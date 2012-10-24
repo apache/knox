@@ -1,0 +1,12 @@
+.classpath
+.project
+.settings
+.idea/
+.iml/
+*.iml
+.DS_Store
+target
+/ambari-web/public/
+/ambari-web/node_modules/
+*.pyc
+*.py~

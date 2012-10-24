@@ -1,0 +1,16 @@
+Create a wrapper chain that you can set the gateway chain on.  This should allow for dynamic reconfiguration.
+Have this wrapper control the lifecycle of the chain.  Including the init and destroy of the chain.
+
+Create a factory that takes a string and creates config.
+
+Create a factory that takes config and generate the gateway chain.
+
+Put Apache headers in all source.
+
+Hook up Copatura
+
+Hook up FindBugs
+
+Have messages and resources factories check that the required annotations exist and fail if they don't.  This
+will make sure that those annotations exist so that we can find the bundles at extraction time.
+

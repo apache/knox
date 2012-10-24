@@ -1,0 +1,35 @@
+--- Path param matching ---
+1. Path param required [1,1]
+Pattern: /path/{param-name}/path
+
+2. Path param optional [0,n]
+Pattern: /path/{param-name*}/path
+
+2. Path remainder optional [0,n]
+Pattern: /path/{**}
+
+--- Query param matching
+1. Query param required [1,1]
+ Pattern: /path?name={param-name}
+Template: /other-path?other-name={param-name*}
+
+2. Query param optional [0..n]
+ Pattern: /path?name={param-name*}
+Template: /other-path?other-name={param-name*}
+
+3. Query param remainder [0..n]
+ Pattern: /path?{**}
+
+Notes
+By default patterns are reluctantly matched
+Query parameter ordering is not significant.
+Path parameter ordering is a requirement for matching.
+This should match anything /{**}?{**}
+The should reproduce the input /{**}?{**}
+Note: The **'s will only match what isn't specifically consumed.  Therefore for query param matching they must always logically be last.
+Note: For {**} path params remember that they are "reluctant". The value *** could be greedy.
+
+Extensions
+Could use + to mean [1,n]
+Could use ? to mean [0,1]
+Could use additional * to mean greedy **, +*, ?*, [1,n]*
