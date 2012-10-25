@@ -24,11 +24,8 @@ public class QuerySegment extends Segment {
   public QuerySegment(
       String queryName,
       String paramName,
-      String valuePattern,
-      int minRequired,
-      int maxAllowed,
-      boolean greedy ) {
-    super( paramName, valuePattern, minRequired, maxAllowed, greedy );
+      String valuePattern ) {
+    super( paramName, valuePattern );
     this.queryName = queryName;
   }
 

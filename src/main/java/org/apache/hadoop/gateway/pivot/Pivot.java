@@ -25,14 +25,19 @@ import java.net.URISyntaxException;
 
 public interface Pivot {
 
-  void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException, URISyntaxException;
+  void doGet( HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
 
-  void doPost( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException, URISyntaxException;
+  void doPost( HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
 
-  void doPut( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException, URISyntaxException;
+  void doPut( HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
 
-  void doDelete( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException;
+  void doDelete( HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
 
-  void doOptions( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException, URISyntaxException;
+  void doOptions( HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
 
 }

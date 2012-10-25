@@ -39,11 +39,11 @@ public class UrlRewriteFilter extends AbstractGatewayFilter {
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init( filterConfig );
     rewriter = new UrlRewriter();
-    addRule( filterConfig.getInitParameter( "rewrite" ) );
+    addRule( filterConfig.getInitParameter( "rewriteUri" ) );
     String rewrite;
     int i = 0;
     do {
-      rewrite = filterConfig.getInitParameter( "rewrite." + i++ );
+      rewrite = filterConfig.getInitParameter( "rewriteUri." + i++ );
       addRule( rewrite );
     } while( rewrite != null || i == 1 );
   }

@@ -19,25 +19,26 @@ package org.apache.hadoop.gateway.util.uritemplate;
 
 import java.util.StringTokenizer;
 
-//NOTE: Not thread safe but reusable.
+//NOTE: Instances Not thread safe but reusable.  Static parse method is thread safe.
+//NOTE: Does not handle scheme, authority or fragment parts yet.
+//NOTE: Basically ignores matrix parameters at this point.
 public class Parser {
+
+  public static final String TEMPLATE_OPEN_MARKUP = "{";
+  public static final String TEMPLATE_CLOSE_MARKUP = "}";
+  public static final String NAME_PATTERN_SEPARATOR = "=";
 
   private Builder builder;
   private StringTokenizer parser;
   private String prevToken;
   private String currToken;
 
-  public void next( String delim ) {
-    prevToken = currToken;
-    currToken = parser.nextToken( delim );
+  public static Template parse( String template ) {
+    return new Parser().parseTemplate( template );
   }
 
-  public boolean more() {
-    return parser.hasMoreTokens();
-  }
-
-  public Template parse( String text ) {
-    parser = new StringTokenizer( text, "/?", true ); // Note that the delims are returned.
+  public Template parseTemplate( String template ) {
+    parser = new StringTokenizer( template, "/?", true ); // Note that the delims are returned.
     builder = new Builder();
     builder.setIsAbsolute( false ); // Assume relative until found otherwise.
     builder.setIsDirectory( false ); // Assume a file path until found otherwise.
@@ -75,8 +76,17 @@ public class Parser {
     return builder.build();
   }
 
+  private void next( String delim ) {
+    prevToken = currToken;
+    currToken = parser.nextToken( delim );
+  }
+
+  private boolean more() {
+    return parser.hasMoreTokens();
+  }
+
   private void consumePathSegmentToken() {
-    if( currToken.startsWith( "{" ) ) {
+    if( currToken.startsWith( TEMPLATE_OPEN_MARKUP ) ) {
       consumePathTemplateToken();
     } else {
       consumePathPatternToken();
@@ -89,13 +99,18 @@ public class Parser {
 
   private void consumePathTemplateToken() {
     String template = currToken;
-    if( template.startsWith( "{" ) ) {
+    if( template.startsWith( TEMPLATE_OPEN_MARKUP ) ) {
       template = template.substring( 1 );
     }
-    if( template.endsWith( "}" ) ) {
+    if( template.endsWith( TEMPLATE_CLOSE_MARKUP ) ) {
       template = template.substring( 0, template.length()-1 );
     }
-    builder.addPathSegment( template, "*" );
+    String[] pair = template.split( NAME_PATTERN_SEPARATOR, 2 );
+    if( pair.length ==  1 ) {
+      builder.addPathSegment( pair[ 0 ], Segment.WILDCARD_PATTERN );
+    } else {
+      builder.addPathSegment( pair[ 0 ], pair[ 1 ] );
+    }
   }
 
   private void consumeQuerySegmentToken() {
@@ -103,7 +118,7 @@ public class Parser {
     if( nameValue.length == 2 ) {
       String name = nameValue[ 0 ];
       String value = nameValue[ 1 ];
-      if( value.startsWith( "{" ) ) {
+      if( value.startsWith( TEMPLATE_OPEN_MARKUP ) ) {
         consumeQueryTemplateToken( name, value );
       } else {
         consumeQueryPatternToken( name, value );
@@ -115,14 +130,19 @@ public class Parser {
     builder.addQuerySegment( queryName, "", valuePattern );
   }
 
-  private void consumeQueryTemplateToken( String queryName, String paramName ) {
-    if( paramName.startsWith( "{" ) ) {
-      paramName = paramName.substring( 1 );
+  private void consumeQueryTemplateToken( String queryName, String template ) {
+    if( template.startsWith( TEMPLATE_OPEN_MARKUP ) ) {
+      template = template.substring( 1 );
     }
-    if( paramName.endsWith( "}" ) ) {
-      paramName = paramName.substring( 0, paramName.length()-1 );
+    if( template.endsWith( TEMPLATE_CLOSE_MARKUP ) ) {
+      template = template.substring( 0, template.length()-1 );
     }
-    builder.addQuerySegment( queryName, paramName, "*" );
+    String[] pair = template.split( NAME_PATTERN_SEPARATOR, 2 );
+    if( pair.length == 1 ) {
+      builder.addQuerySegment( queryName, pair[ 0 ], Segment.WILDCARD_PATTERN );
+    } else {
+      builder.addQuerySegment( queryName, pair[ 0 ], pair[ 1 ] );
+    }
   }
 
 }

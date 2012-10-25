@@ -35,99 +35,97 @@ public class ExpanderTest {
 
   @Test
   public void testBasicExpansion() throws Exception {
-    Expander expander = new Expander();
-    Parser parser = new Parser();
     Template template;
     Params params;
     URI expanded;
 
-    template = parser.parse( "" );
+    template = Parser.parse( "" );
     params = new Params();
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "" ) ) ;
 
-    template = parser.parse( "/" );
+    template = Parser.parse( "/" );
     params = new Params();
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "/" ) ) ;
 
-    template = parser.parse( "{path-name}" );
+    template = Parser.parse( "{path-name}" );
     params = new Params();
     params.addValue( "path-name", "path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "path-value" ) ) ;
 
-    template = parser.parse( "/{path-name}" );
+    template = Parser.parse( "/{path-name}" );
     params = new Params();
     params.addValue( "path-name", "path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "/path-value" ) ) ;
 
-    template = parser.parse( "{path-name}/" );
+    template = Parser.parse( "{path-name}/" );
     params = new Params();
     params.addValue( "path-name", "path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "path-value/" ) ) ;
 
-    template = parser.parse( "/{path-name}/" );
+    template = Parser.parse( "/{path-name}/" );
     params = new Params();
     params.addValue( "path-name", "path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "/path-value/" ) ) ;
 
-    template = parser.parse( "path-name" );
+    template = Parser.parse( "path-name" );
     params = new Params();
     params.addValue( "path-name", "other-path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "path-name" ) ) ;
 
-    template = parser.parse( "/path-name" );
+    template = Parser.parse( "/path-name" );
     params = new Params();
     params.addValue( "path-name", "other-path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "/path-name" ) ) ;
 
-    template = parser.parse( "path-name/" );
+    template = Parser.parse( "path-name/" );
     params = new Params();
     params.addValue( "path-name", "other-path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "path-name/" ) ) ;
 
-    template = parser.parse( "/path-name/" );
+    template = Parser.parse( "/path-name/" );
     params = new Params();
     params.addValue( "path-name", "other-path-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "/path-name/" ) ) ;
 
-    template = parser.parse( "?" );
+    template = Parser.parse( "?" );
     params = new Params();
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?" ) ) ;
 
-    template = parser.parse( "?query-name={param-name}" );
+    template = Parser.parse( "?query-name={param-name}" );
     params = new Params();
     params.addValue( "param-name", "param-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query-name=param-value" ) ) ;
 
-    template = parser.parse( "?query-name-1={param-name-1}&query-name-2={param-name-2}" );
+    template = Parser.parse( "?query-name-1={param-name-1}&query-name-2={param-name-2}" );
     params = new Params();
     params.addValue( "param-name-1", "param-value-1" );
     params.addValue( "param-name-2", "param-value-2" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query-name-1=param-value-1&query-name-2=param-value-2" ) ) ;
 
-    template = parser.parse( "?query-name=param-value" );
+    template = Parser.parse( "?query-name=param-value" );
     params = new Params();
     params.addValue( "param-name", "other-param-value" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query-name=param-value" ) ) ;
 
-    template = parser.parse( "?query-name-1=param-value-1&query-name-2=param-value-2" );
+    template = Parser.parse( "?query-name-1=param-value-1&query-name-2=param-value-2" );
     params = new Params();
     params.addValue( "param-name-1", "other-param-value-1" );
     params.addValue( "param-name-2", "other-param-value-2" );
-    expanded = expander.expand( template, params );
+    expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query-name-1=param-value-1&query-name-2=param-value-2" ) ) ;
   }
 

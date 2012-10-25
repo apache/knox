@@ -21,6 +21,9 @@ import java.util.regex.Pattern;
 
 public class Segment {
 
+  static final String WILDCARD_PATTERN = "*";
+  static final String GLOB_PATTERN = "**";
+
   public static final int STATIC = 0;
   public static final int WILDCARD = 1;
   public static final int REGEX = 2;
@@ -31,25 +34,54 @@ public class Segment {
   private Pattern valueRegex;
   private int minRequired;
   private int maxAllowed;
-  private boolean greedy;
+  //private boolean greedy;
 
-  public Segment( String paramName, String valuePattern, int minRequired, int maxAllowed, boolean greedy ) {
+  @Override
+  public int hashCode() {
+    return valuePattern.hashCode() + paramName.hashCode();
+  }
+
+  @Override
+  @SuppressWarnings( "unchecked" )
+  public boolean equals( Object obj ) {
+    boolean equal = false;
+    if( obj instanceof Segment ) {
+      Segment that = (Segment)obj;
+      equal = ( ( this.type == that.type ) &&
+                ( this.paramName.equals( that.paramName ) ) &&
+                ( this.valuePattern.equals( that.valuePattern ) ) &&
+                ( this.minRequired == that.minRequired ) &&
+                ( this.maxAllowed == that.maxAllowed ) ) ;//&&
+                //( this.greedy == that.greedy ) );
+    }
+    return equal;
+  }
+
+  public Segment( String paramName, String valuePattern ) { //}, int minRequired, int maxAllowed, boolean greedy ) {
     this.paramName = paramName;
     this.valuePattern = valuePattern;
-    this.minRequired = minRequired;
-    this.maxAllowed = maxAllowed;
-    this.greedy = greedy;
-    if( "*".equals( valuePattern ) ) {
+    //this.greedy = greedy;
+    if( WILDCARD_PATTERN.equals( valuePattern ) ) {
+      this.type = WILDCARD;
+      this.minRequired = 1;
+      this.maxAllowed = 1;
+      this.valueRegex = null;
+    } else if( GLOB_PATTERN.equals( valuePattern ) ) {
       type = WILDCARD;
-      valueRegex = null;
-    } else if ( valuePattern.contains( "*" ) ) {
-      type = REGEX;
-      valueRegex = compileRegex( valuePattern );
+      this.minRequired = 0;
+      this.maxAllowed = Integer.MAX_VALUE;
+      this.valueRegex = null;
+    } else if ( valuePattern.contains( WILDCARD_PATTERN ) ) {
+      this.type = REGEX;
+      this.minRequired = 1;
+      this.maxAllowed = 1;
+      this.valueRegex = compileRegex( valuePattern );
     } else {
-      type = STATIC;
-      valueRegex = null;
+      this.type = STATIC;
+      this.minRequired = 1;
+      this.maxAllowed = 1;
+      this.valueRegex = null;
     }
-
   }
 
   public int getType() {
@@ -76,12 +108,26 @@ public class Segment {
     return maxAllowed;
   }
 
-  public boolean getGreedy() {
-    return greedy;
-  }
+//  public boolean getGreedy() {
+//    return greedy;
+//  }
 
-  private static Pattern compileRegex( String pattern ) {
-    throw new UnsupportedOperationException( Segment.class.getCanonicalName() + ".compileRegex()" );
+  // Creates a pattern for a simplified filesystem style wildcard '*' syntax.
+  private static Pattern compileRegex( String segment ) {
+    // Turn '*' into '/' to keep it safe.
+    // Chose '/' because that can't exist in a segment.
+    segment = segment.replaceAll( "\\*", "/" );
+    // Turn '.' into '\.'.
+    segment = segment.replaceAll( "\\.", "\\\\." );
+    // Turn '/' back into '.*'.
+    segment = segment.replaceAll( "/", "\\.\\*" );
+    if( !segment.startsWith( "^" ) ) {
+      segment = "^" + segment;
+    }
+    if( !segment.endsWith( "$" ) ) {
+      segment = segment + "$";
+    }
+    return Pattern.compile( segment );
   }
 
   public boolean matches( Segment that ) {
@@ -142,7 +188,7 @@ public class Segment {
     boolean matches;
     switch( that.getType() ) {
       case( STATIC ):
-        matches = that.getValueRegex().matcher( this.getValuePattern() ).matches();
+        matches = this.getValueRegex().matcher( that.getValuePattern() ).matches();
         break;
       case( WILDCARD ):
         matches = true;

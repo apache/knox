@@ -23,7 +23,11 @@ import java.util.List;
 
 public class Extractor {
 
-  public Params extract( Template template, URI uri ) {
+  public static Params extract( Template template, URI uri ) {
+    return new Extractor().extractParams( template, uri );
+  }
+
+  public Params extractParams( Template template, URI uri ) {
     Parser parser = new Parser();
     Params params = new Params();
     Template uriTemplate = parser.parse( uri.toString() );
@@ -59,7 +63,6 @@ public class Extractor {
   }
 
   private void extractQueryParams( Template extractTemplate, Template inputTemplate, Params params ) {
-    boolean matching = true;
     Iterator<QuerySegment> extractIterator = extractTemplate.getQuery().values().iterator();
     while( extractIterator.hasNext() ) {
       QuerySegment extractSegment = extractIterator.next();

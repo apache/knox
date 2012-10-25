@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import java.net.URI;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -31,48 +30,44 @@ public class ExtractorTest {
 
   @Test
   public void testEdgeCaseExtraction() throws Exception {
-    Extractor extractor = new Extractor();
-    Parser parser = new Parser();
     Template template;
     Params params;
     URI uri;
 
-    template = parser.parse( "" );
+    template = Parser.parse( "" );
     uri = new URI("");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 0 ) );
   }
 
     @Test
   public void testPathExtraction() throws Exception {
-    Extractor extractor = new Extractor();
-    Parser parser = new Parser();
     Template template;
     Params params;
     URI uri;
 
-    template = parser.parse( "{path-param}" );
+    template = Parser.parse( "{path-param}" );
     uri = new URI("path-value");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
     assertThat( params.getNames(), hasItem( "path-param" ) );
     assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
     assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
 
-    template = parser.parse( "/some-path/{path-param}" );
+    template = Parser.parse( "/some-path/{path-param}" );
     uri = new URI("/some-path/path-value");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
     assertThat( params.getNames(), hasItem( "path-param" ) );
     assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
     assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
 
-    template = parser.parse( "/some-path/{path-param}/some-other-path" );
+    template = Parser.parse( "/some-path/{path-param}/some-other-path" );
     uri = new URI("/some-path/path-value/some-other-path");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
     assertThat( params.getNames(), hasItem( "path-param" ) );
@@ -82,24 +77,22 @@ public class ExtractorTest {
 
   @Test
   public void testQueryExtraction() throws Exception {
-    Extractor extractor = new Extractor();
-    Parser parser = new Parser();
     Template template;
     Params params;
     URI uri;
 
-    template = parser.parse( "?query-param={param-name}" );
+    template = Parser.parse( "?query-param={param-name}" );
     uri = new URI("?query-param=param-value");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
     assertThat( params.getNames(), hasItem( "param-name" ) );
     assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
     assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
 
-    template = parser.parse( "?query-param={param-name}" );
+    template = Parser.parse( "?query-param={param-name}" );
     uri = new URI("?query-param=param-value");
-    params = extractor.extract( template, uri );
+    params = Extractor.extract( template, uri );
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
     assertThat( params.getNames(), hasItem( "param-name" ) );

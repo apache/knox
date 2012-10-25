@@ -1,3 +1,12 @@
+Feature
+Write a special pivot for WebHDFS PUT/POST redirects.
+
+Utility
+Add scheme & authority support to uritemplate
+
+Utility
+Add query matching support to uritemplate
+
 Security (IMPORTANT)
 A HTTP BasicAuth challenge must never be issued over an insecure transport.
 

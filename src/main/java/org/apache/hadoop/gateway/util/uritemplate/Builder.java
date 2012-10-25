@@ -57,13 +57,13 @@ public class Builder {
   }
 
   public Builder addPathSegment( String paramName, String valuePattern ) {
-    PathSegment segment = new PathSegment( paramName, valuePattern, 1, 1, false );
+    PathSegment segment = new PathSegment( paramName, valuePattern );
     pathSegments.add( segment );
     return this;
   }
 
   public Builder addQuerySegment( String queryName, String paramName, String valuePattern ) {
-    QuerySegment segment = new QuerySegment( queryName, paramName, valuePattern, 1, 1, false );
+    QuerySegment segment = new QuerySegment( queryName, paramName, valuePattern );
     querySegments.put( queryName, segment );
     return this;
   }

@@ -22,11 +22,16 @@ import java.net.URISyntaxException;
 
 public class Rewriter {
 
-  public URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+  public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+      throws URISyntaxException {
+    return new Rewriter().rewriteUri( inputUri, inputTemplate, outputTemplate, resolver );
+  }
+
+  public URI rewriteUri( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
       throws URISyntaxException {
     Extractor extractor = new Extractor();
     Expander expander = new Expander();
-    Params params = extractor.extract( inputTemplate, inputUri );
+    Params params = extractor.extractParams( inputTemplate, inputUri );
     URI outputUri = expander.expand( outputTemplate, params );
     return outputUri;
   }

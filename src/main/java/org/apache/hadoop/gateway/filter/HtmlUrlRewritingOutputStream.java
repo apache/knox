@@ -119,7 +119,7 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
 //    String newUrl = oldUrl;
 //    // If this is an absolute URL, then
 //    if( absoluteUrlPattern.matcher( oldUrl ).matches() ) {
-//      //TODO: Should really rewrite absolute urls that target the proxied service too.
+//      //TODO: Should really rewriteUri absolute urls that target the proxied service too.
 //      newUrl = Urls.concatUrl( config.getInitParameter("prefix"), oldUrl );
 //    } else {
 //      //TODO: Need access to the proxy path.

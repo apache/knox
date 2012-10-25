@@ -21,11 +21,8 @@ public class PathSegment extends Segment {
 
   public PathSegment(
       String paramName,
-      String pathPattern,
-      int minRequired,
-      int maxAllowed,
-      boolean greedy ) {
-    super( paramName, pathPattern, minRequired, maxAllowed, greedy );
+      String pathPattern ) {
+    super( paramName, pathPattern );
   }
 
 }

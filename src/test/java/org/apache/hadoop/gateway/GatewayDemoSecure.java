@@ -175,7 +175,7 @@ public class GatewayDemoSecure {
 //
 //    filterConfig = new FilterConfig();
 //    filterConfig.put( "class", UrlRewriteFilter.class.getName() );
-//    serviceConfig.filters.put( "rewrite", filterConfig );
+//    serviceConfig.filters.put( "rewriteUri", filterConfig );
 //
 //    clusterConfig.proxies.put( "hdfs-console", serviceConfig );
 //
@@ -186,7 +186,7 @@ public class GatewayDemoSecure {
 //
 //    filterConfig = new FilterConfig();
 //    filterConfig.put( "class", UrlRewriteFilter.class.getName() );
-//    serviceConfig.filters.put( "rewrite", filterConfig );
+//    serviceConfig.filters.put( "rewriteUri", filterConfig );
 //
 //    clusterConfig.proxies.put( "hdfs-health", serviceConfig );
 //

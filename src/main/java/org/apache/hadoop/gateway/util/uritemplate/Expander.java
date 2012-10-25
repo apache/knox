@@ -25,14 +25,18 @@ import java.util.List;
 
 public class Expander {
 
-  public URI expand( Template template, Resolver resolver ) throws URISyntaxException {
+  public static URI expand( Template template, Resolver resolver ) throws URISyntaxException {
+    return new Expander().expandTemplate( template, resolver );
+  }
+
+  public URI expandTemplate( Template template, Resolver resolver ) throws URISyntaxException {
     StringBuilder builder = new StringBuilder();
     expandPath( template, resolver, builder );
     expandQuery( template, resolver, builder );
     return new URI( builder.toString() );
   }
 
-  private void expandPath( Template template, Resolver resolver, StringBuilder builder ) {
+  public void expandPath( Template template, Resolver resolver, StringBuilder builder ) {
     if( template.isAbsolute() ) {
       builder.append( "/" );
     }
