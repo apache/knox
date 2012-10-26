@@ -15,22 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-public class QuerySegment extends Segment {
+import java.util.List;
+import java.util.Set;
 
-  private String queryName;
+public interface Resolver {
 
-  public QuerySegment(
-      String queryName,
-      String paramName,
-      String valuePattern ) {
-    super( paramName, valuePattern );
-    this.queryName = queryName;
-  }
+  public Set<String> getNames();
 
-  public String getQueryName() {
-    return queryName;
-  }
+  public List<String> getValues( String name );
 
 }

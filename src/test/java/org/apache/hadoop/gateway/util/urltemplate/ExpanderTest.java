@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.junit.Ignore;
 import org.junit.Test;

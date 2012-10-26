@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -32,11 +34,11 @@ public class ParserTest {
       boolean hasQuery,
       int pathSegmentsSize,
       int querySegmentsSize ) {
-    assertThat( template.isAbsolute(), equalTo( isAbsolute ) );
-    assertThat( template.isDirectory(), equalTo( isDirectory ) );
-    assertThat( template.hasQuery(), equalTo( hasQuery ) );
-    assertThat( template.getPath().size(), equalTo( pathSegmentsSize ) );
-    assertThat( template.getQuery().size(), equalTo( querySegmentsSize ) );
+    assertThat( "Incorrect isAbsolute value.", template.isAbsolute(), equalTo( isAbsolute ) );
+    assertThat( "Incorrect isDirectory value.", template.isDirectory(), equalTo( isDirectory ) );
+    assertThat( "Incorrect hasQuery value.", template.hasQuery(), equalTo( hasQuery ) );
+    assertThat( "Incorrect path size.", template.getPath().size(), equalTo( pathSegmentsSize ) );
+    assertThat( "Incorrect query size.", template.getQuery().size(), equalTo( querySegmentsSize ) );
   }
 
   public void assertPath(
@@ -45,8 +47,8 @@ public class ParserTest {
       String paramName,
       String valuePattern ) {
     PathSegment segment = template.getPath().get( index );
-    assertThat( segment.getParamName(), equalTo( paramName ));
-    assertThat( segment.getValuePattern(), equalTo( valuePattern ));
+    assertThat( "Incorrect template param name.", segment.getParamName(), equalTo( paramName ) );
+    assertThat( "Incorrect template value pattern.", segment.getValuePattern(), equalTo( valuePattern ) );
   }
 
   public void assertPath(
@@ -58,8 +60,8 @@ public class ParserTest {
       int minRequired,
       int maxAllowed ) {
     PathSegment segment = template.getPath().get( index );
-    assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ));
-    assertThat( "Value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ));
+    assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ) );
+    assertThat( "Value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ) );
     assertThat( "Segment type wrong.", segment.getType(), equalTo( type ) );
     assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
     assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
@@ -91,6 +93,16 @@ public class ParserTest {
     assertThat( "Segment type wrong.", segment.getType(), equalTo( type ) );
     assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
     assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
+  }
+
+  @Test
+  public void testCompleteUrl() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    template = Parser.parse( text );
+    assertBasics( template, true, false, true, 3, 2 );
   }
 
   @Ignore( "TODO" )
@@ -106,7 +118,7 @@ public class ParserTest {
   }
 
   @Test
-  public void testTemplates() {
+  public void testTemplates() throws URISyntaxException {
     String text;
     Template template;
 
@@ -152,15 +164,7 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, true, true, false, 0, 0 );
 
-    text = "//";
-    template = Parser.parse( text );
-    assertBasics( template, true, true, false, 0, 0 );
-
     text = "?";
-    template = Parser.parse( text );
-    assertBasics( template, false, false, true, 0, 0 );
-
-    text = "??";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 0 );
 
@@ -174,10 +178,10 @@ public class ParserTest {
     assertBasics( template, true, false, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
-    text = "//path";
-    template = Parser.parse( text );
-    assertBasics( template, true, false, false, 1, 0 );
-    assertPath( template, 0, "", "path" );
+//    text = "//path";
+//    template = Parser.parse( text );
+//    assertBasics( template, true, false, false, 1, 0 );
+//    assertPath( template, 0, "", "path" );
 
     text = "path/";
     template = Parser.parse( text );
@@ -194,10 +198,10 @@ public class ParserTest {
     assertBasics( template, true, true, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
-    text = "//path//";
-    template = Parser.parse( text );
-    assertBasics( template, true, true, false, 1, 0 );
-    assertPath( template, 0, "", "path" );
+//    text = "//path//";
+//    template = Parser.parse( text );
+//    assertBasics( template, true, true, false, 1, 0 );
+//    assertPath( template, 0, "", "path" );
 
     text = "pathA/pathB";
     template = Parser.parse( text );
@@ -251,16 +255,11 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, true, true, true, 0, 0 );
 
-    text = "//??";
-    template = Parser.parse( text );
-    assertBasics( template, true, true, true, 0, 0 );
+//    text = "//??";
+//    template = Parser.parse( text );
+//    assertBasics( template, true, true, true, 0, 0 );
 
     text = "?name=value";
-    template = Parser.parse( text );
-    assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "name", "", "value" );
-
-    text = "??name=value";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
     assertQuery( template, "name", "", "value" );
@@ -290,7 +289,7 @@ public class ParserTest {
   }
 
   @Test
-  public void testParameterizedPathTemplatesWithWildcardAndRegex() {
+  public void testParameterizedPathTemplatesWithWildcardAndRegex() throws URISyntaxException {
     String text;
     Template template;
 
@@ -321,7 +320,7 @@ public class ParserTest {
   }
 
   @Test
-  public void testParameterizedQueryTemplatesWithWildcardAndRegex() {
+  public void testParameterizedQueryTemplatesWithWildcardAndRegex() throws URISyntaxException {
     String text;
     Template template;
 
@@ -352,7 +351,7 @@ public class ParserTest {
   }
 
   @Test
-  public void testGlobPattern() {
+  public void testGlobPattern() throws URISyntaxException {
     String text;
     Template template;
 
@@ -375,6 +374,87 @@ public class ParserTest {
     text = "/**/path";
     template = Parser.parse( text );
     assertBasics( template, true, false, false, 2, 0 );
+  }
+
+  @Ignore( "TODO" )
+  @Test
+  public void testPatternsWithSchemeAndAuthority() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "http:";
+    template = Parser.parse( text );
+
+    text = "http:/path";
+    template = Parser.parse( text );
+
+    text = "http://host";
+    template = Parser.parse( text );
+
+    text = "http://host/";
+    template = Parser.parse( text );
+
+    text = "http://host:80";
+    template = Parser.parse( text );
+
+    text = "http://host:80/";
+    template = Parser.parse( text );
+
+
+    text = "{scheme}:";
+    template = Parser.parse( text );
+
+    text = "{scheme}:/{path}";
+    template = Parser.parse( text );
+
+    text = "{scheme}://{host}";
+    template = Parser.parse( text );
+
+    text = "{scheme}://{host}/";
+    template = Parser.parse( text );
+
+    text = "{scheme}://{host}:{port}";
+    template = Parser.parse( text );
+
+    text = "{scheme}://{host}:{port}/";
+    template = Parser.parse( text );
+
+
+    text = "{scheme=http}:/{path=index.html}";
+    template = Parser.parse( text );
+
+    text = "{scheme=http}://{host=*.com}";
+    template = Parser.parse( text );
+
+    text = "{scheme=https}://{host=*.edu}/";
+    template = Parser.parse( text );
+
+    text = "{scheme=rmi}://{host=*}:{port=80}";
+    template = Parser.parse( text );
+
+    text = "{scheme=ftp}://{host=localhost*}:{port=*80}/";
+    template = Parser.parse( text );
+  }
+
+  @Test
+  public void testEdgeCases() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "//";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+
+    text = "??";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+
+    text = "??name=value";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 1 );
+    assertQuery( template, "name", "", "value" );
+
   }
 
 }

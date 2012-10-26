@@ -15,15 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.util.List;
-import java.util.Set;
+public class PathSegment extends Segment {
 
-public interface Resolver {
-
-  public Set<String> getNames();
-
-  public List<String> getValues( String name );
+  public PathSegment( String paramName, String pathPattern ) {
+    super( paramName, pathPattern );
+  }
 
 }

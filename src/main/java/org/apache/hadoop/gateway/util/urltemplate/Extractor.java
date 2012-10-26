@@ -15,22 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 
 public class Extractor {
 
-  public static Params extract( Template template, URI uri ) {
+  public static Params extract( Template template, URI uri ) throws URISyntaxException {
     return new Extractor().extractParams( template, uri );
   }
 
-  public Params extractParams( Template template, URI uri ) {
-    Parser parser = new Parser();
+  public Params extractParams( Template template, URI uri ) throws URISyntaxException {
     Params params = new Params();
-    Template uriTemplate = parser.parse( uri.toString() );
+    Template uriTemplate = Parser.parse( uri.toString() );
     extractPathParams( template, uriTemplate, params );
     extractQueryParams( template, uriTemplate, params );
     return params;

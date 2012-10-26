@@ -15,25 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+public class QuerySegment extends Segment {
 
-public class Rewriter {
+  private String queryName;
 
-  public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
-      throws URISyntaxException {
-    return new Rewriter().rewriteUri( inputUri, inputTemplate, outputTemplate, resolver );
+  public QuerySegment( String queryName, String paramName, String valuePattern ) {
+    super( paramName, valuePattern );
+    this.queryName = queryName;
   }
 
-  public URI rewriteUri( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
-      throws URISyntaxException {
-    Extractor extractor = new Extractor();
-    Expander expander = new Expander();
-    Params params = extractor.extractParams( inputTemplate, inputUri );
-    URI outputUri = expander.expand( outputTemplate, params );
-    return outputUri;
+  public String getQueryName() {
+    return queryName;
   }
 
 }

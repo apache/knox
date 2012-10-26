@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.util.regex.Pattern;
 
 public class Segment {
 
+  static final String ANONYMOUS_PARAM = "";
   static final String WILDCARD_PATTERN = "*";
   static final String GLOB_PATTERN = "**";
 

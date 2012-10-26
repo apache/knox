@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 
 import org.junit.Test;
+
+import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -104,7 +106,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testVariousPatterns() {
+  public void testVariousPatterns() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs" ), "/webhdfs" );
     matcher.add( Parser.parse( "/webhdfs/dfshealth.jsp" ), "/webhdfs/dfshealth.jsp" );
@@ -128,7 +130,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testStar() {
+  public void testStar() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/*" ), "/webhdfs/*" );
     assertValidMatch( matcher, "/webhdfs/*", "/webhdfs/*" );
@@ -139,7 +141,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testGlob() {
+  public void testGlob() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/**" ), "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/**" );
@@ -149,7 +151,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testMatrixParam() {
+  public void testMatrixParam() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/**" ), "/webhdfs/**" );
     matcher.add( Parser.parse( "/webhdfs/browseDirectory.jsp;dn=*" ), "/webhdfs/browseDirectory.jsp;dn=*" );
@@ -157,7 +159,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testTwoGlobsAtDifferentDepths() {
+  public void testTwoGlobsAtDifferentDepths() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/**" ), "/webhdfs/**" );
     matcher.add( Parser.parse( "/webhdfs/v1/**" ), "/webhdfs/v1/**" );
@@ -173,7 +175,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testGlobsVsStarsAtSameDepth() {
+  public void testGlobsVsStarsAtSameDepth() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/*" ), "/webhdfs/*" );
     matcher.add( Parser.parse( "/webhdfs/**" ), "/webhdfs/**" );
@@ -189,7 +191,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testMatchingPatternsWithinPathSegments() {
+  public void testMatchingPatternsWithinPathSegments() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/path/{file}" ), "default" );
     assertValidMatch( matcher, "/path/file-name", "default" );
@@ -209,7 +211,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testMatchingPatternsWithinQuerySegments() {
+  public void testMatchingPatternsWithinQuerySegments() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "?query={param}" ), "default" );
     assertValidMatch( matcher, "?query=value", "default" );
@@ -229,7 +231,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testMatchingForTemplatesThatVaryOnlyByQueryParams() {
+  public void testMatchingForTemplatesThatVaryOnlyByQueryParams() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
     addTemplate( matcher, "?one={param}" );
     addTemplate( matcher, "?two={param}" );
@@ -240,11 +242,11 @@ public class MatcherTest {
     assertValidMatch( matcher, "?", null );
   }
 
-  private void addTemplate( Matcher<String> matcher, String template ) {
+  private void addTemplate( Matcher<String> matcher, String template ) throws URISyntaxException {
     matcher.add( Parser.parse( template ), template );
   }
 
-  private void assertValidMatch( Matcher<String> matcher, String uri, String template ) {
+  private void assertValidMatch( Matcher<String> matcher, String uri, String template ) throws URISyntaxException {
     if( template == null ) {
       assertThat( matcher.match( Parser.parse( uri ) ), nullValue() );
     } else {

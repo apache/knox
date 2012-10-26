@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,11 +23,20 @@ import java.util.List;
 
 public class Builder {
 
+  private boolean hasScheme;
+  private Segment scheme;
+  private boolean hasAuthority;
+  private Segment username;
+  private Segment password;
+  private Segment host;
+  private Segment port;
   private boolean isAbsolute;
   private boolean isDirectory;
-  private boolean hasQuery;
   private List<PathSegment> pathSegments;
+  private boolean hasQuery;
   private LinkedHashMap<String,QuerySegment> querySegments;
+  private boolean hasFragment;
+  private Segment fragment;
 
   public Builder() {
     this.isAbsolute = false;
@@ -38,7 +47,45 @@ public class Builder {
   }
 
   public Template build() {
-    return new Template( pathSegments, isAbsolute, isDirectory, querySegments, hasQuery );
+    return new Template(
+        scheme, hasScheme,
+        username, password, host, port, hasAuthority,
+        pathSegments, isAbsolute, isDirectory,
+        querySegments, hasQuery,
+        fragment, hasFragment );
+  }
+
+  public void setHasScheme( boolean hasScheme ) {
+    this.hasScheme = hasScheme;
+  }
+
+  public void setScheme( String paramName, String valuePattern ) {
+    this.scheme = new Segment( paramName, valuePattern );
+    setHasScheme( true );
+  }
+
+  public void setHasAuthority( boolean hasAuthority ) {
+    this.hasAuthority = hasAuthority;
+  }
+
+  public void setUsername( String paramName, String valuePattern ) {
+    setHasAuthority( true );
+    this.username = new Segment( paramName, valuePattern );
+  }
+
+  public void setPassword( String paramName, String valuePattern ) {
+    setHasAuthority( true );
+    this.password = new Segment( paramName, valuePattern );
+  }
+
+  public void setHost( String paramName, String valuePattern ) {
+    setHasAuthority( true );
+    this.host = new Segment( paramName, valuePattern );
+  }
+
+  public void setPort( String paramName, String valuePattern ) {
+    setHasAuthority( true );
+    this.port = new Segment( paramName, valuePattern );
   }
 
   public Builder setIsAbsolute( boolean isAbsolute ) {
@@ -51,14 +98,14 @@ public class Builder {
     return this;
   }
 
-  public Builder setHasQuery( boolean hasQuery ) {
-    this.hasQuery = hasQuery;
-    return this;
-  }
-
   public Builder addPathSegment( String paramName, String valuePattern ) {
     PathSegment segment = new PathSegment( paramName, valuePattern );
     pathSegments.add( segment );
+    return this;
+  }
+
+  public Builder setHasQuery( boolean hasQuery ) {
+    this.hasQuery = hasQuery;
     return this;
   }
 
@@ -66,6 +113,15 @@ public class Builder {
     QuerySegment segment = new QuerySegment( queryName, paramName, valuePattern );
     querySegments.put( queryName, segment );
     return this;
+  }
+
+  public void setHasFragment( boolean hasFragment ) {
+    this.hasFragment = hasFragment;
+  }
+
+  public void setFragment( String paramName, String valuePattern ) {
+    setHasFragment( true );
+    this.fragment = new Segment( paramName, valuePattern );
   }
 
 }

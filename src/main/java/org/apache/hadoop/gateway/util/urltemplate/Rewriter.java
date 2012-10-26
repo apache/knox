@@ -15,37 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.uritemplate;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.util.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-public class Params implements Resolver {
+public class Rewriter {
 
-  private Map<String,List<String>> map = new HashMap<String,List<String>>();
-
-  public void addName( String name ) {
-    List<String> values = getValues( name );
-    if( values == null ) {
-      values = new ArrayList<String>();
-      map.put( name, values );
-    }
+  public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+      throws URISyntaxException {
+    return new Rewriter().rewriteUri( inputUri, inputTemplate, outputTemplate, resolver );
   }
 
-  public Set<String> getNames() {
-    return map.keySet();
-  }
-
-  public void addValue( String name, String value ) {
-    List<String> values = getValues( name );
-    if( values == null ) {
-      values = new ArrayList<String>();
-      map.put( name, values );
-    }
-    values.add( value );
-  }
-
-  public List<String> getValues( String name ) {
-    return map.get( name );
+  public URI rewriteUri( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+      throws URISyntaxException {
+    Extractor extractor = new Extractor();
+    Expander expander = new Expander();
+    Params params = extractor.extractParams( inputTemplate, inputUri );
+    URI outputUri = expander.expand( outputTemplate, params );
+    return outputUri;
   }
 
 }
