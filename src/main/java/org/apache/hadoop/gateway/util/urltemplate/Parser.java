@@ -120,14 +120,14 @@ public class Parser {
       state = STATE_SCHEME;
       builder.setHasScheme( true );
       consumeSchemeToken( prevToken );
+    } else if( "#".equals( currToken ) ) {
+      state = STATE_FRAGMENT;
+      builder.setHasFragment( true );
+      consumePathSegmentToken( prevToken );
     } else if( "/".equals( prevToken ) ) {
       state = STATE_PATH;
       builder.setIsAbsolute( true );
       consumePathSegmentToken( currToken );
-    } else if( "#".equals( prevToken ) ) {
-      state = STATE_FRAGMENT;
-      builder.setHasFragment( true );
-      consumePathSegmentToken( prevToken );
     } else {
       // Don't know what it is yet so get the next token.
     }
@@ -145,11 +145,15 @@ public class Parser {
     } else if ( "?".equals( currToken ) ) {
       state = STATE_QUERY;
       builder.setHasQuery( true );
-      consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
+      if( !":".equals( prevToken ) ) {
+        consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
+      }
     } else if ( "#".equals( currToken ) ) {
       state = STATE_FRAGMENT;
       builder.setHasFragment( true );
-      consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
+      if( !":".equals( prevToken ) ) {
+        consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
+      }
     } else {
       // Don't know what it is yet so get the next token.
     }
@@ -188,7 +192,7 @@ public class Parser {
     } else if( "?".equals( currToken ) ) {
       state = STATE_QUERY;
       builder.setHasQuery( true );
-    } else if( "?".equals( currToken ) ) {
+    } else if( "#".equals( currToken ) ) {
       state = STATE_FRAGMENT;
       builder.setHasFragment( true );
     } else {
