@@ -24,26 +24,26 @@ import java.util.List;
 public class Builder {
 
   private boolean hasScheme;
-  private SchemeSegment scheme;
+  private Scheme scheme;
   private boolean hasAuthority;
   private UsernameSegment username;
-  private PasswordSegment password;
-  private HostSegment host;
-  private PortSegment port;
+  private Password password;
+  private Host host;
+  private Port port;
   private boolean isAbsolute;
   private boolean isDirectory;
-  private List<PathSegment> pathSegments;
+  private List<Path> pathSegments;
   private boolean hasQuery;
-  private LinkedHashMap<String,QuerySegment> querySegments;
+  private LinkedHashMap<String,Query> querySegments;
   private boolean hasFragment;
-  private FragmentSegment fragment;
+  private Fragment fragment;
 
   public Builder() {
     this.isAbsolute = false;
     this.isDirectory = false;
     this.hasQuery = false;
-    this.pathSegments = new ArrayList<PathSegment>();
-    this.querySegments = new LinkedHashMap<String,QuerySegment>();
+    this.pathSegments = new ArrayList<Path>();
+    this.querySegments = new LinkedHashMap<String,Query>();
   }
 
   public Template build() {
@@ -60,7 +60,7 @@ public class Builder {
   }
 
   public void setScheme( String paramName, String valuePattern ) {
-    this.scheme = new SchemeSegment( paramName, valuePattern );
+    this.scheme = new Scheme( paramName, valuePattern );
     setHasScheme( true );
   }
 
@@ -75,17 +75,17 @@ public class Builder {
 
   public void setPassword( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.password = new PasswordSegment( paramName, valuePattern );
+    this.password = new Password( paramName, valuePattern );
   }
 
   public void setHost( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.host = new HostSegment( paramName, valuePattern );
+    this.host = new Host( paramName, valuePattern );
   }
 
   public void setPort( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.port = new PortSegment( paramName, valuePattern );
+    this.port = new Port( paramName, valuePattern );
   }
 
   public Builder setIsAbsolute( boolean isAbsolute ) {
@@ -99,7 +99,7 @@ public class Builder {
   }
 
   public Builder addPathSegment( String paramName, String valuePattern ) {
-    PathSegment segment = new PathSegment( paramName, valuePattern );
+    Path segment = new Path( paramName, valuePattern );
     pathSegments.add( segment );
     return this;
   }
@@ -110,7 +110,7 @@ public class Builder {
   }
 
   public Builder addQuerySegment( String queryName, String paramName, String valuePattern ) {
-    QuerySegment segment = new QuerySegment( queryName, paramName, valuePattern );
+    Query segment = new Query( queryName, paramName, valuePattern );
     querySegments.put( queryName, segment );
     return this;
   }
@@ -121,7 +121,7 @@ public class Builder {
 
   public void setFragment( String paramName, String valuePattern ) {
     setHasFragment( true );
-    this.fragment = new FragmentSegment( paramName, valuePattern );
+    this.fragment = new Fragment( paramName, valuePattern );
   }
 
 }

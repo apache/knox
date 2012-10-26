@@ -51,12 +51,12 @@ public class Extractor {
   }
 
   private static void extractPathParams( Template extractTemplate, Template inputTemplate, Params params ) {
-    List<PathSegment> inputPath = inputTemplate.getPath();
+    List<Path> inputPath = inputTemplate.getPath();
     int inputSegmentIndex=0, inputSegmentCount=inputPath.size();
     boolean matching = true;
-    for( PathSegment extractSegment: extractTemplate.getPath() ) {
+    for( Path extractSegment: extractTemplate.getPath() ) {
       if( matching && inputSegmentIndex < inputSegmentCount ) {
-        PathSegment inputSegment = inputPath.get( inputSegmentIndex );
+        Path inputSegment = inputPath.get( inputSegmentIndex );
         if( extractSegment.matches( inputSegment ) ) {
           String paramName = extractSegment.getParamName();
           String paramValue = inputSegment.getValuePattern();
@@ -77,10 +77,10 @@ public class Extractor {
   }
 
   private static void extractQueryParams( Template extractTemplate, Template inputTemplate, Params params ) {
-    Iterator<QuerySegment> extractIterator = extractTemplate.getQuery().values().iterator();
+    Iterator<Query> extractIterator = extractTemplate.getQuery().values().iterator();
     while( extractIterator.hasNext() ) {
-      QuerySegment extractSegment = extractIterator.next();
-      QuerySegment inputSegment = inputTemplate.getQuery().get( extractSegment.getQueryName() );
+      Query extractSegment = extractIterator.next();
+      Query inputSegment = inputTemplate.getQuery().get( extractSegment.getQueryName() );
       extractSegmentParams( extractSegment, inputSegment, params );
     }
   }

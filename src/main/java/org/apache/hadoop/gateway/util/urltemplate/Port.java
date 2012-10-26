@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class PasswordSegment extends Segment {
+public class Port extends Segment {
 
-  public PasswordSegment( String paramName, String valuePattern ) {
+  public Port( String paramName, String valuePattern ) {
     super( paramName, valuePattern );
   }
 

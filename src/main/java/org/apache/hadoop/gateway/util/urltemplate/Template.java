@@ -21,35 +21,35 @@ import java.util.*;
 
 public class Template {
 
-  private SchemeSegment scheme;
+  private Scheme scheme;
   private boolean hasScheme;
   private UsernameSegment username;
-  private PasswordSegment password;
-  private HostSegment host;
-  private PortSegment port;
+  private Password password;
+  private Host host;
+  private Port port;
   private boolean hasAuthority;
-  private List<PathSegment> path;
+  private List<Path> path;
   private boolean isAbsolute;
   private boolean isDirectory;
-  private Map<String,QuerySegment> query;
+  private Map<String,Query> query;
   private boolean hasQuery;
-  private FragmentSegment fragment;
+  private Fragment fragment;
   private boolean hasFragment;
 
   Template(
-      SchemeSegment scheme,
+      Scheme scheme,
       boolean hasScheme,
       UsernameSegment username,
-      PasswordSegment password,
-      HostSegment host,
-      PortSegment port,
+      Password password,
+      Host host,
+      Port port,
       boolean hasAuthority,
-      List<PathSegment> path,
+      List<Path> path,
       boolean isAbsolute,
       boolean isDirectory,
-      LinkedHashMap<String,QuerySegment> query,
+      LinkedHashMap<String,Query> query,
       boolean hasQuery,
-      FragmentSegment fragment,
+      Fragment fragment,
       boolean hasFragment ) {
     this.scheme = scheme;
     this.hasScheme = hasScheme;
@@ -67,7 +67,7 @@ public class Template {
     this.hasFragment = hasFragment;
   }
 
-  public SchemeSegment getScheme() {
+  public Scheme getScheme() {
     return scheme;
   }
 
@@ -79,15 +79,15 @@ public class Template {
     return username;
   }
 
-  public PasswordSegment getPassword() {
+  public Password getPassword() {
     return password;
   }
 
-  public HostSegment getHost() {
+  public Host getHost() {
     return host;
   }
 
-  public PortSegment getPort() {
+  public Port getPort() {
     return port;
   }
 
@@ -95,7 +95,7 @@ public class Template {
     return hasAuthority;
   }
 
-  public List<PathSegment> getPath() {
+  public List<Path> getPath() {
     return path;
   }
 
@@ -107,7 +107,7 @@ public class Template {
     return isDirectory;
   }
 
-  public Map<String,QuerySegment> getQuery() {
+  public Map<String,Query> getQuery() {
     return query;
   }
 
@@ -115,7 +115,7 @@ public class Template {
     return hasQuery;
   }
 
-  public FragmentSegment getFragment() {
+  public Fragment getFragment() {
     return fragment;
   }
 

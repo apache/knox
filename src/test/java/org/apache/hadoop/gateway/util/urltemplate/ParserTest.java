@@ -46,7 +46,7 @@ public class ParserTest {
       int index,
       String paramName,
       String valuePattern ) {
-    PathSegment segment = template.getPath().get( index );
+    Path segment = template.getPath().get( index );
     assertThat( "Incorrect template param name.", segment.getParamName(), equalTo( paramName ) );
     assertThat( "Incorrect template value pattern.", segment.getValuePattern(), equalTo( valuePattern ) );
   }
@@ -59,7 +59,7 @@ public class ParserTest {
       int type,
       int minRequired,
       int maxAllowed ) {
-    PathSegment segment = template.getPath().get( index );
+    Path segment = template.getPath().get( index );
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ) );
     assertThat( "Value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ) );
     assertThat( "Segment type wrong.", segment.getType(), equalTo( type ) );
@@ -72,7 +72,7 @@ public class ParserTest {
       String queryName,
       String paramName,
       String valuePattern ) {
-    QuerySegment segment = template.getQuery().get( queryName );
+    Query segment = template.getQuery().get( queryName );
     assertThat( "Query name wrong.", segment.getQueryName(), equalTo( queryName ));
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ));
     assertThat( "value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ));
@@ -86,7 +86,7 @@ public class ParserTest {
       int type,
       int minRequired,
       int maxAllowed ) {
-    QuerySegment segment = template.getQuery().get( queryName );
+    Query segment = template.getQuery().get( queryName );
     assertThat( "Query name wrong.", segment.getQueryName(), equalTo( queryName ));
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ));
     assertThat( "value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ));

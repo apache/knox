@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class SchemeSegment extends Segment {
+public class Fragment extends Segment {
 
-  public SchemeSegment( String paramName, String valuePattern ) {
+  public Fragment( String paramName, String valuePattern ) {
     super( paramName, valuePattern );
   }
 

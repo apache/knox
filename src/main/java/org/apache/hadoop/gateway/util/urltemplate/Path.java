@@ -17,10 +17,10 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class PortSegment extends Segment {
+public class Path extends Segment {
 
-  public PortSegment( String paramName, String valuePattern ) {
-    super( paramName, valuePattern );
+  public Path( String paramName, String pathPattern ) {
+    super( paramName, pathPattern );
   }
 
 }

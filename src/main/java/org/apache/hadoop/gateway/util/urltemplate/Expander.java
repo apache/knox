@@ -76,12 +76,12 @@ public class Expander {
     if( template.isAbsolute() ) {
       builder.append( "/" );
     }
-    List<PathSegment> path = template.getPath();
+    List<Path> path = template.getPath();
     for( int i=0, n=path.size(); i<n; i++ ) {
       if( i > 0 ) {
         builder.append( "/" );
       }
-      PathSegment segment = path.get( i );
+      Path segment = path.get( i );
       switch( segment.getType() ) {
         case( Segment.STATIC ):
           String value = segment.getValuePattern();
@@ -101,7 +101,7 @@ public class Expander {
   }
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
-  private static void expandPathValues( PathSegment segment, List<String> values, StringBuilder builder ) {
+  private static void expandPathValues( Path segment, List<String> values, StringBuilder builder ) {
     if( values != null ) {
       for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
         if( i > 0 ) {
@@ -113,14 +113,14 @@ public class Expander {
   }
 
   private static void expandQuery( Template template, Resolver resolver, StringBuilder builder ) {
-    Collection<QuerySegment> query = template.getQuery().values();
+    Collection<Query> query = template.getQuery().values();
     if( query.isEmpty() ) {
       if( template.hasQuery() ) {
         builder.append( "?" );
       }
     } else {
       boolean first = true;
-      Iterator<QuerySegment> iterator = query.iterator();
+      Iterator<Query> iterator = query.iterator();
       while( iterator.hasNext() ) {
         if( first ) {
           builder.append( "?" );
@@ -128,7 +128,7 @@ public class Expander {
         } else {
           builder.append( "&" );
         }
-        QuerySegment segment = iterator.next();
+        Query segment = iterator.next();
         String queryName = segment.getQueryName();
         switch( segment.getType() ) {
           case( Segment.STATIC ):
@@ -150,7 +150,7 @@ public class Expander {
   }
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
-  private static void expandQueryValues( QuerySegment segment, String queryName, List<String> values, StringBuilder builder ) {
+  private static void expandQueryValues( Query segment, String queryName, List<String> values, StringBuilder builder ) {
     if( values != null ) {
       for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
         if( i > 0 ) {

@@ -43,7 +43,7 @@ public class Matcher<V> {
     node = add( node, template.getPort() );
 
     // Add the path segments while descending.
-    for( PathSegment segment : template.getPath() ) {
+    for( Path segment : template.getPath() ) {
       // If the root already contains a matching segment then descend to that node.
       // Otherwise create a child node, addValue it to the root and descend to it.
       // If this new node is a leaf node then set the value.
@@ -89,7 +89,7 @@ public class Matcher<V> {
     if( matches ) {
       winner = pickBestMatch( template, status );
     } else {
-      winner = new Match<V>( null, null );
+      winner = null;
     }
     return winner;
   }
@@ -108,8 +108,8 @@ public class Matcher<V> {
   }
 
   private boolean matchPath( Template template, Status status ) {
-    PathSegment segment;
-    Iterator<PathSegment> segments = template.getPath().iterator();
+    Path segment;
+    Iterator<Path> segments = template.getPath().iterator();
     while( segments.hasNext() && status.hasCandidates() ) {
       segment = segments.next();
       pickMatchingChildren( segment, status );
@@ -189,10 +189,10 @@ public class Matcher<V> {
 
   private int calcQueryMatchCount( QueryNode node, Template input ) {
     int matchCount = 0;
-    Map<String,QuerySegment> inputQuery = input.getQuery();
-    Map<String,QuerySegment> templateQuery = node.template.getQuery();
-    for( QuerySegment templateSegment : templateQuery.values() ) {
-      QuerySegment inputSegment = inputQuery.get( templateSegment.getQueryName() );
+    Map<String,Query> inputQuery = input.getQuery();
+    Map<String,Query> templateQuery = node.template.getQuery();
+    for( Query templateSegment : templateQuery.values() ) {
+      Query inputSegment = inputQuery.get( templateSegment.getQueryName() );
       if( inputSegment != null && templateSegment.matches( inputSegment ) ) {
         matchCount++ ;
       } else {
