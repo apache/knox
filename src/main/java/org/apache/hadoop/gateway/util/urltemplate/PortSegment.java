@@ -17,27 +17,10 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class QuerySegment extends Segment {
+public class PortSegment extends Segment {
 
-  private String queryName;
-
-  public QuerySegment( String queryName, String paramName, String valuePattern ) {
+  public PortSegment( String paramName, String valuePattern ) {
     super( paramName, valuePattern );
-    this.queryName = queryName;
-  }
-
-  public String getQueryName() {
-    return queryName;
-  }
-
-  @Override
-  public boolean matches( Segment that ) {
-    boolean matches = super.matches( that );
-    if( matches ) {
-      QuerySegment thatQuery = (QuerySegment)that;
-      matches = this.queryName.equals( thatQuery.queryName );
-    }
-    return matches;
   }
 
 }

@@ -28,6 +28,39 @@ import static org.junit.Assert.assertThat;
 public class MatcherTest {
 
   @Test
+  public void testMatchCompleteUrl() throws Exception {
+    Matcher<String> matcher;
+    String pattern, input;
+    Template patternTemplate, inputTemplate;
+    Matcher.Match<String> match;
+
+    matcher = new Matcher<String>();
+    pattern = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    patternTemplate = Parser.parse( pattern );
+    matcher.add( patternTemplate, pattern );
+    input = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    inputTemplate = Parser.parse( input );
+    match = matcher.match( inputTemplate );
+    assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
+    assertThat( match.getValue(), equalTo( pattern ) );
+
+    matcher = new Matcher<String>();
+    pattern = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    patternTemplate = Parser.parse( pattern );
+    matcher.add( patternTemplate, pattern );
+
+    input = pattern;
+    inputTemplate = Parser.parse( input );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+
+    input = "not://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    inputTemplate = Parser.parse( input );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+  }
+
+  @Test
   public void testMatch() throws Exception {
     Matcher<String> matcher;
     String pattern, input;

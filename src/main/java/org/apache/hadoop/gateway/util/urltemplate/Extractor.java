@@ -31,12 +31,26 @@ public class Extractor {
   public Params extractParams( Template template, URI uri ) throws URISyntaxException {
     Params params = new Params();
     Template uriTemplate = Parser.parse( uri.toString() );
+    extractSchemeParams( template, uriTemplate, params );
+    extractAuthorityParams( template, uriTemplate, params );
     extractPathParams( template, uriTemplate, params );
     extractQueryParams( template, uriTemplate, params );
+    extractFragmentParams( template, uriTemplate, params );
     return params;
   }
 
-  private void extractPathParams( Template extractTemplate, Template inputTemplate, Params params ) {
+  private static void extractSchemeParams( Template extractTemplate, Template inputTemplate, Params params ) {
+    extractSegmentParams( extractTemplate.getScheme(), inputTemplate.getScheme(), params );
+  }
+
+  private static void extractAuthorityParams( Template extractTemplate, Template inputTemplate, Params params ) {
+    extractSegmentParams( extractTemplate.getUsername(), inputTemplate.getUsername(), params );
+    extractSegmentParams( extractTemplate.getPassword(), inputTemplate.getPassword(), params );
+    extractSegmentParams( extractTemplate.getHost(), inputTemplate.getHost(), params );
+    extractSegmentParams( extractTemplate.getPort(), inputTemplate.getPort(), params );
+  }
+
+  private static void extractPathParams( Template extractTemplate, Template inputTemplate, Params params ) {
     List<PathSegment> inputPath = inputTemplate.getPath();
     int inputSegmentIndex=0, inputSegmentCount=inputPath.size();
     boolean matching = true;
@@ -62,11 +76,21 @@ public class Extractor {
     }
   }
 
-  private void extractQueryParams( Template extractTemplate, Template inputTemplate, Params params ) {
+  private static void extractQueryParams( Template extractTemplate, Template inputTemplate, Params params ) {
     Iterator<QuerySegment> extractIterator = extractTemplate.getQuery().values().iterator();
     while( extractIterator.hasNext() ) {
       QuerySegment extractSegment = extractIterator.next();
       QuerySegment inputSegment = inputTemplate.getQuery().get( extractSegment.getQueryName() );
+      extractSegmentParams( extractSegment, inputSegment, params );
+    }
+  }
+
+  private static void extractFragmentParams( Template extractTemplate, Template inputTemplate, Params params ) {
+    extractSegmentParams( extractTemplate.getFragment(), inputTemplate.getFragment(), params );
+  }
+
+  private static void extractSegmentParams( Segment extractSegment, Segment inputSegment, Params params ) {
+    if( extractSegment != null && inputSegment != null ) {
       params.addValue( extractSegment.getParamName(), inputSegment.getValuePattern() );
     }
   }

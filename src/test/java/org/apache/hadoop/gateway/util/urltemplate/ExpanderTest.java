@@ -21,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -31,6 +32,20 @@ public class ExpanderTest {
   @Ignore( "TODO" )
   @Test
   public void testUrlEncoding() {
+  }
+
+  @Test
+  public void testCompleteUrl() throws URISyntaxException {
+    String text;
+    Template template;
+    Params params;
+    URI expanded;
+
+    text = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+    template = Parser.parse( text );
+    params = new Params();
+    expanded = Expander.expand( template, params );
+    assertThat( expanded.toString(), equalTo( text ) ) ;
   }
 
   @Test

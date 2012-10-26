@@ -32,7 +32,17 @@ public class Matcher<V> {
   public void add( Template template, V value ) {
     map.put( template, value );
     PathNode node = root;
-    // Add the path segments while descending into the root.
+
+    // Add the scheme segment to the tree (if any) while descending.
+    node = add( node, template.getScheme() );
+
+    // Add the authority segments (if any) while descending.
+    node = add( node, template.getUsername() );
+    node = add( node, template.getPassword() );
+    node = add( node, template.getHost() );
+    node = add( node, template.getPort() );
+
+    // Add the path segments while descending.
     for( PathSegment segment : template.getPath() ) {
       // If the root already contains a matching segment then descend to that node.
       // Otherwise create a child node, addValue it to the root and descend to it.
@@ -44,6 +54,11 @@ public class Matcher<V> {
         node = node.addPath( segment );
       }
     }
+
+    // Add the fragment (if any) segments while descending.
+    // Note: Doing it this way puts the fragment above the query parameters in the match order.
+    node = add( node, template.getFragment() );
+
     if( template.getQuery().isEmpty() ) {
       // This might overwrite the template/value of an existing node.  Last in wins.
       node.template = template;
@@ -54,33 +69,70 @@ public class Matcher<V> {
     }
   }
 
-  public Match<V> match( Template path ) {
-    List<PathNode> candidates = new ArrayList<PathNode>();
-    List<PathNode> matches = new ArrayList<PathNode>();
-    List<PathNode> temp;
-    candidates.add( root );
-    PathSegment segment;
-    Iterator<PathSegment> segments = path.getPath().iterator();
-    while( segments.hasNext() && !candidates.isEmpty() ) {
-      segment = segments.next();
-      matches.clear();
-      pickMatchingChildren( segment, candidates, matches );
-      // Swap the lists to avoid object allocation.
-      temp = candidates; candidates = matches; matches = temp;
+  private PathNode add( PathNode node, Segment segment ) {
+    if( segment == null ) {
+      return node;
+    } else {
+      return node.addPath( segment );
     }
-    // The candidates list is used (not matches) because of the swap above.
-    Match<V> winner = pickBestMatch( path, candidates );
+  }
+
+  public Match<V> match( Template template ) {
+    Status status = new Status();
+    status.candidates.add( root );
+    boolean matches =
+      matchScheme( template, status ) &&
+      matchAuthority( template, status ) &&
+      matchPath( template, status ) &&
+      matchFragment( template, status );
+    Match<V> winner;
+    if( matches ) {
+      winner = pickBestMatch( template, status );
+    } else {
+      winner = new Match<V>( null, null );
+    }
     return winner;
   }
 
-  private void pickMatchingChildren( Segment segment, List<PathNode> parents, List<PathNode> matches ) {
-    for( PathNode parent : parents ) {
-      if( parent.isGlob() ) {
-        matches.add( parent );
+  private boolean matchScheme( Template template, Status status ) {
+    pickMatchingChildren( template.getScheme(), status );
+    return status.hasCandidates();
+  }
+
+  private boolean matchAuthority( Template template, Status status ) {
+    pickMatchingChildren( template.getUsername(), status );
+    pickMatchingChildren( template.getPassword(), status );
+    pickMatchingChildren( template.getHost(), status );
+    pickMatchingChildren( template.getPort(), status );
+    return status.hasCandidates();
+  }
+
+  private boolean matchPath( Template template, Status status ) {
+    PathSegment segment;
+    Iterator<PathSegment> segments = template.getPath().iterator();
+    while( segments.hasNext() && status.hasCandidates() ) {
+      segment = segments.next();
+      pickMatchingChildren( segment, status );
+    }
+    return status.hasCandidates();
+  }
+
+  private boolean matchFragment( Template template, Status status ) {
+    pickMatchingChildren( template.getFragment(), status );
+    return status.hasCandidates();
+  }
+
+  private void pickMatchingChildren( Segment segment, Status status ) {
+    if( segment != null ) {
+      for( PathNode parent : status.candidates ) {
+        if( parent.isGlob() ) {
+          status.matches.add( parent );
+        }
+        if( parent.children != null ) {
+          pickMatchingPathNodes( segment, parent.children.values(), status.matches );
+        }
       }
-      if( parent.children != null ) {
-        pickMatchingPathNodes( segment, parent.children.values(), matches );
-      }
+      status.swapMatchesToCandidates();
     }
   }
 
@@ -92,10 +144,10 @@ public class Matcher<V> {
     }
   }
 
-  private Match<V> pickBestMatch( Template input, List<PathNode> candidates ) {
+  private Match<V> pickBestMatch( Template input, Status status ) {
     Match<V> bestMatch = new Match<V>( null, null );
     PathNode bestPath = null;
-    for( PathNode pathNode: candidates ) {
+    for( PathNode pathNode: status.candidates ) {
       if( ( bestPath == null ) || // If we don't have anything at all pick the node.
           ( pathNode.depth > bestPath.depth ) || // If the node is deeper than the best node, pick it.
           // If the node is the same depth as current best but is static and the best isn't then pick it.
@@ -151,6 +203,22 @@ public class Matcher<V> {
     return matchCount;
   }
 
+  private class Status {
+
+    List<PathNode> candidates = new ArrayList<PathNode>();
+    List<PathNode> matches = new ArrayList<PathNode>();
+    List<PathNode> temp;
+
+    private void swapMatchesToCandidates() {
+      temp = candidates; candidates = matches; matches = temp;
+      matches.clear();
+    }
+
+    private boolean hasCandidates() {
+      return !candidates.isEmpty();
+    }
+  }
+
   public static class Match<V> {
 
     private Template template;
@@ -174,7 +242,7 @@ public class Matcher<V> {
 
     int depth; // Zero based depth of the node for "best node" calculation.
     Segment segment;
-    Map<PathSegment,PathNode> children;
+    Map<Segment,PathNode> children;
     Set<QueryNode> queries;
 
     private PathNode( PathNode parent, Segment segment ) {
@@ -185,9 +253,9 @@ public class Matcher<V> {
       this.queries = null;
     }
 
-    private PathNode addPath( PathSegment path ) {
+    private PathNode addPath( Segment path ) {
       if( children == null ) {
-        children = new HashMap<PathSegment,PathNode>();
+        children = new HashMap<Segment,PathNode>();
       }
       PathNode child = new PathNode( this, path );
       children.put( path, child );
@@ -222,7 +290,7 @@ public class Matcher<V> {
     }
 
     private boolean matches( Segment segment ) {
-      return this.segment.matches( segment );
+      return( this.segment.matches( segment ) );
     }
 
   }

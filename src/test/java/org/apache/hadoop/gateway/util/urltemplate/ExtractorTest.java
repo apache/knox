@@ -20,7 +20,9 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import org.junit.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -29,19 +31,43 @@ import static org.junit.Assert.assertThat;
 public class ExtractorTest {
 
   @Test
-  public void testEdgeCaseExtraction() throws Exception {
+  public void testFullUrlExtraction() throws URISyntaxException {
+    String text;
     Template template;
     Params params;
     URI uri;
 
-    template = Parser.parse( "" );
-    uri = new URI("");
+    text = "{scheme}://{username}:{password}@{host}:{port}/{root}/{path}/{file}?queryA={paramA}&queryB={paramB}#{fragment}";
+    template = Parser.parse( text );
+    uri = new URI( "http://horton:hadoop@hortonworks.com:80/top/middle/end?queryA=valueA&queryB=valueB#section" );
     params = Extractor.extract( template, uri );
-    assertThat( params, notNullValue() );
-    assertThat( params.getNames().size(), equalTo( 0 ) );
+
+    assertThat( params.getNames(), hasItem( "scheme" ) );
+    assertThat( params.getValues( "scheme" ), hasItem( "http" ) );
+    assertThat( params.getNames(), hasItem( "username" ) );
+    assertThat( params.getValues( "username" ), hasItem( "horton" ) );
+    assertThat( params.getNames(), hasItem( "password" ) );
+    assertThat( params.getValues( "password" ), hasItem( "hadoop" ) );
+    assertThat( params.getNames(), hasItem( "host" ) );
+    assertThat( params.getValues( "host" ), hasItem( "hortonworks.com" ) );
+    assertThat( params.getNames(), hasItem( "port" ) );
+    assertThat( params.getValues( "port" ), hasItem( "80" ) );
+    assertThat( params.getNames(), hasItem( "root" ) );
+    assertThat( params.getValues( "root" ), hasItem( "top" ) );
+    assertThat( params.getNames(), hasItem( "path" ) );
+    assertThat( params.getValues( "path" ), hasItem( "middle" ) );
+    assertThat( params.getNames(), hasItem( "file" ) );
+    assertThat( params.getValues( "file" ), hasItem( "end" ) );
+    assertThat( params.getNames(), hasItem( "paramA" ) );
+    assertThat( params.getValues( "paramA" ), hasItem( "valueA" ) );
+    assertThat( params.getNames(), hasItem( "paramB" ) );
+    assertThat( params.getValues( "paramB" ), hasItem( "valueB" ) );
+    assertThat( params.getNames(), hasItem( "fragment" ) );
+    assertThat( params.getValues( "fragment" ), hasItem( "section" ) );
+    assertThat( params.getNames().size(), equalTo( 11 ) );
   }
 
-    @Test
+  @Test
   public void testPathExtraction() throws Exception {
     Template template;
     Params params;
@@ -98,6 +124,19 @@ public class ExtractorTest {
     assertThat( params.getNames(), hasItem( "param-name" ) );
     assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
     assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
+  }
+
+  @Test
+  public void testEdgeCaseExtraction() throws Exception {
+    Template template;
+    Params params;
+    URI uri;
+
+    template = Parser.parse( "" );
+    uri = new URI("");
+    params = Extractor.extract( template, uri );
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 0 ) );
   }
 
 }

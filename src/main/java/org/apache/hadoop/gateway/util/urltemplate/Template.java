@@ -21,35 +21,35 @@ import java.util.*;
 
 public class Template {
 
-  private Segment scheme;
+  private SchemeSegment scheme;
   private boolean hasScheme;
-  private Segment username;
-  private Segment password;
-  private Segment host;
-  private Segment port;
+  private UsernameSegment username;
+  private PasswordSegment password;
+  private HostSegment host;
+  private PortSegment port;
   private boolean hasAuthority;
   private List<PathSegment> path;
   private boolean isAbsolute;
   private boolean isDirectory;
   private Map<String,QuerySegment> query;
   private boolean hasQuery;
-  private Segment fragment;
+  private FragmentSegment fragment;
   private boolean hasFragment;
 
   Template(
-      Segment scheme,
+      SchemeSegment scheme,
       boolean hasScheme,
-      Segment username,
-      Segment password,
-      Segment host,
-      Segment port,
+      UsernameSegment username,
+      PasswordSegment password,
+      HostSegment host,
+      PortSegment port,
       boolean hasAuthority,
       List<PathSegment> path,
       boolean isAbsolute,
       boolean isDirectory,
       LinkedHashMap<String,QuerySegment> query,
       boolean hasQuery,
-      Segment fragment,
+      FragmentSegment fragment,
       boolean hasFragment ) {
     this.scheme = scheme;
     this.hasScheme = hasScheme;
@@ -67,7 +67,7 @@ public class Template {
     this.hasFragment = hasFragment;
   }
 
-  public Segment getScheme() {
+  public SchemeSegment getScheme() {
     return scheme;
   }
 
@@ -75,19 +75,19 @@ public class Template {
     return hasScheme;
   }
 
-  public Segment getUsername() {
+  public UsernameSegment getUsername() {
     return username;
   }
 
-  public Segment getPassword() {
+  public PasswordSegment getPassword() {
     return password;
   }
 
-  public Segment getHost() {
+  public HostSegment getHost() {
     return host;
   }
 
-  public Segment getPort() {
+  public PortSegment getPort() {
     return port;
   }
 
@@ -115,7 +115,7 @@ public class Template {
     return hasQuery;
   }
 
-  public Segment getFragment() {
+  public FragmentSegment getFragment() {
     return fragment;
   }
 

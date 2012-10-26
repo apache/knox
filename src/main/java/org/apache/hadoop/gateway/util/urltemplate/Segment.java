@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.util.regex.Pattern;
 
-public class Segment {
+abstract class Segment {
 
   static final String ANONYMOUS_PARAM = "";
   static final String WILDCARD_PATTERN = "*";
@@ -132,19 +132,21 @@ public class Segment {
   }
 
   public boolean matches( Segment that ) {
-    boolean matches;
-    switch( this.getType() ) {
-      case( STATIC ):
-        matches = matchThisStatic( that );
-        break;
-      case( WILDCARD ):
-        matches = matchThisWildcard( that );
-        break;
-      case( REGEX ):
-        matches = matchThisRegex( that );
-        break;
-      default:
-        matches = false;
+    boolean matches = getClass().isInstance( that );
+    if( matches ) {
+      switch( this.getType() ) {
+        case( STATIC ):
+          matches = matchThisStatic( that );
+          break;
+        case( WILDCARD ):
+          matches = matchThisWildcard( that );
+          break;
+        case( REGEX ):
+          matches = matchThisRegex( that );
+          break;
+        default:
+          matches = false;
+      }
     }
     return matches;
   }

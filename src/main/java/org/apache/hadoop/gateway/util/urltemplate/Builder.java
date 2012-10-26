@@ -24,19 +24,19 @@ import java.util.List;
 public class Builder {
 
   private boolean hasScheme;
-  private Segment scheme;
+  private SchemeSegment scheme;
   private boolean hasAuthority;
-  private Segment username;
-  private Segment password;
-  private Segment host;
-  private Segment port;
+  private UsernameSegment username;
+  private PasswordSegment password;
+  private HostSegment host;
+  private PortSegment port;
   private boolean isAbsolute;
   private boolean isDirectory;
   private List<PathSegment> pathSegments;
   private boolean hasQuery;
   private LinkedHashMap<String,QuerySegment> querySegments;
   private boolean hasFragment;
-  private Segment fragment;
+  private FragmentSegment fragment;
 
   public Builder() {
     this.isAbsolute = false;
@@ -60,7 +60,7 @@ public class Builder {
   }
 
   public void setScheme( String paramName, String valuePattern ) {
-    this.scheme = new Segment( paramName, valuePattern );
+    this.scheme = new SchemeSegment( paramName, valuePattern );
     setHasScheme( true );
   }
 
@@ -70,22 +70,22 @@ public class Builder {
 
   public void setUsername( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.username = new Segment( paramName, valuePattern );
+    this.username = new UsernameSegment( paramName, valuePattern );
   }
 
   public void setPassword( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.password = new Segment( paramName, valuePattern );
+    this.password = new PasswordSegment( paramName, valuePattern );
   }
 
   public void setHost( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.host = new Segment( paramName, valuePattern );
+    this.host = new HostSegment( paramName, valuePattern );
   }
 
   public void setPort( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.port = new Segment( paramName, valuePattern );
+    this.port = new PortSegment( paramName, valuePattern );
   }
 
   public Builder setIsAbsolute( boolean isAbsolute ) {
@@ -121,7 +121,7 @@ public class Builder {
 
   public void setFragment( String paramName, String valuePattern ) {
     setHasFragment( true );
-    this.fragment = new Segment( paramName, valuePattern );
+    this.fragment = new FragmentSegment( paramName, valuePattern );
   }
 
 }

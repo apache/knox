@@ -31,12 +31,48 @@ public class Expander {
 
   public URI expandTemplate( Template template, Resolver resolver ) throws URISyntaxException {
     StringBuilder builder = new StringBuilder();
+    expandScheme( template, resolver, builder );
+    expandAuthority( template, resolver, builder );
     expandPath( template, resolver, builder );
     expandQuery( template, resolver, builder );
+    expandFragment( template, resolver, builder );
     return new URI( builder.toString() );
   }
 
-  public void expandPath( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandScheme( Template template, Resolver resolver, StringBuilder builder ) {
+    Segment segment = template.getScheme();
+    if( segment != null ) {
+      expandSingleValue( template.getScheme(), resolver, builder );
+      builder.append( ":" );
+    }
+  }
+
+  private static void expandAuthority( Template template, Resolver resolver, StringBuilder builder ) {
+    if( template.hasAuthority() ) {
+      builder.append( "//" );
+      Segment username = template.getUsername();
+      Segment password = template.getPassword();
+      Segment host = template.getHost();
+      Segment port = template.getPort();
+      expandSingleValue( username, resolver, builder );
+      if( password != null ) {
+        builder.append( ":" );
+        expandSingleValue( password, resolver, builder );
+      }
+      if( username != null || password != null ) {
+        builder.append( "@" );
+      }
+      if( host != null ) {
+        expandSingleValue( host, resolver, builder );
+      }
+      if( port != null ) {
+        builder.append( ":" );
+        expandSingleValue( port, resolver, builder );
+      }
+    }
+  }
+
+  private static void expandPath( Template template, Resolver resolver, StringBuilder builder ) {
     if( template.isAbsolute() ) {
       builder.append( "/" );
     }
@@ -57,7 +93,6 @@ public class Expander {
           List<String> values = resolver.getValues( name );
           expandPathValues( segment, values, builder );
           break;
-        default:
       }
     }
     if( template.isDirectory() && path.size() > 0 ) {
@@ -66,7 +101,7 @@ public class Expander {
   }
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
-  private void expandPathValues( PathSegment segment, List<String> values, StringBuilder builder ) {
+  private static void expandPathValues( PathSegment segment, List<String> values, StringBuilder builder ) {
     if( values != null ) {
       for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
         if( i > 0 ) {
@@ -77,7 +112,7 @@ public class Expander {
     }
   }
 
-  private void expandQuery( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandQuery( Template template, Resolver resolver, StringBuilder builder ) {
     Collection<QuerySegment> query = template.getQuery().values();
     if( query.isEmpty() ) {
       if( template.hasQuery() ) {
@@ -115,7 +150,7 @@ public class Expander {
   }
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
-  private void expandQueryValues( QuerySegment segment, String queryName, List<String> values, StringBuilder builder ) {
+  private static void expandQueryValues( QuerySegment segment, String queryName, List<String> values, StringBuilder builder ) {
     if( values != null ) {
       for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
         if( i > 0 ) {
@@ -127,4 +162,31 @@ public class Expander {
       }
     }
   }
+
+  private static void expandFragment( Template template, Resolver resolver, StringBuilder builder ) {
+    if( template.hasFragment() ) {
+      builder.append( "#" );
+    }
+    expandSingleValue( template.getFragment(), resolver, builder );
+  }
+
+  private static void expandSingleValue( Segment segment, Resolver resolver, StringBuilder builder ) {
+    if( segment != null ) {
+      switch( segment.getType() ) {
+        case( Segment.STATIC ):
+          String value = segment.getValuePattern();
+          builder.append( value );
+          break;
+        case( Segment.WILDCARD ):
+        case( Segment.REGEX ):
+          String name = segment.getParamName();
+          List<String> values = resolver.getValues( name );
+          if( values != null && !values.isEmpty() ) {
+            builder.append( values.get( 0 ) );
+          }
+          break;
+      }
+    }
+  }
+
 }
