@@ -20,9 +20,11 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.junit.Test;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class MatcherTest {
@@ -32,7 +34,7 @@ public class MatcherTest {
     Matcher<String> matcher;
     String pattern, input;
     Template patternTemplate, inputTemplate;
-    Matcher.Match<String> match;
+    Matcher<String>.Match match;
 
     matcher = new Matcher<String>();
     pattern = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
@@ -65,7 +67,7 @@ public class MatcherTest {
     Matcher<String> matcher;
     String pattern, input;
     Template patternTemplate, inputTemplate;
-    Matcher.Match<String> match;
+    Matcher<String>.Match match;
 
     matcher = new Matcher<String>();
     pattern = "path";
@@ -284,10 +286,163 @@ public class MatcherTest {
       assertThat( matcher.match( Parser.parse( uri ) ), nullValue() );
     } else {
       Template uriTemplate = Parser.parse( uri );
-      Matcher.Match<String> match = matcher.match( uriTemplate );
+      Matcher<String>.Match match = matcher.match( uriTemplate );
       assertThat( "Expected to find a match.", match, notNullValue() );
       assertThat( match.getValue(), equalTo( template ) );
     }
+  }
+
+  @Test
+  public void testFullUrlExtraction() throws URISyntaxException {
+    Template template;
+    Template input;
+    Matcher<?> matcher;
+    Matcher<?>.Match match;
+    Params params;
+
+    template = Parser.parse( "{scheme}://{username}:{password}@{host}:{port}/{root}/{path}/{file}?queryA={paramA}&queryB={paramB}#{fragment}" );
+    input = Parser.parse( "http://horton:hadoop@hortonworks.com:80/top/middle/end?queryA=valueA&queryB=valueB#section" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+
+    assertThat( params.getNames(), hasItem( "scheme" ) );
+    assertThat( params.getValues( "scheme" ), hasItem( "http" ) );
+    assertThat( params.getNames(), hasItem( "username" ) );
+    assertThat( params.getValues( "username" ), hasItem( "horton" ) );
+    assertThat( params.getNames(), hasItem( "password" ) );
+    assertThat( params.getValues( "password" ), hasItem( "hadoop" ) );
+    assertThat( params.getNames(), hasItem( "host" ) );
+    assertThat( params.getValues( "host" ), hasItem( "hortonworks.com" ) );
+    assertThat( params.getNames(), hasItem( "port" ) );
+    assertThat( params.getValues( "port" ), hasItem( "80" ) );
+    assertThat( params.getNames(), hasItem( "root" ) );
+    assertThat( params.getValues( "root" ), hasItem( "top" ) );
+    assertThat( params.getNames(), hasItem( "path" ) );
+    assertThat( params.getValues( "path" ), hasItem( "middle" ) );
+    assertThat( params.getNames(), hasItem( "file" ) );
+    assertThat( params.getValues( "file" ), hasItem( "end" ) );
+    assertThat( params.getNames(), hasItem( "paramA" ) );
+    assertThat( params.getValues( "paramA" ), hasItem( "valueA" ) );
+    assertThat( params.getNames(), hasItem( "paramB" ) );
+    assertThat( params.getValues( "paramB" ), hasItem( "valueB" ) );
+    assertThat( params.getNames(), hasItem( "fragment" ) );
+    assertThat( params.getValues( "fragment" ), hasItem( "section" ) );
+    assertThat( params.getNames().size(), equalTo( 11 ) );
+  }
+
+  @Test
+  public void testPathExtraction() throws Exception {
+    Template template;
+    Template input;
+    Matcher<?> matcher;
+    Matcher<?>.Match match;
+    Params params;
+
+    template = Parser.parse( "{path-param}" );
+    input = Parser.parse( "path-value" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "path-param" ) );
+    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+
+    template = Parser.parse( "/some-path/{path-param}" );
+    input = Parser.parse( "/some-path/path-value" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "path-param" ) );
+    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+
+    template = Parser.parse( "/some-path/{path-param}/some-other-path" );
+    input = Parser.parse( "/some-path/path-value/some-other-path" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "path-param" ) );
+    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+
+    template = Parser.parse( "{path=**}" );
+    input = Parser.parse( "A/B" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "path" ) );
+    assertThat( params.getValues( "path" ).size(), equalTo( 2 ) );
+    assertThat( params.getValues( "path" ), hasItem( "A" ) );
+    assertThat( params.getValues( "path" ), hasItem( "B" ) );
+
+    template = Parser.parse( "/top/{mid=**}/end" );
+    input = Parser.parse( "/top/A/B/end" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "mid" ) );
+    assertThat( params.getValues( "mid" ).size(), equalTo( 2 ) );
+    assertThat( params.getValues( "mid" ), hasItem( "A" ) );
+    assertThat( params.getValues( "mid" ), hasItem( "B" ) );
+  }
+
+  @Test
+  public void testQueryExtraction() throws Exception {
+    Template template;
+    Template input;
+    Matcher<?> matcher;
+    Matcher<?>.Match match;
+    Params params;
+
+    template = Parser.parse( "?query-param={param-name}" );
+    input = Parser.parse( "?query-param=param-value" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "param-name" ) );
+    assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
+
+    template = Parser.parse( "?query-param={param-name}" );
+    input = Parser.parse( "?query-param=param-value" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 1 ) );
+    assertThat( params.getNames(), hasItem( "param-name" ) );
+    assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
+  }
+
+  @Test
+  public void testEdgeCaseExtraction() throws Exception {
+    Template template;
+    Template input;
+    Matcher<?> matcher;
+    Matcher<?>.Match match;
+    Params params;
+
+    template = Parser.parse( "" );
+    input = Parser.parse( "" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params, notNullValue() );
+    assertThat( params.getNames().size(), equalTo( 0 ) );
   }
 
 }

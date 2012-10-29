@@ -35,13 +35,23 @@ public class Params implements Resolver {
     return map.keySet();
   }
 
-  public void addValue( String name, String value ) {
+  private List<String> getOrAddValues( String name ) {
     List<String> values = getValues( name );
     if( values == null ) {
-      values = new ArrayList<String>();
+      values = new ArrayList<String>( 1 );
       map.put( name, values );
     }
+    return values;
+  }
+
+  public void addValue( String name, String value ) {
+    List<String> values = getOrAddValues( name );
     values.add( value );
+  }
+
+  public void insertValue( String name, String value ) {
+    List<String> values = getOrAddValues( name );
+    values.add( 0, value );
   }
 
   public List<String> getValues( String name ) {

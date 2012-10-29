@@ -149,9 +149,10 @@ public class Expander {
     }
   }
 
-  //TODO: This needs to handle multiple values but only to the limit of the segment.
   private static void expandQueryValues( Query segment, String queryName, List<String> values, StringBuilder builder ) {
-    if( values != null ) {
+    if( values == null ) {
+      builder.append( queryName );
+    } else {
       for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
         if( i > 0 ) {
           builder.append( "&" );

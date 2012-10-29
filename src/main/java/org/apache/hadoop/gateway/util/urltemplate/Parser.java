@@ -37,7 +37,7 @@ public class Parser {
   private static final int STATE_FRAGMENT = 5;
 
   private int state;
-  private String template;
+  private String template; // Kept this for debugging.
   private Builder builder;
   private StringTokenizer parser;
   private String prevToken;
@@ -164,19 +164,19 @@ public class Parser {
     if( "/".equals( currToken ) ) {
       state = STATE_PATH;
       builder.setIsAbsolute( true );
-      if( !"/".equals( prevToken ) && !":".equals( prevToken )) {
+      if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
       }
     } else if( "?".equals( currToken ) ) {
       state = STATE_QUERY;
       builder.setHasQuery( true );
-      if( !"/".equals( prevToken ) && !":".equals( prevToken )) {
+      if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
       }
     } else if( "#".equals( currToken ) ) {
       state = STATE_FRAGMENT;
       builder.setHasFragment( true );
-      if( !"/".equals( prevToken ) && !":".equals( prevToken )) {
+      if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
       }
     } else {
@@ -192,9 +192,15 @@ public class Parser {
     } else if( "?".equals( currToken ) ) {
       state = STATE_QUERY;
       builder.setHasQuery( true );
+      if( "/".equals( prevToken ) ) {
+        builder.setIsDirectory( true );
+      }
     } else if( "#".equals( currToken ) ) {
       state = STATE_FRAGMENT;
       builder.setHasFragment( true );
+      if( "/".equals( prevToken ) ) {
+        builder.setIsDirectory( true );
+      }
     } else {
       consumePathSegmentToken( currToken );
     }
@@ -231,9 +237,24 @@ public class Parser {
           consumePathSegmentToken( currToken );
         }
         break;
+      case( STATE_AUTHORITY ):
+        if( !"/".equals( currToken ) ) {
+          consumeAuthorityToken( currToken );
+        }
+        break;
       case( STATE_PATH ):
         if( "/".equals( currToken ) ) {
           builder.setIsDirectory( true );
+        }
+        break;
+      case( STATE_QUERY ):
+        if( !"?".equals( currToken ) ) {
+          consumeQuerySegmentToken( currToken );
+        }
+        break;
+      case( STATE_FRAGMENT ):
+        if( !"#".equals( currToken ) ) {
+          consumeFragmentToken( currToken );
         }
         break;
     }
@@ -251,26 +272,28 @@ public class Parser {
       String[] usernamePassword=null, hostPort=null, paramPattern=null;
       String[] userAddr = split( token, '@' );
       if( userAddr.length == 1 ) {
-        hostPort = split( userAddr[0], ':' );
+        hostPort = split( userAddr[ 0 ], ':' );
       } else {
-        usernamePassword = split( userAddr[0], ':' );
-        hostPort = split( userAddr[1], ':' );
+        usernamePassword = split( userAddr[ 0 ], ':' );
+        hostPort = split( userAddr[ 1 ], ':' );
       }
       if( usernamePassword != null ) {
-        paramPattern = parseTemplateToken( usernamePassword[0] );
-        builder.setUsername( paramPattern[0], paramPattern[1] );
-        if( usernamePassword.length > 1 ) {
-          paramPattern = parseTemplateToken( usernamePassword[1] );
-          builder.setPassword( paramPattern[0], paramPattern[1] );
+        if( usernamePassword[ 0 ].length() > 0 ) {
+          paramPattern = parseTemplateToken( usernamePassword[ 0 ] );
+          builder.setUsername( paramPattern[ 0 ], paramPattern[ 1 ] );
+        }
+        if( usernamePassword.length > 1 && usernamePassword[ 1 ].length() > 0 ) {
+          paramPattern = parseTemplateToken( usernamePassword[ 1 ] );
+          builder.setPassword( paramPattern[ 0 ], paramPattern[ 1 ] );
         }
       }
-      if( hostPort != null ) {
-        paramPattern = parseTemplateToken( hostPort[0] );
-        builder.setHost( paramPattern[0], paramPattern[1] );
-        if( hostPort.length >= 1 ) {
-          paramPattern = parseTemplateToken( hostPort[1] );
-          builder.setPort( paramPattern[0], paramPattern[1] );
-        }
+      if( hostPort[ 0 ].length() > 0 ) {
+        paramPattern = parseTemplateToken( hostPort[ 0 ] );
+        builder.setHost( paramPattern[ 0 ], paramPattern[1] );
+      }
+      if( hostPort.length > 1 && hostPort[ 1 ].length() > 0 ) {
+        paramPattern = parseTemplateToken( hostPort[ 1 ] );
+        builder.setPort( paramPattern[ 0 ], paramPattern[ 1 ] );
       }
     }
   }
@@ -285,7 +308,10 @@ public class Parser {
   private void consumeQuerySegmentToken( String token ) {
     if( token != null ) {
       String nameValue[] = split( token, '=' );
-      if( nameValue.length == 2 ) {
+      if( nameValue.length == 1 ) {
+        String queryName = nameValue[ 0 ];
+        builder.addQuerySegment( queryName, "", "*" );
+      } else {
         String queryName = nameValue[ 0 ];
         String[] paramPattern = parseTemplateToken( nameValue[ 1 ] );
         builder.addQuerySegment( queryName, paramPattern[0], paramPattern[1] );

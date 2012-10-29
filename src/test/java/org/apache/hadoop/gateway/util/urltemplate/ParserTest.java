@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -444,6 +445,96 @@ public class ParserTest {
   }
 
   @Test
+  public void testAuthority() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "//";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
+
+    text = "//:@:";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
+
+    text = "//host";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getPort(), nullValue() );
+
+    text = "//@host";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getPort(), nullValue() );
+
+    text = "//@:80";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort().getValuePattern(), equalTo( "80" ) );
+
+    text = "//username@";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername().getValuePattern(), equalTo( "username" ) );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
+
+    text = "//:password@";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword().getValuePattern(), equalTo( "password" ) );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
+
+  }
+
+  @Test
+  public void testQuery() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "?queryName";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 1 );
+    Query query = template.getQuery().get( "queryName" );
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "queryName" ) );
+    assertThat( query.getParamName(), equalTo( "" ) );
+    assertThat( query.getValuePattern(), equalTo( "*" ) );
+  }
+
+  @Test
+  public void testFragment() throws URISyntaxException {
+    String text;
+    Template template;
+
+    text = "#fragment";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getFragment().getValuePattern(), equalTo( "fragment" ) );
+  }
+
+  @Test
   public void testEdgeCases() throws URISyntaxException {
     String text;
     Template template;
@@ -520,6 +611,101 @@ public class ParserTest {
     assertThat( template.hasScheme(), equalTo( true ) );
     assertThat( template.getScheme().getValuePattern(), equalTo( "http" ) );
     assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "scheme:path?";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 1, 0 );
+
+    text = "scheme:path#";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 1, 0 );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "//host/";
+    template = Parser.parse( text );
+    assertBasics( template, true, true, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+
+    text = "//host?";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+
+    text = "//host#";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getFragment(), nullValue() );
+    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+
+    text = "///";
+    template = Parser.parse( text );
+    assertBasics( template, true, true, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+
+    text = "//:";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+
+    text = "//?";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+
+    text = "//#";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "//:/";
+    template = Parser.parse( text );
+    assertBasics( template, true, true, false, 0, 0 );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getHost(), nullValue() );
+
+    text = "//:?";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    assertThat( template.getHost(), nullValue() );
+
+    text = "//:#";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, false, 0, 0 );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getHost(), nullValue() );
+
+    text = "///#";
+    template = Parser.parse( text );
+    assertBasics( template, true, true, false, 0, 0 );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "///path#";
+    template = Parser.parse( text );
+    assertBasics( template, true, false, false, 1, 0 );
+    assertThat( template.hasFragment(), equalTo( true ) );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "///?";
+    template = Parser.parse( text );
+    assertBasics( template, true, true, true, 0, 0 );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getFragment(), nullValue() );
+
+    text = "///path?";
+    template = Parser.parse( text );
+    assertBasics( template, true, false, true, 1, 0 );
+    assertThat( template.getHost(), nullValue() );
     assertThat( template.getFragment(), nullValue() );
   }
 

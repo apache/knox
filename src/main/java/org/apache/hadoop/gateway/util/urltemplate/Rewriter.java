@@ -29,10 +29,11 @@ public class Rewriter {
 
   public URI rewriteUri( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
       throws URISyntaxException {
-    Extractor extractor = new Extractor();
-    Expander expander = new Expander();
-    Params params = extractor.extractParams( inputTemplate, inputUri );
-    URI outputUri = expander.expand( outputTemplate, params );
+    Template inputUriTemplate = Parser.parse( inputUri.toString() );
+    Matcher<Void> matcher = new Matcher<Void>( inputTemplate, null );
+    Matcher<Void>.Match match = matcher.match( inputUriTemplate );
+    Params params = match.getParams();
+    URI outputUri = Expander.expand( outputTemplate, params );
     return outputUri;
   }
 
