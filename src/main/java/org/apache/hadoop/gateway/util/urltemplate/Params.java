@@ -23,13 +23,13 @@ public class Params implements Resolver {
 
   private Map<String,List<String>> map = new HashMap<String,List<String>>();
 
-  public void addName( String name ) {
-    List<String> values = getValues( name );
-    if( values == null ) {
-      values = new ArrayList<String>();
-      map.put( name, values );
-    }
-  }
+//  public void addName( String name ) {
+//    List<String> values = getValues( name );
+//    if( values == null ) {
+//      values = new ArrayList<String>();
+//      map.put( name, values );
+//    }
+//  }
 
   public Set<String> getNames() {
     return map.keySet();

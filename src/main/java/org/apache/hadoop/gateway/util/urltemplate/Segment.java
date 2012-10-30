@@ -35,7 +35,6 @@ abstract class Segment {
   private Pattern valueRegex;
   private int minRequired;
   private int maxAllowed;
-  //private boolean greedy;
 
   @Override
   public int hashCode() {
@@ -52,16 +51,14 @@ abstract class Segment {
                 ( this.paramName.equals( that.paramName ) ) &&
                 ( this.valuePattern.equals( that.valuePattern ) ) &&
                 ( this.minRequired == that.minRequired ) &&
-                ( this.maxAllowed == that.maxAllowed ) ) ;//&&
-                //( this.greedy == that.greedy ) );
+                ( this.maxAllowed == that.maxAllowed ) );
     }
     return equal;
   }
 
-  public Segment( String paramName, String valuePattern ) { //}, int minRequired, int maxAllowed, boolean greedy ) {
+  public Segment( String paramName, String valuePattern ) {
     this.paramName = paramName;
     this.valuePattern = valuePattern;
-    //this.greedy = greedy;
     if( WILDCARD_PATTERN.equals( valuePattern ) ) {
       this.type = WILDCARD;
       this.minRequired = 1;
@@ -109,10 +106,6 @@ abstract class Segment {
     return maxAllowed;
   }
 
-//  public boolean getGreedy() {
-//    return greedy;
-//  }
-
   // Creates a pattern for a simplified filesystem style wildcard '*' syntax.
   private static Pattern compileRegex( String segment ) {
     // Turn '*' into '/' to keep it safe.
@@ -122,12 +115,6 @@ abstract class Segment {
     segment = segment.replaceAll( "\\.", "\\\\." );
     // Turn '/' back into '.*'.
     segment = segment.replaceAll( "/", "\\.\\*" );
-    if( !segment.startsWith( "^" ) ) {
-      segment = "^" + segment;
-    }
-    if( !segment.endsWith( "$" ) ) {
-      segment = segment + "$";
-    }
     return Pattern.compile( segment );
   }
 
@@ -152,7 +139,7 @@ abstract class Segment {
   }
 
   private boolean matchThisStatic( Segment that ) {
-    boolean matches;
+    boolean matches = false;
     switch( that.getType() ) {
       case( STATIC ):
         matches = this.getValuePattern().equals( that.getValuePattern() );
@@ -163,14 +150,12 @@ abstract class Segment {
       case( REGEX ):
         matches = that.getValueRegex().matcher( this.getValuePattern() ).matches();
         break;
-      default:
-        matches = false;
     }
     return matches;
   }
 
   private boolean matchThisWildcard( Segment that ) {
-    boolean matches;
+    boolean matches = false;
     switch( that.getType() ) {
       case( STATIC ):
         matches = true;
@@ -181,14 +166,12 @@ abstract class Segment {
       case( REGEX ):
         matches = true;
         break;
-      default:
-        matches = false;
     }
     return matches;
   }
 
   private boolean matchThisRegex( Segment that ) {
-    boolean matches;
+    boolean matches = false;
     switch( that.getType() ) {
       case( STATIC ):
         matches = this.getValueRegex().matcher( that.getValuePattern() ).matches();
@@ -197,10 +180,8 @@ abstract class Segment {
         matches = true;
         break;
       case( REGEX ):
-        matches = false;
+        matches =  this.getValuePattern().equals( that.getValuePattern() );
         break;
-      default:
-        matches = false;
     }
     return matches;
   }

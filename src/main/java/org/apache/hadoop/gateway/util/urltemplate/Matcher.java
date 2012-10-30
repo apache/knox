@@ -179,50 +179,6 @@ public class Matcher<V> {
     return match;
   }
 
-  private Match createMatch( MatchSegment bestMatchSegment, PathNode bestPath, QueryNode bestQuery, Template input ) {
-    Match match = null;
-
-    // If there is a best path and either no query or a matching query, then
-    if( bestPath != null && ( bestQuery != null || !bestPath.hasQueries() ) ) {
-
-      if( bestQuery != null ) {
-        match = new Match( bestQuery.template, bestQuery.value );
-      } else {
-        match = new Match( bestPath.template, bestPath.value );
-      }
-
-      // Attempt to create the correct size list.
-      Params matchParams = new Params();
-//      ArrayList<MatchSegment> matchPath = new ArrayList<MatchSegment>(
-//          bestPath.depth + ( ( bestQuery != null ) ? bestQuery.template.getQuery().size() : 0 ) );
-
-      // Add the matching query segments to the end of the list.
-      if( bestQuery != null ) {
-        Map<String,Query> inputQuery = input.getQuery();
-        for( Query templateSegment : bestQuery.template.getQuery().values() ) {
-          Query inputSegment = inputQuery.get( templateSegment.getQueryName() );
-          if( inputSegment != null && templateSegment.matches( inputSegment ) ) {
-            extractSegmentParams( templateSegment, inputSegment, matchParams );
-//            matchSegment = new MatchSegment( matchSegment, bestPath, templateSegment, inputSegment );
-//            matchPath.add( matchSegment );
-          }
-        }
-      }
-
-      // Walk back up the matching segment tree.
-      MatchSegment matchSegment = bestMatchSegment;
-      while( matchSegment != null && matchSegment.pathNode.depth > 0 ) {
-        extractSegmentParams( matchSegment.templateSegment, matchSegment.inputSegment, matchParams );
-//        matchParams.insertValue( )
-//        matchPath.add( 0, matchSegment );
-        matchSegment = matchSegment.parentMatch;
-      }
-//      match.matchPath = matchPath;
-      match.params = matchParams;
-    }
-    return match;
-  }
-
   private QueryNode pickBestQueryMatch( Template input, PathNode pathNode ) {
     QueryNode bestNode = null;
     int bestMatchCount = 0;
@@ -252,6 +208,51 @@ public class Matcher<V> {
     return matchCount;
   }
 
+  private Match createMatch( MatchSegment bestMatchSegment, PathNode bestPath, QueryNode bestQuery, Template input ) {
+    Match match = null;
+
+    // If there is a best path and either no query or a matching query, then
+    if( bestPath != null && ( bestQuery != null || !bestPath.hasQueries() ) ) {
+
+      if( bestQuery != null ) {
+        match = new Match( bestQuery.template, bestQuery.value );
+      } else {
+        match = new Match( bestPath.template, bestPath.value );
+      }
+
+      Params matchParams = new Params();
+
+      // Add the matching query segments to the end of the list.
+      if( bestQuery != null ) {
+        Map<String,Query> inputQuery = input.getQuery();
+        for( Query templateSegment : bestQuery.template.getQuery().values() ) {
+          Query inputSegment = inputQuery.get( templateSegment.getQueryName() );
+          if( inputSegment != null && templateSegment.matches( inputSegment ) ) {
+            extractSegmentParams( templateSegment, inputSegment, matchParams );
+          }
+        }
+      }
+
+      // Walk back up the matching segment tree.
+      MatchSegment matchSegment = bestMatchSegment;
+      while( matchSegment != null && matchSegment.pathNode.depth > 0 ) {
+        extractSegmentParams( matchSegment.templateSegment, matchSegment.inputSegment, matchParams );
+        matchSegment = matchSegment.parentMatch;
+      }
+      match.params = matchParams;
+    }
+    return match;
+  }
+
+  private static void extractSegmentParams( Segment extractSegment, Segment inputSegment, Params params ) {
+    if( extractSegment != null && inputSegment != null ) {
+      String paramName = extractSegment.getParamName();
+      if( paramName.length() > 0 ) {
+        params.insertValue( paramName, inputSegment.getValuePattern() );
+      }
+    }
+  }
+
   private class Status {
 
     List<MatchSegment> candidates = new ArrayList<MatchSegment>();
@@ -268,7 +269,7 @@ public class Matcher<V> {
     }
   }
 
-  public class MatchSegment {
+  private class MatchSegment {
     private MatchSegment parentMatch;
     private PathNode pathNode;
     private Segment templateSegment;
@@ -280,22 +281,12 @@ public class Matcher<V> {
       this.templateSegment = templateSegment;
       this.inputSegment = inputSegment;
     }
-
-    public Segment getTemplateSegment() {
-      return templateSegment;
-    }
-
-    public Segment getInputSegment() {
-      return inputSegment;
-    }
   }
 
   public class Match {
-
     private Template template;
     private V value;
     private Params params;
-    //private List<MatchSegment> matchPath;
 
     private Match( Template template, V value ) {
       this.template = template;
@@ -313,10 +304,6 @@ public class Matcher<V> {
     public Params getParams() {
       return params;
     }
-
-//    public List<MatchSegment> getMatchPath() {
-//      return matchPath;
-//    }
   }
 
   private class PathNode extends Node {
@@ -362,9 +349,9 @@ public class Matcher<V> {
               ( segment.getMaxAllowed() > 1 ) );
     }
 
-    private boolean isLeaf() {
-      return( children == null || children.size() == 0 );
-    }
+//    private boolean isLeaf() {
+//      return( children == null || children.size() == 0 );
+//    }
 
     private boolean hasQueries() {
       return( queries != null && queries.size() > 0 );
@@ -392,15 +379,6 @@ public class Matcher<V> {
     private Node( Template template, V value ) {
       this.template = template;
       this.value = value;
-    }
-  }
-
-  private static void extractSegmentParams( Segment extractSegment, Segment inputSegment, Params params ) {
-    if( extractSegment != null && inputSegment != null ) {
-      String paramName = extractSegment.getParamName();
-      if( paramName.length() > 0 ) {
-        params.insertValue( paramName, inputSegment.getValuePattern() );
-      }
     }
   }
 
