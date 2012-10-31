@@ -17,28 +17,23 @@
  */
 package org.apache.hadoop.gateway.pivot;
 
-import org.apache.hadoop.gateway.util.Regex;
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.gateway.util.UrlRewriter;
-import org.apache.hadoop.gateway.util.Urls;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.text.MessageFormat;
+import java.net.*;
 import java.util.Enumeration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -46,16 +41,23 @@ import java.util.regex.Pattern;
 public class UrlConnectionPivot extends AbstractGatewayPivot {
 
   @Override
-  public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException {
-
+  public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
     String sourcePathInfo = request.getPathInfo();
     String sourcePattern = getConfig().getInitParameter( "source" );
     String targetPattern = getConfig().getInitParameter( "target" );
 
-    //TODO: This should be more at filter init.
-    Pattern sourceRegex = UrlRewriter.compileUrlRegex( sourcePattern );
-    Matcher matcher = sourceRegex.matcher( sourcePathInfo );
-    String targetUrl = MessageFormat.format( targetPattern, Regex.toGroupArray( matcher ) );
+    //TODO: Some of the compilation should be done at servlet init for performance reasons.
+    Template sourceTemplate = Parser.parse( sourcePattern );
+    Template targetTemplate = Parser.parse( targetPattern );
+
+    Resolver resolver = new ParamResolver( getConfig(), request );
+    URI sourceUri = new URI( sourcePathInfo );
+    URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
+
+//    //TODO: This should be more at filter init.
+//    Pattern sourceRegex = UrlRewriter.compileUrlRegex( sourcePattern );
+//    Matcher matcher = sourceRegex.matcher( sourcePathInfo );
+//    String targetUrl = MessageFormat.format( targetPattern, Regex.toGroupArray( matcher ) );
 //    System.out.println( "Source URI: " + request.getRequestURI() );
 //    System.out.println( "Source URL: " + request.getRequestURL() );
 //    System.out.println( "Source Query: " + request.getQueryString() );
@@ -81,7 +83,7 @@ public class UrlConnectionPivot extends AbstractGatewayPivot {
     }
 
     try {
-      URL clientUrl = new URL( targetUrl + paramStr.toString() );
+      URL clientUrl = new URL( targetUri.toString() + paramStr.toString() );
       //System.out.println( "Resolved query: " + clientUrl );
       AuthenticatedURL.Token token = new AuthenticatedURL.Token();
       KerberosAuthenticator authenticator = new KerberosAuthenticator();

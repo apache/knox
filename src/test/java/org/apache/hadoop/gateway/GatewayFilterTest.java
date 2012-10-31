@@ -27,6 +27,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -57,7 +58,7 @@ public class GatewayFilterTest {
   }
 
   @Test
-  public void testNoopFilter() throws ServletException, IOException {
+  public void testNoopFilter() throws ServletException, IOException, URISyntaxException {
 
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.replay( config );

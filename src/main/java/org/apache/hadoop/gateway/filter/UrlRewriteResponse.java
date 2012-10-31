@@ -17,40 +17,74 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.hadoop.gateway.util.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
  */
-public class UrlRewriteResponse extends HttpServletResponseWrapper {
+public class UrlRewriteResponse extends HttpServletResponseWrapper implements Resolver {
 
-  private static final String CONTENT_LENGTH_HEADER_NAME = "Content-Length";
+  private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<String>();
+  static {
+    IGNORE_HEADER_NAMES.add( "Content-Length" );
+  }
+
+  private static final Set<String> REWRITE_HEADER_NAMES = new HashSet<String>();
+  static {
+    REWRITE_HEADER_NAMES.add( "Location" );
+  }
+
   private FilterConfig config;
-  private UrlRewriter rewriter;
+  private Rewriter rewriter;
   private HtmlUrlRewritingOutputStream output;
 
-  public UrlRewriteResponse( FilterConfig config, UrlRewriter rewriter, HttpServletResponse response ) throws IOException {
+  public UrlRewriteResponse( FilterConfig config, Rewriter rewriter, HttpServletResponse response ) throws IOException {
     super( response );
     this.config = config;
     this.rewriter = rewriter;
     this.output = null;
   }
 
-  protected boolean allowHeader( String name ) {
-    return !CONTENT_LENGTH_HEADER_NAME.equalsIgnoreCase( name );
+  protected boolean rewriteHeader( String name ) {
+    return REWRITE_HEADER_NAMES.contains( name );
+  }
+
+  protected boolean ignoreHeader( String name ) {
+    return IGNORE_HEADER_NAMES.contains( name );
+  }
+
+  private String rewriteHeaderValue( String value ) {
+    try {
+      Template input = Parser.parse( value );
+      String output = rewriter.rewrite( input, this ).toString();
+      return output.toString();
+    } catch( URISyntaxException e ) {
+      throw new IllegalArgumentException( e );
+    }
   }
 
   // Ignore the Content-Length from the pivot response since the response body may be rewritten.
   @Override
   public void setHeader( String name, String value ) {
-    if( allowHeader( name) ) {
+    if( !ignoreHeader( name) ) {
+      if( rewriteHeader( name ) ) {
+        value = rewriteHeaderValue( value );
+      }
       super.setHeader( name, value );
     }
   }
@@ -58,7 +92,10 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper {
   // Ignore the Content-Length from the pivot response since the response body may be rewritten.
   @Override
   public void addHeader( String name, String value ) {
-    if( allowHeader( name) ) {
+    if( !ignoreHeader( name) ) {
+      if( rewriteHeader( name ) ) {
+        value = rewriteHeaderValue( value );
+      }
       super.addHeader( name, value );
     }
   }
@@ -84,4 +121,9 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper {
     }
   }
 
+  @Override
+  @SuppressWarnings( "unchecked" )
+  public List<String> getValues( String name ) {
+    return (List<String>)Arrays.asList( config.getInitParameter( name ) );
+  }
 }

@@ -26,9 +26,11 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
+import java.net.URISyntaxException;
+
 public class JettyGatewayFactory {
 
-  public static Handler create( String gatewayPath, Config gatewayConfig ) {
+  public static Handler create( String gatewayPath, Config gatewayConfig ) throws URISyntaxException {
 
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );

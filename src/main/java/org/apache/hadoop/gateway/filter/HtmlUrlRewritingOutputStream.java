@@ -17,13 +17,15 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.hadoop.gateway.util.UrlRewriter;
-import org.apache.hadoop.gateway.util.Urls;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -41,13 +43,13 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
   static Map<String,Pattern> tagUrlPatterns = buildTagPatternMap();
 
   private FilterConfig config;
-  private UrlRewriter rewriter;
+  private Rewriter rewriter;
   private ServletOutputStream stream;
   private String encoding;
   private ByteArrayOutputStream buffer;
   private boolean inTag;
 
-  public HtmlUrlRewritingOutputStream( FilterConfig config, UrlRewriter rewriter, ServletOutputStream stream, String encoding ) {
+  public HtmlUrlRewritingOutputStream( FilterConfig config, Rewriter rewriter, ServletOutputStream stream, String encoding ) {
     this.config = config;
     this.rewriter = rewriter;
     this.stream = stream;
@@ -59,7 +61,11 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
   private void flushTag() throws IOException {
     byte[] bytes = buffer.toByteArray();
     String tag = new String( bytes, encoding );
-    tag = rewriteTag( tag );
+    try {
+      tag = rewriteTag( tag );
+    } catch( URISyntaxException e ) {
+      throw new IOException( e );
+    }
     stream.write( tag.getBytes( encoding ) );
     inTag = false;
     buffer.reset();
@@ -113,8 +119,9 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
   // 1. A physical URL that starts with a scheme (e.g. http:)
   // 2. An absolute URL that starts with a slash (/path)
   // 3. A relative URL that doesn't start with either.
-  String rewriteUrl( String oldUrl ) {
-    String newUrl = rewriter.rewriteUrl( oldUrl );
+  String rewriteUrl( String oldUrl ) throws URISyntaxException {
+    //String newUrl = rewriter.rewriteUrl( oldUrl );
+    URI newUri = rewriter.rewrite( Parser.parse( oldUrl ), null );
     //System.out.println( "Rewrite: " + oldUrl + " to " + newUrl );
 //    String newUrl = oldUrl;
 //    // If this is an absolute URL, then
@@ -127,10 +134,10 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
 //      // Prefix the original url with the proxy path.
 //      //newUrl = Urls.concatUrl( config.getInitParameter("prefix"), oldUrl );
 //    }
-    return newUrl;
+    return newUri.toString();
   }
 
-  String rewriteTag( String oldTag ) {
+  String rewriteTag( String oldTag ) throws URISyntaxException {
     //System.out.println( "Extracted markup: " + oldTag );
     String newTag = oldTag;
     String tagName = extractTag( oldTag );

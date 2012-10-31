@@ -17,7 +17,8 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.hadoop.gateway.util.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -25,6 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -33,26 +35,32 @@ public class UrlRewriteFilter extends AbstractGatewayFilter {
 
   //TODO: Rewrite headers that contain URLs.
   //TODO: Rewrite cookies that contain URLs.
-  private UrlRewriter rewriter;
+  private Rewriter rewriter;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init( filterConfig );
-    rewriter = new UrlRewriter();
-    addRule( filterConfig.getInitParameter( "rewriteUri" ) );
-    String rewrite;
-    int i = 0;
-    do {
-      rewrite = filterConfig.getInitParameter( "rewriteUri." + i++ );
-      addRule( rewrite );
-    } while( rewrite != null || i == 1 );
+    try {
+      rewriter = new Rewriter();
+      addRule( filterConfig.getInitParameter( "rewrite" ) );
+      String rewrite;
+      int i = 0;
+      do {
+        rewrite = filterConfig.getInitParameter( "rewrite." + i++ );
+        addRule( rewrite );
+      } while( rewrite != null || i == 1 );
+    } catch( URISyntaxException e ) {
+      throw new ServletException( e );
+    }
   }
 
-  private void addRule( String rewrite ) {
+  private void addRule( String rewrite ) throws URISyntaxException {
     if( rewrite != null ) {
       String[] patternFormatPair = rewrite.split( " ", 2 );
       if( patternFormatPair.length == 2 ) {
-        rewriter.addRule( patternFormatPair[ 0 ], patternFormatPair[ 1 ] );
+        rewriter.addRule(
+            Parser.parse( patternFormatPair[ 0 ] ),
+            Parser.parse( patternFormatPair[ 1 ] ) );
       }
     }
   }

@@ -1,11 +1,14 @@
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.util.PathMap;
+import org.apache.hadoop.gateway.util.urltemplate.Matcher;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -20,12 +23,12 @@ public class GatewayFilter implements Filter {
   };
 
   private Set<Holder> holders;
-  private PathMap<Chain> chains;
+  private Matcher<Chain> chains;
   private FilterConfig config;
 
   public GatewayFilter() {
     holders = new HashSet<Holder>();
-    chains = new PathMap<Chain>();
+    chains = new Matcher<Chain>();
   }
 
   @Override
@@ -42,10 +45,21 @@ public class GatewayFilter implements Filter {
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
-    String path = httpRequest.getPathInfo();
 
-    Chain chain = chains.pick( path );
-    if( chain != null ) {
+    //TODO: The resulting pathInfo + query needs to be added to the servlet request somehow so that filters don't need to rebuild it.  This is done in HttpClientPivot right now for example.
+    String query = httpRequest.getQueryString();
+    String path = httpRequest.getPathInfo() + ( query == null ? "" : "?" + query );
+
+    Template pathTemplate;
+    try {
+      pathTemplate = Parser.parse( path );
+    } catch( URISyntaxException e ) {
+      throw new ServletException( e );
+    }
+
+    Matcher<Chain>.Match match = chains.match( pathTemplate );
+    if( match != null ) {
+      Chain chain = match.getValue();
       try {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
@@ -81,25 +95,25 @@ public class GatewayFilter implements Filter {
 
   private void addHolder( Holder holder ) {
     holders.add( holder );
-    Chain chain = chains.get( holder.path );
+    Chain chain = chains.get( holder.template );
     if( chain == null ) {
       chain = new Chain();
-      chains.put( holder.path, chain );
+      chains.add( holder.template, chain );
     }
     chain.chain.add( holder );
   }
 
-  public void addFilter( String path, String name, Filter filter, Map<String,String> params ) {
+  public void addFilter( String path, String name, Filter filter, Map<String,String> params ) throws URISyntaxException {
     Holder holder = new Holder( path, name, filter, params );
     addHolder( holder );
   }
 
-  public void addFilter( String path, String name, Class<Filter> clazz, Map<String,String> params ) {
+  public void addFilter( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
     Holder holder = new Holder( path, name, clazz, params );
     addHolder( holder );
   }
 
-  public void addFilter( String path, String name, String clazz, Map<String,String> params ) {
+  public void addFilter( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
     Holder holder = new Holder( path, name, clazz, params );
     addHolder( holder );
   }
@@ -134,14 +148,16 @@ public class GatewayFilter implements Filter {
 
   private class Holder implements Filter, FilterConfig{
     private String path;
+    private Template template;
     private String name;
     private Map<String,String> params;
     private Filter instance;
     private Class<? extends Filter> clazz;
     private String type;
 
-    private Holder( String path, String name, Filter filter, Map<String,String> params ) {
+    private Holder( String path, String name, Filter filter, Map<String,String> params ) throws URISyntaxException {
       this.path = path;
+      this.template = Parser.parse( path );
       this.name = name;
       this.params = params;
       this.instance = filter;
@@ -149,8 +165,9 @@ public class GatewayFilter implements Filter {
       this.type = clazz.getCanonicalName();
     }
 
-    private Holder( String path, String name, Class<Filter> clazz, Map<String,String> params ) {
+    private Holder( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
       this.path = path;
+      this.template = Parser.parse( path );
       this.name = name;
       this.params = params;
       this.instance = null;
@@ -158,8 +175,9 @@ public class GatewayFilter implements Filter {
       this.type = clazz.getCanonicalName();
     }
 
-    private Holder( String path, String name, String clazz, Map<String,String> params ) {
+    private Holder( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
       this.path = path;
+      this.template = Parser.parse( path );
       this.name = name;
       this.params = params;
       this.instance = null;

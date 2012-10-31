@@ -1,3 +1,9 @@
+Usability
+Need to be able to more easily create a template that matches a full URL but only cares about the path for example.
+Right now this will need to looke something like this *://*:*@*:*/**
+I'm not evern sure how this will handle the query and fragment sections.
+To match a real full URL would this be required or even currently work? *://*:*@*:*/**?**#*
+
 Feature
 Write a special pivot for WebHDFS PUT/POST redirects.
 

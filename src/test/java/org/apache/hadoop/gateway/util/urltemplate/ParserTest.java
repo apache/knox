@@ -21,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URISyntaxException;
+import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -50,7 +51,7 @@ public class ParserTest {
       String valuePattern ) {
     Path segment = template.getPath().get( index );
     assertThat( "Incorrect template param name.", segment.getParamName(), equalTo( paramName ) );
-    assertThat( "Incorrect template value pattern.", segment.getValuePattern(), equalTo( valuePattern ) );
+    assertThat( "Incorrect template value pattern.", segment.getFirstValue().getPattern(), equalTo( valuePattern ) );
   }
 
   public void assertPath(
@@ -63,10 +64,10 @@ public class ParserTest {
       int maxAllowed ) {
     Path segment = template.getPath().get( index );
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ) );
-    assertThat( "Value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ) );
-    assertThat( "Segment type wrong.", segment.getType(), equalTo( type ) );
-    assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
-    assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
+    assertThat( "Value pattern wrong.", segment.getFirstValue().getPattern(), equalTo( valuePattern ) );
+    assertThat( "Segment type wrong.", segment.getFirstValue().getType(), equalTo( type ) );
+//    assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
+//    assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
   }
 
   public void assertQuery(
@@ -77,7 +78,7 @@ public class ParserTest {
     Query segment = template.getQuery().get( queryName );
     assertThat( "Query name wrong.", segment.getQueryName(), equalTo( queryName ));
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ));
-    assertThat( "value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ));
+    assertThat( "value pattern wrong.", segment.getFirstValue().getPattern(), equalTo( valuePattern ));
   }
 
   public void assertQuery(
@@ -91,10 +92,10 @@ public class ParserTest {
     Query segment = template.getQuery().get( queryName );
     assertThat( "Query name wrong.", segment.getQueryName(), equalTo( queryName ));
     assertThat( "Param name wrong.", segment.getParamName(), equalTo( paramName ));
-    assertThat( "value pattern wrong.", segment.getValuePattern(), equalTo( valuePattern ));
-    assertThat( "Segment type wrong.", segment.getType(), equalTo( type ) );
-    assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
-    assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
+    assertThat( "value pattern wrong.", segment.getFirstValue().getPattern(), equalTo( valuePattern ));
+    assertThat( "Segment type wrong.", segment.getFirstValue().getType(), equalTo( type ) );
+//    assertThat( "Segment min required wrong.", segment.getMinRequired(), equalTo( minRequired ) );
+//    assertThat( "Segment max allowed wrong.", segment.getMaxAllowed(), equalTo( maxAllowed ) );
   }
 
   @Test
@@ -141,6 +142,12 @@ public class ParserTest {
     assertQuery( template, "paramA", "valueA", "*" );
 
     text = "?paramA={valueA}&paramB={valueB}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 2 );
+    assertQuery( template, "paramA", "valueA", "*" );
+    assertQuery( template, "paramB", "valueB", "*" );
+
+    text = "?paramA={valueA}?paramB={valueB}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 2 );
     assertQuery( template, "paramA", "valueA", "*" );
@@ -304,7 +311,7 @@ public class ParserTest {
     text = "{path}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 1, 0 );
-    assertPath( template, 0, "path", "*", Segment.WILDCARD, 1, 1 );
+    assertPath( template, 0, "path", "*", Segment.STAR, 1, 1 );
 
     text = "{path=static}";
     template = Parser.parse( text );
@@ -314,12 +321,12 @@ public class ParserTest {
     text = "{path=*}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 1, 0 );
-    assertPath( template, 0, "path", "*", Segment.WILDCARD, 1, 1 );
+    assertPath( template, 0, "path", "*", Segment.STAR, 1, 1 );
 
     text = "{path=**}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 1, 0 );
-    assertPath( template, 0, "path", "**", Segment.WILDCARD, 0, Integer.MAX_VALUE );
+    assertPath( template, 0, "path", "**", Segment.GLOB, 0, Integer.MAX_VALUE );
 
     text = "{path=wild*card}";
     template = Parser.parse( text );
@@ -335,7 +342,7 @@ public class ParserTest {
     text = "?query={param}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "*", Segment.WILDCARD, 1, 1 );
+    assertQuery( template, "query", "param", "*", Segment.STAR, 1, 1 );
 
     text = "?query={param=static}";
     template = Parser.parse( text );
@@ -345,12 +352,12 @@ public class ParserTest {
     text = "?query={param=*}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "*", Segment.WILDCARD, 1, 1 );
+    assertQuery( template, "query", "param", "*", Segment.STAR, 1, 1 );
 
     text = "?query={param=**}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "**", Segment.WILDCARD, 0, Integer.MAX_VALUE );
+    assertQuery( template, "query", "param", "**", Segment.GLOB, 0, Integer.MAX_VALUE );
 
     text = "?query={param=wild*card}";
     template = Parser.parse( text );
@@ -470,7 +477,7 @@ public class ParserTest {
     assertThat( template.hasAuthority(), equalTo( true ) );
     assertThat( template.getUsername(), nullValue() );
     assertThat( template.getPassword(), nullValue() );
-    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "host" ) );
     assertThat( template.getPort(), nullValue() );
 
     text = "//@host";
@@ -478,7 +485,7 @@ public class ParserTest {
     assertThat( template.hasAuthority(), equalTo( true ) );
     assertThat( template.getUsername(), nullValue() );
     assertThat( template.getPassword(), nullValue() );
-    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "host" ) );
     assertThat( template.getPort(), nullValue() );
 
     text = "//@:80";
@@ -487,12 +494,12 @@ public class ParserTest {
     assertThat( template.getUsername(), nullValue() );
     assertThat( template.getPassword(), nullValue() );
     assertThat( template.getHost(), nullValue() );
-    assertThat( template.getPort().getValuePattern(), equalTo( "80" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), equalTo( "80" ) );
 
     text = "//username@";
     template = Parser.parse( text );
     assertThat( template.hasAuthority(), equalTo( true ) );
-    assertThat( template.getUsername().getValuePattern(), equalTo( "username" ) );
+    assertThat( template.getUsername().getFirstValue().getPattern(), equalTo( "username" ) );
     assertThat( template.getPassword(), nullValue() );
     assertThat( template.getHost(), nullValue() );
     assertThat( template.getPort(), nullValue() );
@@ -501,7 +508,7 @@ public class ParserTest {
     template = Parser.parse( text );
     assertThat( template.hasAuthority(), equalTo( true ) );
     assertThat( template.getUsername(), nullValue() );
-    assertThat( template.getPassword().getValuePattern(), equalTo( "password" ) );
+    assertThat( template.getPassword().getFirstValue().getPattern(), equalTo( "password" ) );
     assertThat( template.getHost(), nullValue() );
     assertThat( template.getPort(), nullValue() );
 
@@ -511,15 +518,32 @@ public class ParserTest {
   public void testQuery() throws URISyntaxException {
     String text;
     Template template;
+    Query query;
+    Iterator<Segment.Value> values;
+    Segment.Value value;
 
     text = "?queryName";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    Query query = template.getQuery().get( "queryName" );
+    query = template.getQuery().get( "queryName" );
     assertThat( query, notNullValue() );
     assertThat( query.getQueryName(), equalTo( "queryName" ) );
     assertThat( query.getParamName(), equalTo( "" ) );
-    assertThat( query.getValuePattern(), equalTo( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?query=value1&query=value2";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 1 );
+    query = template.getQuery().get( "query" );
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "query" ) );
+    assertThat( query.getParamName(), equalTo( "" ) );
+    values = query.getValues().iterator();
+    value = values.next();
+    assertThat( value.getPattern(), equalTo( "value1" ) );
+    value = values.next();
+    assertThat( value.getPattern(), equalTo( "value2" ) );
+    assertThat( values.hasNext(), equalTo( false ) );
   }
 
   @Test
@@ -531,7 +555,7 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 0, 0 );
     assertThat( template.hasFragment(), equalTo( true ) );
-    assertThat( template.getFragment().getValuePattern(), equalTo( "fragment" ) );
+    assertThat( template.getFragment().getFirstValue().getPattern(), equalTo( "fragment" ) );
   }
 
   @Test
@@ -602,14 +626,14 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 0 );
     assertThat( template.hasScheme(), equalTo( true ) );
-    assertThat( template.getScheme().getValuePattern(), equalTo( "http" ) );
+    assertThat( template.getScheme().getFirstValue().getPattern(), equalTo( "http" ) );
     assertThat( template.hasQuery(), equalTo( true ) );
 
     text = "http:#";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 0, 0 );
     assertThat( template.hasScheme(), equalTo( true ) );
-    assertThat( template.getScheme().getValuePattern(), equalTo( "http" ) );
+    assertThat( template.getScheme().getFirstValue().getPattern(), equalTo( "http" ) );
     assertThat( template.hasFragment(), equalTo( true ) );
     assertThat( template.getFragment(), nullValue() );
 
@@ -627,13 +651,13 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, true, true, false, 0, 0 );
     assertThat( template.hasAuthority(), equalTo( true ) );
-    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "host" ) );
 
     text = "//host?";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 0 );
     assertThat( template.hasAuthority(), equalTo( true ) );
-    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "host" ) );
 
     text = "//host#";
     template = Parser.parse( text );
@@ -641,7 +665,7 @@ public class ParserTest {
     assertThat( template.hasAuthority(), equalTo( true ) );
     assertThat( template.hasFragment(), equalTo( true ) );
     assertThat( template.getFragment(), nullValue() );
-    assertThat( template.getHost().getValuePattern(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "host" ) );
 
     text = "///";
     template = Parser.parse( text );
@@ -707,6 +731,101 @@ public class ParserTest {
     assertBasics( template, true, false, true, 1, 0 );
     assertThat( template.getHost(), nullValue() );
     assertThat( template.getFragment(), nullValue() );
+  }
+
+  @Test
+  public void testQueryRemainder() throws URISyntaxException {
+    String text;
+    Template template;
+    Query query;
+
+    text = "?*";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "*" ) );
+    assertThat( query.getParamName(), equalTo( "" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?**";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "**" ) );
+    assertThat( query.getParamName(), equalTo( "" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?{*}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "*" ) );
+    assertThat( query.getParamName(), equalTo( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?{**}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "**" ) );
+    assertThat( query.getParamName(), equalTo( "**" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?*={*}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "*" ) );
+    assertThat( query.getParamName(), equalTo( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?**={**}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "**" ) );
+    assertThat( query.getParamName(), equalTo( "**" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?**={**=**}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 0 );
+    query = template.getExtra();
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "**" ) );
+    assertThat( query.getParamName(), equalTo( "**" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "**" ) );
+  }
+
+  @Test
+  public void testSimplifiedQuerySyntax() throws URISyntaxException {
+    String text;
+    Template template;
+    Query query;
+
+    text = "?{param}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 1 );
+    query = template.getQuery().get( "param" );
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "param" ) );
+    assertThat( query.getParamName(), equalTo( "param" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
+
+    text = "?{param=value}";
+    template = Parser.parse( text );
+    assertBasics( template, false, false, true, 0, 1 );
+    query = template.getQuery().get( "param" );
+    assertThat( query, notNullValue() );
+    assertThat( query.getQueryName(), equalTo( "param" ) );
+    assertThat( query.getParamName(), equalTo( "param" ) );
+    assertThat( query.getFirstValue().getPattern(), equalTo( "value" ) );
   }
 
 }

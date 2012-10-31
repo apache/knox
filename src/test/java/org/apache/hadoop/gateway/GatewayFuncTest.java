@@ -17,7 +17,9 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.response.Response;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
@@ -57,8 +59,9 @@ public class GatewayFuncTest {
   public static void startGateway() throws Exception {
 
     Map<String,String> params = new HashMap<String,String>();
-    params.put( "namenode.address", "vm-hdp-full.home:50070" );
-    params.put( "datanode.address", "vm-hdp-full.home:50075" );
+    params.put( "gateway.address", "localhost:8888" );
+    params.put( "namenode.address", "vm.home:50070" );
+    params.put( "datanode.address", "vm.home:50075" );
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Config config = GatewayConfigFactory.create( configUrl, params );
@@ -66,7 +69,7 @@ public class GatewayFuncTest {
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.addHandler( JettyGatewayFactory.create( "/gateway/cluster", config ) );
 
-    gateway = new Server( 0 ); // Picks an open port.
+    gateway = new Server( 8888 ); // Picks an open port.
     gateway.setHandler( contexts );
     gateway.start();
   }
@@ -128,7 +131,7 @@ public class GatewayFuncTest {
         .param( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
-        .statusCode( 200 )
+        .statusCode( HttpStatus.SC_OK )
         .body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
         .body( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
         .body( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "tmp" ) )
@@ -150,15 +153,19 @@ public class GatewayFuncTest {
         .param( "user.name", "hdfs" )
         .param( "op", "MKDIRS" )
         .expect()
-        .statusCode( 200 )
+        .statusCode( HttpStatus.SC_OK )
         .body( "boolean", equalTo( true ) )
         .when().put( namenodePath + "/test" );
 
     given()
         .param( "op", "LISTSTATUS" )
         .expect()
-        .statusCode( 200 )
+        .statusCode( HttpStatus.SC_OK )
+        .body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .body( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
         .body( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "test" ) )
+        .body( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "tmp" ) )
+        .body( "FileStatuses.FileStatus[4].pathSuffix", equalTo( "user" ) )
         .when().get( namenodePath + "/" );
 
 //    given()
@@ -192,7 +199,7 @@ public class GatewayFuncTest {
         .param( "op", "CREATE" )
         .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
         .expect()
-        .statusCode( 307 )
+        .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( namenodePath + "/test/file" );
     String location = response.getHeader( "Location" );
     assertThat( location, startsWith( getGatewayPath() + "/gateway/cluster" ) );
@@ -203,7 +210,7 @@ public class GatewayFuncTest {
         .param( "op", "CREATE" )
         .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
         .expect()
-        .statusCode( 201 )
+        .statusCode( HttpStatus.SC_CREATED )
         //.header( "Location", equalTo( location ) )
         .when().put( location );
 
@@ -227,7 +234,7 @@ public class GatewayFuncTest {
         .param( "user.name", "hdfs" )
         .param( "op", "OPEN" )
         .expect()
-        .statusCode( 200 )
+        .statusCode( HttpStatus.SC_OK )
         .body( equalTo( "TEST" ) )
         .when().get( namenodePath + "/test/file" );
 

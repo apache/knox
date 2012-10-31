@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-import org.hamcrest.*;
-import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -76,29 +74,29 @@ public class SegmentTest {
     assertThat( s4.matches( s5 ), equalTo( true ) );
     assertThat( s5.matches( s4 ), equalTo( true ) );
 
-    InvalidSegment s7 = new InvalidSegment( "p", "v", Integer.MAX_VALUE );
-    InvalidSegment s8 = new InvalidSegment( "p", "v", Integer.MAX_VALUE-1 );
-    assertThat( s7.matches( s8 ), equalTo( false ) );
-    assertThat( s8.matches( s7 ), equalTo( false ) );
-
-    InvalidSegment s9 = new InvalidSegment( "p", "*", Integer.MAX_VALUE-2 );
-    InvalidSegment s10 = new InvalidSegment( "p", "*", Integer.MAX_VALUE-3 );
-    assertThat( s9.matches( s10 ), equalTo( false ) );
-    assertThat( s10.matches( s9 ), equalTo( false ) );
-
-    InvalidSegment s11 = new InvalidSegment( "p", "**", Integer.MAX_VALUE-4 );
-    InvalidSegment s12 = new InvalidSegment( "p", "**", Integer.MAX_VALUE-5 );
-    assertThat( s11.matches( s12 ), equalTo( false ) );
-    assertThat( s12.matches( s11 ), equalTo( false ) );
-
-    assertThat( s7.matches( s9 ), equalTo( false ) );
-    assertThat( s9.matches( s7 ), equalTo( false ) );
-    assertThat( s7.matches( s11 ), equalTo( false ) );
-    assertThat( s11.matches( s7 ), equalTo( false ) );
-    assertThat( s9.matches( s11 ), equalTo( false ) );
-    assertThat( s11.matches( s9 ), equalTo( false ) );
-
-    assertThat( s1.matches( s7 ), equalTo( false ) );
+//    InvalidSegment s7 = new InvalidSegment( "p", "v", Integer.MAX_VALUE );
+//    InvalidSegment s8 = new InvalidSegment( "p", "v", Integer.MAX_VALUE-1 );
+//    assertThat( s7.matches( s8 ), equalTo( false ) );
+//    assertThat( s8.matches( s7 ), equalTo( false ) );
+//
+//    InvalidSegment s9 = new InvalidSegment( "p", "*", Integer.MAX_VALUE-2 );
+//    InvalidSegment s10 = new InvalidSegment( "p", "*", Integer.MAX_VALUE-3 );
+//    assertThat( s9.matches( s10 ), equalTo( false ) );
+//    assertThat( s10.matches( s9 ), equalTo( false ) );
+//
+//    InvalidSegment s11 = new InvalidSegment( "p", "**", Integer.MAX_VALUE-4 );
+//    InvalidSegment s12 = new InvalidSegment( "p", "**", Integer.MAX_VALUE-5 );
+//    assertThat( s11.matches( s12 ), equalTo( false ) );
+//    assertThat( s12.matches( s11 ), equalTo( false ) );
+//
+//    assertThat( s7.matches( s9 ), equalTo( false ) );
+//    assertThat( s9.matches( s7 ), equalTo( false ) );
+//    assertThat( s7.matches( s11 ), equalTo( false ) );
+//    assertThat( s11.matches( s7 ), equalTo( false ) );
+//    assertThat( s9.matches( s11 ), equalTo( false ) );
+//    assertThat( s11.matches( s9 ), equalTo( false ) );
+//
+//    assertThat( s1.matches( s7 ), equalTo( false ) );
   }
 
   private class TestSegment extends Segment {
@@ -109,20 +107,12 @@ public class SegmentTest {
 
   }
 
-  private class InvalidSegment extends Segment {
-
-    private int type;
-
-    public InvalidSegment( String paramName, String valuePattern, int type ) {
-      super( paramName, valuePattern );
-      this.type = type;
-    }
-
-    @Override
-    public int getType() {
-      return type;
-    }
-
-  }
+//  private class InvalidSegment extends Segment {
+//
+//    public InvalidSegment( String paramName, String valuePattern ) {
+//      super( paramName, valuePattern );
+//    }
+//
+//  }
 
 }

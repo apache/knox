@@ -301,20 +301,32 @@ public class Parser {
   private void consumePathSegmentToken( String token ) {
     if( token != null ) {
       String[] pair = parseTemplateToken( token );
-      builder.addPathSegment( pair[0], pair[1] );
+      builder.addPath( pair[ 0 ], pair[ 1 ] );
     }
   }
 
   private void consumeQuerySegmentToken( String token ) {
-    if( token != null ) {
-      String nameValue[] = split( token, '=' );
-      if( nameValue.length == 1 ) {
-        String queryName = nameValue[ 0 ];
-        builder.addQuerySegment( queryName, "", "*" );
+    if( token != null && token.length() > 0 ) {
+      // Shorthand format {param} == param={param=*}
+      if( TEMPLATE_OPEN_MARKUP == token.charAt( 0 ) ) {
+        String[] paramPattern = parseTemplateToken( token );
+        if( paramPattern.length == 1 ) {
+          String paramName = paramPattern[ 0 ];
+          builder.addQuery( paramName, paramName, Segment.STAR_PATTERN );
+        } else {
+          String paramName = paramPattern[ 0 ];
+          builder.addQuery( paramName, paramName, paramPattern[ 1 ] );
+        }
       } else {
-        String queryName = nameValue[ 0 ];
-        String[] paramPattern = parseTemplateToken( nameValue[ 1 ] );
-        builder.addQuerySegment( queryName, paramPattern[0], paramPattern[1] );
+        String nameValue[] = split( token, '=' );
+        if( nameValue.length == 1 ) {
+          String queryName = nameValue[ 0 ];
+          builder.addQuery( queryName, Segment.ANONYMOUS_PARAM, "*" );
+        } else {
+          String queryName = nameValue[ 0 ];
+          String[] paramPattern = parseTemplateToken( nameValue[ 1 ] );
+          builder.addQuery( queryName, paramPattern[ 0 ], paramPattern[ 1 ] );
+        }
       }
     }
   }
@@ -335,7 +347,7 @@ public class Parser {
     // If this is a parameter template (ie {...}
     if( b > 0 ) {
       if( i < 0 ) {
-        a = new String[]{ t.substring( b, e ), Segment.WILDCARD_PATTERN };
+        a = new String[]{ t.substring( b, e ), Segment.STAR_PATTERN };
       } else {
         a = new String[]{ t.substring( b, i ), t.substring( i+1, e ) };
       }

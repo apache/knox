@@ -82,12 +82,15 @@ public class Expander {
         builder.append( "/" );
       }
       Path segment = path.get( i );
-      switch( segment.getType() ) {
+      Segment.Value value = segment.getFirstValue();
+      switch( value.getType() ) {
         case( Segment.STATIC ):
-          String value = segment.getValuePattern();
-          builder.append( value );
+          String pattern = value.getPattern();
+          builder.append( pattern );
           break;
-        case( Segment.WILDCARD ):
+        case( Segment.DEFAULT ):
+        case( Segment.STAR ):
+        case( Segment.GLOB ):
         case( Segment.REGEX ):
           String name = segment.getParamName();
           List<String> values = resolver.getValues( name );
@@ -102,12 +105,17 @@ public class Expander {
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
   private static void expandPathValues( Path segment, List<String> values, StringBuilder builder ) {
-    if( values != null ) {
-      for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
-        if( i > 0 ) {
-          builder.append( "/" );
+    if( values != null && values.size() > 0 ) {
+      int type = segment.getFirstValue().getType();
+      if( type == Segment.GLOB || type == Segment.DEFAULT ) {
+        for( int i=0, n=values.size(); i<n; i++ ) {
+          if( i > 0 ) {
+            builder.append( "/" );
+          }
+          builder.append( values.get( i ) );
         }
-        builder.append( values.get( i ) );
+      } else {
+        builder.append( values.get( 0 ) );
       }
     }
   }
@@ -130,36 +138,47 @@ public class Expander {
         }
         Query segment = iterator.next();
         String queryName = segment.getQueryName();
-        switch( segment.getType() ) {
-          case( Segment.STATIC ):
-            String value = segment.getValuePattern();
-            builder.append( queryName );
-            builder.append( "=" );
-            builder.append( value );
-            break;
-          case( Segment.WILDCARD ):
-          case( Segment.REGEX ):
-            String paramName = segment.getParamName();
-            List<String> values = resolver.getValues( paramName );
-            expandQueryValues( segment, queryName, values, builder );
-            break;
-          default:
+        for( Segment.Value value: segment.getValues() ) {
+          switch( value.getType() ) {
+            case( Segment.STATIC ):
+              String pattern = value.getPattern();
+              builder.append( queryName );
+              builder.append( "=" );
+              builder.append( pattern );
+              break;
+            case( Segment.DEFAULT ):
+            case( Segment.GLOB ):
+            case( Segment.STAR ):
+            case( Segment.REGEX ):
+              String paramName = segment.getParamName();
+              List<String> values = resolver.getValues( paramName );
+              expandQueryValues( segment, queryName, values, builder );
+              break;
+            default:
+          }
         }
       }
     }
   }
 
   private static void expandQueryValues( Query segment, String queryName, List<String> values, StringBuilder builder ) {
-    if( values == null ) {
+    if( values == null || values.size() == 0 ) {
       builder.append( queryName );
     } else {
-      for( int i=0, n=Math.min( values.size(), segment.getMaxAllowed() ); i<n; i++ ) {
-        if( i > 0 ) {
-          builder.append( "&" );
+      int type = segment.getFirstValue().getType();
+      if( type == Segment.GLOB || type == Segment.DEFAULT ) {
+        for( int i=0, n=values.size(); i<n; i++ ) {
+          if( i > 0 ) {
+            builder.append( "&" );
+          }
+          builder.append( queryName );
+          builder.append( "=" );
+          builder.append( values.get( i ) );
         }
+      } else {
         builder.append( queryName );
         builder.append( "=" );
-        builder.append( values.get( i ) );
+        builder.append( values.get( 0 ) );
       }
     }
   }
@@ -173,12 +192,13 @@ public class Expander {
 
   private static void expandSingleValue( Segment segment, Resolver resolver, StringBuilder builder ) {
     if( segment != null ) {
-      switch( segment.getType() ) {
+      Segment.Value value = segment.getFirstValue();
+      switch( value.getType() ) {
         case( Segment.STATIC ):
-          String value = segment.getValuePattern();
-          builder.append( value );
+          String pattern = value.getPattern();
+          builder.append( pattern );
           break;
-        case( Segment.WILDCARD ):
+        case( Segment.STAR ):
         case( Segment.REGEX ):
           String name = segment.getParamName();
           List<String> values = resolver.getValues( name );

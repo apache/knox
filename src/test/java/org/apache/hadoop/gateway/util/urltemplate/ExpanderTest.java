@@ -161,6 +161,19 @@ public class ExpanderTest {
     assertThat( expanded.toString(), equalTo( "?query-name-1=param-value-1&query-name-2=param-value-2" ) ) ;
   }
 
+// Can't create a URI with just a scheme: new URI( "http:" )
+//  @Test
+//  public void testSchemeExpansion() throws URISyntaxException {
+//    Template template;
+//    Params params;
+//    URI expanded;
+//
+//    template = Parser.parse( "scheme:" );
+//    params = new Params();
+//    expanded = Expander.expand( template, params );
+//    assertThat( expanded.toString(), equalTo( "scheme:" ) ) ;
+//  }
+
   @Test
   public void testAuthorityExpansion() throws URISyntaxException {
     Template template;

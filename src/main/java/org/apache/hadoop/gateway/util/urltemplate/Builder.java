@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,26 +33,37 @@ public class Builder {
   private Port port;
   private boolean isAbsolute;
   private boolean isDirectory;
-  private List<Path> pathSegments;
+  private List<Path> path;
   private boolean hasQuery;
-  private LinkedHashMap<String,Query> querySegments;
+  private LinkedHashMap<String,Query> query;
+  private Query extra;
   private boolean hasFragment;
   private Fragment fragment;
 
   public Builder() {
+    this.hasScheme = false;
+    this.scheme = null;
+    this.hasAuthority = false;
+    this.username = null;
+    this.password = null;
+    this.host = null;
+    this.port = null;
     this.isAbsolute = false;
     this.isDirectory = false;
+    this.path = new ArrayList<Path>();
     this.hasQuery = false;
-    this.pathSegments = new ArrayList<Path>();
-    this.querySegments = new LinkedHashMap<String,Query>();
+    this.query = new LinkedHashMap<String,Query>();
+    this.extra = null;
+    this.hasFragment = false;
+    this.fragment = null;
   }
 
   public Template build() {
     return new Template(
         scheme, hasScheme,
         username, password, host, port, hasAuthority,
-        pathSegments, isAbsolute, isDirectory,
-        querySegments, hasQuery,
+        path, isAbsolute, isDirectory,
+        query, extra, hasQuery,
         fragment, hasFragment );
   }
 
@@ -98,9 +110,9 @@ public class Builder {
     return this;
   }
 
-  public Builder addPathSegment( String paramName, String valuePattern ) {
+  public Builder addPath( String paramName, String valuePattern ) {
     Path segment = new Path( paramName, valuePattern );
-    pathSegments.add( segment );
+    path.add( segment );
     return this;
   }
 
@@ -109,9 +121,28 @@ public class Builder {
     return this;
   }
 
-  public Builder addQuerySegment( String queryName, String paramName, String valuePattern ) {
-    Query segment = new Query( queryName, paramName, valuePattern );
-    querySegments.put( queryName, segment );
+  public Builder addQuery( String queryName, String paramName, String valuePattern ) {
+    if( Segment.STAR_PATTERN.equals( queryName ) || Segment.GLOB_PATTERN.equals( queryName ) ) {
+      if( extra == null ) {
+        Query segment = new Query( queryName, paramName, valuePattern );
+        extra = segment;
+      } else {
+        // Can't have two extras: ?{*}&{**}
+        //TODO throw new URISyntaxException()? because
+      }
+    } else {
+      Query segment = query.get( queryName );
+      if( segment == null ) {
+        segment = new Query( queryName, paramName, valuePattern );
+        query.put( queryName, segment );
+      } else {
+        if( segment.getParamName().equals( paramName ) ) {
+          // Can't have two param names for the same query name: ?query={param1}&query={param2}
+          //TODO throw new URISyntaxException()?
+        }
+        segment.addValue( valuePattern );
+      }
+    }
     return this;
   }
 

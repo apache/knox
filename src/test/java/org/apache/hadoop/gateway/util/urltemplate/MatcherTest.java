@@ -27,7 +27,145 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
+//TODO: Test to make sure that extra unmatched query parameters prevent a match.
 public class MatcherTest {
+
+  private void addTemplate( Matcher<String> matcher, String template ) throws URISyntaxException {
+    matcher.add( Parser.parse( template ), template );
+  }
+
+  private void assertValidMatch( Matcher<String> matcher, String uri, String template ) throws URISyntaxException {
+    if( template == null ) {
+      assertThat( matcher.match( Parser.parse( uri ) ), nullValue() );
+    } else {
+      Template uriTemplate = Parser.parse( uri );
+      Matcher<String>.Match match = matcher.match( uriTemplate );
+      assertThat( "Expected to find a match.", match, notNullValue() );
+      assertThat( match.getValue(), equalTo( template ) );
+    }
+  }
+
+  @Test
+  public void testQueryHandling() throws Exception {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    patternTemplate = Parser.parse( "/path?{query}" );
+    inputTemplate = Parser.parse( "/path" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
+
+    matcher = new Matcher<String>();
+    matcher.add( Parser.parse( "/path?{query}" ), "T1" );
+    matcher.add( Parser.parse( "/path" ), "T2" );
+    inputTemplate = Parser.parse( "/path" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because there is an entry in the matcher without a query.", match, notNullValue() );
+    assertThat( match.getValue(), equalTo( "T2") );
+
+    patternTemplate = Parser.parse( "/path?{query}" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value" ) );
+    assertThat( match.getParams().getValues( "query" ).size(), equalTo( 1 ) );
+
+    patternTemplate = Parser.parse( "/path?{*}" );
+    inputTemplate = Parser.parse( "/path" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
+
+    patternTemplate = Parser.parse( "/path?*" );
+    inputTemplate = Parser.parse( "/path" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
+
+    patternTemplate = Parser.parse( "/path?*" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat(
+        "Should match because the template has an extra query and the input has a query.",
+        match, notNullValue() );
+    assertThat(
+        "Should not have extracts any parameters since pattern template didn't contain {}",
+        match.getParams().getValues( "query" ), nullValue() );
+
+    patternTemplate = Parser.parse( "/path?{*}" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+
+    patternTemplate = Parser.parse( "/path?{**}" );
+    inputTemplate = Parser.parse( "/path" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the template has an optional query.", match, notNullValue() );
+
+    patternTemplate = Parser.parse( "/path?**" );
+    inputTemplate = Parser.parse( "/path" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
+
+    patternTemplate = Parser.parse( "/path?**" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), nullValue() );
+
+    patternTemplate = Parser.parse( "/path?{query}&{*}" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should not match because input does not contain the required extra query.", match, nullValue() );
+
+    patternTemplate = Parser.parse( "/path?{query}&{*}" );
+    inputTemplate = Parser.parse( "/path?query=value&extra=extra-value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value" ) );
+    assertThat( match.getParams().getValues( "query" ).size(), equalTo( 1 ) );
+
+    patternTemplate = Parser.parse( "/path?{query=**}" );
+    inputTemplate = Parser.parse( "/path?query=value1&query=value2" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value1" ) );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value2" ) );
+    assertThat( match.getParams().getValues( "query" ).size(), equalTo( 2 ) );
+
+    patternTemplate = Parser.parse( "/path?{query}" );
+    inputTemplate = Parser.parse( "/path?query=value1&query=value2" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value1" ) );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value2" ) );
+    assertThat( match.getParams().getValues( "query" ).size(), equalTo( 2 ) );
+  }
 
   @Test
   public void testMatchCompleteUrl() throws Exception {
@@ -73,11 +211,13 @@ public class MatcherTest {
     pattern = "path";
     patternTemplate = Parser.parse( pattern );
     matcher.add( patternTemplate, pattern );
+    assertThat( matcher.get( patternTemplate ), is( pattern ) );
     input = "path";
     inputTemplate = Parser.parse( input );
     match = matcher.match( inputTemplate );
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
+
 
     matcher = new Matcher<String>();
     pattern = "/path";
@@ -120,6 +260,18 @@ public class MatcherTest {
     assertThat( match.getValue(), equalTo( pattern ) );
 
     matcher = new Matcher<String>();
+    pattern = "path-1/{path=**}/path-4";
+    patternTemplate = Parser.parse( pattern );
+    matcher.add( patternTemplate, pattern );
+    input = "path-1/path-2/path-3/path-4";
+    inputTemplate = Parser.parse( input );
+    match = matcher.match( inputTemplate );
+    assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
+    assertThat( match.getValue(), equalTo( pattern ) );
+    assertThat( match.getParams().getValues( "path" ).get( 0 ), equalTo( "path-2" ) );
+    assertThat( match.getParams().getValues( "path" ).get( 1 ), equalTo( "path-3" ) );
+
+    matcher = new Matcher<String>();
     pattern = "/";
     patternTemplate = Parser.parse( pattern );
     matcher.add( patternTemplate, pattern );
@@ -154,7 +306,7 @@ public class MatcherTest {
 
     assertValidMatch( matcher, "/webhdfs", "/webhdfs" );
     assertValidMatch( matcher, "/webhdfs/dfshealth.jsp", "/webhdfs/dfshealth.jsp" );
-    assertValidMatch( matcher, "/webhdfs/v1", "/webhdfs/*" );
+    assertValidMatch( matcher, "/webhdfs/v1", "/webhdfs/*" ); // The star should be picked in preference to the glob.
     assertValidMatch( matcher, "/webhdfs/some.jsp", "/webhdfs/*.jsp" );
     assertValidMatch( matcher, "/webhdfs/other.jsp", "/webhdfs/other.jsp" );
     assertValidMatch( matcher, "/webhdfs/path/some.jsp", "/webhdfs/**" );
@@ -214,7 +366,7 @@ public class MatcherTest {
     Matcher<String> matcher = new Matcher<String>();
     matcher.add( Parser.parse( "/webhdfs/*" ), "/webhdfs/*" );
     matcher.add( Parser.parse( "/webhdfs/**" ), "/webhdfs/**" );
-    assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/*" );
+    assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/*" ); // The star should be picked in preference to the glob.
     assertValidMatch( matcher, "/webhdfs/path/file", "/webhdfs/**" );
 
     // Reverse the put order.
@@ -275,21 +427,6 @@ public class MatcherTest {
     assertValidMatch( matcher, "?two=value", "?two={param}" );
     assertValidMatch( matcher, "?three=value", null );
     assertValidMatch( matcher, "?", null );
-  }
-
-  private void addTemplate( Matcher<String> matcher, String template ) throws URISyntaxException {
-    matcher.add( Parser.parse( template ), template );
-  }
-
-  private void assertValidMatch( Matcher<String> matcher, String uri, String template ) throws URISyntaxException {
-    if( template == null ) {
-      assertThat( matcher.match( Parser.parse( uri ) ), nullValue() );
-    } else {
-      Template uriTemplate = Parser.parse( uri );
-      Matcher<String>.Match match = matcher.match( uriTemplate );
-      assertThat( "Expected to find a match.", match, notNullValue() );
-      assertThat( match.getValue(), equalTo( template ) );
-    }
   }
 
   @Test

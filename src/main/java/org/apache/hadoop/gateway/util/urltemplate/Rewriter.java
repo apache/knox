@@ -20,20 +20,49 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+//TODO: There are usability issues when trying to rewrite only the path portion of a fully quallified URL.
+// See RewriterTeset.testRewriteUrlWithHttpServletRequestAndFilterConfig
+// For example...
+// sourceInput = new URI( "http://some-host:0/some-path" );
+// sourcePattern = Parser.parse( "*://*:*/**" );
+// targetPattern = Parser.parse( "should-not-change" );
+// actualOutput = Rewriter.rewrite( sourceInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+// expectedOutput = new URI( "should-not-change" );
+// assertThat( actualOutput, equalTo( expectedOutput ) );
+// This was possible before with just the source pattern being "**".
+// At a minimum, the authority portion should support a "**" glob meaning "//*:*@*:*"
 public class Rewriter {
+
+  private Matcher<Template> rules;
 
   public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
       throws URISyntaxException {
-    return new Rewriter().rewriteUri( inputUri, inputTemplate, outputTemplate, resolver );
+    Rewriter rewriter = new Rewriter();
+    rewriter.addRule( inputTemplate, outputTemplate );
+    Template inputUriTemplate = Parser.parse( inputUri.toString() );
+    return rewriter.rewrite( inputUriTemplate, resolver );
   }
 
-  public URI rewriteUri( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+  public Rewriter() {
+    rules = new Matcher<Template>();
+  }
+
+  public void addRule( Template inputTemplate, Template outputTemplate ) {
+    rules.add( inputTemplate, outputTemplate );
+  }
+
+  public URI rewrite( Template input, Resolver resolver )
       throws URISyntaxException {
-    Template inputUriTemplate = Parser.parse( inputUri.toString() );
-    Matcher<Void> matcher = new Matcher<Void>( inputTemplate, null );
-    Matcher<Void>.Match match = matcher.match( inputUriTemplate );
-    Params params = match.getParams();
-    URI outputUri = Expander.expand( outputTemplate, params );
+    URI outputUri = null;
+    Matcher<Template>.Match match = rules.match( input );
+    if( match != null ) {
+      if( resolver == null ) {
+        resolver = match.getParams();
+      } else {
+        resolver = new CompositeResolver( match.getParams(), resolver );
+      }
+      outputUri = Expander.expand( match.getValue(), resolver );
+    }
     return outputUri;
   }
 

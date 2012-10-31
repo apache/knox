@@ -17,28 +17,48 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 abstract class Segment {
 
   static final String ANONYMOUS_PARAM = "";
-  static final String WILDCARD_PATTERN = "*";
+
+  static final String DEFAULT_PATTERN = "";
+  static final String STAR_PATTERN = "*";
   static final String GLOB_PATTERN = "**";
 
-  public static final int STATIC = 0;
-  public static final int WILDCARD = 1;
+  // Note: The order of these is important.  The numbers must be from most specific to least.
+  public static final int STATIC = 1;
   public static final int REGEX = 2;
+  public static final int STAR = 3;
+  public static final int DEFAULT = 4;
+  public static final int GLOB = 5;
+  public static final int UNKNOWN = 6;
 
-  private int type;
   private String paramName;
-  private String valuePattern;
-  private Pattern valueRegex;
-  private int minRequired;
-  private int maxAllowed;
+  private Value first;
+  private Map<String,Value> values;
+//  private int type;
+//  private String valuePattern;
+//  private Pattern regex;
+//  private int minRequired;
+//  private int maxAllowed;
+
+  public Segment( String paramName, String valuePattern ) {
+    this.paramName = paramName;
+    this.first = new Value( valuePattern );
+    this.values = new LinkedHashMap<String,Value>();
+    this.values.put( valuePattern, first );
+//    this.valuePattern = valuePattern;
+  }
 
   @Override
   public int hashCode() {
-    return valuePattern.hashCode() + paramName.hashCode();
+    return paramName.hashCode();
   }
 
   @Override
@@ -47,63 +67,167 @@ abstract class Segment {
     boolean equal = false;
     if( obj instanceof Segment ) {
       Segment that = (Segment)obj;
-      equal = ( ( this.type == that.type ) &&
-                ( this.paramName.equals( that.paramName ) ) &&
-                ( this.valuePattern.equals( that.valuePattern ) ) &&
-                ( this.minRequired == that.minRequired ) &&
-                ( this.maxAllowed == that.maxAllowed ) );
+      equal = ( this.paramName.equals( that.paramName ) && this.values.size() == that.values.size() );
+      if( equal ) {
+        for( String pattern: this.values.keySet() ) {
+          equal = that.values.containsKey( pattern );
+          if( !equal ) {
+            break;
+          }
+        }
+      }
     }
     return equal;
-  }
-
-  public Segment( String paramName, String valuePattern ) {
-    this.paramName = paramName;
-    this.valuePattern = valuePattern;
-    if( WILDCARD_PATTERN.equals( valuePattern ) ) {
-      this.type = WILDCARD;
-      this.minRequired = 1;
-      this.maxAllowed = 1;
-      this.valueRegex = null;
-    } else if( GLOB_PATTERN.equals( valuePattern ) ) {
-      type = WILDCARD;
-      this.minRequired = 0;
-      this.maxAllowed = Integer.MAX_VALUE;
-      this.valueRegex = null;
-    } else if ( valuePattern.contains( WILDCARD_PATTERN ) ) {
-      this.type = REGEX;
-      this.minRequired = 1;
-      this.maxAllowed = 1;
-      this.valueRegex = compileRegex( valuePattern );
-    } else {
-      this.type = STATIC;
-      this.minRequired = 1;
-      this.maxAllowed = 1;
-      this.valueRegex = null;
-    }
-  }
-
-  public int getType() {
-    return type;
   }
 
   public String getParamName() {
     return paramName;
   }
 
-  public String getValuePattern() {
-    return valuePattern;
+  public Collection<Value> getValues() {
+    return values.values();
   }
 
-  public Pattern getValueRegex() {
-    return valueRegex;
+  public Value getFirstValue() {
+    return first;
   }
 
-  public int getMinRequired() {
-    return minRequired;
+//  public int getMinRequired() {
+//    return minRequired;
+//  }
+//
+//  public int getMaxAllowed() {
+//    return maxAllowed;
+//  }
+
+  public boolean matches( Segment that ) {
+    if( getClass().isInstance( that ) ) {
+      for( Value thisValue: this.values.values() ) {
+        for( Value thatValue: that.values.values() ) {
+          if( thisValue.matches( thatValue ) ) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
-  public int getMaxAllowed() {
-    return maxAllowed;
+  void addValue( String valuePattern ) {
+    Value value = new Value( valuePattern );
+    values.put( valuePattern, value );
+  }
+
+  public class Value {
+    private int type;
+    private String pattern;
+    private Pattern regex;
+
+    private Value( String pattern ) {
+      this.pattern = pattern;
+      this.regex = null;
+      if( DEFAULT_PATTERN.equals( pattern ) ) {
+        this.type = DEFAULT;
+      } else if( STAR_PATTERN.equals( pattern ) ) {
+        this.type = STAR;
+      } else if( GLOB_PATTERN.equals( pattern ) ) {
+        type = GLOB;
+      } else if ( pattern.contains( STAR_PATTERN ) ) {
+        this.type = REGEX;
+        this.regex = compileRegex( pattern );
+      } else {
+        this.type = STATIC;
+      }
+    }
+
+    public int getType() {
+      return type;
+    }
+
+    public String getPattern() {
+      return pattern;
+    }
+
+    public Pattern getRegex() {
+      return regex;
+    }
+
+    public boolean matches( Value that ) {
+      boolean matches = getClass().isInstance( that );
+      if( matches ) {
+        switch( this.getType() ) {
+          case( STATIC ):
+            matches = matchThisStatic( that );
+            break;
+          case( DEFAULT ):
+          case( STAR ):
+          case( GLOB ):
+            matches = matchThisWildcard( that );
+            break;
+          case( REGEX ):
+            matches = matchThisRegex( that );
+            break;
+          default:
+            matches = false;
+        }
+      }
+      return matches;
+    }
+
+    private boolean matchThisStatic( Value that ) {
+      boolean matches = false;
+      switch( that.getType() ) {
+        case( STATIC ):
+          matches = this.pattern.equals( that.pattern );
+          break;
+        case( DEFAULT ):
+        case( STAR ):
+        case( GLOB ):
+          matches = true;
+          break;
+        case( REGEX ):
+          matches = that.regex.matcher( this.pattern ).matches();
+          break;
+      }
+      return matches;
+    }
+
+    private boolean matchThisWildcard( Value that ) {
+      boolean matches = false;
+      switch( that.getType() ) {
+        case( STATIC ):
+          matches = true;
+          break;
+        case( DEFAULT ):
+        case( STAR ):
+        case( GLOB ):
+          matches = true;
+          break;
+        case( REGEX ):
+          matches = true;
+          break;
+      }
+      return matches;
+    }
+
+    private boolean matchThisRegex( Value that ) {
+      boolean matches = false;
+      switch( that.getType() ) {
+        case( STATIC ):
+          matches = this.regex.matcher( that.pattern ).matches();
+          break;
+        case( DEFAULT ):
+        case( STAR ):
+        case( GLOB ):
+          matches = true;
+          break;
+        case( REGEX ):
+          matches =  this.pattern.equals( that.pattern );
+          break;
+      }
+      return matches;
+    }
+
   }
 
   // Creates a pattern for a simplified filesystem style wildcard '*' syntax.
@@ -116,74 +240,6 @@ abstract class Segment {
     // Turn '/' back into '.*'.
     segment = segment.replaceAll( "/", "\\.\\*" );
     return Pattern.compile( segment );
-  }
-
-  public boolean matches( Segment that ) {
-    boolean matches = getClass().isInstance( that );
-    if( matches ) {
-      switch( this.getType() ) {
-        case( STATIC ):
-          matches = matchThisStatic( that );
-          break;
-        case( WILDCARD ):
-          matches = matchThisWildcard( that );
-          break;
-        case( REGEX ):
-          matches = matchThisRegex( that );
-          break;
-        default:
-          matches = false;
-      }
-    }
-    return matches;
-  }
-
-  private boolean matchThisStatic( Segment that ) {
-    boolean matches = false;
-    switch( that.getType() ) {
-      case( STATIC ):
-        matches = this.getValuePattern().equals( that.getValuePattern() );
-        break;
-      case( WILDCARD ):
-        matches = true;
-        break;
-      case( REGEX ):
-        matches = that.getValueRegex().matcher( this.getValuePattern() ).matches();
-        break;
-    }
-    return matches;
-  }
-
-  private boolean matchThisWildcard( Segment that ) {
-    boolean matches = false;
-    switch( that.getType() ) {
-      case( STATIC ):
-        matches = true;
-        break;
-      case( WILDCARD ):
-        matches = true;
-        break;
-      case( REGEX ):
-        matches = true;
-        break;
-    }
-    return matches;
-  }
-
-  private boolean matchThisRegex( Segment that ) {
-    boolean matches = false;
-    switch( that.getType() ) {
-      case( STATIC ):
-        matches = this.getValueRegex().matcher( that.getValuePattern() ).matches();
-        break;
-      case( WILDCARD ):
-        matches = true;
-        break;
-      case( REGEX ):
-        matches =  this.getValuePattern().equals( that.getValuePattern() );
-        break;
-    }
-    return matches;
   }
 
 }

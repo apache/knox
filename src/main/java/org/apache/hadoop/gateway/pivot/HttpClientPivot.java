@@ -20,15 +20,16 @@ package org.apache.hadoop.gateway.pivot;
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.gateway.util.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -57,12 +58,19 @@ public class HttpClientPivot extends AbstractGatewayPivot {
   }
 
   private URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
-    String sourcePathInfo = request.getPathInfo();
+    String sourceQuery = request.getQueryString();
+    String sourcePathInfo = request.getPathInfo() + ( sourceQuery == null ? "" : "?" + sourceQuery );
     String sourcePattern = getConfig().getInitParameter( "source" );
     String targetPattern = getConfig().getInitParameter( "target" );
 
-    //TODO: Some of the regex compilation at servlet init for performance reasons.
-    String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, request, getConfig() );
+    //TODO: Some of the compilation should be done at servlet init for performance reasons.
+    Template sourceTemplate = Parser.parse( sourcePattern );
+    Template targetTemplate = Parser.parse( targetPattern );
+
+    Resolver resolver = new ParamResolver( getConfig(), request );
+    URI sourceUri = new URI( sourcePathInfo );
+    URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
+    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, request, getConfig() );
 //    System.out.println( "Source URI:" + request.getRequestURI() );
 //    System.out.println( "Source URL:" + request.getRequestURL() );
 //    System.out.println( "Source Query: " + request.getQueryString() );
@@ -71,7 +79,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 //    System.out.println( "Target pattern: " + targetPattern );
 //    System.out.println( "Resolved target: " + targetUrl );
 
-    URIBuilder queryBuilder = new URIBuilder( targetUrl );
+    URIBuilder queryBuilder = new URIBuilder( targetUri );
 
     // Copy the server request parameters to the client request parameters.
     Enumeration<String> paramNames = request.getParameterNames();

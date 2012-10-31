@@ -15,26 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
-public class Regex {
+public class CompositeResolver implements Resolver {
 
-  private static Object[] EMPTY_OBJECT_ARRAY = new Object[ 0 ];
+  private Resolver[] delegates;
 
-  public static Object[] toGroupArray( Matcher matcher ) {
-    Object[] array;
-    if( matcher.matches() ) {
-      array = new String[ matcher.groupCount() ];
-      for( int i = 0, n = matcher.groupCount(); i < n; i++ ) {
-        array[ i ] = matcher.group( i + 1 );
+  public CompositeResolver( Resolver... resolvers ) {
+    this.delegates = resolvers;
+  }
+
+  @Override
+  public List<String> getValues( String name ) {
+    List<String> values = null;
+    if( delegates != null ) {
+      for( Resolver resolver: delegates ) {
+        values = resolver.getValues( name );
+        if( values != null ) {
+          break;
+        }
       }
-    } else {
-      array = EMPTY_OBJECT_ARRAY;
     }
-    return array;
+    return values;
   }
 
 }

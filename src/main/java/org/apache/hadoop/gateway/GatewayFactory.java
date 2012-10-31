@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway;
 import org.apache.hadoop.gateway.config.Config;
 
 import javax.servlet.Filter;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -78,20 +79,20 @@ public class GatewayFactory {
 //    return services;
 //  }
 
-  private static void addFilter( GatewayFilter gateway, Config filterConfig ) {
+  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
     String source = filterConfig.get( "source" );
     String name = filterConfig.get( "name" );
     String clazz = filterConfig.get( "class" );
     gateway.addFilter( source, name, clazz, filterConfig );
   }
 
-  private static void addService( GatewayFilter gateway, Config serviceConfig ) {
+  private static void addService( GatewayFilter gateway, Config serviceConfig ) throws URISyntaxException {
     for( Config filterConfig : serviceConfig.getChildren().values() ) {
       addFilter( gateway, filterConfig );
     }
   }
 
-  public static GatewayFilter create( Config gatewayConfig ) {
+  public static GatewayFilter create( Config gatewayConfig ) throws URISyntaxException {
     GatewayFilter gateway = new GatewayFilter();
     for( Config service : gatewayConfig.getChildren().values() ) {
       addService( gateway, service );

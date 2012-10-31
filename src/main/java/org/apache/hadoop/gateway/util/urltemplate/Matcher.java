@@ -19,6 +19,30 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.util.*;
 
+/*
+   Path
+     Match
+       {path} => {path=*}
+       {path=*} // Match single path level. (ie wildcard)
+       {path=**} // Match multiple path levels. (ie glob)
+       {path=*.ext} // Match single level with simplified regex pattern. (ie regex)
+     Expand
+       {path} => {path=**} // Note: Default cardinality changes between match and expand.
+   Query
+     Match
+       {param} => {param=*:param}
+       {param=*} => {param=*:param} // Match single param value.
+       {param=**} => {param=**:param} // Match multiple param values.
+       {param=*suffix:other-param}
+     Expand
+       {param} -> {param=**:param} // Note: Default cardinality changes between match and expand.
+       {param=*} -> {param=*:param}
+       {param=**} -> {param=**:param}
+       {param=other-parm} -> {param=**:otherparam} // Note: Default cardinality changes between match and expand.
+       {param=:other-parm} -> {param=**:otherparam} // Note: Default cardinality changes between match and expand.
+       {param=*:other-parm} -> {param=*:otherparam}
+       {param=**:other-parm} -> {param=**:otherparam}
+ */
 public class Matcher<V> {
 
   private Map<Template,V> map;
@@ -32,6 +56,10 @@ public class Matcher<V> {
   public Matcher( Template template, V value ) {
     this();
     add( template, value );
+  }
+
+  public V get( Template template ) {
+    return map.get( template );
   }
 
   public void add( Template template, V value ) {
@@ -64,7 +92,7 @@ public class Matcher<V> {
     // Note: Doing it this way puts the fragment above the query parameters in the match order.
     node = add( node, template.getFragment() );
 
-    if( template.getQuery().isEmpty() ) {
+    if( template.getQuery().isEmpty() && template.getExtra() == null ) {
       // This might overwrite the template/value of an existing pathNode.  Last in wins.
       node.template = template;
       node.value = value;
@@ -85,11 +113,12 @@ public class Matcher<V> {
   public Match match( Template input ) {
     Status status = new Status();
     status.candidates.add( new MatchSegment( null, root, null, null ) );
-    boolean matches =
-      matchScheme( input, status ) &&
-      matchAuthority( input, status ) &&
-      matchPath( input, status ) &&
-      matchFragment( input, status );
+    boolean matches = true;
+    // Separate &= statements for debugability.
+    matches &= matchScheme( input, status );
+    matches &= matchAuthority( input, status );
+    matches &= matchPath( input, status );
+    matches &= matchFragment( input, status );
     Match winner;
     if( matches ) {
       winner = pickBestMatch( input, status );
@@ -130,7 +159,7 @@ public class Matcher<V> {
   private void pickMatchingChildren( Segment segment, Status status ) {
     if( segment != null ) {
       for( MatchSegment parent : status.candidates ) {
-        if( parent.pathNode.isGlob() ) {
+        if( parent.pathNode.hasGlob() ) {
           status.matches.add( new MatchSegment( parent, parent.pathNode, parent.pathNode.segment, segment ) );
         }
         if( parent.pathNode.children != null ) {
@@ -155,16 +184,17 @@ public class Matcher<V> {
       if( ( bestPath == null ) || // If we don't have anything at all pick the pathNode.
           ( pathNode.depth > bestPath.depth ) || // If the pathNode is deeper than the best pathNode, pick it.
           // If the pathNode is the same depth as current best but is static and the best isn't then pick it.
-          ( ( pathNode.depth == bestPath.depth ) && ( pathNode.isStatic() && !bestPath.isStatic() ) ) ) {
-        if( !pathNode.hasQueries() ) {
-          if( pathNode.template != null ) {
-            bestPath = pathNode;
-            bestQuery = null;
-            bestMatch.template = pathNode.template;
-            bestMatch.value = pathNode.value;
-            bestMatchSegment = matchSegment;
-          }
-        } else {
+          ( ( pathNode.depth == bestPath.depth ) && ( pathNode.getType() < bestPath.getType() ) ) ) {
+        // If the path node has a template then assume we will pick the path node.
+        if( pathNode.template != null ) {
+          bestPath = pathNode;
+          bestQuery = null;
+          bestMatch.template = pathNode.template;
+          bestMatch.value = pathNode.value;
+          bestMatchSegment = matchSegment;
+        }
+        // If the path node has queries see if one is better match than the path node itself.
+        if( pathNode.hasQueries() ) {
           bestQuery = pickBestQueryMatch( input, pathNode );
           if( bestQuery != null && bestQuery.template != null ) {
             bestPath = pathNode;
@@ -183,9 +213,16 @@ public class Matcher<V> {
     QueryNode bestNode = null;
     int bestMatchCount = 0;
     for( QueryNode node : pathNode.queries ) {
-      int nodeMatchCount = calcQueryMatchCount( node, input );
-      if( nodeMatchCount > bestMatchCount ) {
-        bestMatchCount = nodeMatchCount;
+      Query extra = node.template.getExtra();
+      int nodeQuerySize = node.template.getQuery().size();
+      int queryMatchCount = calcQueryMatchCount( node, input );
+      boolean matchesNamedQueries = queryMatchCount >= nodeQuerySize;
+      boolean matchesExtraQuery =
+          ( ( extra == null ) ||
+            ( Segment.GLOB_PATTERN.equals( extra.getQueryName() ) ) ||
+            ( input.getQuery().size() > nodeQuerySize ) );
+      if( ( bestNode == null || queryMatchCount > bestMatchCount ) && ( matchesNamedQueries && matchesExtraQuery ) ) {
+        bestMatchCount = queryMatchCount;
         bestNode = node;
       }
     }
@@ -211,8 +248,7 @@ public class Matcher<V> {
   private Match createMatch( MatchSegment bestMatchSegment, PathNode bestPath, QueryNode bestQuery, Template input ) {
     Match match = null;
 
-    // If there is a best path and either no query or a matching query, then
-    if( bestPath != null && ( bestQuery != null || !bestPath.hasQueries() ) ) {
+    if( bestPath != null ) { //&& ( bestQuery != null || !bestPath.hasQueries() ) ) {
 
       if( bestQuery != null ) {
         match = new Match( bestQuery.template, bestQuery.value );
@@ -248,7 +284,9 @@ public class Matcher<V> {
     if( extractSegment != null && inputSegment != null ) {
       String paramName = extractSegment.getParamName();
       if( paramName.length() > 0 ) {
-        params.insertValue( paramName, inputSegment.getValuePattern() );
+        for( Segment.Value value: inputSegment.getValues() ) {
+          params.insertValue( paramName, value.getPattern() );
+        }
       }
     }
   }
@@ -287,6 +325,7 @@ public class Matcher<V> {
     private Template template;
     private V value;
     private Params params;
+    //TODO private Params extra;
 
     private Match( Template template, V value ) {
       this.template = template;
@@ -339,19 +378,31 @@ public class Matcher<V> {
       return query;
     }
 
-    private boolean isStatic() {
-      return( segment.getType() == Segment.STATIC );
+    private int getType() {
+      int type = Segment.UNKNOWN;
+      if( segment != null ) {
+        for( Segment.Value value: segment.getValues() ) {
+          int vType = value.getType();
+          type = type < vType ? type : vType;
+          if( type == Segment.STATIC ) {
+            break;
+          }
+        }
+      }
+      return type;
     }
 
-    private boolean isGlob() {
-      return( ( segment != null ) &&
-              ( segment.getType() == Segment.WILDCARD ) &&
-              ( segment.getMaxAllowed() > 1 ) );
+    private boolean hasGlob() {
+      boolean is = false;
+      if( segment != null ) {
+        for( Segment.Value value: segment.getValues() ) {
+          if( Segment.GLOB == value.getType() ) {
+            is = true;
+          }
+        }
+      }
+      return is;
     }
-
-//    private boolean isLeaf() {
-//      return( children == null || children.size() == 0 );
-//    }
 
     private boolean hasQueries() {
       return( queries != null && queries.size() > 0 );
