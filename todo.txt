@@ -1,31 +1,20 @@
-Usability
-Need to be able to more easily create a template that matches a full URL but only cares about the path for example.
-Right now this will need to looke something like this *://*:*@*:*/**
-I'm not evern sure how this will handle the query and fragment sections.
-To match a real full URL would this be required or even currently work? *://*:*@*:*/**?**#*
-
-Feature
-Write a special pivot for WebHDFS PUT/POST redirects.
-
-Utility
-Add scheme & authority support to uritemplate
-
-Utility
-Add query matching support to uritemplate
-
-Security (IMPORTANT)
-A HTTP BasicAuth challenge must never be issued over an insecure transport.
-
 Feature (IMPORTANT)
 Need to be able to populate the user.name query parameter with the authenticated LDAP user name.
 
-Feature (IMPORTANT)
-Will definitely need to be able to use source URL query params to build the target URL.
-This will eliminate the need to have a separate filter chain for every data node.
-There could be thousands of data nodes.
-In order to do this the source patterns will have to include query params because they might be all
-that distinguishes them from another.  The example here is that the same URL might be used for the
-name node and the data nodes and the data node address will be in a query param.
+Demo
+Finish adding Jobtracker and Tasktracker to the demo.  Docment the same way as HDFS was done on gdocs.
+
+Usability
+Need to be able to more easily create a template that matches a full URL but only cares about the path for example.
+Right now this will need to look something like this *://*:*@*:*/**
+I'm not even sure how this will handle the query and fragment sections.
+To match a real full URL would this be required or even currently work? *://*:*@*:*/**?**#*
+
+Usability
+Sort out the handling of * vs ** for match and expand.
+
+Security (IMPORTANT)
+A HTTP BasicAuth challenge must never be issued over an insecure transport.
 
 Feature (IMPORTANT)
 Need to be able to use something from the authentication to map the authenticated use to a Hadoop user.
@@ -48,28 +37,15 @@ Testing
 Resolve all FindBugs issue.
 
 Demo
-Finish adding Jobtracker and Tasktracker to the demo.  Docment the same way as HDFS was done on gdocs.
-
-Demo
 Get the file browsing stuff to work in the demo.
 
-East Of Use
-The pattern matching/replacement between <target>/<source> and <rewrite> needs to be more consistent.  Fixing this
-would mean supporting query parameters in some form in <target>/<source> I think.
-Perhaps the the service/resource should only have a matching pattern and the rewriting of the request URL should
-be handled by the UrlRewriteFilter on the inbound side.
-
-Ease Of Use
+Usability
 Need to handle the <source> value starting with/without a slash better.
 
-Ease Of Use
+Usability
 Consider changing <service> to <resource>.
 
-Ease Of Use
-The <target> for each service should be able to use logical names for some of the path.
-Otherwise the config isn't very reusable.
-
-Ease Of Use
+Usability
 Really need to get rig of the <rewrite.n> stuff.  It might make more sense to have either <rule> or <url>.
 In any case give some thought to having some form of "param rule" embedded within a "url rule" for
 manipulating the query parameters.
@@ -92,82 +68,45 @@ This might be useful in creating a delegation parameter.
 //      token = new AuthenticatedURL.Token( sig );
 //      conn = new AuthenticatedURL().openConnection( changesUrl, token );
 
-Service Rule
-Need to allow query params from the source url to be used in the construction of the target url.
-Source:/webhdfs/browseDirectory.jsp?namenodeInfoPort=50070&dir=%2F&datanodeAddr=XXXX
-Target:XXXX/browseDirectory.jsp?nameNodeInfoPort=50070&dir=%2F
-
-Rewrite Rules
-Need to be able to URL encode/decode information that is taken from the source URL and placed in the target URL.
-Might be able to assume that everything taken from the source URL needs to be decoded.
-Reverse is not true.  Need to be able to specify which items should be included or alternativly which items should not.
-This might only matter for rewrite rules.
-Source: */browseDirectory.jsp?*
-Target: /gw/vm/webhdfs/browseDirectory.jsp?{1}&datanodeAddr={0,encode}
-
-Config(Filter)
-Need a better solution than <rewrite.1/>.
-
-Add support for configured rewrite patterns
-<rewrite>*/browseDirectory.jsp?* /gw/vm/webhdfs/browseDirectory.jsp#{0}?{1}</rewrite>
-<rewrite>/* /gw/vm/webhdfs/{0}</rewrite>
-
-Service config
-source=/webhdfs/browseDirectory.jsp#*
-target=http://{0}/browseDirectory.jsp
-Converts source URL
-/webhdfs/browseDirectory.jsp#http://hadoop-secure:1022?namenodeInfoPort=50070&dir=%2F
-to target URL
-http://http-secure.home:1022/browseDirectory.jsp?namenodeInfoPort=50070&dir=%2F
-
-Make sessions work.
+Usability
 This needs to automatically add the hadoop.auth cookie if there is an authenticated subject.
 The test for this is that you should be able to browse the data node file system.
 
+Feature
 Should be able to redirect to a HTTPS login form to allow the rest of the console to be HTTP.
 For REST APIs this shouldn't happen.  If the transport isn't secure they should just fail.
 
-Setup HTTPS
+Feature
 Will need to mediate between HTTPS on the inbound side and HTTP on the outbound side.
 The hardest part might just be the URL translation.
 
+Security
 Make sure that the challenge filter will only challenge over a secure transport.
 
+Configuration
 Build into the gateway wrapper the ability to take either a URL or a config string as an init parameter to create
 the chain chain.
 
-Need a utility for string formatting.  Use a Resolver interface.
-Have it resolve from request params, init params, system properties, etc.
-Use {word} pattern so it works well with MessageFormat.  Use the /w in regex.
-
-Add stream params to the message framework.  Should use the
-Should be able to add this to the messages framework.  Also add this to a rewriter for header and parameter.
-
+Feature
 Name for logging stuff.  Use terms "contract based", "resource", "message".
 
-Change the default text for messages and resources to "{}" because people might want to have an empty string as a message
-or a resource.
-
-Convert existing servlets to filters.  Call thim Pivots.
-
+Hygiene
 Convert all System.outs to messages.
 
-Change HttpUrlRewriter to just UrlRewriterFilter and have it handle cooies, headers and parameters.
+Design
+Change HttpUrlRewriter to just UrlRewriterFilter and have it handle cookies, headers and parameters.
 On the input and output side create a registry of mime types to stream url rewriters
 
+Design
 Modify stream rewriter by passing an UrlRewriter interface down to the chain.
 
-String replacement.  Take a matching regular expression that includes groups.  Use these groups and pass them
-to a message format pattern as index based params.  For example (group)(group} -> "my groups: {0}, {1}.  Also use the
-parameter based substution stuff.  For example (group){group) -> "{user} group = {0}, {1}" where the {user} is
-processed before MessageFormat is called.
-
+Design
 For logging create separate modules for each logging framework integration.
 
-Enhance the conf digester to uses object factories so that instead of <filter> a more meaningful thing like
+Usability
+Enhance the config digester to uses object factories so that instead of <filter> a more meaningful thing like
 <trace> could be used.  This would just set the name and class params automatically.  There would need to be
 a registry of factories based on tag name.
-
 
 keytool -keystore client-keystore.jks -alias client -genkey -keyalg RSA
 keytool -keystore server-keystore.jks -alias server -genkey -keyalg RSA
