@@ -21,9 +21,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 class ParamResolver implements Resolver {
 
@@ -33,6 +31,11 @@ class ParamResolver implements Resolver {
   ParamResolver( FilterConfig config, HttpServletRequest request ) {
     this.config = config;
     this.request = request;
+  }
+
+  @Override
+  public Set<String> getNames() {
+    return Collections.emptySet();
   }
 
   @Override

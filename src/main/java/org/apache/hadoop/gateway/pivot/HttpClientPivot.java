@@ -29,7 +29,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -41,7 +40,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Enumeration;
 
 /**
  *
@@ -51,13 +49,13 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  HttpClient httpclient;
+  protected HttpClient client;
 
   public HttpClientPivot() throws ServletException {
-    this.httpclient = new DefaultHttpClient();
+    this.client = new DefaultHttpClient();
   }
 
-  private URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
+  protected URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
     String sourceQuery = request.getQueryString();
     String sourcePathInfo = request.getPathInfo() + ( sourceQuery == null ? "" : "?" + sourceQuery );
     String sourcePattern = getConfig().getInitParameter( "source" );
@@ -79,22 +77,23 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 //    System.out.println( "Target pattern: " + targetPattern );
 //    System.out.println( "Resolved target: " + targetUrl );
 
-    URIBuilder queryBuilder = new URIBuilder( targetUri );
-
-    // Copy the server request parameters to the client request parameters.
-    Enumeration<String> paramNames = request.getParameterNames();
-    while( paramNames.hasMoreElements() ) {
-      String paramName = paramNames.nextElement();
-      String paramValue = request.getParameter( paramName );
-      queryBuilder.addParameter( paramName, paramValue );
-    }
-
-    URI queryURI = queryBuilder.build();
-    return queryURI;
+//    URIBuilder queryBuilder = new URIBuilder( targetUri );
+//
+//    // Copy the server request parameters to the client request parameters.
+//    Enumeration<String> paramNames = request.getParameterNames();
+//    while( paramNames.hasMoreElements() ) {
+//      String paramName = paramNames.nextElement();
+//      String paramValue = request.getParameter( paramName );
+//      queryBuilder.addParameter( paramName, paramValue );
+//    }
+//
+//    URI queryURI = queryBuilder.build();
+//    return queryURI;
+    return targetUri;
   }
 
-  private void executeRequest( HttpUriRequest clientRequest, HttpServletResponse serverResponse ) throws IOException {
-    HttpResponse clientResponse = httpclient.execute( clientRequest );
+  protected void executeRequest( HttpUriRequest clientRequest, HttpServletResponse serverResponse ) throws IOException {
+    HttpResponse clientResponse = client.execute( clientRequest );
 
     // Copy the client response header to the server response.
     serverResponse.setStatus( clientResponse.getStatusLine().getStatusCode() );
@@ -136,7 +135,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     executeRequest( clientRequest, response );
   }
 
-  private HttpEntity createRequestEntity( HttpServletRequest request ) throws IOException {
+  protected HttpEntity createRequestEntity( HttpServletRequest request ) throws IOException {
     InputStream contentStream = request.getInputStream();
     int contentLength = request.getContentLength();
     String contentType = request.getContentType();

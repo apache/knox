@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.hadoop.gateway.config.Config;
@@ -150,16 +149,20 @@ public class GatewayFuncTest {
     {"boolean": true}
     */
     given()
+        //.log().all()
         .param( "user.name", "hdfs" )
         .param( "op", "MKDIRS" )
         .expect()
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( "boolean", equalTo( true ) )
         .when().put( namenodePath + "/test" );
 
     given()
+        //.log().all()
         .param( "op", "LISTSTATUS" )
         .expect()
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
         .body( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
@@ -195,24 +198,17 @@ public class GatewayFuncTest {
     Content-Length: 0
      */
     Response response = given()
+        //.log().all()
         .param( "user.name", "hdfs" )
         .param( "op", "CREATE" )
         .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
         .expect()
-        .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
+        //.log().all()
+        .statusCode( HttpStatus.SC_CREATED )
         .when().put( namenodePath + "/test/file" );
     String location = response.getHeader( "Location" );
     assertThat( location, startsWith( getGatewayPath() + "/gateway/cluster" ) );
-
     log.info( "Location=" + location );
-    given()
-        .param( "user.name", "hdfs" )
-        .param( "op", "CREATE" )
-        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
-        .expect()
-        .statusCode( HttpStatus.SC_CREATED )
-        //.header( "Location", equalTo( location ) )
-        .when().put( location );
 
     /* Get the file.
     curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
@@ -231,9 +227,11 @@ public class GatewayFuncTest {
     Hello, webhdfs user!
     */
     given()
+        //.log().all()
         .param( "user.name", "hdfs" )
         .param( "op", "OPEN" )
         .expect()
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( equalTo( "TEST" ) )
         .when().get( namenodePath + "/test/file" );

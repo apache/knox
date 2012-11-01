@@ -18,8 +18,11 @@
 package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.util.List;
+import java.util.Set;
 
 public interface Resolver {
+
+  public Set<String> getNames();
 
   public List<String> getValues( String name );
 

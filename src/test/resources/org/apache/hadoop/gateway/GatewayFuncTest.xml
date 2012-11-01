@@ -18,8 +18,8 @@
     <name>hadoop</name>
     <service>
         <name>namenode-root</name>
-        <source>/namenode/api/v1</source>
-        <target>http://{namenode.address}/webhdfs/v1/</target>
+        <source>/namenode/api/v1?{**}</source>
+        <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
         <filter>
             <name>pivot</name>
             <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
@@ -27,26 +27,16 @@
     </service>
     <service>
         <name>namenode-children</name>
-        <source>/namenode/api/v1/{path=**}</source>
-        <target>http://{namenode.address}/webhdfs/v1/{path}</target>
+        <source>/namenode/api/v1/{path=**}?{**}</source>
+        <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
         <filter>
             <name>rewrite</name>
             <class>org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
-            <!-- <rewrite.1>*://**/webhdfs/v1/{path=**}?**={**} http://{gateway.address}/gateway/cluster/namenode/api/v1/{path}?**={**}</rewrite.1> -->
-            <rewrite.1>*://{host}:{port}/webhdfs/v1/{path=**}?op={op=*}?user.name={username=*}?overwrite={overwrite=*} http://{gateway.address}/gateway/cluster/datanode/api/v1/{path}?op={op}?user.name={username}?overwrite={overwrite}?host={host}?port={port}</rewrite.1>
+            <rewrite>webhdfs://*:*/{path=**} http://{gateway.address}/gateway/cluster/namenode/api/v1/{path=**}</rewrite>
         </filter>
         <filter>
             <name>pivot</name>
-            <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
-        </filter>
-    </service>
-    <service>
-        <name>datanode</name>
-        <source>/datanode/api/v1/{path=**}?op={op=*}?user.name={username=*}?overwrite={overwrite=*}?host={host=*}?port={port=*}</source>
-        <target>http://{host}:{port}/webhdfs/v1/{path=**}?op={op=*}?user.name={username=*}?overwrite={overwrite=*}</target>
-        <filter>
-            <name>pivot</name>
-            <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <class>org.apache.hadoop.gateway.pivot.WebHdfsPivot</class>
         </filter>
     </service>
 </gateway>

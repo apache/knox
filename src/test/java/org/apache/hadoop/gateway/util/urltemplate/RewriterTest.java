@@ -24,8 +24,11 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -36,7 +39,7 @@ public class RewriterTest {
   public void testBasicRewrite() throws Exception {
     URI inputUri, outputUri;
     Template inputTemplate, outputTemplate;
-    Resolver resolver = new Params();
+    MockParams resolver = new MockParams();
 
     inputUri = new URI( "path-1/path-2" );
     inputTemplate = Parser.parse( "{path-1-name}/{path-2-name}" );
@@ -55,6 +58,26 @@ public class RewriterTest {
     outputTemplate = Parser.parse( "{param-value}/{path-name}" );
     outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
     assertThat( outputUri.toString(), equalTo( "some-param-value/some-path" ) );
+  }
+
+  @Test
+  public void testQueryExtraRewrite() throws Exception {
+    URI inputUri, outputUri;
+    Template inputTemplate, outputTemplate;
+    MockParams params = new MockParams();
+
+    inputUri = new URI( "path?query=value" );
+    inputTemplate = Parser.parse( "path?{**}" );
+    outputTemplate = Parser.parse( "path?{**}" );
+
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params );
+    assertThat( outputUri.toString(), equalTo( "path?query=value" ) );
+
+    inputUri = new URI( "path?query=value" );
+    inputTemplate = Parser.parse( "path?{*}" );
+    outputTemplate = Parser.parse( "path?{*}" );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params );
+    assertThat( outputUri.toString(), equalTo( "path?query=value" ) );
   }
 
   @Test
@@ -144,6 +167,17 @@ public class RewriterTest {
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
+    actualInput = new URI( "/datanode/api/v1/test?user.name=hdfs&op=CREATE&overwrite=false&host=vm.home&port=50075" );
+    expectOutput = new URI( "http://vm.home:50075/webhdfs/v1/test?op=CREATE&user.name=hdfs&overwrite=false" );
+    sourcePattern = Parser.parse( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    // Note: Had to change the order of the expected query params to match.
+    // This is probably dependent upon iterator ordering and therefore might be a test issue.
+    // Unfortunately URI.equals() doesn't ignore query param order.
+    // TODO: Enhance Template.equals() to ignore query param order and use that here.
+    assertThat( actualOutput, equalTo( expectOutput ) );
+
     // *://**/webhdfs/v1/{path=**}?**={**}
     // http://{gateway.address}/gateway/cluster/namenode/api/v1/{path}?**={**}
     // 1) Should not add query if none in source.
@@ -168,6 +202,11 @@ public class RewriterTest {
     private TestResolver( FilterConfig config, HttpServletRequest request ) {
       this.config = config;
       this.request = request;
+    }
+
+    @Override
+    public Set<String> getNames() {
+      return Collections.emptySet();
     }
 
     // Picks the values from either the request or the config in that order.

@@ -19,6 +19,8 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Set;
 
 //TODO: There are usability issues when trying to rewrite only the path portion of a fully quallified URL.
 // See RewriterTeset.testRewriteUrlWithHttpServletRequestAndFilterConfig
@@ -55,15 +57,45 @@ public class Rewriter {
       throws URISyntaxException {
     URI outputUri = null;
     Matcher<Template>.Match match = rules.match( input );
+    Params params;
     if( match != null ) {
       if( resolver == null ) {
-        resolver = match.getParams();
+        params = match.getParams();
       } else {
-        resolver = new CompositeResolver( match.getParams(), resolver );
+        params = new RewriteParams( match.getParams(), resolver );
       }
-      outputUri = Expander.expand( match.getValue(), resolver );
+      outputUri = Expander.expand( match.getValue(), params );
     }
     return outputUri;
+  }
+
+  private class RewriteParams implements Params {
+    private Params params;
+    private Resolver[] resolvers;
+
+    private RewriteParams( Params params, Resolver... resolvers ) {
+      this.params = params;
+      this.resolvers = resolvers;
+    }
+
+    @Override
+    public Set<String> getNames() {
+      return params.getNames();
+    }
+
+    @Override
+    public List<String> getValues( String name ) {
+      List<String> values = params.getValues( name );
+      if( values == null && resolvers != null ) {
+        for( Resolver resolver: resolvers ) {
+          values = resolver.getValues( name );
+          if( values != null ) {
+            break;
+          }
+        }
+      }
+      return values;
+    }
   }
 
 }

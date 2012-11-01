@@ -512,6 +512,17 @@ public class ParserTest {
     assertThat( template.getHost(), nullValue() );
     assertThat( template.getPort(), nullValue() );
 
+    text = "//{host}:{port}";
+    template = Parser.parse( text );
+    String image = template.toString();
+    assertThat( image, equalTo( "//{host=*}:{port=*}" ) );
+    assertThat( template.hasAuthority(), equalTo( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost().getParamName(), equalTo( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), equalTo( "*" ) );
+    assertThat( template.getPort().getParamName(), equalTo( "port" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), equalTo( "*" ) );
   }
 
   @Test

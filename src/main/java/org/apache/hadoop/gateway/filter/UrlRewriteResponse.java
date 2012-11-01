@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter;
 
+import apple.laf.JRSUIConstants;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -29,10 +30,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -71,8 +69,12 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
   private String rewriteHeaderValue( String value ) {
     try {
       Template input = Parser.parse( value );
-      String output = rewriter.rewrite( input, this ).toString();
-      return output.toString();
+      String output = value;
+      URI uri = rewriter.rewrite( input, this );
+      if( uri != null ) {
+        output = uri.toString();
+      }
+      return output;
     } catch( URISyntaxException e ) {
       throw new IllegalArgumentException( e );
     }
@@ -122,8 +124,13 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
   }
 
   @Override
+  public Set<String> getNames() {
+    return Collections.emptySet();
+  }
+
+  @Override
   @SuppressWarnings( "unchecked" )
   public List<String> getValues( String name ) {
-    return (List<String>)Arrays.asList( config.getInitParameter( name ) );
+    return Arrays.asList( config.getInitParameter( name ) );
   }
 }

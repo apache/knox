@@ -148,21 +148,36 @@ public class Template {
       b.append( "//" );
       if( username != null || password != null ) {
         if( username != null ) {
-          b.append( username.getFirstValue().getPattern() );
+          buildSegmentValue( b, username, username.getFirstValue() );
         }
         if( password != null ) {
           b.append( ':' );
-          b.append( password.getFirstValue().getPattern() );
+          buildSegmentValue( b, password, password.getFirstValue() );
         }
         b.append( "@" );
-        if( host != null ) {
-          b.append( host.getFirstValue().getPattern() );
-        }
-        if( port != null ) {
-          b.append( ':' );
-          b.append( port.getFirstValue().getPattern() );
-        }
       }
+      if( host != null ) {
+        buildSegmentValue( b, host, host.getFirstValue() );
+      }
+      if( port != null ) {
+        b.append( ':' );
+        buildSegmentValue( b, port, port.getFirstValue() );
+      }
+    }
+  }
+
+  private void buildSegmentValue( StringBuilder b, Segment s, Segment.Value v ) {
+    String paramName = s.getParamName();
+    if( paramName != null && paramName.length() > 0 ) {
+      b.append( "{" );
+      b.append( s.getParamName() );
+      if( v.getType() != Segment.DEFAULT ) {
+        b.append( '=' );
+        b.append( v.getPattern() );
+      }
+      b.append( '}' );
+    } else {
+      b.append( s.getFirstValue().getPattern() );
     }
   }
 
@@ -195,11 +210,10 @@ public class Template {
 
   private void buildQuery( StringBuilder b ) {
     if( hasQuery ) {
-      b.append( '?' );
-      boolean first = true;
+      int count = 0;
       for( Query segment: query.values() ) {
-        if( first ) {
-          first = false;
+        if( ++count == 1 ) {
+          b.append( '?' );
         } else {
           b.append( '&' );
         }
@@ -218,6 +232,17 @@ public class Template {
             b.append( value.getPattern() );
           }
         }
+      }
+      if( extra != null ) {
+        if( ++count == 0 ) {
+          b.append( '?' );
+        } else {
+          b.append( '&' );
+        }
+        buildSegmentValue( b, extra, extra.getFirstValue() );
+      }
+      if( count == 0 ) {
+        b.append( '?' );
       }
     }
   }
@@ -241,7 +266,7 @@ public class Template {
       buildQuery( b );
       buildFragment( b );
       s = b.toString();
-      image = s;
+      //image = s;
     }
     return s;
   }

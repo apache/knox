@@ -19,60 +19,60 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Expander {
 
-  public static URI expand( Template template, Resolver resolver ) throws URISyntaxException {
-    return new Expander().expandTemplate( template, resolver );
+  public static URI expand( Template template, Params params ) throws URISyntaxException {
+    return new Expander().expandTemplate( template, params );
   }
 
-  public URI expandTemplate( Template template, Resolver resolver ) throws URISyntaxException {
+  public URI expandTemplate( Template template, Params params ) throws URISyntaxException {
     StringBuilder builder = new StringBuilder();
-    expandScheme( template, resolver, builder );
-    expandAuthority( template, resolver, builder );
-    expandPath( template, resolver, builder );
-    expandQuery( template, resolver, builder );
-    expandFragment( template, resolver, builder );
+    Set<String> names = new HashSet<String>( params.getNames() );
+    expandScheme( template, names, params, builder );
+    expandAuthority( template, names, params, builder );
+    expandPath( template, names, params, builder );
+    expandQuery( template, names, params, builder );
+    expandFragment( template, names, params, builder );
     return new URI( builder.toString() );
   }
 
-  private static void expandScheme( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandScheme( Template template, Set<String> names, Params params, StringBuilder builder ) {
     Segment segment = template.getScheme();
     if( segment != null ) {
-      expandSingleValue( template.getScheme(), resolver, builder );
+      expandSingleValue( template.getScheme(), names, params, builder );
       builder.append( ":" );
     }
   }
 
-  private static void expandAuthority( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandAuthority( Template template, Set<String> names, Params params, StringBuilder builder ) {
     if( template.hasAuthority() ) {
       builder.append( "//" );
       Segment username = template.getUsername();
       Segment password = template.getPassword();
       Segment host = template.getHost();
       Segment port = template.getPort();
-      expandSingleValue( username, resolver, builder );
+      expandSingleValue( username, names, params, builder );
       if( password != null ) {
         builder.append( ":" );
-        expandSingleValue( password, resolver, builder );
+        expandSingleValue( password, names, params, builder );
       }
       if( username != null || password != null ) {
         builder.append( "@" );
       }
       if( host != null ) {
-        expandSingleValue( host, resolver, builder );
+        expandSingleValue( host, names, params, builder );
       }
       if( port != null ) {
         builder.append( ":" );
-        expandSingleValue( port, resolver, builder );
+        expandSingleValue( port, names, params, builder );
       }
     }
   }
 
-  private static void expandPath( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandPath( Template template, Set<String> names, Params params, StringBuilder builder ) {
     if( template.isAbsolute() ) {
       builder.append( "/" );
     }
@@ -82,6 +82,8 @@ public class Expander {
         builder.append( "/" );
       }
       Path segment = path.get( i );
+      String name = segment.getParamName();
+      names.remove( name );
       Segment.Value value = segment.getFirstValue();
       switch( value.getType() ) {
         case( Segment.STATIC ):
@@ -92,8 +94,7 @@ public class Expander {
         case( Segment.STAR ):
         case( Segment.GLOB ):
         case( Segment.REGEX ):
-          String name = segment.getParamName();
-          List<String> values = resolver.getValues( name );
+          List<String> values = params.getValues( name );
           expandPathValues( segment, values, builder );
           break;
       }
@@ -120,24 +121,30 @@ public class Expander {
     }
   }
 
-  private static void expandQuery( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandQuery( Template template, Set<String> names, Params params, StringBuilder builder ) {
+    AtomicInteger index = new AtomicInteger( 0 );
+    expandExplicitQuery( template, names, params, builder, index );
+    expandExtraQuery( template, names, params, builder, index );
+    if( template.hasQuery() && index.get() == 0 ) {
+      builder.append( '?' );
+    }
+  }
+
+  private static void expandExplicitQuery( Template template, Set<String> names, Params params, StringBuilder builder, AtomicInteger index ) {
     Collection<Query> query = template.getQuery().values();
-    if( query.isEmpty() ) {
-      if( template.hasQuery() ) {
-        builder.append( "?" );
-      }
-    } else {
-      boolean first = true;
+    if( !query.isEmpty() ) {
       Iterator<Query> iterator = query.iterator();
       while( iterator.hasNext() ) {
-        if( first ) {
+        int i = index.incrementAndGet();
+        if( i == 1 ) {
           builder.append( "?" );
-          first = false;
         } else {
           builder.append( "&" );
         }
         Query segment = iterator.next();
         String queryName = segment.getQueryName();
+        String paramName = segment.getParamName();
+        names.remove( paramName );
         for( Segment.Value value: segment.getValues() ) {
           switch( value.getType() ) {
             case( Segment.STATIC ):
@@ -150,11 +157,36 @@ public class Expander {
             case( Segment.GLOB ):
             case( Segment.STAR ):
             case( Segment.REGEX ):
-              String paramName = segment.getParamName();
-              List<String> values = resolver.getValues( paramName );
+              List<String> values = params.getValues( paramName );
               expandQueryValues( segment, queryName, values, builder );
               break;
             default:
+          }
+        }
+      }
+    }
+  }
+
+  private static void expandExtraQuery( Template template, Set<String> names, Params params, StringBuilder builder, AtomicInteger index ) {
+    Query extra = template.getExtra();
+    if( extra != null ) {
+      // Need to copy to an array because we are going to modify the set while iterating.
+      String[] array = new String[ names.size() ];
+      names.toArray( array );
+      for( String name: array ) {
+        names.remove( name );
+        List<String> values = params.getValues( name );
+        if( values != null ) {
+          for( String value: values ) {
+            int i = index.incrementAndGet();
+            if( i == 1 ) {
+              builder.append( "?" );
+            } else {
+              builder.append( "&" );
+            }
+            builder.append( name );
+            builder.append( "=" );
+            builder.append( value );
           }
         }
       }
@@ -183,25 +215,28 @@ public class Expander {
     }
   }
 
-  private static void expandFragment( Template template, Resolver resolver, StringBuilder builder ) {
+  private static void expandFragment( Template template, Set<String> names, Params params, StringBuilder builder ) {
     if( template.hasFragment() ) {
       builder.append( "#" );
     }
-    expandSingleValue( template.getFragment(), resolver, builder );
+    expandSingleValue( template.getFragment(), names, params, builder );
   }
 
-  private static void expandSingleValue( Segment segment, Resolver resolver, StringBuilder builder ) {
+  private static void expandSingleValue( Segment segment, Set<String> names, Params params, StringBuilder builder ) {
     if( segment != null ) {
+      String name = segment.getParamName();
+      names.remove( name );
       Segment.Value value = segment.getFirstValue();
       switch( value.getType() ) {
         case( Segment.STATIC ):
           String pattern = value.getPattern();
           builder.append( pattern );
           break;
+        case( Segment.DEFAULT ):
         case( Segment.STAR ):
+        case( Segment.GLOB ):
         case( Segment.REGEX ):
-          String name = segment.getParamName();
-          List<String> values = resolver.getValues( name );
+          List<String> values = params.getValues( name );
           if( values != null && !values.isEmpty() ) {
             builder.append( values.get( 0 ) );
           }

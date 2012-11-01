@@ -256,7 +256,7 @@ public class Matcher<V> {
         match = new Match( bestPath.template, bestPath.value );
       }
 
-      Params matchParams = new Params();
+      MatchParams matchParams = new MatchParams();
 
       // Add the matching query segments to the end of the list.
       if( bestQuery != null ) {
@@ -265,6 +265,25 @@ public class Matcher<V> {
           Query inputSegment = inputQuery.get( templateSegment.getQueryName() );
           if( inputSegment != null && templateSegment.matches( inputSegment ) ) {
             extractSegmentParams( templateSegment, inputSegment, matchParams );
+          }
+        }
+      }
+
+      // If the template has the "extra" query param then collect query params that were
+      // not already matched.
+      if( bestQuery != null ) {
+        Query extra = bestQuery.template.getExtra();
+        if( extra != null ) {
+          String paramName = extra.getParamName();
+          if( paramName != null && paramName.length() > 0 ) {
+            for( Query query: input.getQuery().values() ) {
+              String queryName = query.getQueryName();
+              if( matchParams.getValues( queryName ) == null ) {
+                for( Segment.Value value: query.getValues() ) {
+                  matchParams.addValue( queryName, value.getPattern() );
+                }
+              }
+            }
           }
         }
       }
@@ -280,7 +299,7 @@ public class Matcher<V> {
     return match;
   }
 
-  private static void extractSegmentParams( Segment extractSegment, Segment inputSegment, Params params ) {
+  private void extractSegmentParams( Segment extractSegment, Segment inputSegment, MatchParams params ) {
     if( extractSegment != null && inputSegment != null ) {
       String paramName = extractSegment.getParamName();
       if( paramName.length() > 0 ) {
@@ -319,6 +338,40 @@ public class Matcher<V> {
       this.templateSegment = templateSegment;
       this.inputSegment = inputSegment;
     }
+  }
+
+  private class MatchParams implements Params {
+
+    private Map<String,List<String>> map = new HashMap<String,List<String>>();
+
+    public Set<String> getNames() {
+      return map.keySet();
+    }
+
+    private List<String> getOrAddValues( String name ) {
+      List<String> values = getValues( name );
+      if( values == null ) {
+        values = new ArrayList<String>( 1 );
+        map.put( name, values );
+      }
+      return values;
+    }
+
+    public void addValue( String name, String value ) {
+      List<String> values = getOrAddValues( name );
+      values.add( value );
+    }
+
+    public void insertValue( String name, String value ) {
+      List<String> values = getOrAddValues( name );
+      values.add( 0, value );
+    }
+
+    @Override
+    public List<String> getValues( String name ) {
+      return map.get( name );
+    }
+
   }
 
   public class Match {

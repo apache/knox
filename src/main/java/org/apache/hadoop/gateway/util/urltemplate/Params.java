@@ -17,45 +17,10 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.util.*;
+import java.util.Set;
 
-public class Params implements Resolver {
+public interface Params extends Resolver {
 
-  private Map<String,List<String>> map = new HashMap<String,List<String>>();
-
-//  public void addName( String name ) {
-//    List<String> values = getValues( name );
-//    if( values == null ) {
-//      values = new ArrayList<String>();
-//      map.put( name, values );
-//    }
-//  }
-
-  public Set<String> getNames() {
-    return map.keySet();
-  }
-
-  private List<String> getOrAddValues( String name ) {
-    List<String> values = getValues( name );
-    if( values == null ) {
-      values = new ArrayList<String>( 1 );
-      map.put( name, values );
-    }
-    return values;
-  }
-
-  public void addValue( String name, String value ) {
-    List<String> values = getOrAddValues( name );
-    values.add( value );
-  }
-
-  public void insertValue( String name, String value ) {
-    List<String> values = getOrAddValues( name );
-    values.add( 0, value );
-  }
-
-  public List<String> getValues( String name ) {
-    return map.get( name );
-  }
+  Set<String> getNames();
 
 }

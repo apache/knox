@@ -17,28 +17,38 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-import java.util.List;
+import java.util.*;
 
-public class CompositeResolver implements Resolver {
+public class MockParams implements Params {
 
-  private Resolver[] delegates;
+  private Map<String,List<String>> map = new HashMap<String,List<String>>();
 
-  public CompositeResolver( Resolver... resolvers ) {
-    this.delegates = resolvers;
+  public Set<String> getNames() {
+    return map.keySet();
+  }
+
+  private List<String> getOrAddValues( String name ) {
+    List<String> values = getValues( name );
+    if( values == null ) {
+      values = new ArrayList<String>( 1 );
+      map.put( name, values );
+    }
+    return values;
+  }
+
+  public void addValue( String name, String value ) {
+    List<String> values = getOrAddValues( name );
+    values.add( value );
+  }
+
+  public void insertValue( String name, String value ) {
+    List<String> values = getOrAddValues( name );
+    values.add( 0, value );
   }
 
   @Override
   public List<String> getValues( String name ) {
-    List<String> values = null;
-    if( delegates != null ) {
-      for( Resolver resolver: delegates ) {
-        values = resolver.getValues( name );
-        if( values != null ) {
-          break;
-        }
-      }
-    }
-    return values;
+    return map.get( name );
   }
 
 }

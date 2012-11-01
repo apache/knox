@@ -107,6 +107,7 @@ public class MatcherTest {
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value" ) );
 
     patternTemplate = Parser.parse( "/path?{**}" );
     inputTemplate = Parser.parse( "/path" );
@@ -129,6 +130,15 @@ public class MatcherTest {
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
     assertThat( match.getParams().getValues( "query" ), nullValue() );
+
+    patternTemplate = Parser.parse( "/path?{**}" );
+    inputTemplate = Parser.parse( "/path?query=value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "T" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
+    assertThat( match.getParams().getValues( "query" ), hasItem( "value" ) );
+    assertThat( match.getParams().getValues( "query" ).size(), equalTo( 1 ) );
 
     patternTemplate = Parser.parse( "/path?{query}&{*}" );
     inputTemplate = Parser.parse( "/path?query=value" );
