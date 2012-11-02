@@ -40,6 +40,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -49,10 +51,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  protected HttpClient client;
-
   public HttpClientPivot() throws ServletException {
-    this.client = new DefaultHttpClient();
   }
 
   protected URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
@@ -92,7 +91,25 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     return targetUri;
   }
 
-  protected void executeRequest( HttpUriRequest clientRequest, HttpServletResponse serverResponse ) throws IOException {
+  protected void executeRequest( HttpUriRequest clientRequest, HttpServletRequest originalRequest, HttpServletResponse serverResponse ) throws IOException {
+
+
+    Set<String> ignored = new HashSet<String>();
+    ignored.add( "Content-Length" );
+    ignored.add( "Host" );
+
+//    Enumeration<String> names = originalRequest.getHeaderNames();
+//    while( names.hasMoreElements() ) {
+//      String name = names.nextElement();
+//      if( !ignored.contains( name ) ) {
+//        Enumeration<String> values = originalRequest.getHeaders( name );
+//        while( values.hasMoreElements() ) {
+//          clientRequest.addHeader( name, values.nextElement() );
+//        }
+//      }
+//    }
+
+    HttpClient client = new DefaultHttpClient();
     HttpResponse clientResponse = client.execute( clientRequest );
 
     // Copy the client response header to the server response.
@@ -124,7 +141,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
       throws IOException, URISyntaxException {
     URI requestUri = resolveRequestUri( request );
     HttpGet clientRequest = new HttpGet( requestUri );
-    executeRequest( clientRequest, response );
+    executeRequest( clientRequest, request, response );
   }
 
   @Override
@@ -132,7 +149,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
       throws IOException, URISyntaxException {
     URI requestUri = resolveRequestUri( request );
     HttpOptions clientRequest = new HttpOptions( requestUri );
-    executeRequest( clientRequest, response );
+    executeRequest( clientRequest, request, response );
   }
 
   protected HttpEntity createRequestEntity( HttpServletRequest request ) throws IOException {
@@ -153,21 +170,21 @@ public class HttpClientPivot extends AbstractGatewayPivot {
   @Override
   public void doPut( HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
+    HttpEntity entity = createRequestEntity( request );
     URI requestUri = resolveRequestUri( request );
     HttpPut clientRequest = new HttpPut( requestUri );
-    HttpEntity entity = createRequestEntity( request );
     clientRequest.setEntity( entity );
-    executeRequest( clientRequest, response );
+    executeRequest( clientRequest, request, response );
   }
 
   @Override
   public void doPost( HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
+    HttpEntity entity = createRequestEntity( request );
     URI requestUri = resolveRequestUri( request );
     HttpPost clientRequest = new HttpPost( requestUri );
-    HttpEntity entity = createRequestEntity( request );
     clientRequest.setEntity( entity );
-    executeRequest( clientRequest, response );
+    executeRequest( clientRequest, request, response );
   }
 
   @Override
@@ -175,7 +192,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
       throws IOException, URISyntaxException {
     URI requestUri = resolveRequestUri( request );
     HttpDelete clientRequest = new HttpDelete( requestUri );
-    executeRequest( clientRequest, response );
+    executeRequest( clientRequest, request, response );
   }
 
 }

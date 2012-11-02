@@ -101,14 +101,20 @@ public class ShiroEmbeddedLdapTest {
         .when().get( url );
 
     given()
-        .auth().basic( "allowedUser","invalid-password")
+        .auth().basic( "allowedUser", "password" )
+        .expect().body( equalTo( "<html>Hello!</html>" ) )
+        .when().get( url );
+
+    given()
+        .auth().basic( "deniedUser","invalid-password")
         .expect().statusCode( 401 )
         .when().get( url );
 
     given()
-        .auth().basic( "allowedUser", "password" )
-        .expect().body( equalTo( "<html>Hello!</html>" ) )
+        .auth().basic( "invalidUser", "password" )
+        .expect().statusCode( 401 )
         .when().get( url );
+
   }
 
   private static class TestFilter implements Filter {

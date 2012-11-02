@@ -20,7 +20,9 @@ package org.apache.hadoop.gateway.pivot;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -40,21 +42,26 @@ public class WebHdfsPivot extends HttpClientPivot {
   @Override
   public void doPut( HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
+    HttpEntity entity = createRequestEntity( request );
+    URI requestUri = resolveRequestUri( request );
     if( "CREATE".equals( request.getParameter( "op" ) ) ) {
-      URI requestUri = resolveRequestUri( request );
       HttpPut clientRequest = new HttpPut( requestUri );
+      HttpClient client = new DefaultHttpClient();
       HttpResponse clientResponse = client.execute( clientRequest );
       EntityUtils.consume( clientResponse.getEntity() );
       if( clientResponse.getStatusLine().getStatusCode() == HttpStatus.TEMPORARY_REDIRECT_307 ) {
         Header locationHeader = clientResponse.getFirstHeader( "Location" );
         String location = locationHeader.getValue();
         clientRequest = new HttpPut( location );
-        HttpEntity entity = createRequestEntity( request );
         clientRequest.setEntity( entity );
-        executeRequest( clientRequest, response );
+        executeRequest( clientRequest, request, response );
       }
     } else {
-      super.doPut( request, response );
+      HttpPut clientRequest = new HttpPut( requestUri );
+      if( entity.getContentLength() > 0 ) {
+        clientRequest.setEntity( entity );
+      }
+      executeRequest( clientRequest, request, response );
     }
   }
 

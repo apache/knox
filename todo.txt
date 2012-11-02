@@ -1,12 +1,25 @@
+Bug
+Right now any parameter that wasn't used in an expansion by the time the query is expanded is added to the
+URL if there is a {**} in the template.  This should only expand unused query parameters.  It also doesn't
+take into account anything that might later be expanded in the fragment.  So
+(1) Need to know where parameters came from.
+(2) Need to do explicit expansion of query and fragment before implicit expansion.
+
+Design
+If all query templates are optional make sure there is no ? at the end of the
+
 Feature (IMPORTANT)
 Need to be able to populate the user.name query parameter with the authenticated LDAP user name.
 
 Demo
 Finish adding Jobtracker and Tasktracker to the demo.  Docment the same way as HDFS was done on gdocs.
 
+Limitation
+It looks like a fragment can contain name values pairs much like a query.
+
 Usability
 Need to be able to more easily create a template that matches a full URL but only cares about the path for example.
-Right now this will need to look something like this *://*:*@*:*/**
+Right now this will need to look something like this *://*:*@*:*/**?**#**
 I'm not even sure how this will handle the query and fragment sections.
 To match a real full URL would this be required or even currently work? *://*:*@*:*/**?**#*
 
@@ -15,6 +28,8 @@ Sort out the handling of * vs ** for match and expand.
 
 Security (IMPORTANT)
 A HTTP BasicAuth challenge must never be issued over an insecure transport.
+Probably need to put a filter in place before shiro/spring-security to enforce this.
+Might just want to put this in as a "global" filter in front of the gateway servlet.
 
 Feature (IMPORTANT)
 Need to be able to use something from the authentication to map the authenticated use to a Hadoop user.

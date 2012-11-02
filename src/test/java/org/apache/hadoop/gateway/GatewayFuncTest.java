@@ -22,12 +22,19 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
+import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.util.Streams;
 import org.apache.hadoop.test.IntegrationTests;
 import org.apache.hadoop.test.MediumTests;
+import org.apache.shiro.web.env.EnvironmentLoaderListener;
+import org.apache.shiro.web.servlet.ShiroFilter;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,15 +42,24 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.servlet.DispatcherType;
 import java.io.IOException;
 import java.net.URL;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -51,8 +67,15 @@ import static org.junit.Assert.assertThat;
 @Category( { IntegrationTests.class, MediumTests.class } )
 public class GatewayFuncTest {
 
+//  @Test
+//  public void demoWait() throws IOException {
+//    System.out.println( "Press any key to continue. Server at " + getGatewayPath() );
+//    System.in.read();
+//  }
+
   private static Logger log = LoggerFactory.getLogger( GatewayFuncTest.class );
 
+  private static EmbeddedApacheDirectoryServer ldap;
   private static Server gateway;
 
   public static void startGateway() throws Exception {
@@ -61,25 +84,43 @@ public class GatewayFuncTest {
     params.put( "gateway.address", "localhost:8888" );
     params.put( "namenode.address", "vm.home:50070" );
     params.put( "datanode.address", "vm.home:50075" );
+    params.put( "templeton.address", "vm.home:50111" );
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Config config = GatewayConfigFactory.create( configUrl, params );
 
     ContextHandlerCollection contexts = new ContextHandlerCollection();
-    contexts.addHandler( JettyGatewayFactory.create( "/gateway/cluster", config ) );
+    Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
+    ((ServletContextHandler)handler).addEventListener( new EnvironmentLoaderListener() );
+    contexts.addHandler( handler );
 
-    gateway = new Server( 8888 ); // Picks an open port.
+    gateway = new Server( 8888 );
     gateway.setHandler( contexts );
     gateway.start();
   }
 
+  private static void startLdap() throws Exception{
+    URL usersUrl = ClassLoader.getSystemResource( "users.ldif" );
+    ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, 33389 );
+    ldap.start();
+    ldap.loadLdif( usersUrl );
+  }
+
   @BeforeClass
   public static void setupSuite() throws Exception {
+    org.apache.log4j.Logger.getLogger( "org.apache.shiro" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.http" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.http.wire" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.conn" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.client" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.http.client" ).setLevel( org.apache.log4j.Level.ALL );
+
 //    URL loginUrl = ClassLoader.getSystemResource( "jaas.conf" );
 //    System.setProperty( "java.security.auth.login.config", loginUrl.getFile() );
 //    URL krbUrl = ClassLoader.getSystemResource( "krb5.conf" );
 //    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
 
+    startLdap();
     startGateway();
   }
 
@@ -87,6 +128,7 @@ public class GatewayFuncTest {
   public static void cleanupSuite() throws Exception {
     gateway.stop();
     gateway.join();
+    ldap.stop();
   }
 
   private String getGatewayPath() {
@@ -95,7 +137,25 @@ public class GatewayFuncTest {
   }
 
   @Test
-  public void testBasicHdfsOperations() throws IOException {
+  public void testLdap() throws IOException {
+    String namenodePath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
+
+    log.info( "Making REST API call." );
+    // Attempt to delete the test directory in case a previous run failed.
+    // Ignore any result.
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "DELETE" )
+        .param( "recursive", "true" )
+        .expect()
+            //.log().all()
+        .when()
+        .delete( namenodePath + "/test" );
+  }
+
+    @Test
+  public void testBasicHdfsUseCase() throws IOException {
     String namenodePath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
     //String namenodePath = "http://vm-hdpt:50070/webhdfs/v1";
 
@@ -252,6 +312,143 @@ public class GatewayFuncTest {
         .param( "op", "DELETE" )
         .param( "recursive", "true" )
         .when().delete( namenodePath + "/test" );
+  }
+
+  @Test
+  public void testBasicTempletonUserCase() throws IOException {
+    String hdfsPath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
+    String templetonPath = getGatewayPath() + "/gateway/cluster/templeton/api/v1";
+
+    /* Delete anything left over from a previous run.
+    curl -X DELETE 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount?user.name=hdfs&op=DELETE&recursive=true'
+     */
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "DELETE" )
+        .param( "recursive", "true" )
+        .expect()
+        //.log().all()
+        .when()
+        .delete( hdfsPath + "/user/hdfs/test" );
+
+    /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+     */
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "CREATE" )
+        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_CREATED )
+        .when().put( hdfsPath + "/user/hdfs/test/hadoop-examples.jar" );
+
+    /* Put the data file into HDFS (CHANGES.txt)
+    curl -X PUT --data-binary @CHANGES.txt 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/CHANGES.txt?user.name=hdfs&op=CREATE'
+     */
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "CREATE" )
+        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_CREATED )
+        .when().put( hdfsPath + "/user/hdfs/test/input/CHANGES.txt" );
+
+    /* Create the output directory
+    curl -X PUT 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
+    */
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "MKDIRS" )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .body( "boolean", equalTo( true ) )
+        .when().put( hdfsPath + "/user/hdfs/test/output" );
+
+    /* Submit the job
+    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/gateway/cluster/templeton/api/v1/mapreduce/jar'
+    ﻿{"id":"job_201210301335_0059"}
+    */
+    String json = given()
+        //.log().all()
+        .formParam( "user.name", "hdfs" )
+        .formParam( "jar", "test/hadoop-examples.jar" )
+        .formParam( "class", "org.apache.hadoop.examples.WordCount" )
+        .formParam( "arg", "test/input", "test/output" )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .when().post( templetonPath + "/mapreduce/jar" ).asString();
+    String job = from( json ).getString( "id" );
+
+    /* Get the job status
+    curl 'http://vm:50111/templeton/v1/queue/:jobid?user.name=hdfs'
+    */
+    String status = given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .pathParam( "job", job )
+        .expect()
+        //.log().all()
+        .body( "status.jobId", equalTo( job ) )
+        .statusCode( HttpStatus.SC_OK )
+        .when().get( templetonPath + "/queue/{job}" ).asString();
+    log.info( status );
+
+    // Can't really check here because the job won't be done.
+    /* Retrieve results
+    curl 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
+    */
+    given()
+        //.log().all()
+        .param( "user.name", "hdfs" )
+        .param( "op", "LISTSTATUS" )
+        .expect()
+        .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        //.body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .when()
+        .get( hdfsPath + "/user/hdfs/test/output" );
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testJndiLdapAuthenticate() {
+
+    Hashtable env = new Hashtable();
+    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
+    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
+    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
+    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
+    env.put( Context.SECURITY_CREDENTIALS, "password" );
+
+    try {
+      DirContext ctx = new InitialDirContext( env );
+      ctx.close();
+    } catch( NamingException e ) {
+      e.printStackTrace();
+      fail( "Should have been able to find the allowedUser and create initial context." );
+    }
+
+    env = new Hashtable();
+    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
+    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
+    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
+    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
+    env.put( Context.SECURITY_CREDENTIALS, "invalid-password" );
+
+    try {
+      DirContext ctx = new InitialDirContext( env );
+      fail( "Should have thrown a NamingException to indicate invalid credentials." );
+    } catch( NamingException e ) {
+      // This exception should be thrown.
+    }
   }
 
 }

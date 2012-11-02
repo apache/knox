@@ -16,19 +16,29 @@
 -->
 <gateway>
     <name>hadoop</name>
+
     <service>
         <name>namenode-root</name>
         <source>/namenode/api/v1?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
         <filter>
+            <name>shiro</name>
+            <class>org.apache.shiro.web.servlet.ShiroFilter</class>
+        </filter>
+        <filter>
             <name>pivot</name>
             <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
         </filter>
     </service>
+
     <service>
         <name>namenode-children</name>
         <source>/namenode/api/v1/{path=**}?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
+        <filter>
+            <name>shiro</name>
+            <class>org.apache.shiro.web.servlet.ShiroFilter</class>
+        </filter>
         <filter>
             <name>rewrite</name>
             <class>org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
@@ -39,4 +49,19 @@
             <class>org.apache.hadoop.gateway.pivot.WebHdfsPivot</class>
         </filter>
     </service>
+
+    <service>
+        <name>templeton</name>
+        <source>/templeton/api/v1/{path=**}?{**}</source>
+        <target>http://{templeton.address}/templeton/v1/{path=**}?{**}</target>
+        <filter>
+            <name>shiro</name>
+            <class>org.apache.shiro.web.servlet.ShiroFilter</class>
+        </filter>
+        <filter>
+            <name>pivot</name>
+            <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+        </filter>
+    </service>
+
 </gateway>
