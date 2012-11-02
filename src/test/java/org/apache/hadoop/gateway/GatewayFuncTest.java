@@ -144,12 +144,26 @@ public class GatewayFuncTest {
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
     given()
-        //.log().all()
+        .log().all()
+        .auth().basic( "allowedUser", "password" )
         .param( "user.name", "hdfs" )
         .param( "op", "DELETE" )
         .param( "recursive", "true" )
         .expect()
-            //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .log().all()
+        .when()
+        .delete( namenodePath + "/test" );
+
+    given()
+        .log().all()
+        .auth().basic( "deniedUser","invalid-password")
+        .param( "user.name", "hdfs" )
+        .param( "op", "DELETE" )
+        .param( "recursive", "true" )
+        .expect()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .log().all()
         .when()
         .delete( namenodePath + "/test" );
   }
