@@ -46,7 +46,7 @@ public class GatewayFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
 
-    //TODO: The resulting pathInfo + query needs to be added to the servlet request somehow so that filters don't need to rebuild it.  This is done in HttpClientPivot right now for example.
+    //TODO: The resulting pathInfo + query needs to be added to the servlet expect somehow so that filters don't need to rebuild it.  This is done in HttpClientPivot right now for example.
     String query = httpRequest.getQueryString();
     String path = httpRequest.getPathInfo() + ( query == null ? "" : "?" + query );
 
@@ -81,7 +81,7 @@ public class GatewayFilter implements Filter {
     } else {
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
     }
-    //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
+    //KAM[ Don't do this or the Jetty default servlet will overwrite any respond setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]
   }

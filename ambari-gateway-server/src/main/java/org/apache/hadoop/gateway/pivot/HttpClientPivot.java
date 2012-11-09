@@ -70,10 +70,10 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     Resolver resolver = new ParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );
     URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
-    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, request, getConfig() );
-//    System.out.println( "Source URI:" + request.getRequestURI() );
-//    System.out.println( "Source URL:" + request.getRequestURL() );
-//    System.out.println( "Source Query: " + request.getQueryString() );
+    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, expect, getConfig() );
+//    System.out.println( "Source URI:" + expect.getRequestURI() );
+//    System.out.println( "Source URL:" + expect.getRequestURL() );
+//    System.out.println( "Source Query: " + expect.getQueryString() );
 //    System.out.println( "Source pathInfo: " + sourcePathInfo );
 //    System.out.println( "Source pattern: " + sourcePattern );
 //    System.out.println( "Target pattern: " + targetPattern );
@@ -81,11 +81,11 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 
 //    URIBuilder queryBuilder = new URIBuilder( targetUri );
 //
-//    // Copy the server request parameters to the client request parameters.
-//    Enumeration<String> paramNames = request.getParameterNames();
+//    // Copy the server expect parameters to the client expect parameters.
+//    Enumeration<String> paramNames = expect.getParameterNames();
 //    while( paramNames.hasMoreElements() ) {
 //      String paramName = paramNames.nextElement();
-//      String paramValue = request.getParameter( paramName );
+//      String paramValue = expect.getParameter( paramName );
 //      queryBuilder.addParameter( paramName, paramValue );
 //    }
 //
@@ -115,7 +115,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     HttpClient client = new DefaultHttpClient();
     HttpResponse clientResponse = client.execute( clientRequest );
 
-    // Copy the client response header to the server response.
+    // Copy the client respond header to the server respond.
     serverResponse.setStatus( clientResponse.getStatusLine().getStatusCode() );
     Header[] headers = clientResponse.getAllHeaders();
     for( Header header : headers ) {

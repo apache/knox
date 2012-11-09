@@ -72,18 +72,18 @@ public class MockResponseProvider {
     return this;
   }
 
-  public MockResponseProvider entity( byte[] entity ) {
+  public MockResponseProvider content( byte[] entity ) {
     this.entity = entity;
     return this;
   }
 
-  public MockResponseProvider entity( URL url ) throws IOException {
-    entity( url.openStream() );
+  public MockResponseProvider content( URL url ) throws IOException {
+    content( url.openStream() );
     return this;
   }
 
-  public MockResponseProvider entity( InputStream stream ) throws IOException {
-    entity( IOUtils.toByteArray( stream ) );
+  public MockResponseProvider content( InputStream stream ) throws IOException {
+    content( IOUtils.toByteArray( stream ) );
     return this;
   }
 

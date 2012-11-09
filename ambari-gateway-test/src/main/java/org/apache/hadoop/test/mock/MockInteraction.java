@@ -22,11 +22,11 @@ public class MockInteraction {
   private MockResponseProvider response = new MockResponseProvider();
   private MockRequestMatcher request = new MockRequestMatcher( response );
 
-  public MockRequestMatcher request() {
+  public MockRequestMatcher expect() {
     return request;
   }
 
-  public MockResponseProvider response() {
+  public MockResponseProvider respond() {
     return response;
   }
 

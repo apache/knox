@@ -61,9 +61,9 @@ public class UrlConnectionPivot extends AbstractGatewayPivot {
 //    Pattern sourceRegex = UrlRewriter.compileUrlRegex( sourcePattern );
 //    Matcher matcher = sourceRegex.matcher( sourcePathInfo );
 //    String targetUrl = MessageFormat.format( targetPattern, Regex.toGroupArray( matcher ) );
-//    System.out.println( "Source URI: " + request.getRequestURI() );
-//    System.out.println( "Source URL: " + request.getRequestURL() );
-//    System.out.println( "Source Query: " + request.getQueryString() );
+//    System.out.println( "Source URI: " + expect.getRequestURI() );
+//    System.out.println( "Source URL: " + expect.getRequestURL() );
+//    System.out.println( "Source Query: " + expect.getQueryString() );
 //    System.out.println( "Source pathInfo: " + sourcePathInfo );
 //    System.out.println( "Source pattern: " + sourcePattern );
 //    System.out.println( "Target pattern: " + targetPattern );

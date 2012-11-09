@@ -47,7 +47,7 @@ public class ExpanderTest {
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( text ) ) ;
 
-    text = "{scheme}://{username}:{password}@{host}:{port}/{path=**}?query={param}#{fragment}";
+    text = "{scheme}://{username}:{password}@{host}:{port}/{path=**}?query={queryParam}#{fragment}";
     template = Parser.parse( text );
     params = new MockParams();
     params.addValue( "scheme", "http" );
@@ -59,7 +59,7 @@ public class ExpanderTest {
     params.addValue( "path", "mid" );
     params.addValue( "path", "bot" );
     params.addValue( "path", "file" );
-    params.addValue( "param", "new-value" );
+    params.addValue( "queryParam", "new-value" );
     params.addValue( "fragment", "fragment" );
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "http://horton:hadoop@hortonworks.com:8888/top/mid/bot/file?query=new-value#fragment" ) ) ;
@@ -134,31 +134,31 @@ public class ExpanderTest {
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?" ) ) ;
 
-    template = Parser.parse( "?query-name={param-name}" );
+    template = Parser.parse( "?query-name={queryParam-name}" );
     params = new MockParams();
-    params.addValue( "param-name", "param-value" );
+    params.addValue( "queryParam-name", "queryParam-value" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?query-name=param-value" ) ) ;
+    assertThat( expanded.toString(), equalTo( "?query-name=queryParam-value" ) ) ;
 
-    template = Parser.parse( "?query-name-1={param-name-1}&query-name-2={param-name-2}" );
+    template = Parser.parse( "?query-name-1={queryParam-name-1}&query-name-2={queryParam-name-2}" );
     params = new MockParams();
-    params.addValue( "param-name-1", "param-value-1" );
-    params.addValue( "param-name-2", "param-value-2" );
+    params.addValue( "queryParam-name-1", "queryParam-value-1" );
+    params.addValue( "queryParam-name-2", "queryParam-value-2" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?query-name-1=param-value-1&query-name-2=param-value-2" ) ) ;
+    assertThat( expanded.toString(), equalTo( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" ) ) ;
 
-    template = Parser.parse( "?query-name=param-value" );
+    template = Parser.parse( "?query-name=queryParam-value" );
     params = new MockParams();
-    params.addValue( "param-name", "other-param-value" );
+    params.addValue( "queryParam-name", "other-queryParam-value" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?query-name=param-value" ) ) ;
+    assertThat( expanded.toString(), equalTo( "?query-name=queryParam-value" ) ) ;
 
-    template = Parser.parse( "?query-name-1=param-value-1&query-name-2=param-value-2" );
+    template = Parser.parse( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" );
     params = new MockParams();
-    params.addValue( "param-name-1", "other-param-value-1" );
-    params.addValue( "param-name-2", "other-param-value-2" );
+    params.addValue( "queryParam-name-1", "other-queryParam-value-1" );
+    params.addValue( "queryParam-name-2", "other-queryParam-value-2" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?query-name-1=param-value-1&query-name-2=param-value-2" ) ) ;
+    assertThat( expanded.toString(), equalTo( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" ) ) ;
   }
 
 // Can't create a URI with just a scheme: new URI( "http:" )
@@ -245,24 +245,24 @@ public class ExpanderTest {
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query" ) ) ;
 
-    template = Parser.parse( "?query={param}" );
+    template = Parser.parse( "?query={queryParam}" );
     params = new MockParams();
-    params.addValue( "param", "A" );
-    params.addValue( "param", "B" );
+    params.addValue( "queryParam", "A" );
+    params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query=A" ) ) ;
 
-    template = Parser.parse( "?query={param=*}" );
+    template = Parser.parse( "?query={queryParam=*}" );
     params = new MockParams();
-    params.addValue( "param", "A" );
-    params.addValue( "param", "B" );
+    params.addValue( "queryParam", "A" );
+    params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query=A" ) ) ;
 
-    template = Parser.parse( "?query={param=**}" );
+    template = Parser.parse( "?query={queryParam=**}" );
     params = new MockParams();
-    params.addValue( "param", "A" );
-    params.addValue( "param", "B" );
+    params.addValue( "queryParam", "A" );
+    params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query=A&query=B" ) ) ;
 

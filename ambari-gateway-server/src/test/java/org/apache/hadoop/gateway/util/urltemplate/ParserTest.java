@@ -50,7 +50,7 @@ public class ParserTest {
       String paramName,
       String valuePattern ) {
     Path segment = template.getPath().get( index );
-    assertThat( "Incorrect template param name.", segment.getParamName(), equalTo( paramName ) );
+    assertThat( "Incorrect template queryParam name.", segment.getParamName(), equalTo( paramName ) );
     assertThat( "Incorrect template value pattern.", segment.getFirstValue().getPattern(), equalTo( valuePattern ) );
   }
 
@@ -339,30 +339,30 @@ public class ParserTest {
     String text;
     Template template;
 
-    text = "?query={param}";
+    text = "?query={queryParam}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "*", Segment.STAR, 1, 1 );
+    assertQuery( template, "query", "queryParam", "*", Segment.STAR, 1, 1 );
 
-    text = "?query={param=static}";
+    text = "?query={queryParam=static}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "static", Segment.STATIC, 1, 1 );
+    assertQuery( template, "query", "queryParam", "static", Segment.STATIC, 1, 1 );
 
-    text = "?query={param=*}";
+    text = "?query={queryParam=*}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "*", Segment.STAR, 1, 1 );
+    assertQuery( template, "query", "queryParam", "*", Segment.STAR, 1, 1 );
 
-    text = "?query={param=**}";
+    text = "?query={queryParam=**}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "**", Segment.GLOB, 0, Integer.MAX_VALUE );
+    assertQuery( template, "query", "queryParam", "**", Segment.GLOB, 0, Integer.MAX_VALUE );
 
-    text = "?query={param=wild*card}";
+    text = "?query={queryParam=wild*card}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "param", "wild*card", Segment.REGEX, 1, 1 );
+    assertQuery( template, "query", "queryParam", "wild*card", Segment.REGEX, 1, 1 );
   }
 
   @Test
@@ -820,22 +820,22 @@ public class ParserTest {
     Template template;
     Query query;
 
-    text = "?{param}";
+    text = "?{queryParam}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    query = template.getQuery().get( "param" );
+    query = template.getQuery().get( "queryParam" );
     assertThat( query, notNullValue() );
-    assertThat( query.getQueryName(), equalTo( "param" ) );
-    assertThat( query.getParamName(), equalTo( "param" ) );
+    assertThat( query.getQueryName(), equalTo( "queryParam" ) );
+    assertThat( query.getParamName(), equalTo( "queryParam" ) );
     assertThat( query.getFirstValue().getPattern(), equalTo( "*" ) );
 
-    text = "?{param=value}";
+    text = "?{queryParam=value}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    query = template.getQuery().get( "param" );
+    query = template.getQuery().get( "queryParam" );
     assertThat( query, notNullValue() );
-    assertThat( query.getQueryName(), equalTo( "param" ) );
-    assertThat( query.getParamName(), equalTo( "param" ) );
+    assertThat( query.getQueryName(), equalTo( "queryParam" ) );
+    assertThat( query.getParamName(), equalTo( "queryParam" ) );
     assertThat( query.getFirstValue().getPattern(), equalTo( "value" ) );
   }
 

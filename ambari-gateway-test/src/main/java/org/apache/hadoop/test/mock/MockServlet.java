@@ -39,7 +39,7 @@ public class MockServlet extends HttpServlet {
   protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
     assertThat( "Mock servlet has no available interactions.", interactions.isEmpty(), is( false ) );
     MockInteraction interaction = interactions.remove();
-    interaction.request().match( request );
-    interaction.response().apply( response );
+    interaction.expect().match( request );
+    interaction.respond().apply( response );
   }
 }

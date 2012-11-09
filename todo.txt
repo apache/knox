@@ -1,3 +1,13 @@
+Security
+1) Migrate from Apache Shiro to SpringSecurity or decide to stick with Shiro.
+2) Make HTTPClient do SPNEGO with secure Hadoop cluster.
+3) Setup ApacheDS as a KDC in gateway functional tests.
+4) Figure out how to do REST SSO with ActiveDirectory+Hadoop.
+5) Figure out untrusted code isolation for windows and linux.
+   5a) Is java security enough?
+   5b) For linux ook into Linux Containers, VServer, SeLinux, etc.
+   5c) For windows look into Job objects
+
 Bug
 Right now any parameter that wasn't used in an expansion by the time the query is expanded is added to the
 URL if there is a {**} in the template.  This should only expand unused query parameters.  It also doesn't

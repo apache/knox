@@ -30,18 +30,18 @@ import java.util.*;
        {path} => {path=**} // Note: Default cardinality changes between match and expand.
    Query
      Match
-       {param} => {param=*:param}
-       {param=*} => {param=*:param} // Match single param value.
-       {param=**} => {param=**:param} // Match multiple param values.
-       {param=*suffix:other-param}
+       {queryParam} => {queryParam=*:queryParam}
+       {queryParam=*} => {queryParam=*:queryParam} // Match single queryParam value.
+       {queryParam=**} => {queryParam=**:queryParam} // Match multiple queryParam values.
+       {queryParam=*suffix:other-queryParam}
      Expand
-       {param} -> {param=**:param} // Note: Default cardinality changes between match and expand.
-       {param=*} -> {param=*:param}
-       {param=**} -> {param=**:param}
-       {param=other-parm} -> {param=**:otherparam} // Note: Default cardinality changes between match and expand.
-       {param=:other-parm} -> {param=**:otherparam} // Note: Default cardinality changes between match and expand.
-       {param=*:other-parm} -> {param=*:otherparam}
-       {param=**:other-parm} -> {param=**:otherparam}
+       {queryParam} -> {queryParam=**:queryParam} // Note: Default cardinality changes between match and expand.
+       {queryParam=*} -> {queryParam=*:queryParam}
+       {queryParam=**} -> {queryParam=**:queryParam}
+       {queryParam=other-parm} -> {queryParam=**:otherparam} // Note: Default cardinality changes between match and expand.
+       {queryParam=:other-parm} -> {queryParam=**:otherparam} // Note: Default cardinality changes between match and expand.
+       {queryParam=*:other-parm} -> {queryParam=*:otherparam}
+       {queryParam=**:other-parm} -> {queryParam=**:otherparam}
  */
 public class Matcher<V> {
 
@@ -269,7 +269,7 @@ public class Matcher<V> {
         }
       }
 
-      // If the template has the "extra" query param then collect query params that were
+      // If the template has the "extra" query queryParam then collect query params that were
       // not already matched.
       if( bestQuery != null ) {
         Query extra = bestQuery.template.getExtra();

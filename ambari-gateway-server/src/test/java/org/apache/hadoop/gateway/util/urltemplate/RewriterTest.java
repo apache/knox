@@ -48,11 +48,11 @@ public class RewriterTest {
     outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
     assertThat( outputUri.toString(), equalTo( "new-path-1/path-2/path-3/new-path-4" ) );
 
-    inputUri = new URI( "some-path?query-name=some-param-value" );
-    inputTemplate = Parser.parse( "{path-name}?query-name={param-value}" );
-    outputTemplate = Parser.parse( "{param-value}/{path-name}" );
+    inputUri = new URI( "some-path?query-name=some-queryParam-value" );
+    inputTemplate = Parser.parse( "{path-name}?query-name={queryParam-value}" );
+    outputTemplate = Parser.parse( "{queryParam-value}/{path-name}" );
     outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
-    assertThat( outputUri.toString(), equalTo( "some-param-value/some-path" ) );
+    assertThat( outputUri.toString(), equalTo( "some-queryParam-value/some-path" ) );
   }
 
   @Test
@@ -78,12 +78,12 @@ public class RewriterTest {
   @Test
   public void testRewriteUrlWithHttpServletRequestAndFilterConfig() throws Exception {
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
-    EasyMock.expect( request.getParameter( "request-param-name" ) ).andReturn( "request-param-value" ).anyTimes();
-    EasyMock.expect( request.getParameterValues( "request-param-name" ) ).andReturn( new String[]{"request-param-value"} ).anyTimes();
+    EasyMock.expect( request.getParameter( "expect-queryParam-name" ) ).andReturn( "expect-queryParam-value" ).anyTimes();
+    EasyMock.expect( request.getParameterValues( "expect-queryParam-name" ) ).andReturn( new String[]{"expect-queryParam-value"} ).anyTimes();
     EasyMock.replay( request );
 
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
-    EasyMock.expect( config.getInitParameter( "filter-param-name" ) ).andReturn( "filter-param-value" ).anyTimes();
+    EasyMock.expect( config.getInitParameter( "filter-queryParam-name" ) ).andReturn( "filter-queryParam-value" ).anyTimes();
     EasyMock.replay( config );
 
     Template sourcePattern, targetPattern;
@@ -115,50 +115,50 @@ public class RewriterTest {
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
-    targetPattern = Parser.parse( "{filter-param-name}" );
+    targetPattern = Parser.parse( "{filter-queryParam-name}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "filter-param-value" );
+    expectOutput = new URI( "filter-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
-    targetPattern = Parser.parse( "{request-param-name}" );
+    targetPattern = Parser.parse( "{expect-queryParam-name}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "request-param-value" );
+    expectOutput = new URI( "expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
-    targetPattern = Parser.parse( "http://some-other-host/{filter-param-name}/{request-param-name}" );
+    targetPattern = Parser.parse( "http://some-other-host/{filter-queryParam-name}/{expect-queryParam-name}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "http://some-other-host/filter-param-value/request-param-value" );
+    expectOutput = new URI( "http://some-other-host/filter-queryParam-value/expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/pathA/pathB/pathC" );
     sourcePattern = Parser.parse( "*://*:*/pathA/{1=*}/{2=*}" );
-    targetPattern = Parser.parse( "http://some-other-host/{2}/{1}/{filter-param-name}/{request-param-name}" );
+    targetPattern = Parser.parse( "http://some-other-host/{2}/{1}/{filter-queryParam-name}/{expect-queryParam-name}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "http://some-other-host/pathC/pathB/filter-param-value/request-param-value" );
+    expectOutput = new URI( "http://some-other-host/pathC/pathB/filter-queryParam-value/expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/namenode/api/v1/test" );
     sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
-    targetPattern = Parser.parse( "http://{filter-param-name}/webhdfs/v1/{0}" );
+    targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "http://filter-param-value/webhdfs/v1/test" );
+    expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/namenode/api/v1/test" );
     sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
-    targetPattern = Parser.parse( "http://{filter-param-name}/webhdfs/v1/{0}" );
+    targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
-    expectOutput = new URI( "http://filter-param-value/webhdfs/v1/test" );
+    expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://vm.home:50075/webhdfs/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
-    expectOutput = new URI( "http://filter-param-value/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
+    expectOutput = new URI( "http://filter-queryParam-value/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
     sourcePattern = Parser.parse( "*://*:*/webhdfs/v1/{path=**}?op={op=*}&user.name={username=*}&overwrite={overwrite=*}" );
-    targetPattern = Parser.parse( "http://{filter-param-name}/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
+    targetPattern = Parser.parse( "http://{filter-queryParam-name}/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
@@ -169,8 +169,8 @@ public class RewriterTest {
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     // Note: Had to change the order of the expected query params to match.
     // This is probably dependent upon iterator ordering and therefore might be a test issue.
-    // Unfortunately URI.equals() doesn't ignore query param order.
-    // TODO: Enhance Template.equals() to ignore query param order and use that here.
+    // Unfortunately URI.equals() doesn't ignore query queryParam order.
+    // TODO: Enhance Template.equals() to ignore query queryParam order and use that here.
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     // *://**/webhdfs/v1/{path=**}?**={**}
@@ -179,7 +179,7 @@ public class RewriterTest {
     // 2) Should only add unmatch query parameters
     // Consider chaning = within {} to : and wrapping query fully within {} (e.g. {query=pattern:alias}
     // *://**/webhdfs/v1/{path:**}?{**=**} // Means 0..n query names allowed/expanded.  Each can have 0..n values.
-    // *://**/webhdfs/v1/{path:**}?{*=**} // Means one and only one query name matched.  Only last unused param is expanded.
+    // *://**/webhdfs/v1/{path:**}?{*=**} // Means one and only one query name matched.  Only last unused queryParam is expanded.
     // *://**/webhdfs/v1/{path:**}?{**=*} // Means 0..n query names required.  Only last value is matched/expanded.
     // *://**/webhdfs/v1/{path:**}?{*=*} // Means one and only one query name required.  Only last value is matched/expanded.
     // /top/{**:mid}/bot
@@ -204,7 +204,7 @@ public class RewriterTest {
       return Collections.emptySet();
     }
 
-    // Picks the values from either the request or the config in that order.
+    // Picks the values from either the expect or the config in that order.
     @Override
     @SuppressWarnings( "unchecked" )
     public List<String> getValues( String name ) {

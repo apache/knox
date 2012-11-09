@@ -32,8 +32,8 @@ public class GatewayFactory {
 //    FilterHolder filterHolder = new FilterHolder( Holder.Source.EMBEDDED );
 //    filterHolder.setName( filterName );
 //    filterHolder.setClassName( filterConfig.pick( "class" ) );
-//    for( Map.Entry<String,String> param : filterConfig.entrySet() ) {
-//      filterHolder.setInitParameter( param.getKey(), param.getValue() );
+//    for( Map.Entry<String,String> queryParam : filterConfig.entrySet() ) {
+//      filterHolder.setInitParameter( queryParam.getKey(), queryParam.getValue() );
 //    }
 //    return filterHolder;
 //  }
@@ -46,8 +46,8 @@ public class GatewayFactory {
 //      servletClass = UrlConnectionPivot.class.getName();
 //    }
 //    servletHolder.setClassName( servletClass );
-//    for( Map.Entry<String,String> param : serviceConfig.entrySet() ) {
-//      servletHolder.setInitParameter( param.getKey(), param.getValue() );
+//    for( Map.Entry<String,String> queryParam : serviceConfig.entrySet() ) {
+//      servletHolder.setInitParameter( queryParam.getKey(), queryParam.getValue() );
 //    }
 //    return servletHolder;
 //  }

@@ -27,8 +27,6 @@ import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.test.catetory.IntegrationTests;
-import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;
@@ -176,14 +174,14 @@ public class GatewayTempletonFuncTest {
      */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( HttpMethod.DELETE )
-          .param( "user.name", "hdfs" )
-          .param( "op", "DELETE" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "DELETE" )
+          .respond()
           .status( HttpStatus.SC_OK )
           .contentType( "application/json" )
-          .entity( "{\"boolean\":true}".getBytes() );
+          .content( "{\"boolean\":true}".getBytes() );
     }
     given()
         //.log().all()
@@ -205,22 +203,22 @@ public class GatewayTempletonFuncTest {
      */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar?op=CREATE&user.name=hdfs" );
       datanode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .entity( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .content( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) )
+          .respond()
           .status( HttpStatus.SC_CREATED )
           .header( "Location", "webhdfs://localhost:" + namenode.getPort() + "/user/hdfs/test/org.apache.hadoop-examples.jar" );
     }
@@ -228,9 +226,9 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .body( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_CREATED )
@@ -241,8 +239,8 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
@@ -252,7 +250,7 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .body( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
+          .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_CREATED )
@@ -270,22 +268,22 @@ public class GatewayTempletonFuncTest {
      */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt?op=CREATE&user.name=hdfs" );
       datanode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .entity( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .content( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
+          .respond()
           .status( HttpStatus.SC_CREATED )
           .header( "Location", "webhdfs://localhost:" + namenode.getPort() + "/user/hdfs/test/input/CHANGES.txt" );
     }
@@ -293,9 +291,9 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .content( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_CREATED )
@@ -306,8 +304,8 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
@@ -317,7 +315,7 @@ public class GatewayTempletonFuncTest {
       response = given()
           //.log().all()
           .auth().preemptive().basic( "allowedUser", "password" )
-          .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
+          .content( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_CREATED )
@@ -335,25 +333,25 @@ public class GatewayTempletonFuncTest {
     */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/output" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "MKDIRS" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "MKDIRS" )
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "webhdfs-success.json" ) )
+          .content( ClassLoader.getSystemResource( "webhdfs-success.json" ) )
           .contentType( "application/json" );
     }
     String mkdirs = given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "MKDIRS" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "MKDIRS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .body( "boolean", equalTo( true ) )
+        .content( "boolean", equalTo( true ) )
         .when().put( hdfsPath + "/user/hdfs/test/output" ).asString();
     log.debug( "MKDIRS=" + mkdirs );
     if( MOCK ) {
@@ -366,12 +364,12 @@ public class GatewayTempletonFuncTest {
     */
     if( MOCK ) {
       templeton.add()
-          .request()
+          .expect()
           .method( "POST" )
           .pathInfo( "/templeton/v1/mapreduce/jar" )
-          .response()
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( "{\"id\":\"job_201210301335_0086\"}".getBytes() )
+          .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() )
           .contentType( "application/json" );
     }
     String json = given()
@@ -397,22 +395,22 @@ public class GatewayTempletonFuncTest {
     */
     if( MOCK ) {
       templeton.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/templeton/v1/queue/" + job )
-          .response()
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "templeton-job-status.json" ) )
+          .content( ClassLoader.getSystemResource( "templeton-job-status.json" ) )
           .contentType( "application/json" );
     }
     String status = given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
+        .queryParam( "user.name", "hdfs" )
         .pathParam( "job", job )
         .expect()
          //.log().all()
-        .body( "status.jobId", equalTo( job ) )
+        .content( "status.jobId", equalTo( job ) )
         .statusCode( HttpStatus.SC_OK )
         .when().get( templetonPath + "/queue/{job}" ).asString();
     log.info( "STATUS=" + status );
@@ -426,24 +424,24 @@ public class GatewayTempletonFuncTest {
     */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/output" )
-          .param( "op", "LISTSTATUS" )
-          .response()
+          .queryParam( "op", "LISTSTATUS" )
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "webhdfs-liststatus-empty.json" ) )
+          .content( ClassLoader.getSystemResource( "webhdfs-liststatus-empty.json" ) )
           .contentType( "application/json" );
     }
     String list = given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "LISTSTATUS" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        //.body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        //.content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
         .when()
         .get( hdfsPath + "/user/hdfs/test/output" ).asString();
     log.debug( "LISTSTATUS=" + list );

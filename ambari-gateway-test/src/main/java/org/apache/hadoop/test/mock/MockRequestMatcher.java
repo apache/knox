@@ -38,30 +38,30 @@ public class MockRequestMatcher {
   private String pathInfo = null;
   Map<String,String> headers = null;
   Set<Cookie> cookies = null;
-  private Map<String,String> params = null;
+  private Map<String,String> queryParams = null;
   private String contentType = null;
   private String characterEncoding = null;
   private Integer contentLength = null;
   private byte[] entity = null;
-//    request.getAuthType()
-//    request.getContextPath()
-//    request.getQueryString()
-//    request.getRemoteUser()
-//    request.getRequestedSessionId()
-//    request.getRequestURI()
-//    request.getRequestURL()
-//    request.getRemoteAddr()
-//    request.getRemoteHost()
-//    request.getRemotePort()
-//    request.getServletPath()
-//    request.getScheme()
-//    request.getUserPrincipal()
+//    expect.getAuthType()
+//    expect.getContextPath()
+//    expect.getQueryString()
+//    expect.getRemoteUser()
+//    expect.getRequestedSessionId()
+//    expect.getRequestURI()
+//    expect.getRequestURL()
+//    expect.getRemoteAddr()
+//    expect.getRemoteHost()
+//    expect.getRemotePort()
+//    expect.getServletPath()
+//    expect.getScheme()
+//    expect.getUserPrincipal()
 
   public MockRequestMatcher( MockResponseProvider response ) {
     this.response = response;
   }
 
-  public MockResponseProvider response() {
+  public MockResponseProvider respond() {
     return response;
   }
 
@@ -96,26 +96,26 @@ public class MockRequestMatcher {
     return this;
   }
 
-  public MockRequestMatcher param( String name, String value ) {
-    if( this.params == null ) {
-      this.params = new HashMap<String, String>();
+  public MockRequestMatcher queryParam( String name, String value ) {
+    if( this.queryParams == null ) {
+      this.queryParams = new HashMap<String, String>();
     }
-    params.put( name, value );
+    queryParams.put( name, value );
     return this;
   }
 
-  public MockRequestMatcher entity( byte[] entity ) {
+  public MockRequestMatcher content( byte[] entity ) {
     this.entity = entity;
     return this;
   }
 
-  public MockRequestMatcher entity( URL url ) throws IOException {
-    entity( url.openStream() );
+  public MockRequestMatcher content( URL url ) throws IOException {
+    content( url.openStream() );
     return this;
   }
 
-  public MockRequestMatcher entity( InputStream stream ) throws IOException {
-    entity( IOUtils.toByteArray( stream ) );
+  public MockRequestMatcher content( InputStream stream ) throws IOException {
+    content( IOUtils.toByteArray( stream ) );
     return this;
   }
 
@@ -190,12 +190,12 @@ public class MockRequestMatcher {
               " content does not match the required content",
           bytes, Is.is( entity ) );
     }
-    // Note: Cannot use any of the request.getParameter*() methods because they will ready the request
+    // Note: Cannot use any of the expect.getParameter*() methods because they will ready the expect
     // body and we don't want that to happen.
-    if( params != null ) {
+    if( queryParams != null ) {
       String queryString = request.getQueryString();
       Map<String,String[]> requestParams = parseQueryString( queryString == null ? "" : queryString );
-      for( String name: params.keySet() ) {
+      for( String name: queryParams.keySet() ) {
         String[] values = requestParams.get( name );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
@@ -204,7 +204,7 @@ public class MockRequestMatcher {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
                 " query string " + queryString + " is missing a value for parameter '" + name + "'",
-            Arrays.asList( values ), hasItem( params.get( name ) ) );
+            Arrays.asList( values ), hasItem( queryParams.get( name ) ) );
       }
     }
   }

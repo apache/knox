@@ -28,7 +28,7 @@ import java.util.Set;
 // sourceInput = new URI( "http://some-host:0/some-path" );
 // sourcePattern = Parser.parse( "*://*:*/**" );
 // targetPattern = Parser.parse( "should-not-change" );
-// actualOutput = Rewriter.rewrite( sourceInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+// actualOutput = Rewriter.rewrite( sourceInput, sourcePattern, targetPattern, new TestResolver( config, expect ) );
 // expectedOutput = new URI( "should-not-change" );
 // assertThat( actualOutput, equalTo( expectedOutput ) );
 // This was possible before with just the source pattern being "**".

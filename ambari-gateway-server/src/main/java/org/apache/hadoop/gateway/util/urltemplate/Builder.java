@@ -137,7 +137,7 @@ public class Builder {
         query.put( queryName, segment );
       } else {
         if( segment.getParamName().equals( paramName ) ) {
-          // Can't have two param names for the same query name: ?query={param1}&query={param2}
+          // Can't have two queryParam names for the same query name: ?query={param1}&query={param2}
           //TODO throw new URISyntaxException()?
         }
         segment.addValue( valuePattern );

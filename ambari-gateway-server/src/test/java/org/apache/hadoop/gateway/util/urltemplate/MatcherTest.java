@@ -411,19 +411,19 @@ public class MatcherTest {
   @Test
   public void testMatchingPatternsWithinQuerySegments() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
-    matcher.add( Parser.parse( "?query={param}" ), "default" );
+    matcher.add( Parser.parse( "?query={queryParam}" ), "default" );
     assertValidMatch( matcher, "?query=value", "default" );
 
     matcher = new Matcher<String>();
-    matcher.add( Parser.parse( "?query={param=*}" ), "*" );
+    matcher.add( Parser.parse( "?query={queryParam=*}" ), "*" );
     assertValidMatch( matcher, "?query=some-value", "*" );
 
     matcher = new Matcher<String>();
-    matcher.add( Parser.parse( "?query={param=**}" ), "**" );
+    matcher.add( Parser.parse( "?query={queryParam=**}" ), "**" );
     assertValidMatch( matcher, "?query=some-value", "**" );
 
     matcher = new Matcher<String>();
-    matcher.add( Parser.parse( "?query={param=prefix*suffix}" ), "regex" );
+    matcher.add( Parser.parse( "?query={queryParam=prefix*suffix}" ), "regex" );
     assertValidMatch( matcher, "?query=prefix-middle-suffix", "regex" );
     assertValidMatch( matcher, "?query=not-prefix-middle-suffix", null );
   }
@@ -431,11 +431,11 @@ public class MatcherTest {
   @Test
   public void testMatchingForTemplatesThatVaryOnlyByQueryParams() throws URISyntaxException {
     Matcher<String> matcher = new Matcher<String>();
-    addTemplate( matcher, "?one={param}" );
-    addTemplate( matcher, "?two={param}" );
+    addTemplate( matcher, "?one={queryParam}" );
+    addTemplate( matcher, "?two={queryParam}" );
 
-    assertValidMatch( matcher, "?one=value", "?one={param}" );
-    assertValidMatch( matcher, "?two=value", "?two={param}" );
+    assertValidMatch( matcher, "?one=value", "?one={queryParam}" );
+    assertValidMatch( matcher, "?two=value", "?two={queryParam}" );
     assertValidMatch( matcher, "?three=value", null );
     assertValidMatch( matcher, "?", null );
   }
@@ -487,38 +487,38 @@ public class MatcherTest {
     Matcher<?>.Match match;
     Params params;
 
-    template = Parser.parse( "{path-param}" );
+    template = Parser.parse( "{path-queryParam}" );
     input = Parser.parse( "path-value" );
     matcher = new Matcher<Void>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
-    assertThat( params.getNames(), hasItem( "path-param" ) );
-    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
-    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+    assertThat( params.getNames(), hasItem( "path-queryParam" ) );
+    assertThat( params.getValues( "path-queryParam" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-queryParam" ), hasItem( "path-value" ) );
 
-    template = Parser.parse( "/some-path/{path-param}" );
+    template = Parser.parse( "/some-path/{path-queryParam}" );
     input = Parser.parse( "/some-path/path-value" );
     matcher = new Matcher<Void>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
-    assertThat( params.getNames(), hasItem( "path-param" ) );
-    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
-    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+    assertThat( params.getNames(), hasItem( "path-queryParam" ) );
+    assertThat( params.getValues( "path-queryParam" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-queryParam" ), hasItem( "path-value" ) );
 
-    template = Parser.parse( "/some-path/{path-param}/some-other-path" );
+    template = Parser.parse( "/some-path/{path-queryParam}/some-other-path" );
     input = Parser.parse( "/some-path/path-value/some-other-path" );
     matcher = new Matcher<Void>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
-    assertThat( params.getNames(), hasItem( "path-param" ) );
-    assertThat( params.getValues( "path-param" ).size(), equalTo( 1 ) );
-    assertThat( params.getValues( "path-param" ), hasItem( "path-value" ) );
+    assertThat( params.getNames(), hasItem( "path-queryParam" ) );
+    assertThat( params.getValues( "path-queryParam" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "path-queryParam" ), hasItem( "path-value" ) );
 
     template = Parser.parse( "{path=**}" );
     input = Parser.parse( "A/B" );
@@ -553,27 +553,27 @@ public class MatcherTest {
     Matcher<?>.Match match;
     Params params;
 
-    template = Parser.parse( "?query-param={param-name}" );
-    input = Parser.parse( "?query-param=param-value" );
+    template = Parser.parse( "?query-queryParam={queryParam-name}" );
+    input = Parser.parse( "?query-queryParam=queryParam-value" );
     matcher = new Matcher<Void>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
-    assertThat( params.getNames(), hasItem( "param-name" ) );
-    assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
-    assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
+    assertThat( params.getNames(), hasItem( "queryParam-name" ) );
+    assertThat( params.getValues( "queryParam-name" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "queryParam-name" ), hasItem( "queryParam-value" ) );
 
-    template = Parser.parse( "?query-param={param-name}" );
-    input = Parser.parse( "?query-param=param-value" );
+    template = Parser.parse( "?query-queryParam={queryParam-name}" );
+    input = Parser.parse( "?query-queryParam=queryParam-value" );
     matcher = new Matcher<Void>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 1 ) );
-    assertThat( params.getNames(), hasItem( "param-name" ) );
-    assertThat( params.getValues( "param-name" ).size(), equalTo( 1 ) );
-    assertThat( params.getValues( "param-name" ), hasItem( "param-value" ) );
+    assertThat( params.getNames(), hasItem( "queryParam-name" ) );
+    assertThat( params.getValues( "queryParam-name" ).size(), equalTo( 1 ) );
+    assertThat( params.getValues( "queryParam-name" ), hasItem( "queryParam-value" ) );
   }
 
   @Test

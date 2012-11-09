@@ -29,10 +29,12 @@ import static org.apache.hadoop.gateway.i18n.messages.MessageLevel.*;
 @Messages
 public interface GatewayMessages {
 
-  @Message(level=INFO, text="Starting org.apache.org.apache.hadoop.gateway.")
+  @Message(level=INFO, text="Starting gateway..." )
   void startingGateway();
 
-  @Message(level=FATAL, text="Failed to start org.apache.org.apache.hadoop.gateway.")
+  @Message(level=FATAL, text="Failed to start gateway: {0}" )
   void failedToStartGateway( @StackTrace(level=DEBUG) Exception e );
 
+  @Message(level=INFO, text="Gateway started on port {0}." )
+  void startedGateway( int port );
 }

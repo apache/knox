@@ -92,16 +92,16 @@ public class ResourcesTest {
     ResourcesTestLocaleSubject res = ResourcesFactory.get( ResourcesTestLocaleSubject.class );
 
     Locale.setDefault( Locale.CHINESE ); // Change to something that we won't have test bundles for.
-    assertThat( res.testResource( "param" ), equalTo( "default=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "default=[queryParam]" ) );
 
     Locale.setDefault( Locale.ENGLISH );
-    assertThat( res.testResource( "param" ), equalTo( "en=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "en=[queryParam]" ) );
 
     Locale.setDefault( Locale.US );
-    assertThat( res.testResource( "param" ), equalTo( "us=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "us=[queryParam]" ) );
 
     Locale.setDefault( Locale.UK );
-    assertThat( res.testResource( "param" ), equalTo( "uk=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "uk=[queryParam]" ) );
 
   }
 
@@ -111,10 +111,10 @@ public class ResourcesTest {
     ResourcesTestNamedSubject res = ResourcesFactory.get( ResourcesTestNamedSubject.class );
 
     Locale.setDefault( Locale.CHINESE ); // Change to something that we won't have test bundles for.
-    assertThat( res.testResource( "param" ), equalTo( "default=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "default=[queryParam]" ) );
 
     Locale.setDefault( Locale.CANADA );
-    assertThat( res.testResource( "param" ), equalTo( "ca=[param]" ) );
+    assertThat( res.testResource( "queryParam" ), equalTo( "ca=[queryParam]" ) );
 
   }
 

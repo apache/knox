@@ -307,7 +307,7 @@ public class Parser {
 
   private void consumeQuerySegmentToken( String token ) {
     if( token != null && token.length() > 0 ) {
-      // Shorthand format {param} == param={param=*}
+      // Shorthand format {queryParam} == queryParam={queryParam=*}
       if( TEMPLATE_OPEN_MARKUP == token.charAt( 0 ) ) {
         String[] paramPattern = parseTemplateToken( token );
         if( paramPattern.length == 1 ) {

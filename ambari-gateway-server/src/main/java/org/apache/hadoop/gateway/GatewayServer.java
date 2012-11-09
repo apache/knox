@@ -45,6 +45,7 @@ public class GatewayServer {
     try {
       log.startingGateway();
       startGateway();
+      log.startedGateway( jetty.getConnectors()[0].getLocalPort() );
     } catch( Exception e ) {
       log.failedToStartGateway( e );
     }

@@ -26,8 +26,6 @@ import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.test.catetory.FunctionalTests;
-import org.apache.hadoop.test.catetory.IntegrationTests;
-import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;
@@ -166,21 +164,21 @@ public class GatewayWebHdfsFuncTest {
     // Ignore any result.
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method("DELETE")
           .pathInfo("/webhdfs/v1/test")
-          .param( "user.name", "hdfs" )
-          .param( "op", "DELETE" )
-          .param( "recursive", "true" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "DELETE" )
+          .queryParam( "recursive", "true" )
+          .respond()
           .status( HttpStatus.SC_OK );
     }
     given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", "true" )
         .expect()
         //.log().all()
         .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
@@ -206,26 +204,26 @@ public class GatewayWebHdfsFuncTest {
      */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/" )
-          .param( "op", "LISTSTATUS" )
-          .response()
+          .queryParam( "op", "LISTSTATUS" )
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "webhdfs-liststatus-default.json" ) )
+          .content( ClassLoader.getSystemResource( "webhdfs-liststatus-default.json" ) )
           .contentType( "application/json" );
     }
     given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "op", "LISTSTATUS" )
+        .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
-        .body( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
-        .body( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "tmp" ) )
-        .body( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "user" ) )
+        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
+        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "tmp" ) )
+        .content( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "user" ) )
         .when()
         .get( namenodePath + "/" );
     if( MOCK ) {
@@ -235,7 +233,7 @@ public class GatewayWebHdfsFuncTest {
     /* Create a directory.
     curl -i -X PUT "http://<HOST>:<PORT>/<PATH>?op=MKDIRS[&permission=<OCTAL>]"
 
-    The client receives a response with a boolean JSON object:
+    The client receives a respond with a boolean JSON object:
     HTTP/1.1 200 OK
     Content-Type: application/json
     Transfer-Encoding: chunked
@@ -244,26 +242,26 @@ public class GatewayWebHdfsFuncTest {
     */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "MKDIRS" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "MKDIRS" )
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "webhdfs-success.json" ) )
+          .content( ClassLoader.getSystemResource( "webhdfs-success.json" ) )
           .contentType( "application/json" );
     }
     given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "MKDIRS" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "MKDIRS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
-        .body( "boolean", equalTo( true ) )
+        .content( "boolean", equalTo( true ) )
         .when().put( namenodePath + "/test" );
     if( MOCK ) {
       assertThat( namenode.getCount(), is( 0 ) );
@@ -271,27 +269,27 @@ public class GatewayWebHdfsFuncTest {
 
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/" )
-          .param( "op", "LISTSTATUS" )
-          .response()
+          .queryParam( "op", "LISTSTATUS" )
+          .respond()
           .status( HttpStatus.SC_OK )
-          .entity( ClassLoader.getSystemResource( "webhdfs-liststatus-test.json" ) )
+          .content( ClassLoader.getSystemResource( "webhdfs-liststatus-test.json" ) )
           .contentType( "application/json" );
     }
     given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "op", "LISTSTATUS" )
+        .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
-        .body( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
-        .body( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "test" ) )
-        .body( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "tmp" ) )
-        .body( "FileStatuses.FileStatus[4].pathSuffix", equalTo( "user" ) )
+        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
+        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "test" ) )
+        .content( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "tmp" ) )
+        .content( "FileStatuses.FileStatus[4].pathSuffix", equalTo( "user" ) )
         .when().get( namenodePath + "/" );
     if( MOCK ) {
       assertThat( namenode.getCount(), is( 0 ) );
@@ -302,48 +300,48 @@ public class GatewayWebHdfsFuncTest {
                         [&overwrite=<true|false>][&blocksize=<LONG>][&replication=<SHORT>]
                         [&permission=<OCTAL>][&buffersize=<INT>]"
 
-    The request is redirected to a datanode where the file data is to be written:
+    The expect is redirected to a datanode where the file data is to be written:
     HTTP/1.1 307 TEMPORARY_REDIRECT
     Location: http://<DATANODE>:<PORT>/webhdfs/v1/<PATH>?op=CREATE...
     Content-Length: 0
 
-    Step 2: Submit another HTTP PUT request using the URL in the Location header with the file data to be written.
+    Step 2: Submit another HTTP PUT expect using the URL in the Location header with the file data to be written.
     curl -i -X PUT -T <LOCAL_FILE> "http://<DATANODE>:<PORT>/webhdfs/v1/<PATH>?op=CREATE..."
 
-    The client receives a 201 Created response with zero content length and the WebHDFS URI of the file in the Location header:
+    The client receives a 201 Created respond with zero content length and the WebHDFS URI of the file in the Location header:
     HTTP/1.1 201 Created
     Location: webhdfs://<HOST>:<PORT>/<PATH>
     Content-Length: 0
      */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test/file" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=CREATE&user.name=hdfs" );
       datanode.add()
-          .request()
+          .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test/file" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "CREATE" )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
           .contentType( "text/plain" )
-          .entity( ClassLoader.getSystemResource( "test.txt" ) )
-          //.entity( ClassLoader.getSystemResource( "org.apache.hadoop-examples.jar" ) )
-          .response()
+          .content( ClassLoader.getSystemResource( "test.txt" ) )
+          //.content( ClassLoader.getSystemResource( "org.apache.hadoop-examples.jar" ) )
+          .respond()
           .status( HttpStatus.SC_CREATED )
           .header( "Location", "webhdfs://localhost:" + namenode.getPort() + "/test/file" );
     }
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "use" +
+        .queryParam( "use" +
             "r.name", "hdfs" )
-        .param( "op", "CREATE" )
+        .queryParam( "op", "CREATE" )
         .contentType( "text/plain" )
         .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
         //.content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "org.apache.hadoop-examples.jar" ) ) )
@@ -363,7 +361,7 @@ public class GatewayWebHdfsFuncTest {
     curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
                        [&offset=<LONG>][&length=<LONG>][&buffersize=<INT>]"
 
-    The request is redirected to a datanode where the file data can be read:
+    The expect is redirected to a datanode where the file data can be read:
     HTTP/1.1 307 TEMPORARY_REDIRECT
     Location: http://<DATANODE>:<PORT>/webhdfs/v1/<PATH>?op=OPEN...
     Content-Length: 0
@@ -377,34 +375,34 @@ public class GatewayWebHdfsFuncTest {
     */
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/test/file" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "OPEN" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "OPEN" )
+          .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=OPEN&user.name=hdfs" );
       datanode.add()
-          .request()
+          .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/test/file" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "OPEN" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "OPEN" )
+          .respond()
           .status( HttpStatus.SC_OK )
           .contentType( "text/plain" )
-          .entity( ClassLoader.getSystemResource( "test.txt" ) );
+          .content( ClassLoader.getSystemResource( "test.txt" ) );
     }
     given()
         //.log().all()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "OPEN" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "OPEN" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .body( equalTo( "TEST" ) )
+        .content( equalTo( "TEST" ) )
         .when().get( namenodePath + "/test/file" );
     if( MOCK ) {
       assertThat( namenode.getCount(), is( 0 ) );
@@ -415,7 +413,7 @@ public class GatewayWebHdfsFuncTest {
     curl -i -X DELETE "http://<host>:<port>/webhdfs/v1/<path>?op=DELETE
                                   [&recursive=<true|false>]"
 
-    The client receives a response with a boolean JSON object:
+    The client receives a respond with a boolean JSON object:
     HTTP/1.1 200 OK
     Content-Type: application/json
     Transfer-Encoding: chunked
@@ -425,20 +423,20 @@ public class GatewayWebHdfsFuncTest {
     // Mock the interaction with the namenode.
     if( MOCK ) {
       namenode.add()
-          .request()
+          .expect()
           .method( "DELETE" )
           .pathInfo( "/webhdfs/v1/test" )
-          .param( "user.name", "hdfs" )
-          .param( "op", "DELETE" )
-          .param( "recursive", "true" )
-          .response()
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "DELETE" )
+          .queryParam( "recursive", "true" )
+          .respond()
           .status( HttpStatus.SC_OK );
     }
     given()
         .auth().preemptive().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
+        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", "true" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
         .when().delete( namenodePath + "/test" );
