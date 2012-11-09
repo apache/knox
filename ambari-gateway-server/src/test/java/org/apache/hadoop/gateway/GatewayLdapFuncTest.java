@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.test.mock.MockServerImpl;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
@@ -81,8 +81,8 @@ public class GatewayLdapFuncTest {
 
   private static EmbeddedApacheDirectoryServer ldap;
   private static Server gateway;
-  private static MockServerImpl namenode;
-  private static MockServerImpl datanode;
+  private static MockServer namenode;
+  private static MockServer datanode;
 
   public static void startGateway() throws Exception {
 
@@ -131,8 +131,8 @@ public class GatewayLdapFuncTest {
 //    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
 
     startLdap();
-    namenode = new MockServerImpl( "NameNode", true );
-    datanode = new MockServerImpl( "DataNode", true );
+    namenode = new MockServer( "NameNode", true );
+    datanode = new MockServer( "DataNode", true );
     startGateway();
 
     log.info( "LDAP port = " + LDAP_PORT );
@@ -167,7 +167,7 @@ public class GatewayLdapFuncTest {
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( HttpMethod.DELETE )
           .queryParam( "user.name", "hdfs" )

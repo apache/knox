@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.test.mock.MockServerImpl;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.catetory.IntegrationTests;
 import org.apache.hadoop.test.catetory.MediumTests;
@@ -80,9 +80,9 @@ public class GatewayTempletonFuncTest {
 
   private static EmbeddedApacheDirectoryServer ldap;
   private static Server gateway;
-  private static MockServerImpl namenode;
-  private static MockServerImpl datanode;
-  private static MockServerImpl templeton;
+  private static MockServer namenode;
+  private static MockServer datanode;
+  private static MockServer templeton;
 
   public static void startGateway() throws Exception {
 
@@ -133,9 +133,9 @@ public class GatewayTempletonFuncTest {
 //    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
 
     startLdap();
-    namenode = new MockServerImpl( "NameNode", true );
-    datanode = new MockServerImpl( "DataNode", true );
-    templeton = new MockServerImpl( "Templeton", true );
+    namenode = new MockServer( "NameNode", true );
+    datanode = new MockServer( "DataNode", true );
+    templeton = new MockServer( "Templeton", true );
     startGateway();
   }
 
@@ -173,7 +173,7 @@ public class GatewayTempletonFuncTest {
     curl -X DELETE 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount?user.name=hdfs&op=DELETE&recursive=true'
      */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( HttpMethod.DELETE )
           .queryParam( "user.name", "hdfs" )
@@ -202,7 +202,7 @@ public class GatewayTempletonFuncTest {
     curl -X PUT --data-binary @org.apache.hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/org.apache.hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar" )
@@ -211,7 +211,7 @@ public class GatewayTempletonFuncTest {
           .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar?op=CREATE&user.name=hdfs" );
-      datanode.add()
+      datanode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/org.apache.hadoop-examples.jar" )
@@ -267,7 +267,7 @@ public class GatewayTempletonFuncTest {
     curl -X PUT --data-binary @CHANGES.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/CHANGES.txt?user.name=hdfs&op=CREATE'
      */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt" )
@@ -276,7 +276,7 @@ public class GatewayTempletonFuncTest {
           .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt?op=CREATE&user.name=hdfs" );
-      datanode.add()
+      datanode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/input/CHANGES.txt" )
@@ -332,7 +332,7 @@ public class GatewayTempletonFuncTest {
     curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
     */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/output" )
@@ -363,7 +363,7 @@ public class GatewayTempletonFuncTest {
     ﻿{"id":"job_201210301335_0059"}
     */
     if( MOCK ) {
-      templeton.add()
+      templeton
           .expect()
           .method( "POST" )
           .pathInfo( "/templeton/v1/mapreduce/jar" )
@@ -394,7 +394,7 @@ public class GatewayTempletonFuncTest {
     curl 'http://vm:50111/templeton/v1/queue/:jobid?user.name=hdfs'
     */
     if( MOCK ) {
-      templeton.add()
+      templeton
           .expect()
           .method( "GET" )
           .pathInfo( "/templeton/v1/queue/" + job )
@@ -423,7 +423,7 @@ public class GatewayTempletonFuncTest {
     curl 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
     */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/user/hdfs/test/output" )

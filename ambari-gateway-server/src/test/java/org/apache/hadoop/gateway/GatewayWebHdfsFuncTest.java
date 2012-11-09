@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.test.mock.MockServerImpl;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.commons.io.IOUtils;
@@ -78,8 +78,8 @@ public class GatewayWebHdfsFuncTest {
 
   private static EmbeddedApacheDirectoryServer ldap;
   private static Server gateway;
-  private static MockServerImpl namenode;
-  private static MockServerImpl datanode;
+  private static MockServer namenode;
+  private static MockServer datanode;
 
   public static void startGateway() throws Exception {
 
@@ -128,8 +128,8 @@ public class GatewayWebHdfsFuncTest {
 //    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
 
     startLdap();
-    namenode = new MockServerImpl( "NameNode", true );
-    datanode = new MockServerImpl( "DataNode", true );
+    namenode = new MockServer( "NameNode", true );
+    datanode = new MockServer( "DataNode", true );
     startGateway();
 
     log.info( "LDAP port = " + LDAP_PORT );
@@ -163,7 +163,7 @@ public class GatewayWebHdfsFuncTest {
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method("DELETE")
           .pathInfo("/webhdfs/v1/test")
@@ -203,7 +203,7 @@ public class GatewayWebHdfsFuncTest {
     ]}}
      */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/" )
@@ -241,7 +241,7 @@ public class GatewayWebHdfsFuncTest {
     {"boolean": true}
     */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test" )
@@ -268,7 +268,7 @@ public class GatewayWebHdfsFuncTest {
     }
 
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/" )
@@ -314,7 +314,7 @@ public class GatewayWebHdfsFuncTest {
     Content-Length: 0
      */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test/file" )
@@ -323,7 +323,7 @@ public class GatewayWebHdfsFuncTest {
           .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=CREATE&user.name=hdfs" );
-      datanode.add()
+      datanode
           .expect()
           .method( "PUT" )
           .pathInfo( "/webhdfs/v1/test/file" )
@@ -374,7 +374,7 @@ public class GatewayWebHdfsFuncTest {
     Hello, webhdfs user!
     */
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/test/file" )
@@ -383,7 +383,7 @@ public class GatewayWebHdfsFuncTest {
           .respond()
           .status( HttpStatus.SC_TEMPORARY_REDIRECT )
           .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=OPEN&user.name=hdfs" );
-      datanode.add()
+      datanode
           .expect()
           .method( "GET" )
           .pathInfo( "/webhdfs/v1/test/file" )
@@ -422,7 +422,7 @@ public class GatewayWebHdfsFuncTest {
      */
     // Mock the interaction with the namenode.
     if( MOCK ) {
-      namenode.add()
+      namenode
           .expect()
           .method( "DELETE" )
           .pathInfo( "/webhdfs/v1/test" )

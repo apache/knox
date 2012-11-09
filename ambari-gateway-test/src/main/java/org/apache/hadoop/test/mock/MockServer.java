@@ -28,7 +28,7 @@ import javax.servlet.Servlet;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class MockServerImpl {
+public class MockServer {
 
   private Logger log = LoggerFactory.getLogger( this.getClass() );
 
@@ -37,11 +37,11 @@ public class MockServerImpl {
 
   private Queue<MockInteraction> interactions = new LinkedList<MockInteraction>();
 
-  public MockServerImpl( String name ) {
+  public MockServer( String name ) {
     this.name = name;
   }
 
-  public MockServerImpl( String name, boolean start ) throws Exception {
+  public MockServer( String name, boolean start ) throws Exception {
     this.name = name;
     if( start ) {
       start();
@@ -78,10 +78,16 @@ public class MockServerImpl {
     return jetty.getConnectors()[0].getLocalPort();
   }
 
-  public MockInteraction add() {
+  public MockRequestMatcher expect() {
     MockInteraction interaction = new MockInteraction();
     interactions.add( interaction );
-    return interaction;
+    return interaction.expect();
+  }
+
+  public MockResponseProvider respond() {
+    MockInteraction interaction = new MockInteraction();
+    interactions.add( interaction );
+    return interaction.respond();
   }
 
   public int getCount() {
