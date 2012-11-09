@@ -17,29 +17,44 @@
  */
 package org.apache.hadoop.gateway.mock;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServlet;
+import org.apache.commons.io.IOUtils;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+public class MockResource {
 
-public class MockServlet extends HttpServlet {
+  public static Queue<MockRequestMatcher> requests = new LinkedList<MockRequestMatcher>();
+  public static Queue<Response> responses = new LinkedList<Response>();
 
-  public Queue<MockInteraction> interactions;
+  public static class Request {
+    public HttpServletRequest httpRequest;
+    public Map<String,String> params;
+    public byte[] entity;
 
-  public MockServlet( Queue<MockInteraction> interactions ) {
-    this.interactions = interactions;
+    public Request ( HttpServletRequest httpServletRequest ) {
+      try {
+        this.entity = IOUtils.toByteArray( httpServletRequest.getInputStream() );
+      } catch( IOException e ) {
+        this.entity = null;
+      }
+      this.httpRequest = httpServletRequest;
+    }
   }
 
-  @Override
-  protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
-    assertThat( "Mock servlet has no available interactions.", interactions.isEmpty(), is( false ) );
-    MockInteraction interaction = interactions.remove();
-    interaction.request().match( request );
-    interaction.response().apply( response );
+  @GET
+  @Path( "/__test__")
+  @Produces( MediaType.TEXT_PLAIN )
+  public String get() {
+    return "__HELLO__";
   }
+
 }

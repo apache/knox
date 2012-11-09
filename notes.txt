@@ -1,3 +1,20 @@
+If the query is empty, never include the ? in the expansion.
+
+Have every URL section support *, **, {*} and {**}.
+Have Params include a source enum.
+A {*} or {**} in an expansion template will only include params from the same "source.".
+Have ** in the authority if there is only one apply to all four parts.
+Rethink the way the "extra" was handled.
+
+The source/target below should create a complete copy of the URL.
+{*}://{**}/{**}?{**}#{**}
+{*}://{**}/{**}?{**}#{**}
+Consider having the param name for the {**} shortcuts be things like
+{scheme} {host}, {port}, {username}, {password}, {path}, {query}, {fragment} or shorter
+{s} {hn} {pn} {un}, {pw}, {p}, {q}, {f}
+These might be a good idea because they should be invalid to specify in the syntax because nested {}'s are allowed
+to make parsing easier.
+
 Path
   {path}
     Match: {path=*}

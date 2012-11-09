@@ -17,28 +17,51 @@
  */
 package org.apache.hadoop.gateway.mock.namenode;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import org.apache.hadoop.gateway.mock.MockResource;
 
-@Path( "webhdfs" )
-public class MockNameNodeResource {
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+
+@Path( "webhdfs/v1" )
+public class MockNameNodeResource extends MockResource {
 
   @GET
-  @Path( "/hello")
-  @Produces( MediaType.TEXT_PLAIN )
-  public String get() {
-    return "HELLO";
+  @Path( "/{path}" )
+  public Response get(
+      @Context HttpServletRequest request,
+      @PathParam("path") String path ) throws IOException {
+    requests.remove().match( request );
+    return responses.remove();
   }
 
+  @PUT
+  @Path( "/{path}" )
+  public Response put(
+      @Context HttpServletRequest request,
+      @PathParam("path") String path,
+      @QueryParam("op") String operation ) {
+    assertThat( operation, anyOf( equalTo( "MKDIRS" ), equalTo( "CREATE" ) ) );
+    //interactions.add( new Request( request ) );
+    return responses.remove();
+  }
 
-  @GET
-  @Path( "/{version}/{file}")
-  @Produces( MediaType.APPLICATION_JSON )
-  public String get(
-      @QueryParam("op") String operation,
-      @PathParam( "version" ) String version,
-      @PathParam( "file" ) String file ) {
-    return "{}";
+  @DELETE
+  @Path( "/{path}" )
+  public Response delete(
+      @Context HttpServletRequest request,
+      @PathParam("path") String path,
+      @QueryParam("op") String operation ) {
+    assertThat( operation, equalTo( "DELETE" ) );
+    //interactions.add( new Request( request ) );
+    return responses.remove();
   }
 
 }

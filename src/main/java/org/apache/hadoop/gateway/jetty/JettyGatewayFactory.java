@@ -30,7 +30,7 @@ import java.net.URISyntaxException;
 
 public class JettyGatewayFactory {
 
-  public static Handler create( String gatewayPath, Config gatewayConfig ) throws URISyntaxException {
+  public static ServletContextHandler create( String gatewayPath, Config gatewayConfig ) throws URISyntaxException {
 
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );

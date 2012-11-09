@@ -32,7 +32,6 @@ import org.apache.http.client.methods.*;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -40,8 +39,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  *
@@ -51,8 +48,8 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  public HttpClientPivot() throws ServletException {
-  }
+  //TODO: Should probably the the value that HttpClient will use for its buffer.  See: http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
+  private static final int BUFFER_SIZE = 8192;
 
   protected URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
     String sourceQuery = request.getQueryString();
@@ -91,12 +88,12 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     return targetUri;
   }
 
-  protected void executeRequest( HttpUriRequest clientRequest, HttpServletRequest originalRequest, HttpServletResponse serverResponse ) throws IOException {
+  protected HttpResponse executeRequest( HttpUriRequest clientRequest, HttpServletRequest originalRequest, HttpServletResponse serverResponse ) throws IOException {
 
 
-    Set<String> ignored = new HashSet<String>();
-    ignored.add( "Content-Length" );
-    ignored.add( "Host" );
+//    Set<String> ignored = new HashSet<String>();
+//    ignored.add( "Content-Length" );
+//    ignored.add( "Host" );
 
 //    Enumeration<String> names = originalRequest.getHeaderNames();
 //    while( names.hasMoreElements() ) {
@@ -123,7 +120,14 @@ public class HttpClientPivot extends AbstractGatewayPivot {
 
     HttpEntity entity = clientResponse.getEntity();
     if( entity != null ) {
-      serverResponse.setContentType( entity.getContentType().getValue() );
+      Header contentType = entity.getContentType();
+      if( contentType != null ) {
+        serverResponse.setContentType( contentType.getValue() );
+      }
+      long contentLength = entity.getContentLength();
+      if( contentLength <= Integer.MAX_VALUE ) {
+        serverResponse.setContentLength( (int)contentLength );
+      }
       InputStream input = entity.getContent();
       OutputStream output = serverResponse.getOutputStream();
       try {
@@ -134,6 +138,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
       }
     }
 
+    return clientResponse;
   }
 
   @Override
@@ -168,8 +173,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
   }
 
   @Override
-  public void doPut( HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+  public void doPut( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
     HttpEntity entity = createRequestEntity( request );
     URI requestUri = resolveRequestUri( request );
     HttpPut clientRequest = new HttpPut( requestUri );
@@ -178,8 +182,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
   }
 
   @Override
-  public void doPost( HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+  public void doPost( HttpServletRequest request, HttpServletResponse response )throws IOException, URISyntaxException {
     HttpEntity entity = createRequestEntity( request );
     URI requestUri = resolveRequestUri( request );
     HttpPost clientRequest = new HttpPost( requestUri );
@@ -188,8 +191,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
   }
 
   @Override
-  public void doDelete( HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+  public void doDelete( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
     URI requestUri = resolveRequestUri( request );
     HttpDelete clientRequest = new HttpDelete( requestUri );
     executeRequest( clientRequest, request, response );

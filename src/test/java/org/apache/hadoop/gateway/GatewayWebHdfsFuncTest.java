@@ -18,23 +18,23 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
+import org.apache.hadoop.gateway.mock.MockServerImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.util.Streams;
+import org.apache.hadoop.test.FunctionalTests;
 import org.apache.hadoop.test.IntegrationTests;
 import org.apache.hadoop.test.MediumTests;
+import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
-import org.apache.shiro.web.servlet.ShiroFilter;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,26 +46,21 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import javax.servlet.DispatcherType;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-/**
- *
- */
-@Category( { IntegrationTests.class, MediumTests.class } )
-public class GatewayFuncTest {
+@Category( { FunctionalTests.class, MediumTests.class } )
+public class GatewayWebHdfsFuncTest {
 
 //  @Test
 //  public void demoWait() throws IOException {
@@ -73,18 +68,36 @@ public class GatewayFuncTest {
 //    System.in.read();
 //  }
 
-  private static Logger log = LoggerFactory.getLogger( GatewayFuncTest.class );
+  private static Logger log = LoggerFactory.getLogger( GatewayWebHdfsFuncTest.class );
+
+  private static boolean MOCK = Boolean.parseBoolean( System.getProperty( "MOCK", "true" ) );
+  //private static boolean MOCK = false;
+  private static boolean GATEWAY = Boolean.parseBoolean( System.getProperty( "GATEWAY", "true" ) );
+  //private static boolean GATEWAY = false;
+
+  private static final int LDAP_PORT = 33389;
+  private static final int GATEWAY_PORT = 8888;
+
+  private static String TEST_HOST_NAME = "vm.home";
+  private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
+  private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
 
   private static EmbeddedApacheDirectoryServer ldap;
   private static Server gateway;
+  private static MockServerImpl namenode;
+  private static MockServerImpl datanode;
 
   public static void startGateway() throws Exception {
 
     Map<String,String> params = new HashMap<String,String>();
-    params.put( "gateway.address", "localhost:8888" );
-    params.put( "namenode.address", "vm.home:50070" );
-    params.put( "datanode.address", "vm.home:50075" );
-    params.put( "templeton.address", "vm.home:50111" );
+    params.put( "gateway.address", "localhost:" + GATEWAY_PORT );
+    if( MOCK ) {
+      params.put( "namenode.address", "localhost:" + namenode.getPort() );
+      params.put( "datanode.address", "localhost:" + datanode.getPort() );
+    } else {
+      params.put( "namenode.address", NAME_NODE_ADDRESS );
+      params.put( "datanode.address", DATA_NODE_ADDRESS );
+    }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Config config = GatewayConfigFactory.create( configUrl, params );
@@ -94,21 +107,21 @@ public class GatewayFuncTest {
     ((ServletContextHandler)handler).addEventListener( new EnvironmentLoaderListener() );
     contexts.addHandler( handler );
 
-    gateway = new Server( 8888 );
+    gateway = new Server( GATEWAY_PORT );
     gateway.setHandler( contexts );
     gateway.start();
   }
 
   private static void startLdap() throws Exception{
     URL usersUrl = ClassLoader.getSystemResource( "users.ldif" );
-    ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, 33389 );
+    ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, LDAP_PORT );
     ldap.start();
     ldap.loadLdif( usersUrl );
   }
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-    org.apache.log4j.Logger.getLogger( "org.apache.shiro" ).setLevel( org.apache.log4j.Level.ALL );
+//    org.apache.log4j.Logger.getLogger( "org.apache.shiro" ).setLevel( org.apache.log4j.Level.ALL );
 //    org.apache.log4j.Logger.getLogger( "org.apache.http" ).setLevel( org.apache.log4j.Level.ALL );
 //    org.apache.log4j.Logger.getLogger( "org.apache.http.wire" ).setLevel( org.apache.log4j.Level.ALL );
 //    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.conn" ).setLevel( org.apache.log4j.Level.ALL );
@@ -121,13 +134,22 @@ public class GatewayFuncTest {
 //    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
 
     startLdap();
+    namenode = new MockServerImpl( "NameNode", true );
+    datanode = new MockServerImpl( "DataNode", true );
     startGateway();
+
+    log.info( "LDAP port = " + LDAP_PORT );
+    log.info( "NameNode port = " + namenode.getPort() );
+    log.info( "DataNode port = " + datanode.getPort() );
+    log.info( "Gateway port = " + gateway.getConnectors()[ 0 ].getLocalPort() );
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
     gateway.stop();
     gateway.join();
+    namenode.stop();
+    datanode.stop();
     ldap.stop();
   }
 
@@ -136,54 +158,41 @@ public class GatewayFuncTest {
     return "http://localhost:" + conn.getLocalPort();
   }
 
-  @Test
-  public void testLdap() throws IOException {
-    String namenodePath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
-
-    log.info( "Making REST API call." );
-    // Attempt to delete the test directory in case a previous run failed.
-    // Ignore any result.
-    given()
-        .log().all()
-        .auth().basic( "allowedUser", "password" )
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
-        .expect()
-        .statusCode( HttpStatus.SC_OK )
-        .log().all()
-        .when()
-        .delete( namenodePath + "/test" );
-
-    given()
-        .log().all()
-        .auth().basic( "deniedUser","invalid-password")
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
-        .expect()
-        .statusCode( HttpStatus.SC_UNAUTHORIZED )
-        .log().all()
-        .when()
-        .delete( namenodePath + "/test" );
+  private String getWebHdfsPath() {
+    return GATEWAY ? getGatewayPath()+"/gateway/cluster/namenode/api/v1" : "http://"+NAME_NODE_ADDRESS+"/webhdfs/v1";
   }
 
-    @Test
+  @Test
   public void testBasicHdfsUseCase() throws IOException {
-    String namenodePath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
-    //String namenodePath = "http://vm-hdpt:50070/webhdfs/v1";
+    String namenodePath = getWebHdfsPath();
 
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method("DELETE")
+          .pathInfo("/webhdfs/v1/test")
+          .param( "user.name", "hdfs" )
+          .param( "op", "DELETE" )
+          .param( "recursive", "true" )
+          .response()
+          .status( HttpStatus.SC_OK );
+    }
     given()
         //.log().all()
+        .auth().preemptive().basic( "allowedUser", "password" )
         .param( "user.name", "hdfs" )
         .param( "op", "DELETE" )
         .param( "recursive", "true" )
         .expect()
         //.log().all()
+        .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
         .when()
         .delete( namenodePath + "/test" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+    }
 
     /*
     curl -i -L http://vm-hdpt:50070/webhdfs/v1/?op=LISTSTATUS
@@ -199,8 +208,20 @@ public class GatewayFuncTest {
     {"accessTime":0,"blockSize":0,"group":"hdfs","length":0,"modificationTime":1350595857178,"owner":"hdfs","pathSuffix":"user","permission":"755","replication":0,"type":"DIRECTORY"}
     ]}}
      */
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "GET" )
+          .pathInfo( "/webhdfs/v1/" )
+          .param( "op", "LISTSTATUS" )
+          .response()
+          .status( HttpStatus.SC_OK )
+          .entity( ClassLoader.getSystemResource( "webhdfs-liststatus-default.json" ) )
+          .contentType( "application/json" );
+    }
     given()
         //.log().all()
+        .auth().preemptive().basic( "allowedUser", "password" )
         .param( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
@@ -211,6 +232,9 @@ public class GatewayFuncTest {
         .body( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "user" ) )
         .when()
         .get( namenodePath + "/" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+    }
 
     /* Create a directory.
     curl -i -X PUT "http://<HOST>:<PORT>/<PATH>?op=MKDIRS[&permission=<OCTAL>]"
@@ -222,18 +246,47 @@ public class GatewayFuncTest {
 
     {"boolean": true}
     */
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "PUT" )
+          .pathInfo( "/webhdfs/v1/test" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "MKDIRS" )
+          .response()
+          .status( HttpStatus.SC_OK )
+          .entity( ClassLoader.getSystemResource( "webhdfs-success.json" ) )
+          .contentType( "application/json" );
+    }
     given()
         //.log().all()
+        .auth().preemptive().basic( "allowedUser", "password" )
         .param( "user.name", "hdfs" )
         .param( "op", "MKDIRS" )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
+        .contentType( "application/json" )
         .body( "boolean", equalTo( true ) )
         .when().put( namenodePath + "/test" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+    }
 
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "GET" )
+          .pathInfo( "/webhdfs/v1/" )
+          .param( "op", "LISTSTATUS" )
+          .response()
+          .status( HttpStatus.SC_OK )
+          .entity( ClassLoader.getSystemResource( "webhdfs-liststatus-test.json" ) )
+          .contentType( "application/json" );
+    }
     given()
         //.log().all()
+        .auth().preemptive().basic( "allowedUser", "password" )
         .param( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
@@ -244,14 +297,9 @@ public class GatewayFuncTest {
         .body( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "tmp" ) )
         .body( "FileStatuses.FileStatus[4].pathSuffix", equalTo( "user" ) )
         .when().get( namenodePath + "/" );
-
-//    given()
-//        .param( "user.name", "hdfs" )
-//        .param( "op", "DELETE" )
-//        .expect()
-//        .statusCode( 200 )
-//        .body( "boolean", equalTo( true ) )
-//        .when().delete( namenodePath + "/test" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+    }
 
     /* Add a file.
     curl -i -X PUT "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=CREATE
@@ -271,18 +319,49 @@ public class GatewayFuncTest {
     Location: webhdfs://<HOST>:<PORT>/<PATH>
     Content-Length: 0
      */
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "PUT" )
+          .pathInfo( "/webhdfs/v1/test/file" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "CREATE" )
+          .response()
+          .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+          .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=CREATE&user.name=hdfs" );
+      datanode.add()
+          .request()
+          .method( "PUT" )
+          .pathInfo( "/webhdfs/v1/test/file" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "CREATE" )
+          .contentType( "text/plain" )
+          .entity( ClassLoader.getSystemResource( "test.txt" ) )
+          //.entity( ClassLoader.getSystemResource( "hadoop-examples.jar" ) )
+          .response()
+          .status( HttpStatus.SC_CREATED )
+          .header( "Location", "webhdfs://localhost:" + namenode.getPort() + "/test/file" );
+    }
     Response response = given()
         //.log().all()
-        .param( "user.name", "hdfs" )
+        .auth().preemptive().basic( "allowedUser", "password" )
+        .param( "use" +
+            "r.name", "hdfs" )
         .param( "op", "CREATE" )
-        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
+        .contentType( "text/plain" )
+        .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
+        //.content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_CREATED )
         .when().put( namenodePath + "/test/file" );
     String location = response.getHeader( "Location" );
-    assertThat( location, startsWith( getGatewayPath() + "/gateway/cluster" ) );
     log.info( "Location=" + location );
+    assertThat( location, startsWith( getGatewayPath() + "/gateway/cluster" ) );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+      assertThat( datanode.getCount(), is( 0 ) );
+    }
 
     /* Get the file.
     curl -i -L "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=OPEN
@@ -300,8 +379,30 @@ public class GatewayFuncTest {
 
     Hello, webhdfs user!
     */
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "GET" )
+          .pathInfo( "/webhdfs/v1/test/file" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "OPEN" )
+          .response()
+          .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+          .header( "Location", "http://localhost:" + datanode.getPort() + "/webhdfs/v1/test/file?op=OPEN&user.name=hdfs" );
+      datanode.add()
+          .request()
+          .method( "GET" )
+          .pathInfo( "/webhdfs/v1/test/file" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "OPEN" )
+          .response()
+          .status( HttpStatus.SC_OK )
+          .contentType( "text/plain" )
+          .entity( ClassLoader.getSystemResource( "test.txt" ) );
+    }
     given()
         //.log().all()
+        .auth().preemptive().basic( "allowedUser", "password" )
         .param( "user.name", "hdfs" )
         .param( "op", "OPEN" )
         .expect()
@@ -309,6 +410,10 @@ public class GatewayFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .body( equalTo( "TEST" ) )
         .when().get( namenodePath + "/test/file" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
+      assertThat( datanode.getCount(), is( 0 ) );
+    }
 
     /* Delete the directory.
     curl -i -X DELETE "http://<host>:<port>/webhdfs/v1/<path>?op=DELETE
@@ -321,147 +426,28 @@ public class GatewayFuncTest {
 
     {"boolean": true}
      */
-    given()
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
-        .when().delete( namenodePath + "/test" );
-  }
-
-  @Test
-  public void testBasicTempletonUserCase() throws IOException {
-    String hdfsPath = getGatewayPath() + "/gateway/cluster/namenode/api/v1";
-    String templetonPath = getGatewayPath() + "/gateway/cluster/templeton/api/v1";
-
-    /* Delete anything left over from a previous run.
-    curl -X DELETE 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount?user.name=hdfs&op=DELETE&recursive=true'
-     */
-    given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .param( "op", "DELETE" )
-        .param( "recursive", "true" )
-        .expect()
-        //.log().all()
-        .when()
-        .delete( hdfsPath + "/user/hdfs/test" );
-
-    /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
-    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
-     */
-    given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .param( "op", "CREATE" )
-        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "hadoop-examples.jar" ) ) )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_CREATED )
-        .when().put( hdfsPath + "/user/hdfs/test/hadoop-examples.jar" );
-
-    /* Put the data file into HDFS (CHANGES.txt)
-    curl -X PUT --data-binary @CHANGES.txt 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/CHANGES.txt?user.name=hdfs&op=CREATE'
-     */
-    given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .param( "op", "CREATE" )
-        .body( Streams.drainStream( ClassLoader.getSystemResourceAsStream( "CHANGES.txt" ) ) )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_CREATED )
-        .when().put( hdfsPath + "/user/hdfs/test/input/CHANGES.txt" );
-
-    /* Create the output directory
-    curl -X PUT 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
-    */
-    given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .param( "op", "MKDIRS" )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .body( "boolean", equalTo( true ) )
-        .when().put( hdfsPath + "/user/hdfs/test/output" );
-
-    /* Submit the job
-    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/gateway/cluster/templeton/api/v1/mapreduce/jar'
-    ﻿{"id":"job_201210301335_0059"}
-    */
-    String json = given()
-        //.log().all()
-        .formParam( "user.name", "hdfs" )
-        .formParam( "jar", "test/hadoop-examples.jar" )
-        .formParam( "class", "org.apache.hadoop.examples.WordCount" )
-        .formParam( "arg", "test/input", "test/output" )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .when().post( templetonPath + "/mapreduce/jar" ).asString();
-    String job = from( json ).getString( "id" );
-
-    /* Get the job status
-    curl 'http://vm:50111/templeton/v1/queue/:jobid?user.name=hdfs'
-    */
-    String status = given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .pathParam( "job", job )
-        .expect()
-        //.log().all()
-        .body( "status.jobId", equalTo( job ) )
-        .statusCode( HttpStatus.SC_OK )
-        .when().get( templetonPath + "/queue/{job}" ).asString();
-    log.info( status );
-
-    // Can't really check here because the job won't be done.
-    /* Retrieve results
-    curl 'http://192.168.1.163:8888/gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
-    */
-    given()
-        //.log().all()
-        .param( "user.name", "hdfs" )
-        .param( "op", "LISTSTATUS" )
-        .expect()
-        .log().all()
-        .statusCode( HttpStatus.SC_OK )
-        //.body( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
-        .when()
-        .get( hdfsPath + "/user/hdfs/test/output" );
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testJndiLdapAuthenticate() {
-
-    Hashtable env = new Hashtable();
-    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
-    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
-    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
-    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
-    env.put( Context.SECURITY_CREDENTIALS, "password" );
-
-    try {
-      DirContext ctx = new InitialDirContext( env );
-      ctx.close();
-    } catch( NamingException e ) {
-      e.printStackTrace();
-      fail( "Should have been able to find the allowedUser and create initial context." );
+    // Mock the interaction with the namenode.
+    if( MOCK ) {
+      namenode.add()
+          .request()
+          .method( "DELETE" )
+          .pathInfo( "/webhdfs/v1/test" )
+          .param( "user.name", "hdfs" )
+          .param( "op", "DELETE" )
+          .param( "recursive", "true" )
+          .response()
+          .status( HttpStatus.SC_OK );
     }
-
-    env = new Hashtable();
-    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
-    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
-    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
-    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
-    env.put( Context.SECURITY_CREDENTIALS, "invalid-password" );
-
-    try {
-      DirContext ctx = new InitialDirContext( env );
-      fail( "Should have thrown a NamingException to indicate invalid credentials." );
-    } catch( NamingException e ) {
-      // This exception should be thrown.
+    given()
+        .auth().preemptive().basic( "allowedUser", "password" )
+        .param( "user.name", "hdfs" )
+        .param( "op", "DELETE" )
+        .param( "recursive", "true" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .when().delete( namenodePath + "/test" );
+    if( MOCK ) {
+      assertThat( namenode.getCount(), is( 0 ) );
     }
   }
 

@@ -17,18 +17,13 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;

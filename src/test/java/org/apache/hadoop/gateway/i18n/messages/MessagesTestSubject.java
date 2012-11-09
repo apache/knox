@@ -29,7 +29,7 @@ public interface MessagesTestSubject {
   void withFullAnnotationAndParameter( int x );
 
   @Message( level=INFO, code=42, text="str={0}, t={1}" )
-  void withEverything( String str, @StackTrace( level=INFO ) Throwable t );
+  void withEverything( String str, @StackTrace(level=INFO) Throwable t );
 
   @Message
   void withoutParams();

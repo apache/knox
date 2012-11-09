@@ -23,6 +23,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -39,7 +42,7 @@ public class WebHdfsPivot extends HttpClientPivot {
     super();
   }
 
-  @Override
+  //@Override
   public void doPut( HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     HttpEntity entity = createRequestEntity( request );

@@ -15,24 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway;
+package org.apache.hadoop.gateway.mock;
 
-import org.apache.hadoop.gateway.i18n.messages.Message;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
-import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+public class MockInteraction {
 
-import static org.apache.hadoop.gateway.i18n.messages.MessageLevel.*;
+  private MockResponseProvider response = new MockResponseProvider();
+  private MockRequestMatcher request = new MockRequestMatcher( response );
 
-/**
- *
- */
-@Messages
-public interface GatewayMessages {
+  public MockRequestMatcher request() {
+    return request;
+  }
 
-  @Message(level=INFO, text="Starting gateway.")
-  void startingGateway();
-
-  @Message(level=FATAL, text="Failed to start gateway.")
-  void failedToStartGateway( @StackTrace(level=DEBUG) Exception e );
+  public MockResponseProvider response() {
+    return response;
+  }
 
 }

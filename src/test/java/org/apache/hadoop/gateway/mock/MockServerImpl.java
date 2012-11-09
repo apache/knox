@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.gateway.mock;
 
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -27,12 +25,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
+import java.util.LinkedList;
+import java.util.Queue;
 
-public abstract class MockServerBase implements MockServer {
+public class MockServerImpl {
 
   private Logger log = LoggerFactory.getLogger( this.getClass() );
 
+  private String name;
   private Server jetty;
+
+  private Queue<MockInteraction> interactions = new LinkedList<MockInteraction>();
+
+  public MockServerImpl( String name ) {
+    this.name = name;
+  }
+
+  public MockServerImpl( String name, boolean start ) throws Exception {
+    this.name = name;
+    if( start ) {
+      start();
+    }
+  }
+
+  public String getName() {
+    return name;
+  }
 
   public void start() throws Exception {
     Handler context = createHandler();
@@ -47,11 +65,8 @@ public abstract class MockServerBase implements MockServer {
     jetty.join();
   }
 
-  protected abstract Handler createHandler();
-
-  protected ServletContextHandler createJerseyContext( String... packages ) {
-    PackagesResourceConfig config = new PackagesResourceConfig( packages );
-    Servlet servlet = new ServletContainer( config );
+  private ServletContextHandler createHandler() {
+    Servlet servlet = new MockServlet( interactions );
     ServletHolder holder = new ServletHolder( servlet );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( "/" );
@@ -61,5 +76,23 @@ public abstract class MockServerBase implements MockServer {
 
   public int getPort() {
     return jetty.getConnectors()[0].getLocalPort();
+  }
+
+  public MockInteraction add() {
+    MockInteraction interaction = new MockInteraction();
+    interactions.add( interaction );
+    return interaction;
+  }
+
+  public int getCount() {
+    return interactions.size();
+  }
+
+  public boolean isEmpty() {
+    return interactions.isEmpty();
+  }
+
+  public void reset() {
+    interactions.clear();
   }
 }

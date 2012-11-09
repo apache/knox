@@ -15,24 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway;
+package org.apache.hadoop.gateway.pivot;
 
-import org.apache.hadoop.gateway.i18n.messages.Message;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
-import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+import java.io.FilterInputStream;
+import java.io.InputStream;
 
-import static org.apache.hadoop.gateway.i18n.messages.MessageLevel.*;
+public class ResettableInputStream extends FilterInputStream {
 
-/**
- *
- */
-@Messages
-public interface GatewayMessages {
-
-  @Message(level=INFO, text="Starting gateway.")
-  void startingGateway();
-
-  @Message(level=FATAL, text="Failed to start gateway.")
-  void failedToStartGateway( @StackTrace(level=DEBUG) Exception e );
+  /**
+   * Creates a <code>FilterInputStream</code>
+   * by assigning the  argument <code>in</code>
+   * to the field <code>this.in</code> so as
+   * to remember it for later use.
+   *
+   * @param in the underlying input stream, or <code>null</code> if
+   *           this instance is to be created without an underlying stream.
+   */
+  protected ResettableInputStream( InputStream in ) {
+    super( in );
+  }
 
 }
