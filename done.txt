@@ -2,7 +2,7 @@ Configuration
 source=/webhdfs/browseDirectory.jsp#*
 target=http://{0}/browseDirectory.jsp
 Converts source URL
-/webhdfs/browseDirectory.jsp#http://hadoop-secure:1022?namenodeInfoPort=50070&dir=%2F
+/webhdfs/browseDirectory.jsp#http://org.apache.hadoop-secure:1022?namenodeInfoPort=50070&dir=%2F
 to target URL
 http://http-secure.home:1022/browseDirectory.jsp?namenodeInfoPort=50070&dir=%2F
 
@@ -69,12 +69,12 @@ Add scheme & authority support to uritemplate
 Utility
 Add query matching support to uritemplate
 
-Create a wrapper chain that you can set the gateway chain on.  This should allow for dynamic reconfiguration.
+Create a wrapper chain that you can set the org.apache.org.apache.hadoop.gateway chain on.  This should allow for dynamic reconfiguration.
 Have this wrapper control the lifecycle of the chain.  Including the init and destroy of the chain.
 
 Create a factory that takes a string and creates config.
 
-Create a factory that takes config and generate the gateway chain.
+Create a factory that takes config and generate the org.apache.org.apache.hadoop.gateway chain.
 
 Put Apache headers in all source.
 

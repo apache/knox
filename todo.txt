@@ -29,13 +29,13 @@ Sort out the handling of * vs ** for match and expand.
 Security (IMPORTANT)
 A HTTP BasicAuth challenge must never be issued over an insecure transport.
 Probably need to put a filter in place before shiro/spring-security to enforce this.
-Might just want to put this in as a "global" filter in front of the gateway servlet.
+Might just want to put this in as a "global" filter in front of the org.apache.org.apache.hadoop.gateway servlet.
 
 Feature (IMPORTANT)
 Need to be able to use something from the authentication to map the authenticated use to a Hadoop user.
 
 Feature (IMPORTANT)
-Need to setup SSL for the gateway.
+Need to setup SSL for the org.apache.org.apache.hadoop.gateway.
 This will require some way to do porotocl mediation from HTTPS -> HTTP.
 
 Configuration
@@ -67,7 +67,7 @@ manipulating the query parameters.
 
 Security
 For nn_browsedfscontent.jsp need to provide a delegation parameter.
-Q: What is the relationship between the hadoop.auth cookie and the delegation parameter?
+Q: What is the relationship between the org.apache.hadoop.auth cookie and the delegation parameter?
 In general delegation parameters are provided by the server as a result of a redirect from a service protected via SPNEGO.
 This might be useful in creating a delegation parameter.
 //      Subject s = Subject.getSubject( AccessController.getContext() );
@@ -84,7 +84,7 @@ This might be useful in creating a delegation parameter.
 //      conn = new AuthenticatedURL().openConnection( changesUrl, token );
 
 Usability
-This needs to automatically add the hadoop.auth cookie if there is an authenticated subject.
+This needs to automatically add the org.apache.hadoop.auth cookie if there is an authenticated subject.
 The test for this is that you should be able to browse the data node file system.
 
 Feature
@@ -99,7 +99,7 @@ Security
 Make sure that the challenge filter will only challenge over a secure transport.
 
 Configuration
-Build into the gateway wrapper the ability to take either a URL or a config string as an init parameter to create
+Build into the org.apache.org.apache.hadoop.gateway wrapper the ability to take either a URL or a config string as an init parameter to create
 the chain chain.
 
 Feature
