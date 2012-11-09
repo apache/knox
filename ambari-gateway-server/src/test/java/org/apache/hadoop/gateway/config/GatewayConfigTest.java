@@ -17,14 +17,14 @@
  */
 package org.apache.hadoop.gateway.config;
 
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
 import org.apache.commons.digester3.AbstractObjectCreationFactory;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.Rule;
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.xml.sax.Attributes;

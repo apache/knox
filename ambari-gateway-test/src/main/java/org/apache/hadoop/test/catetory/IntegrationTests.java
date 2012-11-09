@@ -15,35 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock.templeton;
+package org.apache.hadoop.test.catetory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.xml.bind.annotation.XmlRootElement;
-
-@Path( "templton" )
-public class MockTempletonResource {
-
-  @GET
-  @Path( "/hello")
-  @Produces( MediaType.TEXT_PLAIN )
-  public String get() {
-    return "HELLO";
-  }
-
-  @Path( "/{version}/{file}/status")
-  @Produces( MediaType.APPLICATION_JSON )
-  public Status status(
-      @QueryParam("op") String operation,
-      @PathParam( "version" ) String version,
-      @PathParam( "file" ) String file ) {
-    return new Status();
-  }
-
-  @XmlRootElement
-  private class Status {
-    String value;
-    public Status() {}
-  }
-
+public interface IntegrationTests {
 }

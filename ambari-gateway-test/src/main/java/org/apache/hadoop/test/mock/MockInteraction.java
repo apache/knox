@@ -15,7 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test;
+package org.apache.hadoop.test.mock;
 
-public interface IntegrationTests {
+public class MockInteraction {
+
+  private MockResponseProvider response = new MockResponseProvider();
+  private MockRequestMatcher request = new MockRequestMatcher( response );
+
+  public MockRequestMatcher request() {
+    return request;
+  }
+
+  public MockResponseProvider response() {
+    return response;
+  }
+
 }

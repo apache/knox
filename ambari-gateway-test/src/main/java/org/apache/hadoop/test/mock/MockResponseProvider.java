@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock;
+package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
 

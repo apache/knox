@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.mock.MockServlet;
+import org.apache.hadoop.test.mock.MockServlet;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;

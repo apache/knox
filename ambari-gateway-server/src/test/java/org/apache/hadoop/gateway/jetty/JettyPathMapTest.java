@@ -17,9 +17,10 @@
  */
 package org.apache.hadoop.gateway.jetty;
 
-import org.apache.hadoop.test.UnitTests;
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
 import org.eclipse.jetty.http.PathMap;
 import org.junit.Ignore;
 import org.junit.Test;

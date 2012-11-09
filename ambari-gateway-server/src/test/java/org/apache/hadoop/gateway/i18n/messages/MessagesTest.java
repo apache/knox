@@ -17,11 +17,12 @@
  */
 package org.apache.hadoop.gateway.i18n.messages;
 
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.UnitTests;
 import org.apache.hadoop.gateway.i18n.messages.loggers.test.TestMessageLogger;
 import org.apache.hadoop.gateway.i18n.messages.loggers.test.TestMessageLoggerFactory;
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

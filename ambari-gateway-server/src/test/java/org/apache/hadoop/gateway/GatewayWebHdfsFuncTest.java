@@ -18,19 +18,16 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.gateway.mock.MockServerImpl;
+import org.apache.hadoop.test.mock.MockServerImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
-import org.apache.hadoop.gateway.mock.MockServerImpl;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.test.FunctionalTests;
-import org.apache.hadoop.test.IntegrationTests;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.FunctionalTests;
+import org.apache.hadoop.test.catetory.IntegrationTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;
@@ -45,19 +42,15 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.Context;
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;

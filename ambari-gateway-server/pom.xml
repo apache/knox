@@ -71,6 +71,12 @@
         <!-- ********** ********** ********** ********** ********** ********** -->
 
         <dependency>
+            <groupId>org.apache.hadoop.ambari</groupId>
+            <artifactId>ambari-gateway-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <scope>test</scope>
@@ -82,6 +88,7 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- This must be after restassured otherwise is messes up the hamcrest dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

@@ -18,19 +18,17 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.gateway.mock.MockServerImpl;
+import org.apache.hadoop.test.mock.MockServerImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.test.IntegrationTests;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.IntegrationTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
-import org.apache.hadoop.gateway.mock.MockServerImpl;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.test.IntegrationTests;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.IntegrationTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;

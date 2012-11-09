@@ -18,7 +18,8 @@
 package org.apache.hadoop.gateway.security;
 
 import com.google.common.io.Files;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.DirectoryService;
 import org.apache.directory.server.core.entry.ServerEntry;
@@ -28,9 +29,9 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.apache.hadoop.test.FunctionalTests;
-import org.apache.hadoop.test.ManualTests;
-import org.apache.hadoop.test.MediumTests;
+import org.apache.hadoop.test.catetory.FunctionalTests;
+import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.catetory.MediumTests;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;

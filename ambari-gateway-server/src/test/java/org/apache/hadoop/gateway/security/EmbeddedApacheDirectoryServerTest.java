@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.security;
 
-import org.apache.hadoop.test.ManualTests;
-import org.apache.hadoop.test.ManualTests;
+import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.catetory.ManualTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

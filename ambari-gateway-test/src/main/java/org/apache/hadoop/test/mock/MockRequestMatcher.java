@@ -15,9 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock;
+package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
+import org.hamcrest.core.Is;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -26,8 +27,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
@@ -137,22 +137,22 @@ public class MockRequestMatcher {
   public void match( HttpServletRequest request ) throws IOException {
     if( methods != null ) {
       assertThat(
-           "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " is not using one of the required HTTP methods",
-           methods, hasItem( request.getMethod() ) );
+          "Request " + request.getMethod() + " " + request.getRequestURL() +
+              " is not using one of the required HTTP methods",
+          methods, hasItem( request.getMethod() ) );
     }
     if( pathInfo != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-               " does not have the required pathInfo",
-          request.getPathInfo(), is( pathInfo ) );
+              " does not have the required pathInfo",
+          request.getPathInfo(), Is.is( pathInfo ) );
     }
     if( headers != null ) {
       for( String name: headers.keySet() ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                 " does not have the required value for header " + name,
-            request.getHeader( name ), is( headers.get( name ) ) );
+                " does not have the required value for header " + name,
+            request.getHeader( name ), Is.is( headers.get( name ) ) );
       }
     }
     if( cookies != null ) {
@@ -160,7 +160,7 @@ public class MockRequestMatcher {
       for( Cookie cookie: cookies ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                 " does not have the required cookie " + cookie,
+                " does not have the required cookie " + cookie,
             requestCookies, hasItem( cookie ) );
       }
     }
@@ -169,26 +169,26 @@ public class MockRequestMatcher {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required content type",
-          requestContentType[0], is( contentType ) );
+          requestContentType[ 0 ], Is.is( contentType ) );
     }
     if( characterEncoding != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required character encoding",
-          request.getCharacterEncoding(), is( characterEncoding ) );
+          request.getCharacterEncoding(), Is.is( characterEncoding ) );
     }
     if( contentLength != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required content length",
-          request.getContentLength(), is( contentLength ) );
+          request.getContentLength(), Is.is( contentLength ) );
     }
     if( entity != null ) {
       byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " content does not match the required content",
-          bytes, is( entity ) );
+          bytes, Is.is( entity ) );
     }
     // Note: Cannot use any of the request.getParameter*() methods because they will ready the request
     // body and we don't want that to happen.
@@ -199,11 +199,11 @@ public class MockRequestMatcher {
         String[] values = requestParams.get( name );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-            " query string " + queryString + " is missing parameter '" + name + "'",
+                " query string " + queryString + " is missing parameter '" + name + "'",
             values, notNullValue() );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-            " query string " + queryString + " is missing a value for parameter '"+name+"'",
+                " query string " + queryString + " is missing a value for parameter '" + name + "'",
             Arrays.asList( values ), hasItem( params.get( name ) ) );
       }
     }

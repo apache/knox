@@ -15,21 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock.ambari;
+package org.apache.hadoop.test.catetory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-@Path( "ambari" )
-public class MockAmbariResource {
-
-  @GET
-  @Path( "/hello")
-  @Produces( MediaType.TEXT_PLAIN )
-  public String get() {
-    return "HELLO";
-  }
-
+public interface ManualTests {
 }

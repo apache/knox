@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.test.ManualTests;
-import org.apache.hadoop.test.ManualTests;
-import org.apache.hadoop.test.SlowTests;
+import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.catetory.SlowTests;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;

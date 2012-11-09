@@ -17,10 +17,11 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
-import org.apache.hadoop.test.FastTests;
-import org.apache.hadoop.test.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.catetory.FastTests;
+import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.catetory.UnitTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

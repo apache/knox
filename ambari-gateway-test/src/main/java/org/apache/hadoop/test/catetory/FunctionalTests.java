@@ -15,28 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock;
+package org.apache.hadoop.test.catetory;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-
-/**
- *
- */
-public class MockServiceFactory {
-
-  public static Handler create() {
-    ServletHolder servlet = new ServletHolder( MockServlet.class );
-    servlet.setInitParameter( "contentType", "application/json" );
-    servlet.setInitParameter( "content", "{res=serviceA}" );
-
-    ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
-    context.setResourceBase( "target/classes" );
-    context.setContextPath( "/" );
-    context.addServlet( servlet, "/*" );
-
-    return context;
-  }
-
+public interface FunctionalTests {
 }

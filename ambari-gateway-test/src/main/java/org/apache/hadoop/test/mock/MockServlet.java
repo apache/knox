@@ -15,36 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.mock;
+package org.apache.hadoop.test.mock;
 
 import javax.servlet.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Queue;
 
-/**
- *
- */
-public class MockFilter implements Filter {
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
-  FilterConfig config;
+public class MockServlet extends HttpServlet {
 
-  @Override
-  public void init( javax.servlet.FilterConfig filterConfig ) throws ServletException {
-    config = filterConfig;
+  public Queue<MockInteraction> interactions;
+
+  public MockServlet( Queue<MockInteraction> interactions ) {
+    this.interactions = interactions;
   }
 
   @Override
-  public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain ) throws IOException, ServletException {
-    System.out.println( "MockFilter.doMethod: name=" + config.getFilterName() );
-    servletResponse.setContentType( config.getInitParameter( "contentType" ) );
-    servletResponse.setCharacterEncoding( "UTF-8" );
-    servletResponse.getWriter().write( config.getInitParameter( "content" ) );
-    if( !Boolean.valueOf( config.getInitParameter( "pivot" ) ) ) {
-      filterChain.doFilter( servletRequest, servletResponse );
-    }
+  protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+    assertThat( "Mock servlet has no available interactions.", interactions.isEmpty(), is( false ) );
+    MockInteraction interaction = interactions.remove();
+    interaction.request().match( request );
+    interaction.response().apply( response );
   }
-
-  @Override
-  public void destroy() {
-  }
-
 }
