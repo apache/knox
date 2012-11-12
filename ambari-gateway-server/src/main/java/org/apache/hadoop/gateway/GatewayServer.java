@@ -20,12 +20,8 @@ package org.apache.hadoop.gateway;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -37,6 +33,7 @@ import java.util.Map;
 public class GatewayServer {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static GatewayConfig config;
   private static Server jetty;
 
   //TODO: Need to locate bootstrap config that provides information required to locate the Ambari server.
@@ -45,35 +42,36 @@ public class GatewayServer {
     try {
       log.startingGateway();
       startGateway();
-      log.startedGateway( jetty.getConnectors()[0].getLocalPort() );
+      log.startedGateway( jetty.getConnectors()[ 0 ].getLocalPort() );
     } catch( Exception e ) {
       log.failedToStartGateway( e );
     }
   }
 
   private static void startGateway() throws Exception {
+    config = new GatewayConfig();
 
     Map<String,String> params = new HashMap<String,String>();
-//    params.put( "org.apache.org.apache.hadoop.gateway.address", "localhost:8888" );
-//    params.put( "namenode.address", "vm.home:50070" );
-//    params.put( "datanode.address", "vm.home:50075" );
-//    params.put( "templeton.address", "vm.home:50111" );
+    params.put( "ambari.address", config.getAmbariAddress() );
+    params.put( "namenode.address", config.getNameNodeAddress() );
+    params.put( "templeton.address", config.getTempletonAddress() );
 
     //TODO: This needs to be dynamic based on a call to the Ambari server.
-    URL configUrl = ClassLoader.getSystemResource( "org/apache/org.apache.hadoop/org.apache.org.apache.hadoop.gateway/GatewayServer.xml" );
-    Config config = GatewayConfigFactory.create( configUrl, params );
+    URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayServer.xml" );
+    Config gatewayConfig = GatewayConfigFactory.create( configUrl, params );
 
     ContextHandlerCollection contexts = new ContextHandlerCollection();
-    ServletContextHandler handler = JettyGatewayFactory.create( "/org/apache/org.apache.hadoop/gateway/cluster", config );
+    ServletContextHandler handler = JettyGatewayFactory.create( "gateway/cluster", gatewayConfig );
+    handler.getServletContext().setInitParameter( "shiroConfigLocations", config.getShiroConfigFile() );
     handler.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
     contexts.addHandler( handler );
 
-    jetty = new Server( 8888 );
+    jetty = new Server( config.getGatewayPort() );
     jetty.setHandler( contexts );
     jetty.start();
   }
 
-  private static void stopServer() throws Exception {
+  private static void stopGateway() throws Exception {
     jetty.stop();
     jetty.join();
   }

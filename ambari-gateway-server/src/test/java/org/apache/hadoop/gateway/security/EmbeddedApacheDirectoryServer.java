@@ -46,6 +46,13 @@ public class EmbeddedApacheDirectoryServer {
 
   private Partition partition;
 
+  public static void main( String[] args ) throws Exception {
+    EmbeddedApacheDirectoryServer ldap;
+    ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, 33389 );
+    ldap.start();
+    ldap.loadLdif( ClassLoader.getSystemResource( "users.ldif" ) );
+  }
+
   public EmbeddedApacheDirectoryServer( String rootDn, File workDir, int ldapPort ) throws Exception {
     partition = createRootParition( rootDn );
     directory = createDirectory( partition, workDir );

@@ -18,9 +18,6 @@
 package org.apache.hadoop.gateway.pivot;
 
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
-import org.apache.hadoop.gateway.util.Streams;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -70,12 +67,12 @@ public class UrlConnectionPivot extends AbstractGatewayPivot {
 //    System.out.println( "Resolved target: " + targetUrl );
 
     StringBuilder paramStr = new StringBuilder();
-    Enumeration<String> paramNames = request.getParameterNames();
+    Enumeration paramNames = request.getParameterNames();
     if( paramNames.hasMoreElements() ) {
       paramStr.append( "?" );
     }
     while( paramNames.hasMoreElements() ) {
-      String paramName = paramNames.nextElement();
+      String paramName = (String)paramNames.nextElement();
       String paramValue = request.getParameter( paramName );
       paramStr.append( paramName );
       paramStr.append( "=" );

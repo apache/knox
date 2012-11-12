@@ -18,14 +18,14 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.test.mock.MockServer;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.test.catetory.MediumTests;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
+import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.catetory.FunctionalTests;
+import org.apache.hadoop.test.catetory.MediumTests;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;
@@ -46,12 +46,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.path.json.JsonPath.from;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayWebHdfsFuncTest {

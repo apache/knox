@@ -8,6 +8,26 @@ Security
    5b) For linux ook into Linux Containers, VServer, SeLinux, etc.
    5c) For windows look into Job objects
 
+Usability
+Make ** the default for path and queryParam shortcut patterns.
+This
+  <source>/namenode/api/v1/{path=**}?{**}</source>
+should be
+  <source>/namenode/api/v1/{path}?{**}</source>
+and
+
+Usability
+Eliminate the need for two webhdfs entries in the config XML.
+This will require making this
+        <source>/namenode/api/v1?{**}</source>
+        <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
+and this
+        <source>/namenode/api/v1/{path=**}?{**}</source>
+        <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
+behave identically when the input URL is one of these
+  http://host:port/gateway/cluster/namenode/api/v1
+  http://host:port/gateway/cluster/namenode/api/v1/
+
 Bug
 Right now any parameter that wasn't used in an expansion by the time the query is expanded is added to the
 URL if there is a {**} in the template.  This should only expand unused query parameters.  It also doesn't
