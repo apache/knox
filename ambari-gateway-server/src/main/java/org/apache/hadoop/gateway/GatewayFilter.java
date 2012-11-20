@@ -17,7 +17,6 @@ import java.util.*;
 public class GatewayFilter implements Filter {
 
   private static final FilterChain EMPTY_CHAIN = new FilterChain() {
-    @Override
     public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     }
   };

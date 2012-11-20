@@ -68,7 +68,6 @@ public class SslSocketTest {
       return ready;
     }
 
-    @Override
     public void run() {
       try {
         SSLServerSocketFactory sslserversocketfactory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();

@@ -18,13 +18,10 @@
 package org.apache.hadoop.gateway.security;
 
 import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.ManualTests;
 import org.apache.hadoop.test.catetory.MediumTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.web.env.EnvironmentLoaderListener;
-import org.apache.shiro.web.servlet.ShiroFilter;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.filter.DelegatingFilterProxy;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -34,49 +31,51 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.auth.Subject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URL;
+import java.security.AccessController;
 import java.util.EnumSet;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-// Derrived from this thread
+// Derived from this thread
 // http://shiro-user.582556.n2.nabble.com/Integration-of-Shiro-with-Embedded-Jetty-td7519712.html
 @Category( { ManualTests.class, MediumTests.class } )
-public class ShiroEmbeddedLdapTest {
+public class SpringSecurityEmbeddedLdapTest {
 
-  private static Logger log = LoggerFactory.getLogger( ShiroEmbeddedLdapTest.class );
+  private static Logger log = LoggerFactory.getLogger( SpringSecurityEmbeddedLdapTest.class );
 
   private static EmbeddedApacheDirectoryServer ldap;
 
   private Server jetty;
-
+  
   @BeforeClass
   public static void setupSuite() throws Exception{
-    findFreePort();
-    ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, 33389 );
-    ldap.start();
-    ldap.loadLdif( ClassLoader.getSystemResource( "users.ldif" ) );
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    ldap.stop();
   }
 
   @Before
   public void setupTest() throws Exception {
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( "/" );
-    context.addEventListener( new EnvironmentLoaderListener() );
+    
+    context.setInitParameter("contextConfigLocation", "classpath:app-context-security.xml" );
+    context.addEventListener( new ContextLoaderListener() );
 
-    // Add root ShiroFilter, all remaining filters and filter chains are defined in shiro.ini's [urls] section.
-    FilterHolder filterHolder = new FilterHolder( new ShiroFilter() );
+    // Add root Spring Security Filter, all remaining filters and filter chains are determined by the config in app-context-security.xml.
+    FilterHolder filterHolder = new FilterHolder( new DelegatingFilterProxy("springSecurityFilterChain") );
     ServletHolder servletHolder = new ServletHolder( new MockServlet() );
 
     EnumSet<DispatcherType> types = EnumSet.allOf( DispatcherType.class );
@@ -96,7 +95,7 @@ public class ShiroEmbeddedLdapTest {
   }
 
   @Test
-  public void testShiro() throws Exception {
+  public void testSpringSecurity() throws Exception {
     String url = "http://localhost:" + jetty.getConnectors()[0].getPort() + "/";
 
     given()
@@ -125,8 +124,7 @@ public class ShiroEmbeddedLdapTest {
     public void destroy() {}
     
     public void doFilter( ServletRequest request, ServletResponse response, FilterChain chain ) throws IOException, ServletException {
-      org.apache.shiro.subject.Subject ss = SecurityUtils.getSubject();
-      log.info( "PRINCIPAL: " + ss.getPrincipal() );
+      log.info( "PRINCIPAL: " + SecurityContextHolder.getContext().getAuthentication().getPrincipal() );
       chain.doFilter( request, response );
     }
   }

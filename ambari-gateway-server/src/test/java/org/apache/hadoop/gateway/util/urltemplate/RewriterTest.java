@@ -205,7 +205,6 @@ public class RewriterTest {
     }
 
     // Picks the values from either the expect or the config in that order.
-    @Override
     @SuppressWarnings( "unchecked" )
     public List<String> getValues( String name ) {
       List<String> values = null;
