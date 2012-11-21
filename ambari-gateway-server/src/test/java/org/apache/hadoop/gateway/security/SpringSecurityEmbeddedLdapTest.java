@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.security;
 
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
+import org.apache.hadoop.test.category.ManualTests;
+import org.apache.hadoop.test.category.MediumTests;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.filter.DelegatingFilterProxy;
