@@ -25,7 +25,7 @@ import java.net.URL;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class GatewayConfigTest {
+public class GatewayGlobalConfigTest {
 
   private String getDirName( String resource ) {
     URL url = ClassLoader.getSystemResource( resource );
