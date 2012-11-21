@@ -24,7 +24,8 @@ import java.util.*;
  */
 public class Config implements Map<String,String> {
 
-  private Map<String,String> params; // Decided to delegate vs inherit because of recursion issues that can occur during hash map expansion.
+  // Decided to delegate vs inherit because of recursion issues that can occur during hash map expansion.
+  private Map<String,String> params;
   private Config parent;
   private Map<String,Config> children;
 
@@ -64,22 +65,22 @@ public class Config implements Map<String,String> {
 
   @Override
   public int size() {
-    return 0;
+    return params.size();
   }
 
   @Override
   public boolean isEmpty() {
-    return false;
+    return params.isEmpty();
   }
 
   @Override
   public boolean containsKey( Object key ) {
-    return false;
+    return params.containsKey( key );
   }
 
   @Override
   public boolean containsValue( Object value ) {
-    return false;
+    return params.containsValue( value );
   }
 
   @Override

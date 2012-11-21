@@ -35,7 +35,7 @@ import java.security.PrivilegedExceptionAction;
 /**
  *
  */
-public class JassLoginFilter extends AbstractGatewayFilter {
+public class JaasLoginFilter extends AbstractGatewayFilter {
 
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.login";
 

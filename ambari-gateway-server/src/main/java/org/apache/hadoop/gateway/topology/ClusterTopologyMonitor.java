@@ -15,7 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.catetory;
+package org.apache.hadoop.gateway.topology;
 
-public interface FunctionalTests {
+public interface ClusterTopologyMonitor {
+
+  void addTopologyChangeListener( ClusterTopologyListener listener );
+
+  void startMonitor();
+
+  void stopMonitor();
+
 }

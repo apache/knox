@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.catetory;
+package org.apache.hadoop.test.category;
 
-public interface UnitTests {
+public interface IntegrationTests {
 }

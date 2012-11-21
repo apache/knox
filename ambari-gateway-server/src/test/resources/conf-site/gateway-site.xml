@@ -43,4 +43,10 @@ limitations under the License.
         <description>The default address of Templeton.</description>
     </property>
 
+    <property>
+        <name>gateway.shiro.config.file</name>
+        <value>site-shiro.ini</value>
+        <description>The location of the Shiro configuration file.</description>
+    </property>
+
 </configuration>

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.i18n.messages;
 
+import org.apache.hadoop.gateway.i18n.messages.loggers.jdk.JdkMessageLoggerFactory;
 import org.apache.hadoop.gateway.i18n.messages.loggers.sout.SoutMessageLoggerFactory;
 import org.apache.hadoop.gateway.i18n.messages.loggers.sout.SoutMessageLoggerFactory;
 
@@ -56,7 +57,7 @@ public class MessagesFactory {
     if( factories != null && factories.hasNext() ) {
       factory = loader.iterator().next();
     } else {
-      factory = new SoutMessageLoggerFactory();
+      factory = new JdkMessageLoggerFactory();
     }
     return factory;
   }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<cluster>
+    <name>cluster</name>
+    <!--
+    <version>1.2.3</version>
+    <security></security>
+    -->
+    <component>
+        <role>NAMENODE</role>
+        <url>http://host:80/webhdfs/v1</url>
+    </component>
+</cluster>

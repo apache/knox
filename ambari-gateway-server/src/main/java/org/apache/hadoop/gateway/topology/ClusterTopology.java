@@ -15,7 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.catetory;
+package org.apache.hadoop.gateway.topology;
 
-public interface ManualTests {
+import java.util.ArrayList;
+import java.util.Collection;
+
+public class ClusterTopology {
+
+  private String name;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName( String name ) {
+    this.name = name;
+  }
+
+  private long timestamp;
+
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  public void setTimestamp( long timestamp ) {
+    this.timestamp = timestamp;
+  }
+
+  private Collection<ClusterComponent> components = new ArrayList<ClusterComponent>();
+
+  public Collection<ClusterComponent> getComponents() {
+    return this.components;
+  }
+
+  public void addComponent( ClusterComponent component ) {
+    components.add( component );
+  }
+
 }

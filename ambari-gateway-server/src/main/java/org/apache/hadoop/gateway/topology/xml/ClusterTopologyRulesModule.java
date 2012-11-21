@@ -15,18 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.i18n.messages;
+package org.apache.hadoop.gateway.topology.xml;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopology;
 
-/**
- *
- */
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.PARAMETER )
-public @interface StackTrace {
-  MessageLevel level() default MessageLevel.DEBUG;
+public class ClusterTopologyRulesModule extends AbstractRulesModule {
+
+  @Override
+  protected void configure() {
+    forPattern( "cluster" ).createObject().ofType( ClusterTopology.class );
+    forPattern( "cluster/name" ).setBeanProperty();
+    forPattern( "cluster/version" ).setBeanProperty();
+    forPattern( "cluster/component" ).createObject().ofType( ClusterComponent.class ).then().setNext( "addComponent" );
+    forPattern( "cluster/component/role" ).setBeanProperty();
+    forPattern( "cluster/component/url" ).setBeanProperty();
+  }
+
 }

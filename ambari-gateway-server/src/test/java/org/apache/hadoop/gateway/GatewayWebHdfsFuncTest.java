@@ -23,16 +23,14 @@ import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.test.catetory.FunctionalTests;
-import org.apache.hadoop.test.catetory.MediumTests;
+import org.apache.hadoop.test.category.FunctionalTests;
+import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -95,9 +93,8 @@ public class GatewayWebHdfsFuncTest {
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Config config = GatewayConfigFactory.create( configUrl, params );
 
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
     Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
-    ((ServletContextHandler)handler).addEventListener( new EnvironmentLoaderListener() );
+    ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.addHandler( handler );
 
     gateway = new Server( GATEWAY_PORT );

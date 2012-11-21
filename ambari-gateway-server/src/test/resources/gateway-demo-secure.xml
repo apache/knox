@@ -64,7 +64,7 @@
         </filter>
         <filter>
             <name>login</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.JassLoginFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
             <name>pivot</name>
@@ -86,7 +86,7 @@
         </filter>
         <filter>
             <name>login</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.JassLoginFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
             <name>pivot</name>

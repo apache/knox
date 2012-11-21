@@ -52,18 +52,17 @@ public class GatewayServer {
     config = new GatewayConfig();
 
     Map<String,String> params = new HashMap<String,String>();
-    params.put( "ambari.address", config.getAmbariAddress() );
-    params.put( "namenode.address", config.getNameNodeAddress() );
-    params.put( "templeton.address", config.getTempletonAddress() );
+    params.put( GatewayConfig.AMBARI_ADDRESS, config.getAmbariAddress() );
+    params.put( GatewayConfig.NAMENODE_ADDRESS, config.getNameNodeAddress() );
+    params.put( GatewayConfig.TEMPLETON_ADDRESS, config.getTempletonAddress() );
+    params.put( GatewayConfig.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
 
-    //TODO: This needs to be dynamic based on a call to the Ambari server.
+    //TODO: This needs to be dynamic based on a call to the Ambari server or some other discovery service.
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayServer.xml" );
     Config gatewayConfig = GatewayConfigFactory.create( configUrl, params );
 
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     ServletContextHandler handler = JettyGatewayFactory.create( "gateway/cluster", gatewayConfig );
-    handler.getServletContext().setInitParameter( "shiroConfigLocations", config.getShiroConfigFile() );
-    handler.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
     contexts.addHandler( handler );
 
     jetty = new Server( config.getGatewayPort() );

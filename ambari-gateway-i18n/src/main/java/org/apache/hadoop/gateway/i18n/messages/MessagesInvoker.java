@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.i18n.messages;
 
 import org.apache.hadoop.gateway.i18n.resources.ResourcesInvoker;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
@@ -47,7 +48,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     if( logger.isLoggable( level ) ) {
       message = getText( method, args );
       String code = getCode( method );
-      Throwable throwable = findLoggableThrowable( logger, args );
+      Throwable throwable = findLoggableThrowable( logger, method, args );
       logger.log( level, code, message, throwable );
     }
     return message;
@@ -65,12 +66,23 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return code;
   }
 
-  private static Throwable findLoggableThrowable( MessageLogger logger, Object[] args ) {
+  private static StackTrace getStackTraceAnno( Method method, int param ) {
+    Annotation[] annos = method.getParameterAnnotations()[ param ];
+    for( Annotation anno: annos ) {
+      if( anno instanceof StackTrace ) {
+        return (StackTrace)anno;
+      }
+    }
+    return null;
+  }
+
+  private static Throwable findLoggableThrowable( MessageLogger logger, Method method, Object[] args ) {
     Throwable throwable = null;
     if( args != null ) {
-      for( Object arg : args ) {
+      for( int i=0; i<args.length; i++ ) {
+        Object arg = args[i];
         if( arg instanceof Throwable ) {
-          StackTrace anno = arg.getClass().getAnnotation( StackTrace.class );
+          StackTrace anno = getStackTraceAnno( method, i );
           if( anno != null ) {
             if( logger.isLoggable( anno.level() ) ) {
               throwable = (Throwable)arg;

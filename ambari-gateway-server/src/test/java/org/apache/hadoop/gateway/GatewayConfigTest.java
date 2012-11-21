@@ -40,6 +40,7 @@ public class GatewayConfigTest {
     System.setProperty( GatewayConfig.GATEWAY_HOME_VAR, getDirName( "conf-full/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfig();
     assertThat( config.getGatewayPort(), is( 7777 ) );
+    assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
 
   @Test
@@ -47,6 +48,7 @@ public class GatewayConfigTest {
     System.setProperty( GatewayConfig.GATEWAY_HOME_VAR, getDirName( "conf-site/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfig();
     assertThat( config.getGatewayPort(), is( 5555 ) );
+    assertThat( config.getShiroConfigFile(), is( "site-shiro.ini") );
   }
 
   @Test
@@ -54,6 +56,7 @@ public class GatewayConfigTest {
     System.setProperty( GatewayConfig.GATEWAY_HOME_VAR, getDirName( "conf-empty/empty" ) );
     GatewayConfig config = new GatewayConfig();
     assertThat( config.getGatewayPort(), is( 8888 ) );
+    assertThat( config.getShiroConfigFile(), is( "shiro.ini") );
   }
 
 }

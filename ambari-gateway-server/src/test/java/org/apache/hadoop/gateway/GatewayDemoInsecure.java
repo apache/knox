@@ -18,14 +18,11 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.mock.MockConsoleFactory;
-import org.apache.hadoop.test.catetory.ManualTests;
+import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
-import org.apache.hadoop.test.catetory.IntegrationTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.SlowTests;
-import org.apache.hadoop.test.catetory.SlowTests;
+import org.apache.hadoop.test.category.SlowTests;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;

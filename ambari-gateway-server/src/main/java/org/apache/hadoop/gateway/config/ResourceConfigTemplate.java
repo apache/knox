@@ -15,18 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.i18n.messages;
+package org.apache.hadoop.gateway.config;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- *
- */
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.PARAMETER )
-public @interface StackTrace {
-  MessageLevel level() default MessageLevel.DEBUG;
+public interface ResourceConfigTemplate {
 }

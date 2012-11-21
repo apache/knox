@@ -17,9 +17,8 @@
  */
 package org.apache.hadoop.gateway.i18n.resources;
 
-import org.apache.hadoop.test.catetory.FastTests;
-import org.apache.hadoop.test.catetory.UnitTests;
-import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

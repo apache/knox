@@ -21,7 +21,7 @@ limitations under the License.
 
     <property>
         <name>gateway.port</name>
-        <value>9999</value>
+        <value>8888</value>
         <description>The HTTP port for the Gateway.</description>
     </property>
 
@@ -33,14 +33,20 @@ limitations under the License.
 
     <property>
         <name>gateway.namenode.address</name>
-        <value>localhost:50070</value>
+        <value>vm.home:50070</value>
         <description>The default address of the NameNode.</description>
     </property>
 
     <property>
         <name>gateway.templeton.address</name>
-        <value>localhost:50111</value>
+        <value>vm.home:50111</value>
         <description>The default address of Templeton.</description>
+    </property>
+
+    <property>
+        <name>gateway.cluster.config</name>
+        <value>url</value>
+        <description>The location of the Shiro configuration file.</description>
     </property>
 
     <property>

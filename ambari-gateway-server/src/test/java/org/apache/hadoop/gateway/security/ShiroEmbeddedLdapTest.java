@@ -17,11 +17,8 @@
  */
 package org.apache.hadoop.gateway.security;
 
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
+import org.apache.hadoop.test.category.ManualTests;
+import org.apache.hadoop.test.category.MediumTests;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;

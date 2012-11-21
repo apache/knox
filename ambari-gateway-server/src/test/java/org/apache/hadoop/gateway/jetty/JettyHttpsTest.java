@@ -17,12 +17,8 @@
  */
 package org.apache.hadoop.gateway.jetty;
 
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
-import org.apache.hadoop.test.catetory.ManualTests;
-import org.apache.hadoop.test.catetory.MediumTests;
-import org.apache.hadoop.test.catetory.MediumTests;
+import org.apache.hadoop.test.category.ManualTests;
+import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ClientConnectionManager;

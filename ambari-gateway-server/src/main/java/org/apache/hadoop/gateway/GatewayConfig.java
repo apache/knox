@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import java.io.File;
 import java.net.URL;
@@ -82,7 +81,7 @@ public class GatewayConfig extends Configuration {
 
   public static final String HTTP_PORT = GATEWAY_CONF_PREFIX + ".port";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONF_PREFIX + ".hadoop.conf.dir";
-  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONF_PREFIX + ".shrio.config.file";
+  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONF_PREFIX + ".shiro.config.file";
   public static final String AMBARI_ADDRESS = GATEWAY_CONF_PREFIX + ".ambari.address";
   public static final String NAMENODE_ADDRESS = GATEWAY_CONF_PREFIX + ".namenode.address";
   public static final String TEMPLETON_ADDRESS = GATEWAY_CONF_PREFIX + ".templeton.address";

@@ -17,10 +17,8 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.test.catetory.FastTests;
-import org.apache.hadoop.test.catetory.UnitTests;
-import org.apache.hadoop.test.catetory.FastTests;
-import org.apache.hadoop.test.catetory.UnitTests;
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

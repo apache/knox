@@ -15,18 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.i18n.messages;
+package org.apache.hadoop.gateway.topology;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-/**
- *
- */
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.PARAMETER )
-public @interface StackTrace {
-  MessageLevel level() default MessageLevel.DEBUG;
+public class ClusterComponent {
+
+  private String role;
+
+  public String getRole() {
+    return role;
+  }
+
+  public void setRole( String role ) {
+    this.role = role;
+  }
+
+  private URL url;
+
+  public URL getUrl() {
+    return url;
+  }
+
+  public void setUrl( URL url ) {
+    this.url = url;
+  }
+
 }
