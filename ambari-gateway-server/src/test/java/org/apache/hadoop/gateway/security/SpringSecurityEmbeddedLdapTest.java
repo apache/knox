@@ -19,29 +19,34 @@ package org.apache.hadoop.gateway.security;
 
 import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.test.category.MediumTests;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.ContextLoaderListener;
-import org.springframework.web.filter.DelegatingFilterProxy;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.filter.DelegatingFilterProxy;
 
-import javax.security.auth.Subject;
-import javax.servlet.*;
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.URL;
-import java.security.AccessController;
 import java.util.EnumSet;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -53,8 +58,6 @@ import static org.hamcrest.Matchers.equalTo;
 public class SpringSecurityEmbeddedLdapTest {
 
   private static Logger log = LoggerFactory.getLogger( SpringSecurityEmbeddedLdapTest.class );
-
-  private static EmbeddedApacheDirectoryServer ldap;
 
   private Server jetty;
   
