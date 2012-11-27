@@ -60,7 +60,7 @@ public class GatewayConfigTest {
   }
 
   @Test
-  public void testMap() throws IOException, SAXException {
+  public void testMapRule() throws IOException, SAXException {
     String xml = "<map><name>value</name></map>";
 
     Digester digester = new Digester();
@@ -76,7 +76,7 @@ public class GatewayConfigTest {
   }
 
   @Test
-  public void testFactory() throws IOException, SAXException {
+  public void testFactoryCreate() throws IOException, SAXException {
     String xml = "<map><name>value</name></map>";
 
     Digester digester = new Digester();
@@ -95,7 +95,7 @@ public class GatewayConfigTest {
   public void testConfig() throws IOException, SAXException {
     URL configUrl = ClassLoader.getSystemResource( "gateway-digest-test.xml" );
 
-    Config gatewayConfig = GatewayConfigFactory.create( configUrl, null );
+    Config gatewayConfig = ClusterConfigFactory.create( configUrl, null );
     assertThat( gatewayConfig.get( "name" ), equalTo( "org.apache.org.apache.hadoop.gateway-name" ) );
 
     assertThat( gatewayConfig.getChildren().size(), equalTo( 2 ) );

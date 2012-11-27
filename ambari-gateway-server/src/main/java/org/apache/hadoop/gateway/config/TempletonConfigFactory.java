@@ -15,15 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.urltemplate;
+package org.apache.hadoop.gateway.config;
 
-import java.util.List;
+import org.apache.hadoop.gateway.topology.ClusterComponent;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public interface Resolver {
+public class TempletonConfigFactory implements ResourceConfigFactory {
 
-  Set<String> getNames();
+  private static Set<String> ROLES = createSupportedRoles();
 
-  List<String> getValues( String name );
+  private static Set<String> createSupportedRoles() {
+    Set<String> roles = new HashSet<String>();
+    roles.add( "TEMPLETON" );
+    return Collections.unmodifiableSet( roles );
+  }
 
+  @Override
+  public Set<String> getSupportedRoles() {
+    return ROLES;
+  }
+
+  @Override
+  public Collection<Config> createResourceConfig( Config clusterConfig, ClusterComponent clusterComponent ) {
+    //TODO: Implement this.
+    return null;
+  }
 }
+

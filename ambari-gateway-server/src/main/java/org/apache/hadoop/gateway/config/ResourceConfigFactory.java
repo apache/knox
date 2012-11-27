@@ -17,5 +17,15 @@
  */
 package org.apache.hadoop.gateway.config;
 
-public interface ResourceConfigTemplate {
+import org.apache.hadoop.gateway.topology.ClusterComponent;
+
+import java.util.Collection;
+import java.util.Set;
+
+public interface ResourceConfigFactory {
+
+  Set<String> getSupportedRoles();
+
+  Collection<Config> createResourceConfig( Config clusterConfig, ClusterComponent clusterComponent );
+
 }

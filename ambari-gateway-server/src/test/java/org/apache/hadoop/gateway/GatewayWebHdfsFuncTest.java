@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
@@ -46,8 +46,8 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.startsWith;
-import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.Assert.assertThat;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
@@ -91,7 +91,7 @@ public class GatewayWebHdfsFuncTest {
     }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Config config = GatewayConfigFactory.create( configUrl, params );
+    Config config = ClusterConfigFactory.create( configUrl, params );
 
     Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
     ContextHandlerCollection contexts = new ContextHandlerCollection();
@@ -177,7 +177,7 @@ public class GatewayWebHdfsFuncTest {
         .queryParam( "recursive", "true" )
         .expect()
         //.log().all()
-        .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
+        .statusCode( isOneOf( HttpStatus.SC_OK, HttpStatus.SC_NOT_FOUND ) )
         .when()
         .delete( namenodePath + "/test" );
     if( MOCK ) {

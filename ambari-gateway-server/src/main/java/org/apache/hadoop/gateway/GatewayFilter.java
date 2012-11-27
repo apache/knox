@@ -80,7 +80,7 @@ public class GatewayFilter implements Filter {
     } else {
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
     }
-    //KAM[ Don't do this or the Jetty default servlet will overwrite any respond setup by the filter.
+    //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]
   }
@@ -107,10 +107,10 @@ public class GatewayFilter implements Filter {
     addHolder( holder );
   }
 
-  public void addFilter( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
-    Holder holder = new Holder( path, name, clazz, params );
-    addHolder( holder );
-  }
+//  public void addFilter( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
+//    Holder holder = new Holder( path, name, clazz, params );
+//    addHolder( holder );
+//  }
 
   public void addFilter( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
     Holder holder = new Holder( path, name, clazz, params );
@@ -145,8 +145,8 @@ public class GatewayFilter implements Filter {
 
   }
 
-  private class Holder implements Filter, FilterConfig{
-    private String path;
+  private class Holder implements Filter, FilterConfig {
+//    private String path;
     private Template template;
     private String name;
     private Map<String,String> params;
@@ -155,7 +155,7 @@ public class GatewayFilter implements Filter {
     private String type;
 
     private Holder( String path, String name, Filter filter, Map<String,String> params ) throws URISyntaxException {
-      this.path = path;
+//      this.path = path;
       this.template = Parser.parse( path );
       this.name = name;
       this.params = params;
@@ -164,18 +164,18 @@ public class GatewayFilter implements Filter {
       this.type = clazz.getCanonicalName();
     }
 
-    private Holder( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
-      this.path = path;
-      this.template = Parser.parse( path );
-      this.name = name;
-      this.params = params;
-      this.instance = null;
-      this.clazz = clazz;
-      this.type = clazz.getCanonicalName();
-    }
+//    private Holder( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
+//      this.path = path;
+//      this.template = Parser.parse( path );
+//      this.name = name;
+//      this.params = params;
+//      this.instance = null;
+//      this.clazz = clazz;
+//      this.type = clazz.getCanonicalName();
+//    }
 
     private Holder( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
-      this.path = path;
+//      this.path = path;
       this.template = Parser.parse( path );
       this.name = name;
       this.params = params;

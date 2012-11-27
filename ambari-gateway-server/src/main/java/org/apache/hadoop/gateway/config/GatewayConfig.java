@@ -15,13 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway;
+package org.apache.hadoop.gateway.config;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Map;
 
 /**
@@ -57,20 +60,7 @@ public class GatewayConfig extends Configuration {
 
 //  private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String[] HADOOP_CONF_FILENAMES = {
-      "core-default.xml",
-      "core-site.xml",
-      "mapred-default.xml",
-      "mapred-site.xml",
-      "hdfs-site.xml"
-  };
-
-//  private static final String[] HADOOP_PREFIX_VARS = {
-//      "HADOOP_PREFIX",
-//      "HADOOP_HOME"
-//  };
-
-  static final String GATEWAY_HOME_VAR = "GATEWAY_HOME";
+  public static final String GATEWAY_HOME_VAR = "GATEWAY_HOME";
 
   private static final String GATEWAY_CONF_PREFIX = "gateway";
 
@@ -79,18 +69,35 @@ public class GatewayConfig extends Configuration {
       GATEWAY_CONF_PREFIX + "-site.xml"
   };
 
+  private static final String[] HADOOP_CONF_FILENAMES = {
+      "core-default.xml",
+      "core-site.xml"
+//      "hdfs-default.xml",
+//      "hdfs-site.xml",
+//      "mapred-default.xml",
+//      "mapred-site.xml"
+  };
+
+//  private static final String[] HADOOP_PREFIX_VARS = {
+//      "HADOOP_PREFIX",
+//      "HADOOP_HOME"
+//  };
+
+  public static final String HTTP_HOST = GATEWAY_CONF_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONF_PREFIX + ".port";
+  public static final String HTTP_PATH = GATEWAY_CONF_PREFIX + ".path";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONF_PREFIX + ".hadoop.conf.dir";
   public static final String SHIRO_CONFIG_FILE = GATEWAY_CONF_PREFIX + ".shiro.config.file";
-  public static final String AMBARI_ADDRESS = GATEWAY_CONF_PREFIX + ".ambari.address";
-  public static final String NAMENODE_ADDRESS = GATEWAY_CONF_PREFIX + ".namenode.address";
-  public static final String TEMPLETON_ADDRESS = GATEWAY_CONF_PREFIX + ".templeton.address";
+//  public static final String AMBARI_ADDRESS = GATEWAY_CONF_PREFIX + ".ambari.address";
+//  public static final String NAMENODE_ADDRESS = GATEWAY_CONF_PREFIX + ".namenode.address";
+//  public static final String TEMPLETON_ADDRESS = GATEWAY_CONF_PREFIX + ".templeton.address";
 
   public static final String DEFAULT_HTTP_PORT = "8888";
+  public static final String DEFAULT_HTTP_PATH = "gateway";
   public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
   public static final String DEFAULT_AMBARI_ADDRESS = "localhost:50000";
-  public static final String DEFAULT_NAMENODE_ADDRESS = "localhost:50070";
-  public static final String DEFAULT_TEMPLETON_ADDRESS = "localhost:50111";
+//  public static final String DEFAULT_NAMENODE_ADDRESS = "localhost:50070";
+//  public static final String DEFAULT_TEMPLETON_ADDRESS = "localhost:50111";
 
   public GatewayConfig() {
     init();
@@ -109,16 +116,16 @@ public class GatewayConfig extends Configuration {
       set( "env." + e.getKey(), e.getValue() );
     }
 
+    String hadoopConfDir = getHadoopConfDir();
+    for( String fname : HADOOP_CONF_FILENAMES ) {
+      loadFileConfig( hadoopConfDir, fname );
+    }
+
     String homeDir = getGatewayHomeDir();
     for( String fname : GATEWAY_CONF_FILENAMES ) {
       if( !loadClassPathConfig( fname ) ) {
         loadFileConfig( homeDir, fname );
       }
-    }
-
-    String hadoopConfDir = getHadoopConfDir();
-    for( String fname : HADOOP_CONF_FILENAMES ) {
-      loadFileConfig( hadoopConfDir, fname );
     }
   }
 
@@ -142,24 +149,47 @@ public class GatewayConfig extends Configuration {
     return false;
   }
 
+  public String getGatewayHost() throws UnknownHostException {
+    String host = get( HTTP_HOST, null );
+    if( host == null ) {
+      host = InetAddress.getLocalHost().getCanonicalHostName();
+    }
+    return host;
+  }
+
   public int getGatewayPort() {
     return Integer.parseInt( get( HTTP_PORT, DEFAULT_HTTP_PORT ) );
   }
 
-  public String getAmbariAddress() {
-    return get( AMBARI_ADDRESS, DEFAULT_AMBARI_ADDRESS );
+  public String getGatewayPath() {
+    return get( HTTP_PATH, DEFAULT_HTTP_PATH );
   }
+
+//  public String getAmbariAddress() {
+//    return get( AMBARI_ADDRESS, DEFAULT_AMBARI_ADDRESS );
+//  }
 
   public String getShiroConfigFile() {
     return get( SHIRO_CONFIG_FILE, DEFAULT_SHIRO_CONFIG_FILE );
   }
 
-  public String getNameNodeAddress() {
-    return get( NAMENODE_ADDRESS, DEFAULT_NAMENODE_ADDRESS );
-  }
+//  public String getNameNodeAddress() {
+//    return get( NAMENODE_ADDRESS, DEFAULT_NAMENODE_ADDRESS );
+//  }
 
-  public String getTempletonAddress() {
-    return get( TEMPLETON_ADDRESS, DEFAULT_TEMPLETON_ADDRESS );
-  }
+//  public String getTempletonAddress() {
+//    return get( TEMPLETON_ADDRESS, DEFAULT_TEMPLETON_ADDRESS );
+//  }
 
+  public InetSocketAddress getGatewayAddr() throws UnknownHostException {
+    String host = get( HTTP_HOST, null );
+    int port = getGatewayPort();
+    InetSocketAddress addr;
+    if( host != null ) {
+      addr = new InetSocketAddress( host, port );
+    } else {
+      addr = new InetSocketAddress( port );
+    }
+    return addr;
+  }
 }

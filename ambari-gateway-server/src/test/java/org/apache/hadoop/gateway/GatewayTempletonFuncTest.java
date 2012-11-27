@@ -18,15 +18,15 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
+import org.apache.hadoop.gateway.config.Config;
+import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.util.Streams;
 import org.apache.hadoop.test.category.IntegrationTests;
 import org.apache.hadoop.test.category.MediumTests;
-import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
-import org.apache.hadoop.gateway.util.Streams;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -49,7 +49,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.core.AnyOf.anyOf;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
 
 @Category( { IntegrationTests.class, MediumTests.class } )
@@ -97,7 +97,7 @@ public class GatewayTempletonFuncTest {
     }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Config config = GatewayConfigFactory.create( configUrl, params );
+    Config config = ClusterConfigFactory.create( configUrl, params );
 
     Handler handler = JettyGatewayFactory.create( "/org/apache/org.apache.hadoop/gateway/cluster", config );
     ContextHandlerCollection contexts = new ContextHandlerCollection();
@@ -188,7 +188,7 @@ public class GatewayTempletonFuncTest {
         .queryParam( "recursive", "true" )
         .expect()
         //.log().all()
-        .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
+        .statusCode( isOneOf( HttpStatus.SC_OK, HttpStatus.SC_NOT_FOUND ) )
         .when()
         .delete( hdfsPath + "/user/hdfs/test" );
     if( MOCK ) {

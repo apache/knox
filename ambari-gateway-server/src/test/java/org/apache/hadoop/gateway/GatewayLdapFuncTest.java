@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
@@ -95,7 +95,7 @@ public class GatewayLdapFuncTest {
     }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Config config = GatewayConfigFactory.create( configUrl, params );
+    Config config = ClusterConfigFactory.create( configUrl, params );
 
     Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
     ContextHandlerCollection contexts = new ContextHandlerCollection();

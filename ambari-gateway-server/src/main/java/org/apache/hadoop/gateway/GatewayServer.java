@@ -17,69 +17,96 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
+import org.apache.commons.cli.CommandLine;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
+import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
+import org.apache.hadoop.gateway.topology.ClusterTopologyMonitor;
+import org.apache.hadoop.gateway.topology.ClusterTopologyProvider;
 import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 
-import java.net.URL;
+import javax.servlet.Servlet;
+import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-public class GatewayServer {
+public class GatewayServer implements ClusterTopologyListener {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayConfig gatewayConfig;
-  private static Server jetty;
+  private static GatewayServer server = new GatewayServer();
+
+  private Server jetty;
+  private ClusterTopologyMonitor monitor;
 
   //TODO: Need to locate bootstrap gateway config that provides information required to locate the Ambari server.
   //TODO: Provide an XML or JSON equivalent that can be specified directly if Ambari proper is not present.
   public static void main( String[] args ) {
+
     try {
+      CommandLine cmd = GatewayCommandLine.parse( args );
       log.startingGateway();
-      startGateway();
-      log.startedGateway( jetty.getConnectors()[ 0 ].getLocalPort() );
+      server = new GatewayServer();
+      log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
     } catch( Exception e ) {
       log.failedToStartGateway( e );
     }
   }
 
-  private static void startGateway() throws Exception {
-    gatewayConfig = new GatewayConfig();
+  private void startGateway() throws Exception {
 
-    Map<String,String> params = new HashMap<String,String>();
-    params.put( GatewayConfig.AMBARI_ADDRESS, gatewayConfig.getAmbariAddress() );
-    params.put( GatewayConfig.NAMENODE_ADDRESS, gatewayConfig.getNameNodeAddress() );
-    params.put( GatewayConfig.TEMPLETON_ADDRESS, gatewayConfig.getTempletonAddress() );
-    params.put( GatewayConfig.SHIRO_CONFIG_FILE, gatewayConfig.getShiroConfigFile() );
+//    Map<String,String> params = new HashMap<String,String>();
+//    params.put( GatewayConfig.AMBARI_ADDRESS, gatewayConfig.getAmbariAddress() );
+//    params.put( GatewayConfig.NAMENODE_ADDRESS, gatewayConfig.getNameNodeAddress() );
+//    params.put( GatewayConfig.TEMPLETON_ADDRESS, gatewayConfig.getTempletonAddress() );
+//    params.put( GatewayConfig.SHIRO_CONFIG_FILE, gatewayConfig.getShiroConfigFile() );
 
+    // Create the global context handler.
+    ContextHandlerCollection contexts = new ContextHandlerCollection();
+    // Load the global config.
+    GatewayConfig gatewayConfig = new GatewayConfig();
+    // Load the topology from files.
     FileClusterTopologyProvider provider = new FileClusterTopologyProvider( "dir" );
+    // Load the initial topologies.
     Collection<ClusterTopology> topologies = provider.getClusterTopologies();
+    // For each cluster topology create cluster config.
     for( ClusterTopology topology : topologies ) {
-      Config clusterConfig = GatewayConfigFactory.create( (URL)null, (Map<String,String>)null );
+      Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, topology );
+      ServletContextHandler handler = JettyGatewayFactory.create(
+          gatewayConfig.getGatewayPath() + "/" + topology.getName(), clusterConfig );
+      //TODO: Keep a mapping of cluster name to servlet to allow for dynamic reconfiguration.
+      Servlet servlet = handler.getServletHandler().getServlet( topology.getName() ).getServlet();
+      contexts.addHandler( handler );
     }
 
-    //TODO: This needs to be dynamic based on a call to the Ambari server or some other discovery service.
-    URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayServer.xml" );
-    Config gatewayConfig = GatewayConfigFactory.create( configUrl, params );
-
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
-    ServletContextHandler handler = JettyGatewayFactory.create( "gateway/cluster", gatewayConfig );
-    contexts.addHandler( handler );
-
-    jetty = new Server( GatewayServer.gatewayConfig.getGatewayPort() );
+    jetty = new Server( gatewayConfig.getGatewayAddr() );
     jetty.setHandler( contexts );
     jetty.start();
+
+    // Register for changes to any of the topologies.
+    monitor = provider;
+    monitor.addTopologyChangeListener( this );
+    monitor.startMonitor();
   }
 
-  private static void stopGateway() throws Exception {
+  private void stopGateway() throws Exception {
+    monitor.stopMonitor();
     jetty.stop();
     jetty.join();
+  }
+
+  @Override
+  public void handleTopologyChangeEvent( List<ClusterTopologyEvent> events ) {
+    for( ClusterTopologyEvent event : events ) {
+      //TODO: Replace the filter chain for the modified servlet.
+      System.out.println( "Config change for cluster " + event.getTopology().getName() + ". Ignored for now." );
+    }
   }
 }

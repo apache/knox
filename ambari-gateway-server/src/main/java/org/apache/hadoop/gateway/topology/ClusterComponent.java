@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.topology;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 public class ClusterComponent {

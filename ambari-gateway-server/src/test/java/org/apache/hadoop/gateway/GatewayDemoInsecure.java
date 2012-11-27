@@ -17,10 +17,10 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.mock.MockConsoleFactory;
 import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.test.category.SlowTests;
 import org.eclipse.jetty.server.Connector;
@@ -57,7 +57,7 @@ public class GatewayDemoInsecure {
     Config gatewayConfig;
 
     URL configUrl = ClassLoader.getSystemResource( "gateway-demo-insecure.xml" );
-    gatewayConfig = GatewayConfigFactory.create( configUrl, null );
+    gatewayConfig = ClusterConfigFactory.create( configUrl, null );
 
     Map<String,String> params = new HashMap<String,String>();
 

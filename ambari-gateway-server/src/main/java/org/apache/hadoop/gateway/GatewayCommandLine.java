@@ -21,13 +21,16 @@ import org.apache.commons.cli.*;
 
 public class GatewayCommandLine {
 
-  private Options createCommandLine() {
+  private static Options createCommandLine() {
     Options options = new Options();
+    //Option option = new Option( "short-flag", "long-flag", true, "desc" );
+    //option.setRequired( true );
+    //options.addOption( options );
     options.addOption( "short-flag", "long-flag", true, "desc" );
     return options;
   }
 
-  private CommandLine parseCommandLine( String[] args ) throws ParseException {
+  public static CommandLine parse( String[] args ) throws ParseException {
     CommandLineParser parser = new PosixParser();
     CommandLine commandLine = parser.parse( createCommandLine(), args );
     return commandLine;

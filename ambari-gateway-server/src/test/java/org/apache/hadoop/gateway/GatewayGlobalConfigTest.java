@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.junit.Test;
 
 import java.io.File;

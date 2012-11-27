@@ -70,7 +70,7 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     Resolver resolver = new ParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );
     URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
-    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, expect, getConfig() );
+    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, expect, createResourceConfig() );
 //    System.out.println( "Source URI:" + expect.getRequestURI() );
 //    System.out.println( "Source URL:" + expect.getRequestURL() );
 //    System.out.println( "Source Query: " + expect.getQueryString() );

@@ -23,14 +23,28 @@ import org.apache.hadoop.gateway.topology.ClusterTopology;
 
 public class ClusterTopologyRulesModule extends AbstractRulesModule {
 
+  private static final String ROOT_TAG = "cluster";
+  private static final String NAME_TAG = "name";
+  private static final String VERSION_TAG = "version";
+  private static final String COMPONENT_TAG = "component";
+  private static final String ROLE_TAG = "role";
+  private static final String URL_TAG = "url";
+
   @Override
   protected void configure() {
-    forPattern( "cluster" ).createObject().ofType( ClusterTopology.class );
-    forPattern( "cluster/name" ).setBeanProperty();
-    forPattern( "cluster/version" ).setBeanProperty();
-    forPattern( "cluster/component" ).createObject().ofType( ClusterComponent.class ).then().setNext( "addComponent" );
-    forPattern( "cluster/component/role" ).setBeanProperty();
-    forPattern( "cluster/component/url" ).setBeanProperty();
+    forPattern( ROOT_TAG )
+        .createObject().ofType( ClusterTopology.class );
+    forPattern( ROOT_TAG + "/" + NAME_TAG )
+        .setBeanProperty();
+    forPattern( ROOT_TAG + "/" + VERSION_TAG )
+        .setBeanProperty();
+    forPattern( ROOT_TAG + "/" + COMPONENT_TAG )
+        .createObject().ofType( ClusterComponent.class )
+        .then().setNext( "addComponent" );
+    forPattern( ROOT_TAG + "/" + COMPONENT_TAG + "/" + ROLE_TAG )
+        .setBeanProperty();
+    forPattern( ROOT_TAG + "/" + COMPONENT_TAG + "/" + URL_TAG )
+        .setBeanProperty();
   }
 
 }

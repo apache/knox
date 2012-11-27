@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.mock.MockConsoleFactory;
 import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
@@ -59,7 +59,7 @@ public class GatewayDemoSecure {
     Config gatewayConfig;
 
     URL configUrl = ClassLoader.getSystemResource( "gateway-demo-secure.xml" );
-    gatewayConfig = GatewayConfigFactory.create( configUrl, null );
+    gatewayConfig = ClusterConfigFactory.create( configUrl, null );
 
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.addHandler( MockConsoleFactory.create() );

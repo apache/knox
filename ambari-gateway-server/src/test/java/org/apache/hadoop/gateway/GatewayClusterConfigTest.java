@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfigFactory;
+import org.apache.hadoop.gateway.config.ClusterConfigFactory;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.junit.Ignore;
@@ -48,7 +48,7 @@ public class GatewayClusterConfigTest {
 
     // Check each cluster config.
     Iterator<ClusterTopology> iterator = topologies.iterator();
-//TODO    Config clusterConfig = GatewayConfigFactory.create( gatewayConfig, iterator.next() );
+    Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, iterator.next() );
   }
 
 //  public void testDynamicReconfig() throws IOException, SAXException {
@@ -65,7 +65,7 @@ public class GatewayClusterConfigTest {
 //
 //    for( ClusterTopology clusterTopology : topologies ) {
 //      // Create the cluster config.
-//      Config clusterConfig = GatewayConfigFactory.create( gatewayConfig, clusterTopology );
+//      Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, clusterTopology );
 //    }
 //  }
 //

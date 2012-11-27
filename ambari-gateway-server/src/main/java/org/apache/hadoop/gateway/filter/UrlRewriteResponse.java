@@ -17,9 +17,6 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import apple.laf.JRSUIConstants;
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -32,7 +29,11 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  *

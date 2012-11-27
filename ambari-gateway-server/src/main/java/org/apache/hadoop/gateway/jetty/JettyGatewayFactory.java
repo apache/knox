@@ -17,14 +17,13 @@
  */
 package org.apache.hadoop.gateway.jetty;
 
-import org.apache.hadoop.gateway.*;
 import org.apache.hadoop.gateway.GatewayFactory;
 import org.apache.hadoop.gateway.GatewayFilter;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.Config;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 

@@ -20,43 +20,58 @@ package org.apache.hadoop.gateway.config;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Map;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
-public class GatewayConfigFactory {
+public class ClusterConfigFactory {
 
   private static DigesterLoader loader = newLoader( new ClusterConfigRulesModule() );
 
   public static Config create( URL configUrl, Map<String,String> params ) throws IOException, SAXException {
     Digester digester = loader.newDigester( new ExtendedBaseRules() );
     digester.setValidating( false );
-
-    //digester.setRules( new ExtendedBaseRules() );
-    //digester.addObjectCreate( "gateway", Config.class );
-    //digester.addRule( "gateway/*", new MapSetDigesterRule( "service" ) );
-    //
-    //digester.addObjectCreate( "gateway/service", Config.class );
-    //digester.addSetNext( "gateway/service", "addChild" );
-    //digester.addRule( "gateway/service/*", new MapSetDigesterRule( "filter" ) );
-    //
-    //digester.addObjectCreate( "gateway/service/filter", Config.class );
-    //digester.addSetNext( "gateway/service/filter", "addChild" );
-    //digester.addRule( "gateway/service/filter/*", new MapSetDigesterRule() );
-
     Config config = digester.parse( configUrl );
-
     if( params != null ) {
       for( Map.Entry<String,String> param : params.entrySet() ) {
         config.put( param.getKey(), param.getValue() );
       }
     }
-
     return config;
-  };
+  }
+
+  public static Config create( GatewayConfig gatewayConfig, ClusterTopology clusterTopology ) {
+    Config clusterConfig = new Config();
+    // Copy the config values into the root config.
+    if( gatewayConfig != null ) {
+      Map<String,String> params = gatewayConfig.getValByRegex( ".*" );
+      for( Map.Entry<String,String> param : params.entrySet() ) {
+        clusterConfig.put( param.getKey(), param.getValue() );
+      }
+    }
+    if( clusterTopology != null ) {
+      clusterConfig.put( "name", clusterTopology.getName() );
+      for( ClusterComponent clusterComponent : clusterTopology.getComponents() ) {
+        Collection<Config> componentConfigs = createResources( clusterConfig, clusterComponent );
+        for( Config componentConfig : componentConfigs ) {
+          clusterConfig.addChild( componentConfig );
+        }
+      }
+    }
+    return clusterConfig;
+  }
+
+  private static Collection<Config> createResources( Config clusterConfig, ClusterComponent clusterComponent ) {
+    ResourceConfigFactory factory = ResourceConfigFactoryProvider.getResourceConfigFactory( clusterComponent );
+    Collection<Config> configs = factory.createResourceConfig( clusterConfig, clusterComponent );
+    return configs;
+  }
 
 }
