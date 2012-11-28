@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.junit.Ignore;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -43,7 +44,8 @@ public class GatewayClusterConfigTest {
     GatewayConfig gatewayConfig = new GatewayConfig();
 
     // Load the cluster topologies.
-    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider( gatewayConfig.getHadoopConfDir() );
+    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider(
+        new File( configDir, gatewayConfig.getHadoopConfDir() ) );
     Collection<ClusterTopology> topologies = topologyProvider.getClusterTopologies();
 
     // Check each cluster config.
@@ -71,7 +73,7 @@ public class GatewayClusterConfigTest {
 //
 //  private class TestClusterTopologyListener implements ClusterTopologyListener {
 //    @Override
-//    public void handleTopologyChangeEvent( List<ClusterTopologyEvent> events ) {
+//    public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
 //    }
 //  }
 

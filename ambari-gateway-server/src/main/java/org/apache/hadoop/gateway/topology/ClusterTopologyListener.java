@@ -21,6 +21,6 @@ import java.util.List;
 
 public interface ClusterTopologyListener {
 
-  void handleTopologyChangeEvent( List<ClusterTopologyEvent> events );
+  void handleTopologyEvent( List<ClusterTopologyEvent> events );
 
 }

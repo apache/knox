@@ -21,6 +21,9 @@ import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
+import java.io.File;
+import java.net.URL;
+
 import static org.apache.hadoop.gateway.i18n.messages.MessageLevel.*;
 
 /**
@@ -35,6 +38,30 @@ public interface GatewayMessages {
   @Message(level=FATAL, text="Failed to start gateway: {0}" )
   void failedToStartGateway( @StackTrace(level=DEBUG) Exception e );
 
-  @Message(level=INFO, text="Gateway started on port {0}." )
+  @Message(level=INFO, text="Started gateway on port {0}." )
   void startedGateway( int port );
+
+  @Message(level=INFO, text="Stopping gateway..." )
+  void stoppingGateway();
+
+  @Message(level=INFO, text="Stopping gateway." )
+  void stoppedGateway();
+
+  @Message(level=INFO, text="Loading configuration resource {0}" )
+  void loadingConfigurationResource( String res );
+
+  @Message(level=INFO, text="Loading configuration file {0}" )
+  void loadingConfigurationFile( String file );
+
+  @Message(level=WARN, text="Failed to load configuration file {0}: {1}" )
+  void failedToLoadConfig( String path, @StackTrace(level=DEBUG) Exception e );
+
+  @Message(level=INFO, text="Using {1} as GATEWAY_HOME from {0}." )
+  void settingGatewayHomeDir( String location, String home );
+
+  @Message(level=INFO, text="Loading topologies from directory: {0}" )
+  void loadingTopologiesFromDirecotry( File topologiesDir );
+
+  @Message(level=INFO, text="Monitoring topologies changes in directory: {0}" )
+  void monitoringTopologyChangesInDirectory( File topologiesDir );
 }

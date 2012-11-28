@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.commons.cli.CommandLine;
+import org.apache.commons.vfs2.VFS;
 import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
@@ -27,14 +27,16 @@ import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
 import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
 import org.apache.hadoop.gateway.topology.ClusterTopologyMonitor;
-import org.apache.hadoop.gateway.topology.ClusterTopologyProvider;
 import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 
 import javax.servlet.Servlet;
+import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.List;
 
@@ -51,9 +53,10 @@ public class GatewayServer implements ClusterTopologyListener {
   public static void main( String[] args ) {
 
     try {
-      CommandLine cmd = GatewayCommandLine.parse( args );
-      log.startingGateway();
+      //CommandLine cmd = GatewayCommandLine.parse( args );
       server = new GatewayServer();
+      log.startingGateway();
+      server.startGateway();
       log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
     } catch( Exception e ) {
       log.failedToStartGateway( e );
@@ -70,15 +73,18 @@ public class GatewayServer implements ClusterTopologyListener {
 
     // Create the global context handler.
     ContextHandlerCollection contexts = new ContextHandlerCollection();
-    // Load the global config.
+    // Load the global gateway config.
     GatewayConfig gatewayConfig = new GatewayConfig();
-    // Load the topology from files.
-    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( "dir" );
-    // Load the initial topologies.
-    Collection<ClusterTopology> topologies = provider.getClusterTopologies();
+    // Create a dir/file based cluster topology provider.
+    File topologiesDir = new File( gatewayConfig.getGatewayHomeDir(), gatewayConfig.getClusterConfDir() );
+    log.loadingTopologiesFromDirecotry( topologiesDir );
+    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( topologiesDir );
+    // Load the initial cluster topologies.
+    Collection<ClusterTopology> topologiesMap = provider.getClusterTopologies();
     // For each cluster topology create cluster config.
-    for( ClusterTopology topology : topologies ) {
+    for( ClusterTopology topology : topologiesMap ) {
       Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, topology );
+      // Create a Jetty handler for each cluser.
       ServletContextHandler handler = JettyGatewayFactory.create(
           gatewayConfig.getGatewayPath() + "/" + topology.getName(), clusterConfig );
       //TODO: Keep a mapping of cluster name to servlet to allow for dynamic reconfiguration.
@@ -86,24 +92,36 @@ public class GatewayServer implements ClusterTopologyListener {
       contexts.addHandler( handler );
     }
 
-    jetty = new Server( gatewayConfig.getGatewayAddr() );
+    InetSocketAddress address = gatewayConfig.getGatewayAddress();
+    checkAddressAvailability( address );
+
+    jetty = new Server( address );
     jetty.setHandler( contexts );
     jetty.start();
 
     // Register for changes to any of the topologies.
+    log.monitoringTopologyChangesInDirectory( topologiesDir );
     monitor = provider;
     monitor.addTopologyChangeListener( this );
     monitor.startMonitor();
   }
 
+  private void checkAddressAvailability( InetSocketAddress address ) throws IOException {
+    ServerSocket socket = new ServerSocket();
+    socket.bind( address );
+    socket.close();
+  }
+
   private void stopGateway() throws Exception {
+    log.stoppingGateway();
     monitor.stopMonitor();
     jetty.stop();
     jetty.join();
+    log.stoppedGateway();
   }
 
   @Override
-  public void handleTopologyChangeEvent( List<ClusterTopologyEvent> events ) {
+  public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
     for( ClusterTopologyEvent event : events ) {
       //TODO: Replace the filter chain for the modified servlet.
       System.out.println( "Config change for cluster " + event.getTopology().getName() + ". Ignored for now." );

@@ -19,17 +19,18 @@ package org.apache.hadoop.gateway.config;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Map;
 
 /**
- * The configuration for the Gateway.  This merges the normal Hadoop
- * configuration with the Gateway specific variables.
+ * The configuration for the Gateway.
  *
  * The Gateway configuration variables are described in gateway-default.xml
  *
@@ -42,60 +43,66 @@ import java.util.Map;
  * 2. gateway-site.xml - The (possibly empty) configuration that the
  *    system administrator can set variables for their Hadoop cluster.
  *
- * The configuration files are loaded in this order with later files
- * overriding earlier ones.
+ * To find the gateway configuration files the following process is used.
+ * First, if the GATEWAY_HOME system property contains a valid directory name,
+ * an attempt will be made to read the configuration files from that directory.
+ * Second, if the GATEWAY_HOME environment variable contains a valid directory name,
+ * an attempt will be made to read the configuration files from that directory.
+ * Third, an attempt will be made to load the configuration files from the directory
+ * specified via the "user.dir" system property.
+ * Fourth, an attempt will be made to load the configuration files from the classpath.
+ * Last, defaults will be used for all values will be used.
  *
- * To find the configuration files, we first attempt to load a file
- * from the CLASSPATH and then look in the directory specified in the
- * GATEWAY_HOME environment variable.
- *
- * In addition the configuration files may access the special env
- * variable env for all environment variables.  For example, the
- * hadoop executable could be specified using:
- *<pre>
- *      ${env.HADOOP_PREFIX}/bin/hadoop
- *</pre>
+ * If GATEWAY_HOME isn't set via either the system property or environment variable then
+ * a value for this will be defaulted.  The default selected will be the directory that
+ * contained the last loaded configuration file that was not contained in a JAR.  If
+ * no such configuration file is loaded the value of the "user.dir" system property will be used
+ * as the value of GATEWAY_HOME.  This is important to consider for any relative file names as they
+ * will be resolved relative to the value of GATEWAY_HOME.  One such relative value is the
+ * name of the directory containing cluster topologies.  This value default to "clusters".
  */
 public class GatewayConfig extends Configuration {
 
-//  private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   public static final String GATEWAY_HOME_VAR = "GATEWAY_HOME";
 
-  private static final String GATEWAY_CONF_PREFIX = "gateway";
+  private static final String GATEWAY_CONFIG_PREFIX = "gateway";
 
-  public static final String[] GATEWAY_CONF_FILENAMES = {
-      GATEWAY_CONF_PREFIX + "-default.xml",
-      GATEWAY_CONF_PREFIX + "-site.xml"
+  public static final String[] GATEWAY_CONFIG_FILENAMES = {
+      GATEWAY_CONFIG_PREFIX + "-default.xml",
+      GATEWAY_CONFIG_PREFIX + "-site.xml"
   };
 
-  private static final String[] HADOOP_CONF_FILENAMES = {
-      "core-default.xml",
-      "core-site.xml"
-//      "hdfs-default.xml",
-//      "hdfs-site.xml",
-//      "mapred-default.xml",
-//      "mapred-site.xml"
-  };
+//  private static final String[] HADOOP_CONF_FILENAMES = {
+//      "core-default.xml",
+//      "core-site.xml"
+////      "hdfs-default.xml",
+////      "hdfs-site.xml",
+////      "mapred-default.xml",
+////      "mapred-site.xml"
+//  };
 
 //  private static final String[] HADOOP_PREFIX_VARS = {
 //      "HADOOP_PREFIX",
 //      "HADOOP_HOME"
 //  };
 
-  public static final String HTTP_HOST = GATEWAY_CONF_PREFIX + ".host";
-  public static final String HTTP_PORT = GATEWAY_CONF_PREFIX + ".port";
-  public static final String HTTP_PATH = GATEWAY_CONF_PREFIX + ".path";
-  public static final String HADOOP_CONF_DIR = GATEWAY_CONF_PREFIX + ".hadoop.conf.dir";
-  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONF_PREFIX + ".shiro.config.file";
-//  public static final String AMBARI_ADDRESS = GATEWAY_CONF_PREFIX + ".ambari.address";
-//  public static final String NAMENODE_ADDRESS = GATEWAY_CONF_PREFIX + ".namenode.address";
-//  public static final String TEMPLETON_ADDRESS = GATEWAY_CONF_PREFIX + ".templeton.address";
+  public static final String HTTP_HOST = GATEWAY_CONFIG_PREFIX + ".host";
+  public static final String HTTP_PORT = GATEWAY_CONFIG_PREFIX + ".port";
+  public static final String HTTP_PATH = GATEWAY_CONFIG_PREFIX + ".path";
+  public static final String CLUSTER_CONF_DIR = GATEWAY_CONFIG_PREFIX + ".cluster.conf.dir";
+  public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_PREFIX + ".hadoop.conf.dir";
+  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_PREFIX + ".shiro.config.file";
+//  public static final String AMBARI_ADDRESS = GATEWAY_CONFIG_PREFIX + ".ambari.address";
+//  public static final String NAMENODE_ADDRESS = GATEWAY_CONFIG_PREFIX + ".namenode.address";
+//  public static final String TEMPLETON_ADDRESS = GATEWAY_CONFIG_PREFIX + ".templeton.address";
 
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
+  public static final String DEFAULT_CLUSTER_CONF_DIR = "clusters";
   public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
-  public static final String DEFAULT_AMBARI_ADDRESS = "localhost:50000";
+//  public static final String DEFAULT_AMBARI_ADDRESS = "localhost:50000";
 //  public static final String DEFAULT_NAMENODE_ADDRESS = "localhost:50070";
 //  public static final String DEFAULT_TEMPLETON_ADDRESS = "localhost:50111";
 
@@ -103,8 +110,17 @@ public class GatewayConfig extends Configuration {
     init();
   }
 
-  public static String getGatewayHomeDir() {
-    return System.getProperty( GATEWAY_HOME_VAR, System.getenv( GATEWAY_HOME_VAR ) );
+  public String getGatewayHomeDir() {
+    String home = get(
+        GATEWAY_HOME_VAR,
+        System.getProperty(
+            GATEWAY_HOME_VAR,
+            System.getenv( GATEWAY_HOME_VAR ) ) );
+    return home;
+  }
+
+  private void setGatewayHomeDir( String dir ) {
+    set( GATEWAY_HOME_VAR, dir );
   }
 
   public String getHadoopConfDir() {
@@ -112,48 +128,101 @@ public class GatewayConfig extends Configuration {
   }
 
   private void init() {
+    // Load environment variables.
     for( Map.Entry<String, String> e : System.getenv().entrySet() ) {
       set( "env." + e.getKey(), e.getValue() );
     }
-
-    String hadoopConfDir = getHadoopConfDir();
-    for( String fname : HADOOP_CONF_FILENAMES ) {
-      loadFileConfig( hadoopConfDir, fname );
+    // Load system properties.
+    for( Map.Entry<Object, Object> p : System.getProperties().entrySet() ) {
+      set( "sys." + p.getKey().toString(), p.getValue().toString() );
     }
 
-    String homeDir = getGatewayHomeDir();
-    for( String fname : GATEWAY_CONF_FILENAMES ) {
-      if( !loadClassPathConfig( fname ) ) {
-        loadFileConfig( homeDir, fname );
-      }
+    URL lastFileUrl = null;
+    for( String fileName : GATEWAY_CONFIG_FILENAMES ) {
+      lastFileUrl = loadConfig( fileName, lastFileUrl );
+    }
+    initGatewayHomeDir( lastFileUrl );
+  }
+
+  private void initGatewayHomeDir( URL lastFileUrl ) {
+    String home = System.getProperty( GATEWAY_HOME_VAR );
+    if( home != null ) {
+      set( GATEWAY_HOME_VAR, home );
+      log.settingGatewayHomeDir( "system property", home );
+      return;
+    }
+    home = System.getenv( GATEWAY_HOME_VAR );
+    if( home != null ) {
+      set( GATEWAY_HOME_VAR, home );
+      log.settingGatewayHomeDir( "environment variable", home );
+      return;
+    }
+    if( lastFileUrl != null ) {
+      File file = new File( lastFileUrl.getFile() );
+      File dir = file.getParentFile();
+      if( dir.exists() && dir.canRead() )
+      set( GATEWAY_HOME_VAR, dir.getAbsolutePath() );
+      log.settingGatewayHomeDir( "configuration file location", home );
+      return;
+    }
+    home = System.getProperty( "user.dir" );
+    if( home != null ) {
+      set( GATEWAY_HOME_VAR, home );
+      log.settingGatewayHomeDir( "user.dir system property", home );
+      return;
     }
   }
 
-  private boolean loadFileConfig( String dir, String file ) {
+  // 1. GATEWAY_HOME system property
+  // 2. GATEWAY_HOME environment variable
+  // 3. user.dir system property
+  // 4. class path
+  private URL loadConfig( String fileName, URL lastFileUrl ) {
+    lastFileUrl = loadConfigFile( System.getProperty( GATEWAY_HOME_VAR ), fileName );
+    if( lastFileUrl == null ) {
+      lastFileUrl = loadConfigFile( System.getenv( GATEWAY_HOME_VAR ), fileName );
+    }
+    if( lastFileUrl == null ) {
+      lastFileUrl = loadConfigFile( System.getProperty( "user.dir" ), fileName );
+    }
+    if( lastFileUrl == null ) {
+      lastFileUrl = loadConfigResource( fileName );
+    }
+    if( lastFileUrl != null && !"file".equals( lastFileUrl.getProtocol() ) ) {
+      lastFileUrl = null;
+    }
+    return lastFileUrl;
+  }
+
+  private URL loadConfigFile( String dir, String file ) {
+    URL url = null;
     if( dir != null ) {
       File f = new File( dir, file );
       if( f.exists() ) {
-        addResource( new Path( f.getAbsolutePath() ) );
-        return true;
+        String path = f.getAbsolutePath();
+        try {
+          url = f.toURI().toURL();
+          addResource( new Path( path ) );
+          log.loadingConfigurationFile( path );
+        } catch ( MalformedURLException e ) {
+          log.failedToLoadConfig( path, e );
+        }
       }
     }
-    return false;
+    return url;
   }
 
-  private boolean loadClassPathConfig( String file ) {
+  private URL loadConfigResource( String file ) {
     URL url = getResource( file );
     if( url != null ) {
+      log.loadingConfigurationResource( url.toExternalForm() );
       addResource( url );
-      return true;
     }
-    return false;
+    return url;
   }
 
-  public String getGatewayHost() throws UnknownHostException {
-    String host = get( HTTP_HOST, null );
-    if( host == null ) {
-      host = InetAddress.getLocalHost().getCanonicalHostName();
-    }
+  public String getGatewayHost() {
+    String host = get( HTTP_HOST, "0.0.0.0" );
     return host;
   }
 
@@ -169,6 +238,10 @@ public class GatewayConfig extends Configuration {
 //    return get( AMBARI_ADDRESS, DEFAULT_AMBARI_ADDRESS );
 //  }
 
+  public String getClusterConfDir() {
+    return get( CLUSTER_CONF_DIR, DEFAULT_CLUSTER_CONF_DIR );
+  }
+
   public String getShiroConfigFile() {
     return get( SHIRO_CONFIG_FILE, DEFAULT_SHIRO_CONFIG_FILE );
   }
@@ -181,15 +254,11 @@ public class GatewayConfig extends Configuration {
 //    return get( TEMPLETON_ADDRESS, DEFAULT_TEMPLETON_ADDRESS );
 //  }
 
-  public InetSocketAddress getGatewayAddr() throws UnknownHostException {
-    String host = get( HTTP_HOST, null );
+  public InetSocketAddress getGatewayAddress() throws UnknownHostException {
+    String host = getGatewayHost();
     int port = getGatewayPort();
-    InetSocketAddress addr;
-    if( host != null ) {
-      addr = new InetSocketAddress( host, port );
-    } else {
-      addr = new InetSocketAddress( port );
-    }
-    return addr;
+    InetSocketAddress address = new InetSocketAddress( host, port );
+    return address;
   }
+
 }

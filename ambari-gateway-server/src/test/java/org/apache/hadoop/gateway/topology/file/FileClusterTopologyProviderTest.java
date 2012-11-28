@@ -33,6 +33,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -157,7 +158,8 @@ public class FileClusterTopologyProviderTest {
     FileListenerDelegator fileListener = new FileListenerDelegator();
     NoOpFileMonitor monitor = new NoOpFileMonitor( fileListener );
 
-    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( monitor, dir.getName().getFriendlyURI() );
+    FileClusterTopologyProvider provider = new FileClusterTopologyProvider(
+        monitor, dir );
     provider.addTopologyChangeListener( topoListener );
     fileListener.delegate = provider;
 
@@ -257,7 +259,7 @@ public class FileClusterTopologyProviderTest {
     public ArrayList<List<ClusterTopologyEvent>> events = new ArrayList<List<ClusterTopologyEvent>>();
 
     @Override
-    public void handleTopologyChangeEvent( List<ClusterTopologyEvent> events ) {
+    public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
       this.events.add( events );
     }
 

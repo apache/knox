@@ -36,6 +36,7 @@ import org.apache.hadoop.gateway.topology.ClusterTopologyProvider;
 import org.apache.hadoop.gateway.topology.xml.ClusterTopologyRulesModule;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,25 +53,23 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
 
   private static DigesterLoader digesterLoader = newLoader( new ClusterTopologyRulesModule() );
 
-  private FileSystemManager manager;
   private DefaultFileMonitor monitor;
   private FileObject directory;
   private Set<ClusterTopologyListener> listeners;
-  private volatile Map<FileName, ClusterTopology> topology;
+  private volatile Map<FileName, ClusterTopology> topologies;
 
   // For unit testing.
-  FileClusterTopologyProvider( DefaultFileMonitor monitor, String directory ) throws IOException, SAXException {
-    this.manager = VFS.getManager();
-    this.directory = this.manager.resolveFile( directory );
+  FileClusterTopologyProvider( DefaultFileMonitor monitor, FileObject directory ) throws IOException, SAXException {
+    this.directory = directory;
     this.monitor = ( monitor != null ) ? monitor : new DefaultFileMonitor( this );
     this.monitor.setRecursive( true );
     this.monitor.addFile( this.directory );
     this.listeners = new HashSet<ClusterTopologyListener>();
-    this.topology = loadTopologies( this.directory );
+    this.topologies = loadTopologies( this.directory );
   }
 
-  public FileClusterTopologyProvider( String directory ) throws IOException, SAXException {
-    this( null, directory );
+  public FileClusterTopologyProvider( File directory ) throws IOException, SAXException {
+    this( null, VFS.getManager().toFileObject( directory ) );
   }
 
   private static ClusterTopology loadTopology( FileObject file ) throws IOException, SAXException {
@@ -99,10 +98,10 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
 
   private void reloadTopologies() throws FileSystemException {
     synchronized ( this ) {
-      Map<FileName, ClusterTopology> oldTopologies = topology;
+      Map<FileName, ClusterTopology> oldTopologies = topologies;
       Map<FileName, ClusterTopology> newTopologies = loadTopologies( directory );
       List<ClusterTopologyEvent> events = createChangeEvents( oldTopologies, newTopologies );
-      topology = newTopologies;
+      topologies = newTopologies;
       notifyChangeListeners( events );
     }
   }
@@ -135,7 +134,7 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
   private void notifyChangeListeners( List<ClusterTopologyEvent> events ) {
     for( ClusterTopologyListener listener : listeners ) {
       try {
-        listener.handleTopologyChangeEvent( events );
+        listener.handleTopologyEvent( events );
       } catch( RuntimeException e ) {
         e.printStackTrace();
       }
@@ -144,7 +143,7 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
 
   @Override
   public Collection<ClusterTopology> getClusterTopologies() {
-    Map<FileName, ClusterTopology> map = topology;
+    Map<FileName, ClusterTopology> map = topologies;
     return Collections.unmodifiableCollection( map.values() );
   }
 
