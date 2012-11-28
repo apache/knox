@@ -21,9 +21,7 @@ import org.apache.hadoop.gateway.filter.UrlRewriteFilter;
 import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.pivot.WebHdfsPivot;
 import org.apache.hadoop.gateway.topology.ClusterComponent;
-import org.apache.shiro.web.servlet.ShiroFilter;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,10 +61,11 @@ public class HdfsConfigFactory implements ResourceConfigFactory {
     root.put( "name", "namenode-root" );
     root.put( "source", extHdfsPath +  "?{**}" );
     root.put( "target", intHdfsUrl + "?{**}" );
-    authc = new Config();
-    authc.put( "name", "shiro" );
-    authc.put( "class", ShiroFilter.class.getName() );
-    root.addChild( authc );
+//TODO: Add authc filter only when cluster requires it.
+//    authc = new Config();
+//    authc.put( "name", "shiro" );
+//    authc.put( "class", ShiroFilter.class.getName() );
+//    root.addChild( authc );
     pivot = new Config();
     pivot.put( "name", "pivot" );
     pivot.put( "class", HttpClientPivot.class.getName() );
@@ -78,10 +77,11 @@ public class HdfsConfigFactory implements ResourceConfigFactory {
     file.put( "name", "namenode-file" );
     file.put( "source", extHdfsPath + "/{path=**}?{**}" );
     file.put( "target", intHdfsUrl + "/{path=**}?{**}" );
-    authc = new Config();
-    authc.put( "name", "shiro" );
-    authc.put( "class", ShiroFilter.class.getName() );
-    file.addChild( authc );
+//TODO: Add authc filter only when cluster requires it.
+//    authc = new Config();
+//    authc.put( "name", "shiro" );
+//    authc.put( "class", ShiroFilter.class.getName() );
+//    file.addChild( authc );
     rewrite = new Config();
     rewrite.put( "name", "rewrite" );
     rewrite.put( "class", UrlRewriteFilter.class.getName() );

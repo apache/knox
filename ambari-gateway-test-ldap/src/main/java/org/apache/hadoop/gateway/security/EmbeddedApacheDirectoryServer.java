@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.security;
 
 import com.google.common.io.Files;
-import org.apache.hadoop.test.category.ManualTests;
-import org.apache.hadoop.test.category.MediumTests;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.DirectoryService;
 import org.apache.directory.server.core.entry.ServerEntry;
@@ -29,12 +27,12 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.junit.experimental.categories.Category;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
 import java.net.URL;
 
-@Category( { ManualTests.class, MediumTests.class } )
 public class EmbeddedApacheDirectoryServer {
 
   private DefaultDirectoryService directory;
@@ -47,7 +45,11 @@ public class EmbeddedApacheDirectoryServer {
     EmbeddedApacheDirectoryServer ldap;
     ldap = new EmbeddedApacheDirectoryServer( "dc=ambari,dc=apache,dc=org", null, 33389 );
     ldap.start();
-    ldap.loadLdif( ClassLoader.getSystemResource( "users.ldif" ) );
+    URL userUrl = Thread.currentThread().getContextClassLoader().getResource( "users.ldif" );
+    if( userUrl == null ) {
+      throw new FileNotFoundException( "user.ldif" );
+    }
+    ldap.loadLdif( userUrl );
   }
 
   public EmbeddedApacheDirectoryServer( String rootDn, File workDir, int ldapPort ) throws Exception {
@@ -117,8 +119,10 @@ public class EmbeddedApacheDirectoryServer {
     }
   }
 
-  public void loadLdif( URL url ) {
-    LdifFileLoader loader = new LdifFileLoader( directory.getAdminSession(), url.toExternalForm() );
+  public void loadLdif( URL url ) throws URISyntaxException {
+    File file = new File( url.toURI() );
+    LdifFileLoader loader = new LdifFileLoader(
+        directory.getAdminSession(), file, null, Thread.currentThread().getContextClassLoader() );
     loader.execute();
   }
 

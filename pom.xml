@@ -28,10 +28,12 @@
 
     <modules>
         <module>ambari-gateway-test</module>
+        <module>ambari-gateway-test-ldap</module>
         <module>ambari-gateway-i18n</module>
         <module>ambari-gateway-i18n-logging-log4j</module>
         <module>ambari-gateway-i18n-logging-sl4j</module>
         <module>ambari-gateway-server</module>
+        <module>ambari-gateway-demo</module>
     </modules>
 
     <build>
@@ -133,6 +135,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.hadoop.ambari</groupId>
+                <artifactId>ambari-gateway-server</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
                 <version>0.23.3</version>
@@ -181,9 +189,28 @@
                 <classifier>with-deps</classifier>
             </dependency>
 
-            <!-- Spring Security Dependencies -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-vfs2</artifactId>
+                <version>2.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+
             <!-- **************************** -->
+            <!-- Spring Security Dependencies -->
             <!-- Spring 3 dependencies -->
+            <!-- **************************** -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
@@ -265,6 +292,18 @@
                 <version>1.2.17</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-all</artifactId>
+                <version>1.5.5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>13.0.1</version>
+            </dependency>
+
             <!-- ********** ********** ********** ********** ********** ********** -->
             <!-- ********** Test Dependencies                           ********** -->
             <!-- ********** ********** ********** ********** ********** ********** -->
@@ -277,13 +316,20 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.hadoop.ambari</groupId>
+                <artifactId>ambari-gateway-test-ldap</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+
+            <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->
+            <dependency>
                 <groupId>com.jayway.restassured</groupId>
                 <artifactId>rest-assured</artifactId>
                 <version>1.7</version>
                 <scope>test</scope>
             </dependency>
 
-            <!-- This must be after restassured otherwise is messes up the hamcrest dependencies -->
+            <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -299,13 +345,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-all</artifactId>
-                <version>1.5.5</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-server</artifactId>
                 <version>1.14</version>
@@ -316,13 +355,6 @@
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-servlet</artifactId>
                 <version>1.14</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>13.0.1</version>
                 <scope>test</scope>
             </dependency>
 

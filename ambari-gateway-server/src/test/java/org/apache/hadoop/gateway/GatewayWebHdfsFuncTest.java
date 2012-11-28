@@ -332,22 +332,46 @@ public class GatewayWebHdfsFuncTest {
           .status( HttpStatus.SC_CREATED )
           .header( "Location", "webhdfs://localhost:" + namenode.getPort() + "/test/file" );
     }
-    Response response = given()
-        //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
-        .queryParam( "use" +
-            "r.name", "hdfs" )
-        .queryParam( "op", "CREATE" )
-        .contentType( "text/plain" )
-        .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
-        //.content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "org.apache.hadoop-examples.jar" ) ) )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_CREATED )
-        .when().put( namenodePath + "/test/file" );
-    String location = response.getHeader( "Location" );
-    log.info( "Location=" + location );
-    assertThat( location, startsWith( getWebHdfsPath() ) );
+    if( GATEWAY ) {
+      Response response = given()
+          //.log().all()
+          .auth().preemptive().basic( "allowedUser", "password" )
+          .queryParam( "use" +
+              "r.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .contentType( "text/plain" )
+          .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
+          //.content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "org.apache.hadoop-examples.jar" ) ) )
+          .expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_CREATED )
+          .when().put( namenodePath + "/test/file" );
+      String location = response.getHeader( "Location" );
+      log.info( "Location=" + location );
+      assertThat( location, startsWith( getWebHdfsPath() ) );
+    } else {
+      Response response = given()
+          //.log().all()
+          .auth().preemptive().basic( "allowedUser", "password" )
+          .queryParam( "user.name", "hdfs" )
+          .queryParam( "op", "CREATE" )
+          .expect()
+              //.log().all()
+          .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
+          .when().put( namenodePath + "/test/file" );
+      String location = response.getHeader( "Location" );
+      log.debug( "Redirect location: " + response.getHeader( "Location" ) );
+      response = given()
+          //.log().all()
+          .auth().preemptive().basic( "allowedUser", "password" )
+          .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
+          .expect()
+              //.log().all()
+          .statusCode( HttpStatus.SC_CREATED )
+          .when().put( location );
+      location = response.getHeader( "Location" );
+      log.debug( "Created location: " + location );
+    }
     if( MOCK ) {
       assertThat( namenode.getCount(), is( 0 ) );
       assertThat( datanode.getCount(), is( 0 ) );

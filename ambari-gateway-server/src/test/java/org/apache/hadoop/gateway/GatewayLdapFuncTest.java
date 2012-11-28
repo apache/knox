@@ -17,12 +17,12 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.config.ClusterConfigFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.http.HttpStatus;
 import org.eclipse.jetty.server.Connector;
