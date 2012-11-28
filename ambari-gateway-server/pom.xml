@@ -78,7 +78,7 @@
 
         <dependency>
             <groupId>org.apache.hadoop.ambari</groupId>
-            <artifactId>ambari-gateway-logging-sl4j</artifactId>
+            <artifactId>ambari-gateway-i18n-logging-log4j</artifactId>
         </dependency>
 
         <dependency>

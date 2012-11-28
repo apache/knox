@@ -19,15 +19,13 @@ package org.apache.hadoop.gateway.i18n.messages.loggers.log4j;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 import org.apache.hadoop.gateway.i18n.messages.MessageLoggerFactory;
+import org.apache.log4j.Logger;
 
-/**
- *
- */
 public class Log4jMessageLoggerFactory implements MessageLoggerFactory {
 
   @Override
   public MessageLogger getLogger( String name ) {
-    return null;
+    return new Log4jMessageLogger( Logger.getLogger( name ) );
   }
 
 }

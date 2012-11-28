@@ -18,23 +18,38 @@
 package org.apache.hadoop.gateway.i18n.messages.loggers.log4j;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
-/**
- *
- */
 public class Log4jMessageLogger implements MessageLogger {
 
-  //private final Logger logger;
+  private Logger logger;
 
-  @Override
-  public boolean isLoggable( MessageLevel level ) {
-    return true;
+  Log4jMessageLogger( Logger logger ) {
+    this.logger = logger;
   }
 
   @Override
-  public void log( MessageLevel messageLevel, String messageId, String messageText, Throwable throwable ) {
+  public final boolean isLoggable( final MessageLevel level ) {
+    return logger.isEnabledFor( toLevel( level ) );
+  }
+
+  @Override
+  public final void log( final MessageLevel messageLevel, final String messageId, final String messageText, final Throwable throwable ) {
+    logger.log( toLevel( messageLevel ), messageText, throwable );
+  }
+
+  private static final Level toLevel( final MessageLevel level ) {
+    switch( level ) {
+      case FATAL: return Level.FATAL;
+      case ERROR: return Level.ERROR;
+      case WARN: return Level.WARN;
+      case INFO: return Level.INFO;
+      case DEBUG: return Level.DEBUG;
+      case TRACE: return Level.TRACE;
+      default: return Level.OFF;
+    }
   }
 
 }

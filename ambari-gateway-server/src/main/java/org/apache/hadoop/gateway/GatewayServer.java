@@ -17,12 +17,11 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.commons.vfs2.VFS;
 import org.apache.hadoop.gateway.config.ClusterConfigFactory;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.config.Config;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
 import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
@@ -51,7 +50,6 @@ public class GatewayServer implements ClusterTopologyListener {
   //TODO: Need to locate bootstrap gateway config that provides information required to locate the Ambari server.
   //TODO: Provide an XML or JSON equivalent that can be specified directly if Ambari proper is not present.
   public static void main( String[] args ) {
-
     try {
       //CommandLine cmd = GatewayCommandLine.parse( args );
       server = new GatewayServer();
@@ -77,7 +75,7 @@ public class GatewayServer implements ClusterTopologyListener {
     GatewayConfig gatewayConfig = new GatewayConfig();
     // Create a dir/file based cluster topology provider.
     File topologiesDir = new File( gatewayConfig.getGatewayHomeDir(), gatewayConfig.getClusterConfDir() );
-    log.loadingTopologiesFromDirecotry( topologiesDir );
+    log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
     FileClusterTopologyProvider provider = new FileClusterTopologyProvider( topologiesDir );
     // Load the initial cluster topologies.
     Collection<ClusterTopology> topologiesMap = provider.getClusterTopologies();
@@ -88,7 +86,7 @@ public class GatewayServer implements ClusterTopologyListener {
       ServletContextHandler handler = JettyGatewayFactory.create(
           gatewayConfig.getGatewayPath() + "/" + topology.getName(), clusterConfig );
       //TODO: Keep a mapping of cluster name to servlet to allow for dynamic reconfiguration.
-      Servlet servlet = handler.getServletHandler().getServlet( topology.getName() ).getServlet();
+      //Servlet servlet = handler.getServletHandler().getServlet( topology.getName() ).getServlet();
       contexts.addHandler( handler );
     }
 
@@ -100,7 +98,7 @@ public class GatewayServer implements ClusterTopologyListener {
     jetty.start();
 
     // Register for changes to any of the topologies.
-    log.monitoringTopologyChangesInDirectory( topologiesDir );
+    log.monitoringTopologyChangesInDirectory( topologiesDir.getAbsolutePath() );
     monitor = provider;
     monitor.addTopologyChangeListener( this );
     monitor.startMonitor();

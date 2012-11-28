@@ -45,7 +45,7 @@ final class JdkMessageLogger implements MessageLogger {
     logger.log( toLevel( level ), message, throwable );
   }
 
-  private static final Level toLevel( MessageLevel level ) {
+  private static final Level toLevel( final MessageLevel level ) {
     switch( level ) {
       case FATAL: return Level.SEVERE;
       case ERROR: return Level.SEVERE;

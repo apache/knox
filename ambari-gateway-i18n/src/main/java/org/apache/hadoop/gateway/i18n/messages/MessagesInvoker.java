@@ -159,4 +159,8 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return loggers.getLogger( calcLoggerName( clazz, anno ) );
   }
 
+  public String toString() {
+    return "MessageInvoker["+bundle+"]";
+  }
+
 }
