@@ -19,10 +19,8 @@ package org.apache.hadoop.gateway.i18n.messages.loggers.jdk;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -47,15 +45,15 @@ final class JdkMessageLogger implements MessageLogger {
     logger.log( toLevel( level ), message, throwable );
   }
 
-  private static final java.util.logging.Level toLevel( MessageLevel level ) {
+  private static final Level toLevel( MessageLevel level ) {
     switch( level ) {
-      case FATAL: return java.util.logging.Level.SEVERE;
-      case ERROR: return java.util.logging.Level.SEVERE;
-      case WARN: return java.util.logging.Level.WARNING;
-      case INFO: return java.util.logging.Level.INFO;
-      case DEBUG: return java.util.logging.Level.FINE;
-      case TRACE: return java.util.logging.Level.FINEST;
-      default: return java.util.logging.Level.OFF;
+      case FATAL: return Level.SEVERE;
+      case ERROR: return Level.SEVERE;
+      case WARN: return Level.WARNING;
+      case INFO: return Level.INFO;
+      case DEBUG: return Level.FINE;
+      case TRACE: return Level.FINEST;
+      default: return Level.OFF;
     }
   }
 

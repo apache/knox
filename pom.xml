@@ -28,8 +28,9 @@
 
     <modules>
         <module>ambari-gateway-test</module>
-        <module>ambari-gateway-server</module>
         <module>ambari-gateway-i18n</module>
+        <module>ambari-gateway-logging-sl4j</module>
+        <module>ambari-gateway-server</module>
     </modules>
 
     <build>
@@ -113,6 +114,12 @@
             <dependency>
                 <groupId>org.apache.hadoop.ambari</groupId>
                 <artifactId>ambari-gateway-i18n</artifactId>
+                <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop.ambari</groupId>
+                <artifactId>ambari-gateway-logging-sl4j</artifactId>
                 <version>0.1.0-SNAPSHOT</version>
             </dependency>
 

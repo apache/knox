@@ -15,41 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.i18n.messages.loggers.test;
+package org.apache.hadoop.gateway.i18n.messages.loggers.sl4j;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 import org.apache.hadoop.gateway.i18n.messages.MessageLoggerFactory;
+import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-/**
- *
- */
-public class TestMessageLoggerFactory implements MessageLoggerFactory {
-
-  private static TestMessageLoggerFactory INSTANCE;
-  private static Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<String,MessageLogger>();
-
-  public static TestMessageLoggerFactory getFactory() {
-    if( INSTANCE == null ) {
-      INSTANCE = new TestMessageLoggerFactory();
-    }
-    return INSTANCE;
-  }
-
-  public TestMessageLoggerFactory() {
-    INSTANCE = this;
-  }
+public class Sl4jMessageLoggerFactory implements MessageLoggerFactory {
 
   @Override
   public MessageLogger getLogger( String name ) {
-    MessageLogger logger = LOGGERS.get( name );
-    if( logger == null ) {
-      logger = new TestMessageLogger( name );
-      LOGGERS.put( name, logger );
-    }
-    return logger;
+    return new Sl4jMessageLogger( LoggerFactory.getLogger( name ) );
   }
 
 }
