@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway.config;
 import org.apache.hadoop.gateway.filter.UrlRewriteFilter;
 import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.pivot.WebHdfsPivot;
-import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public class HdfsConfigFactory implements ResourceConfigFactory {
   }
 
   @Override
-  public Collection<Config> createResourceConfig( Config clusterConfig, ClusterComponent clusterComponent ) {
+  public Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent ) {
     List<Config> configs = new ArrayList<Config>();
 
     String extClusterUrl = "{request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}";

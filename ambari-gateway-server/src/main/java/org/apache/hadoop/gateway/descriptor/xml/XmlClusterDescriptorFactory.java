@@ -15,17 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.commons.digester3.AbstractObjectCreationFactory;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.xml.sax.Attributes;
 
-import java.util.Collection;
-import java.util.Set;
-
-public interface ResourceConfigFactory {
-
-  Set<String> getSupportedRoles();
-
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
-
+public class XmlClusterDescriptorFactory extends AbstractObjectCreationFactory<ClusterDescriptor> {
+  @Override
+  public ClusterDescriptor createObject( Attributes attributes ) throws Exception {
+    return ClusterDescriptorFactory.create();
+  }
 }

@@ -15,17 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.topology.ClusterTopology;
 
-import java.util.Collection;
-import java.util.Set;
+public interface ClusterDeploymentContext {
 
-public interface ResourceConfigFactory {
+  ClusterFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole );
 
-  Set<String> getSupportedRoles();
+  ClusterTopology getClusterTopology();
 
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
+  Object getWebArchive();
+
+  Object getWebDescriptor();
+
+  GatewayConfig getGatewayConfig();
+
+  ClusterDescriptor getClusterDescriptor();
 
 }

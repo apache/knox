@@ -15,30 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.topology;
+package org.apache.hadoop.gateway.descriptor;
 
-import java.net.URL;
+import java.util.List;
 
-public class ClusterComponent {
+public interface ClusterDescriptor {
 
-  private String role;
+  List<ClusterResourceDescriptor> resources();
 
-  public String getRole() {
-    return role;
-  }
+  ClusterResourceDescriptor addResource();
 
-  public void setRole( String role ) {
-    this.role = role;
-  }
+  ClusterResourceDescriptor createResource();
 
-  private URL url;
-
-  public URL getUrl() {
-    return url;
-  }
-
-  public void setUrl( URL url ) {
-    this.url = url;
-  }
+  void addResource( ClusterResourceDescriptor resource );
 
 }

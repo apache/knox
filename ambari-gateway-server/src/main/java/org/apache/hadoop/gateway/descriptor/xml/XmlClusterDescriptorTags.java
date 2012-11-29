@@ -15,17 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+interface XmlClusterDescriptorTags {
 
-import java.util.Collection;
-import java.util.Set;
-
-public interface ResourceConfigFactory {
-
-  Set<String> getSupportedRoles();
-
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
+  static final String CLUSTER = "clusters";
+  static final String RESOURCE = "resource";
+  static final String RESOURCE_SOURCE = "source";
+  static final String RESOURCE_TARGET = "target";
+  static final String FILTER = "filter";
+  static final String FILTER_ROLE = "role";
+  static final String FILTER_IMPL = "class";
+  static final String FILTER_PARAM = "param";
+  static final String FILTER_PARAM_NAME = "name";
+  static final String FILTER_PARAM_VALUE = "value";
 
 }

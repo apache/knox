@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.config;
 
-import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,7 +52,7 @@ public class ResourceConfigFactoryProvider {
     return factories;
   }
 
-  public static ResourceConfigFactory getResourceConfigFactory( ClusterComponent component ) {
+  public static ResourceConfigFactory getResourceConfigFactory( ClusterTopologyComponent component ) {
     return getFactories().get( component.getRole() );
   }
 

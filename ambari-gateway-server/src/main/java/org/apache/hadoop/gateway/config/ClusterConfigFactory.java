@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway.config;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
-import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.xml.sax.SAXException;
 
@@ -58,7 +58,7 @@ public class ClusterConfigFactory {
     }
     if( clusterTopology != null ) {
       clusterConfig.put( "name", clusterTopology.getName() );
-      for( ClusterComponent clusterComponent : clusterTopology.getComponents() ) {
+      for( ClusterTopologyComponent clusterComponent : clusterTopology.getComponents() ) {
         Collection<Config> componentConfigs = createResources( clusterConfig, clusterComponent );
         for( Config componentConfig : componentConfigs ) {
           clusterConfig.addChild( componentConfig );
@@ -68,7 +68,7 @@ public class ClusterConfigFactory {
     return clusterConfig;
   }
 
-  private static Collection<Config> createResources( Config clusterConfig, ClusterComponent clusterComponent ) {
+  private static Collection<Config> createResources( Config clusterConfig, ClusterTopologyComponent clusterComponent ) {
     ResourceConfigFactory factory = ResourceConfigFactoryProvider.getResourceConfigFactory( clusterComponent );
     Collection<Config> configs = factory.createResourceConfig( clusterConfig, clusterComponent );
     return configs;

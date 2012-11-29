@@ -42,13 +42,13 @@ public class ClusterTopology {
     this.timestamp = timestamp;
   }
 
-  private Collection<ClusterComponent> components = new ArrayList<ClusterComponent>();
+  private Collection<ClusterTopologyComponent> components = new ArrayList<ClusterTopologyComponent>();
 
-  public Collection<ClusterComponent> getComponents() {
+  public Collection<ClusterTopologyComponent> getComponents() {
     return this.components;
   }
 
-  public void addComponent( ClusterComponent component ) {
+  public void addComponent( ClusterTopologyComponent component ) {
     components.add( component );
   }
 

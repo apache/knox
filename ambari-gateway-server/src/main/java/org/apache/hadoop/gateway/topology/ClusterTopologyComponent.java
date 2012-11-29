@@ -15,17 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.topology;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import java.net.URL;
 
-import java.util.Collection;
-import java.util.Set;
+public class ClusterTopologyComponent {
 
-public interface ResourceConfigFactory {
+  private String role;
 
-  Set<String> getSupportedRoles();
+  public String getRole() {
+    return role;
+  }
 
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
+  public void setRole( String role ) {
+    this.role = role;
+  }
+
+  private URL url;
+
+  public URL getUrl() {
+    return url;
+  }
+
+  public void setUrl( URL url ) {
+    this.url = url;
+  }
 
 }

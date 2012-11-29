@@ -19,9 +19,8 @@ package org.apache.hadoop.gateway.topology.xml;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
-import org.apache.hadoop.gateway.topology.ClusterComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.xml.ClusterTopologyRulesModule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class ClusterTopologyRulesModuleTest {
 
   @Before
   public void setUp() throws Exception {
-    loader = newLoader( new ClusterTopologyRulesModule() );
+    loader = newLoader( new XmlClusterTopologyRules() );
   }
 
   @After
@@ -64,7 +63,7 @@ public class ClusterTopologyRulesModuleTest {
     assertThat( topology.getTimestamp(), is( file.lastModified() ) );
     assertThat( topology.getComponents().size(), is( 1 ) );
 
-    ClusterComponent comp = topology.getComponents().iterator().next();
+    ClusterTopologyComponent comp = topology.getComponents().iterator().next();
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is( "NAMENODE" ) );
     assertThat( comp.getUrl(), is( new URL( "http://host:80/webhdfs/v1" ) ) );

@@ -15,34 +15,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+public class ClusterFilterParamImpl implements ClusterFilterParamDescriptor {
 
-public class TempletonConfigFactory implements ResourceConfigFactory {
+  private ClusterFilterDescriptor filter;
+  private String name;
+  private String value;
 
-  private static Set<String> ROLES = createSupportedRoles();
-
-  private static Set<String> createSupportedRoles() {
-    Set<String> roles = new HashSet<String>();
-    roles.add( "TEMPLETON" );
-    return Collections.unmodifiableSet( roles );
+  ClusterFilterParamImpl( ClusterFilterDescriptor filter ) {
+    this.filter = filter;
   }
 
   @Override
-  public Set<String> getSupportedRoles() {
-    return ROLES;
+  public ClusterFilterDescriptor up() {
+    return filter;
   }
 
   @Override
-  public Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent ) {
-    //TODO: Implement this.
-    return null;
+  public ClusterFilterParamDescriptor name( String name ) {
+    this.name = name;
+    return this;
   }
+
+  @Override
+  public String name() {
+    return name();
+  }
+
+  @Override
+  public ClusterFilterParamDescriptor value( String value ) {
+    this.value = value;
+    return this;
+  }
+
+  @Override
+  public String value() {
+    return value;
+  }
+
 }
-

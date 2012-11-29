@@ -15,17 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor.spi;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 
-import java.util.Collection;
-import java.util.Set;
+import java.io.IOException;
+import java.io.Writer;
 
-public interface ResourceConfigFactory {
+public interface ClusterDescriptorExporter {
 
-  Set<String> getSupportedRoles();
+  public String getFormat();
 
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
+  public void store( ClusterDescriptor descriptor, Writer writer ) throws IOException;
 
 }

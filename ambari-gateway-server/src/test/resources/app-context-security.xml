@@ -5,12 +5,12 @@
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
     http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
 
+    <s:ldap-server ldif="classpath:users.ldif" root="dc=ambari,dc=apache,dc=org"/>
+
     <s:http>
         <s:intercept-url pattern="/**" access="ROLE_ADMIN" />
-         <s:http-basic />
+        <s:http-basic />
     </s:http>
-
-    <s:ldap-server ldif="classpath:users.ldif" root="dc=ambari,dc=apache,dc=org"/>
 
     <s:authentication-manager>
         <s:ldap-authentication-provider

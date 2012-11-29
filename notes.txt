@@ -1,3 +1,24 @@
+----------
+Deployment (Once we know we need to create a new WAR).
+----------
+. Given global config
+. Given cluster topology
+. Create empty WebArchive
+. Create empty WebAppDescriptor
+. Invoke the Gateway deployment contributor
+  . Create empty ClusterConfig
+    . Find all ResourceConfigFactory services
+    . For each component in cluster topo
+      . Find and component's config factory
+      . Add created resources configs to cluster config
+        Q: How do they know to include as vs ss?
+  . Populate the deployment context with the above.
+. Find all ClusterDeploymentContributor services
+. Invoke each contributor
+  .
+
+
+
 If the query is empty, never include the ? in the expansion.
 
 Have every URL section support *, **, {*} and {**}.
