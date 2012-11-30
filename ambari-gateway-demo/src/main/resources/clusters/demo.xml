@@ -18,7 +18,6 @@
 -->
 
 <cluster>
-    <name>cluster</name>
     <component>
         <role>NAMENODE</role>
         <url>http://vm.home:50070/webhdfs/v1</url>
