@@ -15,24 +15,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy;
+package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
+import org.apache.hadoop.gateway.deploy.ClusterFilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public interface ClusterFilterDescriptorFactory {
+public class PivotClusterFilterDescriptorFactory implements ClusterFilterDescriptorFactory {
 
-  Set<String> getSupportedFilterRoles();
+  private static final Set<String> ROLES = createSupportedRoles();
 
-  List<ClusterFilterDescriptor> createFilterDescriptors(
+  private static Set<String> createSupportedRoles() {
+    HashSet<String> roles = new HashSet<String>();
+    roles.add( "pivot" );
+    return Collections.unmodifiableSet( roles );
+  }
+
+  @Override
+  public Set<String> getSupportedFilterRoles() {
+    return ROLES;
+  }
+
+  @Override
+  public List<ClusterFilterDescriptor> createFilterDescriptors(
       ClusterDeploymentContext clusterDeploymentContext,
       ClusterTopologyComponent clusterTopologyComponent,
       ClusterResourceDescriptor clusterResourceDescriptor,
       String filterRole,
-      List<ClusterFilterParamDescriptor> filterParamDescriptors );
+      List<ClusterFilterParamDescriptor> filterParamDescriptors ) {
+    List<ClusterFilterDescriptor> descriptors = new ArrayList<ClusterFilterDescriptor>();
+    ClusterFilterDescriptor descriptor
+        = clusterResourceDescriptor.createFilter().role( filterRole ).impl( HttpClientPivot.class );
+    descriptor.addParams( filterParamDescriptors );
+    descriptors.add( descriptor );
+    return descriptors;
+  }
+
 }

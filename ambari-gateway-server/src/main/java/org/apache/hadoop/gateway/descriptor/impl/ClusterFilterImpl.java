@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
 
+import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +60,12 @@ public class ClusterFilterImpl implements ClusterFilterDescriptor {
   }
 
   @Override
+  public ClusterFilterDescriptor impl( Class<? extends Filter> type ) {
+    this.impl = type.getName();
+    return this;
+  }
+
+  @Override
   public String impl() {
     return impl;
   }
@@ -82,7 +89,18 @@ public class ClusterFilterImpl implements ClusterFilterDescriptor {
 
   @Override
   public void addParam( ClusterFilterParamDescriptor param ) {
+    param.up( this );
     params.add( param );
+  }
+
+  @Override
+  public void addParams( List<ClusterFilterParamDescriptor> params ) {
+    if( params != null ) {
+      for( ClusterFilterParamDescriptor param : params ) {
+        param.up( this );
+      }
+      this.params.addAll( params );
+    }
   }
 
 }

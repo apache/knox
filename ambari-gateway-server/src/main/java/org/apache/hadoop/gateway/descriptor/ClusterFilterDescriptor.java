@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
+import javax.servlet.Filter;
 import java.util.List;
 
 public interface ClusterFilterDescriptor {
@@ -29,6 +30,8 @@ public interface ClusterFilterDescriptor {
 
   ClusterFilterDescriptor impl( String impl );
 
+  ClusterFilterDescriptor impl( Class<? extends Filter> type );
+
   String impl();
 
   List<ClusterFilterParamDescriptor> params();
@@ -39,4 +42,5 @@ public interface ClusterFilterDescriptor {
 
   void addParam( ClusterFilterParamDescriptor param );
 
+  void addParams( List<ClusterFilterParamDescriptor> params );
 }

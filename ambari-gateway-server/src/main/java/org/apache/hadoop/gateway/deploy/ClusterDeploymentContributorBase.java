@@ -17,27 +17,21 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
-public interface ClusterDeploymentContext {
+import java.util.List;
 
-  ClusterResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component );
+public abstract class ClusterDeploymentContributorBase implements ClusterDeploymentContributor {
 
-  ClusterFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole );
-
-  GatewayConfig getGatewayConfig();
-
-  ClusterTopology getClusterTopology();
-
-  WebArchive getWebArchive();
-
-  WebAppDescriptor getWebAppDescriptor();
-
-  ClusterDescriptor getClusterDescriptor();
+  protected static ServletType<WebAppDescriptor> findServlet( ClusterDeploymentContext context, String name ) {
+    List<ServletType<WebAppDescriptor>> servlets = context.getWebAppDescriptor().getAllServlet();
+    for( ServletType<WebAppDescriptor> servlet : servlets ) {
+      if( name.equals( servlet.getServletName() ) ) {
+        return servlet;
+      }
+    }
+    return null;
+  }
 
 }

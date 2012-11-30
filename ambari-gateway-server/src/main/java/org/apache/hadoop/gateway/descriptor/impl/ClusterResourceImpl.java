@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
 
 import java.util.ArrayList;
@@ -79,6 +80,16 @@ public class ClusterResourceImpl implements ClusterResourceDescriptor {
   @Override
   public void addFilter( ClusterFilterDescriptor filter ) {
     filters.add( filter );
+  }
+
+  @Override
+  public void addFilters( List<ClusterFilterDescriptor> filters ) {
+    this.filters.addAll( filters );
+  }
+
+  @Override
+  public ClusterFilterParamDescriptor createParam() {
+    return new ClusterFilterParamImpl();
   }
 
 }

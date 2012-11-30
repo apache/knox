@@ -26,7 +26,15 @@ public class ClusterFilterParamImpl implements ClusterFilterParamDescriptor {
   private String name;
   private String value;
 
+  ClusterFilterParamImpl() {
+  }
+
   ClusterFilterParamImpl( ClusterFilterDescriptor filter ) {
+    this.filter = filter;
+  }
+
+  @Override
+  public void up( ClusterFilterDescriptor filter ) {
     this.filter = filter;
   }
 

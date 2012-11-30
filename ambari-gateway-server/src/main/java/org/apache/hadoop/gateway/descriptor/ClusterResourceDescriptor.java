@@ -39,4 +39,8 @@ public interface ClusterResourceDescriptor {
 
   void addFilter( ClusterFilterDescriptor filter );
 
+  void addFilters( List<ClusterFilterDescriptor> filters );
+
+  ClusterFilterParamDescriptor createParam();
+
 }
