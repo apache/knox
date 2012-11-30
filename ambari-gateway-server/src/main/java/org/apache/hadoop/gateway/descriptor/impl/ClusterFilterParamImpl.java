@@ -43,7 +43,7 @@ public class ClusterFilterParamImpl implements ClusterFilterParamDescriptor {
 
   @Override
   public String name() {
-    return name();
+    return name;
   }
 
   @Override

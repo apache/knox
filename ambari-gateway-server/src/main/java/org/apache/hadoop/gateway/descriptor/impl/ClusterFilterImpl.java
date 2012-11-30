@@ -49,7 +49,7 @@ public class ClusterFilterImpl implements ClusterFilterDescriptor {
 
   @Override
   public String role() {
-    return role();
+    return role;
   }
 
   @Override
@@ -60,7 +60,7 @@ public class ClusterFilterImpl implements ClusterFilterDescriptor {
 
   @Override
   public String impl() {
-    return impl();
+    return impl;
   }
 
   @Override

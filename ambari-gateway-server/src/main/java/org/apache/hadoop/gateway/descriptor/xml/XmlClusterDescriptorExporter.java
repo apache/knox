@@ -27,8 +27,11 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -47,24 +50,30 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
     try {
       DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = builderFactory.newDocumentBuilder();
-      Document dom = builder.newDocument();
+      Document document = builder.newDocument();
+      document.setXmlStandalone( true );
 
-      Element root = dom.createElement( CLUSTER );
-      dom.appendChild( root );
+      Element cluster = document.createElement( CLUSTER );
+      document.appendChild( cluster );
 
       for( ClusterResourceDescriptor resource : descriptor.resources() ) {
-        root.appendChild( createResource( dom, resource ) );
+        cluster.appendChild( createResource( document, resource ) );
       }
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();
+      transformerFactory.setAttribute( "indent-number", 2 );
       Transformer transformer = transformerFactory.newTransformer();
-      transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+      //transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+      transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
       transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
       StreamResult result = new StreamResult( writer );
-      DOMSource source = new DOMSource(dom);
+      DOMSource source = new DOMSource(document);
       transformer.transform( source, result );
-    } catch( Exception e ) {
+
+    } catch( ParserConfigurationException e ) {
+      throw new IOException( e );
+    } catch( TransformerException e ) {
       throw new IOException( e );
     }
   }
@@ -72,13 +81,8 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
   private static Element createResource( Document dom, ClusterResourceDescriptor resource ) {
     Element element = dom.createElement( RESOURCE );
 
-    Element source = dom.createElement( RESOURCE_SOURCE );
-    source.appendChild( dom.createTextNode( resource.source() ) );
-    element.appendChild( source );
-
-    Element target = dom.createElement( RESOURCE_TARGET );
-    source.appendChild( dom.createTextNode( resource.target() ) );
-    element.appendChild( target );
+    addTextElement( dom, element, RESOURCE_SOURCE, resource.source() );
+    addTextElement( dom, element, RESOURCE_TARGET, resource.target() );
 
     for( ClusterFilterDescriptor filter : resource.filters() ) {
       element.appendChild( createFilter( dom, filter ) );
@@ -90,13 +94,8 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
   private static Element createFilter( Document dom, ClusterFilterDescriptor filter ) {
     Element element = dom.createElement( FILTER );
 
-    Element source = dom.createElement( FILTER_ROLE );
-    source.appendChild( dom.createTextNode( filter.role() ) );
-    element.appendChild( source );
-
-    Element target = dom.createElement( FILTER_IMPL );
-    source.appendChild( dom.createTextNode( filter.impl() ) );
-    element.appendChild( target );
+    addTextElement( dom, element, FILTER_ROLE, filter.role() );
+    addTextElement( dom, element, FILTER_IMPL, filter.impl() );
 
     for( ClusterFilterParamDescriptor param : filter.params() ) {
       element.appendChild( createFilterParam( dom, param ) );
@@ -107,16 +106,17 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
 
   private static Element createFilterParam( Document dom, ClusterFilterParamDescriptor param ) {
     Element element = dom.createElement( FILTER_PARAM );
-
-    Element name = dom.createElement( FILTER_PARAM_NAME );
-    name.appendChild( dom.createTextNode( param.name() ) );
-    element.appendChild( name );
-
-    Element value = dom.createElement( FILTER_PARAM_VALUE );
-    value.appendChild( dom.createTextNode( param.value() ) );
-    element.appendChild( value );
-
+    addTextElement( dom, element, FILTER_PARAM_NAME, param.name() );
+    addTextElement( dom, element, FILTER_PARAM_VALUE, param.value() );
     return element;
+  }
+
+  private static void addTextElement( Document doc, Element parent, String tag, String text ) {
+    if( text != null ) {
+      Element element = doc.createElement( tag );
+      element.appendChild( doc.createTextNode( text ) );
+      parent.appendChild( element );
+    }
   }
 
 }

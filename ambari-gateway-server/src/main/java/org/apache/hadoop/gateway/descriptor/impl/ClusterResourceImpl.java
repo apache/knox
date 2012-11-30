@@ -47,7 +47,7 @@ public class ClusterResourceImpl implements ClusterResourceDescriptor {
   }
 
   public String source() {
-    return source();
+    return source;
   }
 
   public ClusterResourceDescriptor target( String target ) {
@@ -56,7 +56,7 @@ public class ClusterResourceImpl implements ClusterResourceDescriptor {
   }
 
   public String target() {
-    return target();
+    return target;
   }
 
   @Override

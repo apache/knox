@@ -17,25 +17,51 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
+import org.apache.commons.beanutils.MethodUtils;
+import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.FactoryCreateRule;
+import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
-import org.apache.hadoop.gateway.descriptor.impl.ClusterResourceImpl;
+import org.xml.sax.Attributes;
 
 public class XmlClusterDescriptorRules extends AbstractRulesModule implements XmlClusterDescriptorTags {
 
+  private static final Object[] NO_PARAMS = new Object[0];
+
   @Override
   protected void configure() {
+
     forPattern( CLUSTER ).addRule( new FactoryCreateRule( XmlClusterDescriptorFactory.class ) );
-    forPattern( CLUSTER ).createObject().ofType( ClusterResourceImpl.class );
-    forPattern( CLUSTER + "/" + RESOURCE ).setNext( "addResource" );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" );
-    forPattern( CLUSTER+"/"+RESOURCE+"/"+RESOURCE_TARGET ).callMethod( "target" );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER ).setNext( "addFilter" );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "role" );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_IMPL ).callMethod( "impl" );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM ).setNext( "addParam" );
-    forPattern( CLUSTER+"/"+RESOURCE+"/"+FILTER+"/"+FILTER_PARAM+"/"+FILTER_PARAM_NAME ).callMethod( "name" );
-    forPattern( CLUSTER+"/"+RESOURCE+"/"+FILTER+"/"+FILTER_PARAM+"/"+FILTER_PARAM_VALUE ).callMethod( "value" );
+    forPattern( CLUSTER + "/" + RESOURCE ).addRule( new AddNextRule( "addResource" ) );
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" ).usingElementBodyAsArgument();
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + RESOURCE_TARGET ).callMethod( "target" ).usingElementBodyAsArgument();
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER ).addRule( new AddNextRule( "addFilter" ) );
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "role" ).usingElementBodyAsArgument();
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_IMPL ).callMethod( "impl" ).usingElementBodyAsArgument();
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM ).addRule( new AddNextRule( "addParam") );
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_NAME ).callMethod( "name" ).usingElementBodyAsArgument();
+    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_VALUE ).callMethod( "value" ).usingElementBodyAsArgument();
+  }
+
+  private class AddNextRule extends Rule {
+
+    private String method;
+
+    private AddNextRule( String method ) {
+      this.method = method;
+    }
+
+    @Override
+    public void begin( String namespace, String name, Attributes attributes ) throws Exception {
+      Digester digester = getDigester();
+      digester.push( MethodUtils.invokeMethod( digester.peek(), method, NO_PARAMS ) );
+    }
+
+    @Override
+    public void end( String namespace, String name ) {
+      getDigester().pop();
+    }
+
   }
 
 }
