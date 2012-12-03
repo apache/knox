@@ -17,14 +17,18 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
 import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
-import org.apache.hadoop.gateway.topology.ClusterTopologyMonitor;
 import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -33,8 +37,11 @@ import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.List;
@@ -44,6 +51,7 @@ import java.util.regex.Pattern;
 
 public class GatewayServer implements ClusterTopologyListener {
 
+  private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server = new GatewayServer();
 
@@ -55,7 +63,63 @@ public class GatewayServer implements ClusterTopologyListener {
 
   public static void main( String[] args ) {
     try {
-      //CommandLine cmd = GatewayCommandLine.parse( args );
+      CommandLine cmd = GatewayCommandLine.parse( args );
+      if( cmd.hasOption( "help" ) ) {
+        GatewayCommandLine.printHelp();
+      } else if( cmd.hasOption( "install" ) ) {
+        installGateway();
+      } else if( cmd.hasOption( "version" ) ) {
+        System.out.println( res.gatewayVersionMessage() );
+      } else {
+        startGateway();
+      }
+    } catch( ParseException e ) {
+      log.failedToParseCommandLine( e );
+    }
+  }
+
+  private static void installGateway() {
+    try {
+      GatewayConfig config = new GatewayConfig();
+      String home = config.getGatewayHomeDir();
+
+      File homeDir = new File( home ).getAbsoluteFile();
+      if( !homeDir.exists() ) {
+        log.creatingGatewayHomeDir( homeDir );
+        homeDir.mkdirs();
+      }
+
+      File defaultConfigFile = new File( homeDir, "gateway-site.xml" );
+      if( !defaultConfigFile.exists() ) {
+        log.creatingDefaultConfigFile( defaultConfigFile );
+        extractToFile( "gateway-site.xml", defaultConfigFile );
+      }
+
+      File topologiesDir = calculateAbsoluteTopologiesDir( config );
+      if( !topologiesDir.exists() ) {
+        log.creatingGatewayDeploymentDir( topologiesDir );
+        topologiesDir.mkdirs();
+
+        File defaultTopologyFile = new File( topologiesDir, "cluster.xml" );
+        log.creatingDefaultTopologyFile( defaultTopologyFile );
+        extractToFile( "cluster-sample.xml", defaultTopologyFile );
+      }
+
+    } catch( IOException e ) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void extractToFile( String resource, File file ) throws IOException {
+    InputStream input = ClassLoader.getSystemResourceAsStream( resource );
+    OutputStream output = new FileOutputStream( file );
+    IOUtils.copy( input, output );
+    output.close();
+    input.close();
+  }
+
+  private static void startGateway() {
+    try {
       server = new GatewayServer();
       log.startingGateway();
       server.startGateway();
@@ -65,7 +129,7 @@ public class GatewayServer implements ClusterTopologyListener {
     }
   }
 
-  private void startGateway() throws Exception {
+  private void start() throws Exception {
 
 //    Map<String,String> params = new HashMap<String,String>();
 //    params.put( GatewayConfig.AMBARI_ADDRESS, config.getAmbariAddress() );
@@ -96,7 +160,7 @@ public class GatewayServer implements ClusterTopologyListener {
     jetty.setHandler( contexts );
     jetty.start();
 
-    // Loading the topologies.
+    // Load the current topologies.
     log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
     monitor.reloadTopologies();
 
@@ -105,13 +169,13 @@ public class GatewayServer implements ClusterTopologyListener {
     monitor.startMonitor();
   }
 
-  private void checkAddressAvailability( InetSocketAddress address ) throws IOException {
+  private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {
     ServerSocket socket = new ServerSocket();
     socket.bind( address );
     socket.close();
   }
 
-  private void stopGateway() throws Exception {
+  private void stop() throws Exception {
     log.stoppingGateway();
     monitor.stopMonitor();
     jetty.stop();
@@ -144,10 +208,14 @@ public class GatewayServer implements ClusterTopologyListener {
     }
   }
 
-  private File calculateAbsoluteTopologiesDir() {
+  private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {
     File topoDir = new File( config.getGatewayHomeDir(), config.getClusterConfDir() );
     topoDir = topoDir.getAbsoluteFile();
     return topoDir;
+  }
+
+  private File calculateAbsoluteTopologiesDir() {
+    return calculateAbsoluteTopologiesDir( config );
   }
 
   private File calcWarDir( ClusterTopology topology ) {

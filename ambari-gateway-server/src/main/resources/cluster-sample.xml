@@ -17,24 +17,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<configuration>
-
-    <property>
-        <name>gateway.port</name>
-        <value>8888</value>
-        <description>The HTTP port for the Gateway.</description>
-    </property>
-
-    <property>
-        <name>gateway.path</name>
-        <value>gateway</value>
-        <description>The default context path for the gateway.</description>
-    </property>
-
-    <property>
-        <name>gateway.cluster.conf.dir</name>
-        <value>clusters</value>
-        <description>The directory within GATEWAY_HOME that contains cluster topology files and deployments.</description>
-    </property>
-
-</configuration>
+<cluster>
+    <!--
+    <component>
+        <component>
+            <role>NAMENODE</role>
+            <url>http://localhost:50070/webhdfs/v1</url>
+        </component>
+    </component>
+    -->
+</cluster>

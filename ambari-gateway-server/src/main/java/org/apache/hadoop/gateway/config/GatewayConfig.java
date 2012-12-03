@@ -158,10 +158,11 @@ public class GatewayConfig extends Configuration {
       return;
     }
     if( lastFileUrl != null ) {
-      File file = new File( lastFileUrl.getFile() );
+      File file = new File( lastFileUrl.getFile() ).getAbsoluteFile();
       File dir = file.getParentFile();
       if( dir.exists() && dir.canRead() )
-      set( GATEWAY_HOME_VAR, dir.getAbsolutePath() );
+        home = dir.getAbsolutePath();
+      set( GATEWAY_HOME_VAR, home );
       log.settingGatewayHomeDir( "configuration file location", home );
       return;
     }

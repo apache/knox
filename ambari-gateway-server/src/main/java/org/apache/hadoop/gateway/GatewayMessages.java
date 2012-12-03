@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
@@ -31,6 +32,9 @@ import static org.apache.hadoop.gateway.i18n.messages.MessageLevel.*;
  */
 @Messages
 public interface GatewayMessages {
+
+  @Message(level=FATAL, text="Failed to parse command line: {0}" )
+  void failedToParseCommandLine( @StackTrace(level=DEBUG) ParseException e );
 
   @Message(level=INFO, text="Starting gateway..." )
   void startingGateway();
@@ -73,4 +77,17 @@ public interface GatewayMessages {
 
   @Message(level=INFO, text="Deleting deployed cluster topology {0}" )
   void deletingCluster( String warDirName );
+
+  @Message(level=INFO, text="Creating gateway home directory: {0}" )
+  void creatingGatewayHomeDir( File homeDir );
+
+  @Message(level=INFO, text="Creating gateway cluster topology deployment directory: {0}" )
+  void creatingGatewayDeploymentDir( File topologiesDir );
+
+  @Message(level=INFO, text="Creating default gateway configuration file: {0}" )
+  void creatingDefaultConfigFile( File defaultConfigFile );
+
+  @Message(level=INFO, text="Creating sample cluster topology file: {0}" )
+  void creatingDefaultTopologyFile( File defaultConfigFile );
+
 }

@@ -19,14 +19,18 @@ package org.apache.hadoop.gateway;
 
 import org.apache.commons.cli.*;
 
+import java.io.PrintWriter;
+
 public class GatewayCommandLine {
 
-  private static Options createCommandLine() {
+  public static Options createCommandLine() {
     Options options = new Options();
     //Option option = new Option( "short-flag", "long-flag", true, "desc" );
     //option.setRequired( true );
     //options.addOption( options );
-    options.addOption( "short-flag", "long-flag", true, "desc" );
+    options.addOption( "h", "help", false, "Help" );
+    options.addOption( "v", "version", false, "Version" );
+    options.addOption( "i", "install", false, "Version" );
     return options;
   }
 
@@ -34,6 +38,18 @@ public class GatewayCommandLine {
     CommandLineParser parser = new PosixParser();
     CommandLine commandLine = parser.parse( createCommandLine(), args );
     return commandLine;
+  }
+
+  public static void printUsage() {
+    PrintWriter printer = new PrintWriter( System.err );
+    new HelpFormatter().printUsage( printer, 80, "gateway", createCommandLine() );
+    printer.flush();
+  }
+
+  public static void printHelp() {
+    PrintWriter printer = new PrintWriter( System.err );
+    new HelpFormatter().printUsage( printer, 80, "gateway", createCommandLine() );
+    printer.flush();
   }
 
 }

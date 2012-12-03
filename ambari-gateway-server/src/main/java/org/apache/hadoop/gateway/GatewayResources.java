@@ -27,6 +27,9 @@ import org.apache.hadoop.gateway.i18n.resources.Resources;
 @Resources
 public interface GatewayResources {
 
+  @Resource( text="Apache Hadoop Gateway Version 0.1.0-Alpha" )
+  String gatewayVersionMessage();
+
   @Resource( text="Apache Hadoop Gateway" )
   String gatewayServletInfo();
 
