@@ -23,7 +23,6 @@ import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
 import org.apache.hadoop.gateway.filter.UrlRewriteFilter;
-import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.ArrayList;

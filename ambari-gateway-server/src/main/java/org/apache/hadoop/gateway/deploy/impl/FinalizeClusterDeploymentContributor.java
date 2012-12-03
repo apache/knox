@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContributorBase;
@@ -31,9 +32,6 @@ import java.io.StringWriter;
 
 public class FinalizeClusterDeploymentContributor extends ClusterDeploymentContributorBase implements ClusterDeploymentContributor {
 
-  private static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION = "gateway.xml";
-  private static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM = "gatewayClusterDescriptorLocation";
-
   @Override
   public void contribute( ClusterDeploymentContext context ) {
     try {
@@ -41,13 +39,14 @@ public class FinalizeClusterDeploymentContributor extends ClusterDeploymentContr
       StringWriter writer = new StringWriter();
       ClusterDescriptorFactory.store( context.getClusterDescriptor(), "xml", writer );
       context.getWebArchive().addAsWebInfResource(
-          new StringAsset( writer.toString() ), GATEWAY_CLUSTER_DESCRIPTOR_LOCATION );
+          new StringAsset( writer.toString() ),
+          GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
 
       // Set the location of the gateway cluster descriptor as a servlet init param.
       ServletType<WebAppDescriptor> servlet = findServlet( context, context.getClusterTopology().getName() );
       servlet.createInitParam()
-          .paramName( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM )
-          .paramValue( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION );
+          .paramName( GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM )
+          .paramValue( GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
 
       // Write the web.xml into the war.
       Asset webXmlAsset = new StringAsset( context.getWebAppDescriptor().exportAsString() );

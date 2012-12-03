@@ -18,72 +18,28 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.config.Config;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
 
 import javax.servlet.Filter;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
 public class GatewayFactory {
 
-//  private static FilterHolder createFilter( ServiceConfig serviceConfig, String filterName ) {
-//    FilterConfig filterConfig = serviceConfig.filters.pick( filterName );
-//    FilterHolder filterHolder = new FilterHolder( Holder.Source.EMBEDDED );
-//    filterHolder.setName( filterName );
-//    filterHolder.setClassName( filterConfig.pick( "class" ) );
-//    for( Map.Entry<String,String> queryParam : filterConfig.entrySet() ) {
-//      filterHolder.setInitParameter( queryParam.getKey(), queryParam.getValue() );
-//    }
-//    return filterHolder;
-//  }
-//
-//  private static ServletHolder createProxy( String proxyName, ServiceConfig serviceConfig ) {
-//    ServletHolder servletHolder = new ServletHolder( Holder.Source.EMBEDDED );
-//    servletHolder.setName( proxyName );
-//    String servletClass = serviceConfig.pick( "class" );
-//    if( servletClass == null ) {
-//      servletClass = UrlConnectionPivot.class.getName();
-//    }
-//    servletHolder.setClassName( servletClass );
-//    for( Map.Entry<String,String> queryParam : serviceConfig.entrySet() ) {
-//      servletHolder.setInitParameter( queryParam.getKey(), queryParam.getValue() );
-//    }
-//    return servletHolder;
-//  }
-//
-//  private static Handler createService( GatewayConfig gatewayConfig, ClusterConfig clusterConfig, String proxyName ) {
-//    ServiceConfig serviceConfig = clusterConfig.proxies.pick( proxyName );
-//    ServletContextHandler proxyContext = new ServletContextHandler( ServletContextHandler.SESSIONS );
-//    String gatewayPath = Urls.ensureLeadingSlash( gatewayConfig.pick( "path" ) );
-//    String clusterPath = gatewayPath + Urls.ensureLeadingSlash( clusterConfig.pick( "path" ) );
-//    proxyContext.setContextPath( clusterPath );
-//    String proxyPath = Urls.ensureLeadingSlash( serviceConfig.pick( "path" ) );
-//    for( String filterName : serviceConfig.filters.keySet() ) {
-//      proxyContext.addFilter(
-//          createFilter( serviceConfig, filterName ),
-//          proxyPath,
-//          EnumSet.of( DispatcherType.REQUEST ) );
-//    }
-//    System.out.println( "Creating proxy on " + proxyPath );
-//    proxyContext.addServlet( createProxy( proxyName, serviceConfig ), proxyPath );
-//    return proxyContext;
-//  }
-//
-//  private static Handler createCluster( GatewayConfig gatewayConfig, String clusterName ) {
-//    ClusterConfig clusterConfig = gatewayConfig.services.pick( clusterName );
-//    ContextHandlerCollection services = new ContextHandlerCollection();
-//    for( String proxyName : clusterConfig.proxies.keySet() ) {
-//      services.addHandler( createService( gatewayConfig, clusterConfig, proxyName ) );
-//    }
-//    return services;
-//  }
-
-  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
-    String source = filterConfig.get( "source" );
-    String name = filterConfig.get( "name" );
-    String clazz = filterConfig.get( "class" );
-    gateway.addFilter( source, name, clazz, filterConfig );
+  public static GatewayFilter create( Config gatewayConfig ) throws URISyntaxException {
+    GatewayFilter gateway = new GatewayFilter();
+    for( Config service : gatewayConfig.getChildren().values() ) {
+      addService( gateway, service );
+    }
+    return gateway;
   }
 
   private static void addService( GatewayFilter gateway, Config serviceConfig ) throws URISyntaxException {
@@ -92,12 +48,37 @@ public class GatewayFactory {
     }
   }
 
-  public static GatewayFilter create( Config gatewayConfig ) throws URISyntaxException {
-    GatewayFilter gateway = new GatewayFilter();
-    for( Config service : gatewayConfig.getChildren().values() ) {
-      addService( gateway, service );
+  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
+    String source = filterConfig.get( "source" );
+    String name = filterConfig.get( "name" );
+    String clazz = filterConfig.get( "class" );
+    gateway.addFilter( source, name, clazz, filterConfig );
+  }
+
+  public static GatewayFilter create( ClusterDescriptor descriptor ) throws URISyntaxException {
+    GatewayFilter filter = new GatewayFilter();
+    for( ClusterResourceDescriptor resource : descriptor.resources() ) {
+      addResource( filter, resource );
     }
-    return gateway;
+    return filter;
+  }
+
+  private static void addResource( GatewayFilter gateway, ClusterResourceDescriptor resource ) throws URISyntaxException {
+    for( ClusterFilterDescriptor filter : resource.filters() ) {
+      addFilter( gateway, filter );
+    }
+  }
+
+  private static void addFilter( GatewayFilter gateway, ClusterFilterDescriptor filter ) throws URISyntaxException {
+    gateway.addFilter( filter.up().source(), filter.role(), filter.impl(), createParams( filter.params() ) );
+  }
+
+  private static Map<String, String> createParams( List<ClusterFilterParamDescriptor> paramList ) {
+    Map<String, String> paramMap = new HashMap<String, String>();
+    for( ClusterFilterParamDescriptor param : paramList ) {
+      paramMap.put( param.name(), param.value() );
+    }
+    return paramMap;
   }
 
 }

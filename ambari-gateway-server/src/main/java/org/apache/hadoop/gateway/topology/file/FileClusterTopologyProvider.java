@@ -33,6 +33,7 @@ import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
 import org.apache.hadoop.gateway.topology.ClusterTopologyMonitor;
 import org.apache.hadoop.gateway.topology.ClusterTopologyProvider;
 import org.apache.hadoop.gateway.topology.xml.XmlClusterTopologyRules;
+import org.codehaus.plexus.util.FileUtils;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -61,10 +62,10 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
   FileClusterTopologyProvider( DefaultFileMonitor monitor, FileObject directory ) throws IOException, SAXException {
     this.directory = directory;
     this.monitor = ( monitor != null ) ? monitor : new DefaultFileMonitor( this );
-    this.monitor.setRecursive( true );
+    this.monitor.setRecursive( false );
     this.monitor.addFile( this.directory );
     this.listeners = new HashSet<ClusterTopologyListener>();
-    this.topologies = loadTopologies( this.directory );
+    this.topologies = new HashMap<FileName, ClusterTopology>(); //loadTopologies( this.directory );
   }
 
   public FileClusterTopologyProvider( File directory ) throws IOException, SAXException {
@@ -75,33 +76,40 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
     Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
     ClusterTopology topology = digester.parse( content.getInputStream() );
+    topology.setName( FileUtils.removeExtension( file.getName().getBaseName() ) );
     topology.setTimestamp( content.getLastModifiedTime() );
     return topology;
   }
 
-  private static Map<FileName, ClusterTopology> loadTopologies( FileObject directory ) throws FileSystemException {
+  private Map<FileName, ClusterTopology> loadTopologies( FileObject directory ) throws FileSystemException {
     Map<FileName, ClusterTopology> map = new HashMap<FileName, ClusterTopology>();
     if( directory.exists() && directory.getType().hasChildren() ) {
       for( FileObject file : directory.getChildren() ) {
-        try {
-          map.put( file.getName(), loadTopology( file ) );
-        } catch( IOException e ) {
-          e.printStackTrace();
-        } catch( SAXException e ) {
-          e.printStackTrace();
+        if( file.exists() && !file.getType().hasChildren() ) {
+          try {
+            map.put( file.getName(), loadTopology( file ) );
+          } catch( IOException e ) {
+            e.printStackTrace();
+          } catch( SAXException e ) {
+            e.printStackTrace();
+          }
         }
       }
     }
     return map;
   }
 
-  private void reloadTopologies() throws FileSystemException {
-    synchronized ( this ) {
-      Map<FileName, ClusterTopology> oldTopologies = topologies;
-      Map<FileName, ClusterTopology> newTopologies = loadTopologies( directory );
-      List<ClusterTopologyEvent> events = createChangeEvents( oldTopologies, newTopologies );
-      topologies = newTopologies;
-      notifyChangeListeners( events );
+  private void reloadTopologies() {
+    try {
+      synchronized ( this ) {
+        Map<FileName, ClusterTopology> oldTopologies = topologies;
+        Map<FileName, ClusterTopology> newTopologies = loadTopologies( directory );
+        List<ClusterTopologyEvent> events = createChangeEvents( oldTopologies, newTopologies );
+        topologies = newTopologies;
+        notifyChangeListeners( events );
+      }
+    } catch( FileSystemException e ) {
+      e.printStackTrace();
     }
   }
 
@@ -153,6 +161,7 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
 
   @Override
   public void startMonitor() {
+    reloadTopologies();
     monitor.start();
   }
 
@@ -162,17 +171,17 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
   }
 
   @Override
-  public void fileCreated( FileChangeEvent fileChangeEvent ) throws Exception {
+  public void fileCreated( FileChangeEvent fileChangeEvent ) {
     reloadTopologies();
   }
 
   @Override
-  public void fileDeleted( FileChangeEvent fileChangeEvent ) throws Exception {
+  public void fileDeleted( FileChangeEvent fileChangeEvent ) {
     reloadTopologies();
   }
 
   @Override
-  public void fileChanged( FileChangeEvent fileChangeEvent ) throws Exception {
+  public void fileChanged( FileChangeEvent fileChangeEvent ) {
     reloadTopologies();
   }
 

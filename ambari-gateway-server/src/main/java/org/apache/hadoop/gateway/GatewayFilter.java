@@ -107,7 +107,7 @@ public class GatewayFilter implements Filter {
     addHolder( holder );
   }
 
-//  public void addFilter( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
+//  public void addFilter( String path, String name, Class<WarDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
 //    Holder holder = new Holder( path, name, clazz, params );
 //    addHolder( holder );
 //  }
@@ -164,7 +164,7 @@ public class GatewayFilter implements Filter {
       this.type = clazz.getCanonicalName();
     }
 
-//    private Holder( String path, String name, Class<Filter> clazz, Map<String,String> params ) throws URISyntaxException {
+//    private Holder( String path, String name, Class<WarDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
 //      this.path = path;
 //      this.template = Parser.parse( path );
 //      this.name = name;

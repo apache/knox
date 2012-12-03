@@ -36,8 +36,8 @@ public class JettyGatewayFactory {
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( gatewayPath );
-    context.setInitParameter( "shiroConfigLocations", gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
-    context.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
+    //context.setInitParameter( "shiroConfigLocations", gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
+    //context.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
 
     GatewayFilter filter = GatewayFactory.create( gatewayConfig );
     GatewayServlet servlet = new GatewayServlet( filter );

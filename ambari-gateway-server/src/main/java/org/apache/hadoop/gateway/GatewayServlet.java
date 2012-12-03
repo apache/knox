@@ -17,11 +17,23 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorImporter;
+
 import javax.servlet.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Enumeration;
 
 public class GatewayServlet implements Servlet {
+
+  public static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
+  public static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM = "gatewayClusterDescriptorLocation";
 
   private ConfigAdapter config;
   private GatewayFilter filter;
@@ -52,6 +64,7 @@ public class GatewayServlet implements Servlet {
 
   @Override
   public synchronized void init( ServletConfig servletConfig ) throws ServletException {
+    filter = createFilter( servletConfig );
     config = new ConfigAdapter( servletConfig );
     if( filter != null ) {
       filter.init( config );
@@ -73,7 +86,7 @@ public class GatewayServlet implements Servlet {
 
   @Override
   public String getServletInfo() {
-    return null;
+    return "Apache Hadoop Gateway Servlet";
   }
 
   @Override
@@ -82,6 +95,34 @@ public class GatewayServlet implements Servlet {
       filter.destroy();
     }
     filter = null;
+  }
+
+  private static GatewayFilter createFilter( ServletConfig servletConfig ) throws ServletException {
+    GatewayFilter filter = null;
+    try {
+      URL locationUrl = null;
+      String location = servletConfig.getInitParameter( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM );
+      if( location != null ) {
+        locationUrl = servletConfig.getServletContext().getResource( location );
+      } else {
+        locationUrl = servletConfig.getServletContext().getResource( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
+      }
+      if( locationUrl != null ) {
+        InputStream stream = locationUrl.openStream();
+        ClusterDescriptor descriptor;
+        try {
+          descriptor = ClusterDescriptorFactory.load( "xml", new InputStreamReader( stream ) );
+        } finally {
+          stream.close();
+        }
+        filter = GatewayFactory.create( descriptor );
+      }
+    } catch( IOException e ) {
+      throw new ServletException( e );
+    } catch( URISyntaxException e ) {
+      throw new ServletException( e );
+    }
+    return filter;
   }
 
   private class ConfigAdapter implements FilterConfig {

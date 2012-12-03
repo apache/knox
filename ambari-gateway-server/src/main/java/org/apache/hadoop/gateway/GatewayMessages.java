@@ -64,4 +64,13 @@ public interface GatewayMessages {
 
   @Message(level=INFO, text="Monitoring topology files in directory: {0}" )
   void monitoringTopologyChangesInDirectory( String topologiesDir );
+
+  @Message(level=INFO, text="Deploying cluster topology {0} to {1}" )
+  void deployingCluster( String clusterName, String warDirName );
+
+  @Message(level=INFO, text="Deployed cluster topology {0}." )
+  void deployedCluster( String clusterName );
+
+  @Message(level=INFO, text="Deleting deployed cluster topology {0}" )
+  void deletingCluster( String warDirName );
 }
