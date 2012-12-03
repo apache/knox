@@ -99,7 +99,7 @@ public class FileClusterTopologyProvider implements ClusterTopologyProvider, Clu
     return map;
   }
 
-  private void reloadTopologies() {
+  public void reloadTopologies() {
     try {
       synchronized ( this ) {
         Map<FileName, ClusterTopology> oldTopologies = topologies;

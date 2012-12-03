@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.i18n.resources.Resource;
 import org.apache.hadoop.gateway.i18n.resources.Resources;
 import org.apache.hadoop.gateway.i18n.resources.Resources;
 
@@ -26,6 +27,7 @@ import org.apache.hadoop.gateway.i18n.resources.Resources;
 @Resources
 public interface GatewayResources {
 
-  String unableToResolveTemplateParam( String name, String template );
+  @Resource( text="Apache Hadoop Gateway" )
+  String gatewayServletInfo();
 
 }

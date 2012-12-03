@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <cluster>
-    <name>cluster-two</name>
     <!--
     <version>1.2.3</version>
     <security></security>

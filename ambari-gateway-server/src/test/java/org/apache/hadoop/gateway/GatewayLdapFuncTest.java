@@ -153,11 +153,51 @@ public class GatewayLdapFuncTest {
   }
 
   private String getWebHdfsPath() {
-    return GATEWAY ? getGatewayPath()+ "/gateway/cluster/namenode/api/v1" : "http://"+NAME_NODE_ADDRESS+"/webhdfs/v1";
+    if( GATEWAY ) {
+      return getGatewayPath()+ "/gateway/cluster/namenode/api/v1";
+    } else if ( MOCK ) {
+      return "http://localhost:" + namenode.getPort();
+    } else {
+      return "http://"+NAME_NODE_ADDRESS+"/webhdfs/v1";
+    }
   }
 
   @Test
-  public void testLdap() throws IOException {
+  @SuppressWarnings("unchecked")
+  public void testDirectJndiLdapAuthenticate() {
+
+    Hashtable env = new Hashtable();
+    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
+    env.put( Context.PROVIDER_URL, "ldap://localhost:" + LDAP_PORT );
+    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
+    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
+    env.put( Context.SECURITY_CREDENTIALS, "password" );
+
+    try {
+      DirContext ctx = new InitialDirContext( env );
+      ctx.close();
+    } catch( NamingException e ) {
+      e.printStackTrace();
+      fail( "Should have been able to find the allowedUser and create initial context." );
+    }
+
+    env = new Hashtable();
+    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
+    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
+    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
+    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
+    env.put( Context.SECURITY_CREDENTIALS, "invalid-password" );
+
+    try {
+      DirContext ctx = new InitialDirContext( env );
+      fail( "Should have thrown a NamingException to indicate invalid credentials." );
+    } catch( NamingException e ) {
+      // This exception should be thrown.
+    }
+  }
+
+  @Test
+  public void testLdapProtectedService() throws IOException {
     String namenodePath = getWebHdfsPath();
 
     log.info( "Making REST API call." );
@@ -202,40 +242,6 @@ public class GatewayLdapFuncTest {
         //.log().all()
         .when()
         .delete( namenodePath + "/test" );
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testJndiLdapAuthenticate() {
-
-    Hashtable env = new Hashtable();
-    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
-    env.put( Context.PROVIDER_URL, "ldap://localhost:" + LDAP_PORT );
-    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
-    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
-    env.put( Context.SECURITY_CREDENTIALS, "password" );
-
-    try {
-      DirContext ctx = new InitialDirContext( env );
-      ctx.close();
-    } catch( NamingException e ) {
-      e.printStackTrace();
-      fail( "Should have been able to find the allowedUser and create initial context." );
-    }
-
-    env = new Hashtable();
-    env.put( Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory" );
-    env.put( Context.PROVIDER_URL, "ldap://localhost:33389" );
-    env.put( Context.SECURITY_AUTHENTICATION, "simple" );
-    env.put( Context.SECURITY_PRINCIPAL, "uid=allowedUser,ou=people,dc=ambari,dc=apache,dc=org" );
-    env.put( Context.SECURITY_CREDENTIALS, "invalid-password" );
-
-    try {
-      DirContext ctx = new InitialDirContext( env );
-      fail( "Should have thrown a NamingException to indicate invalid credentials." );
-    } catch( NamingException e ) {
-      // This exception should be thrown.
-    }
   }
 
 }

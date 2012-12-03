@@ -32,17 +32,27 @@ import java.net.URISyntaxException;
 public class JettyGatewayFactory {
 
   public static ServletContextHandler create( String gatewayPath, Config gatewayConfig ) throws URISyntaxException {
-
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( gatewayPath );
-    //context.setInitParameter( "shiroConfigLocations", gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
-    //context.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
+
+    context.setInitParameter( "shiroConfigLocations", gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
+    context.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
 
     GatewayFilter filter = GatewayFactory.create( gatewayConfig );
     GatewayServlet servlet = new GatewayServlet( filter );
     ServletHolder holder = new ServletHolder( servlet );
 
+    context.addServlet( holder, "/*" );
+    return context;
+  }
+
+  public static ServletContextHandler create( String gatewayPath ) throws URISyntaxException {
+    gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
+    ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
+    context.setContextPath( gatewayPath );
+    GatewayServlet servlet = new GatewayServlet();
+    ServletHolder holder = new ServletHolder( servlet );
     context.addServlet( holder, "/*" );
     return context;
   }

@@ -155,25 +155,28 @@ public class FileClusterTopologyProviderTest {
     FileListenerDelegator fileListener = new FileListenerDelegator();
     NoOpFileMonitor monitor = new NoOpFileMonitor( fileListener );
 
-    FileClusterTopologyProvider provider = new FileClusterTopologyProvider(
-        monitor, dir );
+    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( monitor, dir );
     provider.addTopologyChangeListener( topoListener );
     fileListener.delegate = provider;
+
+    // Unit test "hack" to force monitor to execute.
+    provider.reloadTopologies();
 
     Collection<ClusterTopology> topologies = provider.getClusterTopologies();
     assertThat( topologies, notNullValue() );
     assertThat( topologies.size(), is( 1 ) );
     ClusterTopology topology = topologies.iterator().next();
-    assertThat( topology.getName(), is( "cluster-one" ) );
+    assertThat( topology.getName(), is( "one" ) );
     assertThat( topology.getTimestamp(), is( 1L ) );
-    assertThat( topoListener.events.size(), is( 0 ) );
+    assertThat( topoListener.events.size(), is( 1 ) );
+    topoListener.events.clear();
 
     // Add a file to the directory.
     FileObject two = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
     fileListener.fileCreated( new FileChangeEvent( two ) );
     topologies = provider.getClusterTopologies();
     assertThat( topologies.size(), is( 2 ) );
-    Set<String> names = new HashSet<String>( Arrays.asList( "cluster-one", "cluster-two" ) );
+    Set<String> names = new HashSet<String>( Arrays.asList( "one", "two" ) );
     Iterator<ClusterTopology> iterator = topologies.iterator();
     topology = iterator.next();
     assertThat( names, hasItem( topology.getName() ) );
@@ -194,7 +197,7 @@ public class FileClusterTopologyProviderTest {
     fileListener.fileChanged( new FileChangeEvent( two ) );
     topologies = provider.getClusterTopologies();
     assertThat( topologies.size(), is( 2 ) );
-    names = new HashSet<String>( Arrays.asList( "cluster-one", "cluster-three" ) );
+    names = new HashSet<String>( Arrays.asList( "one", "two" ) );
     iterator = topologies.iterator();
     topology = iterator.next();
     assertThat( names, hasItem( topology.getName() ) );
@@ -210,7 +213,7 @@ public class FileClusterTopologyProviderTest {
     topologies = provider.getClusterTopologies();
     assertThat( topologies.size(), is( 1 ) );
     topology = topologies.iterator().next();
-    assertThat( topology.getName(), is( "cluster-one" ) );
+    assertThat( topology.getName(), is( "one" ) );
     assertThat( topology.getTimestamp(), is( 1L ) );
   }
 

@@ -28,6 +28,7 @@ import org.apache.hadoop.gateway.topology.ClusterTopologyMonitor;
 import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
@@ -37,6 +38,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class GatewayServer implements ClusterTopologyListener {
@@ -46,10 +49,10 @@ public class GatewayServer implements ClusterTopologyListener {
 
   private Server jetty;
   private GatewayConfig config;
-  private ClusterTopologyMonitor monitor;
+  private ContextHandlerCollection contexts;
+  private FileClusterTopologyProvider monitor;
+  private Map<String, WebAppContext> deployments;
 
-  //TODO: Need to locate bootstrap gateway config that provides information required to locate the Ambari server.
-  //TODO: Provide an XML or JSON equivalent that can be specified directly if Ambari proper is not present.
   public static void main( String[] args ) {
     try {
       //CommandLine cmd = GatewayCommandLine.parse( args );
@@ -70,38 +73,35 @@ public class GatewayServer implements ClusterTopologyListener {
 //    params.put( GatewayConfig.TEMPLETON_ADDRESS, config.getTempletonAddress() );
 //    params.put( GatewayConfig.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
 
-    // Create the global context handler.
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
     // Load the global gateway config.
     config = new GatewayConfig();
-    // Create a dir/file based cluster topology provider.
-    File topologiesDir = calcAbsTopoDir();
-    log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
-    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( topologiesDir );
-//    // Load the initial cluster topologies.
-//    Collection<ClusterTopology> topologiesMap = provider.getClusterTopologies();
-//    // For each cluster topology create cluster config.
-//    for( ClusterTopology topology : topologiesMap ) {
-//      Config clusterConfig = ClusterConfigFactory.create( config, topology );
-//      // Create a Jetty handler for each cluser.
-//      ServletContextHandler handler = JettyGatewayFactory.create(
-//          config.getGatewayPath() + "/" + topology.getName(), clusterConfig );
-//      //TODO: Keep a mapping of cluster name to servlet to allow for dynamic reconfiguration.
-//      //Servlet servlet = handler.getServletHandler().getServlet( topology.getName() ).getServlet();
-//      contexts.addHandler( handler );
-//    }
 
+    // Create a dir/file based cluster topology provider.
+    File topologiesDir = calculateAbsoluteTopologiesDir();
+    monitor = new FileClusterTopologyProvider( topologiesDir );
+    monitor.addTopologyChangeListener( this );
+
+    // Create the global context handler.
+    contexts = new ContextHandlerCollection();
+
+    // A map to keep track of current deployments by cluster name.
+    deployments = new ConcurrentHashMap<String, WebAppContext>();
+
+    // Determine the socket address and check availability.
     InetSocketAddress address = config.getGatewayAddress();
     checkAddressAvailability( address );
 
+    // Start Jetty.
     jetty = new Server( address );
     jetty.setHandler( contexts );
     jetty.start();
 
-    // Register for changes to any of the topologies.
+    // Loading the topologies.
+    log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
+    monitor.reloadTopologies();
+
+    // Start the topology monitor.
     log.monitoringTopologyChangesInDirectory( topologiesDir.getAbsolutePath() );
-    monitor = provider;
-    monitor.addTopologyChangeListener( this );
     monitor.startMonitor();
   }
 
@@ -123,37 +123,40 @@ public class GatewayServer implements ClusterTopologyListener {
   public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
     for( ClusterTopologyEvent event : events ) {
       ClusterTopology topology = event.getTopology();
-      File topoDir = calcAbsTopoDir();
+      File topoDir = calculateAbsoluteTopologiesDir();
       File warDir = calcWarDir( topology );
       if( event.getType().equals( ClusterTopologyEvent.Type.DELETED ) ) {
-        File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.[0-9A-Fa-f]+" ) );
+        File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
         for( File file : files ) {
           log.deletingCluster( file.getAbsolutePath() );
+          undeploy( topology );
           FileUtils.deleteQuietly( file );
         }
-      } else if( !warDir.exists() ) {
-        log.deployingCluster( topology.getName(), warDir.getAbsolutePath() );
-        WebArchive war = ClusterDeploymentFactory.createClusterDeployment( config, topology );
-        File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
-        tmp.renameTo( warDir );
-        //log.deployedCluster( topology.getName() );
+      } else {
+        if( !warDir.exists() ) {
+          log.deployingCluster( topology.getName(), warDir.getAbsolutePath() );
+          WebArchive war = ClusterDeploymentFactory.createClusterDeployment( config, topology );
+          File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
+          tmp.renameTo( warDir );
+        }
+        deploy( topology, topoDir );
       }
     }
   }
 
-  private File calcAbsTopoDir() {
+  private File calculateAbsoluteTopologiesDir() {
     File topoDir = new File( config.getGatewayHomeDir(), config.getClusterConfDir() );
     topoDir = topoDir.getAbsoluteFile();
     return topoDir;
   }
 
   private File calcWarDir( ClusterTopology topology ) {
-    File warDir = new File( calcAbsTopoDir(), topology.getName() + "." + Long.toHexString( topology.getTimestamp() ) );
+    File warDir = new File( calculateAbsoluteTopologiesDir(), calcWarName( topology ) );
     return warDir;
   }
 
   private String calcWarName( ClusterTopology topology ) {
-    String name = topology.getName() + "." + Long.toHexString( topology.getTimestamp() );
+    String name = topology.getName() + ".war." + Long.toHexString( topology.getTimestamp() );
     return name;
   }
 
@@ -168,6 +171,37 @@ public class GatewayServer implements ClusterTopologyListener {
     @Override
     public boolean accept( File dir, String name ) {
       return pattern.matcher( name ).matches();
+    }
+  }
+
+  public void undeploy( ClusterTopology topology ) {
+    WebAppContext context = deployments.remove( topology.getName() );
+    if( context != null ) {
+      contexts.removeHandler( context ) ;
+      try {
+        context.stop();
+      } catch( Exception e ) {
+        //TODO: I18N message
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public void deploy( ClusterTopology topology, File topologyDir ) {
+    String name = topology.getName();
+    String war = topologyDir.getAbsolutePath();
+    WebAppContext context = new WebAppContext();
+    context.setDefaultsDescriptor( null );
+    context.setContextPath( name );
+    context.setWar( war );
+    undeploy( topology );
+    deployments.put( name, context );
+    contexts.addHandler( context );
+    try {
+      context.start();
+    } catch( Exception e ) {
+      //TODO: I18N message
+      e.printStackTrace();
     }
   }
 
