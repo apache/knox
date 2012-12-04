@@ -17,13 +17,13 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.test.mock.MockServer;
-import org.apache.hadoop.test.category.MediumTests;
-import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.ClusterConfigFactory;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
+import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
+import org.apache.hadoop.test.category.MediumTests;
+import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -42,6 +42,8 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.ws.rs.HttpMethod;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -50,7 +52,6 @@ import java.util.Map;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -95,7 +96,15 @@ public class GatewayLdapFuncTest {
     }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Config config = ClusterConfigFactory.create( configUrl, params );
+    Reader configReader = new InputStreamReader( configUrl.openStream() );
+    ClusterDescriptor config = ClusterDescriptorFactory.load( "xml", configReader );
+    configReader.close();
+
+    for( Map.Entry<String,String> param : params.entrySet() ) {
+      config.addParam().name( param.getKey() ).value( param.getValue() );
+    }
+//    URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
+//    Config config = ClusterConfigFactory.create( configUrl, params );
 
     Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
     ContextHandlerCollection contexts = new ContextHandlerCollection();

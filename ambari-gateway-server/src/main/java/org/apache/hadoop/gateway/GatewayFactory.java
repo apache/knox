@@ -17,13 +17,13 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.config.Config;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
 
-import javax.servlet.Filter;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
@@ -34,26 +34,26 @@ import java.util.Map;
  */
 public class GatewayFactory {
 
-  public static GatewayFilter create( Config gatewayConfig ) throws URISyntaxException {
-    GatewayFilter gateway = new GatewayFilter();
-    for( Config service : gatewayConfig.getChildren().values() ) {
-      addService( gateway, service );
-    }
-    return gateway;
-  }
-
-  private static void addService( GatewayFilter gateway, Config serviceConfig ) throws URISyntaxException {
-    for( Config filterConfig : serviceConfig.getChildren().values() ) {
-      addFilter( gateway, filterConfig );
-    }
-  }
-
-  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
-    String source = filterConfig.get( "source" );
-    String name = filterConfig.get( "name" );
-    String clazz = filterConfig.get( "class" );
-    gateway.addFilter( source, name, clazz, filterConfig );
-  }
+//  public static GatewayFilter create( Config gatewayConfig ) throws URISyntaxException {
+//    GatewayFilter gateway = new GatewayFilter();
+//    for( Config service : gatewayConfig.getChildren().values() ) {
+//      addService( gateway, service );
+//    }
+//    return gateway;
+//  }
+//
+//  private static void addService( GatewayFilter gateway, Config serviceConfig ) throws URISyntaxException {
+//    for( Config filterConfig : serviceConfig.getChildren().values() ) {
+//      addFilter( gateway, filterConfig );
+//    }
+//  }
+//
+//  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
+//    String source = filterConfig.get( "source" );
+//    String name = filterConfig.get( "name" );
+//    String clazz = filterConfig.get( "class" );
+//    gateway.addFilter( source, name, clazz, filterConfig );
+//  }
 
   public static GatewayFilter create( ClusterDescriptor descriptor ) throws URISyntaxException {
     GatewayFilter filter = new GatewayFilter();
@@ -70,11 +70,22 @@ public class GatewayFactory {
   }
 
   private static void addFilter( GatewayFilter gateway, ClusterFilterDescriptor filter ) throws URISyntaxException {
-    gateway.addFilter( filter.up().source(), filter.role(), filter.impl(), createParams( filter.params() ) );
+    gateway.addFilter( filter.up().source(), filter.role(), filter.impl(), createParams( filter ) );
   }
 
-  private static Map<String, String> createParams( List<ClusterFilterParamDescriptor> paramList ) {
+  private static Map<String, String> createParams( ClusterFilterDescriptor filter ) {
     Map<String, String> paramMap = new HashMap<String, String>();
+    ClusterResourceDescriptor resource = filter.up();
+    ClusterDescriptor cluster = resource.up();
+    for( ClusterParamDescriptor param : cluster.params() ) {
+      paramMap.put( param.name(), param.value() );
+    }
+    for( ClusterResourceParamDescriptor param : resource.params() ) {
+      paramMap.put( param.name(), param.value() );
+    }
+    paramMap.put( "source", resource.source() );
+    paramMap.put( "target", resource.target() );
+    List<ClusterFilterParamDescriptor> paramList = filter.params();
     for( ClusterFilterParamDescriptor param : paramList ) {
       paramMap.put( param.name(), param.value() );
     }

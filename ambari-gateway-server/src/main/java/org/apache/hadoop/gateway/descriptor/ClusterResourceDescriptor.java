@@ -31,6 +31,18 @@ public interface ClusterResourceDescriptor {
 
   String target();
 
+
+  List<ClusterResourceParamDescriptor> params();
+
+  ClusterResourceParamDescriptor addParam();
+
+  ClusterResourceParamDescriptor createParam();
+
+  void addParam( ClusterResourceParamDescriptor param );
+
+  void addParams( List<ClusterResourceParamDescriptor> params );
+
+
   List<ClusterFilterDescriptor> filters();
 
   ClusterFilterDescriptor addFilter();
@@ -41,6 +53,6 @@ public interface ClusterResourceDescriptor {
 
   void addFilters( List<ClusterFilterDescriptor> filters );
 
-  ClusterFilterParamDescriptor createParam();
+  ClusterFilterParamDescriptor createFilterParam();
 
 }

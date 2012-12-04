@@ -19,11 +19,8 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
 import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
-import org.apache.hadoop.gateway.filter.UrlRewriteFilter;
-import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.ArrayList;
@@ -68,8 +65,9 @@ public class HdfsClusterResourceDescriptorFactory implements ClusterResourceDesc
     fileResource.source( extHdfsPath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     //TODO: Add authentication filter when we figure out how to configure it.
-    List<ClusterFilterParamDescriptor> params = new ArrayList<ClusterFilterParamDescriptor>();
-    params.add( fileResource.createParam()
+    List<ClusterFilterParamDescriptor> params
+        = new ArrayList<ClusterFilterParamDescriptor>();
+    params.add( fileResource.createFilterParam()
         .name( "rewrite" )
         .value( "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath + "/{path=**}" ) );
     fileResource.addFilters(

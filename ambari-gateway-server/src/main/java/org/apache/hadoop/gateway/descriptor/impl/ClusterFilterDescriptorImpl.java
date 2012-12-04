@@ -25,21 +25,21 @@ import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterFilterImpl implements ClusterFilterDescriptor {
+public class ClusterFilterDescriptorImpl implements ClusterFilterDescriptor {
 
-  private ClusterResourceDescriptor resource;
+  private ClusterResourceDescriptor parent;
+  private List<ClusterFilterParamDescriptor> params;
   private String role;
   private String impl;
-  private List<ClusterFilterParamDescriptor> params;
 
-  ClusterFilterImpl( ClusterResourceDescriptor resource ) {
-    this.resource = resource;
+  ClusterFilterDescriptorImpl( ClusterResourceDescriptor parent ) {
+    this.parent = parent;
     this.params = new ArrayList<ClusterFilterParamDescriptor>();
   }
 
   @Override
   public ClusterResourceDescriptor up() {
-    return resource;
+    return parent;
   }
 
   @Override
@@ -84,7 +84,7 @@ public class ClusterFilterImpl implements ClusterFilterDescriptor {
 
   @Override
   public ClusterFilterParamDescriptor createParam() {
-    return new ClusterFilterParamImpl( this );
+    return new ClusterFilterParamDescriptorImpl( this );
   }
 
   @Override

@@ -15,17 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+public interface ClusterParamDescriptor {
 
-import java.util.Collection;
-import java.util.Set;
+  void up( ClusterDescriptor parent );
 
-public interface ResourceConfigFactory {
+  ClusterDescriptor up();
 
-  Set<String> getSupportedRoles();
+  ClusterParamDescriptor name( String name );
 
-  Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent );
+  String name();
+
+  ClusterParamDescriptor value( String value );
+
+  String value();
 
 }

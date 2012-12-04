@@ -43,4 +43,5 @@ public interface ClusterFilterDescriptor {
   void addParam( ClusterFilterParamDescriptor param );
 
   void addParams( List<ClusterFilterParamDescriptor> params );
+
 }

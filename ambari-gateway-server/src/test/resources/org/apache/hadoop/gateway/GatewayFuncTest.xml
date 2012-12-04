@@ -14,54 +14,56 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<gateway>
-    <name>hadoop</name>
+<cluster>
 
-    <service>
-        <name>namenode-root</name>
+    <resource>
+        <!--<name>namenode-root</name>-->
         <source>/namenode/api/v1?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
         <filter>
-            <name>shiro</name>
+            <role>authentication</role>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
+            <role>pivot</role>
             <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
         </filter>
-    </service>
+    </resource>
 
-    <service>
-        <name>namenode-children</name>
+    <resource>
+        <!--<name>namenode-children</name>-->
         <source>/namenode/api/v1/{path=**}?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
         <filter>
-            <name>shiro</name>
+            <role>authentication</role>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <name>rewrite</name>
+            <role>rewrite</role>
             <class>org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
-            <rewrite>webhdfs://*:*/{path=**} http://{gateway.address}/gateway/cluster/namenode/api/v1/{path=**}</rewrite>
+            <param>
+                <name>rewrite</name>
+                <value>webhdfs://*:*/{path=**} http://{gateway.address}/gateway/cluster/namenode/api/v1/{path=**}</value>
+            </param>
         </filter>
         <filter>
-            <name>pivot</name>
+            <role>pivot</role>
             <class>org.apache.hadoop.gateway.pivot.WebHdfsPivot</class>
         </filter>
-    </service>
+    </resource>
 
-    <service>
-        <name>templeton</name>
+    <resource>
+        <!--<name>templeton</name>-->
         <source>/templeton/api/v1/{path=**}?{**}</source>
         <target>http://{templeton.address}/templeton/v1/{path=**}?{**}</target>
         <filter>
-            <name>shiro</name>
+            <role>authentication</role>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
+            <role>pivot</role>
             <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
         </filter>
-    </service>
+    </resource>
 
-</gateway>
+</cluster>

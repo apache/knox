@@ -17,11 +17,11 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.ClusterConfigFactory;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.mock.MockConsoleFactory;
 import org.apache.hadoop.test.category.ManualTests;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.test.category.SlowTests;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -38,6 +38,8 @@ import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,10 +58,12 @@ public class GatewayDemoSecure {
 
   public static void startGateway() throws Exception {
 
-    Config gatewayConfig;
-
     URL configUrl = ClassLoader.getSystemResource( "gateway-demo-secure.xml" );
-    gatewayConfig = ClusterConfigFactory.create( configUrl, null );
+    Reader configReader = new InputStreamReader( configUrl.openStream() );
+    ClusterDescriptor gatewayConfig = ClusterDescriptorFactory.load( "xml", configReader );
+    configReader.close();
+//    Config gatewayConfig;
+//    gatewayConfig = ClusterConfigFactory.create( configUrl, null );
 
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.addHandler( MockConsoleFactory.create() );

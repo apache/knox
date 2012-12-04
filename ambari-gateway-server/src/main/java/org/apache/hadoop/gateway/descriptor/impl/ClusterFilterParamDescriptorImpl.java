@@ -19,28 +19,31 @@ package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
 
-public class ClusterFilterParamImpl implements ClusterFilterParamDescriptor {
+public class ClusterFilterParamDescriptorImpl implements ClusterFilterParamDescriptor {
 
-  private ClusterFilterDescriptor filter;
+  private ClusterFilterDescriptor parent;
   private String name;
   private String value;
 
-  ClusterFilterParamImpl() {
+  ClusterFilterParamDescriptorImpl() {
+    this.parent = null;
   }
 
-  ClusterFilterParamImpl( ClusterFilterDescriptor filter ) {
-    this.filter = filter;
+  ClusterFilterParamDescriptorImpl( ClusterFilterDescriptor parent ) {
+    this.parent = parent;
   }
 
   @Override
-  public void up( ClusterFilterDescriptor filter ) {
-    this.filter = filter;
+  public void up( ClusterFilterDescriptor parent ) {
+    this.parent = parent;
   }
 
   @Override
   public ClusterFilterDescriptor up() {
-    return filter;
+    return parent;
   }
 
   @Override

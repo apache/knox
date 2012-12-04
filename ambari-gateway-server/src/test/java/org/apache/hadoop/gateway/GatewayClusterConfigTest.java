@@ -17,41 +17,28 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.ClusterConfigFactory;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
-import org.junit.Ignore;
-import org.xml.sax.SAXException;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-
 public class GatewayClusterConfigTest {
 
   private String locateTestConfigDir() {
     return null;
   }
 
-  @Ignore( "TODO" )
-  public void testBootstrapConfig() throws IOException, SAXException {
-    String configDir = locateTestConfigDir();
-
-    // Load the gateway config.
-    GatewayConfig gatewayConfig = new GatewayConfig();
-
-    // Load the cluster topologies.
-    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider(
-        new File( configDir, gatewayConfig.getHadoopConfDir() ) );
-    Collection<ClusterTopology> topologies = topologyProvider.getClusterTopologies();
-
-    // Check each cluster config.
-    Iterator<ClusterTopology> iterator = topologies.iterator();
-    Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, iterator.next() );
-  }
+//  @Ignore( "TODO" )
+//  public void testBootstrapConfig() throws IOException, SAXException {
+//    String configDir = locateTestConfigDir();
+//
+//    // Load the gateway config.
+//    GatewayConfig gatewayConfig = new GatewayConfig();
+//
+//    // Load the cluster topologies.
+//    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider(
+//        new File( configDir, gatewayConfig.getHadoopConfDir() ) );
+//    Collection<ClusterTopology> topologies = topologyProvider.getClusterTopologies();
+//
+//    // Check each cluster config.
+//    Iterator<ClusterTopology> iterator = topologies.iterator();
+//    Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, iterator.next() );
+//  }
 
 //  public void testDynamicReconfig() throws IOException, SAXException {
 //    String configDir = locateTestConfigDir();

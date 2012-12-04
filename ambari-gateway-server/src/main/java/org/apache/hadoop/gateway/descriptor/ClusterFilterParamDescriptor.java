@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.descriptor;
 
 public interface ClusterFilterParamDescriptor {
 
-  void up( ClusterFilterDescriptor filter );
+  void up( ClusterFilterDescriptor parent );
 
   ClusterFilterDescriptor up();
 

@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
 
 import java.util.ArrayList;
@@ -25,10 +26,12 @@ import java.util.List;
 
 public class ClusterDescriptorImpl implements ClusterDescriptor {
 
+  private List<ClusterParamDescriptor> params;
   private List<ClusterResourceDescriptor> resources;
 
   public ClusterDescriptorImpl() {
-    resources = new ArrayList<ClusterResourceDescriptor>();
+    this.params = new ArrayList<ClusterParamDescriptor>();
+    this.resources = new ArrayList<ClusterResourceDescriptor>();
   }
 
   @Override
@@ -45,12 +48,45 @@ public class ClusterDescriptorImpl implements ClusterDescriptor {
 
   @Override
   public ClusterResourceDescriptor createResource() {
-    return new ClusterResourceImpl( this );
+    return new ClusterResourceDescriptorImpl( this );
   }
 
   @Override
   public void addResource( ClusterResourceDescriptor resource ) {
     resources.add( resource );
+  }
+
+  @Override
+  public List<ClusterParamDescriptor> params() {
+    return params;
+  }
+
+  @Override
+  public ClusterParamDescriptor addParam() {
+    ClusterParamDescriptor param = createParam();
+    addParam( param );
+    return param;
+  }
+
+  @Override
+  public ClusterParamDescriptor createParam() {
+    return new ClusterParamDescriptorImpl( this );
+  }
+
+  @Override
+  public void addParam( ClusterParamDescriptor param ) {
+    param.up( this );
+    params.add( param );
+  }
+
+  @Override
+  public void addParams( List<ClusterParamDescriptor> params ) {
+    if( params != null ) {
+      for( ClusterParamDescriptor param : params ) {
+        param.up( this );
+      }
+      this.params.addAll( params );
+    }
   }
 
 }

@@ -47,7 +47,12 @@ public class RewriteClusterFilterDescriptorFactory implements ClusterFilterDescr
   }
 
   @Override
-  public List<ClusterFilterDescriptor> createFilterDescriptors( ClusterDeploymentContext clusterDeploymentContext, ClusterTopologyComponent clusterTopologyComponent, ClusterResourceDescriptor clusterResourceDescriptor, String filterRole, List<ClusterFilterParamDescriptor> filterParamDescriptors ) {
+  public List<ClusterFilterDescriptor> createFilterDescriptors(
+      ClusterDeploymentContext clusterDeploymentContext,
+      ClusterTopologyComponent clusterTopologyComponent,
+      ClusterResourceDescriptor clusterResourceDescriptor,
+      String filterRole,
+      List<ClusterFilterParamDescriptor> filterParamDescriptors ) {
     List<ClusterFilterDescriptor> descriptors = new ArrayList<ClusterFilterDescriptor>();
     ClusterFilterDescriptor descriptor
         = clusterResourceDescriptor.createFilter().role( filterRole ).impl( UrlRewriteFilter.class );

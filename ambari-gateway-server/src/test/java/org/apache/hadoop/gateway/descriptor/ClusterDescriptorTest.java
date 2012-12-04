@@ -33,10 +33,14 @@ public class ClusterDescriptorTest {
   public void testClusterDescriptorConstruction() {
 
     ClusterDescriptor descriptor = ClusterDescriptorFactory.create()
+        .addParam().name( "cluster-param1-name" ).value( "cluster-param1-value" ).up()
+        .addParam().name( "cluster-param2-name" ).value( "cluster-param2-value" ).up()
         .addResource()
           .source( "resource1-source" )
           .target( "resource1-target" )
-          .addFilter()
+          //.addParam().name( "resource1-param1-name" ).value( "resource-param1-value" ).up()
+          //.addParam().name( "resource1-param2-name" ).value( "resource-param2-value" ).up()
+        .addFilter()
             .role( "resource1-filter1-role" )
             .impl( "resource1-filter1-impl" )
             .addParam()

@@ -21,6 +21,16 @@ import java.util.List;
 
 public interface ClusterDescriptor {
 
+  List<ClusterParamDescriptor> params();
+
+  ClusterParamDescriptor addParam();
+
+  ClusterParamDescriptor createParam();
+
+  void addParam( ClusterParamDescriptor param );
+
+  void addParams( List<ClusterParamDescriptor> params );
+
   List<ClusterResourceDescriptor> resources();
 
   ClusterResourceDescriptor addResource();

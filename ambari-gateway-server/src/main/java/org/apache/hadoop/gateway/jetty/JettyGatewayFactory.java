@@ -20,8 +20,7 @@ package org.apache.hadoop.gateway.jetty;
 import org.apache.hadoop.gateway.GatewayFactory;
 import org.apache.hadoop.gateway.GatewayFilter;
 import org.apache.hadoop.gateway.GatewayServlet;
-import org.apache.hadoop.gateway.config.Config;
-import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -31,12 +30,12 @@ import java.net.URISyntaxException;
 
 public class JettyGatewayFactory {
 
-  public static ServletContextHandler create( String gatewayPath, Config gatewayConfig ) throws URISyntaxException {
+  public static ServletContextHandler create( String gatewayPath, ClusterDescriptor gatewayConfig ) throws URISyntaxException {
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( gatewayPath );
 
-    context.setInitParameter( "shiroConfigLocations", gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
+    //context.setInitParameter( "shiroConfigLocations", "shiro.ini" ); //gatewayConfig.get( GatewayConfig.SHIRO_CONFIG_FILE ) );
     context.addEventListener( new EnvironmentLoaderListener() ); // For Shiro bootstrapping.
 
     GatewayFilter filter = GatewayFactory.create( gatewayConfig );

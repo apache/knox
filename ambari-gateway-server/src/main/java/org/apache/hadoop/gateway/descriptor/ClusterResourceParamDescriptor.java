@@ -15,34 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.config;
+package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+public interface ClusterResourceParamDescriptor {
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+  void up( ClusterResourceDescriptor parent );
 
-public class TempletonConfigFactory implements ResourceConfigFactory {
+  ClusterResourceDescriptor up();
 
-  private static Set<String> ROLES = createSupportedRoles();
+  ClusterResourceParamDescriptor name( String name );
 
-  private static Set<String> createSupportedRoles() {
-    Set<String> roles = new HashSet<String>();
-    roles.add( "TEMPLETON" );
-    return Collections.unmodifiableSet( roles );
-  }
+  String name();
 
-  @Override
-  public Set<String> getSupportedRoles() {
-    return ROLES;
-  }
+  ClusterResourceParamDescriptor value( String value );
 
-  @Override
-  public Collection<Config> createResourceConfig( Config clusterConfig, ClusterTopologyComponent clusterComponent ) {
-    //TODO: Implement this.
-    return null;
-  }
+  String value();
+
 }
-

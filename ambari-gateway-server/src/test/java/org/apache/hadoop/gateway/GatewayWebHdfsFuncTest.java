@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.config.ClusterConfigFactory;
-import org.apache.hadoop.gateway.config.Config;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
@@ -39,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -91,7 +93,12 @@ public class GatewayWebHdfsFuncTest {
     }
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Config config = ClusterConfigFactory.create( configUrl, params );
+    Reader configReader = new InputStreamReader( configUrl.openStream() );
+    ClusterDescriptor config = ClusterDescriptorFactory.load( "xml", configReader );
+
+    for( Map.Entry<String,String> param : params.entrySet() ) {
+      config.addParam().name( param.getKey() ).value( param.getValue() );
+    }
 
     Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
     ContextHandlerCollection contexts = new ContextHandlerCollection();

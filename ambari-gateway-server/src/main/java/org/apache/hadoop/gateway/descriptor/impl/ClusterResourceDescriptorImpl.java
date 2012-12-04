@@ -21,25 +21,28 @@ import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterResourceImpl implements ClusterResourceDescriptor {
+public class ClusterResourceDescriptorImpl implements ClusterResourceDescriptor {
 
-  private ClusterDescriptor descriptor;
+  private ClusterDescriptor parent;
   private String source;
   private String target;
+  private List<ClusterResourceParamDescriptor> params;
   private List<ClusterFilterDescriptor> filters;
 
-  ClusterResourceImpl( ClusterDescriptor descriptor ) {
-    this.descriptor = descriptor;
+  ClusterResourceDescriptorImpl( ClusterDescriptor parent ) {
+    this.parent = parent;
+    this.params = new ArrayList<ClusterResourceParamDescriptor>();
     this.filters = new ArrayList<ClusterFilterDescriptor>();
   }
 
   @Override
   public ClusterDescriptor up() {
-    return descriptor;
+    return parent;
   }
 
   public ClusterResourceDescriptor source( String source ) {
@@ -74,7 +77,7 @@ public class ClusterResourceImpl implements ClusterResourceDescriptor {
 
   @Override
   public ClusterFilterDescriptor createFilter() {
-    return new ClusterFilterImpl( this );
+    return new ClusterFilterDescriptorImpl( this );
   }
 
   @Override
@@ -88,8 +91,41 @@ public class ClusterResourceImpl implements ClusterResourceDescriptor {
   }
 
   @Override
-  public ClusterFilterParamDescriptor createParam() {
-    return new ClusterFilterParamImpl();
+  public ClusterFilterParamDescriptor createFilterParam() {
+    return new ClusterFilterParamDescriptorImpl();
+  }
+
+  @Override
+  public List<ClusterResourceParamDescriptor> params() {
+    return params;
+  }
+
+  @Override
+  public ClusterResourceParamDescriptor addParam() {
+    ClusterResourceParamDescriptor param = createParam();
+    addParam( param );
+    return param;
+  }
+
+  @Override
+  public ClusterResourceParamDescriptor createParam() {
+    return new ClusterResourceParamDescriptorImpl( this );
+  }
+
+  @Override
+  public void addParam( ClusterResourceParamDescriptor param ) {
+    param.up( this );
+    params.add( param );
+  }
+
+  @Override
+  public void addParams( List<ClusterResourceParamDescriptor> params ) {
+    if( params != null ) {
+      for( ClusterResourceParamDescriptor param : params ) {
+        param.up( this );
+      }
+      this.params.addAll( params );
+    }
   }
 
 }
