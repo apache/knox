@@ -17,33 +17,33 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 
 import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterFilterDescriptorImpl implements ClusterFilterDescriptor {
+public class FilterDescriptorImpl implements FilterDescriptor {
 
-  private ClusterResourceDescriptor parent;
-  private List<ClusterFilterParamDescriptor> params;
+  private ResourceDescriptor parent;
+  private List<FilterParamDescriptor> params;
   private String role;
   private String impl;
 
-  ClusterFilterDescriptorImpl( ClusterResourceDescriptor parent ) {
+  FilterDescriptorImpl( ResourceDescriptor parent ) {
     this.parent = parent;
-    this.params = new ArrayList<ClusterFilterParamDescriptor>();
+    this.params = new ArrayList<FilterParamDescriptor>();
   }
 
   @Override
-  public ClusterResourceDescriptor up() {
+  public ResourceDescriptor up() {
     return parent;
   }
 
   @Override
-  public ClusterFilterDescriptor role( String role ) {
+  public FilterDescriptor role( String role ) {
     this.role = role;
     return this;
   }
@@ -54,13 +54,13 @@ public class ClusterFilterDescriptorImpl implements ClusterFilterDescriptor {
   }
 
   @Override
-  public ClusterFilterDescriptor impl( String impl ) {
+  public FilterDescriptor impl( String impl ) {
     this.impl = impl;
     return this;
   }
 
   @Override
-  public ClusterFilterDescriptor impl( Class<? extends Filter> type ) {
+  public FilterDescriptor impl( Class<? extends Filter> type ) {
     this.impl = type.getName();
     return this;
   }
@@ -71,32 +71,32 @@ public class ClusterFilterDescriptorImpl implements ClusterFilterDescriptor {
   }
 
   @Override
-  public List<ClusterFilterParamDescriptor> params() {
+  public List<FilterParamDescriptor> params() {
     return params;
   }
 
   @Override
-  public ClusterFilterParamDescriptor addParam() {
-    ClusterFilterParamDescriptor param = createParam();
+  public FilterParamDescriptor addParam() {
+    FilterParamDescriptor param = createParam();
     addParam( param );
     return param;
   }
 
   @Override
-  public ClusterFilterParamDescriptor createParam() {
-    return new ClusterFilterParamDescriptorImpl( this );
+  public FilterParamDescriptor createParam() {
+    return new FilterParamDescriptorImpl( this );
   }
 
   @Override
-  public void addParam( ClusterFilterParamDescriptor param ) {
+  public void addParam( FilterParamDescriptor param ) {
     param.up( this );
     params.add( param );
   }
 
   @Override
-  public void addParams( List<ClusterFilterParamDescriptor> params ) {
+  public void addParams( List<FilterParamDescriptor> params ) {
     if( params != null ) {
-      for( ClusterFilterParamDescriptor param : params ) {
+      for( FilterParamDescriptor param : params ) {
         param.up( this );
       }
       this.params.addAll( params );

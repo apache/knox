@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.List;
@@ -29,10 +29,10 @@ public interface ClusterFilterDescriptorFactory {
 
   Set<String> getSupportedFilterRoles();
 
-  List<ClusterFilterDescriptor> createFilterDescriptors(
+  List<FilterDescriptor> createFilterDescriptors(
       ClusterDeploymentContext clusterDeploymentContext,
       ClusterTopologyComponent clusterTopologyComponent,
-      ClusterResourceDescriptor clusterResourceDescriptor,
+      ResourceDescriptor resourceDescriptor,
       String filterRole,
-      List<ClusterFilterParamDescriptor> filterParamDescriptors );
+      List<FilterParamDescriptor> filterParamDescriptors );
 }

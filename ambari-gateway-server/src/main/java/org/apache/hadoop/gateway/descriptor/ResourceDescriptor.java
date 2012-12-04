@@ -19,40 +19,40 @@ package org.apache.hadoop.gateway.descriptor;
 
 import java.util.List;
 
-public interface ClusterResourceDescriptor {
+public interface ResourceDescriptor {
 
   ClusterDescriptor up();
 
-  ClusterResourceDescriptor source( String source );
+  ResourceDescriptor source( String source );
 
   String source();
 
-  ClusterResourceDescriptor target( String target );
+  ResourceDescriptor target( String target );
 
   String target();
 
 
-  List<ClusterResourceParamDescriptor> params();
+  List<ResourceParamDescriptor> params();
 
-  ClusterResourceParamDescriptor addParam();
+  ResourceParamDescriptor addParam();
 
-  ClusterResourceParamDescriptor createParam();
+  ResourceParamDescriptor createParam();
 
-  void addParam( ClusterResourceParamDescriptor param );
+  void addParam( ResourceParamDescriptor param );
 
-  void addParams( List<ClusterResourceParamDescriptor> params );
+  void addParams( List<ResourceParamDescriptor> params );
 
 
-  List<ClusterFilterDescriptor> filters();
+  List<FilterDescriptor> filters();
 
-  ClusterFilterDescriptor addFilter();
+  FilterDescriptor addFilter();
 
-  ClusterFilterDescriptor createFilter();
+  FilterDescriptor createFilter();
 
-  void addFilter( ClusterFilterDescriptor filter );
+  void addFilter( FilterDescriptor filter );
 
-  void addFilters( List<ClusterFilterDescriptor> filters );
+  void addFilters( List<FilterDescriptor> filters );
 
-  ClusterFilterParamDescriptor createFilterParam();
+  FilterParamDescriptor createFilterParam();
 
 }

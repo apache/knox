@@ -31,12 +31,12 @@ public interface ClusterDescriptor {
 
   void addParams( List<ClusterParamDescriptor> params );
 
-  List<ClusterResourceDescriptor> resources();
+  List<ResourceDescriptor> resources();
 
-  ClusterResourceDescriptor addResource();
+  ResourceDescriptor addResource();
 
-  ClusterResourceDescriptor createResource();
+  ResourceDescriptor createResource();
 
-  void addResource( ClusterResourceDescriptor resource );
+  void addResource( ResourceDescriptor resource );
 
 }

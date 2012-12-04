@@ -17,31 +17,31 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceParamDescriptor;
 
-public class ClusterResourceParamDescriptorImpl implements ClusterResourceParamDescriptor {
+public class ResourceParamDescriptorImpl implements ResourceParamDescriptor {
 
-  private ClusterResourceDescriptor parent;
+  private ResourceDescriptor parent;
   private String name;
   private String value;
 
-  ClusterResourceParamDescriptorImpl( ClusterResourceDescriptor parent ) {
+  ResourceParamDescriptorImpl( ResourceDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public void up( ClusterResourceDescriptor parent ) {
+  public void up( ResourceDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public ClusterResourceDescriptor up() {
+  public ResourceDescriptor up() {
     return parent;
   }
 
   @Override
-  public ClusterResourceParamDescriptor name( String name ) {
+  public ResourceParamDescriptor name( String name ) {
     this.name = name;
     return this;
   }
@@ -52,7 +52,7 @@ public class ClusterResourceParamDescriptorImpl implements ClusterResourceParamD
   }
 
   @Override
-  public ClusterResourceParamDescriptor value( String value ) {
+  public ResourceParamDescriptor value( String value ) {
     this.value = value;
     return this;
   }

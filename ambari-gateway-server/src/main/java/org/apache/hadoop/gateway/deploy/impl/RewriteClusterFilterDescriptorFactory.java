@@ -19,9 +19,9 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
 import org.apache.hadoop.gateway.deploy.ClusterFilterDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.UrlRewriteFilter;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
@@ -47,15 +47,15 @@ public class RewriteClusterFilterDescriptorFactory implements ClusterFilterDescr
   }
 
   @Override
-  public List<ClusterFilterDescriptor> createFilterDescriptors(
+  public List<FilterDescriptor> createFilterDescriptors(
       ClusterDeploymentContext clusterDeploymentContext,
       ClusterTopologyComponent clusterTopologyComponent,
-      ClusterResourceDescriptor clusterResourceDescriptor,
+      ResourceDescriptor resourceDescriptor,
       String filterRole,
-      List<ClusterFilterParamDescriptor> filterParamDescriptors ) {
-    List<ClusterFilterDescriptor> descriptors = new ArrayList<ClusterFilterDescriptor>();
-    ClusterFilterDescriptor descriptor
-        = clusterResourceDescriptor.createFilter().role( filterRole ).impl( UrlRewriteFilter.class );
+      List<FilterParamDescriptor> filterParamDescriptors ) {
+    List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
+    FilterDescriptor descriptor
+        = resourceDescriptor.createFilter().role( filterRole ).impl( UrlRewriteFilter.class );
     descriptor.addParams( filterParamDescriptors );
     descriptors.add( descriptor );
     return descriptors;

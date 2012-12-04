@@ -17,37 +17,35 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 
-public class ClusterFilterParamDescriptorImpl implements ClusterFilterParamDescriptor {
+public class FilterParamDescriptorImpl implements FilterParamDescriptor {
 
-  private ClusterFilterDescriptor parent;
+  private FilterDescriptor parent;
   private String name;
   private String value;
 
-  ClusterFilterParamDescriptorImpl() {
+  FilterParamDescriptorImpl() {
     this.parent = null;
   }
 
-  ClusterFilterParamDescriptorImpl( ClusterFilterDescriptor parent ) {
+  FilterParamDescriptorImpl( FilterDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public void up( ClusterFilterDescriptor parent ) {
+  public void up( FilterDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public ClusterFilterDescriptor up() {
+  public FilterDescriptor up() {
     return parent;
   }
 
   @Override
-  public ClusterFilterParamDescriptor name( String name ) {
+  public FilterParamDescriptor name( String name ) {
     this.name = name;
     return this;
   }
@@ -58,7 +56,7 @@ public class ClusterFilterParamDescriptorImpl implements ClusterFilterParamDescr
   }
 
   @Override
-  public ClusterFilterParamDescriptor value( String value ) {
+  public FilterParamDescriptor value( String value ) {
     this.value = value;
     return this;
   }

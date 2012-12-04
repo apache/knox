@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,32 +27,32 @@ import java.util.List;
 public class ClusterDescriptorImpl implements ClusterDescriptor {
 
   private List<ClusterParamDescriptor> params;
-  private List<ClusterResourceDescriptor> resources;
+  private List<ResourceDescriptor> resources;
 
   public ClusterDescriptorImpl() {
     this.params = new ArrayList<ClusterParamDescriptor>();
-    this.resources = new ArrayList<ClusterResourceDescriptor>();
+    this.resources = new ArrayList<ResourceDescriptor>();
   }
 
   @Override
-  public List<ClusterResourceDescriptor> resources() {
+  public List<ResourceDescriptor> resources() {
     return resources;
   }
 
   @Override
-  public ClusterResourceDescriptor addResource() {
-    ClusterResourceDescriptor resource = createResource();
+  public ResourceDescriptor addResource() {
+    ResourceDescriptor resource = createResource();
     addResource( resource );
     return resource;
   }
 
   @Override
-  public ClusterResourceDescriptor createResource() {
-    return new ClusterResourceDescriptorImpl( this );
+  public ResourceDescriptor createResource() {
+    return new ResourceDescriptorImpl( this );
   }
 
   @Override
-  public void addResource( ClusterResourceDescriptor resource ) {
+  public void addResource( ResourceDescriptor resource ) {
     resources.add( resource );
   }
 

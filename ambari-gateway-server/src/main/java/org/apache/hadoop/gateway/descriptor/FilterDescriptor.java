@@ -17,18 +17,31 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-public interface ClusterResourceParamDescriptor {
+import javax.servlet.Filter;
+import java.util.List;
 
-  void up( ClusterResourceDescriptor parent );
+public interface FilterDescriptor {
 
-  ClusterResourceDescriptor up();
+  ResourceDescriptor up();
 
-  ClusterResourceParamDescriptor name( String name );
+  FilterDescriptor role( String role );
 
-  String name();
+  String role();
 
-  ClusterResourceParamDescriptor value( String value );
+  FilterDescriptor impl( String impl );
 
-  String value();
+  FilterDescriptor impl( Class<? extends Filter> type );
+
+  String impl();
+
+  List<FilterParamDescriptor> params();
+
+  FilterParamDescriptor addParam();
+
+  FilterParamDescriptor createParam();
+
+  void addParam( FilterParamDescriptor param );
+
+  void addParams( List<FilterParamDescriptor> params );
 
 }

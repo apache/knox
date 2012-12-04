@@ -18,11 +18,11 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceParamDescriptor;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -57,36 +57,36 @@ public class GatewayFactory {
 
   public static GatewayFilter create( ClusterDescriptor descriptor ) throws URISyntaxException {
     GatewayFilter filter = new GatewayFilter();
-    for( ClusterResourceDescriptor resource : descriptor.resources() ) {
+    for( ResourceDescriptor resource : descriptor.resources() ) {
       addResource( filter, resource );
     }
     return filter;
   }
 
-  private static void addResource( GatewayFilter gateway, ClusterResourceDescriptor resource ) throws URISyntaxException {
-    for( ClusterFilterDescriptor filter : resource.filters() ) {
+  private static void addResource( GatewayFilter gateway, ResourceDescriptor resource ) throws URISyntaxException {
+    for( FilterDescriptor filter : resource.filters() ) {
       addFilter( gateway, filter );
     }
   }
 
-  private static void addFilter( GatewayFilter gateway, ClusterFilterDescriptor filter ) throws URISyntaxException {
+  private static void addFilter( GatewayFilter gateway, FilterDescriptor filter ) throws URISyntaxException {
     gateway.addFilter( filter.up().source(), filter.role(), filter.impl(), createParams( filter ) );
   }
 
-  private static Map<String, String> createParams( ClusterFilterDescriptor filter ) {
+  private static Map<String, String> createParams( FilterDescriptor filter ) {
     Map<String, String> paramMap = new HashMap<String, String>();
-    ClusterResourceDescriptor resource = filter.up();
+    ResourceDescriptor resource = filter.up();
     ClusterDescriptor cluster = resource.up();
     for( ClusterParamDescriptor param : cluster.params() ) {
       paramMap.put( param.name(), param.value() );
     }
-    for( ClusterResourceParamDescriptor param : resource.params() ) {
+    for( ResourceParamDescriptor param : resource.params() ) {
       paramMap.put( param.name(), param.value() );
     }
     paramMap.put( "source", resource.source() );
     paramMap.put( "target", resource.target() );
-    List<ClusterFilterParamDescriptor> paramList = filter.params();
-    for( ClusterFilterParamDescriptor param : paramList ) {
+    List<FilterParamDescriptor> paramList = filter.params();
+    for( FilterParamDescriptor param : paramList ) {
       paramMap.put( param.name(), param.value() );
     }
     return paramMap;

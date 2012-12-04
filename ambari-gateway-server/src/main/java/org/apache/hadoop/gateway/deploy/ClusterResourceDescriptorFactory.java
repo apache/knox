@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public interface ClusterResourceDescriptorFactory {
 
   Set<String> getSupportedResourceRoles();
 
-  List<ClusterResourceDescriptor> createResourceDescriptors(
+  List<ResourceDescriptor> createResourceDescriptors(
       ClusterDeploymentContext clusterDeploymentContext,
       ClusterTopologyComponent clusterTopologyComponent );
 

@@ -19,9 +19,9 @@ package org.apache.hadoop.gateway.descriptor.xml;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -79,36 +79,36 @@ public class XmlClusterDescriptorImporterTest {
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.resources().size(), is( 2 ) );
 
-    ClusterResourceDescriptor resource1 = descriptor.resources().get( 0 );
+    ResourceDescriptor resource1 = descriptor.resources().get( 0 );
     assertThat( resource1, notNullValue() );
     assertThat( resource1.source(), is( "resource1-source" ) );
     assertThat( resource1.target(), is( "resource1-target" ) );
 
     assertThat( resource1.filters().size(), is( 2 ) );
 
-    ClusterFilterDescriptor filter1 = resource1.filters().get( 0 );
+    FilterDescriptor filter1 = resource1.filters().get( 0 );
     assertThat( filter1, notNullValue() );
     assertThat( filter1.role(), is( "resource1-filter1-role" ) );
     assertThat( filter1.impl(), is( "resource1-filter1-impl" ) );
 
     assertThat( filter1.params().size(), is( 2 ) );
 
-    ClusterFilterParamDescriptor param1 = filter1.params().get( 0 );
+    FilterParamDescriptor param1 = filter1.params().get( 0 );
     assertThat( param1, notNullValue() );
     assertThat( param1.name(), is( "resource1-filter1-param1-name" ) );
     assertThat( param1.value(), is( "resource1-filter1-param1-value" ) );
 
-    ClusterFilterParamDescriptor param2 = filter1.params().get( 1 );
+    FilterParamDescriptor param2 = filter1.params().get( 1 );
     assertThat( param2, notNullValue() );
     assertThat( param2.name(), is( "resource1-filter1-param2-name" ) );
     assertThat( param2.value(), is( "resource1-filter1-param2-value" ) );
 
-    ClusterFilterDescriptor filter2 = resource1.filters().get( 1 );
+    FilterDescriptor filter2 = resource1.filters().get( 1 );
     assertThat( filter2, notNullValue() );
     assertThat( filter2.role(), is( "resource1-filter2-role" ) );
     assertThat( filter2.impl(), is( "resource1-filter2-impl" ) );
 
-    ClusterResourceDescriptor resource2 = descriptor.resources().get( 1 );
+    ResourceDescriptor resource2 = descriptor.resources().get( 1 );
     assertThat( resource2, notNullValue() );
     assertThat( resource2.source(), is( "resource2-source" ) );
     assertThat( resource2.target(), is( "resource2-target" ) );
@@ -132,13 +132,13 @@ public class XmlClusterDescriptorImporterTest {
 
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.resources().size(), is( 1 ) );
-    ClusterResourceDescriptor resource1 = descriptor.resources().get( 0 );
+    ResourceDescriptor resource1 = descriptor.resources().get( 0 );
     assertThat( resource1, notNullValue() );
     assertThat( resource1.filters().size(), is( 1 ) );
-    ClusterFilterDescriptor filter1 = resource1.filters().get( 0 );
+    FilterDescriptor filter1 = resource1.filters().get( 0 );
     assertThat( filter1, notNullValue() );
     assertThat( filter1.params().size(), is( 1 ) );
-    ClusterFilterParamDescriptor param1 = filter1.params().get( 0 );
+    FilterParamDescriptor param1 = filter1.params().get( 0 );
     assertThat( param1, notNullValue() );
   }
 

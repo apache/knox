@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
 import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.ArrayList;
@@ -45,14 +45,14 @@ public class HdfsClusterResourceDescriptorFactory implements ClusterResourceDesc
   }
 
   @Override
-  public List<ClusterResourceDescriptor> createResourceDescriptors( ClusterDeploymentContext context, ClusterTopologyComponent component ) {
-    List<ClusterResourceDescriptor> descriptors = new ArrayList<ClusterResourceDescriptor>();
+  public List<ResourceDescriptor> createResourceDescriptors( ClusterDeploymentContext context, ClusterTopologyComponent component ) {
+    List<ResourceDescriptor> descriptors = new ArrayList<ResourceDescriptor>();
 
     String extClusterUrl = "{request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}";
     String extHdfsPath = "/namenode/api/v1";
     String intHdfsUrl = component.getUrl().toExternalForm();
 
-    ClusterResourceDescriptor rootResource = context.getClusterDescriptor().createResource();
+    ResourceDescriptor rootResource = context.getClusterDescriptor().createResource();
     rootResource.source( extHdfsPath + "?{**}" );
     rootResource.target( intHdfsUrl + "?{**}" );
     //TODO: Add authentication filter when we figure out how to configure it.
@@ -61,12 +61,12 @@ public class HdfsClusterResourceDescriptorFactory implements ClusterResourceDesc
             .createFilterDescriptors( context, component, rootResource, "pivot", null ) );
     descriptors.add( rootResource );
 
-    ClusterResourceDescriptor fileResource = context.getClusterDescriptor().createResource();
+    ResourceDescriptor fileResource = context.getClusterDescriptor().createResource();
     fileResource.source( extHdfsPath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     //TODO: Add authentication filter when we figure out how to configure it.
-    List<ClusterFilterParamDescriptor> params
-        = new ArrayList<ClusterFilterParamDescriptor>();
+    List<FilterParamDescriptor> params
+        = new ArrayList<FilterParamDescriptor>();
     params.add( fileResource.createFilterParam()
         .name( "rewrite" )
         .value( "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath + "/{path=**}" ) );

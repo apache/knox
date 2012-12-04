@@ -18,9 +18,9 @@
 package org.apache.hadoop.gateway.descriptor.xml;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterFilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterResourceDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorExporter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -55,7 +55,7 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
       Element cluster = document.createElement( CLUSTER );
       document.appendChild( cluster );
 
-      for( ClusterResourceDescriptor resource : descriptor.resources() ) {
+      for( ResourceDescriptor resource : descriptor.resources() ) {
         cluster.appendChild( createResource( document, resource ) );
       }
 
@@ -77,33 +77,33 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
     }
   }
 
-  private static Element createResource( Document dom, ClusterResourceDescriptor resource ) {
+  private static Element createResource( Document dom, ResourceDescriptor resource ) {
     Element element = dom.createElement( RESOURCE );
 
     addTextElement( dom, element, RESOURCE_SOURCE, resource.source() );
     addTextElement( dom, element, RESOURCE_TARGET, resource.target() );
 
-    for( ClusterFilterDescriptor filter : resource.filters() ) {
+    for( FilterDescriptor filter : resource.filters() ) {
       element.appendChild( createFilter( dom, filter ) );
     }
 
     return element;
   }
 
-  private static Element createFilter( Document dom, ClusterFilterDescriptor filter ) {
+  private static Element createFilter( Document dom, FilterDescriptor filter ) {
     Element element = dom.createElement( FILTER );
 
     addTextElement( dom, element, FILTER_ROLE, filter.role() );
     addTextElement( dom, element, FILTER_IMPL, filter.impl() );
 
-    for( ClusterFilterParamDescriptor param : filter.params() ) {
+    for( FilterParamDescriptor param : filter.params() ) {
       element.appendChild( createFilterParam( dom, param ) );
     }
 
     return element;
   }
 
-  private static Element createFilterParam( Document dom, ClusterFilterParamDescriptor param ) {
+  private static Element createFilterParam( Document dom, FilterParamDescriptor param ) {
     Element element = dom.createElement( FILTER_PARAM );
     addTextElement( dom, element, FILTER_PARAM_NAME, param.name() );
     addTextElement( dom, element, FILTER_PARAM_VALUE, param.value() );
