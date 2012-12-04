@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.deploy;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -29,6 +30,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -37,7 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasXPath;
 
-public class ClusterDeploymentFactoryTest {
+public class DeploymentFactoryTest {
 
   @Test
   public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException {
@@ -46,7 +48,7 @@ public class ClusterDeploymentFactoryTest {
     ClusterTopology topology = new ClusterTopology();
     topology.setName( "test-cluster" );
 
-    WebArchive war = ClusterDeploymentFactory.createClusterDeployment( config, topology );
+    WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
@@ -72,9 +74,9 @@ public class ClusterDeploymentFactoryTest {
     component.setUrl( new URL( "http://localhost:50070/webhdfs/v1" ) );
     topology.addComponent( component );
 
-    WebArchive war = ClusterDeploymentFactory.createClusterDeployment( config, topology );
-    //File dir = new File( System.getProperty( "user.dir" ) );
-    //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+    WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
+    File dir = new File( System.getProperty( "user.dir" ) );
+    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
     Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );

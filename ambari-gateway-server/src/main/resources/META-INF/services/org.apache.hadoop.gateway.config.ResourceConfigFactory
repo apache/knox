@@ -1,2 +1,0 @@
-org.apache.hadoop.gateway.config.HdfsConfigFactory
-org.apache.hadoop.gateway.config.TempletonConfigFactory

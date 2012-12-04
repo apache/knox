@@ -18,9 +18,9 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
-import org.apache.hadoop.gateway.deploy.ClusterFilterDescriptorFactory;
-import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
@@ -28,7 +28,7 @@ import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
-public class ClusterDeploymentContextImpl implements ClusterDeploymentContext {
+public class DeploymentContextImpl implements DeploymentContext {
 
   private GatewayConfig gatewayConfig;
   private ClusterTopology clusterTopology;
@@ -36,7 +36,7 @@ public class ClusterDeploymentContextImpl implements ClusterDeploymentContext {
   private WebArchive webArchive;
   private WebAppDescriptor webAppDescriptor;
 
-  public ClusterDeploymentContextImpl(
+  public DeploymentContextImpl(
       GatewayConfig gatewayConfig,
       ClusterTopology clusterTopology,
       ClusterDescriptor clusterDescriptor,
@@ -50,12 +50,12 @@ public class ClusterDeploymentContextImpl implements ClusterDeploymentContext {
   }
 
   @Override
-  public ClusterResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
+  public DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
     return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( component );
   }
 
   @Override
-  public ClusterFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
     return ClusterDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
   }
 

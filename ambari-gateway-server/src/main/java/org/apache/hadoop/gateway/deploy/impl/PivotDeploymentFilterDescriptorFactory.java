@@ -15,24 +15,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy;
+package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.pivot.HttpClientPivot;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public interface ClusterFilterDescriptorFactory {
+public class PivotDeploymentFilterDescriptorFactory implements DeploymentFilterDescriptorFactory {
 
-  Set<String> getSupportedFilterRoles();
+  private static final Set<String> ROLES = createSupportedRoles();
 
-  List<FilterDescriptor> createFilterDescriptors(
-      ClusterDeploymentContext clusterDeploymentContext,
+  private static Set<String> createSupportedRoles() {
+    HashSet<String> roles = new HashSet<String>();
+    roles.add( "pivot" );
+    return Collections.unmodifiableSet( roles );
+  }
+
+  @Override
+  public Set<String> getSupportedFilterRoles() {
+    return ROLES;
+  }
+
+  @Override
+  public List<FilterDescriptor> createFilterDescriptors(
+      DeploymentContext deploymentContext,
       ClusterTopologyComponent clusterTopologyComponent,
       ResourceDescriptor resourceDescriptor,
       String filterRole,
-      List<FilterParamDescriptor> filterParamDescriptors );
+      List<FilterParamDescriptor> filterParamDescriptors ) {
+    List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
+    FilterDescriptor descriptor
+        = resourceDescriptor.createFilter().role( filterRole ).impl( HttpClientPivot.class );
+    descriptor.addParams( filterParamDescriptors );
+    descriptors.add( descriptor );
+    return descriptors;
+  }
+
 }

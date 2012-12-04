@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
-import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class HdfsClusterResourceDescriptorFactory implements ClusterResourceDescriptorFactory {
+public class HdfsDeploymentResourceDescriptorFactory implements DeploymentResourceDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 
@@ -45,7 +45,7 @@ public class HdfsClusterResourceDescriptorFactory implements ClusterResourceDesc
   }
 
   @Override
-  public List<ResourceDescriptor> createResourceDescriptors( ClusterDeploymentContext context, ClusterTopologyComponent component ) {
+  public List<ResourceDescriptor> createResourceDescriptors( DeploymentContext context, ClusterTopologyComponent component ) {
     List<ResourceDescriptor> descriptors = new ArrayList<ResourceDescriptor>();
 
     String extClusterUrl = "{request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}";

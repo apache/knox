@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContributor;
-import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentContributor;
+import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
@@ -27,14 +27,14 @@ import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.util.List;
 
-public class GatewayClusterDeploymentContributor implements ClusterDeploymentContributor {
+public class GatewayDeploymentContributor implements DeploymentContributor {
 
   @Override
-  public void contribute( ClusterDeploymentContext context ) {
+  public void contribute( DeploymentContext context ) {
     ClusterDescriptor clusterDescriptor = context.getClusterDescriptor();
     ClusterTopology clusterTopology = context.getClusterTopology();
     for( ClusterTopologyComponent clusterComponent : clusterTopology.getComponents() ) {
-      ClusterResourceDescriptorFactory factory = context.getClusterResourceDescriptorFactory( clusterComponent );
+      DeploymentResourceDescriptorFactory factory = context.getClusterResourceDescriptorFactory( clusterComponent );
       if( factory != null ) {
         List<ResourceDescriptor> descriptors = factory.createResourceDescriptors( context, clusterComponent );
         for( ResourceDescriptor descriptor : descriptors ) {

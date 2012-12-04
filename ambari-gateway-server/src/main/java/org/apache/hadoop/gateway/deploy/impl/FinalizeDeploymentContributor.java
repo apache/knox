@@ -18,9 +18,9 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.GatewayServlet;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContributor;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContributorBase;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentContributor;
+import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -30,10 +30,10 @@ import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class FinalizeClusterDeploymentContributor extends ClusterDeploymentContributorBase implements ClusterDeploymentContributor {
+public class FinalizeDeploymentContributor extends DeploymentContributorBase implements DeploymentContributor {
 
   @Override
-  public void contribute( ClusterDeploymentContext context ) {
+  public void contribute( DeploymentContext context ) {
     try {
       // Write the gateway cluster descriptor (gateway.xml) into the war.
       StringWriter writer = new StringWriter();

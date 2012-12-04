@@ -15,23 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy;
+package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.GatewayServlet;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentContributor;
+import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
-import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
-import java.util.List;
+public class InitializeDeploymentContributor extends DeploymentContributorBase implements DeploymentContributor {
 
-public abstract class ClusterDeploymentContributorBase implements ClusterDeploymentContributor {
+  private static final String GATEWAY_SERVLET_CLASS_NAME = GatewayServlet.class.getName();
 
-  protected static ServletType<WebAppDescriptor> findServlet( ClusterDeploymentContext context, String name ) {
-    List<ServletType<WebAppDescriptor>> servlets = context.getWebAppDescriptor().getAllServlet();
-    for( ServletType<WebAppDescriptor> servlet : servlets ) {
-      if( name.equals( servlet.getServletName() ) ) {
-        return servlet;
-      }
-    }
-    return null;
+  @Override
+  public void contribute( DeploymentContext context ) {
+    WebAppDescriptor wad = context.getWebAppDescriptor();
+    String servlet = context.getClusterTopology().getName();
+    wad.createServlet().servletName( servlet ).servletClass( GATEWAY_SERVLET_CLASS_NAME );
+    wad.createServletMapping().servletName( servlet ).urlPattern( "/*" );
   }
 
 }

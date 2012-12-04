@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentContext;
-import org.apache.hadoop.gateway.deploy.ClusterFilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RewriteClusterFilterDescriptorFactory implements ClusterFilterDescriptorFactory {
+public class RewriteDeploymentFilterDescriptorFactory implements DeploymentFilterDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 
@@ -48,7 +48,7 @@ public class RewriteClusterFilterDescriptorFactory implements ClusterFilterDescr
 
   @Override
   public List<FilterDescriptor> createFilterDescriptors(
-      ClusterDeploymentContext clusterDeploymentContext,
+      DeploymentContext deploymentContext,
       ClusterTopologyComponent clusterTopologyComponent,
       ResourceDescriptor resourceDescriptor,
       String filterRole,

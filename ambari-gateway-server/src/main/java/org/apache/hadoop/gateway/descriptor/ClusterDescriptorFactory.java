@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.deploy.ClusterFilterDescriptorFactory;
-import org.apache.hadoop.gateway.deploy.ClusterResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.impl.ClusterDescriptorImpl;
 import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorImporter;
@@ -38,8 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ClusterDescriptorFactory {
 
-  private static Map<String, ClusterResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
-  private static Map<String, ClusterFilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
+  private static Map<String, DeploymentResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
+  private static Map<String, DeploymentFilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
   private static Map<String, ClusterDescriptorImporter> IMPORTERS = loadImporters();
   private static Map<String, ClusterDescriptorExporter> EXPORTERS = loadExporters();
 
@@ -63,11 +63,11 @@ public abstract class ClusterDescriptorFactory {
     exporter.store( descriptor, writer );
   }
 
-  public static ClusterResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
+  public static DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
     return RESOURCE_FACTORIES.get( component.getRole() );
   }
 
-  public static ClusterFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public static DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
     return FILTER_FACTORIES.get( filterRole );
   }
 
@@ -83,12 +83,12 @@ public abstract class ClusterDescriptorFactory {
     return map;
   }
 
-  private static Map<String, ClusterResourceDescriptorFactory> loadResourceFactories() {
-    Map<String, ClusterResourceDescriptorFactory> map = new HashMap<String, ClusterResourceDescriptorFactory>();
-    ServiceLoader<ClusterResourceDescriptorFactory> loader = ServiceLoader.load( ClusterResourceDescriptorFactory.class );
-    Iterator<ClusterResourceDescriptorFactory> factories = loader.iterator();
+  private static Map<String, DeploymentResourceDescriptorFactory> loadResourceFactories() {
+    Map<String, DeploymentResourceDescriptorFactory> map = new HashMap<String, DeploymentResourceDescriptorFactory>();
+    ServiceLoader<DeploymentResourceDescriptorFactory> loader = ServiceLoader.load( DeploymentResourceDescriptorFactory.class );
+    Iterator<DeploymentResourceDescriptorFactory> factories = loader.iterator();
     while( factories.hasNext() ) {
-      ClusterResourceDescriptorFactory factory = factories.next();
+      DeploymentResourceDescriptorFactory factory = factories.next();
       Set<String> roles = factory.getSupportedResourceRoles();
       for( String role : roles ) {
         map.put( role, factory );
@@ -97,12 +97,12 @@ public abstract class ClusterDescriptorFactory {
     return map;
   }
 
-  private static Map<String, ClusterFilterDescriptorFactory> loadFilterFactories() {
-    Map<String, ClusterFilterDescriptorFactory> map = new HashMap<String, ClusterFilterDescriptorFactory>();
-    ServiceLoader<ClusterFilterDescriptorFactory> loader = ServiceLoader.load( ClusterFilterDescriptorFactory.class );
-    Iterator<ClusterFilterDescriptorFactory> factories = loader.iterator();
+  private static Map<String, DeploymentFilterDescriptorFactory> loadFilterFactories() {
+    Map<String, DeploymentFilterDescriptorFactory> map = new HashMap<String, DeploymentFilterDescriptorFactory>();
+    ServiceLoader<DeploymentFilterDescriptorFactory> loader = ServiceLoader.load( DeploymentFilterDescriptorFactory.class );
+    Iterator<DeploymentFilterDescriptorFactory> factories = loader.iterator();
     while( factories.hasNext() ) {
-      ClusterFilterDescriptorFactory factory = factories.next();
+      DeploymentFilterDescriptorFactory factory = factories.next();
       Set<String> roles = factory.getSupportedFilterRoles();
       for( String role : roles ) {
         map.put( role, factory );

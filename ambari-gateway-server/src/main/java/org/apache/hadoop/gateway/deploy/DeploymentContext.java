@@ -17,18 +17,27 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
-import java.util.List;
-import java.util.Set;
+public interface DeploymentContext {
 
-public interface ClusterResourceDescriptorFactory {
+  DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component );
 
-  Set<String> getSupportedResourceRoles();
+  DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole );
 
-  List<ResourceDescriptor> createResourceDescriptors(
-      ClusterDeploymentContext clusterDeploymentContext,
-      ClusterTopologyComponent clusterTopologyComponent );
+  GatewayConfig getGatewayConfig();
+
+  ClusterTopology getClusterTopology();
+
+  WebArchive getWebArchive();
+
+  WebAppDescriptor getWebAppDescriptor();
+
+  ClusterDescriptor getClusterDescriptor();
 
 }

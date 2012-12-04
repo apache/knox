@@ -18,12 +18,11 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.deploy.ClusterDeploymentFactory;
+import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
@@ -199,7 +198,7 @@ public class GatewayServer implements ClusterTopologyListener {
       } else {
         if( !warDir.exists() ) {
           log.deployingCluster( topology.getName(), warDir.getAbsolutePath() );
-          WebArchive war = ClusterDeploymentFactory.createClusterDeployment( config, topology );
+          WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
           File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
         }

@@ -1,2 +1,0 @@
-org.apache.hadoop.gateway.deploy.impl.RewriteClusterFilterDescriptorFactory
-org.apache.hadoop.gateway.deploy.impl.PivotClusterFilterDescriptorFactory

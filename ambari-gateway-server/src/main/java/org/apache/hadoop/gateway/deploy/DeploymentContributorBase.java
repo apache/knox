@@ -17,8 +17,21 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-public interface ClusterDeploymentContributor {
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
-  public void contribute( ClusterDeploymentContext clusterDeploymentContext );
+import java.util.List;
+
+public abstract class DeploymentContributorBase implements DeploymentContributor {
+
+  protected static ServletType<WebAppDescriptor> findServlet( DeploymentContext context, String name ) {
+    List<ServletType<WebAppDescriptor>> servlets = context.getWebAppDescriptor().getAllServlet();
+    for( ServletType<WebAppDescriptor> servlet : servlets ) {
+      if( name.equals( servlet.getServletName() ) ) {
+        return servlet;
+      }
+    }
+    return null;
+  }
 
 }
