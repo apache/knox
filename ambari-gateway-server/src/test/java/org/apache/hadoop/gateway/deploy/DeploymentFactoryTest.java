@@ -75,8 +75,8 @@ public class DeploymentFactoryTest {
     topology.addComponent( component );
 
     WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
-    File dir = new File( System.getProperty( "user.dir" ) );
-    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+    //File dir = new File( System.getProperty( "user.dir" ) );
+    //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
     Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
