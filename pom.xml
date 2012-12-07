@@ -22,26 +22,26 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <gateway-group>org.apache.hadoop.ambari</gateway-group>
+        <gateway-group>org.apache.hadoop</gateway-group>
         <gateway-version>0.1.0-SNAPSHOT</gateway-version>
     </properties>
 
     <groupId>${gateway-group}</groupId>
-    <artifactId>ambari-gateway</artifactId>
+    <artifactId>gateway</artifactId>
     <version>${gateway-version}</version>
     <packaging>pom</packaging>
 
     <modules>
-        <module>ambari-gateway-test</module>
-        <module>ambari-gateway-test-ldap</module>
-        <module>ambari-gateway-i18n</module>
-        <module>ambari-gateway-i18n-logging-log4j</module>
-        <module>ambari-gateway-i18n-logging-sl4j</module>
+        <module>gateway-test-utils</module>
+        <module>gateway-test-ldap</module>
+        <module>gateway-i18n</module>
+        <module>gateway-i18n-logging-log4j</module>
+        <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
         <module>gateway-hdfs</module>
         <module>gateway-templeton</module>
-        <module>ambari-gateway-server</module>
-        <module>ambari-gateway-demo</module>
+        <module>gateway-server</module>
+        <module>gateway-demo</module>
     </modules>
 
     <build>
@@ -145,25 +145,25 @@
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-i18n</artifactId>
+                <artifactId>gateway-i18n</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-i18n-logging-sl4j</artifactId>
+                <artifactId>gateway-i18n-logging-sl4j</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-i18n-logging-log4j</artifactId>
+                <artifactId>gateway-i18n-logging-log4j</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-server</artifactId>
+                <artifactId>gateway-server</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
@@ -352,14 +352,14 @@
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-test</artifactId>
+                <artifactId>gateway-test</artifactId>
                 <version>${gateway-version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>ambari-gateway-test-ldap</artifactId>
+                <artifactId>gateway-test-ldap</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

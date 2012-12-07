@@ -7,8 +7,6 @@ dependency-reduced-pom.xml
 *.iml
 .DS_Store
 target
-/ambari-web/public/
-/ambari-web/node_modules/
 org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
 *.pyc
 *.py~

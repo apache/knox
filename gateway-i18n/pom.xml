@@ -2,20 +2,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>${gateway-group}</groupId>
         <artifactId>gateway</artifactId>
         <version>${gateway-version}</version>
     </parent>
-    <artifactId>gateway-spi</artifactId>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>gateway-i18n</artifactId>
 
     <dependencies>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-    </dependencies>
 
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 </project>

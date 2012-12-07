@@ -4,18 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>${gateway-group}</groupId>
         <artifactId>gateway</artifactId>
+        <groupId>${gateway-group}</groupId>
         <version>${gateway-version}</version>
     </parent>
-    <artifactId>gateway-spi</artifactId>
+    <artifactId>gateway-i18n-logging-sl4j</artifactId>
 
     <dependencies>
+
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-i18n</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
