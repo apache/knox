@@ -4,8 +4,19 @@
     <name>cluster</name>
     <!--
     <version>1.2.3</version>
-    <security></security>
     -->
+    <gateway>
+	    <provider>
+	    	<role>authentication</role>
+	    	<enabled>true</enabled>
+	    	<!--name>SpringSecurity</name-->
+	    	<param>
+	    		<name>contextConfigLocation</name>
+	    		<value>classpath:app-context-security.xml</value>
+	    	</param>
+	    </provider>
+    </gateway>
+
     <component>
         <role>NAMENODE</role>
         <url>http://host:80/webhdfs/v1</url>

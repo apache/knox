@@ -23,7 +23,6 @@ import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.filter.AuthnFilter;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
 

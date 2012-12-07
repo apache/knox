@@ -21,6 +21,7 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
+import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +68,12 @@ public class ClusterTopologyRulesModuleTest {
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is( "NAMENODE" ) );
     assertThat( comp.getUrl(), is( new URL( "http://host:80/webhdfs/v1" ) ) );
+
+    ClusterTopologyFilterProvider provider = topology.getProviders().iterator().next();
+    assertThat( provider, notNullValue() );
+    assertThat( provider.isEnabled(), is(true) );
+    assertThat( provider.getRole(), is( "authentication" ) );
+    assertThat( provider.getParams().size(), is(1));
   }
 
 }

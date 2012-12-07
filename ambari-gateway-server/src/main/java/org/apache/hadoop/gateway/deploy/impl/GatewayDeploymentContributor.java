@@ -19,11 +19,13 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.DeploymentContributor;
+import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
 
 import java.util.List;
 

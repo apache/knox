@@ -1,2 +1,3 @@
 org.apache.hadoop.gateway.deploy.impl.RewriteDeploymentFilterDescriptorFactory
 org.apache.hadoop.gateway.deploy.impl.PivotDeploymentFilterDescriptorFactory
+org.apache.hadoop.gateway.deploy.impl.AuthnDeploymentFilterDescriptorFactory
