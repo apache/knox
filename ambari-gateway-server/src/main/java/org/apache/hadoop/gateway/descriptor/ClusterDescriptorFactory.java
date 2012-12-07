@@ -27,11 +27,13 @@ import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorImporter;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +44,8 @@ public abstract class ClusterDescriptorFactory {
   private static Map<String, DeploymentFilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
   private static Map<String, ClusterDescriptorImporter> IMPORTERS = loadImporters();
   private static Map<String, ClusterDescriptorExporter> EXPORTERS = loadExporters();
-
+  private static Properties ROLE_TO_FILTER_MAPPING = loadRoleToFilterClassMapping();
+  
   public static ClusterDescriptor create() {
     return new ClusterDescriptorImpl();
   }
@@ -69,6 +72,10 @@ public abstract class ClusterDescriptorFactory {
 
   public static DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
     return FILTER_FACTORIES.get( filterRole );
+  }
+  
+  public static String getClusterProviderFilterClassName(String role, String defaultClassName) {
+    return ROLE_TO_FILTER_MAPPING.getProperty(role, defaultClassName);
   }
 
   private static Map<String, ClusterDescriptorImporter> loadImporters() {
@@ -109,6 +116,21 @@ public abstract class ClusterDescriptorFactory {
       }
     }
     return map;
+  }
+  
+  private static Properties loadRoleToFilterClassMapping() {
+    InputStream inputStream = ClusterDescriptorFactory.class.getClassLoader().getResourceAsStream("META-INF/filter-provider.properties");
+    Properties properties = new Properties();  
+    
+    if ( inputStream != null ) {  
+      try {  
+        properties.load(inputStream);  
+      }  
+      catch ( IOException ioe ) {  
+        ioe.printStackTrace();  
+      }
+    }
+    return properties;
   }
 
 }

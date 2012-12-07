@@ -19,10 +19,15 @@ package org.apache.hadoop.gateway.topology;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClusterTopology {
 
   private String name;
+  private Collection<ClusterTopologyComponent> components = new ArrayList<ClusterTopologyComponent>();
+  private Map<String, ClusterTopologyFilterProvider> providers = new HashMap<String, ClusterTopologyFilterProvider>();
+
 
   public String getName() {
     return name;
@@ -42,8 +47,6 @@ public class ClusterTopology {
     this.timestamp = timestamp;
   }
 
-  private Collection<ClusterTopologyComponent> components = new ArrayList<ClusterTopologyComponent>();
-
   public Collection<ClusterTopologyComponent> getComponents() {
     return this.components;
   }
@@ -52,4 +55,15 @@ public class ClusterTopology {
     components.add( component );
   }
 
+  public Collection<ClusterTopologyFilterProvider> getProviders() {
+    return this.providers.values();
+  }
+
+  public ClusterTopologyFilterProvider getProvider(String role) {
+    return this.providers.get(role);
+  }
+
+  public void addProvider( ClusterTopologyFilterProvider provider ) {
+    providers.put( provider.getRole(), provider );
+  }
 }

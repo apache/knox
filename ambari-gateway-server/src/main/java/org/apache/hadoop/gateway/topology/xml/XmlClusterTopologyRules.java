@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway.topology.xml;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
 import org.apache.hadoop.gateway.topology.ClusterTopology;
+import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
+import org.apache.hadoop.gateway.topology.ClusterTopologyProviderParam;
 
 public class XmlClusterTopologyRules extends AbstractRulesModule {
 
@@ -29,6 +31,10 @@ public class XmlClusterTopologyRules extends AbstractRulesModule {
   private static final String COMPONENT_TAG = "component";
   private static final String ROLE_TAG = "role";
   private static final String URL_TAG = "url";
+  private static final String PROVIDER_TAG = "gateway/provider";
+  private static final String ENABLED_TAG = "enabled";
+  private static final String PARAM_TAG = "param";
+  private static final String VALUE_TAG = "value";
 
   @Override
   protected void configure() {
@@ -38,6 +44,12 @@ public class XmlClusterTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + COMPONENT_TAG ).createObject().ofType( ClusterTopologyComponent.class ).then().setNext( "addComponent" );
     forPattern( ROOT_TAG + "/" + COMPONENT_TAG + "/" + ROLE_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + COMPONENT_TAG + "/" + URL_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG ).createObject().ofType( ClusterTopologyFilterProvider.class ).then().setNext( "addProvider" );
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ROLE_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ENABLED_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG ).createObject().ofType( ClusterTopologyProviderParam.class ).then().setNext( "addParam" );
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
   }
 
 }
