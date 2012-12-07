@@ -17,9 +17,9 @@
   limitations under the License.
 -->
 
-<cluster>
-    <component>
+<topology>
+    <service>
         <role>NAMENODE</role>
         <url>http://vm.home:50070/webhdfs/v1</url>
-    </component>
-</cluster>
+    </service>
+</topology>

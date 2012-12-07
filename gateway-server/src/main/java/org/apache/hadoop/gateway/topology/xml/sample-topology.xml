@@ -19,8 +19,8 @@
 
 <cluster>
     <name>cluster</name>
-    <component>
+    <service>
         <role>NAMENODE</role>
         <url>http://host:80/webhdfs/v1</url>
-    </component>
+    </service>
 </cluster>

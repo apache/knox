@@ -20,15 +20,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <properties>
-        <gateway-group>org.apache.hadoop</gateway-group>
-        <gateway-version>0.1.0-SNAPSHOT</gateway-version>
-    </properties>
-
-    <groupId>${gateway-group}</groupId>
+    <groupId>org.apache.hadoop</groupId>
     <artifactId>gateway</artifactId>
-    <version>${gateway-version}</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -38,11 +32,17 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
-        <module>gateway-hdfs</module>
-        <module>gateway-templeton</module>
+        <module>gateway-provider-hdfs</module>
+        <module>gateway-provider-templeton</module>
         <module>gateway-server</module>
         <module>gateway-demo</module>
     </modules>
+
+    <properties>
+        <gateway-group>org.apache.hadoop</gateway-group>
+        <gateway-artifact>gateway</gateway-artifact>
+        <gateway-version>0.1.0-SNAPSHOT</gateway-version>
+    </properties>
 
     <build>
         <plugins>
@@ -128,6 +128,48 @@
         <dependencies>
 
             <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-i18n</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-i18n-logging-sl4j</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-i18n-logging-log4j</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-spi</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-hdfs</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-templeton</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-server</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
                 <version>8.1.7.v20120910</version>
@@ -141,30 +183,6 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
                 <version>8.1.7.v20120910</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-i18n</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-i18n-logging-sl4j</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-i18n-logging-log4j</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-server</artifactId>
-                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
@@ -356,14 +374,13 @@
                 <version>${gateway-version}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-test-ldap</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
-            <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->
+            <!-- JUnit must be after restassured otherwise is messes up the hamcrest dependencies -->
             <dependency>
                 <groupId>com.jayway.restassured</groupId>
                 <artifactId>rest-assured</artifactId>

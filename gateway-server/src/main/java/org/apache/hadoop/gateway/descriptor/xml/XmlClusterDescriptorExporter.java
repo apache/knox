@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorExporter;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorExporter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

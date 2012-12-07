@@ -8,8 +8,8 @@ Deployment (Once we know we need to create a new WAR).
 . Invoke the Gateway deployment contributor
   . Create empty ClusterConfig
     . Find all ResourceConfigFactory services
-    . For each component in cluster topo
-      . Find and component's config factory
+    . For each service in cluster topo
+      . Find and service's config factory
       . Add created resources configs to cluster config
         Q: How do they know to include as vs ss?
   . Populate the deployment context with the above.

@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.pivot.HttpClientPivot;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public class PivotDeploymentFilterDescriptorFactory implements DeploymentFilterD
   @Override
   public List<FilterDescriptor> createFilterDescriptors(
       DeploymentContext deploymentContext,
-      ClusterTopologyComponent clusterTopologyComponent,
+      Service service,
       ResourceDescriptor resourceDescriptor,
       String filterRole,
       List<FilterParamDescriptor> filterParamDescriptors ) {

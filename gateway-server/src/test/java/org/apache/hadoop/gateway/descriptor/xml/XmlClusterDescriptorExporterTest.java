@@ -29,7 +29,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 

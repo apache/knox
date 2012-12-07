@@ -20,11 +20,9 @@ package org.apache.hadoop.gateway.descriptor;
 import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.impl.ClusterDescriptorImpl;
-import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorExporter;
-import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorImporter;
 import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorImporter;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.topology.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,8 +64,8 @@ public abstract class ClusterDescriptorFactory {
     exporter.store( descriptor, writer );
   }
 
-  public static DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
-    return RESOURCE_FACTORIES.get( component.getRole() );
+  public static DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+    return RESOURCE_FACTORIES.get( service.getRole() );
   }
 
   public static DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {

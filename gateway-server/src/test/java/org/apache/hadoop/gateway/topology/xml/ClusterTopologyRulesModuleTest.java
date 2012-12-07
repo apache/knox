@@ -19,9 +19,9 @@ package org.apache.hadoop.gateway.topology.xml;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,20 +56,20 @@ public class ClusterTopologyRulesModuleTest {
     URL url = ClassLoader.getSystemResource( name );
     assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
     File file = new File( url.getFile() );
-    ClusterTopology topology = digester.parse( url );
+    Topology topology = digester.parse( url );
     assertThat( "Failed to parse resource " + name, topology, notNullValue() );
     topology.setTimestamp( file.lastModified() );
 
-    assertThat( topology.getName(), is( "cluster" ) );
+    assertThat( topology.getName(), is( "topology" ) );
     assertThat( topology.getTimestamp(), is( file.lastModified() ) );
-    assertThat( topology.getComponents().size(), is( 1 ) );
+    assertThat( topology.getServices().size(), is( 1 ) );
 
-    ClusterTopologyComponent comp = topology.getComponents().iterator().next();
+    Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is( "NAMENODE" ) );
     assertThat( comp.getUrl(), is( new URL( "http://host:80/webhdfs/v1" ) ) );
 
-    ClusterTopologyFilterProvider provider = topology.getProviders().iterator().next();
+    Provider provider = topology.getProviders().iterator().next();
     assertThat( provider, notNullValue() );
     assertThat( provider.isEnabled(), is(true) );
     assertThat( provider.getRole(), is( "authentication" ) );

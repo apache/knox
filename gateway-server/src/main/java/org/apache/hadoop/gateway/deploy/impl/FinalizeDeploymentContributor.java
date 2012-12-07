@@ -43,7 +43,7 @@ public class FinalizeDeploymentContributor extends DeploymentContributorBase imp
           GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
 
       // Set the location of the gateway cluster descriptor as a servlet init param.
-      ServletType<WebAppDescriptor> servlet = findServlet( context, context.getClusterTopology().getName() );
+      ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
       servlet.createInitParam()
           .paramName( GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM )
           .paramValue( GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );

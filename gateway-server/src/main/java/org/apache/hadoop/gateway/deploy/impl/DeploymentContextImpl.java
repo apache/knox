@@ -23,35 +23,35 @@ import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
 public class DeploymentContextImpl implements DeploymentContext {
 
   private GatewayConfig gatewayConfig;
-  private ClusterTopology clusterTopology;
+  private Topology topology;
   private ClusterDescriptor clusterDescriptor;
   private WebArchive webArchive;
   private WebAppDescriptor webAppDescriptor;
 
   public DeploymentContextImpl(
       GatewayConfig gatewayConfig,
-      ClusterTopology clusterTopology,
+      Topology topology,
       ClusterDescriptor clusterDescriptor,
       WebArchive webArchive,
       WebAppDescriptor webAppDescriptor ) {
     this.gatewayConfig = gatewayConfig;
-    this.clusterTopology = clusterTopology;
+    this.topology = topology;
     this.clusterDescriptor = clusterDescriptor;
     this.webArchive = webArchive;
     this.webAppDescriptor = webAppDescriptor;
   }
 
   @Override
-  public DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( ClusterTopologyComponent component ) {
-    return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( component );
+  public DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+    return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( service );
   }
 
   @Override
@@ -65,8 +65,8 @@ public class DeploymentContextImpl implements DeploymentContext {
   }
 
   @Override
-  public ClusterTopology getClusterTopology() {
-    return clusterTopology;
+  public Topology getTopology() {
+    return topology;
   }
 
   @Override

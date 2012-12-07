@@ -18,11 +18,10 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
-import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
-import org.apache.hadoop.gateway.topology.ClusterTopologyProviderParam;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.ProviderParam;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -32,12 +31,9 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -49,7 +45,7 @@ public class DeploymentFactoryTest {
   public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException {
     GatewayConfig config = new GatewayConfig();
 
-    ClusterTopology topology = new ClusterTopology();
+    Topology topology = new Topology();
     topology.setName( "test-cluster" );
 
     WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
@@ -71,16 +67,16 @@ public class DeploymentFactoryTest {
   @Test
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException {
     GatewayConfig config = new GatewayConfig();
-    ClusterTopology topology = new ClusterTopology();
+    Topology topology = new Topology();
     topology.setName( "test-cluster" );
-    ClusterTopologyComponent component = new ClusterTopologyComponent();
-    component.setRole( "NAMENODE" );
-    component.setUrl( new URL( "http://localhost:50070/webhdfs/v1" ) );
-    topology.addComponent( component );
-    ClusterTopologyFilterProvider provider = new ClusterTopologyFilterProvider();
+    Service service = new Service();
+    service.setRole( "NAMENODE" );
+    service.setUrl( new URL( "http://localhost:50070/webhdfs/v1" ) );
+    topology.addService( service );
+    Provider provider = new Provider();
     provider.setRole("authentication");
     provider.setEnabled(true);
-    ClusterTopologyProviderParam param = new ClusterTopologyProviderParam();
+    ProviderParam param = new ProviderParam();
     param.setName("contextConfigLocation");
     param.setValue("classpath:app-context-security.xml");
     provider.addParam(param);

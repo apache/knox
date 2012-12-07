@@ -31,12 +31,12 @@ public class GatewayClusterConfigTest {
 //    GatewayConfig gatewayConfig = new GatewayConfig();
 //
 //    // Load the cluster topologies.
-//    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider(
+//    FileTopologyProvider topologyProvider = new FileTopologyProvider(
 //        new File( configDir, gatewayConfig.getHadoopConfDir() ) );
-//    Collection<ClusterTopology> topologies = topologyProvider.getClusterTopologies();
+//    Collection<Topology> topologies = topologyProvider.getTopologies();
 //
 //    // Check each cluster config.
-//    Iterator<ClusterTopology> iterator = topologies.iterator();
+//    Iterator<Topology> iterator = topologies.iterator();
 //    Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, iterator.next() );
 //  }
 
@@ -47,20 +47,20 @@ public class GatewayClusterConfigTest {
 //    GatewayConfig gatewayConfig = new GatewayConfig();
 //
 //    // Load the topologies.
-//    FileClusterTopologyProvider topologyProvider = new FileClusterTopologyProvider( gatewayConfig.getHadoopConfDir() );
-//    ClusterTopologyListener topologyListener = new TestClusterTopologyListener();
+//    FileTopologyProvider topologyProvider = new FileTopologyProvider( gatewayConfig.getHadoopConfDir() );
+//    TopologyListener topologyListener = new TestClusterTopologyListener();
 //    topologyProvider.addTopologyChangeListener( topologyListener );
-//    Collection<ClusterTopology> topologies = topologyProvider.getClusterTopologies();
+//    Collection<Topology> topologies = topologyProvider.getTopologies();
 //
-//    for( ClusterTopology clusterTopology : topologies ) {
+//    for( Topology clusterTopology : topologies ) {
 //      // Create the cluster config.
 //      Config clusterConfig = ClusterConfigFactory.create( gatewayConfig, clusterTopology );
 //    }
 //  }
 //
-//  private class TestClusterTopologyListener implements ClusterTopologyListener {
+//  private class TestClusterTopologyListener implements TopologyListener {
 //    @Override
-//    public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
+//    public void handleTopologyEvent( List<TopologyEvent> events ) {
 //    }
 //  }
 

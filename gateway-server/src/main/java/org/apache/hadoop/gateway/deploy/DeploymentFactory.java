@@ -24,7 +24,7 @@ import org.apache.hadoop.gateway.deploy.impl.GatewayDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.impl.InitializeDeploymentContributor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
@@ -39,14 +39,14 @@ public abstract class DeploymentFactory {
   // Invoke the Gateway deployment contributor
   // Create empty ClusterConfig
   // Find all ResourceConfigFactory services
-  // For each component in cluster topo
-  // Find and component's config factory
+  // For each service in cluster topo
+  // Find and service's config factory
   //   Add created resources configs to cluster config
   //     Q: How do they know to include as vs ss?
   //   Populate the deployment context with the above.
   // Find all DeploymentContributor services
   // Invoke each contributor
-  public static WebArchive createClusterDeployment( GatewayConfig config, ClusterTopology topology ) {
+  public static WebArchive createClusterDeployment( GatewayConfig config, Topology topology ) {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, topology.getName() );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
     ClusterDescriptor gateway = ClusterDescriptorFactory.create();

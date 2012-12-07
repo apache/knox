@@ -23,8 +23,8 @@ import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
-import org.apache.hadoop.gateway.topology.ClusterTopologyFilterProvider;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,12 +51,12 @@ public class AuthnDeploymentFilterDescriptorFactory implements DeploymentFilterD
   @Override
   public List<FilterDescriptor> createFilterDescriptors(
       DeploymentContext deploymentContext,
-      ClusterTopologyComponent clusterTopologyComponent,
+      Service service,
       ResourceDescriptor resourceDescriptor,
       String filterRole,
       List<FilterParamDescriptor> filterParamDescriptors ) {
     List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
-    ClusterTopologyFilterProvider provider = deploymentContext.getClusterTopology().getProvider( "authentication" );
+    Provider provider = deploymentContext.getTopology().getProvider( "authentication" );
     if( provider != null && provider.isEnabled() ) {
       String className = ClusterDescriptorFactory.getClusterProviderFilterClassName( provider.getRole(), DEFAULT_FILTER_CLASSNAME );
       if( className != null ) {

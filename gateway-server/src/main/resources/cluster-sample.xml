@@ -17,13 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<cluster>
+<topology>
     <!--
-    <component>
-        <component>
-            <role>NAMENODE</role>
-            <url>http://localhost:50070/webhdfs/v1</url>
-        </component>
-    </component>
+    <service>
+        <role>NAMENODE</role>
+        <url>http://localhost:50070/webhdfs/v1</url>
+    </service>
     -->
-</cluster>
+</topology>

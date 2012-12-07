@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<cluster>
+<topology>
     <!--
     <version>1.2.3</version>
     <security></security>
     -->
-    <component>
+    <service>
         <role>NAMENODE</role>
         <url>http://host-three:80/webhdfs/v1</url>
-    </component>
-</cluster>
+    </service>
+</topology>

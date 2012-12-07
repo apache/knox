@@ -22,8 +22,8 @@ import org.apache.hadoop.gateway.deploy.DeploymentContributor;
 import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyComponent;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.List;
 
@@ -32,11 +32,11 @@ public class GatewayDeploymentContributor implements DeploymentContributor {
   @Override
   public void contribute( DeploymentContext context ) {
     ClusterDescriptor clusterDescriptor = context.getClusterDescriptor();
-    ClusterTopology clusterTopology = context.getClusterTopology();
-    for( ClusterTopologyComponent clusterComponent : clusterTopology.getComponents() ) {
-      DeploymentResourceDescriptorFactory factory = context.getClusterResourceDescriptorFactory( clusterComponent );
+    Topology topology = context.getTopology();
+    for( Service service : topology.getServices() ) {
+      DeploymentResourceDescriptorFactory factory = context.getClusterResourceDescriptorFactory( service );
       if( factory != null ) {
-        List<ResourceDescriptor> descriptors = factory.createResourceDescriptors( context, clusterComponent );
+        List<ResourceDescriptor> descriptors = factory.createResourceDescriptors( context, service );
         for( ResourceDescriptor descriptor : descriptors ) {
           clusterDescriptor.addResource( descriptor );
         }

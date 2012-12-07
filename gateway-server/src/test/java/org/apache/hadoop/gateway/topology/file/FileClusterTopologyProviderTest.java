@@ -25,9 +25,9 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileMonitor;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
-import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.TopologyEvent;
+import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -151,21 +151,21 @@ public class FileClusterTopologyProviderTest {
     FileObject dir = createDir( "ram:///test/dir" );
     createFile( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
 
-    TestClusterTopologyListener topoListener = new TestClusterTopologyListener();
+    TestTopologyListener topoListener = new TestTopologyListener();
     FileListenerDelegator fileListener = new FileListenerDelegator();
     NoOpFileMonitor monitor = new NoOpFileMonitor( fileListener );
 
-    FileClusterTopologyProvider provider = new FileClusterTopologyProvider( monitor, dir );
+    FileTopologyProvider provider = new FileTopologyProvider( monitor, dir );
     provider.addTopologyChangeListener( topoListener );
     fileListener.delegate = provider;
 
     // Unit test "hack" to force monitor to execute.
     provider.reloadTopologies();
 
-    Collection<ClusterTopology> topologies = provider.getClusterTopologies();
+    Collection<Topology> topologies = provider.getTopologies();
     assertThat( topologies, notNullValue() );
     assertThat( topologies.size(), is( 1 ) );
-    ClusterTopology topology = topologies.iterator().next();
+    Topology topology = topologies.iterator().next();
     assertThat( topology.getName(), is( "one" ) );
     assertThat( topology.getTimestamp(), is( 1L ) );
     assertThat( topoListener.events.size(), is( 1 ) );
@@ -174,10 +174,10 @@ public class FileClusterTopologyProviderTest {
     // Add a file to the directory.
     FileObject two = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
     fileListener.fileCreated( new FileChangeEvent( two ) );
-    topologies = provider.getClusterTopologies();
+    topologies = provider.getTopologies();
     assertThat( topologies.size(), is( 2 ) );
     Set<String> names = new HashSet<String>( Arrays.asList( "one", "two" ) );
-    Iterator<ClusterTopology> iterator = topologies.iterator();
+    Iterator<Topology> iterator = topologies.iterator();
     topology = iterator.next();
     assertThat( names, hasItem( topology.getName() ) );
     names.remove( topology.getName() );
@@ -186,16 +186,16 @@ public class FileClusterTopologyProviderTest {
     names.remove( topology.getName() );
     assertThat( names.size(), is( 0 ) );
     assertThat( topoListener.events.size(), is( 1 ) );
-    List<ClusterTopologyEvent> events = topoListener.events.get( 0 );
+    List<TopologyEvent> events = topoListener.events.get( 0 );
     assertThat( events.size(), is( 1 ) );
-    ClusterTopologyEvent event = events.get( 0 );
-    assertThat( event.getType(), is( ClusterTopologyEvent.Type.CREATED ) );
+    TopologyEvent event = events.get( 0 );
+    assertThat( event.getType(), is( TopologyEvent.Type.CREATED ) );
     assertThat( event.getTopology(), notNullValue() );
 
     // Update a file in the directory.
     two = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-three.xml", 2L );
     fileListener.fileChanged( new FileChangeEvent( two ) );
-    topologies = provider.getClusterTopologies();
+    topologies = provider.getTopologies();
     assertThat( topologies.size(), is( 2 ) );
     names = new HashSet<String>( Arrays.asList( "one", "two" ) );
     iterator = topologies.iterator();
@@ -210,7 +210,7 @@ public class FileClusterTopologyProviderTest {
     // Remove a file from the directory.
     two.delete();
     fileListener.fileDeleted( new FileChangeEvent( two ) );
-    topologies = provider.getClusterTopologies();
+    topologies = provider.getTopologies();
     assertThat( topologies.size(), is( 1 ) );
     topology = topologies.iterator().next();
     assertThat( topology.getName(), is( "one" ) );
@@ -254,12 +254,12 @@ public class FileClusterTopologyProviderTest {
 
   }
 
-  private class TestClusterTopologyListener implements ClusterTopologyListener {
+  private class TestTopologyListener implements TopologyListener {
 
-    public ArrayList<List<ClusterTopologyEvent>> events = new ArrayList<List<ClusterTopologyEvent>>();
+    public ArrayList<List<TopologyEvent>> events = new ArrayList<List<TopologyEvent>>();
 
     @Override
-    public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
+    public void handleTopologyEvent( List<TopologyEvent> events ) {
       this.events.add( events );
     }
 

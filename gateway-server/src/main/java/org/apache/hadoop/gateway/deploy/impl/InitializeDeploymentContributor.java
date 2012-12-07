@@ -30,7 +30,7 @@ public class InitializeDeploymentContributor extends DeploymentContributorBase i
   @Override
   public void contribute( DeploymentContext context ) {
     WebAppDescriptor wad = context.getWebAppDescriptor();
-    String servlet = context.getClusterTopology().getName();
+    String servlet = context.getTopology().getName();
     wad.createServlet().servletName( servlet ).servletClass( GATEWAY_SERVLET_CLASS_NAME );
     wad.createServletMapping().servletName( servlet ).urlPattern( "/*" );
   }

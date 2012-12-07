@@ -25,10 +25,10 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
-import org.apache.hadoop.gateway.topology.ClusterTopology;
-import org.apache.hadoop.gateway.topology.ClusterTopologyEvent;
-import org.apache.hadoop.gateway.topology.ClusterTopologyListener;
-import org.apache.hadoop.gateway.topology.file.FileClusterTopologyProvider;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.TopologyEvent;
+import org.apache.hadoop.gateway.topology.TopologyListener;
+import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class GatewayServer implements ClusterTopologyListener {
+public class GatewayServer implements TopologyListener {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
@@ -57,7 +57,7 @@ public class GatewayServer implements ClusterTopologyListener {
   private Server jetty;
   private GatewayConfig config;
   private ContextHandlerCollection contexts;
-  private FileClusterTopologyProvider monitor;
+  private FileTopologyProvider monitor;
   private Map<String, WebAppContext> deployments;
 
   public static void main( String[] args ) {
@@ -140,7 +140,7 @@ public class GatewayServer implements ClusterTopologyListener {
 
     // Create a dir/file based cluster topology provider.
     File topologiesDir = calculateAbsoluteTopologiesDir();
-    monitor = new FileClusterTopologyProvider( topologiesDir );
+    monitor = new FileTopologyProvider( topologiesDir );
     monitor.addTopologyChangeListener( this );
 
     // Create the global context handler.
@@ -182,12 +182,12 @@ public class GatewayServer implements ClusterTopologyListener {
   }
 
   @Override
-  public void handleTopologyEvent( List<ClusterTopologyEvent> events ) {
-    for( ClusterTopologyEvent event : events ) {
-      ClusterTopology topology = event.getTopology();
+  public void handleTopologyEvent( List<TopologyEvent> events ) {
+    for( TopologyEvent event : events ) {
+      Topology topology = event.getTopology();
       File topoDir = calculateAbsoluteTopologiesDir();
       File warDir = calcWarDir( topology );
-      if( event.getType().equals( ClusterTopologyEvent.Type.DELETED ) ) {
+      if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
         File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
         for( File file : files ) {
           log.deletingCluster( file.getAbsolutePath() );
@@ -216,12 +216,12 @@ public class GatewayServer implements ClusterTopologyListener {
     return calculateAbsoluteTopologiesDir( config );
   }
 
-  private File calcWarDir( ClusterTopology topology ) {
+  private File calcWarDir( Topology topology ) {
     File warDir = new File( calculateAbsoluteTopologiesDir(), calcWarName( topology ) );
     return warDir;
   }
 
-  private String calcWarName( ClusterTopology topology ) {
+  private String calcWarName( Topology topology ) {
     String name = topology.getName() + ".war." + Long.toHexString( topology.getTimestamp() );
     return name;
   }
@@ -240,7 +240,7 @@ public class GatewayServer implements ClusterTopologyListener {
     }
   }
 
-  public void undeploy( ClusterTopology topology ) {
+  public void undeploy( Topology topology ) {
     WebAppContext context = deployments.remove( topology.getName() );
     if( context != null ) {
       contexts.removeHandler( context ) ;
@@ -253,7 +253,7 @@ public class GatewayServer implements ClusterTopologyListener {
     }
   }
 
-  public void deploy( ClusterTopology topology, File topologyDir ) {
+  public void deploy( Topology topology, File topologyDir ) {
     String name = topology.getName();
     String war = topologyDir.getAbsolutePath();
     WebAppContext context = new WebAppContext();

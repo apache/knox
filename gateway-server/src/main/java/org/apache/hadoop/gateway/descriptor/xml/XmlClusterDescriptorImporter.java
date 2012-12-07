@@ -21,7 +21,7 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.spi.ClusterDescriptorImporter;
+import org.apache.hadoop.gateway.descriptor.ClusterDescriptorImporter;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
