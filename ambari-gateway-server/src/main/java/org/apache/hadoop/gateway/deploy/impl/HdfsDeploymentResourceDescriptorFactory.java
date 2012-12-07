@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class HdfsDeploymentResourceDescriptorFactory implements
@@ -39,8 +38,8 @@ public class HdfsDeploymentResourceDescriptorFactory implements
 
   private static Set<String> createSupportedRoles() {
     HashSet<String> roles = new HashSet<String>();
-    roles.add("NAMENODE");
-    return Collections.unmodifiableSet(roles);
+    roles.add( "NAMENODE" );
+    return Collections.unmodifiableSet( roles );
   }
 
   @Override
@@ -50,7 +49,7 @@ public class HdfsDeploymentResourceDescriptorFactory implements
 
   @Override
   public List<ResourceDescriptor> createResourceDescriptors(
-      DeploymentContext context, ClusterTopologyComponent component) {
+      DeploymentContext context, ClusterTopologyComponent component ) {
     List<ResourceDescriptor> descriptors = new ArrayList<ResourceDescriptor>();
 
     String extClusterUrl = "{request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}";
@@ -59,67 +58,67 @@ public class HdfsDeploymentResourceDescriptorFactory implements
 
     ResourceDescriptor rootResource = context.getClusterDescriptor()
         .createResource();
-    rootResource.source(extHdfsPath + "?{**}");
-    rootResource.target(intHdfsUrl + "?{**}");
-    addAuthenticationProviderFilter(context, component, rootResource);
-    addPivotFilter(context, component, rootResource);
-    descriptors.add(rootResource);
+    rootResource.source( extHdfsPath + "?{**}" );
+    rootResource.target( intHdfsUrl + "?{**}" );
+    addAuthenticationProviderFilter( context, component, rootResource );
+    addPivotFilter( context, component, rootResource );
+    descriptors.add( rootResource );
 
     ResourceDescriptor fileResource = context.getClusterDescriptor()
         .createResource();
-    fileResource.source(extHdfsPath + "/{path=**}?{**}");
-    fileResource.target(intHdfsUrl + "/{path=**}?{**}");
-    addAuthenticationProviderFilter(context, component, fileResource);
-    addRewriteFilter(context, component, extClusterUrl, extHdfsPath, fileResource);
-    addPivotFilter(context, component, fileResource);
-    descriptors.add(fileResource);
+    fileResource.source( extHdfsPath + "/{path=**}?{**}" );
+    fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
+    addAuthenticationProviderFilter( context, component, fileResource );
+    addRewriteFilter( context, component, extClusterUrl, extHdfsPath, fileResource );
+    addPivotFilter( context, component, fileResource );
+    descriptors.add( fileResource );
 
     return descriptors;
   }
 
-  private void addRewriteFilter(DeploymentContext context,
-      ClusterTopologyComponent component, String extClusterUrl,
-      String extHdfsPath, ResourceDescriptor fileResource) {
+  private void addRewriteFilter( DeploymentContext context,
+                                 ClusterTopologyComponent component, String extClusterUrl,
+                                 String extHdfsPath, ResourceDescriptor fileResource ) {
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    params.add(fileResource
+    params.add( fileResource
         .createFilterParam()
-        .name("rewrite")
+        .name( "rewrite" )
         .value(
             "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath
-                + "/{path=**}"));
-    fileResource.addFilters(context
-        .getClusterFilterDescriptorFactory("rewrite").createFilterDescriptors(
-            context, component, fileResource, "rewrite", params));
+                + "/{path=**}" ) );
+    fileResource.addFilters( context
+        .getClusterFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
+            context, component, fileResource, "rewrite", params ) );
   }
 
-  private void addPivotFilter(DeploymentContext context,
-      ClusterTopologyComponent component, ResourceDescriptor rootResource) {
-    rootResource.addFilters(context.getClusterFilterDescriptorFactory("pivot")
-        .createFilterDescriptors(context, component, rootResource, "pivot",
-            null));
+  private void addPivotFilter( DeploymentContext context,
+                               ClusterTopologyComponent component, ResourceDescriptor rootResource ) {
+    rootResource.addFilters( context.getClusterFilterDescriptorFactory( "pivot" )
+        .createFilterDescriptors( context, component, rootResource, "pivot",
+            null ) );
   }
 
-  private void addAuthenticationProviderFilter(DeploymentContext context,
-      ClusterTopologyComponent component, ResourceDescriptor resource) {
-    List<FilterParamDescriptor> params = getFilterParams(context, resource);
-    
+  private void addAuthenticationProviderFilter( DeploymentContext context,
+                                                ClusterTopologyComponent component, ResourceDescriptor resource ) {
+    List<FilterParamDescriptor> params = getFilterParams( context, resource );
+
     resource.addFilters(
-        context.getClusterFilterDescriptorFactory("authentication").createFilterDescriptors(
-            context, component, resource, "authentication", params));
+        context.getClusterFilterDescriptorFactory( "authentication" ).createFilterDescriptors(
+            context, component, resource, "authentication", params ) );
   }
 
   private List<FilterParamDescriptor> getFilterParams(
-      DeploymentContext context, ResourceDescriptor resource) {
-    Map<String, String> filterParams = context.getClusterTopology().getProvider("authentication").getParams();
+      DeploymentContext context, ResourceDescriptor resource ) {
+    Map<String, String> filterParams = context.getClusterTopology().getProvider( "authentication" ).getParams();
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
     Iterator<Map.Entry<String, String>> i = filterParams.entrySet().iterator();
-    Map.Entry<String, String> entry = null;
-    while (i.hasNext()) {
-        entry = (Map.Entry<String, String>) i.next();
-        params.add(resource
-            .createFilterParam()
-            .name(entry.getKey())
-            .value(entry.getValue()));
+    Map.Entry<String, String> entry;
+    while( i.hasNext() ) {
+      entry = i.next();
+      params.add( resource
+          .createFilterParam()
+          .name( entry.getKey() )
+          .value( entry.getValue() ) );
     }
     return params;
   }

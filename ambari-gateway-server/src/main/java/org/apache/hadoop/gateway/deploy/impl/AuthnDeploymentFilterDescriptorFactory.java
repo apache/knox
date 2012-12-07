@@ -56,12 +56,12 @@ public class AuthnDeploymentFilterDescriptorFactory implements DeploymentFilterD
       String filterRole,
       List<FilterParamDescriptor> filterParamDescriptors ) {
     List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
-    ClusterTopologyFilterProvider provider = deploymentContext.getClusterTopology().getProvider("authentication");
-    if ( provider != null && provider.isEnabled() ) {
-      String classname = ClusterDescriptorFactory.getClusterProviderFilterClassName(provider.getRole(), DEFAULT_FILTER_CLASSNAME);
-      if ( classname != null ) {
+    ClusterTopologyFilterProvider provider = deploymentContext.getClusterTopology().getProvider( "authentication" );
+    if( provider != null && provider.isEnabled() ) {
+      String className = ClusterDescriptorFactory.getClusterProviderFilterClassName( provider.getRole(), DEFAULT_FILTER_CLASSNAME );
+      if( className != null ) {
         FilterDescriptor descriptor
-            = resourceDescriptor.createFilter().role( filterRole ).impl( classname );
+            = resourceDescriptor.createFilter().role( filterRole ).impl( className );
         descriptor.addParams( filterParamDescriptors );
         descriptors.add( descriptor );
       }
