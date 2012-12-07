@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.hdfs;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Service;
@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class HdfsDeploymentResourceDescriptorFactory implements
-    DeploymentResourceDescriptorFactory {
+public class HdfsResourceDescriptorFactory implements
+    ResourceDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 

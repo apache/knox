@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
-import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.impl.ClusterDescriptorImpl;
 import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorImporter;
@@ -38,8 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ClusterDescriptorFactory {
 
-  private static Map<String, DeploymentResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
-  private static Map<String, DeploymentFilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
+  private static Map<String, ResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
+  private static Map<String, FilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
   private static Map<String, ClusterDescriptorImporter> IMPORTERS = loadImporters();
   private static Map<String, ClusterDescriptorExporter> EXPORTERS = loadExporters();
   private static Properties ROLE_TO_FILTER_MAPPING = loadRoleToFilterClassMapping();
@@ -64,11 +64,11 @@ public abstract class ClusterDescriptorFactory {
     exporter.store( descriptor, writer );
   }
 
-  public static DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+  public static ResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
     return RESOURCE_FACTORIES.get( service.getRole() );
   }
 
-  public static DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public static FilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
     return FILTER_FACTORIES.get( filterRole );
   }
   
@@ -88,12 +88,12 @@ public abstract class ClusterDescriptorFactory {
     return map;
   }
 
-  private static Map<String, DeploymentResourceDescriptorFactory> loadResourceFactories() {
-    Map<String, DeploymentResourceDescriptorFactory> map = new HashMap<String, DeploymentResourceDescriptorFactory>();
-    ServiceLoader<DeploymentResourceDescriptorFactory> loader = ServiceLoader.load( DeploymentResourceDescriptorFactory.class );
-    Iterator<DeploymentResourceDescriptorFactory> factories = loader.iterator();
+  private static Map<String, ResourceDescriptorFactory> loadResourceFactories() {
+    Map<String, ResourceDescriptorFactory> map = new HashMap<String, ResourceDescriptorFactory>();
+    ServiceLoader<ResourceDescriptorFactory> loader = ServiceLoader.load( ResourceDescriptorFactory.class );
+    Iterator<ResourceDescriptorFactory> factories = loader.iterator();
     while( factories.hasNext() ) {
-      DeploymentResourceDescriptorFactory factory = factories.next();
+      ResourceDescriptorFactory factory = factories.next();
       Set<String> roles = factory.getSupportedResourceRoles();
       for( String role : roles ) {
         map.put( role, factory );
@@ -102,12 +102,12 @@ public abstract class ClusterDescriptorFactory {
     return map;
   }
 
-  private static Map<String, DeploymentFilterDescriptorFactory> loadFilterFactories() {
-    Map<String, DeploymentFilterDescriptorFactory> map = new HashMap<String, DeploymentFilterDescriptorFactory>();
-    ServiceLoader<DeploymentFilterDescriptorFactory> loader = ServiceLoader.load( DeploymentFilterDescriptorFactory.class );
-    Iterator<DeploymentFilterDescriptorFactory> factories = loader.iterator();
+  private static Map<String, FilterDescriptorFactory> loadFilterFactories() {
+    Map<String, FilterDescriptorFactory> map = new HashMap<String, FilterDescriptorFactory>();
+    ServiceLoader<FilterDescriptorFactory> loader = ServiceLoader.load( FilterDescriptorFactory.class );
+    Iterator<FilterDescriptorFactory> factories = loader.iterator();
     while( factories.hasNext() ) {
-      DeploymentFilterDescriptorFactory factory = factories.next();
+      FilterDescriptorFactory factory = factories.next();
       Set<String> roles = factory.getSupportedFilterRoles();
       for( String role : roles ) {
         map.put( role, factory );

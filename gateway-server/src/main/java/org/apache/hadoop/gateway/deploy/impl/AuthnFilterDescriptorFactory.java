@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class AuthnDeploymentFilterDescriptorFactory implements DeploymentFilterDescriptorFactory {
+public class AuthnFilterDescriptorFactory implements FilterDescriptorFactory {
 
   private static final String DEFAULT_FILTER_CLASSNAME = "org.springframework.web.filter.DelegatingFilterProxy";
   private static final Set<String> ROLES = createSupportedRoles();

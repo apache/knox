@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RewriteDeploymentFilterDescriptorFactory implements DeploymentFilterDescriptorFactory {
+public class RewriteFilterDescriptorFactory implements FilterDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 

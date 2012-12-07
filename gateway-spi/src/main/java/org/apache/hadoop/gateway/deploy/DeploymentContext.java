@@ -26,9 +26,9 @@ import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
 public interface DeploymentContext {
 
-  DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service );
+  ResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service );
 
-  DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole );
+  FilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole );
 
   GatewayConfig getGatewayConfig();
 

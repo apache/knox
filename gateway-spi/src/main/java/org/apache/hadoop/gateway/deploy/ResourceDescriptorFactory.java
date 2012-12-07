@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.topology.Service;
 import java.util.List;
 import java.util.Set;
 
-public interface DeploymentResourceDescriptorFactory {
+public interface ResourceDescriptorFactory {
 
   Set<String> getSupportedResourceRoles();
 

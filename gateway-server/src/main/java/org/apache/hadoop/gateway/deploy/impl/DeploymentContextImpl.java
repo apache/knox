@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentFilterDescriptorFactory;
-import org.apache.hadoop.gateway.deploy.DeploymentResourceDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
+import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -50,12 +50,12 @@ public class DeploymentContextImpl implements DeploymentContext {
   }
 
   @Override
-  public DeploymentResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+  public ResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
     return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( service );
   }
 
   @Override
-  public DeploymentFilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public FilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
     return ClusterDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
   }
 
