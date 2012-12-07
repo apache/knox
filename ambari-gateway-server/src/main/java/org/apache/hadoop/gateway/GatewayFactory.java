@@ -83,6 +83,8 @@ public class GatewayFactory {
     for( ResourceParamDescriptor param : resource.params() ) {
       paramMap.put( param.name(), param.value() );
     }
+    //TODO: Should all elements of the resource and cluster descriptor somehow be added to the filter params?
+    //TODO: Should we use some composite params object instead of copying all these name value pairs?
     paramMap.put( "source", resource.source() );
     paramMap.put( "target", resource.target() );
     List<FilterParamDescriptor> paramList = filter.params();

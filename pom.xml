@@ -21,9 +21,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.apache.hadoop.ambari</groupId>
+    <properties>
+        <gateway-group>org.apache.hadoop.ambari</gateway-group>
+        <gateway-version>0.1.0-SNAPSHOT</gateway-version>
+    </properties>
+
+    <groupId>${gateway-group}</groupId>
     <artifactId>ambari-gateway</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>${gateway-version}</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -32,12 +37,30 @@
         <module>ambari-gateway-i18n</module>
         <module>ambari-gateway-i18n-logging-log4j</module>
         <module>ambari-gateway-i18n-logging-sl4j</module>
+        <module>gateway-spi</module>
+        <module>gateway-hdfs</module>
+        <module>gateway-templeton</module>
         <module>ambari-gateway-server</module>
         <module>ambari-gateway-demo</module>
     </modules>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.8</version>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <excludes>
+                        <exclude>.gitignore</exclude>
+                        <exclude>.git/**</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>target/**</exclude>
+                        <exclude>**/*.iml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12.4</version>
@@ -121,27 +144,27 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-i18n</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-i18n-logging-sl4j</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-i18n-logging-log4j</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-server</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
@@ -197,18 +220,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-vfs2</artifactId>
                 <version>2.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.6.6</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>1.6.6</version>
             </dependency>
 
             <!-- **************************** -->
@@ -312,6 +323,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+
+            <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
@@ -334,16 +351,16 @@
             <!-- ********** ********** ********** ********** ********** ********** -->
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-test</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
-                <groupId>org.apache.hadoop.ambari</groupId>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>ambari-gateway-test-ldap</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>${gateway-version}</version>
             </dependency>
 
             <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->

@@ -5,11 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.apache.hadoop.ambari</groupId>
+        <groupId>${gateway-group}</groupId>
         <artifactId>ambari-gateway</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>${gateway-version}</version>
     </parent>
-
     <artifactId>ambari-gateway-server</artifactId>
 
     <profiles>
@@ -76,12 +75,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop.ambari</groupId>
+            <groupId>${gateway-group}</groupId>
             <artifactId>ambari-gateway-i18n</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop.ambari</groupId>
+            <groupId>${gateway-group}</groupId>
             <artifactId>ambari-gateway-i18n-logging-log4j</artifactId>
         </dependency>
 
@@ -199,20 +198,23 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-vfs2</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
 
         <dependency>
-            <groupId>org.apache.hadoop.ambari</groupId>
+            <groupId>${gateway-group}</groupId>
             <artifactId>ambari-gateway-test</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop.ambari</groupId>
+            <groupId>${gateway-group}</groupId>
             <artifactId>ambari-gateway-test-ldap</artifactId>
             <scope>test</scope>
         </dependency>
@@ -261,21 +263,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-ldap</artifactId>
-            <!-- <version>3.1.2.RELEASE</version> -->
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.1</version>
         </dependency>
 
     </dependencies>

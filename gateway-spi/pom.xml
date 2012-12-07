@@ -4,24 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>ambari-gateway</artifactId>
         <groupId>${gateway-group}</groupId>
+        <artifactId>ambari-gateway</artifactId>
         <version>${gateway-version}</version>
     </parent>
-    <artifactId>ambari-gateway-i18n-logging-log4j</artifactId>
+    <artifactId>gateway-spi</artifactId>
 
     <dependencies>
-
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>ambari-gateway-i18n</artifactId>
-        </dependency>
-
     </dependencies>
 
 </project>
