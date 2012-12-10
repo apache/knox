@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -28,20 +28,20 @@ import java.util.List;
 
 public class ResourceDescriptorImpl implements ResourceDescriptor {
 
-  private ClusterDescriptor parent;
+  private GatewayDescriptor parent;
   private String source;
   private String target;
   private List<ResourceParamDescriptor> params;
   private List<FilterDescriptor> filters;
 
-  ResourceDescriptorImpl( ClusterDescriptor parent ) {
+  ResourceDescriptorImpl( GatewayDescriptor parent ) {
     this.parent = parent;
     this.params = new ArrayList<ResourceParamDescriptor>();
     this.filters = new ArrayList<FilterDescriptor>();
   }
 
   @Override
-  public ClusterDescriptor up() {
+  public GatewayDescriptor up() {
     return parent;
   }
 

@@ -43,7 +43,7 @@
             <class>org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
             <param>
                 <name>rewrite</name>
-                <value>webhdfs://*:*/{path=**} http://{gateway.address}/gateway/cluster/namenode/api/v1/{path=**}</value>
+                <value>webhdfs://*:*/{path=**} http://{gateway.address}/gateway/gateway/namenode/api/v1/{path=**}</value>
             </param>
         </filter>
         <filter>

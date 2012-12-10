@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.DeploymentContributor;
 import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
@@ -37,7 +37,7 @@ public class FinalizeDeploymentContributor extends DeploymentContributorBase imp
     try {
       // Write the gateway cluster descriptor (gateway.xml) into the war.
       StringWriter writer = new StringWriter();
-      ClusterDescriptorFactory.store( context.getClusterDescriptor(), "xml", writer );
+      GatewayDescriptorFactory.store( context.getGatewayDescriptor(), "xml", writer );
       context.getWebArchive().addAsWebInfResource(
           new StringAsset( writer.toString() ),
           GatewayServlet.GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );

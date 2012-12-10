@@ -21,8 +21,8 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -32,31 +32,31 @@ public class DeploymentContextImpl implements DeploymentContext {
 
   private GatewayConfig gatewayConfig;
   private Topology topology;
-  private ClusterDescriptor clusterDescriptor;
+  private GatewayDescriptor gatewayDescriptor;
   private WebArchive webArchive;
   private WebAppDescriptor webAppDescriptor;
 
   public DeploymentContextImpl(
       GatewayConfig gatewayConfig,
       Topology topology,
-      ClusterDescriptor clusterDescriptor,
+      GatewayDescriptor gatewayDescriptor,
       WebArchive webArchive,
       WebAppDescriptor webAppDescriptor ) {
     this.gatewayConfig = gatewayConfig;
     this.topology = topology;
-    this.clusterDescriptor = clusterDescriptor;
+    this.gatewayDescriptor = gatewayDescriptor;
     this.webArchive = webArchive;
     this.webAppDescriptor = webAppDescriptor;
   }
 
   @Override
   public ResourceDescriptorFactory getResourceDescriptorFactory( Service service ) {
-    return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( service );
+    return GatewayDescriptorFactory.getClusterResourceDescriptorFactory( service );
   }
 
   @Override
   public FilterDescriptorFactory getFilterDescriptorFactory( String filterRole ) {
-    return ClusterDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
+    return GatewayDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
   }
 
   @Override
@@ -80,8 +80,8 @@ public class DeploymentContextImpl implements DeploymentContext {
   }
 
   @Override
-  public ClusterDescriptor getClusterDescriptor() {
-    return clusterDescriptor;
+  public GatewayDescriptor getGatewayDescriptor() {
+    return gatewayDescriptor;
   }
 
 }

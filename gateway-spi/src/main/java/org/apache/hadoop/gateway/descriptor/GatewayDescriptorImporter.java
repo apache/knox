@@ -15,19 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.descriptor.xml;
+package org.apache.hadoop.gateway.descriptor;
 
-interface XmlClusterDescriptorTags {
+import java.io.IOException;
+import java.io.Reader;
 
-  static final String GATEWAY = "gateway";
-  static final String RESOURCE = "resource";
-  static final String RESOURCE_SOURCE = "source";
-  static final String RESOURCE_TARGET = "target";
-  static final String FILTER = "filter";
-  static final String FILTER_ROLE = "role";
-  static final String FILTER_IMPL = "class";
-  static final String FILTER_PARAM = "param";
-  static final String FILTER_PARAM_NAME = "name";
-  static final String FILTER_PARAM_VALUE = "value";
+public interface GatewayDescriptorImporter {
+
+  public String getFormat();
+
+  GatewayDescriptor load( Reader reader ) throws IOException;
 
 }

@@ -17,26 +17,26 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 
 public class GatewayParamDescriptorImpl implements GatewayParamDescriptor {
 
-  private ClusterDescriptor parent;
+  private GatewayDescriptor parent;
   private String name;
   private String value;
 
-  GatewayParamDescriptorImpl( ClusterDescriptor parent ) {
+  GatewayParamDescriptorImpl( GatewayDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public void up( ClusterDescriptor parent ) {
+  public void up( GatewayDescriptor parent ) {
     this.parent = parent;
   }
 
   @Override
-  public ClusterDescriptor up() {
+  public GatewayDescriptor up() {
     return parent;
   }
 

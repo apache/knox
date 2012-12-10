@@ -17,14 +17,17 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.commons.digester3.AbstractObjectCreationFactory;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
-import org.xml.sax.Attributes;
+interface XmlGatewayDescriptorTags {
 
-public class XmlClusterDescriptorFactory extends AbstractObjectCreationFactory<ClusterDescriptor> {
-  @Override
-  public ClusterDescriptor createObject( Attributes attributes ) throws Exception {
-    return ClusterDescriptorFactory.create();
-  }
+  static final String GATEWAY = "gateway";
+  static final String RESOURCE = "resource";
+  static final String RESOURCE_SOURCE = "source";
+  static final String RESOURCE_TARGET = "target";
+  static final String FILTER = "filter";
+  static final String FILTER_ROLE = "role";
+  static final String FILTER_IMPL = "class";
+  static final String FILTER_PARAM = "param";
+  static final String FILTER_PARAM_NAME = "name";
+  static final String FILTER_PARAM_VALUE = "value";
+
 }

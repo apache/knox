@@ -19,9 +19,9 @@ package org.apache.hadoop.gateway.descriptor;
 
 import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.impl.ClusterDescriptorImpl;
-import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorExporter;
-import org.apache.hadoop.gateway.descriptor.xml.XmlClusterDescriptorImporter;
+import org.apache.hadoop.gateway.descriptor.impl.GatewayDescriptorImpl;
+import org.apache.hadoop.gateway.descriptor.xml.XmlGatewayDescriptorExporter;
+import org.apache.hadoop.gateway.descriptor.xml.XmlGatewayDescriptorImporter;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.io.IOException;
@@ -36,28 +36,28 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class ClusterDescriptorFactory {
+public abstract class GatewayDescriptorFactory {
 
   private static Map<String, ResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
   private static Map<String, FilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
-  private static Map<String, ClusterDescriptorImporter> IMPORTERS = loadImporters();
-  private static Map<String, ClusterDescriptorExporter> EXPORTERS = loadExporters();
+  private static Map<String, GatewayDescriptorImporter> IMPORTERS = loadImporters();
+  private static Map<String, GatewayDescriptorExporter> EXPORTERS = loadExporters();
   private static Properties ROLE_TO_FILTER_MAPPING = loadRoleToFilterClassMapping();
   
-  public static ClusterDescriptor create() {
-    return new ClusterDescriptorImpl();
+  public static GatewayDescriptor create() {
+    return new GatewayDescriptorImpl();
   }
 
-  public static ClusterDescriptor load( String format, Reader reader ) throws IOException {
-    ClusterDescriptorImporter importer = IMPORTERS.get( format );
+  public static GatewayDescriptor load( String format, Reader reader ) throws IOException {
+    GatewayDescriptorImporter importer = IMPORTERS.get( format );
     if( importer == null ) {
       throw new IllegalArgumentException( "No importer for format " + format );
     }
     return importer.load( reader );
   }
 
-  public static void store( ClusterDescriptor descriptor, String format, Writer writer ) throws IOException {
-    ClusterDescriptorExporter exporter = EXPORTERS.get( format );
+  public static void store( GatewayDescriptor descriptor, String format, Writer writer ) throws IOException {
+    GatewayDescriptorExporter exporter = EXPORTERS.get( format );
     if( exporter == null ) {
       throw new IllegalArgumentException( "No exporter for format " + format );
     }
@@ -76,15 +76,15 @@ public abstract class ClusterDescriptorFactory {
     return ROLE_TO_FILTER_MAPPING.getProperty(role, defaultClassName);
   }
 
-  private static Map<String, ClusterDescriptorImporter> loadImporters() {
-    Map<String, ClusterDescriptorImporter> map = new ConcurrentHashMap<String, ClusterDescriptorImporter>();
-    map.put( "xml", new XmlClusterDescriptorImporter() );
+  private static Map<String, GatewayDescriptorImporter> loadImporters() {
+    Map<String, GatewayDescriptorImporter> map = new ConcurrentHashMap<String, GatewayDescriptorImporter>();
+    map.put( "xml", new XmlGatewayDescriptorImporter() );
     return map;
   }
 
-  private static Map<String, ClusterDescriptorExporter> loadExporters() {
-    Map<String, ClusterDescriptorExporter> map = new ConcurrentHashMap<String, ClusterDescriptorExporter>();
-    map.put( "xml", new XmlClusterDescriptorExporter() );
+  private static Map<String, GatewayDescriptorExporter> loadExporters() {
+    Map<String, GatewayDescriptorExporter> map = new ConcurrentHashMap<String, GatewayDescriptorExporter>();
+    map.put( "xml", new XmlGatewayDescriptorExporter() );
     return map;
   }
 
@@ -117,7 +117,7 @@ public abstract class ClusterDescriptorFactory {
   }
   
   private static Properties loadRoleToFilterClassMapping() {
-    InputStream inputStream = ClusterDescriptorFactory.class.getClassLoader().getResourceAsStream("META-INF/filter-provider.properties");
+    InputStream inputStream = GatewayDescriptorFactory.class.getClassLoader().getResourceAsStream("META-INF/filter-provider.properties");
     Properties properties = new Properties();  
     
     if ( inputStream != null ) {  

@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -38,6 +38,6 @@ public interface DeploymentContext {
 
   WebAppDescriptor getWebAppDescriptor();
 
-  ClusterDescriptor getClusterDescriptor();
+  GatewayDescriptor getGatewayDescriptor();
 
 }

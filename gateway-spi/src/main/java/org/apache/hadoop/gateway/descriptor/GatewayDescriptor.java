@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.descriptor;
 
 import java.util.List;
 
-public interface ClusterDescriptor {
+public interface GatewayDescriptor {
 
   List<GatewayParamDescriptor> params();
 

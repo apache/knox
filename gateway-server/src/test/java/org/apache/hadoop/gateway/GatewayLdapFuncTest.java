@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.category.FunctionalTests;
@@ -97,7 +97,7 @@ public class GatewayLdapFuncTest {
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Reader configReader = new InputStreamReader( configUrl.openStream() );
-    ClusterDescriptor config = ClusterDescriptorFactory.load( "xml", configReader );
+    GatewayDescriptor config = GatewayDescriptorFactory.load( "xml", configReader );
     configReader.close();
 
     for( Map.Entry<String,String> param : params.entrySet() ) {

@@ -17,15 +17,13 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-
 import java.io.IOException;
 import java.io.Writer;
 
-public interface ClusterDescriptorExporter {
+public interface GatewayDescriptorExporter {
 
   public String getFormat();
 
-  public void store( ClusterDescriptor descriptor, Writer writer ) throws IOException;
+  public void store( GatewayDescriptor descriptor, Writer writer ) throws IOException;
 
 }

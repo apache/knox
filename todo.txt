@@ -1,6 +1,6 @@
 Security
 1) Migrate from Apache Shiro to SpringSecurity or decide to stick with Shiro.
-2) Make HTTPClient do SPNEGO with secure Hadoop cluster.
+2) Make HTTPClient do SPNEGO with secure Hadoop gateway.
 3) Setup ApacheDS as a KDC in gateway functional tests.
 4) Figure out how to do REST SSO with ActiveDirectory+Hadoop.
 5) Figure out untrusted code isolation for windows and linux.
@@ -26,8 +26,8 @@ and this
         <source>/namenode/api/v1/{path=**}?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
 behave identically when the input URL is one of these
-  http://host:port/gateway/cluster/namenode/api/v1
-  http://host:port/gateway/cluster/namenode/api/v1/
+  http://host:port/gateway/gateway/namenode/api/v1
+  http://host:port/gateway/gateway/namenode/api/v1/
 
 Bug
 Right now any parameter that wasn't used in an expansion by the time the query is expanded is added to the

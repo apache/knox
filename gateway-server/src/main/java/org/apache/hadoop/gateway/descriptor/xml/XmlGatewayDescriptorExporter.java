@@ -17,11 +17,11 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorExporter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -37,7 +37,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.Writer;
 
-public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, XmlClusterDescriptorTags {
+public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, XmlGatewayDescriptorTags {
 
   @Override
   public String getFormat() {
@@ -45,7 +45,7 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
   }
 
   @Override
-  public void store( ClusterDescriptor descriptor, Writer writer ) throws IOException {
+  public void store( GatewayDescriptor descriptor, Writer writer ) throws IOException {
     try {
       DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = builderFactory.newDocumentBuilder();

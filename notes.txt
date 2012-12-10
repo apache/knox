@@ -2,15 +2,15 @@
 Deployment (Once we know we need to create a new WAR).
 ----------
 . Given global config
-. Given cluster topology
+. Given gateway topology
 . Create empty WebArchive
 . Create empty WebAppDescriptor
 . Invoke the Gateway deployment contributor
   . Create empty ClusterConfig
     . Find all ResourceConfigFactory services
-    . For each service in cluster topo
+    . For each service in gateway topo
       . Find and service's config factory
-      . Add created resources configs to cluster config
+      . Add created resources configs to gateway config
         Q: How do they know to include as vs ss?
   . Populate the deployment context with the above.
 . Find all ClusterDeploymentContributor services

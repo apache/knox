@@ -19,9 +19,9 @@ package org.apache.hadoop.gateway.descriptor;
 
 public interface GatewayParamDescriptor {
 
-  void up( ClusterDescriptor parent );
+  void up( GatewayDescriptor parent );
 
-  ClusterDescriptor up();
+  GatewayDescriptor up();
 
   GatewayParamDescriptor name( String name );
 

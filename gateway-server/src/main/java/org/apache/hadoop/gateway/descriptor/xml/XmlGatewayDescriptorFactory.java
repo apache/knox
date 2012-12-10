@@ -15,17 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.descriptor;
+package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.commons.digester3.AbstractObjectCreationFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.xml.sax.Attributes;
 
-import java.io.IOException;
-import java.io.Reader;
-
-public interface ClusterDescriptorImporter {
-
-  public String getFormat();
-
-  ClusterDescriptor load( Reader reader ) throws IOException;
-
+public class XmlGatewayDescriptorFactory extends AbstractObjectCreationFactory<GatewayDescriptor> {
+  @Override
+  public GatewayDescriptor createObject( Attributes attributes ) throws Exception {
+    return GatewayDescriptorFactory.create();
+  }
 }

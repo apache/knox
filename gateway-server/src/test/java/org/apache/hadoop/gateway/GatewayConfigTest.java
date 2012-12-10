@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-public class GatewayClusterConfigTest {
+public class GatewayConfigTest {
 
   private String locateTestConfigDir() {
     return null;

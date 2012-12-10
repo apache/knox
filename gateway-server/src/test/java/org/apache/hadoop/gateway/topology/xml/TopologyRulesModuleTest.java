@@ -36,13 +36,13 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
-public class ClusterTopologyRulesModuleTest {
+public class TopologyRulesModuleTest {
 
   private static DigesterLoader loader;
 
   @Before
   public void setUp() throws Exception {
-    loader = newLoader( new XmlClusterTopologyRules() );
+    loader = newLoader( new XmlTopologyRules() );
   }
 
   @After

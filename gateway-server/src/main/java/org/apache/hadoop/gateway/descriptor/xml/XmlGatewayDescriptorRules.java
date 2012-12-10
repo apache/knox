@@ -24,14 +24,14 @@ import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.xml.sax.Attributes;
 
-public class XmlClusterDescriptorRules extends AbstractRulesModule implements XmlClusterDescriptorTags {
+public class XmlGatewayDescriptorRules extends AbstractRulesModule implements XmlGatewayDescriptorTags {
 
   private static final Object[] NO_PARAMS = new Object[0];
 
   @Override
   protected void configure() {
 
-    forPattern( GATEWAY ).addRule( new FactoryCreateRule( XmlClusterDescriptorFactory.class ) );
+    forPattern( GATEWAY ).addRule( new FactoryCreateRule( XmlGatewayDescriptorFactory.class ) );
     forPattern( GATEWAY + "/" + RESOURCE ).addRule( new AddNextRule( "addResource" ) );
     forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_TARGET ).callMethod( "target" ).usingElementBodyAsArgument();

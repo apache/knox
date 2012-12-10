@@ -22,8 +22,8 @@ import org.apache.hadoop.gateway.deploy.impl.DeploymentContextImpl;
 import org.apache.hadoop.gateway.deploy.impl.FinalizeDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.impl.GatewayDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.impl.InitializeDeploymentContributor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -49,7 +49,7 @@ public abstract class DeploymentFactory {
   public static WebArchive createClusterDeployment( GatewayConfig config, Topology topology ) {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, topology.getName() );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
-    ClusterDescriptor gateway = ClusterDescriptorFactory.create();
+    GatewayDescriptor gateway = GatewayDescriptorFactory.create();
 
     DeploymentContext context
         = new DeploymentContextImpl( config, topology, gateway, webArchive, webAppDesc );

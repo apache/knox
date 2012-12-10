@@ -32,9 +32,9 @@ limitations under the License.
     </property>
 
     <property>
-        <name>gateway.cluster.conf.dir</name>
+        <name>gateway.gateway.conf.dir</name>
         <value>clusters</value>
-        <description>The directory within GATEWAY_HOME that contains cluster topology files and deployments.</description>
+        <description>The directory within GATEWAY_HOME that contains gateway topology files and deployments.</description>
     </property>
 
 </configuration>

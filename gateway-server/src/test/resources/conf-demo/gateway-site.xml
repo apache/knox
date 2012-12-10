@@ -44,7 +44,7 @@ limitations under the License.
     </property>
 
     <property>
-        <name>gateway.cluster.config</name>
+        <name>gateway.gateway.config</name>
         <value>url</value>
         <description>The location of the Shiro configuration file.</description>
     </property>

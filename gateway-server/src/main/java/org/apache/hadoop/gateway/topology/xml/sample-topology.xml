@@ -18,7 +18,7 @@
 -->
 
 <topology>
-    <name>cluster</name>
+    <name>gateway</name>
     <service>
         <role>NAMENODE</role>
         <url>http://host:80/webhdfs/v1</url>

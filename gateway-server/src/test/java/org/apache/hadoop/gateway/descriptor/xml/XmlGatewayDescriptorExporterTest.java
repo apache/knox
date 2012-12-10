@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -39,17 +39,17 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.internal.matchers.StringContains.containsString;
 
-public class XmlClusterDescriptorExporterTest {
+public class XmlGatewayDescriptorExporterTest {
 
   @Test
   public void testFormat() {
-    XmlClusterDescriptorExporter exporter = new XmlClusterDescriptorExporter();
+    XmlGatewayDescriptorExporter exporter = new XmlGatewayDescriptorExporter();
     assertThat( exporter.getFormat(), is( "xml" ) );
   }
 
   @Test
   public void testXmlClusterDescriptorStore() throws IOException, SAXException, ParserConfigurationException {
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.create()
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource()
         .source( "resource1-source" )
         .target( "resource1-target" )
@@ -67,7 +67,7 @@ public class XmlClusterDescriptorExporterTest {
         .impl( "resource1-filter2-impl" ).up().up();
 
     CharArrayWriter writer = new CharArrayWriter();
-    ClusterDescriptorFactory.store( descriptor, "xml", writer );
+    GatewayDescriptorFactory.store( descriptor, "xml", writer );
 
     String xml = writer.toString();
 
@@ -88,11 +88,11 @@ public class XmlClusterDescriptorExporterTest {
   @Test
   public void testXmlClusterDescriptorStoreMissingValue() throws IOException, SAXException, ParserConfigurationException {
 
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.create()
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().addParam().up().up().up();
 
     CharArrayWriter writer = new CharArrayWriter();
-    ClusterDescriptorFactory.store( descriptor, "xml", writer );
+    GatewayDescriptorFactory.store( descriptor, "xml", writer );
     String xml = writer.toString();
     //System.out.println( xml );
 
@@ -103,11 +103,11 @@ public class XmlClusterDescriptorExporterTest {
 
   @Test
   public void testXmlClusterDescriptorStoreFailure() throws IOException {
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.create()
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().addParam().up().up().up();
 
     try {
-      ClusterDescriptorFactory.store( descriptor, "xml", new BrokenWriter() );
+      GatewayDescriptorFactory.store( descriptor, "xml", new BrokenWriter() );
       fail( "Expected IOException" );
     } catch( IOException e ) {
       assertThat( e.getMessage(), containsString( "BROKEN" ) );

@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
@@ -55,7 +55,7 @@ public class GatewayFactory {
 //    gateway.addFilter( source, name, clazz, filterConfig );
 //  }
 
-  public static GatewayFilter create( ClusterDescriptor descriptor ) throws URISyntaxException {
+  public static GatewayFilter create( GatewayDescriptor descriptor ) throws URISyntaxException {
     GatewayFilter filter = new GatewayFilter();
     for( ResourceDescriptor resource : descriptor.resources() ) {
       addResource( filter, resource );
@@ -76,14 +76,14 @@ public class GatewayFactory {
   private static Map<String, String> createParams( FilterDescriptor filter ) {
     Map<String, String> paramMap = new HashMap<String, String>();
     ResourceDescriptor resource = filter.up();
-    ClusterDescriptor cluster = resource.up();
-    for( GatewayParamDescriptor param : cluster.params() ) {
+    GatewayDescriptor gateway = resource.up();
+    for( GatewayParamDescriptor param : gateway.params() ) {
       paramMap.put( param.name(), param.value() );
     }
     for( ResourceParamDescriptor param : resource.params() ) {
       paramMap.put( param.name(), param.value() );
     }
-    //TODO: Should all elements of the resource and cluster descriptor somehow be added to the filter params?
+    //TODO: Should all elements of the resource and gateway descriptor somehow be added to the filter params?
     //TODO: Should we use some composite params object instead of copying all these name value pairs?
     paramMap.put( "source", resource.source() );
     paramMap.put( "target", resource.target() );

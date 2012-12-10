@@ -793,7 +793,7 @@ Release 1.0.0 - 2011.12.15
     getDefaultBlockSize() and getDefaultReplication() in WebHdfsFileSystem
     and cleared content type in ExceptionHandler. (szetszwo)
 
-    HDFS-2416. Distcp with a WebHDFS uri on a secure cluster fails. (jitendra)
+    HDFS-2416. Distcp with a WebHDFS uri on a secure gateway fails. (jitendra)
 
     HDFS-2494. Close the streams and DFSClient in DatanodeWebHdfsMethods.
     (Uma Maheswara Rao G via szetszwo)
@@ -1135,7 +1135,7 @@ Release 0.20.205.0 - 2011.10.06
     MAPREDUCE-2928. MR-2413 improvements (Eli Collins via mattf)
 
     HADOOP-7655. provide a small validation script that smoke tests
-    the installed cluster. (Arpit Gupta via mattf)
+    the installed gateway. (Arpit Gupta via mattf)
 
     MAPREDUCE-2187. Reporter sends progress during sort/merge. (Anupam Seth via
     acmurthy)
@@ -1200,7 +1200,7 @@ Release 0.20.205.0 - 2011.10.06
     MAPREDUCE-2915. Ensure LTC passes java.library.path. (Kihwal Lee via
     acmurthy)
 
-    HADOOP-7599. Script improvements to setup a secure Hadoop cluster
+    HADOOP-7599. Script improvements to setup a secure Hadoop gateway
     (Eric Yang via ddas)
 
     MAPREDUCE-2981. Backport FairScheduler from trunk. (Matei Zaharia via
@@ -1239,7 +1239,7 @@ Release 0.20.204.0 - 2011-8-25
 
     HADOOP-6255. Create RPM and Debian packages for common. Changes deployment
     layout to be consistent across the binary tgz, rpm, and deb. Adds setup
-    scripts for easy one node cluster configuration and user creation.
+    scripts for easy one node gateway configuration and user creation.
     (Eric Yang via omalley)
 
     HADOOP-7324. Ganglia plugins for metrics v2. (Priyo Mustafi via llu)
@@ -1761,7 +1761,7 @@ Release 0.20.202.0 - unreleased
     HDFS-1150.FIX.  Verify datanodes' identities to clients in secure clusters.
     Update to patch to improve handling of jsvc source in build.xml (jghoman)
 
-    HADOOP-6752. Remote cluster control functionality needs JavaDocs
+    HADOOP-6752. Remote gateway control functionality needs JavaDocs
     improvement. (Balaji Rajagopalan via cos)
 
     MAPREDUCE-1288. Fixes TrackerDistributedCacheManager to take into account
@@ -1824,7 +1824,7 @@ Release 0.20.202.0 - unreleased
     HDFS-1157. Modifications introduced by HDFS-1150 are breaking aspect's
     bindings (cos)
 
-    HDFS-1130. Adds a configuration dfs.cluster.administrators for
+    HDFS-1130. Adds a configuration dfs.gateway.administrators for
     controlling access to the default servlets in hdfs. (ddas)
 
     HADOOP-6706.FIX. Relogin behavior for RPC clients could be improved
@@ -1885,8 +1885,8 @@ Release 0.20.202.0 - unreleased
     MAPREDUCE-1317. NPE in setHostName in Rumen. (rksingh)
 
     MAPREDUCE-1754. Replace mapred.persmissions.supergroup with an acl :
-    mapreduce.cluster.administrators and HADOOP-6748.: Remove
-    org.apache.hadoop.cluster.administrators. Contributed by Amareshwari Sriramadasu.
+    mapreduce.gateway.administrators and HADOOP-6748.: Remove
+    org.apache.hadoop.gateway.administrators. Contributed by Amareshwari Sriramadasu.
 
     HADOOP-6701.  Incorrect exit codes for "dfs -chown", "dfs -chgrp"
     (rphulari)
@@ -1918,7 +1918,7 @@ Release 0.20.202.0 - unreleased
     queues as specified in the trace. (rksing via htang)
 
     MAPREDUCE-1687. Stress submission policy does not always stress the
-    cluster. (htang)
+    gateway. (htang)
 
     MAPREDUCE-1641. Bug-fix to ensure command line options such as
     -files/-archives are checked for duplicate artifacts in the
@@ -1968,10 +1968,10 @@ Release 0.20.202.0 - unreleased
     HDFS-1096. allow dfsadmin/mradmin refresh of superuser proxy group
     mappings(boryas).
 
-    HDFS-1012. Support for cluster specific path entries in ldap for hdfsproxy
+    HDFS-1012. Support for gateway specific path entries in ldap for hdfsproxy
     (Srikanth Sundarrajan via Nicholas)
 
-    HDFS-1011. Improve Logging in HDFSProxy to include cluster name associated
+    HDFS-1011. Improve Logging in HDFSProxy to include gateway name associated
     with the request (Srikanth Sundarrajan via Nicholas)
 
     HDFS-1010. Retrieve group information from UnixUserGroupInformation
@@ -2187,7 +2187,7 @@ Release 0.20.202.0 - unreleased
     with non-deletable permissions are created within it.
     (Amar Kamat via yhemanth)
 
-    HDFS-1007. Fixes bugs to do with 20S cluster talking to 20 over
+    HDFS-1007. Fixes bugs to do with 20S gateway talking to 20 over
     hftp (borya)
 
     MAPREDUCE:1566. Fixes bugs in the earlier patch. (ddas)
@@ -2778,7 +2778,7 @@ Release 0.20.202.0 - unreleased
     to trash, despite trash being enabled, if a user is over-quota. (jhoman)
 
     MAPREDUCE-1160. Reduce verbosity of log lines in some Map/Reduce classes
-    to avoid filling up jobtracker logs on a busy cluster.
+    to avoid filling up jobtracker logs on a busy gateway.
     (Ravi Gummadi and Hong Tang via yhemanth)
 
     HDFS-587. Add ability to run HDFS with MR test on non-default queue,
@@ -3665,7 +3665,7 @@ Release 0.20.0 - 2009-04-15
     1) The TaskTracker has been blacklisted by at least 4 jobs (configurable)
     2) The TaskTracker has been blacklisted 50% more number of times than
        the average (configurable)
-    3) The cluster has less than 50% trackers blacklisted
+    3) The gateway has less than 50% trackers blacklisted
     Once in 24 hours, a TaskTracker blacklisted for all jobs is given a chance.
     Restarting the TaskTracker moves it out of the blacklist.
     (Amareshwari Sriramadasu via ddas)
@@ -3695,7 +3695,7 @@ Release 0.20.0 - 2009-04-15
     fixed to no longer send out heartbeats on each task completion. A
     slow-start for scheduling reduces is introduced to ensure that reduces
     aren't started till sufficient number of maps are done, else reduces of
-    jobs whose maps aren't scheduled might swamp the cluster.
+    jobs whose maps aren't scheduled might swamp the gateway.
     Configuration changes to mapred-default.xml:
       add mapred.reduce.slowstart.completed.maps
     (acmurthy)
@@ -3984,7 +3984,7 @@ Release 0.20.0 - 2009-04-15
     HADOOP-4956. Creates TaskStatus for failed tasks with an empty Counters
     object instead of null. (ddas)
 
-    HADOOP-4979. Fix capacity scheduler to block cluster for failed high
+    HADOOP-4979. Fix capacity scheduler to block gateway for failed high
     RAM requirements across task types. (Vivek Ratan via yhemanth)
 
     HADOOP-4949. Fix native compilation. (Chris Douglas via acmurthy)
@@ -4260,7 +4260,7 @@ Release 0.20.0 - 2009-04-15
     HADOOP-5548. Add synchronization for JobTracker methods in RecoveryManager.
     (Amareshwari Sriramadasu via sharad)
 
-    HADOOP-3810. NameNode seems unstable on a cluster with little space left.
+    HADOOP-3810. NameNode seems unstable on a gateway with little space left.
     (hairong)
 
     HADOOP-5068. Fix NPE in TestCapacityScheduler.  (Vinod Kumar Vavilapalli
@@ -4540,7 +4540,7 @@ Release 0.19.0 - 2008-11-18
     consistent with the web interface as defined in HADOOP-2816. (Suresh
     Srinivas via cdouglas)
 
-    HADOOP-4430. Further change the cluster summary at name node web that was
+    HADOOP-4430. Further change the gateway summary at name node web that was
     changed in HADOOP-2816:
       Non DFS Used - This indicates the disk space taken by non DFS file from
                      the Configured capacity
@@ -4649,7 +4649,7 @@ Release 0.19.0 - 2008-11-18
     MAP+ / REDUCE MAP*. (Alejandro Abdelnur via ddas)
 
     HADOOP-3445. Add capacity scheduler that provides guaranteed capacities to
-    queues as a percentage of the cluster. (Vivek Ratan via omalley)
+    queues as a percentage of the gateway. (Vivek Ratan via omalley)
 
     HADOOP-3992. Add a synthetic load generation facility to the test
     directory. (hairong via szetszwo)
@@ -5108,7 +5108,7 @@ Release 0.19.0 - 2008-11-18
     HADOOP-4037. Fix the eclipse plugin for versions of kfs and log4j. (nigel
     via omalley)
 
-    HADOOP-3950. Cause the Mini MR cluster to wait for task trackers to
+    HADOOP-3950. Cause the Mini MR gateway to wait for task trackers to
     register before continuing. (enis via omalley)
 
     HADOOP-3910. Remove unused ClusterTestDFSNamespaceLogging and
@@ -5552,7 +5552,7 @@ Release 0.18.3 - 2009-01-27
     HADOOP-4857. Fixes TestUlimit to have exactly 1 map in the jobs spawned.
     (Ravi Gummadi via ddas)
 
-    HADOOP-4810. Data lost at cluster startup time. (hairong)
+    HADOOP-4810. Data lost at gateway startup time. (hairong)
 
     HADOOP-4797. Improve how RPC server reads and writes large buffers. Avoids
     soft-leak of direct buffers and excess copies in NIO layer. (Raghu Angadi)
@@ -6638,10 +6638,10 @@ Release 0.17.0 - 2008-05-18
     HADOOP-2634. Deprecate ClientProtocol::exists.
     (lohit vijayarenu via cdouglas)
 
-    HADOOP-2410.  Make EC2 cluster nodes more independent of each other.
+    HADOOP-2410.  Make EC2 gateway nodes more independent of each other.
     Multiple concurrent EC2 clusters are now supported, and nodes may be
-    added to a cluster on the fly with new nodes starting in the same EC2
-    availability zone as the cluster.  Ganglia monitoring and large
+    added to a gateway on the fly with new nodes starting in the same EC2
+    availability zone as the gateway.  Ganglia monitoring and large
     instance sizes have also been added.  (Chris K Wensel via tomwhite)
 
     HADOOP-2826. Deprecated FileSplit.getFile(), LineRecordReader.readLine().
@@ -7024,7 +7024,7 @@ Release 0.17.0 - 2008-05-18
 
     HADOOP-3114. Fix TestDFSShell on Windows. (Lohit Vijaya Renu via cdouglas)
 
-    HADOOP-3118.  Fix Namenode NPE while loading fsimage after a cluster
+    HADOOP-3118.  Fix Namenode NPE while loading fsimage after a gateway
     upgrade from older disk format. (dhruba)
 
     HADOOP-3161. Fix FIleUtil.HardLink.getLinkCount on Mac OS. (nigel
@@ -7455,7 +7455,7 @@ Release 0.16.0 - 2008-02-07
 
     HADOOP-2652. Fix permission issues for HftpFileSystem. This is an
     incompatible change since distcp may not be able to copy files
-    from cluster A (compiled with this patch) to cluster B (compiled
+    from gateway A (compiled with this patch) to gateway B (compiled
     with previous versions). (Tsz Wo (Nicholas), SZE via dhruba)
 
   NEW FEATURES
@@ -7466,7 +7466,7 @@ Release 0.16.0 - 2008-02-07
     HADOOP-2299.  Defination of a login interface.  A simple implementation for
     Unix users and groups. (Hairong Kuang via dhruba)
 
-    HADOOP-1652.  A utility to balance data among datanodes in a HDFS cluster.
+    HADOOP-1652.  A utility to balance data among datanodes in a HDFS gateway.
     (Hairong Kuang via dhruba)
 
     HADOOP-2085.  A library to support map-side joins of consistently
@@ -7513,7 +7513,7 @@ Release 0.16.0 - 2008-02-07
     violations.  (Konstantin Shvachko via dhruba)
 
     HADOOP-1604.  An system administrator can finalize namenode upgrades
-    without running the cluster. (Konstantin Shvachko via dhruba)
+    without running the gateway. (Konstantin Shvachko via dhruba)
 
     HADOOP-1839.  Link-ify the Pending/Running/Complete/Killed grid in
     jobdetails.jsp to help quickly narrow down and see categorized TIPs'
@@ -7699,7 +7699,7 @@ Release 0.16.0 - 2008-02-07
     dump while the dump is happening. (Amareshwari Sri Ramadasu via omalley)
 
     HADOOP-1900. Makes the heartbeat and task event queries interval
-    dependent on the cluster size.  (Amareshwari Sri Ramadasu via ddas)
+    dependent on the gateway size.  (Amareshwari Sri Ramadasu via ddas)
 
     HADOOP-2208. Counter update frequency (from TaskTracker to JobTracker) is
     capped at 1 minute.  (Amareshwari Sri Ramadasu via ddas)
@@ -8101,7 +8101,7 @@ Release 0.15.1 - 2007-11-27
     HADOOP-1917.  Addition of guides/tutorial for better overall
     documentation for Hadoop. Specifically:
     * quickstart.html is targetted towards first-time users and helps them
-      setup a single-node cluster and play with Hadoop.
+      setup a single-node gateway and play with Hadoop.
     * cluster_setup.html helps admins to configure and setup non-trivial
       org.apache.hadoop clusters.
     * mapred_tutorial.html is a comprehensive Map-Reduce tutorial.
@@ -8900,7 +8900,7 @@ Release 0.14.0 - 2007-08-17
  61. HADOOP-1023.  Add links to searchable mail archives.
      (tomwhite via cutting)
 
- 62. HADOOP-1504.  Fix terminate-org.apache.hadoop-cluster script in contrib/ec2
+ 62. HADOOP-1504.  Fix terminate-org.apache.hadoop-gateway script in contrib/ec2
      to only terminate Hadoop instances, and not other instances
      started by the same user.  (tomwhite via cutting)
 
@@ -9092,7 +9092,7 @@ Release 0.14.0 - 2007-08-17
      default replication is sometimes reset to one on restart.
      (Raghu Angadi via cutting)
 
-132. HADOOP-1635.  Remove hardcoded keypair name and fix launch-org.apache.hadoop-cluster
+132. HADOOP-1635.  Remove hardcoded keypair name and fix launch-org.apache.hadoop-gateway
      to support later versions of ec2-api-tools.  (Stu Hood via tomwhite)
 
 133. HADOOP-1638.  Fix contrib EC2 scripts to support NAT addressing.
@@ -9302,7 +9302,7 @@ Release 0.13.0 - 2007-06-08
     datanodes in getAdditionalBlocks.  (Dhruba Borthakur via tomwhite)
 
 34. HADOOP-1133.  Add tool to analyze and debug namenode on a production
-    cluster.  (Dhruba Borthakur via tomwhite)
+    gateway.  (Dhruba Borthakur via tomwhite)
 
 35. HADOOP-1151.  Remove spurious printing to stderr in streaming
     PipeMapRed.  (Koji Noguchi via tomwhite)
@@ -9707,7 +9707,7 @@ Release 0.12.1 - 2007-03-17
  5. HADOOP-1077.  Fix a race condition fetching map outputs that could
     hang reduces.  (Devaraj Das via cutting)
 
- 6. HADOOP-1083.  Fix so that when a cluster restarts with a missing
+ 6. HADOOP-1083.  Fix so that when a gateway restarts with a missing
     datanode, its blocks are replicated.  (Hairong Kuang via cutting)
 
  7. HADOOP-1082.  Fix a NullPointerException in ChecksumFileSystem.
@@ -9763,7 +9763,7 @@ Release 0.12.1 - 2007-03-17
     flush method.  (Hairong Kuang via tomwhite)
 
 23. HADOOP-1126.  Optimize CPU usage for under replicated blocks
-    when cluster restarts.  (Hairong Kuang via tomwhite)
+    when gateway restarts.  (Hairong Kuang via tomwhite)
 
 
 Release 0.12.0 - 2007-03-02
@@ -10086,7 +10086,7 @@ Release 0.11.0 - 2007-02-02
     get snapshots of the namenode state.  (Dhruba Borthakur via cutting)
 
 29. HADOOP-884.  Add scripts in contrib/ec2 to facilitate running
-    Hadoop on an Amazon's EC2 cluster.  (Tom White via cutting)
+    Hadoop on an Amazon's EC2 gateway.  (Tom White via cutting)
 
 30. HADOOP-937.  Change the namenode to request re-registration of
     datanodes in more circumstances.  (Hairong Kuang via cutting)
@@ -10387,7 +10387,7 @@ Release 0.10.0 - 2007-01-05
 
 54. HADOOP-681.  Add to HDFS the ability to decommission nodes.  This
     causes their blocks to be re-replicated on other nodes, so that
-    they may be removed from a cluster.  (Dhruba Borthakur via cutting)
+    they may be removed from a gateway.  (Dhruba Borthakur via cutting)
 
 55. HADOOP-470.  In HDFS web ui, list the datanodes containing each
     copy of a block.  (Hairong Kuang via cutting)
@@ -10662,7 +10662,7 @@ Release 0.8.0 - 2006-11-03
     extend the cache to permit symbolic links to cached items, rather
     than local file copies.  (Mahadev Konar via cutting)
 
-25. HADOOP-482.  Fix unit tests to work when a cluster is running on
+25. HADOOP-482.  Fix unit tests to work when a gateway is running on
     the same machine, removing port conflicts.  (Wendy Chien via cutting)
 
 26. HADOOP-90.  Permit dfs.name.dir to list multiple directories,
@@ -11348,7 +11348,7 @@ Release 0.3.2 - 2006-06-09
  4. HADOOP-240.  DFS's mkdirs() implementation no longer logs a warning
     when the directory already exists. (Hairong Kuang via cutting)
 
- 5. HADOOP-285.  Fix DFS datanodes to be able to re-join the cluster
+ 5. HADOOP-285.  Fix DFS datanodes to be able to re-join the gateway
     after the connection to the namenode is lost.  (omalley via cutting)
 
  6. HADOOP-277.  Fix a race condition when creating directories.
@@ -11654,7 +11654,7 @@ Release 0.2.0 - 2006-05-05
     completion, its output should not be lost.  (Stack via cutting)
 
 42. HADOOP-184. Re-structure some test code to better support testing
-    on a cluster.  (Mahadev Konar via cutting)
+    on a gateway.  (Mahadev Konar via cutting)
 
 43. HADOOP-191  Add streaming package, Hadoop's first contrib module.
     This permits folks to easily submit MapReduce jobs whose map and

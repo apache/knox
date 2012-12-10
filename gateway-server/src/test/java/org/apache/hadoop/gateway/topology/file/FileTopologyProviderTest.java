@@ -49,7 +49,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
-public class FileClusterTopologyProviderTest {
+public class FileTopologyProviderTest {
 
   @Before
   public void setUp() throws Exception {

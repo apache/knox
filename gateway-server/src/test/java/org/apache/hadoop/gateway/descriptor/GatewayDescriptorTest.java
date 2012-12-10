@@ -27,12 +27,12 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.internal.matchers.StringContains.containsString;
 
-public class ClusterDescriptorTest {
+public class GatewayDescriptorTest {
 
   @Test
   public void testClusterDescriptorConstruction() {
 
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.create()
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addParam().name( "cluster-param1-name" ).value( "cluster-param1-value" ).up()
         .addParam().name( "cluster-param2-name" ).value( "cluster-param2-value" ).up()
         .addResource()
@@ -99,14 +99,14 @@ public class ClusterDescriptorTest {
   @Test
   public void testInvalidImportExportFormats() throws IOException {
     try {
-      ClusterDescriptorFactory.load( "INVALID", null );
+      GatewayDescriptorFactory.load( "INVALID", null );
       fail( "Expected IllegalArgumentException" );
     } catch( IllegalArgumentException e ) {
       assertThat( e.getMessage(), containsString( "INVALID" ) );
     }
 
     try {
-      ClusterDescriptorFactory.store( ClusterDescriptorFactory.create(), "INVALID", null );
+      GatewayDescriptorFactory.store( GatewayDescriptorFactory.create(), "INVALID", null );
       fail( "Expected IllegalArgumentException" );
     } catch( IllegalArgumentException e ) {
       assertThat( e.getMessage(), containsString( "INVALID" ) );

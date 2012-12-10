@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 
-public class XmlClusterTopologyRules extends AbstractRulesModule {
+public class XmlTopologyRules extends AbstractRulesModule {
 
   private static final String ROOT_TAG = "topology";
   private static final String NAME_TAG = "name";

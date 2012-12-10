@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.mock.MockConsoleFactory;
 import org.apache.hadoop.test.category.ManualTests;
@@ -60,7 +60,7 @@ public class GatewayDemoSecure {
 
     URL configUrl = ClassLoader.getSystemResource( "gateway-demo-secure.xml" );
     Reader configReader = new InputStreamReader( configUrl.openStream() );
-    ClusterDescriptor gatewayConfig = ClusterDescriptorFactory.load( "xml", configReader );
+    GatewayDescriptor gatewayConfig = GatewayDescriptorFactory.load( "xml", configReader );
     configReader.close();
 //    Config gatewayConfig;
 //    gatewayConfig = ClusterConfigFactory.create( configUrl, null );

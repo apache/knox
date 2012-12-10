@@ -20,8 +20,8 @@ package org.apache.hadoop.gateway.descriptor.xml;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorImporter;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorImporter;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -29,9 +29,9 @@ import java.io.Reader;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
-public class XmlClusterDescriptorImporter implements ClusterDescriptorImporter {
+public class XmlGatewayDescriptorImporter implements GatewayDescriptorImporter {
 
-  private static DigesterLoader loader = newLoader( new XmlClusterDescriptorRules() );
+  private static DigesterLoader loader = newLoader( new XmlGatewayDescriptorRules() );
 
   @Override
   public String getFormat() {
@@ -39,11 +39,11 @@ public class XmlClusterDescriptorImporter implements ClusterDescriptorImporter {
   }
 
   @Override
-  public ClusterDescriptor load( Reader reader ) throws IOException {
+  public GatewayDescriptor load( Reader reader ) throws IOException {
     Digester digester = loader.newDigester( new ExtendedBaseRules() );
     digester.setValidating( false );
     try {
-      ClusterDescriptor descriptor = digester.parse( reader );
+      GatewayDescriptor descriptor = digester.parse( reader );
       return descriptor;
     } catch( SAXException e ) {
       throw new IOException( e );

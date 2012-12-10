@@ -57,7 +57,7 @@ public class HdfsResourceDescriptorFactory implements
     String extHdfsPath = "/namenode/api/v1";
     String intHdfsUrl = service.getUrl().toExternalForm();
 
-    ResourceDescriptor rootResource = context.getClusterDescriptor()
+    ResourceDescriptor rootResource = context.getGatewayDescriptor()
         .createResource();
     rootResource.source( extHdfsPath + "?{**}" );
     rootResource.target( intHdfsUrl + "?{**}" );
@@ -65,7 +65,7 @@ public class HdfsResourceDescriptorFactory implements
     addPivotFilter( context, service, rootResource );
     descriptors.add( rootResource );
 
-    ResourceDescriptor fileResource = context.getClusterDescriptor()
+    ResourceDescriptor fileResource = context.getGatewayDescriptor()
         .createResource();
     fileResource.source( extHdfsPath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );

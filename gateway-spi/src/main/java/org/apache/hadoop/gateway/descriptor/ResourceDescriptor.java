@@ -21,7 +21,7 @@ import java.util.List;
 
 public interface ResourceDescriptor {
 
-  ClusterDescriptor up();
+  GatewayDescriptor up();
 
   ResourceDescriptor source( String source );
 

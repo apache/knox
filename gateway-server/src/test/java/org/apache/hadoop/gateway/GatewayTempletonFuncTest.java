@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.util.Streams;
@@ -100,7 +100,7 @@ public class GatewayTempletonFuncTest {
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Reader configReader = new InputStreamReader( configUrl.openStream() );
-    ClusterDescriptor config = ClusterDescriptorFactory.load( "xml", configReader );
+    GatewayDescriptor config = GatewayDescriptorFactory.load( "xml", configReader );
     //Config config = ClusterConfigFactory.create( configUrl, params );
 
     Handler handler = JettyGatewayFactory.create( "/org/apache/org.apache.hadoop/gateway/cluster", config );

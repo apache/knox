@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 
 import javax.servlet.Filter;
@@ -121,7 +121,7 @@ public class GatewayServlet implements Servlet {
       }
       if( stream != null ) {
         try {
-          ClusterDescriptor descriptor = ClusterDescriptorFactory.load( "xml", new InputStreamReader( stream ) );
+          GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", new InputStreamReader( stream ) );
           filter = GatewayFactory.create( descriptor );
         } finally {
           stream.close();

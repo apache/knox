@@ -17,19 +17,19 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterDescriptorImpl implements ClusterDescriptor {
+public class GatewayDescriptorImpl implements GatewayDescriptor {
 
   private List<GatewayParamDescriptor> params;
   private List<ResourceDescriptor> resources;
 
-  public ClusterDescriptorImpl() {
+  public GatewayDescriptorImpl() {
     this.params = new ArrayList<GatewayParamDescriptor>();
     this.resources = new ArrayList<ResourceDescriptor>();
   }

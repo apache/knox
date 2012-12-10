@@ -32,7 +32,7 @@ import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
-import org.apache.hadoop.gateway.topology.xml.XmlClusterTopologyRules;
+import org.apache.hadoop.gateway.topology.xml.XmlTopologyRules;
 import org.codehaus.plexus.util.FileUtils;
 import org.xml.sax.SAXException;
 
@@ -51,7 +51,7 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, FileListener {
 
-  private static DigesterLoader digesterLoader = newLoader( new XmlClusterTopologyRules() );
+  private static DigesterLoader digesterLoader = newLoader( new XmlTopologyRules() );
 
   private DefaultFileMonitor monitor;
   private FileObject directory;

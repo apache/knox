@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -34,11 +34,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.internal.matchers.StringContains.containsString;
 
-public class XmlClusterDescriptorImporterTest {
+public class XmlGatewayDescriptorImporterTest {
 
   @Test
   public void testFormat() {
-    XmlClusterDescriptorImporter importer = new XmlClusterDescriptorImporter();
+    XmlGatewayDescriptorImporter importer = new XmlGatewayDescriptorImporter();
     assertThat( importer.getFormat(), is( "xml" ) );
   }
 
@@ -74,7 +74,7 @@ public class XmlClusterDescriptorImporterTest {
 
     Reader reader = new StringReader( xml );
 
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.load( "xml", reader );
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", reader );
 
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.resources().size(), is( 2 ) );
@@ -128,7 +128,7 @@ public class XmlClusterDescriptorImporterTest {
 
     Reader reader = new StringReader( xml );
 
-    ClusterDescriptor descriptor = ClusterDescriptorFactory.load( "xml", reader );
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", reader );
 
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.resources().size(), is( 1 ) );
@@ -152,7 +152,7 @@ public class XmlClusterDescriptorImporterTest {
 
     Reader reader = new StringReader( xml );
     try {
-      ClusterDescriptorFactory.load( "xml", reader );
+      GatewayDescriptorFactory.load( "xml", reader );
       fail( "Should have thrown IOException" );
     } catch( IOException e ) {
       assertThat( e.getMessage(), containsString( "org.xml.sax.SAXParseException" ) );

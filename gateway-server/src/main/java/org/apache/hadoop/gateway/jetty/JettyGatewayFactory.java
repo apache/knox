@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway.jetty;
 import org.apache.hadoop.gateway.GatewayFactory;
 import org.apache.hadoop.gateway.GatewayFilter;
 import org.apache.hadoop.gateway.GatewayServlet;
-import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -30,7 +30,7 @@ import java.net.URISyntaxException;
 
 public class JettyGatewayFactory {
 
-  public static ServletContextHandler create( String gatewayPath, ClusterDescriptor gatewayConfig ) throws URISyntaxException {
+  public static ServletContextHandler create( String gatewayPath, GatewayDescriptor gatewayConfig ) throws URISyntaxException {
     gatewayPath = Urls.ensureLeadingSlash( gatewayPath );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( gatewayPath );
