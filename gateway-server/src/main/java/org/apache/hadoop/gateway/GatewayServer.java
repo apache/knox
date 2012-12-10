@@ -198,7 +198,7 @@ public class GatewayServer implements TopologyListener {
       } else {
         if( !warDir.exists() ) {
           log.deployingCluster( topology.getName(), warDir.getAbsolutePath() );
-          WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
+          WebArchive war = DeploymentFactory.createDeployment( config, topology );
           File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
         }

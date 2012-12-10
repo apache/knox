@@ -30,23 +30,19 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
+
 public abstract class DeploymentFactory {
 
-  // Given global config
-  // Given cluster topology
-  // Create empty WebArchive
-  // Create empty WebAppDescriptor
-  // Invoke the Gateway deployment contributor
-  // Create empty ClusterConfig
-  // Find all ResourceConfigFactory services
-  // For each service in cluster topo
-  // Find and service's config factory
-  //   Add created resources configs to cluster config
-  //     Q: How do they know to include as vs ss?
-  //   Populate the deployment context with the above.
-  // Find all DeploymentContributor services
-  // Invoke each contributor
-  public static WebArchive createClusterDeployment( GatewayConfig config, Topology topology ) {
+  private static Set<DeploymentContributor> CONTRIBUTORS = loadContributors();
+
+  public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, topology.getName() );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
     GatewayDescriptor gateway = GatewayDescriptorFactory.create();
@@ -60,9 +56,32 @@ public abstract class DeploymentFactory {
 
     initializeContributor.contribute( context );
     gatewayContributor.contribute( context );
+    invokeLoadedContributors( context );
     finalizeContributor.contribute( context );
 
     return webArchive;
+  }
+
+  private static void invokeLoadedContributors( DeploymentContext context ) {
+    for( DeploymentContributor contributor : CONTRIBUTORS ) {
+      try {
+        contributor.contribute( context );
+      } catch( Exception e ) {
+        //TODO: I18N message.
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private static Set<DeploymentContributor> loadContributors() {
+    Set<DeploymentContributor> set = new HashSet<DeploymentContributor>();
+    ServiceLoader<DeploymentContributor> loader = ServiceLoader.load( DeploymentContributor.class );
+    Iterator<DeploymentContributor> contributors = loader.iterator();
+    while( contributors.hasNext() ) {
+      DeploymentContributor contributor = contributors.next();
+      set.add( contributor );
+    }
+    return Collections.unmodifiableSet( set );
   }
 
 }

@@ -107,6 +107,7 @@ public class GatewayWebHdfsFuncTest {
     gateway = new Server( GATEWAY_PORT );
     gateway.setHandler( contexts );
     gateway.start();
+
   }
 
   private static void startLdap() throws Exception{

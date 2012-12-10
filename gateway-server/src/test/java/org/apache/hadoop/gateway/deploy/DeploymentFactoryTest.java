@@ -23,7 +23,6 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -33,7 +32,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -51,7 +49,7 @@ public class DeploymentFactoryTest {
     Topology topology = new Topology();
     topology.setName( "test-cluster" );
 
-    WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
+    WebArchive war = DeploymentFactory.createDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
@@ -85,7 +83,7 @@ public class DeploymentFactoryTest {
     provider.addParam( param );
     topology.addProvider( provider );
 
-    WebArchive war = DeploymentFactory.createClusterDeployment( config, topology );
+    WebArchive war = DeploymentFactory.createDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
