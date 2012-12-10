@@ -22,6 +22,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -79,7 +80,7 @@ public class GatewayServer implements TopologyListener {
 
   private static void installGateway() {
     try {
-      GatewayConfig config = new GatewayConfig();
+      GatewayConfig config = new GatewayConfigImpl();
       String home = config.getGatewayHomeDir();
 
       File homeDir = new File( home ).getAbsoluteFile();
@@ -131,12 +132,12 @@ public class GatewayServer implements TopologyListener {
   private void start() throws Exception {
 
 //    Map<String,String> params = new HashMap<String,String>();
-//    params.put( GatewayConfig.NAMENODE_ADDRESS, config.getNameNodeAddress() );
-//    params.put( GatewayConfig.TEMPLETON_ADDRESS, config.getTempletonAddress() );
-//    params.put( GatewayConfig.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
+//    params.put( GatewayConfigImpl.NAMENODE_ADDRESS, config.getNameNodeAddress() );
+//    params.put( GatewayConfigImpl.TEMPLETON_ADDRESS, config.getTempletonAddress() );
+//    params.put( GatewayConfigImpl.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
 
     // Load the global gateway config.
-    config = new GatewayConfig();
+    config = new GatewayConfigImpl();
 
     // Create a dir/file based cluster topology provider.
     File topologiesDir = calculateAbsoluteTopologiesDir();

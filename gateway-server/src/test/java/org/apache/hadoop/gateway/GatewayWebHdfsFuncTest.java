@@ -94,13 +94,13 @@ public class GatewayWebHdfsFuncTest {
 
     URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
     Reader configReader = new InputStreamReader( configUrl.openStream() );
-    GatewayDescriptor config = GatewayDescriptorFactory.load( "xml", configReader );
+    GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", configReader );
 
     for( Map.Entry<String,String> param : params.entrySet() ) {
-      config.addParam().name( param.getKey() ).value( param.getValue() );
+      descriptor.addParam().name( param.getKey() ).value( param.getValue() );
     }
 
-    Handler handler = JettyGatewayFactory.create( "/gateway/cluster", config );
+    Handler handler = JettyGatewayFactory.create( "/gateway/cluster", descriptor );
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.addHandler( handler );
 

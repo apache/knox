@@ -51,7 +51,7 @@ public abstract class GatewayDescriptorFactory {
   public static GatewayDescriptor load( String format, Reader reader ) throws IOException {
     GatewayDescriptorImporter importer = IMPORTERS.get( format );
     if( importer == null ) {
-      throw new IllegalArgumentException( "No importer for format " + format );
+      throw new IllegalArgumentException( "No importer for descriptor format " + format );
     }
     return importer.load( reader );
   }
@@ -59,7 +59,7 @@ public abstract class GatewayDescriptorFactory {
   public static void store( GatewayDescriptor descriptor, String format, Writer writer ) throws IOException {
     GatewayDescriptorExporter exporter = EXPORTERS.get( format );
     if( exporter == null ) {
-      throw new IllegalArgumentException( "No exporter for format " + format );
+      throw new IllegalArgumentException( "No exporter for descriptor format " + format );
     }
     exporter.store( descriptor, writer );
   }

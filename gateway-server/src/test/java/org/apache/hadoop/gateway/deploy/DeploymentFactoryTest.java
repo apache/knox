@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
@@ -45,7 +46,7 @@ public class DeploymentFactoryTest {
 
   @Test
   public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException {
-    GatewayConfig config = new GatewayConfig();
+    GatewayConfig config = new GatewayConfigImpl();
 
     Topology topology = new Topology();
     topology.setName( "test-cluster" );
@@ -68,7 +69,7 @@ public class DeploymentFactoryTest {
 
   @Test
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException {
-    GatewayConfig config = new GatewayConfig();
+    GatewayConfig config = new GatewayConfigImpl();
     Topology topology = new Topology();
     topology.setName( "test-cluster" );
     Service service = new Service();

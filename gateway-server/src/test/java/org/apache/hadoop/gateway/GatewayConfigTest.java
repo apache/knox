@@ -28,7 +28,7 @@ public class GatewayConfigTest {
 //    String configDir = locateTestConfigDir();
 //
 //    // Load the gateway config.
-//    GatewayConfig gatewayConfig = new GatewayConfig();
+//    GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
 //
 //    // Load the cluster topologies.
 //    FileTopologyProvider topologyProvider = new FileTopologyProvider(
@@ -44,7 +44,7 @@ public class GatewayConfigTest {
 //    String configDir = locateTestConfigDir();
 //
 //    // Load the gateway config.
-//    GatewayConfig gatewayConfig = new GatewayConfig();
+//    GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
 //
 //    // Load the topologies.
 //    FileTopologyProvider topologyProvider = new FileTopologyProvider( gatewayConfig.getHadoopConfDir() );

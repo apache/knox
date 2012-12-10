@@ -166,7 +166,7 @@ public class GatewayDemoSecure {
 //    ServiceConfig serviceConfig;
 //    FilterConfig filterConfig;
 //
-//    gatewayConfig = new GatewayConfig();
+//    gatewayConfig = new GatewayConfigImpl();
 //    gatewayConfig.put( "path", "org.apache.org.apache.hadoop.gateway" );
 //
 //    clusterConfig = new ClusterConfig();
