@@ -73,16 +73,16 @@ public class XmlClusterDescriptorExporterTest {
 
     Document doc = parse( xml );
 
-    assertThat( doc, hasXPath( "/cluster/resource[1]/source", equalTo( "resource1-source" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/target", equalTo( "resource1-target" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/role", equalTo( "resource1-filter1-role" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/class", equalTo( "resource1-filter1-impl" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/param[1]/name", equalTo( "resource1-filter1-param1-name" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/param[1]/value", equalTo( "resource1-filter1-param1-value" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/param[2]/name", equalTo( "resource1-filter1-param2-name" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[1]/param[2]/value", equalTo( "resource1-filter1-param2-value" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[2]/role", equalTo( "resource1-filter2-role" ) ) );
-    assertThat( doc, hasXPath( "/cluster/resource[1]/filter[2]/class", equalTo( "resource1-filter2-impl" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/source", equalTo( "resource1-source" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/target", equalTo( "resource1-target" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "resource1-filter1-role" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "resource1-filter1-impl" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/name", equalTo( "resource1-filter1-param1-name" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/value", equalTo( "resource1-filter1-param1-value" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/name", equalTo( "resource1-filter1-param2-name" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/value", equalTo( "resource1-filter1-param2-value" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "resource1-filter2-role" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "resource1-filter2-impl" ) ) );
   }
 
   @Test
@@ -98,7 +98,7 @@ public class XmlClusterDescriptorExporterTest {
 
     Document doc = parse( xml );
 
-    assertThat( doc, hasXPath( "/cluster/resource/filter/param" ) );
+    assertThat( doc, hasXPath( "/gateway/resource/filter/param" ) );
   }
 
   @Test

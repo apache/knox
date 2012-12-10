@@ -63,7 +63,7 @@ public class DeploymentFactoryTest {
     assertThat( wad, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
-    assertThat( gateway, hasXPath( "/cluster" ) );
+    assertThat( gateway, hasXPath( "/gateway" ) );
   }
 
   @Test
@@ -98,26 +98,26 @@ public class DeploymentFactoryTest {
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/source", equalTo( "/namenode/api/v1?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/source", equalTo( "/namenode/api/v1?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
 
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/filter[2]/role", equalTo( "pivot" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "pivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
 
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/source", equalTo( "/namenode/api/v1/{path=**}?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[1]/param[1]/name", equalTo( "contextConfigLocation" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[1]/param[1]/value", equalTo( "classpath:app-context-security.xml" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[2]/role", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}/namenode/api/v1/{path=**}" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[3]/role", equalTo( "pivot" ) ) );
-    assertThat( gateway, hasXPath( "/cluster/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/source", equalTo( "/namenode/api/v1/{path=**}?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/name", equalTo( "contextConfigLocation" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/value", equalTo( "classpath:app-context-security.xml" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "rewrite" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}/namenode/api/v1/{path=**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "pivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
   }
 
   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {

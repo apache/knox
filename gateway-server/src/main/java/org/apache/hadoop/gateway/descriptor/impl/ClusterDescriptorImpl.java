@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 
 import java.util.ArrayList;
@@ -26,11 +26,11 @@ import java.util.List;
 
 public class ClusterDescriptorImpl implements ClusterDescriptor {
 
-  private List<ClusterParamDescriptor> params;
+  private List<GatewayParamDescriptor> params;
   private List<ResourceDescriptor> resources;
 
   public ClusterDescriptorImpl() {
-    this.params = new ArrayList<ClusterParamDescriptor>();
+    this.params = new ArrayList<GatewayParamDescriptor>();
     this.resources = new ArrayList<ResourceDescriptor>();
   }
 
@@ -57,32 +57,32 @@ public class ClusterDescriptorImpl implements ClusterDescriptor {
   }
 
   @Override
-  public List<ClusterParamDescriptor> params() {
+  public List<GatewayParamDescriptor> params() {
     return params;
   }
 
   @Override
-  public ClusterParamDescriptor addParam() {
-    ClusterParamDescriptor param = createParam();
+  public GatewayParamDescriptor addParam() {
+    GatewayParamDescriptor param = createParam();
     addParam( param );
     return param;
   }
 
   @Override
-  public ClusterParamDescriptor createParam() {
-    return new ClusterParamDescriptorImpl( this );
+  public GatewayParamDescriptor createParam() {
+    return new GatewayParamDescriptorImpl( this );
   }
 
   @Override
-  public void addParam( ClusterParamDescriptor param ) {
+  public void addParam( GatewayParamDescriptor param ) {
     param.up( this );
     params.add( param );
   }
 
   @Override
-  public void addParams( List<ClusterParamDescriptor> params ) {
+  public void addParams( List<GatewayParamDescriptor> params ) {
     if( params != null ) {
-      for( ClusterParamDescriptor param : params ) {
+      for( GatewayParamDescriptor param : params ) {
         param.up( this );
       }
       this.params.addAll( params );

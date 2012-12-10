@@ -34,7 +34,7 @@ public class GatewayDeploymentContributor implements DeploymentContributor {
     ClusterDescriptor clusterDescriptor = context.getClusterDescriptor();
     Topology topology = context.getTopology();
     for( Service service : topology.getServices() ) {
-      ResourceDescriptorFactory factory = context.getClusterResourceDescriptorFactory( service );
+      ResourceDescriptorFactory factory = context.getResourceDescriptorFactory( service );
       if( factory != null ) {
         List<ResourceDescriptor> descriptors = factory.createResourceDescriptors( context, service );
         for( ResourceDescriptor descriptor : descriptors ) {

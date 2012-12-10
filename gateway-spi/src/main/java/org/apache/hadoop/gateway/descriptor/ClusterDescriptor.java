@@ -21,15 +21,15 @@ import java.util.List;
 
 public interface ClusterDescriptor {
 
-  List<ClusterParamDescriptor> params();
+  List<GatewayParamDescriptor> params();
 
-  ClusterParamDescriptor addParam();
+  GatewayParamDescriptor addParam();
 
-  ClusterParamDescriptor createParam();
+  GatewayParamDescriptor createParam();
 
-  void addParam( ClusterParamDescriptor param );
+  void addParam( GatewayParamDescriptor param );
 
-  void addParams( List<ClusterParamDescriptor> params );
+  void addParams( List<GatewayParamDescriptor> params );
 
   List<ResourceDescriptor> resources();
 

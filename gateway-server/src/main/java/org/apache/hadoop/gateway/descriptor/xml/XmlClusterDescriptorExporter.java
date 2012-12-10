@@ -52,7 +52,7 @@ public class XmlClusterDescriptorExporter implements ClusterDescriptorExporter, 
       Document document = builder.newDocument();
       document.setXmlStandalone( true );
 
-      Element cluster = document.createElement( CLUSTER );
+      Element cluster = document.createElement( GATEWAY );
       document.appendChild( cluster );
 
       for( ResourceDescriptor resource : descriptor.resources() ) {

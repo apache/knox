@@ -45,7 +45,7 @@ public class XmlClusterDescriptorImporterTest {
   @Test
   public void testXmlClusterDescriptorLoad() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
-        "<cluster>\n" +
+        "<gateway>\n" +
         "  <resource>\n" +
         "    <source>resource1-source</source>\n" +
         "    <target>resource1-target</target>\n" +
@@ -70,7 +70,7 @@ public class XmlClusterDescriptorImporterTest {
         "    <source>resource2-source</source>\n" +
         "    <target>resource2-target</target>\n" +
         "  </resource>\n" +
-        "</cluster>";
+        "</gateway>";
 
     Reader reader = new StringReader( xml );
 
@@ -117,14 +117,14 @@ public class XmlClusterDescriptorImporterTest {
   @Test
   public void testXmlClusterDescriptorLoadEmpty() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
-        "<cluster>\n" +
+        "<gateway>\n" +
         "  <resource>\n" +
         "    <filter>\n" +
         "      <param>\n" +
         "      </param>\n" +
         "    </filter>\n" +
         "  </resource>\n" +
-        "</cluster>";
+        "</gateway>";
 
     Reader reader = new StringReader( xml );
 
@@ -145,7 +145,7 @@ public class XmlClusterDescriptorImporterTest {
   @Test
   public void testXmlClusterDescriptorLoadInvalid() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
-        "<cluster>\n" +
+        "<gateway>\n" +
         "  <resource>\n" +
         "    <filter>\n" +
         "      <param>";

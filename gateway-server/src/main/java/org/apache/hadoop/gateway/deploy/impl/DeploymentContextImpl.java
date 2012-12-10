@@ -50,12 +50,12 @@ public class DeploymentContextImpl implements DeploymentContext {
   }
 
   @Override
-  public ResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+  public ResourceDescriptorFactory getResourceDescriptorFactory( Service service ) {
     return ClusterDescriptorFactory.getClusterResourceDescriptorFactory( service );
   }
 
   @Override
-  public FilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public FilterDescriptorFactory getFilterDescriptorFactory( String filterRole ) {
     return ClusterDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
   }
 

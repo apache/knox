@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.hdfs;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -87,13 +88,13 @@ public class HdfsResourceDescriptorFactory implements
             "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath
                 + "/{path=**}" ) );
     fileResource.addFilters( context
-        .getClusterFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
+        .getFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
             context, service, fileResource, "rewrite", params ) );
   }
 
   private void addPivotFilter( DeploymentContext context,
                                Service service, ResourceDescriptor rootResource ) {
-    rootResource.addFilters( context.getClusterFilterDescriptorFactory( "pivot" )
+    rootResource.addFilters( context.getFilterDescriptorFactory( "pivot" )
         .createFilterDescriptors( context, service, rootResource, "pivot",
             null ) );
   }
@@ -101,9 +102,9 @@ public class HdfsResourceDescriptorFactory implements
   private void addAuthenticationProviderFilter( DeploymentContext context,
                                                 Service service, ResourceDescriptor resource ) {
     List<FilterParamDescriptor> params = getFilterParams( context, resource );
-
+    FilterDescriptorFactory factory = context.getFilterDescriptorFactory( "authentication" );
     resource.addFilters(
-        context.getClusterFilterDescriptorFactory( "authentication" ).createFilterDescriptors(
+        factory.createFilterDescriptors(
             context, service, resource, "authentication", params ) );
   }
 

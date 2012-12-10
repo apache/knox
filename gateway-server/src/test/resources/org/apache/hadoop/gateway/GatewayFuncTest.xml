@@ -14,7 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<cluster>
+<gateway>
 
     <resource>
         <!--<name>namenode-root</name>-->
@@ -66,4 +66,4 @@
         </filter>
     </resource>
 
-</cluster>
+</gateway>

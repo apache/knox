@@ -18,15 +18,15 @@
 package org.apache.hadoop.gateway.descriptor.impl;
 
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 
-public class ClusterParamDescriptorImpl implements ClusterParamDescriptor {
+public class GatewayParamDescriptorImpl implements GatewayParamDescriptor {
 
   private ClusterDescriptor parent;
   private String name;
   private String value;
 
-  ClusterParamDescriptorImpl( ClusterDescriptor parent ) {
+  GatewayParamDescriptorImpl( ClusterDescriptor parent ) {
     this.parent = parent;
   }
 
@@ -41,7 +41,7 @@ public class ClusterParamDescriptorImpl implements ClusterParamDescriptor {
   }
 
   @Override
-  public ClusterParamDescriptor name( String name ) {
+  public GatewayParamDescriptor name( String name ) {
     this.name = name;
     return this;
   }
@@ -52,7 +52,7 @@ public class ClusterParamDescriptorImpl implements ClusterParamDescriptor {
   }
 
   @Override
-  public ClusterParamDescriptor value( String value ) {
+  public GatewayParamDescriptor value( String value ) {
     this.value = value;
     return this;
   }

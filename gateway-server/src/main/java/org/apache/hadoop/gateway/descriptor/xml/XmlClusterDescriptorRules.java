@@ -31,16 +31,16 @@ public class XmlClusterDescriptorRules extends AbstractRulesModule implements Xm
   @Override
   protected void configure() {
 
-    forPattern( CLUSTER ).addRule( new FactoryCreateRule( XmlClusterDescriptorFactory.class ) );
-    forPattern( CLUSTER + "/" + RESOURCE ).addRule( new AddNextRule( "addResource" ) );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" ).usingElementBodyAsArgument();
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + RESOURCE_TARGET ).callMethod( "target" ).usingElementBodyAsArgument();
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER ).addRule( new AddNextRule( "addFilter" ) );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "role" ).usingElementBodyAsArgument();
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_IMPL ).callMethod( "impl" ).usingElementBodyAsArgument();
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM ).addRule( new AddNextRule( "addParam") );
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_NAME ).callMethod( "name" ).usingElementBodyAsArgument();
-    forPattern( CLUSTER + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_VALUE ).callMethod( "value" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY ).addRule( new FactoryCreateRule( XmlClusterDescriptorFactory.class ) );
+    forPattern( GATEWAY + "/" + RESOURCE ).addRule( new AddNextRule( "addResource" ) );
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_TARGET ).callMethod( "target" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER ).addRule( new AddNextRule( "addFilter" ) );
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "role" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_IMPL ).callMethod( "impl" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM ).addRule( new AddNextRule( "addParam") );
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_NAME ).callMethod( "name" ).usingElementBodyAsArgument();
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_VALUE ).callMethod( "value" ).usingElementBodyAsArgument();
   }
 
   private class AddNextRule extends Rule {

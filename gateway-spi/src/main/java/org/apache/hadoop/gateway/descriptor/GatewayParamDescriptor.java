@@ -17,17 +17,17 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-public interface ClusterParamDescriptor {
+public interface GatewayParamDescriptor {
 
   void up( ClusterDescriptor parent );
 
   ClusterDescriptor up();
 
-  ClusterParamDescriptor name( String name );
+  GatewayParamDescriptor name( String name );
 
   String name();
 
-  ClusterParamDescriptor value( String value );
+  GatewayParamDescriptor value( String value );
 
   String value();
 

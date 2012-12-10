@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.descriptor.xml;
 
 interface XmlClusterDescriptorTags {
 
-  static final String CLUSTER = "cluster";
+  static final String GATEWAY = "gateway";
   static final String RESOURCE = "resource";
   static final String RESOURCE_SOURCE = "source";
   static final String RESOURCE_TARGET = "target";

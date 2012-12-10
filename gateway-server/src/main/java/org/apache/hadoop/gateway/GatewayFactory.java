@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway;
 import org.apache.hadoop.gateway.descriptor.ClusterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ClusterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceParamDescriptor;
 
@@ -77,7 +77,7 @@ public class GatewayFactory {
     Map<String, String> paramMap = new HashMap<String, String>();
     ResourceDescriptor resource = filter.up();
     ClusterDescriptor cluster = resource.up();
-    for( ClusterParamDescriptor param : cluster.params() ) {
+    for( GatewayParamDescriptor param : cluster.params() ) {
       paramMap.put( param.name(), param.value() );
     }
     for( ResourceParamDescriptor param : resource.params() ) {
