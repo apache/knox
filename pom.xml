@@ -32,8 +32,8 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
-        <module>gateway-provider-hdfs</module>
-        <module>gateway-provider-templeton</module>
+        <module>gateway-service-hdfs</module>
+        <module>gateway-service-templeton</module>
         <module>gateway-server</module>
         <module>gateway-demo</module>
     </modules>
@@ -149,12 +149,12 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-provider-hdfs</artifactId>
+                <artifactId>gateway-service-hdfs</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-provider-templeton</artifactId>
+                <artifactId>gateway-service-templeton</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
