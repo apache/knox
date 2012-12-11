@@ -27,8 +27,8 @@
             <rewrite>dfshealth.jsp dfs/home</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -36,8 +36,8 @@
         <source>/dfs/static/**</source>
         <target>http://org.apache.hadoop-insecure.home:50070/static/{0}</target>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -53,8 +53,8 @@
             <rewrite.4>dfsnodelist.jsp?* nodes?{0}</rewrite.4>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -71,8 +71,8 @@
             <rewrite.5>/logs/ logs</rewrite.5>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -88,8 +88,8 @@
             <rewrite.4>*://*:*/browseDirectory.jsp?* files/{0}/{1}/{2}?{3}</rewrite.4>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -102,8 +102,8 @@
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -111,8 +111,8 @@
         <source>/dfs/logs/**</source>
         <target>http://org.apache.hadoop-insecure.home:50070/logs/{0}</target>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -130,8 +130,8 @@
             <rewrite.6>*://*:*/browseDirectory.jsp?* files/{0}/{1}/{2}?{3}</rewrite.6>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -139,8 +139,8 @@
         <source>/dfs/rest/v1/**</source>
         <target>http://org.apache.hadoop-insecure.home:50070/webhdfs/v1/{0}</target>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.UrlConnectionPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.UrlConnectionDispatch</class>
         </filter>
     </service>
 
@@ -154,8 +154,8 @@
             <rewrite>jobtracker.jsp mr/home</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -168,8 +168,8 @@
             <rewrite.1>/static/* static/{0}</rewrite.1>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -182,8 +182,8 @@
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -196,8 +196,8 @@
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
 

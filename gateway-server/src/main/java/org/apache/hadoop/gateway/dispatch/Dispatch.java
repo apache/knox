@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public interface Pivot {
+public interface Dispatch {
 
   void doGet( HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;

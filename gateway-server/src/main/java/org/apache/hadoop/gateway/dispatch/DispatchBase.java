@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 
@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AbstractGatewayPivot extends AbstractGatewayFilter implements Pivot {
+public abstract class DispatchBase extends AbstractGatewayFilter implements Dispatch {
   
   private static Map<String,Adapter> METHOD_ADAPTERS = createMethodAdapters();
 
@@ -79,42 +79,42 @@ public class AbstractGatewayPivot extends AbstractGatewayFilter implements Pivot
   }
 
   private interface Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException;
   }
 
   private static class GetAdapter implements Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
-      pivot.doGet( request, response );
+      dispatch.doGet( request, response );
     }
   }
 
   private static class PostAdapter implements Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
-      pivot.doPost( request, response );
+      dispatch.doPost( request, response );
     }
   }
 
   private static class PutAdapter implements Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
-      pivot.doPut( request, response );
+      dispatch.doPut( request, response );
     }
   }
 
   private static class DeleteAdapter implements Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
-      pivot.doDelete( request, response );
+      dispatch.doDelete( request, response );
     }
   }
 
   private static class OptionsAdapter implements Adapter {
-    public void doMethod( Pivot pivot, HttpServletRequest request, HttpServletResponse response )
+    public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
-      pivot.doOptions( request, response );
+      dispatch.doOptions( request, response );
     }
   }
 

@@ -4,12 +4,24 @@ import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -45,7 +57,7 @@ public class GatewayFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
 
-    //TODO: The resulting pathInfo + query needs to be added to the servlet expect somehow so that filters don't need to rebuild it.  This is done in HttpClientPivot right now for example.
+    //TODO: The resulting pathInfo + query needs to be added to the servlet expect somehow so that filters don't need to rebuild it.  This is done in HttpClientDispatch right now for example.
     String query = httpRequest.getQueryString();
     String path = httpRequest.getPathInfo() + ( query == null ? "" : "?" + query );
 

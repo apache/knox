@@ -92,7 +92,7 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
     }
   }
 
-  // Ignore the Content-Length from the pivot respond since the respond body may be rewritten.
+  // Ignore the Content-Length from the dispatch respond since the respond body may be rewritten.
   @Override
   public void setHeader( String name, String value ) {
     if( !ignoreHeader( name) ) {
@@ -103,7 +103,7 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
     }
   }
 
-  // Ignore the Content-Length from the pivot respond since the respond body may be rewritten.
+  // Ignore the Content-Length from the dispatch respond since the respond body may be rewritten.
   @Override
   public void addHeader( String name, String value ) {
     if( !ignoreHeader( name) ) {

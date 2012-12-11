@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -23,9 +23,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -36,9 +33,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class WebHdfsPivot extends HttpClientPivot {
+public class HdfsDispatch extends HttpClientDispatch {
 
-  public WebHdfsPivot() throws ServletException {
+  public HdfsDispatch() throws ServletException {
     super();
   }
 

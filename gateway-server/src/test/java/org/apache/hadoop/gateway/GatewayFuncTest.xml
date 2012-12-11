@@ -26,8 +26,8 @@
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
 
@@ -46,8 +46,8 @@
                 http://{org.apache.org.apache.hadoop.gateway.address}/org.apache.hadoopache.hadoop.gateway/gateway/namenode/api/v1/{path=**}</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.WebHdfsPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HdfsDispatch</class>
         </filter>
     </service>
 
@@ -60,8 +60,8 @@
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
 

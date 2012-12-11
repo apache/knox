@@ -15,20 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.Streams;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -44,7 +49,7 @@ import java.net.URISyntaxException;
  *
  */
 //TODO: Common code needs to be factored into helper methods.
-public class HttpClientPivot extends AbstractGatewayPivot {
+public class HttpClientDispatch extends DispatchBase {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
@@ -61,51 +66,13 @@ public class HttpClientPivot extends AbstractGatewayPivot {
     Template sourceTemplate = Parser.parse( sourcePattern );
     Template targetTemplate = Parser.parse( targetPattern );
 
-    Resolver resolver = new ParamResolver( getConfig(), request );
+    Resolver resolver = new DispatchParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );
     URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
-    //String targetUrl = UrlRewriter.rewriteUrl( sourcePathInfo, sourcePattern, targetPattern, expect, createResourceConfig() );
-//    System.out.println( "Source URI:" + expect.getRequestURI() );
-//    System.out.println( "Source URL:" + expect.getRequestURL() );
-//    System.out.println( "Source Query: " + expect.getQueryString() );
-//    System.out.println( "Source pathInfo: " + sourcePathInfo );
-//    System.out.println( "Source pattern: " + sourcePattern );
-//    System.out.println( "Target pattern: " + targetPattern );
-//    System.out.println( "Resolved target: " + targetUrl );
-
-//    URIBuilder queryBuilder = new URIBuilder( targetUri );
-//
-//    // Copy the server expect parameters to the client expect parameters.
-//    Enumeration<String> paramNames = expect.getParameterNames();
-//    while( paramNames.hasMoreElements() ) {
-//      String paramName = paramNames.nextElement();
-//      String paramValue = expect.getParameter( paramName );
-//      queryBuilder.addParameter( paramName, paramValue );
-//    }
-//
-//    URI queryURI = queryBuilder.build();
-//    return queryURI;
     return targetUri;
   }
 
   protected HttpResponse executeRequest( HttpUriRequest clientRequest, HttpServletRequest originalRequest, HttpServletResponse serverResponse ) throws IOException {
-
-
-//    Set<String> ignored = new HashSet<String>();
-//    ignored.add( "Content-Length" );
-//    ignored.add( "Host" );
-
-//    Enumeration<String> names = originalRequest.getHeaderNames();
-//    while( names.hasMoreElements() ) {
-//      String name = names.nextElement();
-//      if( !ignored.contains( name ) ) {
-//        Enumeration<String> values = originalRequest.getHeaders( name );
-//        while( values.hasMoreElements() ) {
-//          clientRequest.addHeader( name, values.nextElement() );
-//        }
-//      }
-//    }
-
     HttpClient client = new DefaultHttpClient();
     HttpResponse clientResponse = client.execute( clientRequest );
 

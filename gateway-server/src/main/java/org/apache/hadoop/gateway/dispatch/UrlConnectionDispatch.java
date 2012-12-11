@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.util.Streams;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -32,13 +32,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Enumeration;
 
 /**
  *
  */
-public class UrlConnectionPivot extends AbstractGatewayPivot {
+public class UrlConnectionDispatch extends DispatchBase {
 
   @Override
   public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
@@ -50,7 +54,7 @@ public class UrlConnectionPivot extends AbstractGatewayPivot {
     Template sourceTemplate = Parser.parse( sourcePattern );
     Template targetTemplate = Parser.parse( targetPattern );
 
-    Resolver resolver = new ParamResolver( getConfig(), request );
+    Resolver resolver = new DispatchParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );
     URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
 

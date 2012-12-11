@@ -18,7 +18,7 @@ processed before MessageFormat is called.
 NOTE: Not done this way.
 
 Design
-Convert existing servlets to filters.  Call thim Pivots.
+Convert existing servlets to filters.  Call thim Dispatch.
 
 Usability
 Need a utility for string formatting.  Use a Resolver interface.
@@ -61,7 +61,7 @@ that distinguishes them from another.  The example here is that the same URL mig
 name node and the data nodes and the data node address will be in a query param.
 
 Feature
-Write a special pivot for WebHDFS PUT/POST redirects.
+Write a special dispatch for WebHDFS PUT/POST redirects.
 
 Utility
 Add scheme & authority support to uritemplate

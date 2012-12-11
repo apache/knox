@@ -15,21 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.pivot;
+package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-class ParamResolver implements Resolver {
+class DispatchParamResolver implements Resolver {
 
   private FilterConfig config;
   private HttpServletRequest request;
 
-  ParamResolver( FilterConfig config, HttpServletRequest request ) {
+  DispatchParamResolver( FilterConfig config, HttpServletRequest request ) {
     this.config = config;
     this.request = request;
   }

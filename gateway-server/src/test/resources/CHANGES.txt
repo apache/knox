@@ -5863,7 +5863,7 @@ Release 0.18.0 - 2008-08-19
     HADOOP-3295. Allow TextOutputFormat to use configurable spearators.
     (Zheng Shao via cdouglas).
 
-    HADOOP-3308. Improve QuickSort by excluding values eq the pivot from the
+    HADOOP-3308. Improve QuickSort by excluding values eq the dispatch from the
     partition. (cdouglas)
 
     HADOOP-2461. Trim property names in configuration.

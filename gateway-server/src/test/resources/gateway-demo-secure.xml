@@ -28,8 +28,8 @@
             <rewrite>* webhdfs/{0}</rewrite>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -45,8 +45,8 @@
             <rewrite.3>* /gw/vm/webhdfs/{0}</rewrite.3>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -67,8 +67,8 @@
             <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.UrlConnectionPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.UrlConnectionDispatch</class>
         </filter>
     </service>
     <service>
@@ -89,8 +89,8 @@
             <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
-            <name>pivot</name>
-            <class>org.apache.org.apache.hadoop.gateway.pivot.UrlConnectionPivot</class>
+            <name>dispatch</name>
+            <class>org.apache.org.apache.hadoop.gateway.dispatch.UrlConnectionDispatch</class>
         </filter>
     </service>
 </gateway>

@@ -22,7 +22,7 @@ import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.pivot.HttpClientPivot;
+import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
@@ -31,13 +31,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PivotFilterDescriptorFactory implements FilterDescriptorFactory {
+public class DispatchFilterDescriptorFactory implements FilterDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 
   private static Set<String> createSupportedRoles() {
     HashSet<String> roles = new HashSet<String>();
-    roles.add( "pivot" );
+    roles.add( "dispatch" );
     return Collections.unmodifiableSet( roles );
   }
 
@@ -55,7 +55,7 @@ public class PivotFilterDescriptorFactory implements FilterDescriptorFactory {
       List<FilterParamDescriptor> filterParamDescriptors ) {
     List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
     FilterDescriptor descriptor
-        = resourceDescriptor.createFilter().role( filterRole ).impl( HttpClientPivot.class );
+        = resourceDescriptor.createFilter().role( filterRole ).impl( HttpClientDispatch.class );
     descriptor.addParams( filterParamDescriptors );
     descriptors.add( descriptor );
     return descriptors;

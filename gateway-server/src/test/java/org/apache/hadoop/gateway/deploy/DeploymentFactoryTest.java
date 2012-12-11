@@ -23,9 +23,7 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -34,8 +32,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -106,8 +102,8 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "pivot" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/source", equalTo( "/namenode/api/v1/{path=**}?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
@@ -119,8 +115,8 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {gateway.url}/namenode/api/v1/{path=**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "pivot/webhdfs" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.pivot.WebHdfsPivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "dispatch/webhdfs" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HdfsDispatch" ) ) );
   }
 
   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {

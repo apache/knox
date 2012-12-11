@@ -25,8 +25,8 @@
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <role>pivot</role>
-            <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <role>dispatch</role>
+            <class>org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </resource>
 
@@ -47,8 +47,8 @@
             </param>
         </filter>
         <filter>
-            <role>pivot</role>
-            <class>org.apache.hadoop.gateway.pivot.WebHdfsPivot</class>
+            <role>dispatch</role>
+            <class>org.apache.hadoop.gateway.dispatch.HdfsDispatch</class>
         </filter>
     </resource>
 
@@ -61,8 +61,8 @@
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>
         </filter>
         <filter>
-            <role>pivot</role>
-            <class>org.apache.hadoop.gateway.pivot.HttpClientPivot</class>
+            <role>dispatch</role>
+            <class>org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </resource>
 

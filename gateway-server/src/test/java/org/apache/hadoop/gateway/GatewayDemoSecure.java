@@ -174,7 +174,7 @@ public class GatewayDemoSecure {
 //
 //    serviceConfig = new ServiceConfig();
 //    serviceConfig.put( "path", "webhdfs" );
-//    serviceConfig.put( "class", HttpClientPivot.class.getName() );
+//    serviceConfig.put( "class", HttpClientDispatch.class.getName() );
 //    serviceConfig.put( "target", "http://org.apache.hadoop-secure.home:50070/" );
 //
 //    filterConfig = new FilterConfig();
@@ -185,7 +185,7 @@ public class GatewayDemoSecure {
 //
 //    serviceConfig = new ServiceConfig();
 //    serviceConfig.put( "path", "webhdfs/dfshealth.jsp" );
-//    serviceConfig.put( "class", HttpClientPivot.class.getName() );
+//    serviceConfig.put( "class", HttpClientDispatch.class.getName() );
 //    serviceConfig.put( "target", "http://org.apache.hadoop-secure.home:50070/dfshealth.jsp" );
 //
 //    filterConfig = new FilterConfig();
@@ -196,7 +196,7 @@ public class GatewayDemoSecure {
 //
 //    serviceConfig = new ServiceConfig();
 //    serviceConfig.put( "path", "webhdfs/*" );
-//    serviceConfig.put( "class", UrlConnectionPivot.class.getName() );
+//    serviceConfig.put( "class", UrlConnectionDispatch.class.getName() );
 //    serviceConfig.put( "target", "http://org.apache.hadoop-secure.home:50070/webhdfs" );
 //
 //    filterConfig = new FilterConfig();

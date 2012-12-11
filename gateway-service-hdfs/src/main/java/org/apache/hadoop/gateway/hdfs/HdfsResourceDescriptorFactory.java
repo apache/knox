@@ -63,7 +63,7 @@ public class HdfsResourceDescriptorFactory implements
     rootResource.source( extHdfsPath + "?{**}" );
     rootResource.target( intHdfsUrl + "?{**}" );
     addAuthenticationProviderFilter( context, service, rootResource );
-    addPivotFilter( context, service, rootResource, "pivot" );
+    addDispatchFilter( context, service, rootResource, "dispatch" );
     descriptors.add( rootResource );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().createResource();
@@ -71,7 +71,7 @@ public class HdfsResourceDescriptorFactory implements
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     addAuthenticationProviderFilter( context, service, fileResource );
     addRewriteFilter( context, service, extClusterUrl, extHdfsPath, fileResource );
-    addPivotFilter( context, service, fileResource, "pivot/webhdfs" );
+    addDispatchFilter( context, service, fileResource, "dispatch/webhdfs" );
     descriptors.add( fileResource );
 
     return descriptors;
@@ -90,10 +90,10 @@ public class HdfsResourceDescriptorFactory implements
             context, service, fileResource, "rewrite", params ) );
   }
 
-  private void addPivotFilter( DeploymentContext context,
-                               Service service,
-                               ResourceDescriptor rootResource,
-                               String filterRole ) {
+  private void addDispatchFilter( DeploymentContext context,
+                                  Service service,
+                                  ResourceDescriptor rootResource,
+                                  String filterRole ) {
     rootResource.addFilters( context.getFilterDescriptorFactory( filterRole )
         .createFilterDescriptors( context, service, rootResource, filterRole, null ) );
   }

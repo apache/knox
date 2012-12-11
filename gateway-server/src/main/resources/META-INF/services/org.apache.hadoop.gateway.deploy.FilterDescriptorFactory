@@ -1,4 +1,4 @@
 org.apache.hadoop.gateway.deploy.impl.RewriteFilterDescriptorFactory
-org.apache.hadoop.gateway.deploy.impl.PivotFilterDescriptorFactory
-org.apache.hadoop.gateway.deploy.impl.WebHdfsPivotFilterDescriptorFactory
+org.apache.hadoop.gateway.deploy.impl.DispatchFilterDescriptorFactory
+org.apache.hadoop.gateway.deploy.impl.WebHdfsDispatchFilterDescriptorFactory
 org.apache.hadoop.gateway.deploy.impl.AuthnFilterDescriptorFactory

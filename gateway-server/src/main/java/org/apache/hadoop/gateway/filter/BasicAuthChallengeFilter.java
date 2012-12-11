@@ -32,7 +32,7 @@ import java.security.AccessController;
 /**
  *
  */
-//TODO: Remove the Authenticate header from the expect so that downstream filters and pivot don't see it.
+//TODO: Remove the Authenticate header from the expect so that downstream filters and dispatch don't see it.
 public class BasicAuthChallengeFilter extends AbstractGatewayFilter {
 
   @Override

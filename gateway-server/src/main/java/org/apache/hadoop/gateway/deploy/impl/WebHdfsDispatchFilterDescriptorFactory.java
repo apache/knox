@@ -22,8 +22,7 @@ import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.pivot.HttpClientPivot;
-import org.apache.hadoop.gateway.pivot.WebHdfsPivot;
+import org.apache.hadoop.gateway.dispatch.HdfsDispatch;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
@@ -32,13 +31,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class WebHdfsPivotFilterDescriptorFactory implements FilterDescriptorFactory {
+public class WebHdfsDispatchFilterDescriptorFactory implements FilterDescriptorFactory {
 
   private static final Set<String> ROLES = createSupportedRoles();
 
   private static Set<String> createSupportedRoles() {
     HashSet<String> roles = new HashSet<String>();
-    roles.add( "pivot/webhdfs" );
+    roles.add( "dispatch/webhdfs" );
     return Collections.unmodifiableSet( roles );
   }
 
@@ -56,7 +55,7 @@ public class WebHdfsPivotFilterDescriptorFactory implements FilterDescriptorFact
       List<FilterParamDescriptor> filterParamDescriptors ) {
     List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
     FilterDescriptor descriptor =
-        resourceDescriptor.createFilter().role( filterRole ).impl( WebHdfsPivot.class );
+        resourceDescriptor.createFilter().role( filterRole ).impl( HdfsDispatch.class );
     descriptor.addParams( filterParamDescriptors );
     descriptors.add( descriptor );
     return descriptors;
