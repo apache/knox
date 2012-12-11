@@ -42,6 +42,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-security-provider-spring</module>
         <module>gateway-service-hdfs</module>
         <module>gateway-service-templeton</module>
         <module>gateway-server</module>
@@ -155,6 +156,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-spi</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-security-provider-spring</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

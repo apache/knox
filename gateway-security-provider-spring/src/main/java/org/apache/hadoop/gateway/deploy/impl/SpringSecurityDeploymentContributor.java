@@ -17,22 +17,28 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
-import org.apache.hadoop.gateway.GatewayServlet;
+import java.util.Map;
+
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentContributor;
 import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
-public class InitializeDeploymentContributor extends DeploymentContributorBase implements DeploymentContributor {
+public class SpringSecurityDeploymentContributor extends DeploymentContributorBase {
 
-  private static final String GATEWAY_SERVLET_CLASS_NAME = GatewayServlet.class.getName();
 
   @Override
-  public void contribute( DeploymentContext context ) {
-    WebAppDescriptor wad = context.getWebAppDescriptor();
-    String servlet = context.getTopology().getName();
-    wad.createServlet().servletName( servlet ).servletClass( GATEWAY_SERVLET_CLASS_NAME );
-    wad.createServletMapping().servletName( servlet ).urlPattern( "/*" );
+  public void contribute(DeploymentContext context) {
+
+    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
+    Provider provider = context.getTopology().getProvider("authentication");
+    if (provider != null && provider.isEnabled()) {
+      Map<String, String> params = provider.getParams();
+      servlet.createInitParam()
+          .paramName( "contextConfigLocation" )
+          .paramValue( params.get("contextConfigLocation") );
+    }
   }
 
 }
