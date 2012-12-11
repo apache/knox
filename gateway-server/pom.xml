@@ -300,6 +300,10 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+        	<groupId>org.apache.hadoop</groupId>
+        	<artifactId>gateway-security-provider-spring</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
