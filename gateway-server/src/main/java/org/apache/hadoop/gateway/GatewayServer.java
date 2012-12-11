@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -53,7 +54,7 @@ public class GatewayServer implements TopologyListener {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayServer server = new GatewayServer();
+  private static GatewayServer server;
 
   private Server jetty;
   private GatewayConfig config;
@@ -71,7 +72,7 @@ public class GatewayServer implements TopologyListener {
       } else if( cmd.hasOption( "version" ) ) {
         System.out.println( res.gatewayVersionMessage() );
       } else {
-        startGateway();
+        startGateway( new GatewayConfigImpl() );
       }
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );
@@ -118,15 +119,21 @@ public class GatewayServer implements TopologyListener {
     input.close();
   }
 
-  private static void startGateway() {
+  public static GatewayServer startGateway( GatewayConfig config ) {
     try {
-      server = new GatewayServer();
+      server = new GatewayServer( config );
       log.startingGateway();
-      server.startGateway();
+      server.start();
       log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
+      return server;
     } catch( Exception e ) {
       log.failedToStartGateway( e );
+      return null;
     }
+  }
+
+  public GatewayServer( GatewayConfig config ) {
+    this.config = config;
   }
 
   private void start() throws Exception {
@@ -174,7 +181,7 @@ public class GatewayServer implements TopologyListener {
     socket.close();
   }
 
-  private void stop() throws Exception {
+  public void stop() throws Exception {
     log.stoppingGateway();
     monitor.stopMonitor();
     jetty.stop();
@@ -227,6 +234,15 @@ public class GatewayServer implements TopologyListener {
     return name;
   }
 
+  public InetSocketAddress[] getAddresses() {
+    InetSocketAddress[] addresses = new InetSocketAddress[ jetty.getConnectors().length ];
+    for( int i=0, n=addresses.length; i<n; i++ ) {
+      Connector connector = jetty.getConnectors()[ i ];
+      addresses[ i ] = new InetSocketAddress( connector.getHost(), connector.getLocalPort() );
+    }
+    return addresses;
+  }
+
   private class WarDirFilter implements FilenameFilter {
 
     Pattern pattern;
@@ -254,13 +270,13 @@ public class GatewayServer implements TopologyListener {
     }
   }
 
-  public void deploy( Topology topology, File topologyDir ) {
+  public void deploy( Topology topology, File warFile ) {
     String name = topology.getName();
-    String war = topologyDir.getAbsolutePath();
+    String warPath = warFile.getAbsolutePath();
     WebAppContext context = new WebAppContext();
     context.setDefaultsDescriptor( null );
-    context.setContextPath( name );
-    context.setWar( war );
+    context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
+    context.setWar( warPath );
     undeploy( topology );
     deployments.put( name, context );
     contexts.addHandler( context );

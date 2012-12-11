@@ -67,7 +67,7 @@ public class UrlRewriteFilter extends AbstractGatewayFilter {
 
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
-    chain.doFilter( request, new UrlRewriteResponse( getConfig(), rewriter, response ) );
+    chain.doFilter( request, new UrlRewriteResponse( getConfig(), rewriter, request, response ) );
   }
 
 }

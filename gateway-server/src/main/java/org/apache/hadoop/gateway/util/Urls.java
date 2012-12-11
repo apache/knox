@@ -17,32 +17,27 @@
  */
 package org.apache.hadoop.gateway.util;
 
-import sun.org.mozilla.javascript.internal.regexp.RegExpImpl;
-
-import java.text.MessageFormat;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  *
  */
 public class Urls {
 
-  public static String ensureLeadingSlash( String path ) {
-    if( path == null ) {
+  public static String ensureLeadingSlash( String s ) {
+    if( s == null ) {
       return "/";
-    } else if( path.startsWith( "/" ) ) {
-      return path;
+    } else if( s.startsWith( "/" ) ) {
+      return s;
     } else {
-      return "/" + path;
+      return "/" + s;
     }
   }
 
-  private static String stripLeadingSlash( String s ) {
-    s = s.trim();
-    while( s.startsWith( "/" ) ) {
-      s = s.substring(1);
+  public static String stripLeadingSlash( String s ) {
+    if( s != null ) {
+      s = s.trim();
+      while( s.startsWith( "/" ) ) {
+        s = s.substring(1);
+      }
     }
     return s;
   }

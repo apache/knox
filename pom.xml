@@ -25,6 +25,16 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <!-- Need this to pickup JUnit 4.11 which is required to resolve Hamcrest dependency issues between JUnit and RestAssured. -->
+    <repositories>
+        <repository>
+            <snapshots><enabled>true</enabled></snapshots>
+            <id>snapshots</id>
+            <name>snapshots</name>
+            <url>http://repo.typesafe.com/typesafe/snapshots</url>
+        </repository>
+    </repositories>
+
     <modules>
         <module>gateway-test-utils</module>
         <module>gateway-test-ldap</module>
@@ -380,21 +390,78 @@
                 <version>${gateway-version}</version>
             </dependency>
 
-            <!-- JUnit must be after restassured otherwise is messes up the hamcrest dependencies -->
             <dependency>
-                <groupId>com.jayway.restassured</groupId>
-                <artifactId>rest-assured</artifactId>
-                <version>1.7</version>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-api</artifactId>
+                <version>1.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>1.2.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-library</artifactId>
+                <version>1.2.1</version>
                 <scope>test</scope>
             </dependency>
 
-            <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->
+            <!-- JUnit must be before Junit otherwise it is messes up the hamcrest dependencies -->
+            <dependency>
+                <groupId>com.jayway.restassured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>1.6.2</version>
+                <!--
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-library</artifactId>
+                    </exclusion>
+                </exclusions>
+                -->
+                <scope>test</scope>
+            </dependency>
+
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
+                <version>4.11</version>
+            </dependency>
+
+            <!-- Junit must be after restassured otherwise is messes up the hamcrest dependencies -->
+            <!--
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit-dep</artifactId>
                 <version>4.10</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-library</artifactId>
+                    </exclusion>
+                </exclusions>
                 <scope>test</scope>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>org.easymock</groupId>

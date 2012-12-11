@@ -37,8 +37,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasXPath;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.xml.HasXPath.hasXPath;
 
 public class DeploymentFactoryTest {
 
@@ -114,9 +114,9 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}/namenode/api/v1/{path=**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "pivot" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.pivot.HttpClientPivot" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {gateway.url}/namenode/api/v1/{path=**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "pivot/webhdfs" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.pivot.WebHdfsPivot" ) ) );
   }
 
   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {

@@ -116,6 +116,9 @@ public class GatewayServlet implements Servlet {
       String location = servletConfig.getInitParameter( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM );
       if( location != null ) {
         stream = servletConfig.getServletContext().getResourceAsStream( location );
+        if( stream == null ) {
+          stream = servletConfig.getServletContext().getResourceAsStream( "/WEB-INF/" + location );
+        }
       } else {
         stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
       }

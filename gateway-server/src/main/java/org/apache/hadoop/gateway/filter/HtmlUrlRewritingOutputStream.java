@@ -40,6 +40,7 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
   static Pattern absoluteUrlPattern = Pattern.compile( "^/.*$" );
 
   static Pattern tagNamePattern = Pattern.compile( "<\\s*([^>\\s/!]*).*", Pattern.CASE_INSENSITIVE | Pattern.CANON_EQ | Pattern.DOTALL );
+
   static Map<String,Pattern> tagUrlPatterns = buildTagPatternMap();
 
   private FilterConfig config;
@@ -121,6 +122,7 @@ public class HtmlUrlRewritingOutputStream extends ServletOutputStream {
   // 3. A relative URL that doesn't start with either.
   String rewriteUrl( String oldUrl ) throws URISyntaxException {
     //String newUrl = rewriter.rewriteUrl( oldUrl );
+    //TODO: Need to have a param resolver for stream based URL rewriting.  Needs to be common for all Url rewriting.
     URI newUri = rewriter.rewrite( Parser.parse( oldUrl ), null );
     //System.out.println( "Rewrite: " + oldUrl + " to " + newUrl );
 //    String newUrl = oldUrl;

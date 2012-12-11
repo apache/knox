@@ -49,9 +49,10 @@ import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
 
 @Category( { IntegrationTests.class, MediumTests.class } )
@@ -192,9 +193,9 @@ public class GatewayTempletonFuncTest {
         .queryParam( "recursive", "true" )
         .expect()
         //.log().all()
-        .statusCode( isOneOf( HttpStatus.SC_OK, HttpStatus.SC_NOT_FOUND ) )
-        .when()
-        .delete( hdfsPath + "/user/hdfs/test" );
+        .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
+            .when()
+            .delete( hdfsPath + "/user/hdfs/test" );
     if( MOCK ) {
       assertThat( namenode.isEmpty(), is( true ) );
     }

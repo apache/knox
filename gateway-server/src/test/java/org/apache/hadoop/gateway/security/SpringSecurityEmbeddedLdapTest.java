@@ -50,7 +50,7 @@ import java.net.ServerSocket;
 import java.util.EnumSet;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.IsEqual.equalTo;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class SpringSecurityEmbeddedLdapTest {

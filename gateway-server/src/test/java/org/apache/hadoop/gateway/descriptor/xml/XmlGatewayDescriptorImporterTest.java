@@ -29,10 +29,10 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.internal.matchers.StringContains.containsString;
 
 public class XmlGatewayDescriptorImporterTest {
 

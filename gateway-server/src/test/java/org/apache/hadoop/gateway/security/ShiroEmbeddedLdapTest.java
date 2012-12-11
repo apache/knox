@@ -40,7 +40,7 @@ import java.net.ServerSocket;
 import java.util.EnumSet;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.IsEqual.equalTo;
 
 // Derrived from this thread
 // http://shiro-user.582556.n2.nabble.com/Integration-of-Shiro-with-Embedded-Jetty-td7519712.html

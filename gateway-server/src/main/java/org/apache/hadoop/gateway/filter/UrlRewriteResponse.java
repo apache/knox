@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter;
 
+import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -24,6 +25,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
@@ -50,14 +52,21 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
     REWRITE_HEADER_NAMES.add( "Location" );
   }
 
+  private static final String REQUEST_PARAM_PREFIX = "request.";
+  private static final String GATEWAY_PARAM_PREFIX = "gateway.";
+
   private FilterConfig config;
   private Rewriter rewriter;
+  private HttpServletRequest request;
+  private HttpServletResponse response;
   private HtmlUrlRewritingOutputStream output;
 
-  public UrlRewriteResponse( FilterConfig config, Rewriter rewriter, HttpServletResponse response ) throws IOException {
+  public UrlRewriteResponse( FilterConfig config, Rewriter rewriter, HttpServletRequest request, HttpServletResponse response ) throws IOException {
     super( response );
     this.config = config;
     this.rewriter = rewriter;
+    this.request = request;
+    this.response = response;
     this.output = null;
   }
 
@@ -134,6 +143,39 @@ public class UrlRewriteResponse extends HttpServletResponseWrapper implements Re
   @Override
   @SuppressWarnings( "unchecked" )
   public List<String> getValues( String name ) {
-    return Arrays.asList( config.getInitParameter( name ) );
+    if( name.startsWith( REQUEST_PARAM_PREFIX ) ) {
+      return Arrays.asList( getRequestParam( name.substring( REQUEST_PARAM_PREFIX.length() ) ) );
+    } else if ( name.startsWith( GATEWAY_PARAM_PREFIX ) ) {
+      return Arrays.asList( getGatewayParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
+    }  else {
+      return Arrays.asList( config.getInitParameter( name ) );
+    }
   }
+
+  private String getGatewayParam( String name ) {
+    if( "url".equals( name ) ) {
+      return request.getScheme() + "://" + request.getServerName() + ":" + request.getLocalPort() + request.getContextPath();
+    } else if( "address".equals( name ) ) {
+      return request.getServerName() + ":" + request.getLocalPort();
+    } else if( "path".equals( name ) ) {
+      return request.getContextPath();
+    } else {
+      return null;
+    }
+  }
+
+  private String getRequestParam( String name ) {
+    if( "host".equals( name ) ) {
+      return request.getServerName();
+    } else if ( "port".equals( name ) ) {
+      return Integer.toString( request.getLocalPort() );
+    } else if ( "scheme".equals( name ) ) {
+      return request.getScheme();
+    } else if ( "context-path".equals( name ) ) {
+      return Urls.stripLeadingSlash( request.getContextPath() );
+    } else {
+      return null;
+    }
+  }
+
 }

@@ -20,8 +20,10 @@ package org.apache.hadoop.gateway.hdfs;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
@@ -53,25 +55,23 @@ public class HdfsResourceDescriptorFactory implements
       DeploymentContext context, Service service ) {
     List<ResourceDescriptor> descriptors = new ArrayList<ResourceDescriptor>();
 
-    String extClusterUrl = "{request.scheme}://{request.host}:{request.port}/{gateway.path}/{cluster.path}";
+    String extClusterUrl = "{gateway.url}";
     String extHdfsPath = "/namenode/api/v1";
     String intHdfsUrl = service.getUrl().toExternalForm();
 
-    ResourceDescriptor rootResource = context.getGatewayDescriptor()
-        .createResource();
+    ResourceDescriptor rootResource = context.getGatewayDescriptor().createResource();
     rootResource.source( extHdfsPath + "?{**}" );
     rootResource.target( intHdfsUrl + "?{**}" );
     addAuthenticationProviderFilter( context, service, rootResource );
-    addPivotFilter( context, service, rootResource );
+    addPivotFilter( context, service, rootResource, "pivot" );
     descriptors.add( rootResource );
 
-    ResourceDescriptor fileResource = context.getGatewayDescriptor()
-        .createResource();
+    ResourceDescriptor fileResource = context.getGatewayDescriptor().createResource();
     fileResource.source( extHdfsPath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     addAuthenticationProviderFilter( context, service, fileResource );
     addRewriteFilter( context, service, extClusterUrl, extHdfsPath, fileResource );
-    addPivotFilter( context, service, fileResource );
+    addPivotFilter( context, service, fileResource, "pivot/webhdfs" );
     descriptors.add( fileResource );
 
     return descriptors;
@@ -84,43 +84,49 @@ public class HdfsResourceDescriptorFactory implements
     params.add( fileResource
         .createFilterParam()
         .name( "rewrite" )
-        .value(
-            "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath
-                + "/{path=**}" ) );
-    fileResource.addFilters( context
-        .getFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
+        .value( "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath + "/{path=**}" ) );
+    fileResource.addFilters(
+        context.getFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
             context, service, fileResource, "rewrite", params ) );
   }
 
   private void addPivotFilter( DeploymentContext context,
-                               Service service, ResourceDescriptor rootResource ) {
-    rootResource.addFilters( context.getFilterDescriptorFactory( "pivot" )
-        .createFilterDescriptors( context, service, rootResource, "pivot",
-            null ) );
+                               Service service,
+                               ResourceDescriptor rootResource,
+                               String filterRole ) {
+    rootResource.addFilters( context.getFilterDescriptorFactory( filterRole )
+        .createFilterDescriptors( context, service, rootResource, filterRole, null ) );
   }
 
   private void addAuthenticationProviderFilter( DeploymentContext context,
                                                 Service service, ResourceDescriptor resource ) {
     List<FilterParamDescriptor> params = getFilterParams( context, resource );
     FilterDescriptorFactory factory = context.getFilterDescriptorFactory( "authentication" );
-    resource.addFilters(
-        factory.createFilterDescriptors(
-            context, service, resource, "authentication", params ) );
+    if( factory != null ) {
+      List<FilterDescriptor> descriptors = factory.createFilterDescriptors( context, service, resource, "authentication", params );
+      if( descriptors != null ) {
+        resource.addFilters( descriptors );
+      }
+    }
   }
 
   private List<FilterParamDescriptor> getFilterParams(
       DeploymentContext context, ResourceDescriptor resource ) {
-    Map<String, String> filterParams = context.getTopology().getProvider( "authentication" ).getParams();
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    Iterator<Map.Entry<String, String>> i = filterParams.entrySet().iterator();
-    Map.Entry<String, String> entry;
-    while( i.hasNext() ) {
-      entry = i.next();
-      params.add( resource
-          .createFilterParam()
-          .name( entry.getKey() )
-          .value( entry.getValue() ) );
+    Provider provider = context.getTopology().getProvider( "authentication" );
+    if( provider != null ) {
+      Map<String, String> filterParams = provider.getParams();
+      Iterator<Map.Entry<String, String>> i = filterParams.entrySet().iterator();
+      Map.Entry<String, String> entry;
+      while( i.hasNext() ) {
+        entry = i.next();
+        params.add( resource
+            .createFilterParam()
+            .name( entry.getKey() )
+            .value( entry.getValue() ) );
+      }
     }
     return params;
   }
+
 }
