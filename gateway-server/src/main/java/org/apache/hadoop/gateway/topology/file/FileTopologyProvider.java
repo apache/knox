@@ -161,7 +161,6 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
 
   @Override
   public void startMonitor() {
-    reloadTopologies();
     monitor.start();
   }
 

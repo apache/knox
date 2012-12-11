@@ -20,31 +20,33 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
-import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.gateway.topology.Service;
-import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.hamcrest.MatcherAssert;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.anyOf;
@@ -71,7 +73,7 @@ public class GatewayWebHdfsNonSecFuncTest {
   //private static boolean GATEWAY = false;
 
   private static final int LDAP_PORT = 33389;
-//  private static final int GATEWAY_PORT = 8888;
+  private static final int GATEWAY_PORT = 8888;
 
   private static String TEST_HOST_NAME = "vm.home";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
@@ -82,27 +84,28 @@ public class GatewayWebHdfsNonSecFuncTest {
   private static MockServer namenode;
   private static MockServer datanode;
 
-  private static GatewayConfig config = new GatewayConfigImpl();
-  private static Topology topology;
-  private static File warDir;
+  private static GatewayTestConfig config;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-    startLdap();
     namenode = new MockServer( "NameNode", true );
     datanode = new MockServer( "DataNode", true );
+    startLdap();
+    setupGateway();
     startGateway();
     log.info( "LDAP port = " + LDAP_PORT );
     log.info( "NameNode port = " + namenode.getPort() );
     log.info( "DataNode port = " + datanode.getPort() );
-    log.info( "Gateway address = " + gateway.getAddresses()[0] );
+    log.info( "Gateway address = " + gateway.getAddresses()[ 0 ] );
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    cleanupTestTopology();
     if( gateway != null ) {
       gateway.stop();
+    }
+    if( ldap != null ) {
+      ldap.stop();
     }
     if( namenode != null ) {
       namenode.stop();
@@ -110,9 +113,57 @@ public class GatewayWebHdfsNonSecFuncTest {
     if( datanode != null ) {
       datanode.stop();
     }
-    if( ldap != null ) {
-      ldap.stop();
-    }
+    cleanupGateway();
+  }
+
+  private static void setupGateway() throws Exception {
+    //File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    File clustersDir = new File( gatewayDir, "clusters" );
+    clustersDir.mkdirs();
+
+    config = new GatewayTestConfig();
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setClusterConfDir( "clusters" );
+    config.setGatewayPath( "gateway" );
+    config.setGatewayPort( 0 );
+
+    writeTopology( createTopology(), "cluster.xml", clustersDir );
+  }
+
+  private static Document createTopology() throws Exception {
+    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+    Document document = documentBuilder.newDocument();
+    Element gateway = document.createElement( "topology" );
+    document.appendChild( gateway );
+    Element service = document.createElement( "service" );
+    gateway.appendChild( service );
+    Element role = document.createElement( "role" );
+    role.appendChild( document.createTextNode( "NAMENODE" ) );
+    service.appendChild( role );
+    Element url = document.createElement( "url" );
+    url.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
+    service.appendChild( url );
+    return document;
+  }
+
+  private static void writeTopology( Document document, String name, File dir ) throws Exception {
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    transformerFactory.setAttribute( "indent-number", 2 );
+    Transformer transformer = transformerFactory.newTransformer();
+    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
+    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+
+    File descriptor = new File( dir, name );
+    FileOutputStream stream = new FileOutputStream( descriptor );
+
+    DOMSource source = new DOMSource( document );
+    StreamResult result = new StreamResult( stream );
+    transformer.transform( source, result );
+    stream.close();
   }
 
   private static void startLdap() throws Exception{
@@ -125,30 +176,10 @@ public class GatewayWebHdfsNonSecFuncTest {
   private static void startGateway() throws Exception {
     gateway = GatewayServer.startGateway( config );
     assertThat( "Failed to start gateway.", gateway, notNullValue() );
-    setupTestTopology();
   }
 
-  private static void setupTestTopology() throws MalformedURLException {
-    topology = new Topology();
-    topology.setName( "test-cluster" );
-
-    Service service = new Service();
-    service.setRole( "NAMENODE" );
-    service.setUrl( new URL( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
-    topology.addService( service );
-
-    File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
-    WebArchive war = DeploymentFactory.createDeployment( config, topology );
-    warDir = war.as( ExplodedExporter.class ).exportExploded( tempDir, topology.getName() + ".war" );
-
-    gateway.deploy( topology, warDir );
-  }
-
-  private static void cleanupTestTopology() {
-    if( gateway != null ) {
-      gateway.undeploy( topology );
-    }
-    FileUtils.deleteQuietly( warDir );
+  private static void cleanupGateway() {
+    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {
@@ -158,9 +189,8 @@ public class GatewayWebHdfsNonSecFuncTest {
 
   private String getWebHdfsPath() {
     String path = GATEWAY
-        ? getGatewayPath() + "/" + config.getGatewayPath() + "/" + topology.getName() + "/namenode/api/v1"
+        ? getGatewayPath() + "/" + config.getGatewayPath() + "/cluster/namenode/api/v1"
         : "http://" + NAME_NODE_ADDRESS + "/webhdfs/v1";
-    //System.out.println( "WebHdfsPath=" + path );
     return path;
   }
 

@@ -60,7 +60,7 @@ public class DeploymentFactoryTest {
     Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayClusterDescriptorLocation" ) ) );
+    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
@@ -94,7 +94,7 @@ public class DeploymentFactoryTest {
     Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayClusterDescriptorLocation" ) ) );
+    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
     assertThat( wad, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );

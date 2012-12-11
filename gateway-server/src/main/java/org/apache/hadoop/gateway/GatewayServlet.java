@@ -40,8 +40,8 @@ public class GatewayServlet implements Servlet {
 
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
 
-  public static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
-  public static final String GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM = "gatewayClusterDescriptorLocation";
+  public static final String GATEWAY_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
+  public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
 
   private FilterConfigAdapter filterConfig;
   private volatile GatewayFilter filter;
@@ -113,14 +113,14 @@ public class GatewayServlet implements Servlet {
     GatewayFilter filter = null;
     try {
       InputStream stream = null;
-      String location = servletConfig.getInitParameter( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_PARAM );
+      String location = servletConfig.getInitParameter( GATEWAY_DESCRIPTOR_LOCATION_PARAM );
       if( location != null ) {
         stream = servletConfig.getServletContext().getResourceAsStream( location );
         if( stream == null ) {
           stream = servletConfig.getServletContext().getResourceAsStream( "/WEB-INF/" + location );
         }
       } else {
-        stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_CLUSTER_DESCRIPTOR_LOCATION_DEFAULT );
+        stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
       }
       if( stream != null ) {
         try {

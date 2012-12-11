@@ -33,10 +33,15 @@ import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -143,14 +148,6 @@ public class GatewayServer implements TopologyListener {
 //    params.put( GatewayConfigImpl.TEMPLETON_ADDRESS, config.getTempletonAddress() );
 //    params.put( GatewayConfigImpl.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
 
-    // Load the global gateway config.
-    config = new GatewayConfigImpl();
-
-    // Create a dir/file based cluster topology provider.
-    File topologiesDir = calculateAbsoluteTopologiesDir();
-    monitor = new FileTopologyProvider( topologiesDir );
-    monitor.addTopologyChangeListener( this );
-
     // Create the global context handler.
     contexts = new ContextHandlerCollection();
 
@@ -165,6 +162,11 @@ public class GatewayServer implements TopologyListener {
     jetty = new Server( address );
     jetty.setHandler( contexts );
     jetty.start();
+
+    // Create a dir/file based cluster topology provider.
+    File topologiesDir = calculateAbsoluteTopologiesDir();
+    monitor = new FileTopologyProvider( topologiesDir );
+    monitor.addTopologyChangeListener( this );
 
     // Load the current topologies.
     log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
@@ -209,7 +211,7 @@ public class GatewayServer implements TopologyListener {
           File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
         }
-        deploy( topology, topoDir );
+        deploy( topology, warDir );
       }
     }
   }
@@ -238,7 +240,12 @@ public class GatewayServer implements TopologyListener {
     InetSocketAddress[] addresses = new InetSocketAddress[ jetty.getConnectors().length ];
     for( int i=0, n=addresses.length; i<n; i++ ) {
       Connector connector = jetty.getConnectors()[ i ];
-      addresses[ i ] = new InetSocketAddress( connector.getHost(), connector.getLocalPort() );
+      String host = connector.getHost();
+      if( host == null ) {
+        addresses[ i ] = new InetSocketAddress( connector.getLocalPort() );
+      } else {
+        addresses[ i ] = new InetSocketAddress( host, connector.getLocalPort() );
+      }
     }
     return addresses;
   }
@@ -288,4 +295,10 @@ public class GatewayServer implements TopologyListener {
     }
   }
 
+  public static class TestServlet extends HttpServlet {
+    @Override
+    protected void doGet( HttpServletRequest req, HttpServletResponse resp ) throws ServletException, IOException {
+      resp.getWriter().write( "<html>Hello</html>" );
+    }
+  }
 }
