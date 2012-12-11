@@ -64,15 +64,15 @@ public abstract class GatewayDescriptorFactory {
     exporter.store( descriptor, writer );
   }
 
-  public static ResourceDescriptorFactory getClusterResourceDescriptorFactory( Service service ) {
+  public static ResourceDescriptorFactory getResourceDescriptorFactory( Service service ) {
     return RESOURCE_FACTORIES.get( service.getRole() );
   }
 
-  public static FilterDescriptorFactory getClusterFilterDescriptorFactory( String filterRole ) {
+  public static FilterDescriptorFactory getFilterDescriptorFactory( String filterRole ) {
     return FILTER_FACTORIES.get( filterRole );
   }
   
-  public static String getClusterProviderFilterClassName(String role, String defaultClassName) {
+  public static String getFilterClassName( String role, String defaultClassName ) {
     return ROLE_TO_FILTER_MAPPING.getProperty(role, defaultClassName);
   }
 

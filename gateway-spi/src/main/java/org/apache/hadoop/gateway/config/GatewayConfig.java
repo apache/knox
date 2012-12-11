@@ -34,7 +34,7 @@ public interface GatewayConfig {
 
   String getGatewayPath();
 
-  String getClusterConfDir();
+  String getDeploymentDir();
 
   InetSocketAddress getGatewayAddress() throws UnknownHostException;
 

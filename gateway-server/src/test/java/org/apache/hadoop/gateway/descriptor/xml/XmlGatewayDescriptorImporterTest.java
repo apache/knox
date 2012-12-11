@@ -17,10 +17,10 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.junit.Test;
 
@@ -43,7 +43,7 @@ public class XmlGatewayDescriptorImporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorLoad() throws IOException {
+  public void testXmlGatewayDescriptorLoad() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
         "<gateway>\n" +
         "  <resource>\n" +
@@ -115,7 +115,7 @@ public class XmlGatewayDescriptorImporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorLoadEmpty() throws IOException {
+  public void testXmlGatewayDescriptorLoadEmpty() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
         "<gateway>\n" +
         "  <resource>\n" +
@@ -143,7 +143,7 @@ public class XmlGatewayDescriptorImporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorLoadInvalid() throws IOException {
+  public void testXmlGatewayDescriptorLoadInvalid() throws IOException {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
         "<gateway>\n" +
         "  <resource>\n" +

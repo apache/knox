@@ -146,7 +146,7 @@ public class FileTopologyProviderTest {
   }
 
   @Test
-  public void testGetClusterTopologies() throws Exception {
+  public void testGetTopologies() throws Exception {
 
     FileObject dir = createDir( "ram:///test/dir" );
     createFile( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );

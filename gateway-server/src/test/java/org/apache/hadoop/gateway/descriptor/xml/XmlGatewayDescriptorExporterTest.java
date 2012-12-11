@@ -48,7 +48,7 @@ public class XmlGatewayDescriptorExporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorStore() throws IOException, SAXException, ParserConfigurationException {
+  public void testXmlGatewayDescriptorStore() throws IOException, SAXException, ParserConfigurationException {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource()
         .source( "resource1-source" )
@@ -86,7 +86,7 @@ public class XmlGatewayDescriptorExporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorStoreMissingValue() throws IOException, SAXException, ParserConfigurationException {
+  public void testXmlGatewayDescriptorStoreMissingValue() throws IOException, SAXException, ParserConfigurationException {
 
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().addParam().up().up().up();
@@ -102,7 +102,7 @@ public class XmlGatewayDescriptorExporterTest {
   }
 
   @Test
-  public void testXmlClusterDescriptorStoreFailure() throws IOException {
+  public void testXmlGatewayDescriptorStoreFailure() throws IOException {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().addParam().up().up().up();
 

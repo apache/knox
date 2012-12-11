@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 public class GatewayDescriptorTest {
 
   @Test
-  public void testClusterDescriptorConstruction() {
+  public void testGatewayDescriptorConstruction() {
 
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addParam().name( "cluster-param1-name" ).value( "cluster-param1-value" ).up()

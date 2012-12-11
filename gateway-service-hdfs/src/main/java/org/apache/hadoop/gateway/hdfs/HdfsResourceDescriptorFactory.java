@@ -55,7 +55,7 @@ public class HdfsResourceDescriptorFactory implements
       DeploymentContext context, Service service ) {
     List<ResourceDescriptor> descriptors = new ArrayList<ResourceDescriptor>();
 
-    String extClusterUrl = "{gateway.url}";
+    String extGatewayUrl = "{gateway.url}";
     String extHdfsPath = "/namenode/api/v1";
     String intHdfsUrl = service.getUrl().toExternalForm();
 
@@ -70,7 +70,7 @@ public class HdfsResourceDescriptorFactory implements
     fileResource.source( extHdfsPath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     addAuthenticationProviderFilter( context, service, fileResource );
-    addRewriteFilter( context, service, extClusterUrl, extHdfsPath, fileResource );
+    addRewriteFilter( context, service, extGatewayUrl, extHdfsPath, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch/webhdfs" );
     descriptors.add( fileResource );
 
@@ -78,13 +78,13 @@ public class HdfsResourceDescriptorFactory implements
   }
 
   private void addRewriteFilter( DeploymentContext context,
-                                 Service service, String extClusterUrl,
+                                 Service service, String extGatewayUrl,
                                  String extHdfsPath, ResourceDescriptor fileResource ) {
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
     params.add( fileResource
         .createFilterParam()
         .name( "rewrite" )
-        .value( "webhdfs://*:*/{path=**}" + " " + extClusterUrl + extHdfsPath + "/{path=**}" ) );
+        .value( "webhdfs://*:*/{path=**}" + " " + extGatewayUrl + extHdfsPath + "/{path=**}" ) );
     fileResource.addFilters(
         context.getFilterDescriptorFactory( "rewrite" ).createFilterDescriptors(
             context, service, fileResource, "rewrite", params ) );

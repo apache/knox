@@ -84,14 +84,14 @@ public abstract class DeploymentFactory {
   
   private static void finalize( DeploymentContext context ) {
     try {
-      // Write the gateway cluster descriptor (gateway.xml) into the war.
+      // Write the gateway descriptor (gateway.xml) into the war.
       StringWriter writer = new StringWriter();
       GatewayDescriptorFactory.store( context.getGatewayDescriptor(), "xml", writer );
       context.getWebArchive().addAsWebInfResource(
           new StringAsset( writer.toString() ),
           GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
 
-      // Set the location of the gateway cluster descriptor as a servlet init param.
+      // Set the location of the gateway descriptor as a servlet init param.
       ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
       servlet.createInitParam()
           .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )

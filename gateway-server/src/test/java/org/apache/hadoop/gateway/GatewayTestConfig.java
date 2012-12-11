@@ -29,7 +29,7 @@ public class GatewayTestConfig implements GatewayConfig {
   private String gatewayHost = "localhost";
   private int gatewayPort = 0;
   private String gatewayPath = "gateway";
-  private String clusterConfDir = "clusters";
+  private String deployDir = "clusters";
 
   @Override
   public String getGatewayHomeDir() {
@@ -77,12 +77,12 @@ public class GatewayTestConfig implements GatewayConfig {
   }
 
   @Override
-  public String getClusterConfDir() {
-    return clusterConfDir;
+  public String getDeploymentDir() {
+    return deployDir;
   }
 
   public void setClusterConfDir( String clusterConfDir ) {
-    this.clusterConfDir = clusterConfDir;
+    this.deployDir = clusterConfDir;
   }
 
   @Override

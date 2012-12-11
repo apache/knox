@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.w3c.dom.Document;
@@ -52,11 +52,11 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
       Document document = builder.newDocument();
       document.setXmlStandalone( true );
 
-      Element cluster = document.createElement( GATEWAY );
-      document.appendChild( cluster );
+      Element gateway = document.createElement( GATEWAY );
+      document.appendChild( gateway );
 
       for( ResourceDescriptor resource : descriptor.resources() ) {
-        cluster.appendChild( createResource( document, resource ) );
+        gateway.appendChild( createResource( document, resource ) );
       }
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();

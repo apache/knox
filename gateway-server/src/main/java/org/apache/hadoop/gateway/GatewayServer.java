@@ -33,7 +33,6 @@ import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -200,13 +199,13 @@ public class GatewayServer implements TopologyListener {
       if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
         File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
         for( File file : files ) {
-          log.deletingCluster( file.getAbsolutePath() );
+          log.deletingDeployment( file.getAbsolutePath() );
           undeploy( topology );
           FileUtils.deleteQuietly( file );
         }
       } else {
         if( !warDir.exists() ) {
-          log.deployingCluster( topology.getName(), warDir.getAbsolutePath() );
+          log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
           WebArchive war = DeploymentFactory.createDeployment( config, topology );
           File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
@@ -217,7 +216,7 @@ public class GatewayServer implements TopologyListener {
   }
 
   private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {
-    File topoDir = new File( config.getGatewayHomeDir(), config.getClusterConfDir() );
+    File topoDir = new File( config.getGatewayHomeDir(), config.getDeploymentDir() );
     topoDir = topoDir.getAbsoluteFile();
     return topoDir;
   }

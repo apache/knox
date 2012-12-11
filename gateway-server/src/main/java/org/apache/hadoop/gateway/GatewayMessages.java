@@ -67,25 +67,25 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Monitoring topology files in directory: {0}" )
   void monitoringTopologyChangesInDirectory( String topologiesDir );
 
-  @Message( level = MessageLevel.INFO, text = "Deploying cluster topology {0} to {1}" )
-  void deployingCluster( String clusterName, String warDirName );
+  @Message( level = MessageLevel.INFO, text = "Deploying topology {0} to {1}" )
+  void deployingTopology( String clusterName, String warDirName );
 
-  @Message( level = MessageLevel.INFO, text = "Deployed cluster topology {0}." )
-  void deployedCluster( String clusterName );
+  @Message( level = MessageLevel.INFO, text = "Deployed topology {0}." )
+  void deployedTopology( String clusterName );
 
-  @Message( level = MessageLevel.INFO, text = "Deleting deployed cluster topology {0}" )
-  void deletingCluster( String warDirName );
+  @Message( level = MessageLevel.INFO, text = "Deleting deployed topology {0}" )
+  void deletingDeployment( String warDirName );
 
   @Message( level = MessageLevel.INFO, text = "Creating gateway home directory: {0}" )
   void creatingGatewayHomeDir( File homeDir );
 
-  @Message( level = MessageLevel.INFO, text = "Creating gateway cluster topology deployment directory: {0}" )
+  @Message( level = MessageLevel.INFO, text = "Creating gateway deployment directory: {0}" )
   void creatingGatewayDeploymentDir( File topologiesDir );
 
   @Message( level = MessageLevel.INFO, text = "Creating default gateway configuration file: {0}" )
   void creatingDefaultConfigFile( File defaultConfigFile );
 
-  @Message( level = MessageLevel.INFO, text = "Creating sample cluster topology file: {0}" )
+  @Message( level = MessageLevel.INFO, text = "Creating sample topology file: {0}" )
   void creatingDefaultTopologyFile( File defaultConfigFile );
 
 }

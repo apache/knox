@@ -90,14 +90,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_HOST = GATEWAY_CONFIG_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_PREFIX + ".path";
-  public static final String CLUSTER_CONF_DIR = GATEWAY_CONFIG_PREFIX + ".cluster.conf.dir";
+  public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_PREFIX + ".deployment.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_PREFIX + ".hadoop.conf.dir";
-  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_PREFIX + ".shiro.config.file";
+//  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_PREFIX + ".shiro.config.file";
 
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
-  public static final String DEFAULT_CLUSTER_CONF_DIR = "clusters";
-  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
+  public static final String DEFAULT_DEPLOYMENT_DIR = "clusters";
+//  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
 
   public GatewayConfigImpl() {
     init();
@@ -228,13 +228,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get( HTTP_PATH, DEFAULT_HTTP_PATH );
   }
 
-  public String getClusterConfDir() {
-    return get( CLUSTER_CONF_DIR, DEFAULT_CLUSTER_CONF_DIR );
+  public String getDeploymentDir() {
+    return get( DEPLOYMENT_DIR, DEFAULT_DEPLOYMENT_DIR );
   }
 
-  public String getShiroConfigFile() {
-    return get( SHIRO_CONFIG_FILE, DEFAULT_SHIRO_CONFIG_FILE );
-  }
+//  public String getShiroConfigFile() {
+//    return get( SHIRO_CONFIG_FILE, DEFAULT_SHIRO_CONFIG_FILE );
+//  }
 
 //  public String getNameNodeAddress() {
 //    return get( NAMENODE_ADDRESS, DEFAULT_NAMENODE_ADDRESS );

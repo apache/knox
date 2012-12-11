@@ -23,8 +23,8 @@ import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
-import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
@@ -51,12 +51,12 @@ public class DeploymentContextImpl implements DeploymentContext {
 
   @Override
   public ResourceDescriptorFactory getResourceDescriptorFactory( Service service ) {
-    return GatewayDescriptorFactory.getClusterResourceDescriptorFactory( service );
+    return GatewayDescriptorFactory.getResourceDescriptorFactory( service );
   }
 
   @Override
   public FilterDescriptorFactory getFilterDescriptorFactory( String filterRole ) {
-    return GatewayDescriptorFactory.getClusterFilterDescriptorFactory( filterRole );
+    return GatewayDescriptorFactory.getFilterDescriptorFactory( filterRole );
   }
 
   @Override

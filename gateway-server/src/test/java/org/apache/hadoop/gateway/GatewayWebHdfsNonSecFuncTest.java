@@ -121,8 +121,8 @@ public class GatewayWebHdfsNonSecFuncTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    File clustersDir = new File( gatewayDir, "clusters" );
-    clustersDir.mkdirs();
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
 
     config = new GatewayTestConfig();
     config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
@@ -130,7 +130,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     config.setGatewayPath( "gateway" );
     config.setGatewayPort( 0 );
 
-    writeTopology( createTopology(), "cluster.xml", clustersDir );
+    writeTopology( createTopology(), "cluster.xml", deployDir );
   }
 
   private static Document createTopology() throws Exception {
