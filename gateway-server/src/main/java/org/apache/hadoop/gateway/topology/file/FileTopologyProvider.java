@@ -169,19 +169,26 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     monitor.stop();
   }
 
-  @Override
-  public void fileCreated( FileChangeEvent fileChangeEvent ) {
-    reloadTopologies();
+  private void handleFileEvent( FileChangeEvent fileChangeEvent ) throws FileSystemException {
+    FileObject file = fileChangeEvent.getFile();
+    if( file != null && ( !file.getType().hasChildren() || file.equals( directory ) ) ) {
+      reloadTopologies();
+    }
   }
 
   @Override
-  public void fileDeleted( FileChangeEvent fileChangeEvent ) {
-    reloadTopologies();
+  public void fileCreated( FileChangeEvent fileChangeEvent ) throws FileSystemException {
+    handleFileEvent( fileChangeEvent );
   }
 
   @Override
-  public void fileChanged( FileChangeEvent fileChangeEvent ) {
-    reloadTopologies();
+  public void fileDeleted( FileChangeEvent fileChangeEvent ) throws FileSystemException {
+    handleFileEvent( fileChangeEvent );
+  }
+
+  @Override
+  public void fileChanged( FileChangeEvent fileChangeEvent ) throws FileSystemException {
+    handleFileEvent( fileChangeEvent );
   }
 
 }
