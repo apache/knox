@@ -22,9 +22,12 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -151,11 +154,20 @@ public class XmlGatewayDescriptorImporterTest {
         "      <param>";
 
     Reader reader = new StringReader( xml );
+    // Keep the tests quiet.  Ignore the stack trace that ends up being written to System.out.
+    Logger logger = Logger.getLogger( "org.apache.commons.digester3.Digester" );
+    Level level = logger.getLevel();
+    logger.setLevel( Level.OFF );
+    PrintStream out = System.out;
+    System.setOut( null );
     try {
       GatewayDescriptorFactory.load( "xml", reader );
       fail( "Should have thrown IOException" );
     } catch( IOException e ) {
       assertThat( e.getMessage(), containsString( "org.xml.sax.SAXParseException" ) );
+    } finally {
+      System.setOut( out );
+      logger.setLevel( level );
     }
   }
 
