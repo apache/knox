@@ -21,9 +21,11 @@ import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.Set;
 
-public interface ResourceDescriptorFactory {
+public interface ServiceDeploymentContributor {
 
-  Set<String> getSupportedServiceRoles();
+  String getName();
+
+  Set<String> getSupportedRoles();
 
   public void contribute( DeploymentContext deploymentContext, Service service );
 

@@ -17,14 +17,29 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
+import java.util.List;
 import java.util.Set;
 
-public interface ResourceDescriptorFactory {
+public interface ProviderDeploymentContributor {
 
-  Set<String> getSupportedServiceRoles();
+  public String getName();
 
-  public void contribute( DeploymentContext deploymentContext, Service service );
+  Set<String> getSupportedRoles();
+
+  public void contribute( DeploymentContext deploymentContext );
+
+  public void contribute( DeploymentContext deploymentContext, Provider provider );
+
+  public void contribute(
+      DeploymentContext deploymentContext,
+      Service service,
+      ResourceDescriptor resourceDescriptor,
+      String filterRole,
+      List<FilterParamDescriptor> filterParamDescriptors );
 
 }
