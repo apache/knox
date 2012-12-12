@@ -29,6 +29,7 @@ public class FilterDescriptorImpl implements FilterDescriptor {
 
   private ResourceDescriptor parent;
   private List<FilterParamDescriptor> params;
+  private String name;
   private String role;
   private String impl;
 
@@ -40,6 +41,17 @@ public class FilterDescriptorImpl implements FilterDescriptor {
   @Override
   public ResourceDescriptor up() {
     return parent;
+  }
+
+  @Override
+  public FilterDescriptor name( String name ) {
+    this.name = name;
+    return this;
+  }
+
+  @Override
+  public String name() {
+    return name;
   }
 
   @Override

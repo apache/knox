@@ -36,6 +36,7 @@ public class XmlGatewayDescriptorRules extends AbstractRulesModule implements Xm
     forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_SOURCE ).callMethod( "source" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_TARGET ).callMethod( "target" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER ).addRule( new AddNextRule( "addFilter" ) );
+    forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "name" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_ROLE ).callMethod( "role" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_IMPL ).callMethod( "impl" ).usingElementBodyAsArgument();
     forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM ).addRule( new AddNextRule( "addParam") );

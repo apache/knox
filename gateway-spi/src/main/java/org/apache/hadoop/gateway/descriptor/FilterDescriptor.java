@@ -24,6 +24,10 @@ public interface FilterDescriptor {
 
   ResourceDescriptor up();
 
+  FilterDescriptor name( String name );
+
+  String name();
+
   FilterDescriptor role( String role );
 
   String role();

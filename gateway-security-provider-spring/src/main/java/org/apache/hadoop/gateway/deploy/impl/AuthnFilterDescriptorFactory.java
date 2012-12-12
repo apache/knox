@@ -18,26 +18,23 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
 import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
-import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
-import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class AuthnFilterDescriptorFactory implements FilterDescriptorFactory {
 
   private static final String DEFAULT_FILTER_CLASSNAME = "org.springframework.web.filter.DelegatingFilterProxy";
+  private static final String DEFAULT_FILTER_NAME = "springSecurityFilterChain";
   private static final Set<String> ROLES = createSupportedRoles();
 
   private static Set<String> createSupportedRoles() {
@@ -63,7 +60,8 @@ public class AuthnFilterDescriptorFactory implements FilterDescriptorFactory {
     if( provider != null && provider.isEnabled() ) {
       String className = DEFAULT_FILTER_CLASSNAME;
       if( className != null ) {
-        FilterDescriptor descriptor = resourceDescriptor.createFilter().role( filterRole ).impl( className );
+        FilterDescriptor descriptor = resourceDescriptor.createFilter()
+            .name( DEFAULT_FILTER_NAME ).role( filterRole ).impl( className );
         descriptor.addParams( filterParamDescriptors );
         descriptors.add( descriptor );
       }

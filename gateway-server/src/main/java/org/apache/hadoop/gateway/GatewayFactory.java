@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceParamDescriptor;
@@ -70,7 +70,11 @@ public class GatewayFactory {
   }
 
   private static void addFilter( GatewayFilter gateway, FilterDescriptor filter ) throws URISyntaxException {
-    gateway.addFilter( filter.up().source(), filter.role(), filter.impl(), createParams( filter ) );
+    String name = filter.name();
+    if( name == null ) {
+      name = filter.role();
+    }
+    gateway.addFilter( filter.up().source(), name, filter.impl(), createParams( filter ) );
   }
 
   private static Map<String, String> createParams( FilterDescriptor filter ) {

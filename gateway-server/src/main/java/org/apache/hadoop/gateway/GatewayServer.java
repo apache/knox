@@ -37,10 +37,6 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -54,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class GatewayServer implements TopologyListener {
+public class GatewayServer {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
@@ -64,6 +60,7 @@ public class GatewayServer implements TopologyListener {
   private GatewayConfig config;
   private ContextHandlerCollection contexts;
   private FileTopologyProvider monitor;
+  private TopologyListener listener;
   private Map<String, WebAppContext> deployments;
 
   public static void main( String[] args ) {
@@ -126,10 +123,12 @@ public class GatewayServer implements TopologyListener {
   public static GatewayServer startGateway( GatewayConfig config ) {
     try {
       server = new GatewayServer( config );
-      log.startingGateway();
-      server.start();
-      log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
-      return server;
+      synchronized (server ) {
+        log.startingGateway();
+        server.start();
+        log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
+        return server;
+      }
     } catch( Exception e ) {
       log.failedToStartGateway( e );
       return null;
@@ -138,9 +137,10 @@ public class GatewayServer implements TopologyListener {
 
   public GatewayServer( GatewayConfig config ) {
     this.config = config;
+    this.listener = new InternalTopologyListener();
   }
 
-  private void start() throws Exception {
+  private synchronized void start() throws Exception {
 
 //    Map<String,String> params = new HashMap<String,String>();
 //    params.put( GatewayConfigImpl.NAMENODE_ADDRESS, config.getNameNodeAddress() );
@@ -165,7 +165,7 @@ public class GatewayServer implements TopologyListener {
     // Create a dir/file based cluster topology provider.
     File topologiesDir = calculateAbsoluteTopologiesDir();
     monitor = new FileTopologyProvider( topologiesDir );
-    monitor.addTopologyChangeListener( this );
+    monitor.addTopologyChangeListener( listener );
 
     // Load the current topologies.
     log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
@@ -176,63 +176,12 @@ public class GatewayServer implements TopologyListener {
     monitor.startMonitor();
   }
 
-  private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {
-    ServerSocket socket = new ServerSocket();
-    socket.bind( address );
-    socket.close();
-  }
-
-  public void stop() throws Exception {
+  public synchronized void stop() throws Exception {
     log.stoppingGateway();
     monitor.stopMonitor();
     jetty.stop();
     jetty.join();
     log.stoppedGateway();
-  }
-
-  @Override
-  public void handleTopologyEvent( List<TopologyEvent> events ) {
-    for( TopologyEvent event : events ) {
-      Topology topology = event.getTopology();
-      File topoDir = calculateAbsoluteTopologiesDir();
-      File warDir = calcWarDir( topology );
-      if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
-        File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
-        for( File file : files ) {
-          log.deletingDeployment( file.getAbsolutePath() );
-          undeploy( topology );
-          FileUtils.deleteQuietly( file );
-        }
-      } else {
-        if( !warDir.exists() ) {
-          log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
-          WebArchive war = DeploymentFactory.createDeployment( config, topology );
-          File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
-          tmp.renameTo( warDir );
-        }
-        deploy( topology, warDir );
-      }
-    }
-  }
-
-  private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {
-    File topoDir = new File( config.getGatewayHomeDir(), config.getDeploymentDir() );
-    topoDir = topoDir.getAbsoluteFile();
-    return topoDir;
-  }
-
-  private File calculateAbsoluteTopologiesDir() {
-    return calculateAbsoluteTopologiesDir( config );
-  }
-
-  private File calcWarDir( Topology topology ) {
-    File warDir = new File( calculateAbsoluteTopologiesDir(), calcWarName( topology ) );
-    return warDir;
-  }
-
-  private String calcWarName( Topology topology ) {
-    String name = topology.getName() + ".war." + Long.toHexString( topology.getTimestamp() );
-    return name;
   }
 
   public InetSocketAddress[] getAddresses() {
@@ -249,6 +198,95 @@ public class GatewayServer implements TopologyListener {
     return addresses;
   }
 
+  private synchronized void internalDeploy( Topology topology, File warFile ) {
+    String name = topology.getName();
+    String warPath = warFile.getAbsolutePath();
+    WebAppContext context = new WebAppContext();
+    context.setDefaultsDescriptor( null );
+    context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
+    context.setWar( warPath );
+    internalUndeploy( topology );
+    deployments.put( name, context );
+    contexts.addHandler( context );
+    try {
+      context.start();
+    } catch( Exception e ) {
+      //TODO: I18N message
+      e.printStackTrace();
+    }
+  }
+
+  private synchronized void internalUndeploy( Topology topology ) {
+    WebAppContext context = deployments.remove( topology.getName() );
+    if( context != null ) {
+      contexts.removeHandler( context ) ;
+      try {
+        context.stop();
+      } catch( Exception e ) {
+        //TODO: I18N message
+        e.printStackTrace();
+      }
+    }
+  }
+
+  // Using an inner class to hide the handleTopologyEvent method from consumers of GatewayServer.
+  private class InternalTopologyListener implements TopologyListener {
+
+    @Override
+    public void handleTopologyEvent( List<TopologyEvent> events ) {
+      synchronized ( GatewayServer.this ) {
+        for( TopologyEvent event : events ) {
+          Topology topology = event.getTopology();
+          File topoDir = calculateAbsoluteTopologiesDir();
+          File warDir = calculateDeploymentDir( topology );
+          if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
+            File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
+            for( File file : files ) {
+              log.deletingDeployment( file.getAbsolutePath() );
+              internalUndeploy( topology );
+              FileUtils.deleteQuietly( file );
+            }
+          } else {
+            if( !warDir.exists() ) {
+              log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
+              WebArchive war = DeploymentFactory.createDeployment( config, topology );
+              File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
+              tmp.renameTo( warDir );
+            }
+            internalDeploy( topology, warDir );
+          }
+        }
+      }
+    }
+
+  }
+
+  private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {
+    File topoDir = new File( config.getGatewayHomeDir(), config.getDeploymentDir() );
+    topoDir = topoDir.getAbsoluteFile();
+    return topoDir;
+  }
+
+  private File calculateAbsoluteTopologiesDir() {
+    return calculateAbsoluteTopologiesDir( config );
+  }
+
+  private File calculateDeploymentDir( Topology topology ) {
+    File warDir = new File( calculateAbsoluteTopologiesDir(), calculateDeploymentName( topology ) );
+    return warDir;
+  }
+
+  private String calculateDeploymentName( Topology topology ) {
+    String name = topology.getName() + ".war." + Long.toHexString( topology.getTimestamp() );
+    return name;
+  }
+
+  private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {
+    ServerSocket socket = new ServerSocket();
+    socket.bind( address );
+    socket.close();
+  }
+
   private class WarDirFilter implements FilenameFilter {
 
     Pattern pattern;
@@ -263,41 +301,4 @@ public class GatewayServer implements TopologyListener {
     }
   }
 
-  public void undeploy( Topology topology ) {
-    WebAppContext context = deployments.remove( topology.getName() );
-    if( context != null ) {
-      contexts.removeHandler( context ) ;
-      try {
-        context.stop();
-      } catch( Exception e ) {
-        //TODO: I18N message
-        e.printStackTrace();
-      }
-    }
-  }
-
-  public void deploy( Topology topology, File warFile ) {
-    String name = topology.getName();
-    String warPath = warFile.getAbsolutePath();
-    WebAppContext context = new WebAppContext();
-    context.setDefaultsDescriptor( null );
-    context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
-    context.setWar( warPath );
-    undeploy( topology );
-    deployments.put( name, context );
-    contexts.addHandler( context );
-    try {
-      context.start();
-    } catch( Exception e ) {
-      //TODO: I18N message
-      e.printStackTrace();
-    }
-  }
-
-  public static class TestServlet extends HttpServlet {
-    @Override
-    protected void doGet( HttpServletRequest req, HttpServletResponse resp ) throws ServletException, IOException {
-      resp.getWriter().write( "<html>Hello</html>" );
-    }
-  }
 }

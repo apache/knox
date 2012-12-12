@@ -93,7 +93,14 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
   private static Element createFilter( Document dom, FilterDescriptor filter ) {
     Element element = dom.createElement( FILTER );
 
-    addTextElement( dom, element, FILTER_ROLE, filter.role() );
+    String name = filter.name();
+    if( name != null ) {
+      addTextElement( dom, element, FILTER_NAME, filter.name() );
+    }
+    String role = filter.role();
+    if( role != null ) {
+      addTextElement( dom, element, FILTER_ROLE, filter.role() );
+    }
     addTextElement( dom, element, FILTER_IMPL, filter.impl() );
 
     for( FilterParamDescriptor param : filter.params() ) {

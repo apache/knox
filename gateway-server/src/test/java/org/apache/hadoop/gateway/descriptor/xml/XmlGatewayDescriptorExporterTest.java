@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.xml.HasXPath.hasXPath;
@@ -63,6 +62,7 @@ public class XmlGatewayDescriptorExporterTest {
         .name( "resource1-filter1-param2-name" )
         .value( "resource1-filter1-param2-value" ).up().up()
         .addFilter()
+        .name( "resource1-filter2-name" )
         .role( "resource1-filter2-role" )
         .impl( "resource1-filter2-impl" ).up().up();
 
@@ -73,16 +73,18 @@ public class XmlGatewayDescriptorExporterTest {
 
     Document doc = parse( xml );
 
-    assertThat( doc, hasXPath( "/gateway/resource[1]/source", equalTo( "resource1-source" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/target", equalTo( "resource1-target" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "resource1-filter1-role" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "resource1-filter1-impl" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/name", equalTo( "resource1-filter1-param1-name" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/value", equalTo( "resource1-filter1-param1-value" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/name", equalTo( "resource1-filter1-param2-name" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/value", equalTo( "resource1-filter1-param2-value" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "resource1-filter2-role" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "resource1-filter2-impl" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/source", is( "resource1-source" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/target", is( "resource1-target" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/name", is( "" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/role", is( "resource1-filter1-role" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/class", is( "resource1-filter1-impl" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/name", is( "resource1-filter1-param1-name" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/value", is( "resource1-filter1-param1-value" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/name", is( "resource1-filter1-param2-name" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/param[2]/value", is( "resource1-filter1-param2-value" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/name", is( "resource1-filter2-name" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/role", is( "resource1-filter2-role" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/filter[2]/class", is( "resource1-filter2-impl" ) ) );
   }
 
   @Test

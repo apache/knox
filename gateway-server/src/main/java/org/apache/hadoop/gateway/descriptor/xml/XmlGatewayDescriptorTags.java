@@ -24,6 +24,7 @@ interface XmlGatewayDescriptorTags {
   static final String RESOURCE_SOURCE = "source";
   static final String RESOURCE_TARGET = "target";
   static final String FILTER = "filter";
+  static final String FILTER_NAME = "name";
   static final String FILTER_ROLE = "role";
   static final String FILTER_IMPL = "class";
   static final String FILTER_PARAM = "param";
