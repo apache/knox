@@ -19,14 +19,16 @@ package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.topology.Service;
 
-import java.util.Set;
-
 public interface ServiceDeploymentContributor {
 
   String getName();
 
-  Set<String> getSupportedRoles();
+  String getRole();
 
-  public void contribute( DeploymentContext deploymentContext, Service service );
+  void initialize( DeploymentContext context );
+
+  void contribute( DeploymentContext deploymentContext, Service service );
+
+  void finalize( DeploymentContext context );
 
 }

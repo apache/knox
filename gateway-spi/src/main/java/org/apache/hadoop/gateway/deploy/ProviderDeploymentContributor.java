@@ -23,23 +23,24 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ProviderDeploymentContributor {
 
-  public String getName();
+  String getName();
 
-  Set<String> getSupportedRoles();
+  String getRole();
 
-  public void contribute( DeploymentContext deploymentContext );
+  void initialize( DeploymentContext context );
 
-  public void contribute( DeploymentContext deploymentContext, Provider provider );
+  void contribute( DeploymentContext context, Provider provider );
 
-  public void contribute(
-      DeploymentContext deploymentContext,
+  void contribute(
+      DeploymentContext context,
+      Provider provider,
       Service service,
-      ResourceDescriptor resourceDescriptor,
-      String filterRole,
-      List<FilterParamDescriptor> filterParamDescriptors );
+      ResourceDescriptor resource,
+      List<FilterParamDescriptor> params );
+
+  void finalize( DeploymentContext context );
 
 }
