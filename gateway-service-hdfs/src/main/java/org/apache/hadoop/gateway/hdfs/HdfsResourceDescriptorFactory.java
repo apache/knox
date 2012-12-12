@@ -46,7 +46,7 @@ public class HdfsResourceDescriptorFactory implements
   }
 
   @Override
-  public Set<String> getSupportedResourceRoles() {
+  public Set<String> getSupportedServiceRoles() {
     return ROLES;
   }
 

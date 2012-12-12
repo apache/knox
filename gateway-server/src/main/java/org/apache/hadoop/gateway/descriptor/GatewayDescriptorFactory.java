@@ -94,7 +94,7 @@ public abstract class GatewayDescriptorFactory {
     Iterator<ResourceDescriptorFactory> factories = loader.iterator();
     while( factories.hasNext() ) {
       ResourceDescriptorFactory factory = factories.next();
-      Set<String> roles = factory.getSupportedResourceRoles();
+      Set<String> roles = factory.getSupportedServiceRoles();
       for( String role : roles ) {
         map.put( role, factory );
       }

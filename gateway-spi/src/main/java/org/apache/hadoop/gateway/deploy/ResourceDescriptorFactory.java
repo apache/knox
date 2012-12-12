@@ -25,7 +25,7 @@ import java.util.Set;
 
 public interface ResourceDescriptorFactory {
 
-  Set<String> getSupportedResourceRoles();
+  Set<String> getSupportedServiceRoles();
 
   List<ResourceDescriptor> createResourceDescriptors(
       DeploymentContext deploymentContext,
