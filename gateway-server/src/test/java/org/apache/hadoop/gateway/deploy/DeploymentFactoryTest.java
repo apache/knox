@@ -100,7 +100,7 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/source", equalTo( "/namenode/api/v1?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
@@ -108,7 +108,7 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/source", equalTo( "/namenode/api/v1/{path=**}?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.springframework.web.filter.DelegatingFilterProxy" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/name", equalTo( "contextConfigLocation" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/value", equalTo( "classpath:app-context-security.xml" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "rewrite" ) ) );
