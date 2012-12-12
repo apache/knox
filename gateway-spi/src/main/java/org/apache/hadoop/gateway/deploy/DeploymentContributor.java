@@ -17,24 +17,8 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.topology.Service;
-
-import java.util.List;
-import java.util.Set;
-
 public interface DeploymentContributor {
 
   public void contribute( DeploymentContext deploymentContext );
 
-  Set<String> getSupportedFilterRoles();
-
-  List<FilterDescriptor> createFilterDescriptors(
-      DeploymentContext deploymentContext,
-      Service service,
-      ResourceDescriptor resourceDescriptor,
-      String filterRole,
-      List<FilterParamDescriptor> filterParamDescriptors );
 }

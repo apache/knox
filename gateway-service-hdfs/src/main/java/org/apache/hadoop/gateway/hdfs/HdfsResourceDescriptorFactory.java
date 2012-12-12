@@ -34,12 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class HdfsResourceDescriptorFactory implements
-    ResourceDescriptorFactory {
+public class HdfsResourceDescriptorFactory implements ResourceDescriptorFactory {
 
-  private static final Set<String> ROLES = createSupportedRoles();
+  private static final Set<String> ROLES = createSupportedServiceRoles();
 
-  private static Set<String> createSupportedRoles() {
+  private static Set<String> createSupportedServiceRoles() {
     HashSet<String> roles = new HashSet<String>();
     roles.add( "NAMENODE" );
     return Collections.unmodifiableSet( roles );

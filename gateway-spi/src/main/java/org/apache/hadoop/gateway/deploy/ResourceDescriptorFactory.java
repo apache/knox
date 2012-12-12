@@ -17,14 +17,18 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Service;
 
+import java.util.List;
 import java.util.Set;
 
 public interface ResourceDescriptorFactory {
 
   Set<String> getSupportedServiceRoles();
 
-  public void contribute( DeploymentContext deploymentContext, Service service );
+  List<ResourceDescriptor> createResourceDescriptors(
+      DeploymentContext deploymentContext,
+      Service service );
 
 }
