@@ -47,6 +47,7 @@
         <module>gateway-service-templeton</module>
         <module>gateway-server</module>
         <module>gateway-demo</module>
+        <module>gateway-security-provider-shiro</module>
     </modules>
 
     <properties>
@@ -156,6 +157,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-spi</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-security-provider-shiro</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

@@ -20,11 +20,18 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.ProviderParam;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
+import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,6 +52,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -83,6 +91,7 @@ public class GatewayWebHdfsNonSecFuncTest {
   private static GatewayServer gateway;
   private static MockServer namenode;
   private static MockServer datanode;
+  private static Topology topology;
 
   private static GatewayTestConfig config;
 
@@ -137,16 +146,37 @@ public class GatewayWebHdfsNonSecFuncTest {
     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
     Document document = documentBuilder.newDocument();
-    Element gateway = document.createElement( "topology" );
-    document.appendChild( gateway );
+    Element topology = document.createElement( "topology" );
+    document.appendChild( topology );
+    
+    Element gateway = document.createElement( "gateway" );
+    topology.appendChild( gateway );
+    Element provider = document.createElement( "provider" );
+    gateway.appendChild( provider );
+    Element providerRole = document.createElement( "role" );
+    providerRole.appendChild( document.createTextNode( "authentication" ) );
+    provider.appendChild( providerRole );
+    Element enabled = document.createElement( "enabled" );
+    enabled.appendChild( document.createTextNode( "true" ) );
+    provider.appendChild( enabled );
+    Element param = document.createElement( "param" );
+    provider.appendChild( param );
+    Element name = document.createElement( "name" );
+    name.appendChild( document.createTextNode( "contextConfigLocation" ) );
+    param.appendChild( name );
+    Element value = document.createElement( "value" );
+    value.appendChild( document.createTextNode( "classpath:/app-context-security.xml" ) );
+    param.appendChild( value );
+    
     Element service = document.createElement( "service" );
-    gateway.appendChild( service );
+    topology.appendChild( service );
     Element role = document.createElement( "role" );
     role.appendChild( document.createTextNode( "NAMENODE" ) );
     service.appendChild( role );
     Element url = document.createElement( "url" );
     url.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
     service.appendChild( url );
+        
     return document;
   }
 
@@ -213,7 +243,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     }
     given()
         //.log().all()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
@@ -253,7 +283,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     }
     given()
         //.log().all()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
@@ -292,7 +322,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     }
     given()
         //.log().all()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "MKDIRS" )
         .expect()
@@ -318,7 +348,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     }
     given()
         //.log().all()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
@@ -377,7 +407,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     if( GATEWAY ) {
       Response response = given()
           //.log().all()
-          //.auth().preemptive().basic( "allowedUser", "password" )
+          .auth().preemptive().basic( "allowedUser", "password" )
           .queryParam( "use" +
               "r.name", "hdfs" )
           .queryParam( "op", "CREATE" )
@@ -458,7 +488,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     }
     given()
         //.log().all()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "OPEN" )
         .expect()
@@ -495,7 +525,7 @@ public class GatewayWebHdfsNonSecFuncTest {
           .status( HttpStatus.SC_OK );
     }
     given()
-        //.auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
