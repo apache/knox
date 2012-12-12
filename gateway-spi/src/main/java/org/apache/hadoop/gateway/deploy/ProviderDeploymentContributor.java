@@ -26,14 +26,23 @@ import java.util.List;
 
 public interface ProviderDeploymentContributor {
 
+  // In the topology a the provider will have an optional name element.  If it is present
+  // then the framework will look for the the provider deployment contributor with the correct
+  // role and name.
   String getName();
 
+  // The role this provider supports (e.g. authentication)
   String getRole();
 
+  // All provider initialize methods are called first in arbitrary order.
   void initialize( DeploymentContext context );
 
+  // Called for each provider in the topology based on the role and optionally name.
   void contribute( DeploymentContext context, Provider provider );
 
+  // This will be called indirectly by a ServiceDeploymentContributor when it needs a filter
+  // contributed for this providers role.  A ServiceDeploymentContributor may request a specific
+  // provider by role and name otherwise the default provider for the role will be used.
   void contribute(
       DeploymentContext context,
       Provider provider,
@@ -41,6 +50,7 @@ public interface ProviderDeploymentContributor {
       ResourceDescriptor resource,
       List<FilterParamDescriptor> params );
 
+  // All provider finalize methods are called last in arbitrary order.
   void finalize( DeploymentContext context );
 
 }
