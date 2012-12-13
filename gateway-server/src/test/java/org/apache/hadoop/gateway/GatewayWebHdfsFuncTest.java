@@ -150,15 +150,12 @@ public class GatewayWebHdfsFuncTest {
     Element enabled = document.createElement( "enabled" );
     enabled.appendChild( document.createTextNode( "true" ) );
     provider.appendChild( enabled );
-    Element param = document.createElement( "param" );
-    provider.appendChild( param );
-    Element name = document.createElement( "name" );
-    name.appendChild( document.createTextNode( "config" ) );
-    param.appendChild( name );
-    Element value = document.createElement( "value" );
-    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
-    param.appendChild( value );
-
+    addParamToProvider(document, provider, "main.ldapRealm", "org.apache.shiro.realm.ldap.JndiLdapRealm");
+    addParamToProvider(document, provider, "main.ldapRealm.userDnTemplate", "uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
+    addParamToProvider(document, provider, "main.ldapRealm.contextFactory.url", "ldap://localhost:33389");
+    addParamToProvider(document, provider, "main.ldapRealm.contextFactory.authenticationMechanism", "simple");
+    addParamToProvider(document, provider, "urls./**", "authcBasic");
+    
     Element service = document.createElement( "service" );
     topology.appendChild( service );
     Element role = document.createElement( "role" );
@@ -169,6 +166,17 @@ public class GatewayWebHdfsFuncTest {
     service.appendChild( url );
         
     return document;
+  }
+
+  private static void addParamToProvider(Document document, Element provider, String name, String value) {
+    Element param = document.createElement( "param" );
+    provider.appendChild( param );
+    Element nameElement = document.createElement( "name" );
+    nameElement.appendChild( document.createTextNode( name ) );
+    param.appendChild( nameElement );
+    Element valueElement = document.createElement( "value" );
+    valueElement.appendChild( document.createTextNode( value ) );
+    param.appendChild( valueElement );
   }
 
   private static void writeTopology( Document document, String name, File dir ) throws Exception {

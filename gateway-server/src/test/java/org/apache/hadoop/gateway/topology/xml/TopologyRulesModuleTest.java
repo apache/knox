@@ -73,7 +73,7 @@ public class TopologyRulesModuleTest {
     assertThat( provider, notNullValue() );
     assertThat( provider.isEnabled(), is(true) );
     assertThat( provider.getRole(), is( "authentication" ) );
-    assertThat( provider.getParams().size(), is(1));
+    assertThat( provider.getParams().size(), is(5));
   }
 
 }
