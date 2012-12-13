@@ -18,39 +18,44 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.isOneOf;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayWebHdfsFuncTest {
@@ -73,40 +78,124 @@ public class GatewayWebHdfsFuncTest {
 
   private static String TEST_HOST_NAME = "vm.home";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
-  private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
+  //private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
 
   private static EmbeddedApacheDirectoryServer ldap;
-  private static Server gateway;
+  private static GatewayServer gateway;
   private static MockServer namenode;
   private static MockServer datanode;
+  private static Topology topology;
 
-  public static void startGateway() throws Exception {
+  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
 
-    Map<String,String> params = new HashMap<String,String>();
-    params.put( "gateway.address", "localhost:" + GATEWAY_PORT );
-    if( MOCK ) {
-      params.put( "namenode.address", "localhost:" + namenode.getPort() );
-      params.put( "datanode.address", "localhost:" + datanode.getPort() );
-    } else {
-      params.put( "namenode.address", NAME_NODE_ADDRESS );
-      params.put( "datanode.address", DATA_NODE_ADDRESS );
+  @BeforeClass
+  public static void setupSuite() throws Exception {
+    namenode = new MockServer( "NameNode", true );
+    datanode = new MockServer( "DataNode", true );
+    startLdap();
+    setupGateway();
+    startGateway();
+    log.info( "LDAP port = " + LDAP_PORT );
+    log.info( "NameNode port = " + namenode.getPort() );
+    log.info( "DataNode port = " + datanode.getPort() );
+    log.info( "Gateway address = " + gateway.getAddresses()[ 0 ] );
+  }
+
+  @AfterClass
+  public static void cleanupSuite() throws Exception {
+    if( gateway != null ) {
+      gateway.stop();
     }
-
-    URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Reader configReader = new InputStreamReader( configUrl.openStream() );
-    GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", configReader );
-
-    for( Map.Entry<String,String> param : params.entrySet() ) {
-      descriptor.addParam().name( param.getKey() ).value( param.getValue() );
+    if( ldap != null ) {
+      ldap.stop();
     }
+    if( namenode != null ) {
+      namenode.stop();
+    }
+    if( datanode != null ) {
+      datanode.stop();
+    }
+    cleanupGateway();
+  }
 
-    Handler handler = JettyGatewayFactory.create( "/gateway/cluster", descriptor );
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
-    contexts.addHandler( handler );
+  private static void setupGateway() throws Exception {
+    //File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
 
-    gateway = new Server( GATEWAY_PORT );
-    gateway.setHandler( contexts );
-    gateway.start();
+    config = new GatewayTestConfig();
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setClusterConfDir( "clusters" );
+    config.setGatewayPath( "gateway" );
+    config.setGatewayPort( 0 );
+
+    writeTopology( createTopology(), "cluster.xml", deployDir );
+  }
+
+  private static Document createTopology() throws Exception {
+    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+    Document document = documentBuilder.newDocument();
+    document.setXmlStandalone( true );
+    Element topology = document.createElement( "topology" );
+    document.appendChild( topology );
+    
+    Element gateway = document.createElement( "gateway" );
+    topology.appendChild( gateway );
+    Element provider = document.createElement( "provider" );
+    gateway.appendChild( provider );
+    Element providerRole = document.createElement( "role" );
+    providerRole.appendChild( document.createTextNode( "authentication" ) );
+    provider.appendChild( providerRole );
+    Element enabled = document.createElement( "enabled" );
+    enabled.appendChild( document.createTextNode( "true" ) );
+    provider.appendChild( enabled );
+//    Element param = document.createElement( "param" );
+//    provider.appendChild( param );
+//    Element name = document.createElement( "name" );
+//    name.appendChild( document.createTextNode( "contextConfigLocation" ) );
+//    param.appendChild( name );
+//    Element value = document.createElement( "value" );
+//    value.appendChild( document.createTextNode( "classpath:/app-context-security.xml" ) );
+//    param.appendChild( value );
+    Element param = document.createElement( "param" );
+    provider.appendChild( param );
+    Element name = document.createElement( "name" );
+    name.appendChild( document.createTextNode( "config" ) );
+    param.appendChild( name );
+    Element value = document.createElement( "value" );
+    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
+    param.appendChild( value );
+
+    Element service = document.createElement( "service" );
+    topology.appendChild( service );
+    Element role = document.createElement( "role" );
+    role.appendChild( document.createTextNode( "NAMENODE" ) );
+    service.appendChild( role );
+    Element url = document.createElement( "url" );
+    url.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
+    service.appendChild( url );
+        
+    return document;
+  }
+
+  private static void writeTopology( Document document, String name, File dir ) throws Exception {
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    transformerFactory.setAttribute( "indent-number", 2 );
+    Transformer transformer = transformerFactory.newTransformer();
+    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
+    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+
+    File descriptor = new File( dir, name );
+    FileOutputStream stream = new FileOutputStream( descriptor );
+
+    DOMSource source = new DOMSource( document );
+    StreamResult result = new StreamResult( stream );
+    transformer.transform( source, result );
+    stream.close();
   }
 
   private static void startLdap() throws Exception{
@@ -116,47 +205,25 @@ public class GatewayWebHdfsFuncTest {
     ldap.loadLdif( usersUrl );
   }
 
-  @BeforeClass
-  public static void setupSuite() throws Exception {
-//    org.apache.log4j.Logger.getLogger( "org.apache.shiro" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.wire" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.conn" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.client" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.client" ).setLevel( org.apache.log4j.Level.ALL );
-
-//    URL loginUrl = ClassLoader.getSystemResource( "jaas.conf" );
-//    System.setProperty( "java.security.auth.login.config", loginUrl.getFile() );
-//    URL krbUrl = ClassLoader.getSystemResource( "krb5.conf" );
-//    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
-
-    startLdap();
-    namenode = new MockServer( "NameNode", true );
-    datanode = new MockServer( "DataNode", true );
-    startGateway();
-
-    log.info( "LDAP port = " + LDAP_PORT );
-    log.info( "NameNode port = " + namenode.getPort() );
-    log.info( "DataNode port = " + datanode.getPort() );
-    log.info( "Gateway port = " + gateway.getConnectors()[ 0 ].getLocalPort() );
+  private static void startGateway() throws Exception {
+    gateway = GatewayServer.startGateway( config );
+    assertThat( "Failed to start gateway.", gateway, notNullValue() );
   }
 
-  @AfterClass
-  public static void cleanupSuite() throws Exception {
-    gateway.stop();
-    gateway.join();
-    namenode.stop();
-    datanode.stop();
-    ldap.stop();
+  private static void cleanupGateway() {
+    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {
-    Connector conn = gateway.getConnectors()[0];
-    return "http://localhost:" + conn.getLocalPort();
+    InetSocketAddress address = gateway.getAddresses()[0];
+    return "http://localhost:" + address.getPort();
   }
 
   private String getWebHdfsPath() {
-    return GATEWAY ? getGatewayPath()+ "/gateway/cluster/namenode/api/v1" : "http://"+NAME_NODE_ADDRESS+"/webhdfs/v1";
+    String path = GATEWAY
+        ? getGatewayPath() + "/" + config.getGatewayPath() + "/cluster/namenode/api/v1"
+        : "http://" + NAME_NODE_ADDRESS + "/webhdfs/v1";
+    return path;
   }
 
   @Test
@@ -168,8 +235,8 @@ public class GatewayWebHdfsFuncTest {
     if( MOCK ) {
       namenode
           .expect()
-          .method("DELETE")
-          .pathInfo("/webhdfs/v1/test")
+          .method( "DELETE" )
+          .pathInfo( "/webhdfs/v1/test" )
           .queryParam( "user.name", "hdfs" )
           .queryParam( "op", "DELETE" )
           .queryParam( "recursive", "true" )
@@ -184,7 +251,7 @@ public class GatewayWebHdfsFuncTest {
         .queryParam( "recursive", "true" )
         .expect()
         //.log().all()
-        .statusCode( isOneOf( HttpStatus.SC_OK, HttpStatus.SC_NOT_FOUND ) )
+        .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
         .when()
         .delete( namenodePath + "/test" );
     if( MOCK ) {
@@ -209,7 +276,7 @@ public class GatewayWebHdfsFuncTest {
       namenode
           .expect()
           .method( "GET" )
-          .pathInfo( "/webhdfs/v1/" )
+          .pathInfo( "/webhdfs/v1" )
           .queryParam( "op", "LISTSTATUS" )
           .respond()
           .status( HttpStatus.SC_OK )
@@ -274,7 +341,7 @@ public class GatewayWebHdfsFuncTest {
       namenode
           .expect()
           .method( "GET" )
-          .pathInfo( "/webhdfs/v1/" )
+          .pathInfo( "/webhdfs/v1" )
           .queryParam( "op", "LISTSTATUS" )
           .respond()
           .status( HttpStatus.SC_OK )
@@ -359,7 +426,7 @@ public class GatewayWebHdfsFuncTest {
     } else {
       Response response = given()
           //.log().all()
-          .auth().preemptive().basic( "allowedUser", "password" )
+          //.auth().preemptive().basic( "allowedUser", "password" )
           .queryParam( "user.name", "hdfs" )
           .queryParam( "op", "CREATE" )
           .expect()
@@ -370,7 +437,7 @@ public class GatewayWebHdfsFuncTest {
       log.debug( "Redirect location: " + response.getHeader( "Location" ) );
       response = given()
           //.log().all()
-          .auth().preemptive().basic( "allowedUser", "password" )
+          //.auth().preemptive().basic( "allowedUser", "password" )
           .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
           .expect()
               //.log().all()
