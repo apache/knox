@@ -68,8 +68,8 @@ public class GatewayServer {
       CommandLine cmd = GatewayCommandLine.parse( args );
       if( cmd.hasOption( "help" ) ) {
         GatewayCommandLine.printHelp();
-      } else if( cmd.hasOption( "install" ) ) {
-        installGateway();
+      } else if( cmd.hasOption( "setup" ) ) {
+        setupGateway();
       } else if( cmd.hasOption( "version" ) ) {
         System.out.println( res.gatewayVersionMessage() );
       } else {
@@ -80,7 +80,7 @@ public class GatewayServer {
     }
   }
 
-  private static void installGateway() {
+  private static void setupGateway() {
     try {
       GatewayConfig config = new GatewayConfigImpl();
       String home = config.getGatewayHomeDir();

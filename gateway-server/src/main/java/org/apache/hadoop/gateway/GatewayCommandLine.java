@@ -17,7 +17,12 @@
  */
 package org.apache.hadoop.gateway;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 
 import java.io.PrintWriter;
 
@@ -30,7 +35,7 @@ public class GatewayCommandLine {
     //options.addOption( options );
     options.addOption( "h", "help", false, "Help" );
     options.addOption( "v", "version", false, "Version" );
-    options.addOption( "i", "install", false, "Version" );
+    options.addOption( "s", "setup", false, "Setup" );
     return options;
   }
 

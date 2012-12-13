@@ -61,7 +61,7 @@ public class GatewayTempletonFuncTest {
 //    System.in.read();
 //  }
 
-  private static Logger log = LoggerFactory.getLogger( GatewayWebHdfsFuncTest.class );
+  private static Logger log = LoggerFactory.getLogger( GatewayTempletonFuncTest.class );
 
   private static boolean MOCK = Boolean.parseBoolean( System.getProperty( "MOCK", "true" ) );
   //private static boolean MOCK = false;
@@ -81,7 +81,7 @@ public class GatewayTempletonFuncTest {
   private static MockServer datanode;
   private static MockServer templeton;
 
-  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
+  private static GatewayTestConfig config;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -142,8 +142,20 @@ public class GatewayTempletonFuncTest {
               .addTag( "role" ).addText( "authentication" )
               .addTag( "enabled" ).addText( "true" )
               .addTag( "param" )
-                .addTag( "name" ).addText( "config" )
-                .addTag( "value" ).addText( SHIRO_INLINE_CONFIG )
+                .addTag( "name" ).addText( "main.ldapRealm" )
+                .addTag( "value" ).addText( "org.apache.shiro.realm.ldap.JndiLdapRealm" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+                .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+                .addTag( "value" ).addText( "ldap://localhost:33389" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+                .addTag( "value" ).addText( "simple" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "urls./**" )
+                .addTag( "value" ).addText( "authcBasic" )
         .gotoRoot()
           .addTag( "service" )
             .addTag( "role" ).addText( "NAMENODE" )
@@ -155,70 +167,6 @@ public class GatewayTempletonFuncTest {
         .gotoRoot();
     return xml;
   }
-
-//  private static Document createTopology() throws Exception {
-//    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-//    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-//    Document document = documentBuilder.newDocument();
-//    document.setXmlStandalone( true );
-//    Element topology = document.createElement( "topology" );
-//    document.appendChild( topology );
-//
-//    Element gateway = document.createElement( "gateway" );
-//    topology.appendChild( gateway );
-//    Element provider = document.createElement( "provider" );
-//    gateway.appendChild( provider );
-//    Element providerRole = document.createElement( "role" );
-//    providerRole.appendChild( document.createTextNode( "authentication" ) );
-//    provider.appendChild( providerRole );
-//    Element enabled = document.createElement( "enabled" );
-//    enabled.appendChild( document.createTextNode( "true" ) );
-//    provider.appendChild( enabled );
-//    Element param = document.createElement( "param" );
-//    provider.appendChild( param );
-//    Element name = document.createElement( "name" );
-//    name.appendChild( document.createTextNode( "config" ) );
-//    param.appendChild( name );
-//    Element value = document.createElement( "value" );
-//    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
-//    param.appendChild( value );
-//
-//    Element hdfsService = document.createElement( "service" );
-//    topology.appendChild( hdfsService );
-//    Element hdfsRole = document.createElement( "role" );
-//    hdfsRole.appendChild( document.createTextNode( "NAMENODE" ) );
-//    hdfsService.appendChild( hdfsRole );
-//    Element hdfsUrl = document.createElement( "url" );
-//    hdfsUrl.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
-//    hdfsService.appendChild( hdfsUrl );
-//
-//    Element templetonService = document.createElement( "service" );
-//    topology.appendChild( templetonService );
-//    Element templetonRole = document.createElement( "role" );
-//    templetonRole.appendChild( document.createTextNode( "TEMPLETON" ) );
-//    templetonService.appendChild( templetonRole );
-//    Element templetonUrl = document.createElement( "url" );
-//    templetonUrl.appendChild( document.createTextNode( "http://localhost:" + templeton.getPort() + "/templeton/v1" ) );
-//    templetonService.appendChild( templetonUrl );
-//
-//    return document;
-//  }
-//
-//  private static void writeTopology( Document document, String name, File dir ) throws Exception {
-//    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-//    transformerFactory.setAttribute( "indent-number", 2 );
-//    Transformer transformer = transformerFactory.newTransformer();
-//    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-//
-//    File descriptor = new File( dir, name );
-//    FileOutputStream stream = new FileOutputStream( descriptor );
-//
-//    DOMSource source = new DOMSource( document );
-//    StreamResult result = new StreamResult( stream );
-//    transformer.transform( source, result );
-//    stream.close();
-//  }
 
   private static void startLdap() throws Exception{
     URL usersUrl = ClassLoader.getSystemResource( "users.ldif" );

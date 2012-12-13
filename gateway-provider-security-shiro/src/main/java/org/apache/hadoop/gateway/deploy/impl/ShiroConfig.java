@@ -17,11 +17,11 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.topology.Provider;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.hadoop.gateway.topology.Provider;
 
 public class ShiroConfig {
   private Map<String, Map<String, String>> sections = new HashMap<String, Map<String, String>>();
