@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
@@ -31,16 +33,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -83,7 +76,7 @@ public class GatewayWebHdfsFuncTest {
   private static MockServer namenode;
   private static MockServer datanode;
 
-  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
+  private static GatewayTestConfig config;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -116,7 +109,6 @@ public class GatewayWebHdfsFuncTest {
   }
 
   private static void setupGateway() throws Exception {
-    //File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -129,70 +121,41 @@ public class GatewayWebHdfsFuncTest {
     config.setGatewayPath( "gateway" );
     config.setGatewayPort( 0 );
 
-    writeTopology( createTopology(), "cluster.xml", deployDir );
-  }
-
-  private static Document createTopology() throws Exception {
-    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-    Document document = documentBuilder.newDocument();
-    document.setXmlStandalone( true );
-    Element topology = document.createElement( "topology" );
-    document.appendChild( topology );
-    
-    Element gateway = document.createElement( "gateway" );
-    topology.appendChild( gateway );
-    Element provider = document.createElement( "provider" );
-    gateway.appendChild( provider );
-    Element providerRole = document.createElement( "role" );
-    providerRole.appendChild( document.createTextNode( "authentication" ) );
-    provider.appendChild( providerRole );
-    Element enabled = document.createElement( "enabled" );
-    enabled.appendChild( document.createTextNode( "true" ) );
-    provider.appendChild( enabled );
-    addParamToProvider(document, provider, "main.ldapRealm", "org.apache.shiro.realm.ldap.JndiLdapRealm");
-    addParamToProvider(document, provider, "main.ldapRealm.userDnTemplate", "uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
-    addParamToProvider(document, provider, "main.ldapRealm.contextFactory.url", "ldap://localhost:33389");
-    addParamToProvider(document, provider, "main.ldapRealm.contextFactory.authenticationMechanism", "simple");
-    addParamToProvider(document, provider, "urls./**", "authcBasic");
-    
-    Element service = document.createElement( "service" );
-    topology.appendChild( service );
-    Element role = document.createElement( "role" );
-    role.appendChild( document.createTextNode( "NAMENODE" ) );
-    service.appendChild( role );
-    Element url = document.createElement( "url" );
-    url.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
-    service.appendChild( url );
-        
-    return document;
-  }
-
-  private static void addParamToProvider(Document document, Element provider, String name, String value) {
-    Element param = document.createElement( "param" );
-    provider.appendChild( param );
-    Element nameElement = document.createElement( "name" );
-    nameElement.appendChild( document.createTextNode( name ) );
-    param.appendChild( nameElement );
-    Element valueElement = document.createElement( "value" );
-    valueElement.appendChild( document.createTextNode( value ) );
-    param.appendChild( valueElement );
-  }
-
-  private static void writeTopology( Document document, String name, File dir ) throws Exception {
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    transformerFactory.setAttribute( "indent-number", 2 );
-    Transformer transformer = transformerFactory.newTransformer();
-    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-
-    File descriptor = new File( dir, name );
+    XMLTag doc = createTopology();
+    File descriptor = new File( deployDir, "cluster.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
-
-    DOMSource source = new DOMSource( document );
-    StreamResult result = new StreamResult( stream );
-    transformer.transform( source, result );
+    doc.toStream( stream );
     stream.close();
+  }
+
+  private static XMLTag createTopology() {
+    XMLTag xml = XMLDoc.newDocument( true )
+        .addRoot( "topology" )
+          .addTag( "gateway" )
+            .addTag( "provider" )
+              .addTag( "role" ).addText( "authentication" )
+              .addTag( "enabled" ).addText( "true" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm" )
+                .addTag( "value" ).addText( "org.apache.shiro.realm.ldap.JndiLdapRealm" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+                .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+                .addTag( "value" ).addText( "ldap://localhost:33389" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+                .addTag( "value" ).addText( "simple" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "urls./**" )
+                .addTag( "value" ).addText( "authcBasic" )
+        .gotoRoot()
+          .addTag( "service" )
+            .addTag( "role" ).addText( "NAMENODE" )
+            .addTag( "url" ).addText( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" )
+        .gotoRoot();
+    return xml;
   }
 
   private static void startLdap() throws Exception{
