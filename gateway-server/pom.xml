@@ -311,6 +311,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.mycila.xmltool</groupId>
+            <artifactId>xmltool</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!--dependency>
         	<groupId>org.apache.hadoop</groupId>
         	<artifactId>gateway-security-provider-spring</artifactId>
@@ -319,6 +325,8 @@
         	<groupId>org.apache.hadoop</groupId>
         	<artifactId>gateway-security-provider-shiro</artifactId>
         </dependency>
+
+
     </dependencies>
 
 </project>

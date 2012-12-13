@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
@@ -33,17 +35,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import javax.ws.rs.HttpMethod;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -122,7 +115,6 @@ public class GatewayTempletonFuncTest {
   }
 
   private static void setupGateway() throws Exception {
-    //File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -135,72 +127,98 @@ public class GatewayTempletonFuncTest {
     config.setGatewayPath( "gateway" );
     config.setGatewayPort( 0 );
 
-    writeTopology( createTopology(), "cluster.xml", deployDir );
-  }
-
-  private static Document createTopology() throws Exception {
-    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-    Document document = documentBuilder.newDocument();
-    document.setXmlStandalone( true );
-    Element topology = document.createElement( "topology" );
-    document.appendChild( topology );
-
-    Element gateway = document.createElement( "gateway" );
-    topology.appendChild( gateway );
-    Element provider = document.createElement( "provider" );
-    gateway.appendChild( provider );
-    Element providerRole = document.createElement( "role" );
-    providerRole.appendChild( document.createTextNode( "authentication" ) );
-    provider.appendChild( providerRole );
-    Element enabled = document.createElement( "enabled" );
-    enabled.appendChild( document.createTextNode( "true" ) );
-    provider.appendChild( enabled );
-    Element param = document.createElement( "param" );
-    provider.appendChild( param );
-    Element name = document.createElement( "name" );
-    name.appendChild( document.createTextNode( "config" ) );
-    param.appendChild( name );
-    Element value = document.createElement( "value" );
-    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
-    param.appendChild( value );
-
-    Element hdfsService = document.createElement( "service" );
-    topology.appendChild( hdfsService );
-    Element hdfsRole = document.createElement( "role" );
-    hdfsRole.appendChild( document.createTextNode( "NAMENODE" ) );
-    hdfsService.appendChild( hdfsRole );
-    Element hdfsUrl = document.createElement( "url" );
-    hdfsUrl.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
-    hdfsService.appendChild( hdfsUrl );
-
-    Element templetonService = document.createElement( "service" );
-    topology.appendChild( templetonService );
-    Element templetonRole = document.createElement( "role" );
-    templetonRole.appendChild( document.createTextNode( "TEMPLETON" ) );
-    templetonService.appendChild( templetonRole );
-    Element templetonUrl = document.createElement( "url" );
-    templetonUrl.appendChild( document.createTextNode( "http://localhost:" + templeton.getPort() + "/templeton/v1" ) );
-    templetonService.appendChild( templetonUrl );
-
-    return document;
-  }
-
-  private static void writeTopology( Document document, String name, File dir ) throws Exception {
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    transformerFactory.setAttribute( "indent-number", 2 );
-    Transformer transformer = transformerFactory.newTransformer();
-    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-
-    File descriptor = new File( dir, name );
+    XMLTag doc = createTopology();
+    File descriptor = new File( deployDir, "cluster.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
-
-    DOMSource source = new DOMSource( document );
-    StreamResult result = new StreamResult( stream );
-    transformer.transform( source, result );
+    doc.toStream( stream );
     stream.close();
   }
+
+  private static XMLTag createTopology() {
+    XMLTag xml = XMLDoc.newDocument( true )
+        .addRoot( "topology" )
+          .addTag( "gateway" )
+            .addTag( "provider" )
+              .addTag( "role" ).addText( "authentication" )
+              .addTag( "enabled" ).addText( "true" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "config" )
+                .addTag( "value" ).addText( SHIRO_INLINE_CONFIG )
+        .gotoRoot()
+          .addTag( "service" )
+            .addTag( "role" ).addText( "NAMENODE" )
+            .addTag( "url" ).addText( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" )
+            .gotoParent()
+          .addTag( "service" )
+            .addTag( "role" ).addText( "TEMPLETON" )
+            .addTag( "url" ).addText( "http://localhost:" + templeton.getPort() + "/templeton/v1" )
+        .gotoRoot();
+    return xml;
+  }
+
+//  private static Document createTopology() throws Exception {
+//    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+//    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+//    Document document = documentBuilder.newDocument();
+//    document.setXmlStandalone( true );
+//    Element topology = document.createElement( "topology" );
+//    document.appendChild( topology );
+//
+//    Element gateway = document.createElement( "gateway" );
+//    topology.appendChild( gateway );
+//    Element provider = document.createElement( "provider" );
+//    gateway.appendChild( provider );
+//    Element providerRole = document.createElement( "role" );
+//    providerRole.appendChild( document.createTextNode( "authentication" ) );
+//    provider.appendChild( providerRole );
+//    Element enabled = document.createElement( "enabled" );
+//    enabled.appendChild( document.createTextNode( "true" ) );
+//    provider.appendChild( enabled );
+//    Element param = document.createElement( "param" );
+//    provider.appendChild( param );
+//    Element name = document.createElement( "name" );
+//    name.appendChild( document.createTextNode( "config" ) );
+//    param.appendChild( name );
+//    Element value = document.createElement( "value" );
+//    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
+//    param.appendChild( value );
+//
+//    Element hdfsService = document.createElement( "service" );
+//    topology.appendChild( hdfsService );
+//    Element hdfsRole = document.createElement( "role" );
+//    hdfsRole.appendChild( document.createTextNode( "NAMENODE" ) );
+//    hdfsService.appendChild( hdfsRole );
+//    Element hdfsUrl = document.createElement( "url" );
+//    hdfsUrl.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
+//    hdfsService.appendChild( hdfsUrl );
+//
+//    Element templetonService = document.createElement( "service" );
+//    topology.appendChild( templetonService );
+//    Element templetonRole = document.createElement( "role" );
+//    templetonRole.appendChild( document.createTextNode( "TEMPLETON" ) );
+//    templetonService.appendChild( templetonRole );
+//    Element templetonUrl = document.createElement( "url" );
+//    templetonUrl.appendChild( document.createTextNode( "http://localhost:" + templeton.getPort() + "/templeton/v1" ) );
+//    templetonService.appendChild( templetonUrl );
+//
+//    return document;
+//  }
+//
+//  private static void writeTopology( Document document, String name, File dir ) throws Exception {
+//    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+//    transformerFactory.setAttribute( "indent-number", 2 );
+//    Transformer transformer = transformerFactory.newTransformer();
+//    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
+//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+//
+//    File descriptor = new File( dir, name );
+//    FileOutputStream stream = new FileOutputStream( descriptor );
+//
+//    DOMSource source = new DOMSource( document );
+//    StreamResult result = new StreamResult( stream );
+//    transformer.transform( source, result );
+//    stream.close();
+//  }
 
   private static void startLdap() throws Exception{
     URL usersUrl = ClassLoader.getSystemResource( "users.ldif" );
