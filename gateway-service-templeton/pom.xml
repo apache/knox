@@ -28,6 +28,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>

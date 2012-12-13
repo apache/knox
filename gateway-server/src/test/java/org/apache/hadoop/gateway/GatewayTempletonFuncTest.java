@@ -18,44 +18,48 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.response.Response;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
-import org.apache.hadoop.gateway.jetty.JettyGatewayFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.test.category.IntegrationTests;
+import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.ws.rs.HttpMethod;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
-@Category( { IntegrationTests.class, MediumTests.class } )
+@Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayTempletonFuncTest {
 
 //  @Test
@@ -64,7 +68,7 @@ public class GatewayTempletonFuncTest {
 //    System.in.read();
 //  }
 
-  private static Logger log = LoggerFactory.getLogger( GatewayTempletonFuncTest.class );
+  private static Logger log = LoggerFactory.getLogger( GatewayWebHdfsFuncTest.class );
 
   private static boolean MOCK = Boolean.parseBoolean( System.getProperty( "MOCK", "true" ) );
   //private static boolean MOCK = false;
@@ -72,45 +76,130 @@ public class GatewayTempletonFuncTest {
   //private static boolean GATEWAY = false;
 
   private static final int LDAP_PORT = 33389;
-  private static final int GATEWAY_PORT = 8888;
 
   private static String TEST_HOST_NAME = "vm.home";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
-  private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
   private static String TEMPLETON_ADDRESS = TEST_HOST_NAME + ":50111";
+  //private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
 
   private static EmbeddedApacheDirectoryServer ldap;
-  private static Server gateway;
+  private static GatewayServer gateway;
   private static MockServer namenode;
   private static MockServer datanode;
   private static MockServer templeton;
 
-  public static void startGateway() throws Exception {
+  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
 
-    Map<String,String> params = new HashMap<String,String>();
-    params.put( "gateway.address", "localhost:" + GATEWAY_PORT );
-    if( MOCK ) {
-      params.put( "namenode.address", "localhost:" + namenode.getPort() );
-      params.put( "datanode.address", "localhost:" + datanode.getPort() );
-      params.put( "templeton.address", "localhost:" + templeton.getPort() );
-    } else {
-      params.put( "namenode.address", NAME_NODE_ADDRESS );
-      params.put( "datanode.address", DATA_NODE_ADDRESS );
-      params.put( "templeton.address", TEMPLETON_ADDRESS );
+  @BeforeClass
+  public static void setupSuite() throws Exception {
+    namenode = new MockServer( "NameNode", true );
+    datanode = new MockServer( "DataNode", true );
+    templeton = new MockServer( "Templeton", true );
+    startLdap();
+    setupGateway();
+    startGateway();
+    log.info( "LDAP port = " + LDAP_PORT );
+    log.info( "NameNode port = " + namenode.getPort() );
+    log.info( "DataNode port = " + datanode.getPort() );
+    log.info( "Gateway address = " + gateway.getAddresses()[ 0 ] );
+  }
+
+  @AfterClass
+  public static void cleanupSuite() throws Exception {
+    if( gateway != null ) {
+      gateway.stop();
     }
+    if( ldap != null ) {
+      ldap.stop();
+    }
+    if( namenode != null ) {
+      namenode.stop();
+    }
+    if( datanode != null ) {
+      datanode.stop();
+    }
+    cleanupGateway();
+  }
 
-    URL configUrl = ClassLoader.getSystemResource( "org/apache/hadoop/gateway/GatewayFuncTest.xml" );
-    Reader configReader = new InputStreamReader( configUrl.openStream() );
-    GatewayDescriptor config = GatewayDescriptorFactory.load( "xml", configReader );
-    //Config config = ClusterConfigFactory.create( configUrl, params );
+  private static void setupGateway() throws Exception {
+    //File tempDir = new File( System.getProperty( "java.io.tmpdir" ) );
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
 
-    Handler handler = JettyGatewayFactory.create( "/org/apache/org.apache.hadoop/gateway/cluster", config );
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
-    contexts.addHandler( handler );
+    config = new GatewayTestConfig();
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setClusterConfDir( "clusters" );
+    config.setGatewayPath( "gateway" );
+    config.setGatewayPort( 0 );
 
-    gateway = new Server( GATEWAY_PORT );
-    gateway.setHandler( contexts );
-    gateway.start();
+    writeTopology( createTopology(), "cluster.xml", deployDir );
+  }
+
+  private static Document createTopology() throws Exception {
+    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+    Document document = documentBuilder.newDocument();
+    document.setXmlStandalone( true );
+    Element topology = document.createElement( "topology" );
+    document.appendChild( topology );
+
+    Element gateway = document.createElement( "gateway" );
+    topology.appendChild( gateway );
+    Element provider = document.createElement( "provider" );
+    gateway.appendChild( provider );
+    Element providerRole = document.createElement( "role" );
+    providerRole.appendChild( document.createTextNode( "authentication" ) );
+    provider.appendChild( providerRole );
+    Element enabled = document.createElement( "enabled" );
+    enabled.appendChild( document.createTextNode( "true" ) );
+    provider.appendChild( enabled );
+    Element param = document.createElement( "param" );
+    provider.appendChild( param );
+    Element name = document.createElement( "name" );
+    name.appendChild( document.createTextNode( "config" ) );
+    param.appendChild( name );
+    Element value = document.createElement( "value" );
+    value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
+    param.appendChild( value );
+
+    Element hdfsService = document.createElement( "service" );
+    topology.appendChild( hdfsService );
+    Element hdfsRole = document.createElement( "role" );
+    hdfsRole.appendChild( document.createTextNode( "NAMENODE" ) );
+    hdfsService.appendChild( hdfsRole );
+    Element hdfsUrl = document.createElement( "url" );
+    hdfsUrl.appendChild( document.createTextNode( "http://localhost:" + namenode.getPort() + "/webhdfs/v1" ) );
+    hdfsService.appendChild( hdfsUrl );
+
+    Element templetonService = document.createElement( "service" );
+    topology.appendChild( templetonService );
+    Element templetonRole = document.createElement( "role" );
+    templetonRole.appendChild( document.createTextNode( "TEMPLETON" ) );
+    templetonService.appendChild( templetonRole );
+    Element templetonUrl = document.createElement( "url" );
+    templetonUrl.appendChild( document.createTextNode( "http://localhost:" + templeton.getPort() + "/templeton/v1" ) );
+    templetonService.appendChild( templetonUrl );
+
+    return document;
+  }
+
+  private static void writeTopology( Document document, String name, File dir ) throws Exception {
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    transformerFactory.setAttribute( "indent-number", 2 );
+    Transformer transformer = transformerFactory.newTransformer();
+    transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
+    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+
+    File descriptor = new File( dir, name );
+    FileOutputStream stream = new FileOutputStream( descriptor );
+
+    DOMSource source = new DOMSource( document );
+    StreamResult result = new StreamResult( stream );
+    transformer.transform( source, result );
+    stream.close();
   }
 
   private static void startLdap() throws Exception{
@@ -120,44 +209,25 @@ public class GatewayTempletonFuncTest {
     ldap.loadLdif( usersUrl );
   }
 
-  @BeforeClass
-  public static void setupSuite() throws Exception {
-//    org.apache.log4j.Logger.getLogger( "org.apache.shiro" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.wire" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.conn" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.impl.client" ).setLevel( org.apache.log4j.Level.ALL );
-//    org.apache.log4j.Logger.getLogger( "org.apache.http.client" ).setLevel( org.apache.log4j.Level.ALL );
-
-//    URL loginUrl = ClassLoader.getSystemResource( "jaas.conf" );
-//    System.setProperty( "java.security.auth.login.config", loginUrl.getFile() );
-//    URL krbUrl = ClassLoader.getSystemResource( "krb5.conf" );
-//    System.setProperty( "java.security.krb5.conf", krbUrl.getFile() );
-
-    startLdap();
-    namenode = new MockServer( "NameNode", true );
-    datanode = new MockServer( "DataNode", true );
-    templeton = new MockServer( "Templeton", true );
-    startGateway();
+  private static void startGateway() throws Exception {
+    gateway = GatewayServer.startGateway( config );
+    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
   }
 
-  @AfterClass
-  public static void cleanupSuite() throws Exception {
-    gateway.stop();
-    gateway.join();
-    namenode.stop();
-    datanode.stop();
-    templeton.stop();
-    ldap.stop();
+  private static void cleanupGateway() {
+    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {
-    Connector conn = gateway.getConnectors()[0];
-    return "http://localhost:" + conn.getLocalPort();
+    InetSocketAddress address = gateway.getAddresses()[0];
+    return "http://localhost:" + address.getPort();
   }
 
   private String getWebHdfsPath() {
-    return GATEWAY ? getGatewayPath()+ "/gateway/cluster/namenode/api/v1" : "http://"+NAME_NODE_ADDRESS+"/webhdfs/v1";
+    String path = GATEWAY
+        ? getGatewayPath() + "/" + config.getGatewayPath() + "/cluster/namenode/api/v1"
+        : "http://" + NAME_NODE_ADDRESS + "/webhdfs/v1";
+    return path;
   }
 
   private String getTempletonPath() {
@@ -192,7 +262,7 @@ public class GatewayTempletonFuncTest {
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
-        //.log().all()
+        .log().ifError()
         .statusCode( anyOf( equalTo( HttpStatus.SC_OK ), equalTo( HttpStatus.SC_NOT_FOUND ) ) )
             .when()
             .delete( hdfsPath + "/user/hdfs/test" );

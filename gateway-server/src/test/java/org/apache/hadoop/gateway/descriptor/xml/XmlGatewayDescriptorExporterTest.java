@@ -27,8 +27,10 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.Writer;
 
@@ -108,12 +110,20 @@ public class XmlGatewayDescriptorExporterTest {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().param().up().up().up();
 
+    PrintStream out = System.out;
+    PrintStream err = System.err;
+    System.setOut( new PrintStream( new ByteArrayOutputStream() )  );
+    System.setErr( new PrintStream( new ByteArrayOutputStream() ) );
     try {
       GatewayDescriptorFactory.store( descriptor, "xml", new BrokenWriter() );
       fail( "Expected IOException" );
     } catch( IOException e ) {
       assertThat( e.getMessage(), containsString( "BROKEN" ) );
+    } finally {
+      System.setErr( err );
+      System.setOut( out );
     }
+
   }
 
   private Document parse( String xml ) throws IOException, SAXException, ParserConfigurationException {

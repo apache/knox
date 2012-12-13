@@ -90,7 +90,15 @@ public class GatewayServlet implements Servlet {
   public void service( ServletRequest servletRequest, ServletResponse servletResponse ) throws ServletException, IOException {
     GatewayFilter f = filter;
     if( f != null ) {
-      f.doFilter( servletRequest, servletResponse );
+      try {
+        f.doFilter( servletRequest, servletResponse );
+      } catch( IOException e ) {
+        e.printStackTrace();
+        throw e;
+      } catch( ServletException e ) {
+        e.printStackTrace();
+        throw e;
+      }
     } else {
       ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
     }

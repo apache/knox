@@ -21,7 +21,6 @@ import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
@@ -74,7 +73,6 @@ public class GatewayWebHdfsFuncTest {
   //private static boolean GATEWAY = false;
 
   private static final int LDAP_PORT = 33389;
-  private static final int GATEWAY_PORT = 8888;
 
   private static String TEST_HOST_NAME = "vm.home";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
@@ -84,7 +82,6 @@ public class GatewayWebHdfsFuncTest {
   private static GatewayServer gateway;
   private static MockServer namenode;
   private static MockServer datanode;
-  private static Topology topology;
 
   private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
 
@@ -153,14 +150,6 @@ public class GatewayWebHdfsFuncTest {
     Element enabled = document.createElement( "enabled" );
     enabled.appendChild( document.createTextNode( "true" ) );
     provider.appendChild( enabled );
-//    Element param = document.createElement( "param" );
-//    provider.appendChild( param );
-//    Element name = document.createElement( "name" );
-//    name.appendChild( document.createTextNode( "contextConfigLocation" ) );
-//    param.appendChild( name );
-//    Element value = document.createElement( "value" );
-//    value.appendChild( document.createTextNode( "classpath:/app-context-security.xml" ) );
-//    param.appendChild( value );
     Element param = document.createElement( "param" );
     provider.appendChild( param );
     Element name = document.createElement( "name" );
