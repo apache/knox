@@ -42,6 +42,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     return "shiro";
   }
 
+  @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
     // Write the provider specific config out to the war for cluster specific config

@@ -50,7 +50,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     rootResource.source( extHdfsPath + "?{**}" );
     rootResource.target( intHdfsUrl + "?{**}" );
     addAuthenticationFilter( context, service, rootResource );
-    addDispatchFilter( context, service, rootResource, "http-client" );
+    addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
@@ -58,7 +58,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     addAuthenticationFilter( context, service, fileResource );
     addRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
-    addDispatchFilter( context, service, fileResource, "hdfs" );
+    addDispatchFilter( context, service, fileResource, "dispatch-hdfs", null );
   }
 
   private void addRewriteFilter( DeploymentContext context,
@@ -74,8 +74,8 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     context.contributeFilter( service, resource, "rewrite", null, params );
   }
 
-  private void addDispatchFilter( DeploymentContext context, Service service, ResourceDescriptor resource, String name ) {
-    context.contributeFilter( service, resource, "dispatch", name, null );
+  private void addDispatchFilter( DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+    context.contributeFilter( service, resource, role, name, null );
   }
 
   private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {

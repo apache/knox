@@ -31,7 +31,7 @@ public class WebHdfsDispatchDeploymentContributor extends ProviderDeploymentCont
 
   @Override
   public String getRole() {
-    return "dispatch";
+    return "dispatch-hdfs";
   }
 
   @Override

@@ -114,7 +114,7 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/value", equalTo( "webhdfs://*:*/{path=**} {gateway.url}/namenode/api/v1/{path=**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "dispatch-hdfs" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/name", equalTo( "hdfs" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HdfsDispatch" ) ) );
   }
