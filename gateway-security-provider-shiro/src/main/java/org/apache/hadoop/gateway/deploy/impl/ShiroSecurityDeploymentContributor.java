@@ -17,9 +17,12 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
+import java.io.StringWriter;
+
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.DeploymentContributorBase;
 import org.apache.hadoop.gateway.topology.Provider;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
@@ -31,6 +34,14 @@ public class ShiroSecurityDeploymentContributor extends DeploymentContributorBas
     ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
     Provider provider = context.getTopology().getProvider("authentication");
     if (provider != null && provider.isEnabled()) {
+      StringWriter writer = new StringWriter();
+      // write the provider specific config out to the war for cluster specific config
+      String config = provider.getParams().get("config");
+      if (config != null) {
+        context.getWebArchive().addAsWebInfResource(
+            new StringAsset( config ),
+            "shiro.ini" );
+      }
 //      Map<String, String> params = provider.getParams();
 //      servlet.createInitParam()
 //          .paramName( "contextConfigLocation" )

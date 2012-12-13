@@ -109,8 +109,6 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/name", equalTo( "contextConfigLocation" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/param[1]/value", equalTo( "classpath:app-context-security.xml" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/param[1]/name", equalTo( "rewrite" ) ) );

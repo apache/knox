@@ -23,15 +23,12 @@ import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class HdfsResourceDescriptorFactory implements ResourceDescriptorFactory {
@@ -99,33 +96,12 @@ public class HdfsResourceDescriptorFactory implements ResourceDescriptorFactory 
 
   private void addAuthenticationProviderFilter( DeploymentContext context,
                                                 Service service, ResourceDescriptor resource ) {
-    List<FilterParamDescriptor> params = getFilterParams( context, resource );
     FilterDescriptorFactory factory = context.getFilterDescriptorFactory( "authentication" );
     if( factory != null ) {
-      List<FilterDescriptor> descriptors = factory.createFilterDescriptors( context, service, resource, "authentication", params );
+      List<FilterDescriptor> descriptors = factory.createFilterDescriptors( context, service, resource, "authentication", null );
       if( descriptors != null ) {
         resource.addFilters( descriptors );
       }
     }
   }
-
-  private List<FilterParamDescriptor> getFilterParams(
-      DeploymentContext context, ResourceDescriptor resource ) {
-    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    Provider provider = context.getTopology().getProvider( "authentication" );
-    if( provider != null ) {
-      Map<String, String> filterParams = provider.getParams();
-      Iterator<Map.Entry<String, String>> i = filterParams.entrySet().iterator();
-      Map.Entry<String, String> entry;
-      while( i.hasNext() ) {
-        entry = i.next();
-        params.add( resource
-            .createFilterParam()
-            .name( entry.getKey() )
-            .value( entry.getValue() ) );
-      }
-    }
-    return params;
-  }
-
 }
