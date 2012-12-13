@@ -20,18 +20,12 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
-import org.apache.hadoop.gateway.topology.Provider;
-import org.apache.hadoop.gateway.topology.ProviderParam;
-import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,7 +46,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -83,8 +76,6 @@ public class GatewayWebHdfsNonSecFuncTest {
   private static final int LDAP_PORT = 33389;
   private static final int GATEWAY_PORT = 8888;
 
-  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";
-
   private static String TEST_HOST_NAME = "vm.home";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
   //private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
@@ -95,7 +86,7 @@ public class GatewayWebHdfsNonSecFuncTest {
   private static MockServer datanode;
   private static Topology topology;
 
-  private static GatewayTestConfig config;
+  private static final String SHIRO_INLINE_CONFIG = "[main]\nldapRealm = org.apache.shiro.realm.ldap.JndiLdapRealm\nldapRealm.userDnTemplate = uid={0},ou=people,dc=hadoop,dc=apache,dc=org\nldapRealm.contextFactory.url = ldap://localhost:33389\nldapRealm.contextFactory.authenticationMechanism = simple\n[urls]\n/** = authcBasic";  private static GatewayTestConfig config;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -148,6 +139,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
     Document document = documentBuilder.newDocument();
+    document.setXmlStandalone( true );
     Element topology = document.createElement( "topology" );
     document.appendChild( topology );
     
@@ -177,7 +169,7 @@ public class GatewayWebHdfsNonSecFuncTest {
     Element value = document.createElement( "value" );
     value.appendChild( document.createTextNode( SHIRO_INLINE_CONFIG ) );
     param.appendChild( value );
-    
+
     Element service = document.createElement( "service" );
     topology.appendChild( service );
     Element role = document.createElement( "role" );
@@ -219,7 +211,7 @@ public class GatewayWebHdfsNonSecFuncTest {
   }
 
   private static void cleanupGateway() {
-//    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {

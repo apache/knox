@@ -40,12 +40,12 @@ public interface FilterDescriptor {
 
   List<FilterParamDescriptor> params();
 
-  FilterParamDescriptor addParam();
+  FilterParamDescriptor param();
 
   FilterParamDescriptor createParam();
 
-  void addParam( FilterParamDescriptor param );
+  FilterDescriptor param( FilterParamDescriptor param );
 
-  void addParams( List<FilterParamDescriptor> params );
+  FilterDescriptor params( List<FilterParamDescriptor> params );
 
 }

@@ -1,3 +1,0 @@
-org.apache.hadoop.gateway.deploy.impl.RewriteFilterDescriptorFactory
-org.apache.hadoop.gateway.deploy.impl.DispatchFilterDescriptorFactory
-org.apache.hadoop.gateway.deploy.impl.WebHdfsDispatchFilterDescriptorFactory

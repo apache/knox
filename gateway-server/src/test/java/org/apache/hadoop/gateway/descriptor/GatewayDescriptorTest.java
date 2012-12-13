@@ -38,15 +38,15 @@ public class GatewayDescriptorTest {
         .addResource()
           .source( "resource1-source" )
           .target( "resource1-target" )
-          //.addParam().name( "resource1-param1-name" ).value( "resource-param1-value" ).up()
-          //.addParam().name( "resource1-param2-name" ).value( "resource-param2-value" ).up()
+          //.param().name( "resource1-param1-name" ).value( "resource-param1-value" ).up()
+          //.param().name( "resource1-param2-name" ).value( "resource-param2-value" ).up()
         .addFilter()
             .role( "resource1-filter1-role" )
             .impl( "resource1-filter1-impl" )
-            .addParam()
+            .param()
               .name( "resource1-filter1-param1-name" )
               .value( "resource1-filter1-param1-value" ).up()
-            .addParam()
+            .param()
               .name( "resource1-filter1-param2-name" )
               .value( "resource1-filter1-param2-value" ).up().up()
           .addFilter()
@@ -56,7 +56,7 @@ public class GatewayDescriptorTest {
           .source( "resource2-source" )
           .target( "resource2-target" )
           .addFilter()
-            .addParam().up().up().up();
+            .param().up().up().up();
 
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.resources().size(), is( 2 ) );

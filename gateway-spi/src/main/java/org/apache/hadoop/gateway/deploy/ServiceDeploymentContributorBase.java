@@ -17,8 +17,14 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-public interface DeploymentContributor {
+public abstract class ServiceDeploymentContributorBase extends DeploymentContributorBase implements ServiceDeploymentContributor {
 
-  public void contribute( DeploymentContext deploymentContext );
+  public void initializeContribution( DeploymentContext context ) {
+    // Noop.
+  }
+
+  public void finalizeContribution( DeploymentContext context ) {
+    // Noop.
+  }
 
 }

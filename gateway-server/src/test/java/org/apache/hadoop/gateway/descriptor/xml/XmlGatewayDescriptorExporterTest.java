@@ -55,10 +55,10 @@ public class XmlGatewayDescriptorExporterTest {
         .addFilter()
         .role( "resource1-filter1-role" )
         .impl( "resource1-filter1-impl" )
-        .addParam()
+        .param()
         .name( "resource1-filter1-param1-name" )
         .value( "resource1-filter1-param1-value" ).up()
-        .addParam()
+        .param()
         .name( "resource1-filter1-param2-name" )
         .value( "resource1-filter1-param2-value" ).up().up()
         .addFilter()
@@ -91,7 +91,7 @@ public class XmlGatewayDescriptorExporterTest {
   public void testXmlGatewayDescriptorStoreMissingValue() throws IOException, SAXException, ParserConfigurationException {
 
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
-        .addResource().addFilter().addParam().up().up().up();
+        .addResource().addFilter().param().up().up().up();
 
     CharArrayWriter writer = new CharArrayWriter();
     GatewayDescriptorFactory.store( descriptor, "xml", writer );
@@ -106,7 +106,7 @@ public class XmlGatewayDescriptorExporterTest {
   @Test
   public void testXmlGatewayDescriptorStoreFailure() throws IOException {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
-        .addResource().addFilter().addParam().up().up().up();
+        .addResource().addFilter().param().up().up().up();
 
     try {
       GatewayDescriptorFactory.store( descriptor, "xml", new BrokenWriter() );

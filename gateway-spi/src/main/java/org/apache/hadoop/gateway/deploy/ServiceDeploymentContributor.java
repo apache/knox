@@ -21,19 +21,20 @@ import org.apache.hadoop.gateway.topology.Service;
 
 public interface ServiceDeploymentContributor {
 
-  // The name of this service deployment contributor.  Not used yet.
-  String getName();
-
   // The role of this service deployment contributor.  e.g. NAMENODE
   String getRole();
 
-  // Called after provider initialize methods and in arbitrary order relative to other service contributors.
-  void initialize( DeploymentContext context );
+  // The name of this service deployment contributor.  Not used yet.
+  String getName();
+
+  // Called after provider initializeContribution methods and in arbitrary order relative to other service contributors.
+  void initializeContribution( DeploymentContext context );
 
   // Called per service based on the service's role.
-  void contribute( DeploymentContext deploymentContext, Service service );
+  // Returns a list of resources it added to the descriptor.
+  void contributeService( DeploymentContext context, Service service );
 
-  // Called after all contributors and before provider finalize methods.
-  void finalize( DeploymentContext context );
+  // Called after all contributors and before provider finalizeContribution methods.
+  void finalizeContribution( DeploymentContext context );
 
 }

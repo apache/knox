@@ -23,13 +23,14 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 
 import java.util.List;
 
-public class SpringSecurityDeploymentContributor extends ProviderDeploymentContributorBase {
+public class ShiroDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_NAME = "springSecurityFilterChain";
-  private static final String FILTER_CLASSNAME = "org.springframework.web.filter.DelegatingFilterProxy";
+  private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
+  private static final String FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
 
   @Override
   public String getRole() {
@@ -38,12 +39,21 @@ public class SpringSecurityDeploymentContributor extends ProviderDeploymentContr
 
   @Override
   public String getName() {
-    return "spring-security";
+    return "shiro";
+  }
+
+  public void contributeProvider( DeploymentContext context, Provider provider ) {
+    context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
+    // Write the provider specific config out to the war for cluster specific config
+    String config = provider.getParams().get( "config" );
+    if ( config != null ) {
+      context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
+    }
   }
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().name( FILTER_NAME ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
+    resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }
 
 }

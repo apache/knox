@@ -18,17 +18,21 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
-import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
+import java.util.List;
+
 public interface DeploymentContext {
 
-  ResourceDescriptorFactory getResourceDescriptorFactory( Service service );
-
-  FilterDescriptorFactory getFilterDescriptorFactory( String filterRole );
+//  ProviderDeploymentContributor getProviderContributor( String role, String name );
+//
+//  ServiceDeploymentContributor getServiceContributor( String role, String name );
 
   GatewayConfig getGatewayConfig();
 
@@ -40,4 +44,5 @@ public interface DeploymentContext {
 
   GatewayDescriptor getGatewayDescriptor();
 
+  void contributeFilter( Service service, ResourceDescriptor resource, String role, String name, List<FilterParamDescriptor> params );
 }

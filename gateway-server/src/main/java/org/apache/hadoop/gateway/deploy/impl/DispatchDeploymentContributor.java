@@ -15,20 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy;
+package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.List;
-import java.util.Set;
 
-public interface ResourceDescriptorFactory {
+public class DispatchDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  Set<String> getSupportedServiceRoles();
+  @Override
+  public String getRole() {
+    return "dispatch";
+  }
 
-  List<ResourceDescriptor> createResourceDescriptors(
-      DeploymentContext deploymentContext,
-      Service service );
+  @Override
+  public String getName() {
+    return "http-client";
+  }
+
+  @Override
+  public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+    resource.addFilter().name( getName() ).role( getRole() ).impl( HttpClientDispatch.class );
+  }
 
 }

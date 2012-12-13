@@ -88,9 +88,9 @@ public class FilterDescriptorImpl implements FilterDescriptor {
   }
 
   @Override
-  public FilterParamDescriptor addParam() {
+  public FilterParamDescriptor param() {
     FilterParamDescriptor param = createParam();
-    addParam( param );
+    param( param );
     return param;
   }
 
@@ -100,19 +100,21 @@ public class FilterDescriptorImpl implements FilterDescriptor {
   }
 
   @Override
-  public void addParam( FilterParamDescriptor param ) {
+  public FilterDescriptor param( FilterParamDescriptor param ) {
     param.up( this );
     params.add( param );
+    return this;
   }
 
   @Override
-  public void addParams( List<FilterParamDescriptor> params ) {
+  public FilterDescriptor params( List<FilterParamDescriptor> params ) {
     if( params != null ) {
       for( FilterParamDescriptor param : params ) {
         param.up( this );
       }
       this.params.addAll( params );
     }
+    return this;
   }
 
 }

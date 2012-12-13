@@ -23,6 +23,10 @@ public interface ResourceDescriptor {
 
   GatewayDescriptor up();
 
+  ResourceDescriptor role( String role );
+
+  String role();
+
   ResourceDescriptor source( String source );
 
   String source();

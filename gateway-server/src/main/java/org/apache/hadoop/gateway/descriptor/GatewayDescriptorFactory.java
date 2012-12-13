@@ -17,33 +17,21 @@
  */
 package org.apache.hadoop.gateway.descriptor;
 
-import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
-import org.apache.hadoop.gateway.deploy.ResourceDescriptorFactory;
 import org.apache.hadoop.gateway.descriptor.impl.GatewayDescriptorImpl;
 import org.apache.hadoop.gateway.descriptor.xml.XmlGatewayDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.xml.XmlGatewayDescriptorImporter;
-import org.apache.hadoop.gateway.topology.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class GatewayDescriptorFactory {
 
-  private static Map<String, ResourceDescriptorFactory> RESOURCE_FACTORIES = loadResourceFactories();
-  private static Map<String, FilterDescriptorFactory> FILTER_FACTORIES = loadFilterFactories();
   private static Map<String, GatewayDescriptorImporter> IMPORTERS = loadImporters();
   private static Map<String, GatewayDescriptorExporter> EXPORTERS = loadExporters();
-  private static Properties ROLE_TO_FILTER_MAPPING = loadRoleToFilterClassMapping();
-  
+
   public static GatewayDescriptor create() {
     return new GatewayDescriptorImpl();
   }
@@ -64,18 +52,6 @@ public abstract class GatewayDescriptorFactory {
     exporter.store( descriptor, writer );
   }
 
-  public static ResourceDescriptorFactory getResourceDescriptorFactory( Service service ) {
-    return RESOURCE_FACTORIES.get( service.getRole() );
-  }
-
-  public static FilterDescriptorFactory getFilterDescriptorFactory( String filterRole ) {
-    return FILTER_FACTORIES.get( filterRole );
-  }
-  
-  public static String getFilterClassName( String role, String defaultClassName ) {
-    return ROLE_TO_FILTER_MAPPING.getProperty(role, defaultClassName);
-  }
-
   private static Map<String, GatewayDescriptorImporter> loadImporters() {
     Map<String, GatewayDescriptorImporter> map = new ConcurrentHashMap<String, GatewayDescriptorImporter>();
     map.put( "xml", new XmlGatewayDescriptorImporter() );
@@ -86,49 +62,6 @@ public abstract class GatewayDescriptorFactory {
     Map<String, GatewayDescriptorExporter> map = new ConcurrentHashMap<String, GatewayDescriptorExporter>();
     map.put( "xml", new XmlGatewayDescriptorExporter() );
     return map;
-  }
-
-  private static Map<String, ResourceDescriptorFactory> loadResourceFactories() {
-    Map<String, ResourceDescriptorFactory> map = new HashMap<String, ResourceDescriptorFactory>();
-    ServiceLoader<ResourceDescriptorFactory> loader = ServiceLoader.load( ResourceDescriptorFactory.class );
-    Iterator<ResourceDescriptorFactory> factories = loader.iterator();
-    while( factories.hasNext() ) {
-      ResourceDescriptorFactory factory = factories.next();
-      Set<String> roles = factory.getSupportedServiceRoles();
-      for( String role : roles ) {
-        map.put( role, factory );
-      }
-    }
-    return map;
-  }
-
-  private static Map<String, FilterDescriptorFactory> loadFilterFactories() {
-    Map<String, FilterDescriptorFactory> map = new HashMap<String, FilterDescriptorFactory>();
-    ServiceLoader<FilterDescriptorFactory> loader = ServiceLoader.load( FilterDescriptorFactory.class );
-    Iterator<FilterDescriptorFactory> factories = loader.iterator();
-    while( factories.hasNext() ) {
-      FilterDescriptorFactory factory = factories.next();
-      Set<String> roles = factory.getSupportedFilterRoles();
-      for( String role : roles ) {
-        map.put( role, factory );
-      }
-    }
-    return map;
-  }
-  
-  private static Properties loadRoleToFilterClassMapping() {
-    InputStream inputStream = GatewayDescriptorFactory.class.getClassLoader().getResourceAsStream("META-INF/filter-provider.properties");
-    Properties properties = new Properties();  
-    
-    if ( inputStream != null ) {  
-      try {  
-        properties.load(inputStream);  
-      }  
-      catch ( IOException ioe ) {  
-        ioe.printStackTrace();  
-      }
-    }
-    return properties;
   }
 
 }

@@ -20,14 +20,16 @@ package org.apache.hadoop.gateway.topology;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Topology {
 
   private String name;
-  private Collection<Service> services = new ArrayList<Service>();
-  private Map<String, Provider> providers = new HashMap<String, Provider>();
-
+  private long timestamp;
+  private List<Provider> providerList = new ArrayList<Provider>();
+  private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
+  private List<Service> services = new ArrayList<Service>();
 
   public String getName() {
     return name;
@@ -36,8 +38,6 @@ public class Topology {
   public void setName( String name ) {
     this.name = name;
   }
-
-  private long timestamp;
 
   public long getTimestamp() {
     return timestamp;
@@ -48,7 +48,7 @@ public class Topology {
   }
 
   public Collection<Service> getServices() {
-    return this.services;
+    return services;
   }
 
   public void addService( Service service ) {
@@ -56,14 +56,27 @@ public class Topology {
   }
 
   public Collection<Provider> getProviders() {
-    return this.providers.values();
+    return providerList;
   }
 
-  public Provider getProvider(String role) {
-    return this.providers.get(role);
+  public Provider getProvider( String role, String name ) {
+    Provider provider = null;
+    Map<String,Provider> nameMap = providerMap.get( role );
+    if( nameMap != null ) {
+      provider = nameMap.get( name );
+    }
+    return provider;
   }
 
   public void addProvider( Provider provider ) {
-    providers.put( provider.getRole(), provider );
+    providerList.add( provider );
+    String role = provider.getRole();
+    Map<String,Provider> nameMap = providerMap.get( role );
+    if( nameMap == null ) {
+      nameMap = new HashMap<String,Provider>();
+      providerMap.put( role, nameMap );
+    }
+    nameMap.put( provider.getName(), provider );
   }
+
 }

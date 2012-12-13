@@ -22,7 +22,7 @@ import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 import java.util.List;
 
-public abstract class DeploymentContributorBase implements DeploymentContributor {
+public abstract class DeploymentContributorBase {
 
   protected static ServletType<WebAppDescriptor> findServlet( DeploymentContext context, String name ) {
     List<ServletType<WebAppDescriptor>> servlets = context.getWebAppDescriptor().getAllServlet();

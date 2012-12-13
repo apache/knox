@@ -17,22 +17,20 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
-import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Provider;
 
-import java.util.List;
-import java.util.Set;
+public abstract class ProviderDeploymentContributorBase extends DeploymentContributorBase implements ProviderDeploymentContributor {
 
-public interface FilterDescriptorFactory {
+  public void initializeContribution( DeploymentContext context ) {
+    // Noop.
+  }
 
-  Set<String> getSupportedFilterRoles();
+  public void contributeProvider( DeploymentContext context, Provider provider ) {
+    // Noop.
+  }
 
-  List<FilterDescriptor> createFilterDescriptors(
-      DeploymentContext deploymentContext,
-      Service service,
-      ResourceDescriptor resourceDescriptor,
-      String filterRole,
-      List<FilterParamDescriptor> filterParamDescriptors );
+  public void finalizeContribution( DeploymentContext context ) {
+    // Noop.
+  }
+
 }

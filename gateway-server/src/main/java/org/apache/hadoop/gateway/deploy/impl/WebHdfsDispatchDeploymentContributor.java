@@ -18,47 +18,30 @@
 package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.FilterDescriptorFactory;
-import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
+import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.dispatch.HdfsDispatch;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class WebHdfsDispatchFilterDescriptorFactory implements FilterDescriptorFactory {
+public class WebHdfsDispatchDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final Set<String> ROLES = createSupportedRoles();
-
-  private static Set<String> createSupportedRoles() {
-    HashSet<String> roles = new HashSet<String>();
-    roles.add( "dispatch/webhdfs" );
-    return Collections.unmodifiableSet( roles );
+  @Override
+  public String getRole() {
+    return "dispatch";
   }
 
   @Override
-  public Set<String> getSupportedFilterRoles() {
-    return ROLES;
+  public String getName() {
+    return "hdfs";
   }
 
   @Override
-  public List<FilterDescriptor> createFilterDescriptors(
-      DeploymentContext deploymentContext,
-      Service service,
-      ResourceDescriptor resourceDescriptor,
-      String filterRole,
-      List<FilterParamDescriptor> filterParamDescriptors ) {
-    List<FilterDescriptor> descriptors = new ArrayList<FilterDescriptor>();
-    FilterDescriptor descriptor =
-        resourceDescriptor.createFilter().role( filterRole ).impl( HdfsDispatch.class );
-    descriptor.addParams( filterParamDescriptors );
-    descriptors.add( descriptor );
-    return descriptors;
+  public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+    resource.addFilter().role( getRole() ).name( getName() ).impl( HdfsDispatch.class );
   }
 
 }

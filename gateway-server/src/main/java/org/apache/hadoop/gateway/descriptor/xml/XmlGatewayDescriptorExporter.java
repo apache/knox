@@ -80,6 +80,10 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
   private static Element createResource( Document dom, ResourceDescriptor resource ) {
     Element element = dom.createElement( RESOURCE );
 
+    String role = resource.role();
+    if( role != null ) {
+      addTextElement( dom, element, RESOURCE_ROLE, role );
+    }
     addTextElement( dom, element, RESOURCE_SOURCE, resource.source() );
     addTextElement( dom, element, RESOURCE_TARGET, resource.target() );
 
@@ -93,13 +97,13 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
   private static Element createFilter( Document dom, FilterDescriptor filter ) {
     Element element = dom.createElement( FILTER );
 
-    String name = filter.name();
-    if( name != null ) {
-      addTextElement( dom, element, FILTER_NAME, filter.name() );
-    }
     String role = filter.role();
     if( role != null ) {
       addTextElement( dom, element, FILTER_ROLE, filter.role() );
+    }
+    String name = filter.name();
+    if( name != null ) {
+      addTextElement( dom, element, FILTER_NAME, filter.name() );
     }
     addTextElement( dom, element, FILTER_IMPL, filter.impl() );
 

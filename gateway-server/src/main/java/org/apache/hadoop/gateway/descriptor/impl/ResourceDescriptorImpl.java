@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.gateway.descriptor.impl;
 
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceParamDescriptor;
 
@@ -29,6 +29,7 @@ import java.util.List;
 public class ResourceDescriptorImpl implements ResourceDescriptor {
 
   private GatewayDescriptor parent;
+  private String role;
   private String source;
   private String target;
   private List<ResourceParamDescriptor> params;
@@ -43,6 +44,15 @@ public class ResourceDescriptorImpl implements ResourceDescriptor {
   @Override
   public GatewayDescriptor up() {
     return parent;
+  }
+
+  public ResourceDescriptor role( String role ) {
+    this.role = role;
+    return this;
+  }
+
+  public String role() {
+    return role;
   }
 
   public ResourceDescriptor source( String source ) {
