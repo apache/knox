@@ -47,6 +47,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -55,6 +56,7 @@ public class GatewayServer {
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server;
+  private static Properties buildProperties;
 
   private Server jetty;
   private GatewayConfig config;
@@ -71,13 +73,30 @@ public class GatewayServer {
       } else if( cmd.hasOption( "setup" ) ) {
         setupGateway();
       } else if( cmd.hasOption( "version" ) ) {
-        System.out.println( res.gatewayVersionMessage() );
+        buildProperties = loadBuildProperties();
+        System.out.println( res.gatewayVersionMessage(
+            buildProperties.getProperty( "build.version", "unknown" ),
+            buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {
         startGateway( new GatewayConfigImpl() );
       }
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );
     }
+  }
+
+  private static Properties loadBuildProperties() {
+    Properties properties = new Properties();
+    InputStream inputStream = ClassLoader.getSystemResourceAsStream( "build.properties" );
+    if( inputStream != null ) {
+      try {
+        properties.load( inputStream );
+        inputStream.close();
+      } catch( IOException e ) {
+        // Ignore.
+      }
+    }
+    return properties;
   }
 
   private static void setupGateway() {
