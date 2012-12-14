@@ -18,17 +18,72 @@
 package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.easymock.EasyMock;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 public class RewriterTest {
+
+  @Ignore( "Not implemented yet." )
+  @Test
+  public void testParamIndirectionRewrite() throws Exception {
+    URI inputUri, outputUri;
+    Template inputTemplate, outputTemplate;
+    MockParams resolver = new MockParams();
+    resolver.addValue( "some-known-host", "some-other-host" );
+
+    // This is how it works now.
+    // This is the URI like we would get from say a Location HTTP header.
+    inputUri = new URI( "http://some-host:80" );
+    // This will be used to extract the three values from input URI: scheme='http', host='some-known-host', port='80'
+    inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
+    // The template to build a new URI.  The match those in the input template.
+    outputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
+    // Copies the values extracted from the input URI via the inputTemplate and inserts them into the outputTemplate.
+    // The resolver isn't used in this case.
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    assertThat( outputUri.toString(), equalTo( "http://some-host:80" ) );
+
+    // Need a syntax for the URL rewriter to tell it to take the value extracted from the inputUri
+    // and lookup it up via the resolver to populate the output template.  So from the input template
+    // the values of 'some-host' is extracted for the 'host' parameter.  The '$' in the output template below
+    // would tell the rewriter to look the value 'some-host' up in the resolver and place that in the
+    // output URI.
+    // I want to discuss the '$' syntax hoping you have a better suggestion.
+    inputUri = new URI( "http://some-known-host:80" );
+    inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
+    outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    assertThat( outputUri.toString(), equalTo( "http://some-other-host:80" ) );
+
+    // What should happen if the param value cannot be resolved to something else?
+    // Right now it uses the empty string.
+    inputUri = new URI( "http://some-unknown-host:80" );
+    inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
+    outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    assertThat( outputUri.toString(), equalTo( "http://:80" ) );
+
+    // Should there be another syntax that uses the original value if it cannot resolve the extraced value?
+    // Should this be the default and only behavior?
+    // See the '?' in the output template below.
+    inputUri = new URI( "http://some-unknown-host:80" );
+    inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
+    outputTemplate = Parser.parse( "{scheme}://{?host}:{port}" );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    assertThat( outputUri.toString(), equalTo( "http://some-unknown-host:80" ) );
+  }
 
   @Test
   public void testBasicRewrite() throws Exception {

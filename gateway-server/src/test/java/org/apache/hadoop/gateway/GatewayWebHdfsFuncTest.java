@@ -67,7 +67,9 @@ public class GatewayWebHdfsFuncTest {
 
   private static final int LDAP_PORT = 33389;
 
-  private static String TEST_HOST_NAME = "vm.home";
+  //private static String TEST_HOST_NAME = "ec2-23-22-31-165.compute-1.amazonaws.com";
+  //private static String TEST_HOST_NAME = "http://192.168.56.101";
+  private static String TEST_HOST_NAME = "vm.local";
   private static String NAME_NODE_ADDRESS = TEST_HOST_NAME + ":50070";
   //private static String DATA_NODE_ADDRESS = TEST_HOST_NAME + ":50075";
 
@@ -248,12 +250,12 @@ public class GatewayWebHdfsFuncTest {
         .auth().preemptive().basic( "allowedUser", "password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
-        //.log().all()
+        .log().ifError()
         .statusCode( HttpStatus.SC_OK )
-        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
-        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
-        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "tmp" ) )
-        .content( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "user" ) )
+        //.content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "mapred" ) )
+        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "tmp" ) )
+        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "user" ) )
         .when()
         .get( namenodePath + "/" );
     if( MOCK ) {
@@ -315,11 +317,11 @@ public class GatewayWebHdfsFuncTest {
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
-        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "mapred" ) )
-        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "test" ) )
-        .content( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "tmp" ) )
-        .content( "FileStatuses.FileStatus[4].pathSuffix", equalTo( "user" ) )
+        //.content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "apps" ) )
+        .content( "FileStatuses.FileStatus[0].pathSuffix", equalTo( "mapred" ) )
+        .content( "FileStatuses.FileStatus[1].pathSuffix", equalTo( "test" ) )
+        .content( "FileStatuses.FileStatus[2].pathSuffix", equalTo( "tmp" ) )
+        .content( "FileStatuses.FileStatus[3].pathSuffix", equalTo( "user" ) )
         .when().get( namenodePath + "/" );
     if( MOCK ) {
       assertThat( namenode.getCount(), is( 0 ) );
