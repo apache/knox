@@ -140,16 +140,16 @@ public class GatewayWebHdfsFuncTest {
               .addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm" )
                 .addTag( "value" ).addText( "org.apache.shiro.realm.ldap.JndiLdapRealm" )
-              .addTag( "param" )
+              .gotoParent().addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
                 .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )
-              .addTag( "param" )
+              .gotoParent().addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
                 .addTag( "value" ).addText( "ldap://localhost:33389" )
-              .addTag( "param" )
+              .gotoParent().addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
                 .addTag( "value" ).addText( "simple" )
-              .addTag( "param" )
+              .gotoParent().addTag( "param" )
                 .addTag( "name" ).addText( "urls./**" )
                 .addTag( "value" ).addText( "authcBasic" )
         .gotoRoot()
@@ -173,7 +173,7 @@ public class GatewayWebHdfsFuncTest {
   }
 
   private static void cleanupGateway() {
-    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+//    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {
@@ -188,6 +188,40 @@ public class GatewayWebHdfsFuncTest {
     return path;
   }
 
+  @Test
+  public void testBasicHdfsInvalidUserUseCase() throws IOException {
+    String namenodePath = getWebHdfsPath();
+
+    // Attempt to delete the test directory in case a previous run failed.
+    // Ignore any result.
+    if( MOCK ) {
+      namenode
+          .expect()
+          .method( "DELETE" )
+          .pathInfo( "/webhdfs/v1/test" )
+//          .queryParam( "user.name", null )
+          .queryParam( "op", "DELETE" )
+          .queryParam( "recursive", "true" )
+          .respond()
+          .status( HttpStatus.SC_OK );
+    }
+    given()
+        //.log().all()
+        .auth().preemptive().basic( "invaldUser", "password" )
+//        .queryParam( "user.name", "hdfs" )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", "true" )
+        .expect()
+        //.log().all()
+        .statusCode( equalTo( HttpStatus.SC_UNAUTHORIZED ) )
+        .when()
+        .delete( namenodePath + "/test" );
+    if( MOCK ) {
+      // make sure that it wasn't deleted
+      assertThat( namenode.getCount(), is( 1 ) );
+    }
+  }  
+  
   @Test
   public void testBasicHdfsUseCase() throws IOException {
     String namenodePath = getWebHdfsPath();
@@ -207,8 +241,8 @@ public class GatewayWebHdfsFuncTest {
     }
     given()
         //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
-        .queryParam( "user.name", "hdfs" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
+//        .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
@@ -247,7 +281,7 @@ public class GatewayWebHdfsFuncTest {
     }
     given()
         //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         .log().ifError()
@@ -286,8 +320,8 @@ public class GatewayWebHdfsFuncTest {
     }
     given()
         //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
-        .queryParam( "user.name", "hdfs" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
+//        .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "MKDIRS" )
         .expect()
         //.log().all()
@@ -312,7 +346,7 @@ public class GatewayWebHdfsFuncTest {
     }
     given()
         //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
@@ -371,9 +405,8 @@ public class GatewayWebHdfsFuncTest {
     if( GATEWAY ) {
       Response response = given()
           //.log().all()
-          .auth().preemptive().basic( "allowedUser", "password" )
-          .queryParam( "use" +
-              "r.name", "hdfs" )
+          .auth().preemptive().basic( "hdfs", "hdfs-password" )
+          .queryParam( "user.name", "hdfs" )
           .queryParam( "op", "CREATE" )
           .contentType( "text/plain" )
           .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
@@ -388,8 +421,8 @@ public class GatewayWebHdfsFuncTest {
     } else {
       Response response = given()
           //.log().all()
-          //.auth().preemptive().basic( "allowedUser", "password" )
-          .queryParam( "user.name", "hdfs" )
+          .auth().preemptive().basic( "hdfs", "hdfs-password" )
+//          .queryParam( "user.name", "hdfs" )
           .queryParam( "op", "CREATE" )
           .expect()
               //.log().all()
@@ -399,7 +432,7 @@ public class GatewayWebHdfsFuncTest {
       log.debug( "Redirect location: " + response.getHeader( "Location" ) );
       response = given()
           //.log().all()
-          //.auth().preemptive().basic( "allowedUser", "password" )
+          .auth().preemptive().basic( "hdfs", "hdfs-password" )
           .content( IOUtils.toByteArray( ClassLoader.getSystemResourceAsStream( "test.txt" ) ) )
           .expect()
               //.log().all()
@@ -452,8 +485,8 @@ public class GatewayWebHdfsFuncTest {
     }
     given()
         //.log().all()
-        .auth().preemptive().basic( "allowedUser", "password" )
-        .queryParam( "user.name", "hdfs" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
+//        .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "OPEN" )
         .expect()
         //.log().all()
@@ -489,8 +522,8 @@ public class GatewayWebHdfsFuncTest {
           .status( HttpStatus.SC_OK );
     }
     given()
-        .auth().preemptive().basic( "allowedUser", "password" )
-        .queryParam( "user.name", "hdfs" )
+        .auth().preemptive().basic( "hdfs", "hdfs-password" )
+//        .queryParam( "user.name", "hdfs" )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()

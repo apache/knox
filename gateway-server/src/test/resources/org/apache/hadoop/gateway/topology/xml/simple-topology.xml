@@ -46,6 +46,15 @@
                 <value>authcBasic</value>
             </param>
         </provider>
+        <provider>
+        	<role>identity-assertion</role>
+        	<enabled>true</enabled>
+        	<name>simple</name>
+     	    <param>
+            <name>name</name>
+            <value>user.name</value>
+          </param>
+        </provider>
     </gateway>
 
     <service>

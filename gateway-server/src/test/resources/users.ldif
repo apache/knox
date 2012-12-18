@@ -20,6 +20,16 @@ sn: Walls
 uid: allowedUser
 userPassword:password
 
+dn: uid=hdfs,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: LarryWalls
+sn: Walls
+uid: hdfs
+userPassword:hdfs-password
+
 dn: uid=deniedUser,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person

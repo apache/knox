@@ -31,6 +31,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
   private static final String FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
+  private static final String FILTER_CLASSNAME2 = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
 
   @Override
   public String getRole() {
@@ -39,12 +40,18 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   @Override
   public String getName() {
-    return "shiro";
+    return "ShiroFilter";
   }
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
+    // add servletContextListener
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
+    // LJM TEMP: add filter
+//    context.getWebAppDescriptor().createFilter().filterName("ShiroFilter").filterClass(FILTER_CLASSNAME);
+//    context.getWebAppDescriptor().createFilter().filterName("PostShiroFilter").filterClass(FILTER_CLASSNAME2);
+//    context.getWebAppDescriptor().createFilterMapping().filterName("ShiroFilter").servletName("cluster");
+//    context.getWebAppDescriptor().createFilterMapping().filterName("PostShiroFilter").servletName("cluster");
     // Write the provider specific config out to the war for cluster specific config
 //    String config = provider.getParams().get( "config" );
     String config = new ShiroConfig(provider).toString();
@@ -56,6 +63,6 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
+    resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( FILTER_CLASSNAME2 ).params( params );
   }
-
 }
