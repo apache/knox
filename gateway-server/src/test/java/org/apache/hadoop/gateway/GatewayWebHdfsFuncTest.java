@@ -173,7 +173,7 @@ public class GatewayWebHdfsFuncTest {
   }
 
   private static void cleanupGateway() {
-//    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
   }
 
   private String getGatewayPath() {
