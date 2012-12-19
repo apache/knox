@@ -20,10 +20,14 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.hadoop.test.category.FunctionalTests;
+import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +37,7 @@ import java.net.ServerSocket;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 
+@Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
   private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
@@ -40,7 +45,7 @@ public class GatewayBasicFuncTest {
   public static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
 
   private static final String TEST_HOST = "vm.local";
-  private static final boolean MOCK_SERVICES = true;
+  private static final boolean MOCK_SERVICES = false;
   private static final boolean USE_GATEWAY = true;
 
   private static int findFreePort() throws IOException {
@@ -178,7 +183,7 @@ public class GatewayBasicFuncTest {
         .auth().preemptive().basic( user, password )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( "FileStatuses.FileStatus[0].pathSuffix", is( "dir" ) )
         .when().get( driver.getUrl( "NAMENODE" ) + root );
@@ -190,7 +195,7 @@ public class GatewayBasicFuncTest {
         .auth().preemptive().basic( user, "invalid-password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED );
     driver.assertComplete();
 
@@ -200,7 +205,7 @@ public class GatewayBasicFuncTest {
         .auth().preemptive().basic( "invalid-user", "invalid-password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED );
     driver.assertComplete();
 
@@ -248,7 +253,7 @@ public class GatewayBasicFuncTest {
         .auth().preemptive().basic( user, password )
         .queryParam( "op", "CREATE" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
     String location = response.getHeader( "Location" );
@@ -259,7 +264,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "test.txt" ) )
         .contentType( "text/plain" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_CREATED )
         .when().put( location );
     location = response.getHeader( "Location" );
@@ -306,7 +311,7 @@ public class GatewayBasicFuncTest {
         .auth().preemptive().basic( user, password )
         .queryParam( "op", "OPEN" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( is( "TEST" ) )
         .when().get( driver.getUrl("NAMENODE") + root + "/dir/file" );
@@ -338,7 +343,7 @@ public class GatewayBasicFuncTest {
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
-        .log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .when().delete( driver.getUrl( "NAMENODE" ) + root );
     driver.assertComplete();
@@ -449,12 +454,16 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( userA, passA, root, "true", HttpStatus.SC_OK );
   }
 
+  @Ignore
   @Test
   public void testJavaMapReduceViaTempleton() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testJavaMapReduceViaTempleton";
     String user = "mapred";
     String pass = "mapred-password";
     String group = "mapred";
+//    String user = "kminder";
+//    String pass = "kminder-password";
+//    String group = "users";
 
     // Cleanup anything that might have been leftover because the test failed previously.
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
@@ -498,6 +507,7 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
   }
 
+  @Ignore
   @Test
   public void testPigViaTempleton() throws IOException {
     String root = "/tmp/GatewayTempletonFuncTest/testPigViaTempleton";
@@ -527,6 +537,7 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( user, pass, root, "true", 200 );
   }
 
+  @Ignore
   @Test
   public void testHiveViaTempleton() throws IOException {
     String user = "hive";

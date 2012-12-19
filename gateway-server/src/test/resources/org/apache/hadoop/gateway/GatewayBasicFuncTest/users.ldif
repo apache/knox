@@ -60,6 +60,16 @@ sn: User
 uid: hcat
 userPassword:hcat-password
 
+dn: uid=kminder,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: KevinMinder
+sn: Minder
+uid: kminder
+userPassword:kminder-password
+
 dn: uid=deniedUser,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person

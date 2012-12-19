@@ -26,11 +26,11 @@ import org.apache.hadoop.gateway.topology.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataNodeDeploymentContributor extends ServiceDeploymentContributorBase {
+public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase {
 
   @Override
   public String getRole() {
-    return "DATANODE";
+    return "NAMENODE";
   }
 
   @Override
@@ -40,33 +40,66 @@ public class DataNodeDeploymentContributor extends ServiceDeploymentContributorB
 
   @Override
   public void contributeService( DeploymentContext context, Service service ) {
+    contributeNameNode( context, service );
+    contributeDataNode( context, service );
+  }
 
+  public void contributeNameNode( DeploymentContext context, Service service ) {
     String extGatewayUrl = "{gateway.url}";
-    String extHdfsPath = "/datanode/api/v1";
+    String extNameNodePath = "/namenode/api/v1";
     String intHdfsUrl = service.getUrl().toExternalForm();
 
-//    ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
-//    rootResource.role( service.getRole() );
-//    rootResource.source( extHdfsPath + "?{**}" );
-//    rootResource.target( intHdfsUrl + "?{**}" );
-//    addAuthenticationFilter( context, service, rootResource );
-//    addDispatchFilter( context, service, rootResource, "dispatch", null );
+    ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
+    rootResource.role( service.getRole() );
+    rootResource.source( extNameNodePath + "?{**}" );
+    rootResource.target( intHdfsUrl + "?{**}" );
+    addAuthenticationFilter( context, service, rootResource );
+    addDispatchFilter( context, service, rootResource, "dispatch", null );
+
+    ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
+    fileResource.role( service.getRole() );
+    fileResource.source( extNameNodePath + "/{path=**}?{**}" );
+    fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
+    addAuthenticationFilter( context, service, fileResource );
+    addNameNodeRewriteFilter( context, service, fileResource, extGatewayUrl );
+    addDispatchFilter( context, service, fileResource, "dispatch", null );
+  }
+
+  public void contributeDataNode( DeploymentContext context, Service service ) {
+    String extGatewayUrl = "{gateway.url}";
+    String extHdfsPath = "/datanode/api/v1";
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
     fileResource.source( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
     fileResource.target( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     addAuthenticationFilter( context, service, fileResource );
-    addRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
+    addDataNodeRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
-  private void addRewriteFilter( DeploymentContext context,
+  private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
+    context.contributeFilter( service, resource, "authentication", null, null );
+  }
+
+  private void addNameNodeRewriteFilter( DeploymentContext context,
+                                 Service service,
+                                 ResourceDescriptor resource,
+                                 String extGatewayUrl ) {
+    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+    FilterParamDescriptor param = resource.createFilterParam()
+        .name( "rewrite" )
+        .value( "*://{host}:{port}/webhdfs/v1/{path=**}?{**}" + " " + extGatewayUrl + "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    params.add( param );
+    context.contributeFilter( service, resource, "rewrite", null, params );
+  }
+
+  private void addDataNodeRewriteFilter( DeploymentContext context,
                                  Service service,
                                  ResourceDescriptor resource,
                                  String extGatewayUrl,
                                  String extHdfsPath ) {
-        List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
     FilterParamDescriptor param = resource.createFilterParam()
         .name( "rewrite" )
         .value( "webhdfs://*:*/{path=**}" + " " + extGatewayUrl + extHdfsPath + "/{path=**}" );
@@ -76,10 +109,6 @@ public class DataNodeDeploymentContributor extends ServiceDeploymentContributorB
 
   private void addDispatchFilter( DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
     context.contributeFilter( service, resource, role, name, null );
-  }
-
-  private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "authentication", null, null );
   }
 
 }

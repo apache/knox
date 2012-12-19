@@ -412,7 +412,7 @@
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test</artifactId>
+                <artifactId>gateway-test-utils</artifactId>
                 <version>${gateway-version}</version>
                 <scope>test</scope>
             </dependency>

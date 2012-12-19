@@ -36,7 +36,7 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-test</artifactId>
+            <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
 

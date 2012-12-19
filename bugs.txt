@@ -2,3 +2,11 @@ BUG-20121218-1: Deployment
 If there isn't a provider contributor on the classpath for a <provider> in a topology file then you get a NPE.
 This was discovered when all of the META-INF/services files were not being merged for the standalone gateway JAR.
 
+BUG-20121219-1:
+Right now IdentityAssertionHttpServletRequestWrapper assumes that any "user.name" in either a query string
+or form parameters should be rewritten with the authenticated identity.  It should probably be configured
+to only look for one or the other and the param name should be configurable as well.
+
+BUG-20121219-2:
+It isn't clear what IdentityAssertionHttpServletRequestWrapper does or should do if there is not authenticated user.
+Should it do nothing and let the value for any existing param pass through or should it remove any existing value?

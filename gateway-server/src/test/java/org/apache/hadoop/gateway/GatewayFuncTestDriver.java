@@ -239,7 +239,8 @@ public class GatewayFuncTestDriver {
           .status( status );
     }
     Response response = given()
-        //.log().all()
+        //.log().headers()
+        //.log().parameters()
         .auth().preemptive().basic( user, password )
         .queryParam( "op", "CREATE" )
         .queryParam( "permission", permsOctal )
@@ -278,7 +279,8 @@ public class GatewayFuncTestDriver {
           .status( status );
     }
     Response response = given()
-        //.log().all()
+        //.log().headers()
+        //.log().params()
         .auth().preemptive().basic( user, password )
         .contentType( contentType )
         .content( getResourceBytes( resource ) )
@@ -562,13 +564,14 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
     String json = given()
-        //.log().all()
+        .log().all()
         .auth().preemptive().basic( user, password )
+        //.formParam( "user.name", user )
         .formParam( "jar", jar )    //"/user/hdfs/test/hadoop-examples.jar" )
         .formParam( "class", main ) //"org.apache.org.apache.hadoop.examples.WordCount" )
         .formParam( "arg", input, output ) //.formParam( "arg", "/user/hdfs/test/input", "/user/hdfs/test/output" )
         .expect()
-        //.log().all()
+        .log().all()
         .statusCode( status )
         .when().post( getUrl( "TEMPLETON" ) + "/mapreduce/jar" ).asString();
     log.trace( "JSON=" + json );
