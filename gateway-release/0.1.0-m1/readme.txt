@@ -70,18 +70,18 @@ Installation and Deployment Instructions
 4. Start the gateway server
 	java -jar bin/gateway-test-server-0.1.0-SNAPSHOT.jar
 5. Configure for the Management of your Hadoop Cluster
-	a. edit the file {GATEWAY_HOME}/resources/topology.xml
-	b. change the host and port in the url for the NAMENODE service to match your cluster deployment 
+	a. Edit the file {GATEWAY_HOME}/resources/topology.xml
+	b. Change the host and port in the url for the NAMENODE service to match your cluster deployment
 		<service>
         	<role>NAMENODE</role>
         	<url>http://host:80/webhdfs/v1</url>
     	</service>
-	c. save or copy this file to {GATEWAY_HOME}/clusters
+	c. Save or copy this file to {GATEWAY_HOME}/clusters
 		this directory is monitored by the gateway server and reacts to the discovery of a topology descriptor by provisioning
 		the endpoints and required filter chains to serve the needs of each cluster as described by the topology file
 6. Test the Installation and Configuration of your Hadoop Cluster within the Gateway process
 	invoke the LISTSATUS operation on HDFS represented by your configured NAMENODE by using your web browser or curl:
-	
+
 	{!!!!!!!!!! TODO: BASIC and gateway URLS !!!!!!!!!!!!!!!!}
 	curl -i -L http://vm-hdpt:50070/webhdfs/v1/?op=LISTSTATUS 
 
@@ -104,4 +104,23 @@ http://hadoop.apache.org/docs/r1.0.4/webhdfs.html
  and
 http://people.apache.org/~thejas/templeton_doc_v1/
 
-{!!!!!!!!!! TODO: Mapping of HDFS and Templeton APIs to Gateway URLS !!!!!!!!!!!!!!!!}
+------------------------------------------------------------------------------
+Mapping Gateway URLs to Hadoop cluster URLs
+------------------------------------------------------------------------------
+The Gateway functions in many ways as a reverse proxy.  As such it maintains a mapping of URLs that are exposed
+externally by the Gateway to URLs that are provided by the Hadoop cluster.  Examples of mappings for the NameNode and
+Templeton are shown below.  These mapping are generated from the combination of the gateway configuration file
+(i.e. gateway-site.xml) and the cluster topology descriptors (e.g. {GATEWAY_HOME}/clusters/<cluster-name>.xml}.
+
+	HDFS (NameNode)
+	  Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>namenode/api/v1
+	  Cluster: http://<namenode-host>:50070/webhdfs/v1
+	Templeton
+	  Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>templeton/api/v1
+	  Cluster: http://<templeton-host>:50111/templeton/v1
+
+	The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via the gateway configuration file (i.e. gateway-site.xml).
+	The value for <cluster-name> is derrived from the name of the cluster topology descriptor (e.g. cluster.xml).
+	The value for <namenode-host> are provided via the cluster topology descriptor.
+	Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton respectively.
+	  Their values can also be provided via the cluster topology descriptor.

@@ -1,0 +1,4 @@
+BUG-20121218-1: Deployment
+If there isn't a provider contributor on the classpath for a <provider> in a topology file then you get a NPE.
+This was discovered when all of the META-INF/services files were not being merged for the standalone gateway JAR.
+
