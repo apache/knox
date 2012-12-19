@@ -45,9 +45,17 @@ public class EmbeddedApacheDirectoryServer {
     EmbeddedApacheDirectoryServer ldap;
     ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, 33389 );
     ldap.start();
-    URL userUrl = Thread.currentThread().getContextClassLoader().getResource( "users.ldif" );
-    if( userUrl == null ) {
-      throw new FileNotFoundException( "user.ldif" );
+    
+    URL userUrl = null;
+    if (args.length > 0) {
+      String ldifDir = args[0];
+      userUrl = new URL("file:///" + ldifDir + File.separator + "users.ldif");
+    }
+    else {
+      userUrl = Thread.currentThread().getContextClassLoader().getResource( "users.ldif" );
+      if( userUrl == null ) {
+        throw new FileNotFoundException( "user.ldif" );
+      }
     }
     ldap.loadLdif( userUrl );
   }

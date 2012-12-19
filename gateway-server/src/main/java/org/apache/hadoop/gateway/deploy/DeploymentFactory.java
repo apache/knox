@@ -363,7 +363,7 @@ public abstract class DeploymentFactory {
     ProviderDeploymentContributor contributor = null;
     if( name == null ) {
       List<ProviderDeploymentContributor> list = providers.get( role );
-      if( !list.isEmpty() ) {
+      if( list != null && !list.isEmpty() ) {
         contributor = list.get( 0 );
       }
     } else {
