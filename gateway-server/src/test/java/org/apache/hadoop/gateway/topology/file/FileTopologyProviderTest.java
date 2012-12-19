@@ -105,11 +105,11 @@ public class FileTopologyProviderTest {
 //    } );
 //    monitor.addFile( dir );
 //    monitor.start();
-//    FileObject file = createFile( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
-//    file = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
+//    FileObject file = createFileNN( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
+//    file = createFileNN( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
 //    Thread.sleep( 4000 );
-//    file = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 3L );
-//    file = createFile( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
+//    file = createFileNN( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 3L );
+//    file = createFileNN( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
 //
 //    System.out.println( "Waiting" );
 //    System.in.read();

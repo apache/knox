@@ -30,6 +30,36 @@ sn: Walls
 uid: hdfs
 userPassword:hdfs-password
 
+dn: uid=mapred,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: MapReduceUser
+sn: User
+uid: mapred
+userPassword:mapred-password
+
+dn: uid=hive,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HiveUser
+sn: User
+uid: hive
+userPassword:hive-password
+
+dn: uid=hcat,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HCatUser
+sn: User
+uid: hcat
+userPassword:hcat-password
+
 dn: uid=deniedUser,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person

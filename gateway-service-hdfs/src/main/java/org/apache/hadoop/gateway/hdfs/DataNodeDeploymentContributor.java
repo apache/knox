@@ -26,11 +26,11 @@ import org.apache.hadoop.gateway.topology.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase {
+public class DataNodeDeploymentContributor extends ServiceDeploymentContributorBase {
 
   @Override
   public String getRole() {
-    return "NAMENODE";
+    return "DATANODE";
   }
 
   @Override
@@ -42,23 +42,23 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   public void contributeService( DeploymentContext context, Service service ) {
 
     String extGatewayUrl = "{gateway.url}";
-    String extHdfsPath = "/namenode/api/v1";
+    String extHdfsPath = "/datanode/api/v1";
     String intHdfsUrl = service.getUrl().toExternalForm();
 
-    ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
-    rootResource.role( service.getRole() );
-    rootResource.source( extHdfsPath + "?{**}" );
-    rootResource.target( intHdfsUrl + "?{**}" );
-    addAuthenticationFilter( context, service, rootResource );
-    addDispatchFilter( context, service, rootResource, "dispatch", null );
+//    ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
+//    rootResource.role( service.getRole() );
+//    rootResource.source( extHdfsPath + "?{**}" );
+//    rootResource.target( intHdfsUrl + "?{**}" );
+//    addAuthenticationFilter( context, service, rootResource );
+//    addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
-    fileResource.source( extHdfsPath + "/{path=**}?{**}" );
-    fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
+    fileResource.source( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    fileResource.target( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     addAuthenticationFilter( context, service, fileResource );
     addRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
-    addDispatchFilter( context, service, fileResource, "dispatch-hdfs", null );
+    addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
   private void addRewriteFilter( DeploymentContext context,

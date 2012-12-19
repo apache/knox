@@ -81,7 +81,7 @@ public class GatewayTestConfig implements GatewayConfig {
     return deployDir;
   }
 
-  public void setClusterConfDir( String clusterConfDir ) {
+  public void setDeploymentDir( String clusterConfDir ) {
     this.deployDir = clusterConfDir;
   }
 

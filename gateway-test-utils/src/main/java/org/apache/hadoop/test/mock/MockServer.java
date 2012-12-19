@@ -66,7 +66,7 @@ public class MockServer {
   }
 
   private ServletContextHandler createHandler() {
-    Servlet servlet = new MockServlet( interactions );
+    Servlet servlet = new MockServlet( getName(), interactions );
     ServletHolder holder = new ServletHolder( servlet );
     ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
     context.setContextPath( "/" );

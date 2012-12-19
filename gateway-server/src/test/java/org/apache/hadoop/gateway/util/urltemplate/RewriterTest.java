@@ -24,6 +24,7 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -211,9 +212,9 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://vm.home:50075/webhdfs/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
-    expectOutput = new URI( "http://filter-queryParam-value/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
+    expectOutput = new URI( "http://filter-queryParam-value/gatewaycluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
     sourcePattern = Parser.parse( "*://*:*/webhdfs/v1/{path=**}?op={op=*}&user.name={username=*}&overwrite={overwrite=*}" );
-    targetPattern = Parser.parse( "http://{filter-queryParam-name}/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
+    targetPattern = Parser.parse( "http://{filter-queryParam-name}/gatewaycluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
@@ -229,7 +230,7 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     // *://**/webhdfs/v1/{path=**}?**={**}
-    // http://{org.apache.org.apache.hadoop.gateway.address}/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/{path}?**={**}
+    // http://{org.apache.org.apache.hadoop.gateway.address}/gatewaycluster/namenode/api/v1/{path}?**={**}
     // 1) Should not add query if none in source.
     // 2) Should only add unmatch query parameters
     // Consider chaning = within {} to : and wrapping query fully within {} (e.g. {query=pattern:alias}
@@ -244,6 +245,48 @@ public class RewriterTest {
 
   }
 
+  @Test
+  public void testRewriteNameNodeLocationResponseHeader() throws URISyntaxException {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.replay( request );
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect( config.getInitParameter( "gateway.url" ) ).andReturn( "http://gw:8888/gateway/cluster" ).anyTimes();
+    EasyMock.replay( config );
+
+    Template sourcePattern, targetPattern;
+    URI actualInput, actualOutput, expectOutput;
+
+    sourcePattern = Parser.parse( "*://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
+    targetPattern = Parser.parse( "{gateway.url}/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+
+    actualInput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    expectOutput = new URI( "http://gw:8888/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    assertThat( actualOutput, equalTo( expectOutput ) );
+  }
+
+  @Test
+  public void testRewriteDataNodeLocationResponseHeader() throws URISyntaxException {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.replay( request );
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect( config.getInitParameter( "gateway.url" ) ).andReturn( "http://gw:8888/gateway/cluster" ).anyTimes();
+    EasyMock.replay( config );
+
+    Template sourcePattern, targetPattern;
+    URI actualInput, actualOutput, expectOutput;
+
+    sourcePattern = Parser.parse( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
+
+    actualInput = new URI( "/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    expectOutput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    assertThat( actualOutput, equalTo( expectOutput ) );
+  }
+  
   private class TestResolver implements Resolver {
 
     private FilterConfig config;

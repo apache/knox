@@ -44,6 +44,9 @@
         <module>gateway-spi</module>
         <module>gateway-provider-security-spring</module>
         <module>gateway-provider-security-shiro</module>
+        <!-- Place holder for future work.
+        <module>gateway-provider-identity-assertion-pseudo</module>
+        -->
         <module>gateway-service-hdfs</module>
         <module>gateway-service-templeton</module>
         <module>gateway-server</module>

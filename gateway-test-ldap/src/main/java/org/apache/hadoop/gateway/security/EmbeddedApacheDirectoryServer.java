@@ -58,6 +58,19 @@ public class EmbeddedApacheDirectoryServer {
     transport = createTransport( directory, ldapPort );
   }
 
+  public LdapServer getTransport() {
+    return transport;
+  }
+
+  public DirectoryService getDirectory() {
+    return directory;
+  }
+
+  public Partition getPartition() {
+    return partition;
+  }
+
+
   private static Partition createRootParition( String dn ) {
     JdbmPartition partition = new JdbmPartition();
     partition.setId( "root" );
@@ -79,7 +92,11 @@ public class EmbeddedApacheDirectoryServer {
   private static LdapServer createTransport( DirectoryService directory, int ldapPort ) {
     LdapServer transport = new LdapServer();
     transport.setDirectoryService( directory );
-    transport.setTransports( new TcpTransport( initLdapPort( ldapPort ) ) );
+    if( ldapPort <= 0 ) {
+      transport.setTransports( new TcpTransport() );
+    } else {
+      transport.setTransports( new TcpTransport( ldapPort ) );
+    }
     return transport;
   }
 
@@ -92,10 +109,6 @@ public class EmbeddedApacheDirectoryServer {
       dir = Files.createTempDir();
     }
     return dir;
-  }
-
-  private static final int initLdapPort( int ldapPort ) {
-    return ( ldapPort <= 0 ) ? 10389 : ldapPort;
   }
 
   public void start() throws Exception {

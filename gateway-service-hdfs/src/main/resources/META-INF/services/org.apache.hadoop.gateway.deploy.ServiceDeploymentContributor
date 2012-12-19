@@ -1,1 +1,2 @@
-org.apache.hadoop.gateway.hdfs.HdfsDeploymentContributor
+org.apache.hadoop.gateway.hdfs.NameNodeDeploymentContributor
+org.apache.hadoop.gateway.hdfs.DataNodeDeploymentContributor

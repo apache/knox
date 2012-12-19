@@ -29,16 +29,18 @@ import static org.junit.Assert.assertThat;
 
 public class MockServlet extends HttpServlet {
 
+  public String name;
   public Queue<MockInteraction> interactions;
 
-  public MockServlet( Queue<MockInteraction> interactions ) {
+  public MockServlet( String name, Queue<MockInteraction> interactions ) {
+    this.name = name;
     this.interactions = interactions;
   }
 
   @Override
   protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
     try {
-      assertThat( "Mock servlet has no available interactions.", interactions.isEmpty(), is( false ) );
+      assertThat( "Mock servlet " + name + " has no available interactions.", interactions.isEmpty(), is( false ) );
       MockInteraction interaction = interactions.remove();
       interaction.expect().match( request );
       interaction.respond().apply( response );

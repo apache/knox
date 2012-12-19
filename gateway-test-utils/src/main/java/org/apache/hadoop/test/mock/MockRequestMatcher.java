@@ -190,7 +190,7 @@ public class MockRequestMatcher {
               " content does not match the required content",
           bytes, Is.is( entity ) );
     }
-    // Note: Cannot use any of the expect.getParameter*() methods because they will ready the expect
+    // Note: Cannot use any of the expect.getParameter*() methods because they will read the
     // body and we don't want that to happen.
     if( queryParams != null ) {
       String queryString = request.getQueryString();
