@@ -25,7 +25,6 @@ import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -454,7 +453,6 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( userA, passA, root, "true", HttpStatus.SC_OK );
   }
 
-  @Ignore
   @Test
   public void testJavaMapReduceViaTempleton() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testJavaMapReduceViaTempleton";
@@ -507,7 +505,6 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
   }
 
-  @Ignore
   @Test
   public void testPigViaTempleton() throws IOException {
     String root = "/tmp/GatewayTempletonFuncTest/testPigViaTempleton";
@@ -537,7 +534,6 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( user, pass, root, "true", 200 );
   }
 
-  @Ignore
   @Test
   public void testHiveViaTempleton() throws IOException {
     String user = "hive";

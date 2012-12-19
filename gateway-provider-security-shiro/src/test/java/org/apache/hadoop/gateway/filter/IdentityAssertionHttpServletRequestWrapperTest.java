@@ -53,6 +53,39 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
   }
 
   @Test
+  public void testInsertUserNameInFormParamWithoutEncoding() throws IOException {
+    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
+    request.setContentType( "application/x-www-form-urlencoded" );
+
+    IdentityAssertionHttpServletRequestWrapper wrapper
+        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+
+    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
+
+    assertThat( outputBody, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
+  public void testInsertUserNameInFormParamWithIso88591Encoding() throws IOException {
+    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
+    request.setContentType( "application/x-www-form-urlencoded" );
+    request.setCharacterEncoding( "ISO-8859-1" );
+
+    IdentityAssertionHttpServletRequestWrapper wrapper
+        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+
+    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
+
+    assertThat( outputBody, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
   public void testOverwriteUserNameInFormParam() throws IOException {
     String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 

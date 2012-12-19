@@ -2,6 +2,9 @@ package org.apache.hadoop.gateway.filter;
 
 import org.apache.commons.io.IOUtils;
 
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
-
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 
 public class IdentityAssertionHttpServletRequestWrapper extends
     HttpServletRequestWrapper {
@@ -80,9 +79,26 @@ public class IdentityAssertionHttpServletRequestWrapper extends
     String q = null;
     Map<String, String[]> params = getParams();
     if (params != null) {
-      q = urlEncodeUTF8( params );
+      String encoding = getCharacterEncoding();
+      if( encoding == null ) {
+        encoding = Charset.defaultCharset().name();
+      }
+      q = urlEncode( params, encoding );
     }
     return q;
+  }
+
+  @Override
+  public int getContentLength() {
+    int len;
+    String contentType = getContentType();
+    // If the content type is a form we might rewrite the body so default it to -1.
+    if( contentType != null && contentType.startsWith( "application/x-www-form-urlencoded" ) ) {
+      len = -1;
+    } else {
+      len = super.getContentLength();
+    }
+    return len;
   }
 
   @Override
@@ -96,14 +112,11 @@ public class IdentityAssertionHttpServletRequestWrapper extends
       String body = IOUtils.toString( super.getInputStream(), encoding );
       Map<String, String[]> params = getParams( body );
       body = urlEncode( params, encoding );
-      return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes( encoding ) ) );
+      // ASCII is OK here because the urlEncode about should have already escaped
+      return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes( "US-ASCII" ) ) );
     } else {
       return super.getInputStream();
     }
-  }
-
-  static String urlEncodeUTF8(String s) {
-    return urlEncode( s, "UTF-8" );
   }
 
   static String urlEncode( String string, String encoding ) {
@@ -112,10 +125,6 @@ public class IdentityAssertionHttpServletRequestWrapper extends
     } catch (UnsupportedEncodingException e) {
       throw new UnsupportedOperationException(e);
     }
-  }
-
-  static String urlEncodeUTF8( Map<String,String[]> params ) {
-    return urlEncode( params, "UTF-8" );
   }
 
   static String urlEncode( Map<String,String[]> map, String encoding ) {
