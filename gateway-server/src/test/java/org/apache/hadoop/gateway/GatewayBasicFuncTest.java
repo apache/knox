@@ -45,7 +45,7 @@ public class GatewayBasicFuncTest {
   public static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
 
   private static final String TEST_HOST = "vm.local";
-  private static final boolean MOCK_SERVICES = false;
+  private static final boolean MOCK_SERVICES = true;
   private static final boolean USE_GATEWAY = true;
 
   private static int findFreePort() throws IOException {
