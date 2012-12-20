@@ -54,10 +54,11 @@ Java:
   Java 1.6 or later
 
 Hadoop Cluster:
-  Local installation of a Hadoop Cluster (EC2 instances and/or Sandbox installations will not work at this time)
-  The EC2 and Sandbox limitation is caused by Hadoop services running with internal IP addresses.  The Gateway
-  will work in these cases but it must be deployed on the EC2 cluster or Sandbox VM.  The instructions that
-  follow assume that the Gateway is deployed externally from the Hadoop clusters.
+  A local installation of a Hadoop Cluster is required at this time.  Hadoop EC2 cluster and/or Sandbox installations
+  are currently difficult to access remotely via the Gateway.   The EC2 and Sandbox limitation is caused by Hadoop
+  services running with internal IP addresses.  For the Gateway to work in these cases it will need to be deployed
+  on the EC2 cluster or Sandbox.  The instructions that follow assume that the Gateway is deployed externally from
+  the Hadoop clusters.  Externally in this case is likely to be
 
   The Hadoop cluster should have WebHDFS and WebHCat (i.e. Templeton) deployed and configured.
 
@@ -66,35 +67,54 @@ Installation and Deployment Instructions
 ------------------------------------------------------------------------------
 
 1. Install
-     Download and extract the gateway-0.1.0-download.zip file into the installation directory that will contain your
+     Download and extract the gateway-0.1.0-SNAPSHOT.zip file into the installation directory that will contain your
      GATEWAY_HOME
+       jar xf gateway-0.1.0-SNAPSHOT.zip
+     This will create a directory 'gateway' in your current directory.
+
 2. Enter Gateway Home directory
-     cd gateway-0.1.0
-3. Start the demo LDAP server (ApacheDS)
-   a. Make a backup copy of the {GATEWAY_HOME}/conf/users.ldif file and add your users and groups to the file
-   b. Start the LDAP server - pointing it to the config dir where it will find the users.ldif file
+     cd gateway
+   The fully qualified name of this directory will be referenced at {GATEWAY_HOME} throughout the remainder of this
+   document.
+
+3. Configure the Gateway with the topology of your Hadoop cluster
+   a. Edit the file {GATEWAY_HOME}/conf/sample.xml
+   b. Change the host and port in the urls of the <service> elements for NAMENODE and TEMPLETON service to match your
+      cluster deployment.
+   c. Optionally you can change the LDAP URL for the LDAP server to be used for authentication.  This is set via
+      the main.ldapRealm.contextFactory.url property in the <gateway><provider><authentication> section.
+   d. Save the file.  The directory {GATEWAY_HOME}/deployments is monitored by the Gateway server and reacts to the
+      discovery of a cluster topology descriptor by provisioning the endpoints and required filter chains to serve
+      the needs of each cluster as described by the topology file.  Note that the name of the file excluding the
+      extension is also used as the path for that cluster in the URL.  So for example the sample.xml file will result
+      in Gateway URLs of the form http://{gateway-host}:{gateway-port}/gateway/sample/namenode/api/v1
+
+4. Start the demo LDAP server (ApacheDS)
+   a. The default configuration edited above contains the LDAP URL for a LDAP server.  By default that file
+      is configured to access this simple ApacheDS based LDAP server and its default configuration.  Spcifially
+      by default this server listens on port 33389.
+   b. Edit {GATEWAY_HOME}/conf/users.ldif if required and add your users and groups to the file.
+      A number of normal Hadoop users (e.g. hdfs, mapred, hcat, hive) have already been included.  Note that
+      the passwords in this file are "fictitious" and have nothing to do with the actual accounts on the Hadoop
+      cluster you are using.  There is also a copy of this file in the templates directory that you can use to
+      start over if necessary.
+   c. Start the LDAP server - pointing it to the config dir where it will find the users.ldif file in the conf
+      directory.
         java -jar bin/gateway-test-ldap-0.1.0-SNAPSHOT.jar conf/ &
-4. Start the Gateway server
-     java -jar bin/gateway-test-server-0.1.0-SNAPSHOT.jar
-5. Configure for the Management of your Hadoop Cluster
-   a. Edit the file {GATEWAY_HOME}/resources/topology.xml
-   b. Change the host and port in the url for the NAMENODE service to match your cluster deployment
-        <service>
-         <role>NAMENODE</role>
-         <url>http://host:80/webhdfs/v1</url>
-        </service>
-   c. Save or copy this file to {GATEWAY_HOME}/deployments
-      this directory is monitored by the Gateway server and reacts to the discovery of a topology descriptor by
-      provisioning the endpoints and required filter chains to serve the needs of each cluster as described by the
-      topology file.
-6. Test the Installation and Configuration of your Hadoop Cluster within the Gateway process
-   invoke the LISTSATUS operation on HDFS represented by your configured NAMENODE by using your web browser or curl:
+      There are a number of messages of the form "Created null." that can safely be ignored.
+      Take note the port on which it was started as this needs to match later configuration.
 
-     {!!!!!!!!!! TODO: BASIC and gateway URLS !!!!!!!!!!!!!!!!}
-     curl -i -L http://vm-hdpt:50070/webhdfs/v1/?op=LISTSTATUS
+5. Start the Gateway server
+     java -jar bin/gateway-server-0.1.0-SNAPSHOT.jar
+   Take note of the port identified in the logging output as you will need this for accessing the gateway.
 
-   The results of the above command should result in something to along the lines of
-   (details subject to the content within HDFS):
+6. Test the installation and configuration of your Gateway
+   Invoke the LISTSATUS operation on HDFS represented by your configured NAMENODE by using your web browser or curl:
+
+     curl -i -L http://localhost:8888/gateway/sample/namenode/api/v1/?op=LISTSTATUS
+
+   The results of the above command should result in something to along the lines of the output below.  The exact
+   information returned is subject to the content within HDFS in your Hadoop cluster.
 
      HTTP/1.1 200 OK
        Content-Type: application/json
@@ -117,7 +137,7 @@ Installation and Deployment Instructions
 ------------------------------------------------------------------------------
 Mapping Gateway URLs to Hadoop cluster URLs
 ------------------------------------------------------------------------------
-The Gateway functions in many ways as a reverse proxy.  As such it maintains a mapping of URLs that are exposed
+The Gateway functions in much like a reverse proxy.  As such it maintains a mapping of URLs that are exposed
 externally by the Gateway to URLs that are provided by the Hadoop cluster.  Examples of mappings for the NameNode and
 Templeton are shown below.  These mapping are generated from the combination of the Gateway configuration file
 (i.e. {GATEWAY_HOME}/gateway-site.xml) and the cluster topology descriptors
@@ -137,6 +157,13 @@ The value for <cluster-name> is derrived from the name of the cluster topology d
 The value for <namenode-host> are provided via the cluster topology descriptor.
 Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton respectively.
       Their values can also be provided via the cluster topology descriptor.
+
+------------------------------------------------------------------------------
+Enabling logging
+------------------------------------------------------------------------------
+If necessary you can enable additional logging by editing the log4j.properties file in the conf directory.
+Changing the rootLogger value from ERROR to DEBUG will generate a large amount of debug logging.  A number
+of useful, more fine loggers are also provided in the file.
 
 ------------------------------------------------------------------------------
 Filing bugs
