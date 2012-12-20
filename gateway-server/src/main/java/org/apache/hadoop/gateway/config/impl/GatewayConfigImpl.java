@@ -66,11 +66,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_CONFIG_PREFIX = "gateway";
+  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
+
+  private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
 
   public static final String[] GATEWAY_CONFIG_FILENAMES = {
-      GATEWAY_CONFIG_PREFIX + "-default.xml",
-      GATEWAY_CONFIG_PREFIX + "-site.xml"
+      GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-default.xml",
+      GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"
   };
 
 //  private static final String[] HADOOP_CONF_FILENAMES = {
@@ -87,12 +89,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 //      "HADOOP_HOME"
 //  };
 
-  public static final String HTTP_HOST = GATEWAY_CONFIG_PREFIX + ".host";
-  public static final String HTTP_PORT = GATEWAY_CONFIG_PREFIX + ".port";
-  public static final String HTTP_PATH = GATEWAY_CONFIG_PREFIX + ".path";
-  public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_PREFIX + ".deployment.dir";
-  public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_PREFIX + ".hadoop.conf.dir";
-//  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_PREFIX + ".shiro.config.file";
+  public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
+  public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
+  public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
+  public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.dir";
+  public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
+//  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_FILE_PREFIX + ".shiro.config.file";
 
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
@@ -152,7 +154,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
     if( lastFileUrl != null ) {
       File file = new File( lastFileUrl.getFile() ).getAbsoluteFile();
-      File dir = file.getParentFile();
+      File dir = file.getParentFile().getParentFile(); // Move up two levels to get to parent of conf.
       if( dir.exists() && dir.canRead() )
         home = dir.getAbsolutePath();
       set( GATEWAY_HOME_VAR, home );

@@ -39,6 +39,16 @@
         </exec>
     </target>
 
+    <!--
+    <target name="build-notest" depends="init" description="Build the product.">
+        <exec executable="mvn">
+            <arg value="package"/>
+            <arg value="-DskipTests"/>
+            <arg value="-Prelease"/>
+        </exec>
+    </target>
+    -->
+
     <target name="archive" depends="init" description="Create the release ZIP.">
         <zip destfile="${archive}">
             <zipfileset

@@ -29,17 +29,17 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayGlobalConfigTest {
 
-  private String getDirName( String resource ) {
+  private String getHomeDirName( String resource ) {
     URL url = ClassLoader.getSystemResource( resource );
     String fileName = url.getFile();
     File file = new File( fileName );
-    String dirName = file.getParent();
+    String dirName = file.getParentFile().getParent();
     return dirName;
   }
 
   @Test
   public void testFullConfig() {
-    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getDirName( "conf-full/gateway-default.xml" ) );
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-full/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
@@ -47,7 +47,7 @@ public class GatewayGlobalConfigTest {
 
   @Test
   public void testSiteConfig() {
-    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getDirName( "conf-site/gateway-site.xml" ) );
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 5555 ) );
     //assertThat( config.getShiroConfigFile(), is( "site-shiro.ini") );
@@ -55,7 +55,7 @@ public class GatewayGlobalConfigTest {
 
   @Test
   public void testEmptyConfig() {
-    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getDirName( "conf-empty/empty" ) );
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-empty/conf/empty" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 8888 ) );
     //assertThat( config.getShiroConfigFile(), is( "shiro.ini") );

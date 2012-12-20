@@ -44,10 +44,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.matchers.JUnitMatchers.hasItem;
 
 public class FileTopologyProviderTest {
 
@@ -149,7 +149,7 @@ public class FileTopologyProviderTest {
   public void testGetTopologies() throws Exception {
 
     FileObject dir = createDir( "ram:///test/dir" );
-    createFile( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
+    createFile( dir, "one.xml", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
 
     TestTopologyListener topoListener = new TestTopologyListener();
     FileListenerDelegator fileListener = new FileListenerDelegator();
@@ -172,7 +172,7 @@ public class FileTopologyProviderTest {
     topoListener.events.clear();
 
     // Add a file to the directory.
-    FileObject two = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
+    FileObject two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
     fileListener.fileCreated( new FileChangeEvent( two ) );
     topologies = provider.getTopologies();
     assertThat( topologies.size(), is( 2 ) );
@@ -193,7 +193,7 @@ public class FileTopologyProviderTest {
     assertThat( event.getTopology(), notNullValue() );
 
     // Update a file in the directory.
-    two = createFile( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-three.xml", 2L );
+    two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-three.xml", 2L );
     fileListener.fileChanged( new FileChangeEvent( two ) );
     topologies = provider.getTopologies();
     assertThat( topologies.size(), is( 2 ) );

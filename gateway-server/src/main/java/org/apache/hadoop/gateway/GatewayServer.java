@@ -70,8 +70,8 @@ public class GatewayServer {
       CommandLine cmd = GatewayCommandLine.parse( args );
       if( cmd.hasOption( "help" ) ) {
         GatewayCommandLine.printHelp();
-      } else if( cmd.hasOption( "setup" ) ) {
-        setupGateway();
+//      } else if( cmd.hasOption( "setup" ) ) {
+//        setupGateway();
       } else if( cmd.hasOption( "version" ) ) {
         buildProperties = loadBuildProperties();
         System.out.println( res.gatewayVersionMessage(
@@ -110,10 +110,10 @@ public class GatewayServer {
         homeDir.mkdirs();
       }
 
-      File defaultConfigFile = new File( homeDir, "gateway-site.xml" );
+      File defaultConfigFile = new File( homeDir, "conf/gateway-site.xml" );
       if( !defaultConfigFile.exists() ) {
         log.creatingDefaultConfigFile( defaultConfigFile );
-        extractToFile( "gateway-site.xml", defaultConfigFile );
+        extractToFile( "conf/gateway-site.xml", defaultConfigFile );
       }
 
       File topologiesDir = calculateAbsoluteTopologiesDir( config );

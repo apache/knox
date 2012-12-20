@@ -35,7 +35,7 @@ public class GatewayCommandLine {
     //options.addOption( options );
     options.addOption( "h", "help", false, "Help" );
     options.addOption( "v", "version", false, "Version" );
-    options.addOption( "s", "setup", false, "Setup" );
+//    options.addOption( "s", "setup", false, "Setup" );
     return options;
   }
 
