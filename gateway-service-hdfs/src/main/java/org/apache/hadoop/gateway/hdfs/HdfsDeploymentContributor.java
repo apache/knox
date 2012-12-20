@@ -51,8 +51,8 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
-    rootResource.source( extNameNodePath + "?{**}" );
-    rootResource.target( intHdfsUrl + "?{**}" );
+    rootResource.source( extNameNodePath + "/?{**}" );
+    rootResource.target( intHdfsUrl + "/?{**}" );
     addAuthenticationFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 

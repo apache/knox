@@ -71,6 +71,14 @@ Example section currently fails.
 The Gateway cannot be be used against either an EC2 cluster or Hadoop Sandbox unless the gateway is deployed in the
 EC2 cluster or the on the Sandbox VM.
 
+Currently when any of the files in {GATEWAY_HOME}/deployments is changed, all
+deployed cluster topologies will be reloaded.  Therefore you may see
+unexpected message of the form "Loading topology file:"
+
+If the cluster deployment descriptors in {GATEWAY_HOME}/deployments are
+incorrect the errors logged by the gateway are overly detailed and not
+diagnostic enough.
+
 ------------------------------------------------------------------------------
 Installation and Deployment Instructions
 ------------------------------------------------------------------------------
@@ -156,10 +164,10 @@ Templeton are shown below.  These mapping are generated from the combination of 
 (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml}.
 
   HDFS (NameNode)
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>namenode/api/v1
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/namenode/api/v1
     Cluster: http://<namenode-host>:50070/webhdfs/v1
   Templeton
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>templeton/api/v1
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api/v1
     Cluster: http://<templeton-host>:50111/templeton/v1
 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via the Gateway configuration file

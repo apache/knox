@@ -23,7 +23,6 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -33,7 +32,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -99,8 +97,8 @@ public class DeploymentFactoryTest {
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/source", equalTo( "/namenode/api/v1?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/source", equalTo( "/namenode/api/v1/?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 

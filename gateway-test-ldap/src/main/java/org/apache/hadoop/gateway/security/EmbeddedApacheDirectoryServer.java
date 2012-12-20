@@ -57,6 +57,8 @@ public class EmbeddedApacheDirectoryServer {
       userUrl = Thread.currentThread().getContextClassLoader().getResource( "users.ldif" );
       if( userUrl == null ) {
         throw new FileNotFoundException( "classpath:user.ldif" );
+      } else if( userUrl.toExternalForm().startsWith( "jar:file:" ) ) {
+        throw new IllegalArgumentException( "Loading user.ldif from within jar unsupported. Provide directory containing user.ldif as first argument. " );
       }
     }
     ldap.loadLdif( userUrl );
