@@ -54,22 +54,28 @@ Java:
   Java 1.6 or later
 
 Hadoop Cluster:
-  A local installation of a Hadoop Cluster is required at this time.  Hadoop EC2 cluster and/or Sandbox installations
-  are currently difficult to access remotely via the Gateway.   The EC2 and Sandbox limitation is caused by Hadoop
-  services running with internal IP addresses.  For the Gateway to work in these cases it will need to be deployed
-  on the EC2 cluster or Sandbox.  The instructions that follow assume that the Gateway is deployed externally from
-  the Hadoop clusters.  Externally in this case is likely to be
+  A local installation of a Hadoop Cluster is required at this time.  Hadoop 
+  EC2 cluster and/or Sandbox installations are currently difficult to access 
+  remotely via the Gateway. The EC2 and Sandbox limitation is caused by Hadoop
+  services running with internal IP addresses.  For the Gateway to work in these 
+  cases it will need to be deployed on the EC2 cluster or Sandbox, at this time.  
+  
+  The instructions that follow assume that the Gateway is *not* colocated with
+  the Hadoop clusters themselves and (most importantly) that the IP addresses 
+  of the cluster services are accessible by the gateway where ever it happens to
+  be running.
 
-  The Hadoop cluster should have WebHDFS and WebHCat (i.e. Templeton) deployed and configured.
+  The Hadoop cluster should be ensured to have WebHDFS and WebHCat (i.e. Templeton) 
+  deployed and configured.
 
 ------------------------------------------------------------------------------
 Know Issues
 ------------------------------------------------------------------------------
-Currently there is an issue with submitting Java MapReduce jobs via the WebHCat REST APIs.  Therefore step 7 in the
-Example section currently fails.
+Currently there is an issue with submitting Java MapReduce jobs via the WebHCat 
+REST APIs.  Therefore step 7 in the Example section currently fails.
 
-The Gateway cannot be be used against either an EC2 cluster or Hadoop Sandbox unless the gateway is deployed in the
-EC2 cluster or the on the Sandbox VM.
+The Gateway cannot be be used against either an EC2 cluster or Hadoop Sandbox 
+unless the gateway is deployed in the EC2 cluster or the on the Sandbox VM.
 
 Currently when any of the files in {GATEWAY_HOME}/deployments is changed, all
 deployed cluster topologies will be reloaded.  Therefore you may see
@@ -95,9 +101,10 @@ Installation and Deployment Instructions
    document.
 
 3. Start the demo LDAP server (ApacheDS)
-   a. The default configuration edited above contains the LDAP URL for a LDAP server.  By default that file
-      is configured to access this simple ApacheDS based LDAP server and its default configuration.  Specifically,
-      by default this server listens on port 33389.
+   a. First, understand that the LDAP server provided here is for demonstration purposes. You may configure the
+      LDAP specifics within the topology descriptor for the cluster as described in step 5 below, in order to
+      customize what LDAP instance to use. The assumption is that most users will leverage the demo LDAP server 
+      while evaluating this release and should therefore continue with the instructions here in step 3.
    b. Edit {GATEWAY_HOME}/conf/users.ldif if required and add your users and groups to the file.
       A number of normal Hadoop users (e.g. hdfs, mapred, hcat, hive) have already been included.  Note that
       the passwords in this file are "fictitious" and have nothing to do with the actual accounts on the Hadoop
@@ -119,7 +126,9 @@ Installation and Deployment Instructions
    a. Edit the file {GATEWAY_HOME}/deployments/sample.xml
    b. Change the host and port in the urls of the <service> elements for NAMENODE and TEMPLETON service to match your
       cluster deployment.
-   c. Optionally you can change the LDAP URL for the LDAP server to be used for authentication.  This is set via
+   c. The default configuration contains the LDAP URL for a LDAP server.  By default that file is configured to access 
+      the demo ApacheDS based LDAP server and its default configuration. By default, this server listens on port 33389.
+      Optionally, you can change the LDAP URL for the LDAP server to be used for authentication.  This is set via
       the main.ldapRealm.contextFactory.url property in the <gateway><provider><authentication> section.
    d. Save the file.  The directory {GATEWAY_HOME}/deployments is monitored by the Gateway server and reacts to the
       discovery of a new or changed cluster topology descriptor by provisioning the endpoints and required filter
