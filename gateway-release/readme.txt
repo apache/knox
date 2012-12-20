@@ -71,9 +71,9 @@ Installation and Deployment Instructions
 2. Enter Gateway Home directory
      cd gateway-0.1.0
 3. Start the demo LDAP server (ApacheDS)
-   a. Make a backup copy of the {GATEWAY_HOME}/config/users.ldif file and add your users and groups to the file
+   a. Make a backup copy of the {GATEWAY_HOME}/conf/users.ldif file and add your users and groups to the file
    b. Start the LDAP server - pointing it to the config dir where it will find the users.ldif file
-        java -jar bin/gateway-test-ldap-0.1.0-SNAPSHOT.jar config/ &
+        java -jar bin/gateway-test-ldap-0.1.0-SNAPSHOT.jar conf/ &
 4. Start the Gateway server
      java -jar bin/gateway-test-server-0.1.0-SNAPSHOT.jar
 5. Configure for the Management of your Hadoop Cluster
@@ -83,7 +83,7 @@ Installation and Deployment Instructions
          <role>NAMENODE</role>
          <url>http://host:80/webhdfs/v1</url>
         </service>
-   c. Save or copy this file to {GATEWAY_HOME}/clusters
+   c. Save or copy this file to {GATEWAY_HOME}/deployments
       this directory is monitored by the Gateway server and reacts to the discovery of a topology descriptor by
       provisioning the endpoints and required filter chains to serve the needs of each cluster as described by the
       topology file.
@@ -121,7 +121,7 @@ The Gateway functions in many ways as a reverse proxy.  As such it maintains a m
 externally by the Gateway to URLs that are provided by the Hadoop cluster.  Examples of mappings for the NameNode and
 Templeton are shown below.  These mapping are generated from the combination of the Gateway configuration file
 (i.e. {GATEWAY_HOME}/gateway-site.xml) and the cluster topology descriptors
-(e.g. {GATEWAY_HOME}/clusters/<cluster-name>.xml}.
+(e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml}.
 
   HDFS (NameNode)
     Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>namenode/api/v1
@@ -133,7 +133,7 @@ Templeton are shown below.  These mapping are generated from the combination of 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via the Gateway configuration file
 (i.e. {GATEWAY_HOME}/gateway-site.xml).
 The value for <cluster-name> is derrived from the name of the cluster topology descriptor
-(e.g. {GATEWAY_HOME}/clusters/{cluster-name>.xml).
+(e.g. {GATEWAY_HOME}/deployments/{cluster-name>.xml).
 The value for <namenode-host> are provided via the cluster topology descriptor.
 Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton respectively.
       Their values can also be provided via the cluster topology descriptor.

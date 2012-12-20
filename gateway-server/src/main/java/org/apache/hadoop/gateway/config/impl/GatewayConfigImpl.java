@@ -96,7 +96,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
-  public static final String DEFAULT_DEPLOYMENT_DIR = "clusters";
+  public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
 //  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
 
   public GatewayConfigImpl() {

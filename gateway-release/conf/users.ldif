@@ -1,0 +1,46 @@
+version: 1
+
+dn: ou=users,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: users
+
+dn: uid=hdfs,ou=users,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HDFS
+sn: HDFS
+uid: hdfs
+userPassword:hdfs-password
+
+dn: uid=mapred,ou=users,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: MapReduce
+sn: MapReduce
+uid: mapred
+userPassword:mapred-password
+
+dn: uid=hive,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Hive
+sn: Hive
+uid: hive
+userPassword:hive-password
+
+dn: uid=hcat,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HCat
+sn: HCat
+uid: hcat
+userPassword:hcat-password
