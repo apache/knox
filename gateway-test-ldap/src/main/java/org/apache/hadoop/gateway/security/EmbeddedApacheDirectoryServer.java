@@ -47,14 +47,16 @@ public class EmbeddedApacheDirectoryServer {
     ldap.start();
     
     URL userUrl = null;
-    if (args.length > 0) {
-      String ldifDir = args[0];
-      userUrl = new URL("file:///" + ldifDir + File.separator + "users.ldif");
-    }
-    else {
+    if ( args.length > 0 ) {
+      File file = new File( args[0], "users.ldif" );
+      if( !file.exists() || !file.canRead() ) {
+        throw new FileNotFoundException( file.getAbsolutePath() );
+      }
+      userUrl = file.toURL();
+    } else {
       userUrl = Thread.currentThread().getContextClassLoader().getResource( "users.ldif" );
       if( userUrl == null ) {
-        throw new FileNotFoundException( "user.ldif" );
+        throw new FileNotFoundException( "classpath:user.ldif" );
       }
     }
     ldap.loadLdif( userUrl );

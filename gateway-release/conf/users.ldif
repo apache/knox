@@ -1,11 +1,11 @@
 version: 1
 
-dn: ou=users,dc=hadoop,dc=apache,dc=org
+dn: ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
-ou: users
+ou: people
 
-dn: uid=hdfs,ou=users,dc=hadoop,dc=apache,dc=org
+dn: uid=hdfs,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
@@ -15,7 +15,7 @@ sn: HDFS
 uid: hdfs
 userPassword:hdfs-password
 
-dn: uid=mapred,ou=users,dc=hadoop,dc=apache,dc=org
+dn: uid=mapred,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
