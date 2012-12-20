@@ -175,3 +175,26 @@ File bugs at hortonworks.jira.com under Project "Hadoop Gateway Development"
 Include the results of
   java -jar bin/gateway-server-0.1.0-SNAPSHOT.jar -version
 in the Environment section.  Also include the version of Hadoop that you are using there as well.
+
+------------------------------------------------------------------------------
+Example
+------------------------------------------------------------------------------
+curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
+
+curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
+
+curl -i -u mapred:mapred-password -X DELETE 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+
+curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
+
+curl -i -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value of Location header from last command}'
+
+curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
+
+curl -i -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from last command}'
+
+curl -i -u mapred:mapred-password -X POST -d jar=/tmp/test/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=/tmp/test/input -d arg=/tmp/test/output  'http://localhost:8888/gateway/sample/templeton/api/v1/mapreduce/jar'
+
+curl -i -u mapred:mapred-password -X GET 'http://localhost:8888/gateway/sample/templeton/api/v1/queue'
+
+curl -i -u mapred:mapred-password -X GET 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
