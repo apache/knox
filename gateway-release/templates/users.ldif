@@ -1,37 +1,46 @@
 version: 1
 
-dn: ou=groups,dc=hadoop,dc=apache,dc=org
+dn: ou=users,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
-ou: groups
+ou: users
 
-dn: ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:organizationalUnit
-ou: people
-
-dn: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
+dn: uid=hdfs,ou=users,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: CraigWalls
-sn: Walls
-uid: allowedUser
-userPassword:password
+cn: HDFS
+sn: HDFS
+uid: hdfs
+userPassword:hdfs-password
 
-dn: uid=deniedUser,ou=people,dc=hadoop,dc=apache,dc=org
+dn: uid=mapred,ou=users,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: JohnSmith
-sn: Smith
-uid: deniedUser
-userPassword:password
+cn: MapReduce
+sn: MapReduce
+uid: mapred
+userPassword:mapred-password
 
-dn: cn=admin,ou=groups,dc=hadoop,dc=apache,dc=org
+dn: uid=hive,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
-objectclass:groupOfNames
-cn: admin
-member: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Hive
+sn: Hive
+uid: hive
+userPassword:hive-password
+
+dn: uid=hcat,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HCat
+sn: HCat
+uid: hcat
+userPassword:hcat-password
