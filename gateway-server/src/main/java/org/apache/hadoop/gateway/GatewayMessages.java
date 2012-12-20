@@ -64,6 +64,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Loading topology files from directory: {0}" )
   void loadingTopologiesFromDirecotry( String topologiesDir );
 
+  @Message( level = MessageLevel.INFO, text = "Loading topology file: {0}" )
+  void loadingTopologyFile( String fileName );
+
   @Message( level = MessageLevel.INFO, text = "Monitoring topology files in directory: {0}" )
   void monitoringTopologyChangesInDirectory( String topologiesDir );
 
@@ -99,4 +102,5 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Ignoring provider deployment contributor with invalid null role: {0}" )
   void ignoringProviderContributorWithMissingRole( String className );
+
 }

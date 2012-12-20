@@ -27,6 +27,8 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileMonitor;
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
@@ -51,6 +53,7 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, FileListener {
 
+  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static DigesterLoader digesterLoader = newLoader( new XmlTopologyRules() );
 
   private DefaultFileMonitor monitor;
@@ -73,6 +76,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
   }
 
   private static Topology loadTopology( FileObject file ) throws IOException, SAXException {
+    log.loadingTopologyFile( file.getName().getFriendlyURI() );
     Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
     Topology topology = digester.parse( content.getInputStream() );
@@ -85,7 +89,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     Map<FileName, Topology> map = new HashMap<FileName, Topology>();
     if( directory.exists() && directory.getType().hasChildren() ) {
       for( FileObject file : directory.getChildren() ) {
-        if( file.exists() && !file.getType().hasChildren() ) {
+        if( file.exists() && !file.getType().hasChildren() && "xml".equals( file.getName().getExtension() ) ) {
           try {
             map.put( file.getName(), loadTopology( file ) );
           } catch( IOException e ) {
