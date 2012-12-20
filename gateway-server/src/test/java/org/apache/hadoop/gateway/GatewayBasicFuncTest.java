@@ -459,9 +459,9 @@ public class GatewayBasicFuncTest {
     String user = "mapred";
     String pass = "mapred-password";
     String group = "mapred";
-//    String user = "kminder";
-//    String pass = "kminder-password";
-//    String group = "users";
+//    String user = "hcat";
+//    String pass = "hcat-password";
+//    String group = "hcat";
 
     // Cleanup anything that might have been leftover because the test failed previously.
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
