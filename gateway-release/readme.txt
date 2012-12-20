@@ -63,6 +63,15 @@ Hadoop Cluster:
   The Hadoop cluster should have WebHDFS and WebHCat (i.e. Templeton) deployed and configured.
 
 ------------------------------------------------------------------------------
+Know Issues
+------------------------------------------------------------------------------
+Currently there is an issue with submitting Java MapReduce jobs via the WebHCat REST APIs.  Therefore step 7 in the
+Example section currently fails.
+
+The Gateway cannot be be used against either an EC2 cluster or Hadoop Sandbox unless the gateway is deployed in the
+EC2 cluster or the on the Sandbox VM.
+
+------------------------------------------------------------------------------
 Installation and Deployment Instructions
 ------------------------------------------------------------------------------
 
@@ -179,22 +188,47 @@ in the Environment section.  Also include the version of Hadoop that you are usi
 ------------------------------------------------------------------------------
 Example
 ------------------------------------------------------------------------------
-curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
+The example below illustrates the sequence of curl commands that could be used to run a word count job.  It utilizes
+the hadoop-examples.jar from a Hadoop install for running a simple word count job.  Take care to follow the
+instructions below for steps 4/5 and 6/7 where the Location header returned by the call to the NameNode is copied for
+use with the call to the DataNode that follows it.
 
-curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
+# 1. Create a test input directory /tmp/test/input
+curl -i -u mapred:mapred-password -X PUT \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
 
-curl -i -u mapred:mapred-password -X DELETE 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+# 2. Create a test output directory /tmp/test/input
+curl -i -u mapred:mapred-password -X PUT \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
 
-curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
+# 3. Create the inode for hadoop-examples.jar in /tmp/test
+curl -i -u mapred:mapred-password -X PUT \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
 
-curl -i -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value of Location header from last command}'
+# 4. Upload hadoop-examples.jar to /tmp/test.  Use a hadoop-examples.jar from a Hadoop install.
+curl -i -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value Location header from command above}'
 
-curl -i -u mapred:mapred-password -X PUT 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
+# 5. Create the inode for a sample file readme.txt in /tmp/test/input
+curl -i -u mapred:mapred-password -X PUT \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
 
-curl -i -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from last command}'
+# 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
+curl -i -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from command above}'
 
-curl -i -u mapred:mapred-password -X POST -d jar=/tmp/test/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=/tmp/test/input -d arg=/tmp/test/output  'http://localhost:8888/gateway/sample/templeton/api/v1/mapreduce/jar'
+# 7. Submit the word count job
+curl -i -u mapred:mapred-password -X POST \
+  -d jar=/tmp/test/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount \
+  -d arg=/tmp/test/input -d arg=/tmp/test/output \
+  'http://localhost:8888/gateway/sample/templeton/api/v1/mapreduce/jar'
 
-curl -i -u mapred:mapred-password -X GET 'http://localhost:8888/gateway/sample/templeton/api/v1/queue'
+# 8. Look at the status of the job queue
+curl -i -u mapred:mapred-password -X GET \
+  'http://localhost:8888/gateway/sample/templeton/api/v1/queue'
 
-curl -i -u mapred:mapred-password -X GET 'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
+# 9. List the contents of the output directory /tmp/test/output
+curl -i -u mapred:mapred-password -X GET \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
+
+# 10. Cleanup the test directory
+curl -i -u mapred:mapred-password -X DELETE \
+  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
