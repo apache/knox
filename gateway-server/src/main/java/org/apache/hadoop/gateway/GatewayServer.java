@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
+import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -38,6 +39,7 @@ import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -78,10 +80,29 @@ public class GatewayServer {
             buildProperties.getProperty( "build.version", "unknown" ),
             buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {
-        startGateway( new GatewayConfigImpl() );
+        GatewayConfig config = new GatewayConfigImpl();
+        configureLogging( config );
+        startGateway( config );
       }
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );
+    }
+  }
+
+  private static void configureLogging( GatewayConfig config ) {
+    String fileName = config.getGatewayHomeDir() + "/conf/log4j.properties";
+    File file = new File( fileName );
+    if( file.isFile() && file.canRead() ) {
+      FileInputStream stream;
+      try {
+        stream = new FileInputStream( file );
+        Properties properties = new Properties();
+        properties.load( stream );
+        PropertyConfigurator.configure( properties );
+        log.loadedLoggingConfig( fileName );
+      } catch( IOException e ) {
+        log.failedToLoadLoggingConfig( fileName );
+      }
     }
   }
 

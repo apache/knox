@@ -137,3 +137,11 @@ The value for <cluster-name> is derrived from the name of the cluster topology d
 The value for <namenode-host> are provided via the cluster topology descriptor.
 Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton respectively.
       Their values can also be provided via the cluster topology descriptor.
+
+------------------------------------------------------------------------------
+Filing bugs
+------------------------------------------------------------------------------
+File bugs at hortonworks.jira.com under Project "Hadoop Gateway Development"
+Include the results of
+  java -jar bin/gateway-server-0.1.0-SNAPSHOT.jar -version
+in the Environment section.  Also include the version of Hadoop that you are using there as well.

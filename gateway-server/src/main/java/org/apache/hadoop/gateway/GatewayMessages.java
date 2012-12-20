@@ -103,4 +103,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Ignoring provider deployment contributor with invalid null role: {0}" )
   void ignoringProviderContributorWithMissingRole( String className );
 
+  @Message( level = MessageLevel.INFO, text = "Loaded logging configuration: {0}" )
+  void loadedLoggingConfig( String fileName );
+
+  @Message( level = MessageLevel.WARN, text = "Failed to load logging configuration: {0}" )
+  void failedToLoadLoggingConfig( String fileName );
 }
