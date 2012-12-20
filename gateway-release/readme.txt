@@ -83,12 +83,12 @@ Installation and Deployment Instructions
 
 2. Enter Gateway Home directory
      cd gateway
-   The fully qualified name of this directory will be referenced at {GATEWAY_HOME} throughout the remainder of this
+   The fully qualified name of this directory will be referenced as {GATEWAY_HOME} throughout the remainder of this
    document.
 
 3. Start the demo LDAP server (ApacheDS)
    a. The default configuration edited above contains the LDAP URL for a LDAP server.  By default that file
-      is configured to access this simple ApacheDS based LDAP server and its default configuration.  Spcifially
+      is configured to access this simple ApacheDS based LDAP server and its default configuration.  Specifically,
       by default this server listens on port 33389.
    b. Edit {GATEWAY_HOME}/conf/users.ldif if required and add your users and groups to the file.
       A number of normal Hadoop users (e.g. hdfs, mapred, hcat, hive) have already been included.  Note that
@@ -99,7 +99,7 @@ Installation and Deployment Instructions
       directory.
         java -jar bin/gateway-test-ldap-0.1.0-SNAPSHOT.jar conf &
       There are a number of messages of the form "Created null." that can safely be ignored.
-      Take note the port on which it was started as this needs to match later configuration.
+      Take note of the port on which it was started as this needs to match later configuration.
       This will create a directory named 'org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer' that
       can safely be ignored.
 
@@ -108,7 +108,7 @@ Installation and Deployment Instructions
    Take note of the port identified in the logging output as you will need this for accessing the gateway.
 
 5. Configure the Gateway with the topology of your Hadoop cluster
-   a. Edit the file {GATEWAY_HOME}/conf/sample.xml
+   a. Edit the file {GATEWAY_HOME}/deployments/sample.xml
    b. Change the host and port in the urls of the <service> elements for NAMENODE and TEMPLETON service to match your
       cluster deployment.
    c. Optionally you can change the LDAP URL for the LDAP server to be used for authentication.  This is set via
@@ -123,7 +123,7 @@ Installation and Deployment Instructions
 6. Test the installation and configuration of your Gateway
    Invoke the LISTSATUS operation on HDFS represented by your configured NAMENODE by using your web browser or curl:
 
-     curl -i -L http://localhost:8888/gateway/sample/namenode/api/v1/?op=LISTSTATUS
+     curl --user hdfs:hdfs-password -i -L http://localhost:8888/gateway/sample/namenode/api/v1/tmp?op=LISTSTATUS
 
    The results of the above command should result in something to along the lines of the output below.  The exact
    information returned is subject to the content within HDFS in your Hadoop cluster.
@@ -164,7 +164,7 @@ Templeton are shown below.  These mapping are generated from the combination of 
 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via the Gateway configuration file
 (i.e. {GATEWAY_HOME}/gateway-site.xml).
-The value for <cluster-name> is derrived from the name of the cluster topology descriptor
+The value for <cluster-name> is derived from the name of the cluster topology descriptor
 (e.g. {GATEWAY_HOME}/deployments/{cluster-name>.xml).
 The value for <namenode-host> are provided via the cluster topology descriptor.
 Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton respectively.

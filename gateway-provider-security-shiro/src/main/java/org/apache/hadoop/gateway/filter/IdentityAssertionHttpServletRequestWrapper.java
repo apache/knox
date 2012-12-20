@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
 public class IdentityAssertionHttpServletRequestWrapper extends
@@ -60,8 +61,23 @@ public class IdentityAssertionHttpServletRequestWrapper extends
   }
 
   private Map<String, String[]> getParams( String qString ) {
-    if (qString == null || qString.length() == 0) return null;
-    Map<String, String[]> params = parseQueryString(qString);
+    Map<String, String[]> params = null;
+    if (getMethod().equals("GET")) {
+      if (qString != null && qString.length() > 0) {
+        params = parseQueryString(qString);
+      }
+      else {
+        params = new HashMap<String, String[]>();
+      }
+    }
+    else {
+      if (qString == null || qString.length() == 0) {
+        return null;
+      }
+      else {
+        params = parseQueryString(qString);
+      }
+    }
     ArrayList<String> al = new ArrayList<String>();
     al.add(username);
     String[] a = {""};

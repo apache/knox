@@ -43,6 +43,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
     request.setCharacterEncoding( "UTF-8" );
     request.setContentType( "application/x-www-form-urlencoded" );
+    request.setMethod("POST");
 
     IdentityAssertionHttpServletRequestWrapper wrapper
         = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
@@ -59,6 +60,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
     request.setContentType( "application/x-www-form-urlencoded" );
+    request.setMethod("POST");
 
     IdentityAssertionHttpServletRequestWrapper wrapper
         = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
@@ -76,6 +78,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setCharacterEncoding( "ISO-8859-1" );
+    request.setMethod("POST");
 
     IdentityAssertionHttpServletRequestWrapper wrapper
         = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
@@ -93,7 +96,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
     request.setCharacterEncoding( "UTF-8" );
     request.setContentType( "application/x-www-form-urlencoded" );
-
+    request.setMethod("POST");
+    
     IdentityAssertionHttpServletRequestWrapper wrapper
         = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
 
@@ -134,6 +138,52 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String output = wrapper.getQueryString();
 
     assertThat( output, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
+  public void testInsertUserNameInNullQueryString() {
+    String input = null;
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setQueryString( input );
+
+    IdentityAssertionHttpServletRequestWrapper wrapper
+        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+
+    String output = wrapper.getQueryString();
+
+    assertThat( output, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
+  public void testInsertUserNameInNullQueryStringForGET() {
+    String input = null;
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setQueryString( input );
+
+    IdentityAssertionHttpServletRequestWrapper wrapper
+        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+
+    String output = wrapper.getQueryString();
+
+    assertThat( output, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
+  public void testNoInsertUserNameInNullQueryStringForPOST() {
+    String input = null;
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setQueryString( input );
+    request.setMethod("POST");
+
+    IdentityAssertionHttpServletRequestWrapper wrapper
+        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+
+    String output = wrapper.getQueryString();
+
+    assertThat( output, not(containsString( "user.name=output-user" ) ) );
   }
 
   @Test

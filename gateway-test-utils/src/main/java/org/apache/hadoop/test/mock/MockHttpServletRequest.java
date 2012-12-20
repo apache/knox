@@ -45,6 +45,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
   private String contentType;
   private String characterEncoding;
   private ServletInputStream inputStream;
+  private String method = "GET";
 
   @Override
   public String getAuthType() {
@@ -83,7 +84,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
   @Override
   public String getMethod() {
-    return null;
+    return method;
+  }
+
+  public void setMethod( String method ) {
+    this.method = method;
   }
 
   @Override
