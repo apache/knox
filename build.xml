@@ -23,6 +23,7 @@
 
     <property name="version" value="0.1.0-SNAPSHOT"/>
     <property name="archive" value="target/gateway-${version}.zip"/>
+    <property name="gateway_home" value="gateway"/>
 
     <target name="init" description="Initialize the build.">
     </target>
@@ -51,15 +52,15 @@
             <zipfileset
                     dir="gateway-release"
                     includes="**/*"
-                    prefix=""/>
+                    prefix="${gateway_home}"/>
             <zipfileset
                     dir="gateway-test-ldap/target"
                     includes="gateway-test-ldap-${version}.jar"
-                    prefix="bin"/>
+                    prefix="${gateway_home}/bin"/>
             <zipfileset
                     dir="gateway-server/target"
                     includes="gateway-server-${version}.jar"
-                    prefix="bin"/>
+                    prefix="${gateway_home}/bin"/>
         </zip>
     </target>
 
