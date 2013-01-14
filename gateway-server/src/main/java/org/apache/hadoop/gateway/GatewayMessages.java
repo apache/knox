@@ -28,7 +28,7 @@ import java.io.File;
 /**
  *
  */
-@Messages
+@Messages(logger="org.apache.hadoop.gateway")
 public interface GatewayMessages {
 
   @Message( level = MessageLevel.FATAL, text = "Failed to parse command line: {0}" )

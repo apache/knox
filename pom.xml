@@ -49,6 +49,7 @@
         -->
         <module>gateway-service-hdfs</module>
         <module>gateway-service-templeton</module>
+        <module>gateway-service-oozie</module>
         <module>gateway-server</module>
         <module>gateway-demo</module>
     </modules>
