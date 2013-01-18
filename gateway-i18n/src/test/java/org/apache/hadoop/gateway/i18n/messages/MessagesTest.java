@@ -17,14 +17,16 @@
  */
 package org.apache.hadoop.gateway.i18n.messages;
 
-import org.apache.hadoop.test.category.UnitTests;
 import org.apache.hadoop.gateway.i18n.messages.loggers.test.TestMessageLogger;
 import org.apache.hadoop.gateway.i18n.messages.loggers.test.TestMessageLoggerFactory;
+import org.apache.hadoop.gateway.i18n.messages.loggers.test.TestMessageRecord;
 import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -41,6 +43,11 @@ public class MessagesTest {
 
     TestMessageLogger logger = (TestMessageLogger)TestMessageLoggerFactory.getFactory().getLogger( "some.logger.name" );
     assertThat( logger.records.size(), equalTo( 1 ) );
+
+    TestMessageRecord record = logger.records.get( 0 );
+
+    assertThat( record.caller.getClassName(), is( this.getClass().getName() ) );
+    assertThat( record.caller.getMethodName(), is( "testFirst" ) );
 
   }
 

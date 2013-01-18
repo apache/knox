@@ -43,38 +43,38 @@ public class Sl4jMessageLogger implements MessageLogger {
   }
 
   @Override
-  public void log( MessageLevel messageLevel, String messageId, String messageText, Throwable throwable ) {
+  public void log( final StackTraceElement caller, final MessageLevel messageLevel, final String messageId, final String messageText, final Throwable thrown ) {
     switch( messageLevel ) {
       case FATAL:
       case ERROR:
-        if( throwable == null )
+        if( thrown == null )
           logger.error( messageText );
         else
-          logger.error( messageText, throwable );
+          logger.error( messageText, thrown );
         break;
       case WARN:
-        if( throwable == null )
+        if( thrown == null )
           logger.warn( messageText );
         else
-          logger.warn( messageText, throwable );
+          logger.warn( messageText, thrown );
         break;
       case INFO:
-        if( throwable == null )
+        if( thrown == null )
           logger.info( messageText );
         else
-          logger.info( messageText, throwable );
+          logger.info( messageText, thrown );
         break;
       case DEBUG:
-        if( throwable == null )
+        if( thrown == null )
           logger.debug( messageText );
         else
-          logger.debug( messageText, throwable );
+          logger.debug( messageText, thrown );
         break;
       case TRACE:
-        if( throwable == null )
+        if( thrown == null )
           logger.trace( messageText );
         else
-          logger.trace( messageText, throwable );
+          logger.trace( messageText, thrown );
         break;
     }
   }

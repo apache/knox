@@ -19,9 +19,6 @@ package org.apache.hadoop.gateway.i18n.messages.loggers.test;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +47,8 @@ public class TestMessageLogger implements MessageLogger {
   }
 
   @Override
-  public void log( MessageLevel level, String id, String text, Throwable throwable ) {
-    TestMessageRecord record = new TestMessageRecord( this, level, id, text, throwable );
+  public void log( final StackTraceElement caller, final MessageLevel level, final String id, final String text, final Throwable thrown ) {
+    TestMessageRecord record = new TestMessageRecord( this, caller, level, id, text, thrown );
     records.add( record );
   }
 

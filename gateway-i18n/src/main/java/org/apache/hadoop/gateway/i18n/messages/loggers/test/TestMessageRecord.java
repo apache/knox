@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.i18n.messages.loggers.test;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 
 /**
  *
@@ -27,13 +25,15 @@ import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 public class TestMessageRecord {
 
   public TestMessageLogger logger;
+  public StackTraceElement caller;
   public MessageLevel level;
   public String id;
   public String message;
   public Throwable throwable;
 
-  public TestMessageRecord( TestMessageLogger logger, MessageLevel level, String id, String message, Throwable throwable ) {
+  public TestMessageRecord( TestMessageLogger logger, StackTraceElement caller, MessageLevel level, String id, String message, Throwable throwable ) {
     this.logger = logger;
+    this.caller = caller;
     this.level = level;
     this.id = id;
     this.message = message;

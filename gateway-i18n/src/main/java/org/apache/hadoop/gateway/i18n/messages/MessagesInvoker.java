@@ -49,7 +49,8 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
       message = getText( method, args );
       String code = getCode( method );
       Throwable throwable = findLoggableThrowable( logger, method, args );
-      logger.log( level, code, message, throwable );
+      StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
+      logger.log( caller, level, code, message, throwable );
     }
     return message;
   }

@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -41,8 +42,14 @@ final class JdkMessageLogger implements MessageLogger {
 
   //TODO: Handle message ID.
   @Override
-  public final void log( final MessageLevel level, final String id, final String message, final Throwable throwable ) {
-    logger.log( toLevel( level ), message, throwable );
+  public final void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
+    LogRecord record = new LogRecord( toLevel( level ), message );
+    record.setSourceClassName( caller.getClassName() );
+    record.setSourceMethodName( caller.getMethodName() );
+    if( thrown != null ) {
+      record.setThrown( thrown );
+    }
+    logger.log( record );
   }
 
   private static final Level toLevel( final MessageLevel level ) {

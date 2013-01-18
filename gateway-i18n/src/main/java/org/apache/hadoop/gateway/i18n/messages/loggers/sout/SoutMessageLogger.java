@@ -19,9 +19,6 @@ package org.apache.hadoop.gateway.i18n.messages.loggers.sout;
 
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.MessageLogger;
 
 import java.text.MessageFormat;
 
@@ -49,10 +46,10 @@ public class SoutMessageLogger implements MessageLogger {
   }
 
   @Override
-  public void log( MessageLevel level, String id, String message, Throwable throwable ) {
+  public void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
     System.out.println( MessageFormat.format( getFormat( id ), level, id, message ) );
-    if( throwable != null ) {
-      throwable.printStackTrace();
+    if( thrown != null ) {
+      thrown.printStackTrace();
     }
   }
 

@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.gateway.i18n.messages;
 
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-
 /**
  *
  */
@@ -26,6 +24,6 @@ public interface MessageLogger {
 
   boolean isLoggable( MessageLevel level );
 
-  void log( MessageLevel messageLevel, String messageId, String messageText, Throwable throwable );
+  void log( StackTraceElement caller, MessageLevel messageLevel, String messageId, String messageText, Throwable thrown );
 
 }
