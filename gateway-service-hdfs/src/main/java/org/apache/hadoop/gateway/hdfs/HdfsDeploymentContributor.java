@@ -54,6 +54,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     rootResource.source( extNameNodePath + "/?{**}" );
     rootResource.target( intHdfsUrl + "/?{**}" );
     addAuthenticationFilter( context, service, rootResource );
+    addIdentityAssertionFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
@@ -61,8 +62,13 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.source( extNameNodePath + "/{path=**}?{**}" );
     fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
     addAuthenticationFilter( context, service, fileResource );
+    addIdentityAssertionFilter( context, service, fileResource );
     addNameNodeRewriteFilter( context, service, fileResource, extGatewayUrl );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
+  }
+
+  private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    context.contributeFilter( service, resource, "identity-assertion", null, null );
   }
 
   public void contributeDataNode( DeploymentContext context, Service service ) {
@@ -74,6 +80,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.source( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
     fileResource.target( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     addAuthenticationFilter( context, service, fileResource );
+    addIdentityAssertionFilter( context, service, fileResource );
     addDataNodeRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }

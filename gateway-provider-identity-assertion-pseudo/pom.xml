@@ -11,5 +11,26 @@
 	    <groupId>${gateway-group}</groupId>
 	    <artifactId>gateway-spi</artifactId>
 	  </dependency>
+    <dependency>
+    	<groupId>commons-io</groupId>
+    	<artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.easymock</groupId>
+        <artifactId>easymock</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>gateway-test-utils</artifactId>
+        <scope>test</scope>
+    </dependency> 
   </dependencies>
 </project>

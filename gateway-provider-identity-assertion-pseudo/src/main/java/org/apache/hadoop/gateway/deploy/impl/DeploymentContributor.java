@@ -24,25 +24,36 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 import java.util.List;
 
 public class DeploymentContributor extends ProviderDeploymentContributorBase {
 
   private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.IdentityAssertionFilter";
+  private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
 
   @Override
   public String getRole() {
-    return "authentication";
+    return "identity-assertion";
   }
 
   @Override
   public String getName() {
-    return "IdentityAssertion";
+    return "Pseudo";
   }
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
+    String mappings = provider.getParams().get(PRINCIPAL_MAPPING_PARAM_NAME);
+
+//    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
+//    servlet.createInitParam()
+//        .paramName( PRINCIPAL_MAPPING_PARAM_NAME )
+//        .paramValue( mappings );
+    
+    context.getWebAppDescriptor().createContextParam().paramName(PRINCIPAL_MAPPING_PARAM_NAME).paramValue(mappings);
   }
 
   @Override
