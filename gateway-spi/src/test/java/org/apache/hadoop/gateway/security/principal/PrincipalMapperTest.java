@@ -1,4 +1,4 @@
-package org.apache.hadoop.gateway.filter;
+package org.apache.hadoop.gateway.security.principal;
 
 import static org.junit.Assert.*;
 
