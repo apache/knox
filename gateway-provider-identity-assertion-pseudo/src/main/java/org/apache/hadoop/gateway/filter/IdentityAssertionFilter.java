@@ -26,47 +26,30 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.hadoop.gateway.security.principal.PrincipalMapper;
+import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
+import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
+
 
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.Principal;
-import java.util.HashMap;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 public class IdentityAssertionFilter implements Filter {
 
-  private HashMap<String, String> table = new HashMap<String, String>();
+  private PrincipalMapper mapper = new SimplePrincipalMapper();
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     // load principal mappings
     String principalMapping = filterConfig.getServletContext().getInitParameter("principal.mapping");
-    loadMappingTable(principalMapping);
-  }
-
-  /**
-   * Load the internal principal mapping table from the provided
-   * string value which conforms to the following semicolon delimited format:
-   * actual[,another-actual]=mapped;...
-   * @param principalMapping
-   */
-  private void loadMappingTable(String principalMapping) {
-//    System.out.println("+++++++++++++ Loading the Mapping Table");
-    if (principalMapping != null) {
-      StringTokenizer t = new StringTokenizer(principalMapping, ";");
-      do {
-        String mapping = t.nextToken();
-//        System.out.println("+++++++++++++ Mapping: " + mapping);
-        String principals = mapping.substring(0, mapping.indexOf('='));
-//        System.out.println("+++++++++++++ Principals: " + principals);
-        String value = mapping.substring(mapping.indexOf('=')+1);
-        String[] p = principals.split(",");
-        for(int i = 0; i < p.length; i++) {
-          table.put(p[i], value);
-//          System.out.println("+++++++++++++ Mapping into Table: " + p[i] + "->" + value);
-        }
-      } while(t.hasMoreTokens());
+    try {
+      mapper.loadMappingTable(principalMapping);
+    }
+    catch (PrincipalMappingException pme) {
+      // TODO: log this appropriately
+      pme.printStackTrace();
     }
   }
 
@@ -85,7 +68,7 @@ public class IdentityAssertionFilter implements Filter {
     Subject subject = Subject.getSubject(AccessController.getContext());
 
     String principalName = getPrincipalName(subject);
-    principalName = mapPrincipal(principalName);
+    principalName = mapper.mapPrincipal(principalName);
 //    System.out.println("+++++++++++++ Identity Assertion Filtering with Principal: " + principalName);
 
     IdentityAssertionHttpServletRequestWrapper wrapper = 
@@ -95,23 +78,6 @@ public class IdentityAssertionFilter implements Filter {
     chain.doFilter( wrapper, response );
   }
 
-  /**
-   * Acquire a mapped principal name from the mapping table
-   * as appropriate. Otherwise, the provided principalName
-   * will be used.
-   * @param principalName
-   * @return principal name to be used in the assertion
-   */
-  private String mapPrincipal(String principalName) {
-    String p = null;
-    
-    p = table.get(principalName);
-    if (p == null) {
-      p = principalName;
-    }
-    
-    return p;
-  }
 
   /**
    * Retrieve the principal to represent the asserted identity from
