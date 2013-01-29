@@ -42,6 +42,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-provider-security-hawk</module>
         <module>gateway-provider-security-spring</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
@@ -185,6 +186,16 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-hawk</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -285,6 +296,12 @@
                 <artifactId>commons-vfs2</artifactId>
                 <version>2.0</version>
             </dependency>
+            
+				    <dependency>
+				      <groupId>com.wealdtech.hawk</groupId>
+				      <artifactId>hawk-core</artifactId>
+				      <version>0.5.0</version>
+				    </dependency>
 
             <!-- **************************** -->
             <!-- Spring Security Dependencies -->
@@ -407,7 +424,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>13.0.1</version>
+                <version>14.0-rc1</version>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
