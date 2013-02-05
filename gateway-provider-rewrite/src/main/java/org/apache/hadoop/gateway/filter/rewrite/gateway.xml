@@ -1,0 +1,18 @@
+<gateway>
+    <resource>
+        <role>NAMENODE</role>
+        <url>/namenode/api/v1/**?**</url>
+        <url>/namenode/api/v1/**/?**</url>
+        <!-- <target>http://vm.local:50070/webhdfs/v1/{path=**}?{**}</target> -->
+        <filter>
+            <role>rewrite</role>
+            <class>org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
+            <param>
+                <name>request</name><value>url,cookies,headers,body</value>
+                <name>response</name><value>url,cookies,headers,body</value>
+                <name>request.url</name><value>rule-name</value> <!-- Specifies the exact rule to use.  Avoids rematch. -->
+                <name>request.filters</name><value>body-filter-name</value> <!-- Overrides default body createFilter. Mime type can be */*.  These special createFilter would be provided by the service provider (e.g. HDFS) -->
+            </param>
+        </filter>
+    </resource>
+</gateway>

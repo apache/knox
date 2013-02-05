@@ -50,8 +50,8 @@ public class XmlGatewayDescriptorImporterTest {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
         "<gateway>\n" +
         "  <resource>\n" +
-        "    <source>resource1-source</source>\n" +
-        "    <target>resource1-target</target>\n" +
+        "    <pattern>resource1-source</pattern>\n" +
+//        "    <target>resource1-target</target>\n" +
         "    <filter>\n" +
         "      <role>resource1-filter1-role</role>\n" +
         "      <class>resource1-filter1-impl</class>\n" +
@@ -70,8 +70,8 @@ public class XmlGatewayDescriptorImporterTest {
         "    </filter>\n" +
         "  </resource>\n" +
         "  <resource>\n" +
-        "    <source>resource2-source</source>\n" +
-        "    <target>resource2-target</target>\n" +
+        "    <pattern>resource2-source</pattern>\n" +
+//        "    <target>resource2-target</target>\n" +
         "  </resource>\n" +
         "</gateway>";
 
@@ -84,8 +84,7 @@ public class XmlGatewayDescriptorImporterTest {
 
     ResourceDescriptor resource1 = descriptor.resources().get( 0 );
     assertThat( resource1, notNullValue() );
-    assertThat( resource1.source(), is( "resource1-source" ) );
-    assertThat( resource1.target(), is( "resource1-target" ) );
+    assertThat( resource1.pattern(), is( "resource1-source" ) );
 
     assertThat( resource1.filters().size(), is( 2 ) );
 
@@ -113,8 +112,7 @@ public class XmlGatewayDescriptorImporterTest {
 
     ResourceDescriptor resource2 = descriptor.resources().get( 1 );
     assertThat( resource2, notNullValue() );
-    assertThat( resource2.source(), is( "resource2-source" ) );
-    assertThat( resource2.target(), is( "resource2-target" ) );
+    assertThat( resource2.pattern(), is( "resource2-source" ) );
   }
 
   @Test

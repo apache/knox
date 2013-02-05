@@ -41,7 +41,7 @@
         </filter>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>webhdfs://*:*/{path=**}
                 http://{org.apache.org.apache.hadoop.gateway.address}/org.apache.hadoopache.hadoop.gateway/gateway/namenode/api/v1/{path=**}</rewrite>
         </filter>

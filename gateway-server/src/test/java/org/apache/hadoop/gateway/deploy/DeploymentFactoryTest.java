@@ -97,8 +97,8 @@ public class DeploymentFactoryTest {
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/source", equalTo( "/namenode/api/v1/?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/namenode/api/v1/?**" ) ) );
+    //assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
@@ -109,8 +109,8 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/name", equalTo( "http-client" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/source", equalTo( "/namenode/api/v1/{path=**}?{**}" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/namenode/api/v1/**?**" ) ) );
+    //assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
@@ -119,10 +119,10 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.PostAuthenticationFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.UrlRewriteFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/param[1]/name", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/param[1]/value",
-        equalTo( "*://{host}:{port}/webhdfs/v1/{path=**}?{**} {gateway.url}/datanode/api/v1/{path=**}?{host}&{port}&{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
+//    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/param[1]/name", equalTo( "rewrite" ) ) );
+//    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/param[1]/value",
+//        equalTo( "*://{host}:{port}/webhdfs/v1/{path=**}?{**} {gateway.url}/datanode/api/v1/{path=**}?{host}&{port}&{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/name", equalTo( "http-client" ) ) );

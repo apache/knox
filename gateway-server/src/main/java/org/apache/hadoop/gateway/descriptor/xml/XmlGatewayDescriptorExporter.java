@@ -84,8 +84,8 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
     if( role != null ) {
       addTextElement( dom, element, RESOURCE_ROLE, role );
     }
-    addTextElement( dom, element, RESOURCE_SOURCE, resource.source() );
-    addTextElement( dom, element, RESOURCE_TARGET, resource.target() );
+    addTextElement( dom, element, RESOURCE_PATTERN, resource.pattern() );
+    //addTextElement( dom, element, RESOURCE_TARGET, resource.target() );
 
     for( FilterDescriptor filter : resource.filters() ) {
       element.appendChild( createFilter( dom, filter ) );

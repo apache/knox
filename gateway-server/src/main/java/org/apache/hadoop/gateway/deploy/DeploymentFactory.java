@@ -162,9 +162,10 @@ public abstract class DeploymentFactory {
       Map<String,List<ProviderDeploymentContributor>> providers,
       Map<String,List<ServiceDeploymentContributor>> services ) {
     WebAppDescriptor wad = context.getWebAppDescriptor();
-    String servlet = context.getTopology().getName();
-    wad.createServlet().servletName( servlet ).servletClass( GatewayServlet.class.getName() );
-    wad.createServletMapping().servletName( servlet ).urlPattern( "/*" );
+    String servletName = context.getTopology().getName();
+    String servletClass = GatewayServlet.class.getName();
+    wad.createServlet().servletName( servletName ).servletClass( servletClass );
+    wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
     for( String role : providers.keySet() ) {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
         try {

@@ -40,7 +40,7 @@
         </filter>
         <filter>
             <role>rewrite</role>
-            <class>org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <param>
                 <name>rewrite</name>
                 <value>webhdfs://*:*/{path=**} {gateway.url}/namenode/api/v1/{path=**}</value>

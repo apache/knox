@@ -21,13 +21,11 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.AUTH;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
-import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.AccessController;
 
 /**
  *
@@ -38,27 +36,28 @@ public class BasicAuthChallengeFilter extends AbstractGatewayFilter {
   @Override
   public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
 
-    boolean challenge = false;
-
-    // If the user isn't already authenticated.
-    if( Subject.getSubject( AccessController.getContext() ) == null ) {
-      UsernamePasswordCredentials credentials = createValidatedCredentials( request );
-      if( credentials == null ) {
-        challenge = true;
-      } else {
-        setUserCredentials( request, credentials );
-      }
-    }
-    if( challenge ) {
-      response.setHeader( AUTH.WWW_AUTH, "Basic realm=\"" + getConfig().getInitParameter( "realm" ) + "\"" );
-      response.sendError( HttpServletResponse.SC_UNAUTHORIZED );
-    } else {
-      chain.doFilter( request, response );
-      if( HttpServletResponse.SC_UNAUTHORIZED == response.getStatus() &&
-          response.getHeader( AUTH.WWW_AUTH ) == null ) {
-        response.setHeader( AUTH.WWW_AUTH, "Basic realm=\"" + getConfig().getInitParameter( "realm" ) + "\"" );
-      }
-    }
+//KAM:2013014[ Removing due to dependency issues.  This class isn't used anyway
+//    boolean challenge = false;
+//
+//    // If the user isn't already authenticated.
+//    if( Subject.getSubject( AccessController.getContext() ) == null ) {
+//      UsernamePasswordCredentials credentials = createValidatedCredentials( request );
+//      if( credentials == null ) {
+//        challenge = true;
+//      } else {
+//        setUserCredentials( request, credentials );
+//      }
+//    }
+//    if( challenge ) {
+//      response.setHeader( AUTH.WWW_AUTH, "Basic realm=\"" + getConfig().getInitParameter( "realm" ) + "\"" );
+//      response.sendError( HttpServletResponse.SC_UNAUTHORIZED );
+//    } else {
+//      chain.doFilter( request, response );
+//      if( HttpServletResponse.SC_UNAUTHORIZED == response.getStatus() &&
+//          response.getHeader( AUTH.WWW_AUTH ) == null ) {
+//        response.setHeader( AUTH.WWW_AUTH, "Basic realm=\"" + getConfig().getInitParameter( "realm" ) + "\"" );
+//      }
+//    }
 
   }
 

@@ -19,11 +19,6 @@ package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.util.Streams;
-import org.apache.hadoop.gateway.util.urltemplate.Parser;
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
-import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,87 +36,48 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
  *
  */
-//TODO: Common code needs to be factored into helper methods.
-public class HttpClientDispatch extends DispatchBase {
+public class HttpClientDispatch extends AbstractGatewayDispatch {
 
-  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  //TODO: Should probably the the value that HttpClient will use for its buffer.  See: http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
-  private static final int BUFFER_SIZE = 8192;
-
-  protected URI resolveRequestUri( HttpServletRequest request ) throws URISyntaxException {
-    String sourceQuery = request.getQueryString();
-    String sourcePathInfo = request.getPathInfo() + ( sourceQuery == null ? "" : "?" + sourceQuery );
-    String sourcePattern = getConfig().getInitParameter( "source" );
-    String targetPattern = getConfig().getInitParameter( "target" );
-
-    //TODO: Some of the compilation should be done at servlet init for performance reasons.
-    Template sourceTemplate = Parser.parse( sourcePattern );
-    Template targetTemplate = Parser.parse( targetPattern );
-
-    Resolver resolver = new DispatchParamResolver( getConfig(), request );
-    URI sourceUri = new URI( sourcePathInfo );
-    URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
-    return targetUri;
-  }
-
-  protected HttpResponse executeRequest( HttpUriRequest clientRequest, HttpServletRequest originalRequest, HttpServletResponse serverResponse ) throws IOException {
+  protected void executeRequest(
+      HttpUriRequest outboundRequest,
+      HttpServletRequest inboundRequest,
+      HttpServletResponse outboundResponse )
+          throws IOException {
     HttpClient client = new DefaultHttpClient();
-    HttpResponse clientResponse = client.execute( clientRequest );
+    HttpResponse inboundResponse = client.execute( outboundRequest );
 
     // Copy the client respond header to the server respond.
-    serverResponse.setStatus( clientResponse.getStatusLine().getStatusCode() );
-    Header[] headers = clientResponse.getAllHeaders();
+    outboundResponse.setStatus( inboundResponse.getStatusLine().getStatusCode() );
+    Header[] headers = inboundResponse.getAllHeaders();
     for( Header header : headers ) {
       String name = header.getName();
       String value = header.getValue();
-      serverResponse.addHeader( name, value );
+      outboundResponse.addHeader( name, value );
     }
 
-    HttpEntity entity = clientResponse.getEntity();
+    HttpEntity entity = inboundResponse.getEntity();
     if( entity != null ) {
       Header contentType = entity.getContentType();
       if( contentType != null ) {
-        serverResponse.setContentType( contentType.getValue() );
+        outboundResponse.setContentType( contentType.getValue() );
       }
-      long contentLength = entity.getContentLength();
-      if( contentLength <= Integer.MAX_VALUE ) {
-        serverResponse.setContentLength( (int)contentLength );
-      }
-      InputStream input = entity.getContent();
-      OutputStream output = serverResponse.getOutputStream();
-      try {
-        Streams.drainStream( input, output );
-      } finally {
-        output.flush();
-        input.close();
-      }
+//KM[ If this is set here it ends up setting the content length to the content returned from the server.
+// This length might not match if the the content is rewritten.
+//      long contentLength = entity.getContentLength();
+//      if( contentLength <= Integer.MAX_VALUE ) {
+//        outboundResponse.setContentLength( (int)contentLength );
+//      }
+//]
+      writeResponse( inboundRequest, outboundResponse, entity.getContent() );
     }
-
-    return clientResponse;
-  }
-
-  @Override
-  public void doGet( HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
-    URI requestUri = resolveRequestUri( request );
-    HttpGet clientRequest = new HttpGet( requestUri );
-    executeRequest( clientRequest, request, response );
-  }
-
-  @Override
-  public void doOptions( HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
-    URI requestUri = resolveRequestUri( request );
-    HttpOptions clientRequest = new HttpOptions( requestUri );
-    executeRequest( clientRequest, request, response );
   }
 
   protected HttpEntity createRequestEntity( HttpServletRequest request ) throws IOException {
@@ -140,28 +96,42 @@ public class HttpClientDispatch extends DispatchBase {
   }
 
   @Override
-  public void doPut( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
-    HttpEntity entity = createRequestEntity( request );
-    URI requestUri = resolveRequestUri( request );
-    HttpPut clientRequest = new HttpPut( requestUri );
-    clientRequest.setEntity( entity );
-    executeRequest( clientRequest, request, response );
+  public void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    HttpGet method = new HttpGet( url );
+    executeRequest( method, request, response );
   }
 
   @Override
-  public void doPost( HttpServletRequest request, HttpServletResponse response )throws IOException, URISyntaxException {
-    HttpEntity entity = createRequestEntity( request );
-    URI requestUri = resolveRequestUri( request );
-    HttpPost clientRequest = new HttpPost( requestUri );
-    clientRequest.setEntity( entity );
-    executeRequest( clientRequest, request, response );
+  public void doOptions( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    HttpOptions method = new HttpOptions( url );
+    executeRequest( method, request, response );
   }
 
   @Override
-  public void doDelete( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
-    URI requestUri = resolveRequestUri( request );
-    HttpDelete clientRequest = new HttpDelete( requestUri );
-    executeRequest( clientRequest, request, response );
+  public void doPut( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    HttpPut method = new HttpPut( url );
+    HttpEntity entity = createRequestEntity( request );
+    method.setEntity( entity );
+    executeRequest( method, request, response );
+  }
+
+  @Override
+  public void doPost( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    HttpPost method = new HttpPost( url );
+    HttpEntity entity = createRequestEntity( request );
+    method.setEntity( entity );
+    executeRequest( method, request, response );
+  }
+
+  @Override
+  public void doDelete( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    HttpDelete method = new HttpDelete( url );
+    executeRequest( method, request, response );
   }
 
 }

@@ -1,4 +1,66 @@
 ----------
+Rewrite config file syntax
+----------
+<!-- One file per cluster -->
+<rewrite>
+
+  <!-- For hostname mapping, etc. -->
+  <properties>
+    <property name="internal-host-name" value="external-host-name" bidirectional="true"/>
+  </property>
+
+  <!-- Must have an interface contract like String invoke( String[] args ) -->
+  <functions>
+    <function name="" class="" method=""/>
+  </function>
+
+  <!-- Must have an interface contract like -->
+  <!-- InputStream filter( InputStream stream, String encoding ) -->
+  <!-- Reader filter( Reader reader ) -->
+  <filters>
+    <filter name="" type="text/html" class=""/>
+  </filters>
+
+  <ruleset name="NAMENODE.request">
+    <rule>
+      <match></match>
+      <if>
+      <set>
+      <run>
+      <return></return>
+   </rule>
+    <rule>
+      <match></match>
+      <build></build>
+   </rule>
+  </ruleset>
+<rewrite>
+
+<gateway>
+  <resource>
+    <role>NAMENODE</role>
+    <source>/namenode/api/v1/{path=**}?{**}</source>
+    <target>http://vm.local:50070/webhdfs/v1/{path=**}?{**}</target>
+    <filter>
+      <role>rewrite</role>
+      <class>org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
+      <param>
+        <name>request.ruleset</name><value>NAMENODE.request,more</value>
+        <name>request.headers</name><value>Location,*</value>
+        <name>request.cookies</name><value>hadoop.auth,*</value>
+        <name>request.body</name><value>text/html,*</value>
+
+        <!-- Consider params for parts of the request e.g. inbound.url, inbound.headers, outbound.body -->
+
+        <!-- inbound=HDFS.inboud(headers,coookies,body) -->
+        <!-- outbound=
+      </param>
+    </filter>
+  </resource>
+</gateway>
+
+
+----------
 Deployment (Once we know we need to create a new WAR).
 ----------
 . Given global config

@@ -1,5 +1,6 @@
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -57,7 +58,7 @@ public class GatewayFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
 
-    //TODO: The resulting pathInfo + query needs to be added to the servlet expect somehow so that filters don't need to rebuild it.  This is done in HttpClientDispatch right now for example.
+    //TODO: The resulting pathInfo + query needs to be added to the servlet context somehow so that filters don't need to rebuild it.  This is done in HttpClientDispatch right now for example.
     String query = httpRequest.getQueryString();
     String path = httpRequest.getPathInfo() + ( query == null ? "" : "?" + query );
 
@@ -67,6 +68,8 @@ public class GatewayFilter implements Filter {
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
+
+    servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME, pathTemplate );
 
     Matcher<Chain>.Match match = chains.match( pathTemplate );
     if( match != null ) {

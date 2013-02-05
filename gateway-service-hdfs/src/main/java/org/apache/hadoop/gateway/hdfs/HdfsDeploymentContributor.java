@@ -19,14 +19,20 @@ package org.apache.hadoop.gateway.hdfs;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
-import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.hadoop.gateway.topology.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URISyntaxException;
 
 public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase {
+
+  private static final String NAMENODE_EXTERNAL_PATH = "/namenode/api/v1";
+  private static final String DATANODE_INTERNAL_PATH = "/webhdfs/v1";
+  private static final String DATANODE_EXTERNAL_PATH = "/datanode/api/v1";
+  private static final String CLUSTER_URL_FUNCTION = "{gateway.ur}";
 
   @Override
   public String getRole() {
@@ -39,42 +45,63 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   }
 
   @Override
-  public void contributeService( DeploymentContext context, Service service ) {
-    contributeNameNode( context, service );
-    contributeDataNode( context, service );
+  public void contributeService( DeploymentContext context, Service service ) throws Exception {
+    contributeRewriteRules( context, service );
+    contributeNameNodeResource( context, service );
+    contributeDataNodeResource( context, service );
   }
 
-  public void contributeNameNode( DeploymentContext context, Service service ) {
-    String extGatewayUrl = "{gateway.url}";
-    String extNameNodePath = "/namenode/api/v1";
-    String intHdfsUrl = service.getUrl().toExternalForm();
+  private void contributeRewriteRules( DeploymentContext context, Service service ) throws URISyntaxException {
+    UrlRewriteRulesDescriptor rules = context.getDescriptor( "rewrite" );
+    UrlRewriteRuleDescriptor rule;
+    UrlRewriteActionRewriteDescriptorExt rewrite;
 
+    rule = rules.addRule( getRole() + "/" + getName() + "/namenode-root/request" )
+        .directions( "request" )
+        .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/?{**}" );
+    rewrite = rule.addStep( "rewrite" );
+    rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
+
+    rule = rules.addRule( getRole() + "/" + getName() + "/namenode-file/request" )
+        .directions( "request" )
+        .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/{path=**}?{**}" );
+    rewrite = rule.addStep( "rewrite" );
+    rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
+
+    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/request" )
+        .directions( "request" )
+        .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
+    rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "http://{host}:{port}" + DATANODE_INTERNAL_PATH + "/{path=**}?{**}" );
+
+    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/response" )
+        .directions( "response" )
+        .pattern( "*://{host}:{port}" + DATANODE_INTERNAL_PATH + "/{path=**}?{**}" );
+    rewrite = rule.addStep( "rewrite" );
+    rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
+  }
+
+  public void contributeNameNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
-    rootResource.source( extNameNodePath + "/?{**}" );
-    rootResource.target( intHdfsUrl + "/?{**}" );
+    rootResource.pattern( NAMENODE_EXTERNAL_PATH + "/?**" );
     addAuthenticationFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
-    fileResource.source( extNameNodePath + "/{path=**}?{**}" );
-    fileResource.target( intHdfsUrl + "/{path=**}?{**}" );
+    fileResource.pattern( NAMENODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
-    addNameNodeRewriteFilter( context, service, fileResource, extGatewayUrl );
+    addNameNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
-  public void contributeDataNode( DeploymentContext context, Service service ) {
-    String extGatewayUrl = "{gateway.url}";
-    String extHdfsPath = "/datanode/api/v1";
-
+  public void contributeDataNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
-    fileResource.source( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
-    fileResource.target( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
+    fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?{host}&{port}&**" );
     addAuthenticationFilter( context, service, fileResource );
-    addDataNodeRewriteFilter( context, service, fileResource, extGatewayUrl, extHdfsPath );
+    addDataNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
@@ -82,33 +109,24 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     context.contributeFilter( service, resource, "authentication", null, null );
   }
 
-  private void addNameNodeRewriteFilter( DeploymentContext context,
-                                 Service service,
-                                 ResourceDescriptor resource,
-                                 String extGatewayUrl ) {
-    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    FilterParamDescriptor param = resource.createFilterParam()
-        .name( "rewrite" )
-        .value( "*://{host}:{port}/webhdfs/v1/{path=**}?{**}" + " " + extGatewayUrl + "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
-    params.add( param );
-    context.contributeFilter( service, resource, "rewrite", null, params );
-  }
-
-  private void addDataNodeRewriteFilter( DeploymentContext context,
-                                 Service service,
-                                 ResourceDescriptor resource,
-                                 String extGatewayUrl,
-                                 String extHdfsPath ) {
-    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    FilterParamDescriptor param = resource.createFilterParam()
-        .name( "rewrite" )
-        .value( "webhdfs://*:*/{path=**}" + " " + extGatewayUrl + extHdfsPath + "/{path=**}" );
-    params.add( param );
-    context.contributeFilter( service, resource, "rewrite", null, params );
-  }
-
-  private void addDispatchFilter( DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+  private void addDispatchFilter(
+      DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
     context.contributeFilter( service, resource, role, name, null );
+  }
+
+  private void addNameNodeRewriteFilter(
+      DeploymentContext context,
+      Service service,
+      ResourceDescriptor resource ) throws URISyntaxException {
+    context.contributeFilter( service, resource, "rewrite", null, null );
+
+  }
+
+  private void addDataNodeRewriteFilter(
+      DeploymentContext context,
+      Service service,
+      ResourceDescriptor resource ) throws URISyntaxException {
+    context.contributeFilter( service, resource, "rewrite", null, null );
   }
 
 }

@@ -27,13 +27,9 @@ public interface ResourceDescriptor {
 
   String role();
 
-  ResourceDescriptor source( String source );
+  ResourceDescriptor pattern( String pattern );
 
-  String source();
-
-  ResourceDescriptor target( String target );
-
-  String target();
+  String pattern();
 
 
   List<ResourceParamDescriptor> params();

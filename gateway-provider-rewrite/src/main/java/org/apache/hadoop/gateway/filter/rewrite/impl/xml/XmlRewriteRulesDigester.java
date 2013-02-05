@@ -1,0 +1,134 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
+
+import org.apache.commons.digester3.Digester;
+import org.apache.commons.digester3.Rule;
+import org.apache.commons.digester3.SetPropertiesRule;
+import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptorFactory;
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteFlowDescriptor;
+import org.xml.sax.Attributes;
+
+public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlRewriteRulesTags {
+
+  @Override
+  protected void configure() {
+    forPattern( RULES ).addRule( new RulesFactory() );
+    forPattern( RULES ).addRule( new SetPropertiesRule() );
+    forPattern( RULES + "/" + RULE ).addRule( new RuleFactory() );
+    forPattern( RULES + "/" + RULE ).addRule( new SetPropertiesRule() );
+    for( String type : UrlRewriteStepDescriptorFactory.getTypes() ) {
+      forPattern( "*/" + type ).addRule( new StepFactory() );
+      forPattern( "*/" + type ).addRule( new SetPropertiesRule() );
+    }
+//    forPattern( "*/" + MATCH ).addRule( new MatchFactory() );
+//    forPattern( "*/" + MATCH ).addRule( new SetPropertiesRule() );
+//    forPattern( "*/" + CHECK ).addRule( new CheckFactory() );
+//    forPattern( "*/" + CHECK ).addRule( new SetPropertiesRule() );
+//    forPattern( "*/" + CONTROL ).addRule( new ControlFactory() );
+//    forPattern( "*/" + CONTROL ).addRule( new SetPropertiesRule() );
+//    forPattern( "*/" + ACTION ).addRule( new ActionFactory() );
+//    forPattern( "*/" + ACTION ).addRule( new SetPropertiesRule() );
+  }
+
+  private class RulesFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      return UrlRewriteRulesDescriptorFactory.create();
+    }
+  }
+
+  private class RuleFactory extends Rule {
+    @Override
+    public void begin( String namespace, String name, Attributes attributes ) throws Exception {
+      Digester digester = getDigester();
+      UrlRewriteRulesDescriptor rules = digester.peek();
+      UrlRewriteRuleDescriptor rule = rules.newRule();
+      getDigester().push( rule );
+    }
+
+    @Override
+    public void end( String namespace, String name ) throws Exception {
+      Digester digester = getDigester();
+      UrlRewriteRuleDescriptor rule = digester.pop();
+      UrlRewriteRulesDescriptor rules = digester.peek();
+      rules.addRule( rule );
+    }
+  }
+
+  private class StepFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFlowDescriptor flow = getDigester().peek();
+      return flow.addStep( name );
+    }
+  }
+
+//  private class MatchFactory extends FactoryRule {
+//    @Override
+//    public Object create( String namespace, String name, Attributes attributes ) {
+//      UrlRewriteRuleDescriptor rule = getDigester().peek();
+//      return rule.addMatch();
+//    }
+//  }
+//
+//  private class CheckFactory extends FactoryRule {
+//    @Override
+//    public Object create( String namespace, String name, Attributes attributes ) {
+//      UrlRewriteRuleDescriptor rule = getDigester().peek();
+//      return rule.addCheck();
+//    }
+//  }
+//
+//  private class ActionFactory extends FactoryRule {
+//    @Override
+//    public Object create( String namespace, String name, Attributes attributes ) {
+//      UrlRewriteRuleDescriptor rule = getDigester().peek();
+//      return rule.addAction();
+//    }
+//  }
+//
+//  private class ControlFactory extends FactoryRule {
+//    @Override
+//    public Object create( String namespace, String name, Attributes attributes ) {
+//      UrlRewriteRuleDescriptor rule = getDigester().peek();
+//      return rule.addControl();
+//    }
+//  }
+
+  private abstract class FactoryRule extends Rule {
+
+    protected abstract Object create( String namespace, String name, Attributes attributes );
+
+    @Override
+    public void begin( String namespace, String name, Attributes attributes ) throws Exception {
+      getDigester().push( create( namespace, name, attributes ) );
+    }
+
+    @Override
+    public void end( String namespace, String name ) throws Exception {
+      getDigester().pop();
+    }
+
+  }
+
+}

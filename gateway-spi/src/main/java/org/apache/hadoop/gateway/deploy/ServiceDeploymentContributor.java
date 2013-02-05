@@ -32,7 +32,7 @@ public interface ServiceDeploymentContributor {
 
   // Called per service based on the service's role.
   // Returns a list of resources it added to the descriptor.
-  void contributeService( DeploymentContext context, Service service );
+  void contributeService( DeploymentContext context, Service service ) throws Exception;
 
   // Called after all contributors and before provider finalizeContribution methods.
   void finalizeContribution( DeploymentContext context );

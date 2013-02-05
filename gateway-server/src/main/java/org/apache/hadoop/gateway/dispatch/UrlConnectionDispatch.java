@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.util.Streams;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -42,12 +42,12 @@ import java.util.Enumeration;
 /**
  *
  */
-public class UrlConnectionDispatch extends DispatchBase {
+public class UrlConnectionDispatch extends AbstractGatewayDispatch {
 
   @Override
-  public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
+  public void doGet( URI url, HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
     String sourcePathInfo = request.getPathInfo();
-    String sourcePattern = getConfig().getInitParameter( "source" );
+    String sourcePattern = getConfig().getInitParameter( "pattern" );
     String targetPattern = getConfig().getInitParameter( "target" );
 
     //TODO: Some of the compilation should be done at servlet init for performance reasons.
@@ -97,7 +97,7 @@ public class UrlConnectionDispatch extends DispatchBase {
       if( input != null ) {
         OutputStream output = response.getOutputStream();
         try {
-          Streams.drainStream( input, output );
+          IOUtils.copy( input, output );
         } finally {
           output.flush();
           input.close();

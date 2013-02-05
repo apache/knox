@@ -1,0 +1,5 @@
+org.apache.hadoop.gateway.filter.rewrite.impl.json.JsonUrlRewriteStreamFilter
+org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlUrlRewriteStreamFilter
+org.apache.hadoop.gateway.filter.rewrite.impl.html.HtmlUrlRewriteStreamFilter
+org.apache.hadoop.gateway.filter.rewrite.impl.form.FormUrlRewriteStreamFilter
+org.apache.hadoop.gateway.filter.rewrite.impl.noop.NoOpUrlRewriteStreamFilter

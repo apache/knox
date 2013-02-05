@@ -39,6 +39,13 @@ import static org.hamcrest.CoreMatchers.is;
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
+//  @Test
+//  public void hang() throws IOException {
+//    System.out.println( "Server on port " + driver.gateway.getAddresses()[0].getPort() );
+//    System.out.println();
+//    System.in.read();
+//  }
+
   private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
 
   public static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
@@ -108,9 +115,48 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
+  public void testBasicJsonUseCase() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    /* Create a directory.
+    curl -i -X PUT "http://<HOST>:<PORT>/<PATH>?op=MKDIRS[&permission=<OCTAL>]"
+
+    The client receives a respond with a boolean JSON object:
+    HTTP/1.1 HttpStatus.SC_OK OK
+    Content-Type: application/json
+    Transfer-Encoding: chunked
+
+    {"boolean": true}
+    */
+    driver.getMock( "NAMENODE" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( root + "/dir" )
+        .queryParam( "op", "MKDIRS" )
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "webhdfs-success.json" ) )
+        .contentType( "application/json" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( username, password )
+        .queryParam( "op", "MKDIRS" )
+        .expect()
+            //.log().all();
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "application/json" )
+        .content( "boolean", is( true ) )
+        .when().put( driver.getUrl( "NAMENODE" ) + root + "/dir" );
+    driver.assertComplete();
+  }
+
+  @Test
   public void testBasicHdfsUseCase() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
-    String user = "hdfs";
+    String username = "hdfs";
     String password = "hdfs-password";
 
     // Attempt to delete the test directory in case a previous run failed.
@@ -121,12 +167,12 @@ public class GatewayBasicFuncTest {
         .method( "DELETE" )
         .pathInfo( root )
         .queryParam( "op", "DELETE" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .queryParam( "recursive", "true" )
         .respond()
         .status( HttpStatus.SC_OK );
     given()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
@@ -150,14 +196,14 @@ public class GatewayBasicFuncTest {
         .method( "PUT" )
         .pathInfo( root + "/dir" )
         .queryParam( "op", "MKDIRS" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "webhdfs-success.json" ) )
         .contentType( "application/json" );
     given()
         //.log().all()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "MKDIRS" )
         .expect()
         //.log().all();
@@ -172,14 +218,14 @@ public class GatewayBasicFuncTest {
         .method( "GET" )
         .pathInfo( root )
         .queryParam( "op", "LISTSTATUS" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "webhdfs-liststatus-test.json" ) )
         .contentType( "application/json" );
     given()
         //.log().all()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().ifError()
@@ -191,7 +237,7 @@ public class GatewayBasicFuncTest {
     //NEGATIVE: Test a bad password.
     given()
         //.log().all()
-        .auth().preemptive().basic( user, "invalid-password" )
+        .auth().preemptive().basic( username, "invalid-password" )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().ifError()
@@ -231,7 +277,7 @@ public class GatewayBasicFuncTest {
         .method( "PUT" )
         .pathInfo( root + "/dir/file" )
         .queryParam( "op", "CREATE" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
         .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=CREATE&user.name=hdfs" );
@@ -240,7 +286,7 @@ public class GatewayBasicFuncTest {
         .method( "PUT" )
         .pathInfo( root + "/dir/file" )
         .queryParam( "op", "CREATE" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .contentType( "text/plain" )
         .content( driver.getResourceBytes( "test.txt" ) )
             //.content( driver.gerResourceBytes( "hadoop-examples.jar" ) )
@@ -249,7 +295,7 @@ public class GatewayBasicFuncTest {
         .header( "Location", "webhdfs://" + driver.getRealAddr( "DATANODE" ) + root + "/dir/file" );
     Response response = given()
         //.log().all()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "CREATE" )
         .expect()
         //.log().ifError()
@@ -259,7 +305,7 @@ public class GatewayBasicFuncTest {
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     response = given()
         //.log().all()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "test.txt" ) )
         .contentType( "text/plain" )
         .expect()
@@ -291,7 +337,7 @@ public class GatewayBasicFuncTest {
         .method( "GET" )
         .pathInfo( root + "/dir/file" )
         .queryParam( "op", "OPEN" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
         .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=OPEN&user.name=hdfs" );
@@ -300,14 +346,14 @@ public class GatewayBasicFuncTest {
         .method( "GET" )
         .pathInfo( root + "/dir/file" )
         .queryParam( "op", "OPEN" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .content( driver.getResourceBytes( "test.txt" ) );
     given()
         //.log().all()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "OPEN" )
         .expect()
         //.log().ifError()
@@ -333,12 +379,12 @@ public class GatewayBasicFuncTest {
         .method( "DELETE" )
         .pathInfo( root )
         .queryParam( "op", "DELETE" )
-        .queryParam( "user.name", user )
+        .queryParam( "user.name", username )
         .queryParam( "recursive", "true" )
         .respond()
         .status( HttpStatus.SC_OK );
     given()
-        .auth().preemptive().basic( user, password )
+        .auth().preemptive().basic( username, password )
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()

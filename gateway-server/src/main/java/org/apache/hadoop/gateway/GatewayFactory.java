@@ -49,7 +49,7 @@ public class GatewayFactory {
 //  }
 //
 //  private static void addFilter( GatewayFilter gateway, Config filterConfig ) throws URISyntaxException {
-//    String source = filterConfig.get( "source" );
+//    String source = filterConfig.get( "pattern" );
 //    String name = filterConfig.get( "name" );
 //    String clazz = filterConfig.get( "class" );
 //    gateway.addFilter( source, name, clazz, filterConfig );
@@ -74,7 +74,7 @@ public class GatewayFactory {
     if( name == null ) {
       name = filter.role();
     }
-    gateway.addFilter( filter.up().source(), name, filter.impl(), createParams( filter ) );
+    gateway.addFilter( filter.up().pattern(), name, filter.impl(), createParams( filter ) );
   }
 
   private static Map<String, String> createParams( FilterDescriptor filter ) {
@@ -89,8 +89,7 @@ public class GatewayFactory {
     }
     //TODO: Should all elements of the resource and gateway descriptor somehow be added to the filter params?
     //TODO: Should we use some composite params object instead of copying all these name value pairs?
-    paramMap.put( "source", resource.source() );
-    paramMap.put( "target", resource.target() );
+    paramMap.put( "pattern", resource.pattern() );
     List<FilterParamDescriptor> paramList = filter.params();
     for( FilterParamDescriptor param : paramList ) {
       paramMap.put( param.name(), param.value() );

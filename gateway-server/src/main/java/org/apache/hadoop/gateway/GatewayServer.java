@@ -120,37 +120,37 @@ public class GatewayServer {
     return properties;
   }
 
-  private static void setupGateway() {
-    try {
-      GatewayConfig config = new GatewayConfigImpl();
-      String home = config.getGatewayHomeDir();
-
-      File homeDir = new File( home ).getAbsoluteFile();
-      if( !homeDir.exists() ) {
-        log.creatingGatewayHomeDir( homeDir );
-        homeDir.mkdirs();
-      }
-
-      File defaultConfigFile = new File( homeDir, "conf/gateway-site.xml" );
-      if( !defaultConfigFile.exists() ) {
-        log.creatingDefaultConfigFile( defaultConfigFile );
-        extractToFile( "conf/gateway-site.xml", defaultConfigFile );
-      }
-
-      File topologiesDir = calculateAbsoluteTopologiesDir( config );
-      if( !topologiesDir.exists() ) {
-        log.creatingGatewayDeploymentDir( topologiesDir );
-        topologiesDir.mkdirs();
-
-        File defaultTopologyFile = new File( topologiesDir, "cluster.xml" );
-        log.creatingDefaultTopologyFile( defaultTopologyFile );
-        extractToFile( "cluster-sample.xml", defaultTopologyFile );
-      }
-
-    } catch( IOException e ) {
-      e.printStackTrace();
-    }
-  }
+//  private static void setupGateway() {
+//    try {
+//      GatewayConfig config = new GatewayConfigImpl();
+//      String home = config.getGatewayHomeDir();
+//
+//      File homeDir = new File( home ).getAbsoluteFile();
+//      if( !homeDir.exists() ) {
+//        log.creatingGatewayHomeDir( homeDir );
+//        homeDir.mkdirs();
+//      }
+//
+//      File defaultConfigFile = new File( homeDir, "conf/gateway-site.xml" );
+//      if( !defaultConfigFile.exists() ) {
+//        log.creatingDefaultConfigFile( defaultConfigFile );
+//        extractToFile( "conf/gateway-site.xml", defaultConfigFile );
+//      }
+//
+//      File topologiesDir = calculateAbsoluteTopologiesDir( config );
+//      if( !topologiesDir.exists() ) {
+//        log.creatingGatewayDeploymentDir( topologiesDir );
+//        topologiesDir.mkdirs();
+//
+//        File defaultTopologyFile = new File( topologiesDir, "cluster.xml" );
+//        log.creatingDefaultTopologyFile( defaultTopologyFile );
+//        extractToFile( "cluster-sample.xml", defaultTopologyFile );
+//      }
+//
+//    } catch( IOException e ) {
+//      e.printStackTrace();
+//    }
+//  }
 
   private static void extractToFile( String resource, File file ) throws IOException {
     InputStream input = ClassLoader.getSystemResourceAsStream( resource );
@@ -251,8 +251,7 @@ public class GatewayServer {
     try {
       context.start();
     } catch( Exception e ) {
-      //TODO: I18N message
-      e.printStackTrace();
+      log.failedToDeployTopology( name, e );
     }
   }
 
@@ -263,8 +262,7 @@ public class GatewayServer {
       try {
         context.stop();
       } catch( Exception e ) {
-        //TODO: I18N message
-        e.printStackTrace();
+        log.failedToUndeployTopology( topology.getName(), e );
       }
     }
   }

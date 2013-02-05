@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
+import org.apache.hadoop.gateway.util.urltemplate.Params;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class DispatchParamResolver implements Resolver {
+class DispatchParamResolver implements Params {
 
   private FilterConfig config;
   private HttpServletRequest request;
@@ -43,7 +43,7 @@ class DispatchParamResolver implements Resolver {
   }
 
   @Override
-  public List<String> getValues( String name ) {
+  public List<String> resolve( String name ) {
     List<String> values = null;
 
     if( request !=  null ) {

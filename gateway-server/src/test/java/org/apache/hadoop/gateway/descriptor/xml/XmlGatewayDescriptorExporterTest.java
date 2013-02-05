@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.descriptor.xml;
 
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.apache.hadoop.test.Console;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -27,10 +28,8 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.Writer;
 
@@ -52,8 +51,8 @@ public class XmlGatewayDescriptorExporterTest {
   public void testXmlGatewayDescriptorStore() throws IOException, SAXException, ParserConfigurationException {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource()
-        .source( "resource1-source" )
-        .target( "resource1-target" )
+        .pattern( "resource1-source" )
+        //.target( "resource1-target" )
         .addFilter()
         .role( "resource1-filter1-role" )
         .impl( "resource1-filter1-impl" )
@@ -75,8 +74,8 @@ public class XmlGatewayDescriptorExporterTest {
 
     Document doc = parse( xml );
 
-    assertThat( doc, hasXPath( "/gateway/resource[1]/source", is( "resource1-source" ) ) );
-    assertThat( doc, hasXPath( "/gateway/resource[1]/target", is( "resource1-target" ) ) );
+    assertThat( doc, hasXPath( "/gateway/resource[1]/pattern", is( "resource1-source" ) ) );
+    //assertThat( doc, hasXPath( "/gateway/resource[1]/target", is( "resource1-target" ) ) );
     assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/name", is( "" ) ) );
     assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/role", is( "resource1-filter1-role" ) ) );
     assertThat( doc, hasXPath( "/gateway/resource[1]/filter[1]/class", is( "resource1-filter1-impl" ) ) );
@@ -110,18 +109,15 @@ public class XmlGatewayDescriptorExporterTest {
     GatewayDescriptor descriptor = GatewayDescriptorFactory.create()
         .addResource().addFilter().param().up().up().up();
 
-    PrintStream out = System.out;
-    PrintStream err = System.err;
-    System.setOut( new PrintStream( new ByteArrayOutputStream() )  );
-    System.setErr( new PrintStream( new ByteArrayOutputStream() ) );
+    Console console = new Console();
     try {
+      console.capture();
       GatewayDescriptorFactory.store( descriptor, "xml", new BrokenWriter() );
       fail( "Expected IOException" );
     } catch( IOException e ) {
       assertThat( e.getMessage(), containsString( "BROKEN" ) );
     } finally {
-      System.setErr( err );
-      System.setOut( out );
+      console.release();
     }
 
   }

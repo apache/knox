@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +40,7 @@ public class DeploymentContextImpl implements DeploymentContext {
   private WebAppDescriptor webAppDescriptor;
   Map<String,List<ProviderDeploymentContributor>> providers;
   Map<String,List<ServiceDeploymentContributor>> services;
+  private Map<String,Object> descriptors;
 
   public DeploymentContextImpl(
       GatewayConfig gatewayConfig,
@@ -55,6 +57,7 @@ public class DeploymentContextImpl implements DeploymentContext {
     this.webAppDescriptor = webAppDescriptor;
     this.providers = providers;
     this.services = services;
+    this.descriptors = new HashMap<String,Object>();
   }
 
 //  @Override
@@ -127,6 +130,17 @@ public class DeploymentContextImpl implements DeploymentContext {
     if( provider.isEnabled() ) {
       contributor.contributeFilter( this, provider, service, resource, params );
     }
+  }
+
+  @Override
+  public void addDescriptor( String name, Object descriptor ) {
+    descriptors.put( name, descriptor );
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> T getDescriptor( String name ) {
+    return (T)descriptors.get( name );
   }
 
 }

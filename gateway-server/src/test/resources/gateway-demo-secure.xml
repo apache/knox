@@ -23,7 +23,7 @@
         <target>http://org.apache.hadoop-secure.home:50070/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <!-- <prefix>/gw/vm/webhdfs</prefix> -->
             <rewrite>* webhdfs/{0}</rewrite>
         </filter>
@@ -38,7 +38,7 @@
         <target>http://org.apache.hadoop-secure.home:50070/{0}</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <!-- <prefix>/gw/vm/webhdfs</prefix> -->
             <rewrite.1>*://*:*/browseDirectory.jsp?* /gw/vm/webhdfs/browseDirectory.jsp/{0}/{1}/{2}?{3}</rewrite.1>
             <rewrite.2>/* /gw/vm/webhdfs/{0}</rewrite.2>

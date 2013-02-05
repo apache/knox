@@ -30,10 +30,6 @@ import java.util.List;
 
 public interface DeploymentContext {
 
-//  ProviderDeploymentContributor getProviderContributor( String role, String name );
-//
-//  ServiceDeploymentContributor getServiceContributor( String role, String name );
-
   GatewayConfig getGatewayConfig();
 
   Topology getTopology();
@@ -44,5 +40,14 @@ public interface DeploymentContext {
 
   GatewayDescriptor getGatewayDescriptor();
 
-  void contributeFilter( Service service, ResourceDescriptor resource, String role, String name, List<FilterParamDescriptor> params );
+  void contributeFilter(
+      Service service,
+      ResourceDescriptor resource,
+      String role,
+      String name,
+      List<FilterParamDescriptor> params );
+
+  void addDescriptor( String name, Object descriptor );
+
+  <T> T getDescriptor( String name );
 }

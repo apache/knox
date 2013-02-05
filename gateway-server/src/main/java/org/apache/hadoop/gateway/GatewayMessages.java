@@ -76,6 +76,12 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Deployed topology {0}." )
   void deployedTopology( String clusterName );
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
+  void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to undeploy topology {0}: {1}" )
+  void failedToUndeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
+
   @Message( level = MessageLevel.INFO, text = "Deleting deployed topology {0}" )
   void deletingDeployment( String warDirName );
 
@@ -108,4 +114,5 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Failed to load logging configuration: {0}" )
   void failedToLoadLoggingConfig( String fileName );
+
 }

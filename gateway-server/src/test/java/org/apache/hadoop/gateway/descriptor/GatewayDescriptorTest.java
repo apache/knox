@@ -36,8 +36,8 @@ public class GatewayDescriptorTest {
         .addParam().name( "cluster-param1-name" ).value( "cluster-param1-value" ).up()
         .addParam().name( "cluster-param2-name" ).value( "cluster-param2-value" ).up()
         .addResource()
-          .source( "resource1-source" )
-          .target( "resource1-target" )
+          .pattern( "resource1-source" )
+          //.target( "resource1-target" )
           //.param().name( "resource1-param1-name" ).value( "resource-param1-value" ).up()
           //.param().name( "resource1-param2-name" ).value( "resource-param2-value" ).up()
         .addFilter()
@@ -53,8 +53,8 @@ public class GatewayDescriptorTest {
             .role( "resource1-filter2-role" )
             .impl( "resource1-filter2-impl" ).up().up()
         .addResource()
-          .source( "resource2-source" )
-          .target( "resource2-target" )
+          .pattern( "resource2-source" )
+          //.target( "resource2-target" )
           .addFilter()
             .param().up().up().up();
 
@@ -63,8 +63,8 @@ public class GatewayDescriptorTest {
 
     ResourceDescriptor resource1 = descriptor.resources().get( 0 );
     assertThat( resource1, notNullValue() );
-    assertThat( resource1.source(), is( "resource1-source" ) );
-    assertThat( resource1.target(), is( "resource1-target" ) );
+    assertThat( resource1.pattern(), is( "resource1-source" ) );
+    //assertThat( resource1.target(), is( "resource1-target" ) );
 
     assertThat( resource1.filters().size(), is( 2 ) );
 
@@ -92,8 +92,8 @@ public class GatewayDescriptorTest {
 
     ResourceDescriptor resource2 = descriptor.resources().get( 1 );
     assertThat( resource2, notNullValue() );
-    assertThat( resource2.source(), is( "resource2-source" ) );
-    assertThat( resource2.target(), is( "resource2-target" ) );
+    assertThat( resource2.pattern(), is( "resource2-source" ) );
+    //assertThat( resource2.target(), is( "resource2-target" ) );
   }
 
   @Test

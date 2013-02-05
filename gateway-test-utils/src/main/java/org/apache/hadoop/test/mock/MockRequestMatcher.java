@@ -18,44 +18,39 @@
 package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.core.Is;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.hasItem;
 
 public class MockRequestMatcher {
 
   private MockResponseProvider response;
   private Set<String> methods = null;
   private String pathInfo = null;
+  private String requestURL = null;
   Map<String,String> headers = null;
   Set<Cookie> cookies = null;
+  private Map<String,Object> attributes = null;
   private Map<String,String> queryParams = null;
   private String contentType = null;
   private String characterEncoding = null;
   private Integer contentLength = null;
   private byte[] entity = null;
-//    expect.getAuthType()
-//    expect.getContextPath()
-//    expect.getQueryString()
-//    expect.getRemoteUser()
-//    expect.getRequestedSessionId()
-//    expect.getRequestURI()
-//    expect.getRequestURL()
-//    expect.getRemoteAddr()
-//    expect.getRemoteHost()
-//    expect.getRemotePort()
-//    expect.getServletPath()
-//    expect.getScheme()
-//    expect.getUserPrincipal()
 
   public MockRequestMatcher( MockResponseProvider response ) {
     this.response = response;
@@ -66,8 +61,10 @@ public class MockRequestMatcher {
   }
 
   public MockRequestMatcher method( String... methods ) {
-    if( methods == null ) {
+    if( this.methods == null ) {
       this.methods = new HashSet<String>();
+    }
+    if( methods != null ) {
       for( String method: methods ) {
         this.methods.add( method );
       }
@@ -77,6 +74,11 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher pathInfo( String pathInfo ) {
     this.pathInfo = pathInfo;
+    return this;
+  }
+
+  public MockRequestMatcher requestURL( String requestURL ) {
+    this.requestURL = requestURL;
     return this;
   }
 
@@ -96,11 +98,25 @@ public class MockRequestMatcher {
     return this;
   }
 
+  public MockRequestMatcher attribute( String name, Object value ) {
+    if( this.attributes == null ) {
+      this.attributes = new HashMap<String,Object>();
+    }
+    attributes.put( name, value );
+    return this;
+  }
+
   public MockRequestMatcher queryParam( String name, String value ) {
     if( this.queryParams == null ) {
       this.queryParams = new HashMap<String, String>();
     }
     queryParams.put( name, value );
+    return this;
+  }
+
+  public MockRequestMatcher content( String string, Charset charset ) {
+    characterEncoding( charset.name() );
+    content( string.getBytes( charset ) );
     return this;
   }
 
@@ -145,14 +161,20 @@ public class MockRequestMatcher {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required pathInfo",
-          request.getPathInfo(), Is.is( pathInfo ) );
+          request.getPathInfo(), is( pathInfo ) );
+    }
+    if( requestURL != null ) {
+      assertThat( 
+          "Request " + request.getMethod() + " " + request.getRequestURL() +
+              " does not have the required requestURL",
+          request.getRequestURL().toString(), is( requestURL ) );
     }
     if( headers != null ) {
       for( String name: headers.keySet() ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
                 " does not have the required value for header " + name,
-            request.getHeader( name ), Is.is( headers.get( name ) ) );
+            request.getHeader( name ), is( headers.get( name ) ) );
       }
     }
     if( cookies != null ) {
@@ -169,26 +191,47 @@ public class MockRequestMatcher {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required content type",
-          requestContentType[ 0 ], Is.is( contentType ) );
+          requestContentType[ 0 ], is( contentType ) );
     }
     if( characterEncoding != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required character encoding",
-          request.getCharacterEncoding(), Is.is( characterEncoding ) );
+          request.getCharacterEncoding(), is( characterEncoding ) );
     }
     if( contentLength != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required content length",
-          request.getContentLength(), Is.is( contentLength ) );
+          request.getContentLength(), is( contentLength ) );
     }
     if( entity != null ) {
-      byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
-      assertThat(
-          "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " content does not match the required content",
-          bytes, Is.is( entity ) );
+      if( characterEncoding == null || request.getCharacterEncoding() == null ) {
+        byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " content does not match the required content",
+            bytes, is( entity ) );
+      } else {
+        String expect = new String( entity, characterEncoding );
+        String actual = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " content does not match the required content",
+            actual, is( expect ) );
+      }
+    }
+    if( attributes != null ) {
+      for( String name: attributes.keySet() ) {
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " is missing attribute '" + name + "'",
+            request.getAttribute( name ), notNullValue() );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " has wrong value for attribute '" + name + "'",
+            request.getAttribute( name ), is( request.getAttribute( name ) ) );
+      }
     }
     // Note: Cannot use any of the expect.getParameter*() methods because they will read the
     // body and we don't want that to happen.
@@ -209,6 +252,7 @@ public class MockRequestMatcher {
     }
   }
 
+  // Separate method to minimally scope the depreciation suppression.
   @SuppressWarnings("deprecation")
   private static Map<String,String[]> parseQueryString( String queryString ) {
     return javax.servlet.http.HttpUtils.parseQueryString( queryString );

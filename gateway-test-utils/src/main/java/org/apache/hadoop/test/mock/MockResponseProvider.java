@@ -24,7 +24,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class MockResponseProvider {
 
@@ -74,6 +79,11 @@ public class MockResponseProvider {
 
   public MockResponseProvider content( byte[] entity ) {
     this.entity = entity;
+    return this;
+  }
+
+  public MockResponseProvider content( String string, Charset charset ) {
+    this.entity = string.getBytes( charset );
     return this;
   }
 
@@ -140,6 +150,7 @@ public class MockResponseProvider {
     }
     if( entity != null ) {
       response.getOutputStream().write( entity );
+      response.getOutputStream().close();
     }
   }
 

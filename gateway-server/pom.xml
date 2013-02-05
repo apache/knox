@@ -106,15 +106,11 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-util-urltemplate</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-hdfs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-templeton</artifactId>
         </dependency>
 
         <dependency>
@@ -143,7 +139,22 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-jaspi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.aggregate</groupId>
+            <artifactId>jetty-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.components</groupId>
+            <artifactId>geronimo-jaspi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-osgi-locator</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -260,6 +271,27 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-hdfs</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-templeton</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>gateway-provider-security-shiro</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
@@ -267,6 +299,12 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-test-ldap</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>test-jetty-servlet</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -284,6 +322,22 @@
         <dependency>
             <groupId>com.jayway.restassured</groupId>
             <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path-assert</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.xmlmatchers</groupId>
+            <artifactId>xml-matchers</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -342,10 +396,6 @@
             <artifactId>gateway-provider-security-spring</artifactId>
         </dependency>
         -->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-security-shiro</artifactId>
-        </dependency>
 
 
     </dependencies>

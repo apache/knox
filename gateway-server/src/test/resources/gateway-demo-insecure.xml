@@ -23,7 +23,7 @@
         <target>http://org.apache.hadoop-insecure.home:50070/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>dfshealth.jsp dfs/home</rewrite>
         </filter>
         <filter>
@@ -46,7 +46,7 @@
         <target>http://org.apache.hadoop-insecure.home:50070/dfshealth.jsp</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite.1>/static/* static/{0}</rewrite.1>
             <rewrite.2>/nn_browsedfscontent.jsp files</rewrite.2>
             <rewrite.3>/logs/ logs</rewrite.3>
@@ -63,7 +63,7 @@
         <target>http://org.apache.hadoop-insecure.home:50070/nn_browsedfscontent.jsp</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite.1>*/dfshealth.jsp home</rewrite.1>
             <rewrite.2>browseDirectory.jsp files</rewrite.2>
             <rewrite.3>browseDirectory.jsp?* files?{0}</rewrite.3>
@@ -81,7 +81,7 @@
         <target>{0}://{1}:{2}/browseDirectory.jsp</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite.1>*/dfshealth.jsp home</rewrite.1>
             <rewrite.2>browseDirectory.jsp files</rewrite.2>
             <rewrite.3>browseDirectory.jsp?* files?{0}</rewrite.3>
@@ -98,7 +98,7 @@
         <target>http://org.apache.hadoop-insecure.home:50070/logs/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>
@@ -121,7 +121,7 @@
         <target>http://org.apache.hadoop-insecure.home:50070/dfsnodelist.jsp</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite.1>/static/* static/{0}</rewrite.1>
             <rewrite.2>/nn_browsedfscontent.jsp files</rewrite.2>
             <rewrite.3>/logs/ logs</rewrite.3>
@@ -150,7 +150,7 @@
         <target>http://org.apache.hadoop-insecure.home:50030/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>jobtracker.jsp mr/home</rewrite>
         </filter>
         <filter>
@@ -164,7 +164,7 @@
         <target>http://org.apache.hadoop-insecure.home:50030/jobtracker.jsp</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite.1>/static/* static/{0}</rewrite.1>
         </filter>
         <filter>
@@ -178,7 +178,7 @@
         <target>http://org.apache.hadoop-insecure.home:50030/logs/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>
@@ -192,7 +192,7 @@
         <target>http://org.apache.hadoop-insecure.home:50030/logs/{0}</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.UrlRewriteFilter</class>
+            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>/logs/** logs/{0}</rewrite>
         </filter>
         <filter>

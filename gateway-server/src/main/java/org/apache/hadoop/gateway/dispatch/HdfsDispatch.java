@@ -43,7 +43,7 @@ public class HdfsDispatch extends HttpClientDispatch {
   public void doPut( HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     HttpEntity entity = createRequestEntity( request );
-    URI requestUri = resolveRequestUri( request );
+    URI requestUri = getDispatchUrl( request );
     if( "CREATE".equals( request.getParameter( "op" ) ) ) {
       HttpPut clientRequest = new HttpPut( requestUri );
       HttpClient client = new DefaultHttpClient();

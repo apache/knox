@@ -49,7 +49,13 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
       message = getText( method, args );
       String code = getCode( method );
       Throwable throwable = findLoggableThrowable( logger, method, args );
-      StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
+      // Supposedly this Throwable way is faster than the Thread way.
+      // From looking at the JRE code it looks this is probably the case.
+      // The second version ends up calling the first version after getting the current thread
+      // and then checking that it is being called from the current thread.
+      //TODO: Should probably only do this if the logger is at debug or finer to make sure there isn't a performance impact during production usage.
+      StackTraceElement caller = new Throwable().getStackTrace()[2];
+      // StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
       logger.log( caller, level, code, message, throwable );
     }
     return message;

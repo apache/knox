@@ -30,8 +30,7 @@ public class ResourceDescriptorImpl implements ResourceDescriptor {
 
   private GatewayDescriptor parent;
   private String role;
-  private String source;
-  private String target;
+  private String pattern;
   private List<ResourceParamDescriptor> params;
   private List<FilterDescriptor> filters;
 
@@ -55,22 +54,13 @@ public class ResourceDescriptorImpl implements ResourceDescriptor {
     return role;
   }
 
-  public ResourceDescriptor source( String source ) {
-    this.source = source;
+  public ResourceDescriptor pattern( String pattern ) {
+    this.pattern = pattern;
     return this;
   }
 
-  public String source() {
-    return source;
-  }
-
-  public ResourceDescriptor target( String target ) {
-    this.target = target;
-    return this;
-  }
-
-  public String target() {
-    return target;
+  public String pattern() {
+    return pattern;
   }
 
   @Override

@@ -17,20 +17,11 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.hadoop.gateway.util.PrincipalCredentials;
-import org.apache.hadoop.gateway.util.CredentialsProvider;
-import org.apache.hadoop.gateway.util.PrincipalCredentials;
-import org.apache.http.auth.Credentials;
-
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 
 /**
  *
@@ -42,39 +33,41 @@ public class JaasLoginFilter extends AbstractGatewayFilter {
   @Override
   public void doFilter( final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain ) throws IOException, ServletException {
 
-    if( !isUserAuthenticated( request ) ) {
-      Credentials credentials = getUserCredentials( request );
-      CredentialsProvider credentialsProvider = new CredentialsProvider( credentials );
-
-      try {
-
-        LoginContext loginContext = new LoginContext( JGSS_LOGIN_MOUDLE, credentialsProvider );
-        loginContext.login();
-        Subject subject = loginContext.getSubject();
-
-        // Adding the user principal to the public credentials because we need the username in the subject later.
-        subject.getPublicCredentials().add( new PrincipalCredentials( credentials.getUserPrincipal() ) );
-        //System.out.println( "Subject=" + subject );
-
-        PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
-          @Override
-          public Void run() throws Exception {
-            chain.doFilter( request, response );
-            return null;
-          }
-        };
-
-        Subject.doAs( subject, action );
-
-      } catch( PrivilegedActionException e ) {
-        e.printStackTrace();
-        throw new ServletException( e );
-      } catch( LoginException e ) {
-        e.printStackTrace();
-        HttpServletResponse httpResponse = (HttpServletResponse)response;
-        httpResponse.sendError( HttpServletResponse.SC_UNAUTHORIZED );
-      }
-    }
+//KAM:2013014[ Removing due to dependency issues.  This class isn't used anyway
+//    if( !isUserAuthenticated( request ) ) {
+//      Credentials credentials = getUserCredentials( request );
+//      CredentialsProvider credentialsProvider = new CredentialsProvider( credentials );
+//
+//      try {
+//
+//        LoginContext loginContext = new LoginContext( JGSS_LOGIN_MOUDLE, credentialsProvider );
+//        loginContext.login();
+//        Subject subject = loginContext.getSubject();
+//
+//        // Adding the user principal to the public credentials because we need the username in the subject later.
+//        subject.getPublicCredentials().add( new PrincipalCredentials( credentials.getUserPrincipal() ) );
+//        //System.out.println( "Subject=" + subject );
+//
+//        PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
+//          @Override
+//          public Void run() throws Exception {
+//            chain.doFilter( request, response );
+//            return null;
+//          }
+//        };
+//
+//        Subject.doAs( subject, action );
+//
+//      } catch( PrivilegedActionException e ) {
+//        e.printStackTrace();
+//        throw new ServletException( e );
+//      } catch( LoginException e ) {
+//        e.printStackTrace();
+//        HttpServletResponse httpResponse = (HttpServletResponse)response;
+//        httpResponse.sendError( HttpServletResponse.SC_UNAUTHORIZED );
+//      }
+//    }
+//]
   }
 
 //    URL loginUrl = ClassLoader.getSystemResource( "jaas.conf" );

@@ -38,10 +38,10 @@ import java.util.Enumeration;
 
 public class GatewayServlet implements Servlet {
 
-  private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
-
   public static final String GATEWAY_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
+
+  private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
 
   private FilterConfigAdapter filterConfig;
   private volatile GatewayFilter filter;
@@ -72,12 +72,20 @@ public class GatewayServlet implements Servlet {
 
   @Override
   public synchronized void init( ServletConfig servletConfig ) throws ServletException {
-    if( filter == null ) {
-      filter = createFilter( servletConfig );
-    }
-    filterConfig = new FilterConfigAdapter( servletConfig );
-    if( filter != null ) {
-      filter.init( filterConfig );
+    try {
+      if( filter == null ) {
+        filter = createFilter( servletConfig );
+      }
+      filterConfig = new FilterConfigAdapter( servletConfig );
+      if( filter != null ) {
+        filter.init( filterConfig );
+      }
+    } catch( ServletException e ) {
+      e.printStackTrace();
+      throw e;
+    } catch( RuntimeException e ) {
+      e.printStackTrace();
+      throw e;
     }
   }
 

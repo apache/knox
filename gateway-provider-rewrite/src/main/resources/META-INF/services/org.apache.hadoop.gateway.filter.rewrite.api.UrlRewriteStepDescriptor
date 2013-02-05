@@ -1,0 +1,4 @@
+org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt
+org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptorExt
+org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlDescriptorExt
+org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt

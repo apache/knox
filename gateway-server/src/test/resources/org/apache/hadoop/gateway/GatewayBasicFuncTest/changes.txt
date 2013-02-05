@@ -175,7 +175,7 @@ Release 1.1.0 - unreleased
 
     HADOOP-8209. Add option to relax build-version check for branch-1. (eli)
 
-    HDFS-3518. Add a utility method DistributedFileSystem.isHealthy(uri) for
+    HDFS-3518. Add a utility method DistributedFileSystem.isHealthy(url) for
     checking if the given HDFS is healthy. (szetszwo)
 
   IMPROVEMENTS
@@ -793,7 +793,7 @@ Release 1.0.0 - 2011.12.15
     getDefaultBlockSize() and getDefaultReplication() in WebHdfsFileSystem
     and cleared content type in ExceptionHandler. (szetszwo)
 
-    HDFS-2416. Distcp with a WebHDFS uri on a secure gateway fails. (jitendra)
+    HDFS-2416. Distcp with a WebHDFS url on a secure gateway fails. (jitendra)
 
     HDFS-2494. Close the streams and DFSClient in DatanodeWebHdfsMethods.
     (Uma Maheswara Rao G via szetszwo)
@@ -903,7 +903,7 @@ Release 0.20.205.0 - 2011.10.06
     HDFS-2404. WebHDFS liststatus json response is not correct.
     (Suresh Srinivas via mattf)
 
-    HDFS-2358. NPE when the default filesystem's uri has no authority.
+    HDFS-2358. NPE when the default filesystem's url has no authority.
     (Daryn Sharp via mattf)
 
     MAPREDUCE-3112. Calling org.apache.hadoop cli inside mapreduce job leads to errors.
@@ -1066,7 +1066,7 @@ Release 0.20.205.0 - 2011.10.06
     for the binary layout case. (Eric Yang via ddas)
 
     HADOOP-7661. FileSystem.getCanonicalServiceName throws NPE for any
-    file system uri that doesn't have an authority. (jitendra)
+    file system url that doesn't have an authority. (jitendra)
 
     HADOOP-7649. TestMapredGroupMappingServiceRefresh and
     TestRefreshUserMappings fail after HADOOP-7625. (jitendra)
@@ -1714,7 +1714,7 @@ Release 0.20.202.0 - unreleased
     NameNode memory footprint.  (szetszwo)
 
     MAPREDUCE-572. Fixes DistributedCache.checkURIs to throw error if link is
-    missing for uri in cache archives. (amareshwari)
+    missing for url in cache archives. (amareshwari)
 
     MAPREDUCE-787. Fix JobSubmitter to honor user given symlink in the path.
     (amareshwari)

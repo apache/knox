@@ -1,3 +1,2 @@
-org.apache.hadoop.gateway.deploy.impl.RewriteDeploymentContributor
 org.apache.hadoop.gateway.deploy.impl.DispatchDeploymentContributor
 org.apache.hadoop.gateway.deploy.impl.WebHdfsDispatchDeploymentContributor
