@@ -17,20 +17,22 @@
    */
 package org.apache.hadoop.gateway.filter;
 
-//import javax.security.auth.Subject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
 import java.io.IOException;
-//import java.security.AccessController;
+import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class PostAuthenticationFilter implements Filter {
 
@@ -39,25 +41,62 @@ public class PostAuthenticationFilter implements Filter {
   }
 
   public void destroy() {
-    // TODO Auto-generated method stub
-    
   }
 
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
       throws IOException, ServletException {
-//    Subject subject = Subject.getSubject(AccessController.getContext());
-//    System.out.println("&&&&&&&&&&&&&&&&& " + subject.getPrincipals());
-    Subject subject = SecurityUtils.getSubject();
-    String principal = (String) subject.getPrincipal();
-    IdentityAssertionHttpServletRequestWrapper wrapper = new IdentityAssertionHttpServletRequestWrapper((HttpServletRequest)request, principal);
-//    if (principal != null) {
-//      System.out.println("&&&&&&&&&&&&&&&&& Current Subject PrimaryPrincipal: " + principal + " and is isAuthenticated: " + subject.isAuthenticated());
-//    }
-//    else {
-//      System.out.println("&&&&&&&&&&&&&&&&& Current Subject PrimaryPrincipal: " + null + " and is isAuthenticated: " + subject.isAuthenticated());
-//    }
+    final String principalName = (String) SecurityUtils.getSubject().getPrincipal();
 
-    chain.doFilter( wrapper, response );
+    CallableChain callableChain = new CallableChain(request, response, chain);
+    SecurityUtils.getSubject().execute(callableChain);
+  }
+  
+  private class CallableChain implements Callable<Void> {
+    private FilterChain chain = null;
+    ServletRequest request = null;
+    ServletResponse response = null;
+    
+    CallableChain(ServletRequest request, ServletResponse response, FilterChain chain) {
+      this.request = request;
+      this.response = response;
+      this.chain = chain;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          chain.doFilter( request, response );
+          return null;
+        }
+      };
+      Subject shiroSubject = SecurityUtils.getSubject();
+      final String principal = (String) shiroSubject.getPrincipal();
+      HashSet emptySet = new HashSet();
+      Set<Principal> principals = new HashSet<Principal>();
+      Principal p = new Principal() {
+        @Override
+        public String getName() {
+          // TODO Auto-generated method stub
+          return principal;
+        }
+      };
+      principals.add(p);
+      
+//      The newly constructed Sets check whether this Subject has been set read-only 
+//      before permitting subsequent modifications. The newly created Sets also prevent 
+//      illegal modifications by ensuring that callers have sufficient permissions.
+//
+//      To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
+//      To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
+//      To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
+      javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
+      javax.security.auth.Subject.doAs( subject, action );
+      
+      return null;
+    }
+    
   }
 
 }

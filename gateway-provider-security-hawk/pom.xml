@@ -5,7 +5,7 @@
     <artifactId>gateway</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
+  <artifactId>gateway-provider-security-hawk</artifactId>
   <dependencies>
     <dependency>
 	    <groupId>${gateway-group}</groupId>
@@ -15,6 +15,16 @@
     	<groupId>commons-io</groupId>
     	<artifactId>commons-io</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>com.wealdtech.hawk</groupId>
+      <artifactId>hawk-core</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+    </dependency>    
+    
     <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

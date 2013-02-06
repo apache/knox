@@ -381,7 +381,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -396,8 +395,18 @@
             <artifactId>gateway-provider-security-spring</artifactId>
         </dependency>
         -->
-
-
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>gateway-provider-security-shiro</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
+        </dependency>
+        <!-- dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>gateway-provider-security-hawk</artifactId>
+        </dependency-->
     </dependencies>
 
 </project>

@@ -1,18 +1,27 @@
 package org.apache.hadoop.gateway.filter;
 
+import org.apache.commons.io.IOUtils;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 
 public class IdentityAssertionHttpServletRequestWrapper extends
     HttpServletRequestWrapper {
+
+  private static final String PRINCIPAL_PARAM = "user.name";
   
   String username = null;
 
@@ -23,7 +32,7 @@ public class IdentityAssertionHttpServletRequestWrapper extends
 
   @Override
   public String getParameter(String name) {
-    if (name.equals("user.name")) {
+    if (name.equals(PRINCIPAL_PARAM)) {
       return username;
     }
     return super.getParameter(name);
@@ -51,16 +60,34 @@ public class IdentityAssertionHttpServletRequestWrapper extends
     return params.get(name);
   }
 
-  private Map<String, String[]> getParams() {
-    String qString = super.getQueryString();
-    if (qString == null || qString.length() == 0) return null;
-    Map<String, String[]> params = parseQueryString(qString);
+  private Map<String, String[]> getParams( String qString ) {
+    Map<String, String[]> params = null;
+    if (getMethod().equals("GET")) {
+      if (qString != null && qString.length() > 0) {
+        params = parseQueryString(qString);
+      }
+      else {
+        params = new HashMap<String, String[]>();
+      }
+    }
+    else {
+      if (qString == null || qString.length() == 0) {
+        return null;
+      }
+      else {
+        params = parseQueryString(qString);
+      }
+    }
     ArrayList<String> al = new ArrayList<String>();
     al.add(username);
     String[] a = {""};
-    params.put("user.name", al.toArray(a));
-    
+    params.put(PRINCIPAL_PARAM, al.toArray(a));
+
     return params;
+  }
+
+  private Map<String, String[]> getParams() {
+    return getParams( super.getQueryString() );
   }
   
   @Override
@@ -68,22 +95,55 @@ public class IdentityAssertionHttpServletRequestWrapper extends
     String q = null;
     Map<String, String[]> params = getParams();
     if (params != null) {
-      q = urlEncodeUTF8(params);
+      String encoding = getCharacterEncoding();
+      if( encoding == null ) {
+        encoding = Charset.defaultCharset().name();
+      }
+      q = urlEncode( params, encoding );
     }
-//    System.out.println(q);
-    
     return q;
   }
 
-  static String urlEncodeUTF8(String s) {
-    try {
-        return URLEncoder.encode(s, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-        throw new UnsupportedOperationException(e);
+  @Override
+  public int getContentLength() {
+    int len;
+    String contentType = getContentType();
+    // If the content type is a form we might rewrite the body so default it to -1.
+    if( contentType != null && contentType.startsWith( "application/x-www-form-urlencoded" ) ) {
+      len = -1;
+    } else {
+      len = super.getContentLength();
+    }
+    return len;
+  }
+
+  @Override
+  public ServletInputStream getInputStream() throws java.io.IOException {
+    String contentType = getContentType();
+    if( contentType != null && contentType.startsWith( "application/x-www-form-urlencoded" ) ) {
+      String encoding = getCharacterEncoding();
+      if( encoding == null ) {
+        encoding = Charset.defaultCharset().name();
+      }
+      String body = IOUtils.toString( super.getInputStream(), encoding );
+      Map<String, String[]> params = getParams( body );
+      body = urlEncode( params, encoding );
+      // ASCII is OK here because the urlEncode about should have already escaped
+      return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes( "US-ASCII" ) ) );
+    } else {
+      return super.getInputStream();
     }
   }
-  
-  static String urlEncodeUTF8(Map<?,?> map) {
+
+  static String urlEncode( String string, String encoding ) {
+    try {
+      return URLEncoder.encode( string, encoding );
+    } catch (UnsupportedEncodingException e) {
+      throw new UnsupportedOperationException(e);
+    }
+  }
+
+  static String urlEncode( Map<String,String[]> map, String encoding ) {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<?,?> entry : map.entrySet()) {
         if (sb.length() > 0) {
@@ -94,8 +154,8 @@ public class IdentityAssertionHttpServletRequestWrapper extends
           if (values[i] != null) {
             try {
             sb.append(String.format("%s=%s",
-                urlEncodeUTF8(entry.getKey().toString()),
-                urlEncodeUTF8(values[i])
+                urlEncode( entry.getKey().toString(), encoding ),
+                urlEncode( values[i], encoding )
             ));
             }
             catch (IllegalArgumentException e) {
@@ -113,5 +173,19 @@ public class IdentityAssertionHttpServletRequestWrapper extends
     return javax.servlet.http.HttpUtils.parseQueryString( queryString );
   }
   
+  private class ServletInputStreamWrapper extends ServletInputStream {
+
+    private InputStream stream;
+
+    private ServletInputStreamWrapper( InputStream stream ) {
+      this.stream = stream;
+    }
+
+    @Override
+    public int read() throws IOException {
+      return stream.read();
+    }
+
+  }
 
 }

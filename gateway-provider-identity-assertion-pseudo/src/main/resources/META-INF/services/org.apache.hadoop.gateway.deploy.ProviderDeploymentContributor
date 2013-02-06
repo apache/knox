@@ -1,1 +1,1 @@
-org.apache.hadoop.gateway.deploy.impl.ShiroDeploymentContributor
+org.apache.hadoop.gateway.deploy.impl.DeploymentContributor

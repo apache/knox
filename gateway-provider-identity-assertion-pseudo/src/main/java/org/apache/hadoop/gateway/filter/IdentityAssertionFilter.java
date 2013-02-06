@@ -17,7 +17,7 @@
    */
 package org.apache.hadoop.gateway.filter;
 
-//import javax.security.auth.Subject;
+import javax.security.auth.Subject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -26,39 +26,76 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
-//import org.apache.shiro.SecurityUtils;
-//import org.apache.shiro.subject.Subject;
+import org.apache.hadoop.gateway.security.principal.PrincipalMapper;
+import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
+import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
+
 
 import java.io.IOException;
-//import java.security.AccessController;
+import java.security.AccessController;
+import java.security.Principal;
+import java.util.Set;
 
 public class IdentityAssertionFilter implements Filter {
 
+  private PrincipalMapper mapper = new SimplePrincipalMapper();
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
+    // load principal mappings
+    String principalMapping = filterConfig.getServletContext().getInitParameter("principal.mapping");
+    try {
+      mapper.loadMappingTable(principalMapping);
+    }
+    catch (PrincipalMappingException pme) {
+      // TODO: log this appropriately
+      pme.printStackTrace();
+    }
   }
 
   public void destroy() {
     
   }
 
+  /**
+   * Obtain the standard javax.security.auth.Subject, retrieve the caller principal, map
+   * to the identity to be asserted as appropriate and create the provider specific
+   * assertion token. Add the assertion token to the request.
+   */
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
       throws IOException, ServletException {
-//    Subject subject = Subject.getSubject(AccessController.getContext());
-//    System.out.println("&&&&&&&&&&&&&&&&& " + subject.getPrincipals());
+//    System.out.println("+++++++++++++ Identity Assertion Filtering");
+    Subject subject = Subject.getSubject(AccessController.getContext());
 
-//    Subject subject = SecurityUtils.getSubject();
-//    String principal = (String) subject.getPrincipal();
-//    IdentityAssertionHttpServletRequestWrapper wrapper = new IdentityAssertionHttpServletRequestWrapper((HttpServletRequest)request, principal);
+    String principalName = getPrincipalName(subject);
+    principalName = mapper.mapPrincipal(principalName);
+//    System.out.println("+++++++++++++ Identity Assertion Filtering with Principal: " + principalName);
 
-//    if (principal != null) {
-//      System.out.println("&&&&&&&&&&&&&&&&& Current Subject PrimaryPrincipal: " + principal + " and is isAuthenticated: " + subject.isAuthenticated());
-//    }
-//    else {
-//      System.out.println("&&&&&&&&&&&&&&&&& Current Subject PrimaryPrincipal: " + null + " and is isAuthenticated: " + subject.isAuthenticated());
-//    }
+    IdentityAssertionHttpServletRequestWrapper wrapper = 
+        new IdentityAssertionHttpServletRequestWrapper(
+        (HttpServletRequest)request, 
+        principalName);
+    chain.doFilter( wrapper, response );
+  }
 
-//    chain.doFilter( wrapper, response );
+
+  /**
+   * Retrieve the principal to represent the asserted identity from
+   * the provided Subject.
+   * @param subject
+   * @return principalName
+   */
+  private String getPrincipalName(Subject subject) {
+    // LJM TODO: this implementation assumes the first one found 
+    // should configure through context param based on knowledge
+    // of the authentication provider in use
+    String name = null;
+    Set<Principal> principals = subject.getPrincipals();
+    for (Principal p : principals) {
+      name = p.getName();
+      break;
+    }
+    return name;
   }
 
 }

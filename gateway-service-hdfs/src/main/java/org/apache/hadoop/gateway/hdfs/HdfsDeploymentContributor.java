@@ -86,12 +86,14 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     rootResource.role( service.getRole() );
     rootResource.pattern( NAMENODE_EXTERNAL_PATH + "/?**" );
     addAuthenticationFilter( context, service, rootResource );
+    addIdentityAssertionFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
     fileResource.pattern( NAMENODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
+    addIdentityAssertionFilter( context, service, rootResource );
     addNameNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
@@ -107,6 +109,10 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
   private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
     context.contributeFilter( service, resource, "authentication", null, null );
+  }
+
+  private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    context.contributeFilter( service, resource, "identity-assertion", null, null );
   }
 
   private void addDispatchFilter(

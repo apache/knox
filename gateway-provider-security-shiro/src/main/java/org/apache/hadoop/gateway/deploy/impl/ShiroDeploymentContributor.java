@@ -40,7 +40,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   @Override
   public String getName() {
-    return "shiro";
+    return "ShiroProvider";
   }
 
   @Override
