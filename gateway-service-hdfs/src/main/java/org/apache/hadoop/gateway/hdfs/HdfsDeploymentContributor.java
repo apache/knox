@@ -93,7 +93,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.role( service.getRole() );
     fileResource.pattern( NAMENODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
-    addIdentityAssertionFilter( context, service, rootResource );
+    addIdentityAssertionFilter( context, service, fileResource );
     addNameNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
@@ -103,6 +103,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.role( service.getRole() );
     fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?{host}&{port}&**" );
     addAuthenticationFilter( context, service, fileResource );
+    addIdentityAssertionFilter( context, service, fileResource );
     addDataNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }

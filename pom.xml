@@ -36,9 +36,9 @@
     </repositories>
 
     <modules>
+        <module>gateway-test-utils</module>
         <module>gateway-util-common</module>
         <module>gateway-util-urltemplate</module>
-        <module>gateway-test-utils</module>
         <module>gateway-test-ldap</module>
         <module>gateway-i18n</module>
         <module>gateway-i18n-logging-log4j</module>
@@ -48,9 +48,7 @@
         <module>gateway-provider-security-hawk</module>
         <module>gateway-provider-security-spring</module>
         <module>gateway-provider-security-shiro</module>
-        <!-- Place holder for future work.
         <module>gateway-provider-identity-assertion-pseudo</module>
-        -->
         <module>gateway-service-hdfs</module>
         <module>gateway-service-templeton</module>
         <module>gateway-service-oozie</module>
