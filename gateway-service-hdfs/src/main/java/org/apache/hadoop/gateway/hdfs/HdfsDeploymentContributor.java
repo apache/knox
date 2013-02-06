@@ -32,7 +32,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   private static final String NAMENODE_EXTERNAL_PATH = "/namenode/api/v1";
   private static final String DATANODE_INTERNAL_PATH = "/webhdfs/v1";
   private static final String DATANODE_EXTERNAL_PATH = "/datanode/api/v1";
-  private static final String CLUSTER_URL_FUNCTION = "{gateway.ur}";
+  private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
   @Override
   public String getRole() {
@@ -56,27 +56,27 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     UrlRewriteRuleDescriptor rule;
     UrlRewriteActionRewriteDescriptorExt rewrite;
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/namenode-root/request" )
-        .directions( "request" )
+    rule = rules.addRule( getRole() + "/" + getName() + "/namenode/root/inbound" )
+        .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/namenode-file/request" )
-        .directions( "request" )
+    rule = rules.addRule( getRole() + "/" + getName() + "/namenode/file/inbound" )
+        .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/request" )
-        .directions( "request" )
+    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/inbound" )
+        .directions( "inbound" )
         .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( "http://{host}:{port}" + DATANODE_INTERNAL_PATH + "/{path=**}?{**}" );
+    rewrite.template( "http://{host}:{port}/{path=**}?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/response" )
-        .directions( "response" )
-        .pattern( "*://{host}:{port}" + DATANODE_INTERNAL_PATH + "/{path=**}?{**}" );
+    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/outbound" )
+        .directions( "outbound" )
+        .pattern( "*://{host}:{port}/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
   }

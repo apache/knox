@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextList
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.servlet.FilterConfig;
@@ -34,8 +35,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
+import java.util.List;
 
-public class UrlRewriteRequest extends GatewayRequestWrapper {
+public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver {
 
   private UrlRewriter rewriter;
 
@@ -76,7 +78,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper {
       targetUrl = (Template)getAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME );
       if( targetUrl == null ) {
         Template sourceUrl = getSourceUrl();
-        targetUrl = rewriter.rewrite( sourceUrl, UrlRewriter.Direction.IN );
+        targetUrl = rewriter.rewrite( this, sourceUrl, UrlRewriter.Direction.IN );
         setAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, targetUrl );
       }
     } else {
@@ -119,7 +121,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper {
   public String rewriteValue( UrlRewriter rewriter, String value ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( input, UrlRewriter.Direction.IN );
+      Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN );
       value = output.toString();
     } catch( URISyntaxException e ) {
       e.printStackTrace();
@@ -135,6 +137,11 @@ public class UrlRewriteRequest extends GatewayRequestWrapper {
   @SuppressWarnings("unchecked")
   public Enumeration getHeaders( String name ) {
     return new EnumerationRewriter( rewriter, (Enumeration<String>)super.getHeaders( name ) );
+  }
+
+  @Override
+  public List<String> resolve( String name ) {
+    return null;
   }
 
   private class EnumerationRewriter implements Enumeration<String> {
@@ -161,7 +168,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper {
   @Override
   public ServletInputStream getInputStream() throws IOException {
     InputStream stream = UrlRewriteStreamFilterFactory.create(
-        getMimeType(), null, super.getInputStream(), rewriter, UrlRewriter.Direction.IN );
+        getMimeType(), null, super.getInputStream(), rewriter, this, UrlRewriter.Direction.IN );
     return new UrlRewriteRequestStream( stream );
   }
 

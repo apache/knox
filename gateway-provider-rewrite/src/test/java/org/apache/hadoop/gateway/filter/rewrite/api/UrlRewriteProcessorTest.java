@@ -69,7 +69,7 @@ public class UrlRewriteProcessorTest {
     processor.initialize( config );
 
     Template inputUrl = Parser.parse( "test-scheme://test-host:1/test-input-path" );
-    Template outputUrl = processor.rewrite( inputUrl, UrlRewriter.Direction.IN );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN );
 
     assertThat( "Expect rewrite to produce a new URL",
         outputUrl, notNullValue() );

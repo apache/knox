@@ -15,17 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.spi;
+package org.apache.hadoop.gateway.filter.rewrite.wip;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
+public interface UrlRewriteFunctionProcessor<T extends UrlRewriteFunctionDescriptor> extends UrlRewriteResolver {
 
-public interface UrlRewriteStepProcessor<T extends UrlRewriteStepDescriptor> {
-
-  String getType();
-
-  void initialize( T descriptor ) throws Exception;
-
-  UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception;
+  void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception;
 
   void destroy() throws Exception;
 

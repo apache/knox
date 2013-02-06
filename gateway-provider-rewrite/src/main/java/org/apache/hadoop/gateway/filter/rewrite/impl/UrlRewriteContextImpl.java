@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.util.HashMap;
@@ -29,14 +30,17 @@ import java.util.Set;
 
 public class UrlRewriteContextImpl implements UrlRewriteContext {
 
+  private Resolver resolver;
   private ContextParameters params;
   private UrlRewriter.Direction direction;
   private Template originalUrl;
   private Template currentUrl;
 
   public UrlRewriteContextImpl(
+      Resolver resolver,
       UrlRewriter.Direction direction,
       Template url ) {
+    this.resolver = resolver;
     this.params = new ContextParameters();
     this.direction = direction;
     this.originalUrl = url;
@@ -85,9 +89,9 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
     @Override
     public List<String> resolve( String name ) {
       List<String> values = map.get( name );
-//      if( values == null ) {
-//        values = resolver.resolve( name );
-//      }
+      if( values == null ) {
+        values = resolver.resolve( name );
+      }
       return values;
     }
 

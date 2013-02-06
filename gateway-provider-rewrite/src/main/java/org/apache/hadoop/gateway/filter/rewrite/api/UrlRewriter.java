@@ -17,12 +17,13 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 public interface UrlRewriter {
 
   enum Direction { IN, OUT }
 
-  Template rewrite( Template uri, Direction direction );
+  Template rewrite( Resolver resolver, Template uri, Direction direction );
 
 }

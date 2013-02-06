@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.hadoop.gateway.util.MimeTypes;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
@@ -36,12 +37,19 @@ public abstract class UrlRewriteStreamFilterFactory {
   private UrlRewriteStreamFilterFactory() {
   }
 
-  public static InputStream create( MimeType type, String name, InputStream stream, UrlRewriter rewriter, UrlRewriter.Direction direction ) throws IOException {
+  public static InputStream create(
+      MimeType type,
+      String name,
+      InputStream stream,
+      UrlRewriter rewriter,
+      Resolver resolver,
+      UrlRewriter.Direction direction )
+          throws IOException {
     InputStream filteredStream = null;
     Map<String,UrlRewriteStreamFilter> nameMap = getNameMap( type );
     UrlRewriteStreamFilter filterFactory = getFilter( nameMap, name );
     if( filterFactory != null ) {
-      filteredStream = filterFactory.filter( stream, MimeTypes.getCharset( type ), rewriter, direction );
+      filteredStream = filterFactory.filter( stream, MimeTypes.getCharset( type ), rewriter, resolver, direction );
     }
     return filteredStream;
   }

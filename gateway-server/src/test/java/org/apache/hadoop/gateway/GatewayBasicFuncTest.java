@@ -31,10 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -154,10 +157,40 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
+  public void testBasicOutboundHeaderUseCase() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String username = "hdfs";
+    String password = "hdfs-password";
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    driver.getMock( "NAMENODE" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( root + "/dir/file" )
+        .queryParam( "op", "CREATE" )
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=CREATE&user.name=hdfs" );
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( username, password )
+        .queryParam( "op", "CREATE" )
+        .expect()
+            //.log().ifError()
+        .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
+    String location = response.getHeader( "Location" );
+    log.debug( "Redirect location: " + response.getHeader( "Location" ) );
+    assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+  }
+
+  @Test
   public void testBasicHdfsUseCase() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
 
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
@@ -303,6 +336,7 @@ public class GatewayBasicFuncTest {
         .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
+    assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
     response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -314,6 +348,7 @@ public class GatewayBasicFuncTest {
         .when().put( location );
     location = response.getHeader( "Location" );
     log.debug( "Created location: " + location );
+    assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
     driver.assertComplete();
 
     /* Get the file.

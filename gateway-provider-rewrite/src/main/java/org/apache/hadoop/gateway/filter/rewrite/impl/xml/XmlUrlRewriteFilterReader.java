@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.xml.namespace.QName;
@@ -26,14 +27,18 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URISyntaxException;
 
+import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction;
+
 public class XmlUrlRewriteFilterReader extends XmlFilterReader {
 
+  private Resolver resolver;
   private UrlRewriter rewriter;
-  private UrlRewriter.Direction direction;
+  private Direction direction;
 
-  public XmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, UrlRewriter.Direction direction )
+  public XmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, Direction direction )
       throws IOException {
     super( reader );
+    this.resolver = resolver;
     this.rewriter = rewriter;
     this.direction = direction;
   }
@@ -42,7 +47,7 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   private String filterValueString( String name, String value ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( input, direction );
+      Template output = rewriter.rewrite( resolver, input, direction );
       value = output.toString();
     } catch( URISyntaxException e ) {
       e.printStackTrace();

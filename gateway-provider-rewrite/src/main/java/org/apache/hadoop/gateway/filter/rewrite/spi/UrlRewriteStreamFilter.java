@@ -18,9 +18,12 @@
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction;
 
 // The rewriter will try to find either a stream or reader createFilter for the mime/type and name.
 public interface UrlRewriteStreamFilter {
@@ -29,7 +32,7 @@ public interface UrlRewriteStreamFilter {
 
   String[] getNames();
 
-  InputStream filter( InputStream stream, String encoding, UrlRewriter rewriter, UrlRewriter.Direction direction )
+  InputStream filter( InputStream stream, String encoding, UrlRewriter rewriter, Resolver resolver, Direction direction )
       throws IOException;
 
 }

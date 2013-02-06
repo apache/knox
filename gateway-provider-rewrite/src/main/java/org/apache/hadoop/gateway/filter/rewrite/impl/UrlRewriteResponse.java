@@ -86,7 +86,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   public String rewriteValue( UrlRewriter rewriter, String value ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( input, UrlRewriter.Direction.OUT );
+      Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT );
       value = output.toString();
     } catch( URISyntaxException e ) {
       e.printStackTrace();
@@ -128,7 +128,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     MimeType type = getMimeType();
     UrlRewriter rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );
     InputStream filteredInput = UrlRewriteStreamFilterFactory.create(
-        type, null, input, rewriter, UrlRewriter.Direction.OUT );
+        type, null, input, rewriter, this, UrlRewriter.Direction.OUT );
     IOUtils.copyBytes( filteredInput, output, 4096 );
     output.close();
   }

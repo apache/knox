@@ -167,7 +167,7 @@ public abstract class XmlFilterReader extends Reader {
     try {
       if( stack.isEmpty() ) {
         // This can happen for whitespace outside of the root element.
-        outputValue = filterText( null, inputValue );
+        //outputValue = filterText( null, inputValue );
       } else {
         outputValue = filterText( stack.peek().getQName(), inputValue );
       }

@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,11 +46,12 @@ public class XmlUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
       InputStream stream,
       String encoding,
       UrlRewriter rewriter,
+      Resolver resolver,
       UrlRewriter.Direction direction )
           throws IOException {
     return new ReaderInputStream(
         new XmlUrlRewriteFilterReader(
-            new InputStreamReader( stream, encoding ), rewriter, direction ) );
+            new InputStreamReader( stream, encoding ), rewriter, resolver, direction ) );
   }
 
 }

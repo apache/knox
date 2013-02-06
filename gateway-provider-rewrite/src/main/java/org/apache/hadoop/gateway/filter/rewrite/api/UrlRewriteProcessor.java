@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteStepProcessorHold
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
 
   @Override
   public Template rewrite(
-      Template uri, Direction direction ) {
+      Resolver resolver, Template uri, Direction direction ) {
     Matcher<UrlRewriteStepProcessorHolder>.Match match = null;
     switch( direction ) {
       case IN:
@@ -88,7 +89,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
         break;
     }
     if( match != null ) {
-      UrlRewriteContext context = new UrlRewriteContextImpl( direction, uri );
+      UrlRewriteContext context = new UrlRewriteContextImpl( resolver, direction, uri );
       try {
         UrlRewriteStepProcessorHolder stepHolder = match.getValue();
         UrlRewriteStepStatus stepStatus = stepHolder.process( context );

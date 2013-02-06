@@ -189,9 +189,8 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
   }
 
   @Override
-  public void destroy() {
+  public void destroy() throws Exception {
     destroy( processor );
-    processor.destroy();
     if( descriptor instanceof UrlRewriteFlowDescriptor ) {
       for( UrlRewriteStepProcessorHolder childProcessor : childProcessors ) {
         destroy( childProcessor );

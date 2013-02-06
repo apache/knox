@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.form;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.IOException;
@@ -27,11 +28,13 @@ import java.net.URISyntaxException;
 
 public class FormUrlRewriteFilterReader extends FormFilterReader {
 
+  private Resolver resolver;
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;
 
-  public FormUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, UrlRewriter.Direction direction ) throws IOException {
+  public FormUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction ) throws IOException {
     super( reader );
+    this.resolver = resolver;
     this.rewriter = rewriter;
     this.direction = direction;
   }
@@ -40,7 +43,7 @@ public class FormUrlRewriteFilterReader extends FormFilterReader {
   protected String filterValue( String name, String value ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( input, direction );
+      Template output = rewriter.rewrite( resolver, input, direction );
       value = output.toString();
     } catch( URISyntaxException e ) {
       e.printStackTrace();

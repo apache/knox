@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.noop;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +44,7 @@ public class NoOpUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
       InputStream stream,
       String encoding,
       UrlRewriter rewriter,
+      Resolver resolver,
       UrlRewriter.Direction direction )
           throws IOException {
     return stream;
