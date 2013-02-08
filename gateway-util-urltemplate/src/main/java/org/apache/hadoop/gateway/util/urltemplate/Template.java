@@ -223,17 +223,22 @@ public class Template {
         }
         String paramName = segment.getParamName();
         for( Segment.Value value: segment.getValues() ) {
+          String valuePattern = value.getPattern();
           if( paramName != null && paramName.length() > 0 ) {
             b.append( segment.getQueryName() );
             b.append( "={" );
             b.append( segment.getParamName() );
-            b.append( '=' );
-            b.append( value.getPattern() );
+            if( valuePattern != null ) {
+              b.append( '=' );
+              b.append( valuePattern );
+            }
             b.append( '}' );
           } else {
             b.append( segment.getQueryName() );
-            b.append( "=" );
-            b.append( value.getPattern() );
+            if( valuePattern != null ) {
+              b.append( "=" );
+              b.append( valuePattern );
+            }
           }
         }
       }

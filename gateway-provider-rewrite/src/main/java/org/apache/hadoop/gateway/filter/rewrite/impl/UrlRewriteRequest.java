@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -131,7 +132,11 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public String getHeader( String name ) {
-    return rewriteValue( rewriter, super.getHeader( name ) );
+    String value = super.getHeader( name );
+    if( value != null ) {
+      value = rewriteValue( rewriter, super.getHeader( name ) );
+    }
+    return value;
   }
 
   @SuppressWarnings("unchecked")
@@ -141,7 +146,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public List<String> resolve( String name ) {
-    return null;
+    return Collections.EMPTY_LIST;
   }
 
   private class EnumerationRewriter implements Enumeration<String> {

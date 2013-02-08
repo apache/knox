@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.net.URISyntaxException;
@@ -55,6 +56,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     UrlRewriteRulesDescriptor rules = context.getDescriptor( "rewrite" );
     UrlRewriteRuleDescriptor rule;
     UrlRewriteActionRewriteDescriptorExt rewrite;
+    UrlRewriteMatchDescriptor match;
 
     rule = rules.addRule( getRole() + "/" + getName() + "/namenode/root/inbound" )
         .directions( "inbound" )
@@ -70,15 +72,22 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
     rule = rules.addRule( getRole() + "/" + getName() + "/datanode/inbound" )
         .directions( "inbound" )
-        .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
+        .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?**" );
+    //TODO: If the input type is wrong it throws a NPE.
+    rule.addStep( "decode-query" );
+    match = rule.addStep( "match" );
+    match.pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( "http://{host}:{port}/{path=**}?{**}" );
 
     rule = rules.addRule( getRole() + "/" + getName() + "/datanode/outbound" )
         .directions( "outbound" )
-        .pattern( "*://{host}:{port}/{path=**}?{**}" );
+        .pattern( "*://*:*/**?**" );
+    match = rule.addStep( "match" );
+    match.pattern( "*://{host}:{port}/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
+    rule.addStep( "encode-query" );
   }
 
   public void contributeNameNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
@@ -93,18 +102,18 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.role( service.getRole() );
     fileResource.pattern( NAMENODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
+    addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
-    addNameNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
   public void contributeDataNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
-    fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?{host}&{port}&**" );
+    fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
+    addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
-    addDataNodeRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
@@ -121,19 +130,10 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     context.contributeFilter( service, resource, role, name, null );
   }
 
-  private void addNameNodeRewriteFilter(
-      DeploymentContext context,
-      Service service,
-      ResourceDescriptor resource ) throws URISyntaxException {
+  private void addRewriteFilter(
+      DeploymentContext context, Service service, ResourceDescriptor resource ) throws URISyntaxException {
     context.contributeFilter( service, resource, "rewrite", null, null );
 
-  }
-
-  private void addDataNodeRewriteFilter(
-      DeploymentContext context,
-      Service service,
-      ResourceDescriptor resource ) throws URISyntaxException {
-    context.contributeFilter( service, resource, "rewrite", null, null );
   }
 
 }

@@ -15,16 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.util.urltemplate;
+package org.apache.hadoop.gateway.filter.rewrite.ext;
 
-public class Scheme extends Segment {
+public class UrlRewriteActionQueryEncodeDescriptor
+    extends AbstractUrlRewriteActionDescriptor
+    implements UrlRewriteActionDescriptor {
 
-  public Scheme( String paramName, String valuePattern ) {
-    super( paramName, valuePattern );
+  static final String TYPE_NAME = "encode-query";
+
+  public UrlRewriteActionQueryEncodeDescriptor() {
+    super( TYPE_NAME );
   }
 
-  public Scheme( Scheme scheme ) {
-    super( scheme );
+  @Override
+  public String getParam() {
+    return null;
   }
 
 }

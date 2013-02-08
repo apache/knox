@@ -121,14 +121,11 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.PostAuthenticationFilter" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "rewrite" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/role", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
-//    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/param[1]/name", equalTo( "rewrite" ) ) );
-//    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/param[1]/value",
-//        equalTo( "*://{host}:{port}/webhdfs/v1/{path=**}?{**} {gateway.url}/datanode/api/v1/{path=**}?{host}&{port}&{**}" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/role", equalTo( "identity-assertion" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/name", equalTo( "http-client" ) ) );

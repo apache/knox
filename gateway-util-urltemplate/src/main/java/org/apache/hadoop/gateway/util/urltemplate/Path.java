@@ -23,4 +23,8 @@ public class Path extends Segment {
     super( paramName, pathPattern );
   }
 
+  public Path(Path that ) {
+    super( that );
+  }
+
 }

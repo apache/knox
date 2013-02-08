@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Builder {
 
@@ -57,6 +58,100 @@ public class Builder {
     this.fragment = null;
   }
 
+  public Builder( Template template ) {
+    this.hasScheme = template.hasScheme();
+    this.scheme = copyScheme( template.getScheme() );
+    this.hasAuthority = template.hasAuthority();
+    this.username = copyUsername( template.getUsername() );
+    this.password = copyPassword( template.getPassword() );
+    this.host = copyHost( template.getHost() );
+    this.port = copyPort( template.getPort() );
+    this.isAbsolute = template.isAbsolute();
+    this.isDirectory = template.isDirectory();
+    this.path = copyPath( template.getPath() );
+    this.hasQuery = template.hasQuery();
+    this.query = copyQuery( template.getQuery() );
+    this.extra = copyExtra( template.getExtra() );
+    this.hasFragment = template.hasFragment();
+    this.fragment = copyFragment( template.getFragment() );
+  }
+
+  private Scheme copyScheme( Scheme orig ) {
+    Scheme copy = null;
+    if( orig != null ) {
+      copy = new Scheme( orig );
+    }
+    return copy;
+  }
+
+  private Username copyUsername( Username orig ) {
+    Username copy = null;
+    if( orig != null ) {
+      copy = new Username( orig );
+    }
+    return copy;
+  }
+
+  private Password copyPassword( Password orig ) {
+    Password copy = null;
+    if( orig != null ) {
+      copy = new Password( orig );
+    }
+    return copy;
+  }
+
+  private Host copyHost( Host orig ) {
+    Host copy = null;
+    if( orig != null ) {
+      copy = new Host( orig );
+    }
+    return copy;
+  }
+
+  private Port copyPort( Port orig ) {
+    Port copy = null;
+    if( orig != null ) {
+      copy = new Port( orig );
+    }
+    return copy;
+  }
+
+  private Query copyExtra( Query orig ) {
+    Query copy = null;
+    if( orig != null ) {
+      copy = new Query( orig );
+    }
+    return copy;
+  }
+
+  private List<Path> copyPath( List<Path> orig ) {
+    List<Path> copy = new ArrayList<Path>();
+    if( orig != null ) {
+      for( Path path : orig ) {
+        copy.add( new Path( path ) );
+      }
+    }
+    return copy;
+  }
+
+  private Fragment copyFragment( Fragment orig ) {
+    Fragment copy = null;
+    if( orig != null ) {
+      copy = new Fragment( orig );
+    }
+    return copy;
+  }
+
+  private LinkedHashMap<String, Query> copyQuery( Map<String, Query> orig ) {
+    LinkedHashMap<String,Query> copy = new LinkedHashMap<String, Query>();
+    if( orig != null ) {
+      for( Map.Entry<String,Query> entry : orig.entrySet() ) {
+        copy.put( entry.getKey(), new Query( entry.getValue() ) );
+      }
+    }
+    return copy;
+  }
+
   public Template build() {
     return new Template(
         scheme, hasScheme,
@@ -70,43 +165,79 @@ public class Builder {
     this.hasScheme = hasScheme;
   }
 
+  public Scheme getScheme() {
+    return this.scheme;
+  }
+
   public void setScheme( String paramName, String valuePattern ) {
     this.scheme = new Scheme( paramName, valuePattern );
     setHasScheme( true );
+  }
+
+  public boolean getHashAuthority() {
+    return hasAuthority;
   }
 
   public void setHasAuthority( boolean hasAuthority ) {
     this.hasAuthority = hasAuthority;
   }
 
+  public Username getUsername() {
+    return username;
+  }
+
   public void setUsername( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.username = new Username( paramName, valuePattern );
+    username = new Username( paramName, valuePattern );
+  }
+
+  public Password getPassword() {
+    return password;
   }
 
   public void setPassword( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.password = new Password( paramName, valuePattern );
+    password = new Password( paramName, valuePattern );
+  }
+
+  public Host getHost() {
+    return host;
   }
 
   public void setHost( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.host = new Host( paramName, valuePattern );
+    host = new Host( paramName, valuePattern );
+  }
+
+  public Port getPort() {
+    return port;
   }
 
   public void setPort( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    this.port = new Port( paramName, valuePattern );
+    port = new Port( paramName, valuePattern );
+  }
+
+  public boolean getIsAbsolute() {
+    return isAbsolute;
   }
 
   public Builder setIsAbsolute( boolean isAbsolute ) {
     this.isAbsolute = isAbsolute;
     return this;
   }
-  
+
+  public boolean getIsDirectory() {
+    return isDirectory;
+  }
+
   public Builder setIsDirectory( boolean isDirectory ) {
     this.isDirectory = isDirectory;
     return this;
+  }
+
+  public List<Path> getPath() {
+    return path;
   }
 
   public Builder addPath( String paramName, String valuePattern ) {
@@ -115,9 +246,17 @@ public class Builder {
     return this;
   }
 
+  public boolean getHasQuery() {
+    return hasQuery;
+  }
+
   public Builder setHasQuery( boolean hasQuery ) {
     this.hasQuery = hasQuery;
     return this;
+  }
+
+  public Map<String,Query> getQuery() {
+    return this.query;
   }
 
   public Builder addQuery( String queryName, String paramName, String valuePattern ) {
@@ -135,18 +274,26 @@ public class Builder {
         segment = new Query( queryName, paramName, valuePattern );
         query.put( queryName, segment );
       } else {
-        if( segment.getParamName().equals( paramName ) ) {
-          // Can't have two queryParam names for the same query name: ?query={param1}&query={param2}
-          //TODO throw new URISyntaxException()?
-        }
+        // Can't have two queryParam names for the same query name: ?query={param1}&query={param2} in a template.
+        // Should probably throw an exception in this case.  However, you can have this in a valid URL.
+        // This causes a problem with how templates are used for both URLs and Templates.
+        // For a template only the first parameter name will be used.
         segment.addValue( valuePattern );
       }
     }
     return this;
   }
 
+  public boolean getHasFragment() {
+    return hasFragment;
+  }
+
   public void setHasFragment( boolean hasFragment ) {
     this.hasFragment = hasFragment;
+  }
+
+  public Fragment getFragment() {
+    return fragment;
   }
 
   public void setFragment( String paramName, String valuePattern ) {

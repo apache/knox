@@ -37,21 +37,22 @@ abstract class Segment {
   public static final int GLOB = 5;
   public static final int UNKNOWN = 6;
 
-  private String paramName;
-  private Value first;
+  private String paramName; // ?queryName={paramName=value}
   private Map<String,Value> values;
-//  private int type;
-//  private String valuePattern;
-//  private Pattern regex;
-//  private int minRequired;
-//  private int maxAllowed;
 
   public Segment( String paramName, String valuePattern ) {
     this.paramName = paramName;
-    this.first = new Value( valuePattern );
     this.values = new LinkedHashMap<String,Value>();
-    this.values.put( valuePattern, first );
-//    this.valuePattern = valuePattern;
+    this.values.put( valuePattern, new Value( valuePattern ) );
+  }
+
+  protected Segment( Segment that ) {
+    this.paramName = that.paramName;
+    this.values = new LinkedHashMap<String,Value>();
+    for( Value thatValue : that.getValues() ) {
+      Value thisValue = new Value( thatValue );
+      this.values.put( thisValue.getPattern(), thisValue );
+    }
   }
 
   @Override
@@ -87,16 +88,12 @@ abstract class Segment {
   }
 
   public Value getFirstValue() {
+    Value first = null;
+    if( !values.isEmpty() ) {
+      first = values.values().iterator().next();
+    }
     return first;
   }
-
-//  public int getMinRequired() {
-//    return minRequired;
-//  }
-//
-//  public int getMaxAllowed() {
-//    return maxAllowed;
-//  }
 
   public boolean matches( Segment that ) {
     if( getClass().isInstance( that ) ) {
@@ -130,12 +127,18 @@ abstract class Segment {
         this.type = STAR;
       } else if( GLOB_PATTERN.equals( pattern ) ) {
         type = GLOB;
-      } else if ( pattern.contains( STAR_PATTERN ) ) {
+      } else if ( pattern != null && pattern.contains( STAR_PATTERN ) ) {
         this.type = REGEX;
         this.regex = compileRegex( pattern );
       } else {
         this.type = STATIC;
       }
+    }
+
+    private Value( Value that ) {
+      this.type = that.type;
+      this.pattern = that.pattern;
+      this.regex = that.regex;
     }
 
     public int getType() {

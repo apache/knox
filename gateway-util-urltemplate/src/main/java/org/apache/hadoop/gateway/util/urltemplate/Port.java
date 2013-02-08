@@ -23,4 +23,7 @@ public class Port extends Segment {
     super( paramName, valuePattern );
   }
 
+  public Port( Port port ) {
+    super( port );
+  }
 }

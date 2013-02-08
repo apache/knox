@@ -30,7 +30,7 @@ public interface UrlRewriteFlowDescriptor<T> extends UrlRewriteStepDescriptor<T>
 
   T flow( UrlRewriteStepFlow flow );
 
-  List<? extends UrlRewriteStepDescriptor> steps();
+  List<UrlRewriteStepDescriptor> steps();
 
 //  UrlRewriteMatchDescriptor addMatch();
 //

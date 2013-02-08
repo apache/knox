@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -28,19 +29,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Expander {
 
+  private static Params EMPTY_PARAMS = new EmptyParams();
+
   public static URI expand( Template template, Params params ) throws URISyntaxException {
-    return new Expander().expandTemplate( template, params );
+    return new Expander().expandToUri( template, params );
   }
 
-  public URI expandTemplate( Template template, Params params ) throws URISyntaxException {
+  public URI expandToUri( Template template, Params params ) throws URISyntaxException {
+    return new URI( expandToString( template, params ) );
+  }
+
+  public Template expandToTemplate( Template template, Params params ) throws URISyntaxException {
+    //TODO: This could be much more efficient if it didn't create and then parse a string.
+    return Parser.parse( expandToString( template, params ) );
+  }
+
+  public String expandToString( Template template, Params params ) {
     StringBuilder builder = new StringBuilder();
+    if( params == null ) {
+      params = EMPTY_PARAMS;
+    }
     Set<String> names = new HashSet<String>( params.getNames() );
     expandScheme( template, names, params, builder );
     expandAuthority( template, names, params, builder );
     expandPath( template, names, params, builder );
     expandQuery( template, names, params, builder );
     expandFragment( template, names, params, builder );
-    return new URI( builder.toString() );
+    return builder.toString();
   }
 
   private static void expandScheme( Template template, Set<String> names, Params params, StringBuilder builder ) {
@@ -122,6 +137,8 @@ public class Expander {
       } else {
         builder.append( values.get( 0 ) );
       }
+    } else {
+      builder.append( segment.getFirstValue().getPattern() );
     }
   }
 
@@ -154,8 +171,10 @@ public class Expander {
             case( Segment.STATIC ):
               String pattern = value.getPattern();
               builder.append( queryName );
-              builder.append( "=" );
-              builder.append( pattern );
+              if( pattern != null ) {
+                builder.append( "=" );
+                builder.append( pattern );
+              }
               break;
             case( Segment.DEFAULT ):
             case( Segment.GLOB ):
@@ -243,9 +262,23 @@ public class Expander {
           List<String> values = params.resolve( name );
           if( values != null && !values.isEmpty() ) {
             builder.append( values.get( 0 ) );
+          } else {
+            builder.append( segment.getFirstValue().getPattern() );
           }
           break;
       }
+    }
+  }
+
+  private static class EmptyParams implements Params {
+    @Override
+    public Set<String> getNames() {
+      return Collections.EMPTY_SET;
+    }
+
+    @Override
+    public List<String> resolve( String name ) {
+      return Collections.EMPTY_LIST;
     }
   }
 

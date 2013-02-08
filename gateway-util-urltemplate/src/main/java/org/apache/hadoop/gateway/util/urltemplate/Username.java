@@ -23,4 +23,8 @@ public class Username extends Segment {
     super( paramName, valuePattern );
   }
 
+  public Username( Username username ) {
+    super( username );
+  }
+
 }

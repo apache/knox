@@ -23,4 +23,7 @@ public class Host extends Segment {
     super( paramName, valuePattern );
   }
 
+  public Host( Host host ) {
+    super( host );
+  }
 }

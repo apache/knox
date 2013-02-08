@@ -285,13 +285,19 @@ public class GatewayServer {
               FileUtils.deleteQuietly( file );
             }
           } else {
-            if( !warDir.exists() ) {
-              log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
-              WebArchive war = DeploymentFactory.createDeployment( config, topology );
-              File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
-              tmp.renameTo( warDir );
+            try {
+              if( !warDir.exists() ) {
+                log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
+                WebArchive war = null;
+                war = DeploymentFactory.createDeployment( config, topology );
+                File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
+                tmp.renameTo( warDir );
+              }
+              internalDeploy( topology, warDir );
+            } catch( Throwable e ) {
+              //TODO: This needs proper i18n logging
+              e.printStackTrace();
             }
-            internalDeploy( topology, warDir );
           }
         }
       }

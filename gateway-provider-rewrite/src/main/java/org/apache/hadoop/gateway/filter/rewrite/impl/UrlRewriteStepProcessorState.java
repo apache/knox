@@ -36,8 +36,22 @@ class UrlRewriteStepProcessorState {
   private UrlRewriteStepProcessorHolder peek() {
     if( next == null && steps.hasNext() ) {
       next = steps.next();
+      return next;
+    } else if ( next != null ) {
+      return next;
+    } else {
+      return null;
     }
-    return next;
+  }
+
+  public boolean hasNextCondition() {
+    UrlRewriteStepProcessorHolder curr = peek();
+    return curr != null && curr.isCondition();
+  }
+
+  public boolean hasNextAction() {
+    UrlRewriteStepProcessorHolder curr = peek();
+    return curr != null && curr.isAction();
   }
 
   private UrlRewriteStepProcessorHolder take( UrlRewriteStepStatus lastStatus ) {
@@ -47,29 +61,20 @@ class UrlRewriteStepProcessorState {
     return step;
   }
 
-  public boolean hasNextCondition() {
-    UrlRewriteStepProcessorHolder curr = peek();
-    return curr != null && curr.isCondition();
-  }
-
   public UrlRewriteStepProcessorHolder nextCondition( UrlRewriteStepStatus lastStatus ){
     if( hasNextCondition() ) {
-      next = take( lastStatus );
+      return take( lastStatus );
+    } else {
+      return null;
     }
-    return next;
-  }
-
-  public boolean hasNextAction() {
-    UrlRewriteStepProcessorHolder curr = peek();
-    return curr != null && curr.isAction();
   }
 
   public UrlRewriteStepProcessorHolder nextAction( UrlRewriteStepStatus lastStatus ){
-    UrlRewriteStepProcessorHolder next = null;
     if( hasNextAction() ) {
-      next = take( lastStatus );
+      return take( lastStatus );
+    } else {
+      return null;
     }
-    return next;
   }
 
   public UrlRewriteStepStatus status(){
@@ -77,7 +82,7 @@ class UrlRewriteStepProcessorState {
   }
 
   public boolean hasNext() {
-      return next == null && steps.hasNext();
+      return next != null || steps.hasNext();
   }
 
 }

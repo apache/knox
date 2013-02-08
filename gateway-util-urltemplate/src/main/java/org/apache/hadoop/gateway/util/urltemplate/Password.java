@@ -23,4 +23,8 @@ public class Password extends Segment {
     super( paramName, valuePattern );
   }
 
+  public Password( Password password ) {
+    super( password );
+  }
+
 }

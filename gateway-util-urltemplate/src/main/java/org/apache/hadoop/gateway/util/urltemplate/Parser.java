@@ -321,7 +321,7 @@ public class Parser {
         String nameValue[] = split( token, '=' );
         if( nameValue.length == 1 ) {
           String queryName = nameValue[ 0 ];
-          builder.addQuery( queryName, Segment.ANONYMOUS_PARAM, "*" );
+          builder.addQuery( queryName, Segment.ANONYMOUS_PARAM, null );
         } else {
           String queryName = nameValue[ 0 ];
           String[] paramPattern = parseTemplateToken( nameValue[ 1 ] );
@@ -341,19 +341,23 @@ public class Parser {
   private static String[] parseTemplateToken( String t ) {
     String[] a;
     int l = t.length();
-    int b = ( t.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : 0 );
-    int e = ( t.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : l );
-    int i = t.indexOf( NAME_PATTERN_SEPARATOR, b );
-    // If this is a parameter template (ie {...}
-    if( b > 0 ) {
-      if( i < 0 ) {
-        a = new String[]{ t.substring( b, e ), Segment.STAR_PATTERN };
+    if( l > 0 ) {
+      int b = ( t.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : 0 );
+      int e = ( t.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : l );
+      int i = t.indexOf( NAME_PATTERN_SEPARATOR, b );
+      // If this is a parameter template (ie {...}
+      if( b > 0 ) {
+        if( i < 0 ) {
+          a = new String[]{ t.substring( b, e ), Segment.STAR_PATTERN };
+        } else {
+          a = new String[]{ t.substring( b, i ), t.substring( i+1, e ) };
+        }
+      // Otherwise this is an anonymous template
       } else {
-        a = new String[]{ t.substring( b, i ), t.substring( i+1, e ) };
+        a = new String[]{ Segment.ANONYMOUS_PARAM, t.substring( b, e ) };
       }
-    // Otherwise this is an anonymous template
     } else {
-      a = new String[]{ Segment.ANONYMOUS_PARAM, t.substring( b, e ) };
+      a = new String[]{ Segment.ANONYMOUS_PARAM, null };
     }
     return a;
   }

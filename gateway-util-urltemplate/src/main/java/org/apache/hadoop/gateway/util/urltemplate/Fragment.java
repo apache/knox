@@ -23,4 +23,7 @@ public class Fragment extends Segment {
     super( paramName, valuePattern );
   }
 
+  public Fragment( Fragment fragment ) {
+    super( fragment );
+  }
 }

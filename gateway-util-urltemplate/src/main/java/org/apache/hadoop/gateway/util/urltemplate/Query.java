@@ -26,6 +26,11 @@ public class Query extends Segment {
     this.queryName = queryName;
   }
 
+  public Query( Query that ) {
+    super( that );
+    this.queryName = that.queryName;
+  }
+
   public String getQueryName() {
     return queryName;
   }

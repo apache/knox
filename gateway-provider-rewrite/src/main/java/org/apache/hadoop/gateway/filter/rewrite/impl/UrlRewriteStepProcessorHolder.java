@@ -51,27 +51,41 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
   @Override
   @SuppressWarnings( "unchecked" )
   public void initialize( UrlRewriteStepDescriptor descriptor ) throws Exception {
-    this.descriptor = descriptor;
-    this.isCondition = descriptor instanceof UrlRewriteFlowDescriptor;
-    if( descriptor instanceof UrlRewriteFlowDescriptor ) {
-      this.childProcessors = new ArrayList<UrlRewriteStepProcessorHolder>();
-      UrlRewriteFlowDescriptor flowDescriptor = (UrlRewriteFlowDescriptor)descriptor;
-      Iterator<UrlRewriteStepDescriptor<?>> stepDescriptors = flowDescriptor.steps().iterator();
-      while( stepDescriptors.hasNext() ) {
-        UrlRewriteStepDescriptor stepDescriptor = stepDescriptors.next();
-        UrlRewriteStepProcessorHolder stepProcessor = new UrlRewriteStepProcessorHolder();
-        stepProcessor.initialize( stepDescriptor );
-        childProcessors.add( stepProcessor );
-      }
-    }
-    this.processor = UrlRewriteStepProcessorFactory.create( descriptor );
-    initializeUnchecked( this.processor, descriptor );
+    UrlRewriteStepProcessor processor = UrlRewriteStepProcessorFactory.create( descriptor );
+    processor.initialize( descriptor );
+    initialize( descriptor, processor );
   }
 
+  // For unit testing.
   @SuppressWarnings("unchecked")
-  private static void initializeUnchecked( UrlRewriteStepProcessor processor, UrlRewriteStepDescriptor descriptor )
-      throws Exception {
-    processor.initialize( descriptor );
+  void initialize( UrlRewriteStepDescriptor descriptor, UrlRewriteStepProcessor processor ) throws Exception {
+    this.descriptor = descriptor;
+    this.processor = processor;
+    this.isCondition = descriptor instanceof UrlRewriteFlowDescriptor;
+    this.childProcessors = new ArrayList<UrlRewriteStepProcessorHolder>();
+    if( isCondition ) {
+      UrlRewriteFlowDescriptor flowDescriptor = (UrlRewriteFlowDescriptor)descriptor;
+      List<UrlRewriteStepDescriptor> stepList = flowDescriptor.steps();
+      if( stepList != null && !stepList.isEmpty() ) {
+        Iterator<UrlRewriteStepDescriptor> stepIterator = stepList.iterator();
+        while( stepIterator.hasNext() ) {
+          UrlRewriteStepDescriptor stepDescriptor = stepIterator.next();
+          UrlRewriteStepProcessorHolder stepProcessor = new UrlRewriteStepProcessorHolder();
+          stepProcessor.initialize( stepDescriptor );
+          childProcessors.add( stepProcessor );
+        }
+      }
+    }
+  }
+
+  // For unit testing.
+  UrlRewriteStepDescriptor getDescriptor() {
+    return descriptor;
+  }
+
+  // For unit testing.
+  UrlRewriteStepProcessor getProcessor() {
+    return processor;
   }
 
   @Override
@@ -80,7 +94,9 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
     // If initialization failed then fail processing
     if( processor != null ) {
       status = processor.process( context );
-      if( UrlRewriteStepStatus.SUCCESS == status && descriptor instanceof UrlRewriteFlowDescriptor ) {
+      if( UrlRewriteStepStatus.SUCCESS == status &&
+          descriptor instanceof UrlRewriteFlowDescriptor &&
+          !childProcessors.isEmpty() ) {
         UrlRewriteFlowDescriptor flowDescriptor = (UrlRewriteFlowDescriptor)descriptor;
         UrlRewriteStepFlow flow = flowDescriptor.flow();
         if( flow == null ) {

@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -837,6 +838,50 @@ public class ParserTest {
     assertThat( query.getQueryName(), equalTo( "queryParam" ) );
     assertThat( query.getParamName(), equalTo( "queryParam" ) );
     assertThat( query.getFirstValue().getPattern(), equalTo( "value" ) );
+  }
+
+  @Test
+  public void testAllWildcardUseCases() throws URISyntaxException {
+    Template template = Parser.parse( "*://*:*/**?**" );
+    assertThat( template, notNullValue() );
+
+    template = Parser.parse( "*://*:*/**/path?{**}" );
+    assertThat( template, notNullValue() );
+
+    template = Parser.parse( "*://*:*/**/namenode/api/v1/?{**}" );
+    assertThat( template, notNullValue() );
+
+  }
+
+  @Test
+  public void testQueryNameWithoutValue() throws URISyntaxException {
+    Template template;
+    String string;
+    Expander expander = new Expander();
+
+    template = Parser.parse( "*://*:*/**?X" );
+    assertThat( template, notNullValue() );
+    assertThat( template.getQuery().get( "X" ), notNullValue() );
+    string = expander.expandToString( template, null );
+    assertThat( string, is( "*://*:*/**?X" ) );
+
+    template = Parser.parse( "*://*:*/**?X=" );
+    assertThat( template, notNullValue() );
+    assertThat( template.getQuery().get( "X" ), notNullValue() );
+    string = expander.expandToString( template, null );
+    assertThat( string, is( "*://*:*/**?X" ) );
+
+    template = Parser.parse( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" );
+    assertThat( template, notNullValue() );
+    assertThat( template.getQuery().get( "aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ), notNullValue() );
+    string = expander.expandToString( template, null );
+    assertThat( string, is( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ) );
+
+    template = Parser.parse( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM=" );
+    assertThat( template, notNullValue() );
+    assertThat( template.getQuery().get( "aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ), notNullValue() );
+    string = expander.expandToString( template, null );
+    assertThat( string, is( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ) );
   }
 
 }
