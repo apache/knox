@@ -47,6 +47,7 @@ public class SecureQueryDeploymentContributor
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
     if( provider.isEnabled() ) {
+      //TODO: Do something with the keystore service.
 //      UrlRewriteRulesDescriptor rules = context.getDescriptor( REWRITE_ROLE_NAME );
 //      if( rules != null ) {
 //        HostmapFunctionDescriptor func = rules.addFunction( HostmapFunctionDescriptor.FUNCTION_NAME );
