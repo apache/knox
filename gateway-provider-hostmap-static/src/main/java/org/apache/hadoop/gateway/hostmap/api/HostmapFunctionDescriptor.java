@@ -15,12 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.wip;
+package org.apache.hadoop.gateway.hostmap.api;
 
-import java.net.URI;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 
-public interface UrlRewriteEnvironment extends UrlRewriteResolver {
+public class HostmapFunctionDescriptor implements UrlRewriteFunctionDescriptor<HostmapFunctionDescriptor> {
 
-  URI getResource( String name );
+  public static final String FUNCTION_NAME = "hostmap";
+
+  private String configLocation;
+
+  @Override
+  public String name() {
+    return FUNCTION_NAME;
+  }
+
+  public HostmapFunctionDescriptor config( String configLocation ) {
+    this.configLocation = configLocation;
+    return this;
+  }
+
+  public String config() {
+    return configLocation;
+  }
+
+  public String getConfig() {
+    return config();
+  }
+
+  public void setConfig( String configLocation ) {
+    config( configLocation );
+  }
 
 }

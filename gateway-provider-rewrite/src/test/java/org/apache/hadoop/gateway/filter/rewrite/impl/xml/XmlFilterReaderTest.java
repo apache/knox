@@ -247,12 +247,12 @@ public class XmlFilterReaderTest {
     public void testRuleParsing() throws IOException, SAXException {
       Reader reader = new StringReader( "<rules/>" );
       UrlRewriteRulesDescriptor config = digester.parse( reader );
-      assertThat( config.rules().isEmpty(), is( true ) );
+      assertThat( config.getRules().isEmpty(), is( true ) );
 
       reader = new StringReader( "<rules><rule></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().size(), is( 1 ) );
-      UrlRewriteRuleDescriptor rule = config.rules().get( 0 );
+      assertThat( config.getRules().size(), is( 1 ) );
+      UrlRewriteRuleDescriptor rule = config.getRules().get( 0 );
       assertThat( rule, notNullValue() );
       assertThat( rule.name(), nullValue() );
       assertThat( rule.pattern(), nullValue() );
@@ -261,8 +261,8 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule name=\"test-name\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule, notNullValue() );
       assertThat( rule.name(), is( "test-name" ) );
       assertThat( rule.pattern(), nullValue() );
@@ -271,8 +271,8 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule pattern=\"test-pattern\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule, notNullValue() );
       assertThat( rule.name(), nullValue() );
       assertThat( rule.pattern(), is( "test-pattern" ) );
@@ -281,8 +281,8 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule dir=\"request\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule, notNullValue() );
       assertThat( rule.name(), nullValue() );
       assertThat( rule.pattern(), nullValue() );
@@ -292,8 +292,8 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule flow=\"all\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule, notNullValue() );
       assertThat( rule.name(), nullValue() );
       assertThat( rule.pattern(), nullValue() );
@@ -308,122 +308,122 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule dir=\"request\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"Request\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"in\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"req\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"Req\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"REQ\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"inbound\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"Inbound\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"INBOUND\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"in\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"In\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"IN\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"i\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
       reader = new StringReader( "<rules><rule dir=\"I\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
 
 
       reader = new StringReader( "<rules><rule dir=\"response\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"Response\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"out\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"res\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"Res\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"RES\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"outbound\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"Outbound\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"OUTBOUND\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"out\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"Out\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"OUT\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"o\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
       reader = new StringReader( "<rules><rule dir=\"O\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.OUT ) );
 
 
       reader = new StringReader( "<rules><rule dir=\"request,response\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), hasItem( UrlRewriter.Direction.IN ) );
-      assertThat( config.rules().get( 0 ).directions(), hasItem( UrlRewriter.Direction.OUT ) );
+      assertThat( config.getRules().get( 0 ).directions(), hasItem( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), hasItem( UrlRewriter.Direction.OUT ) );
     }
 
     @Test
@@ -433,7 +433,7 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule dir=\"request\"></rule></rules>" );
       config = digester.parse( reader );
-      assertThat( config.rules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
+      assertThat( config.getRules().get( 0 ).directions(), contains( UrlRewriter.Direction.IN ) );
     }
 
     @Test
@@ -447,9 +447,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><match></match></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       match = (UrlRewriteMatchDescriptorExt)rule.steps().get( 0 );
@@ -460,14 +460,14 @@ public class XmlFilterReaderTest {
 
       reader = new StringReader( "<rules><rule><match type=\"test-type\" op=\"test-op\" pattern=\"test-pattern\"></match></rule></rules>" );
       config = digester.parse( reader );
-      match = (UrlRewriteMatchDescriptorExt)config.rules().get( 0 ).steps().get( 0 );
+      match = (UrlRewriteMatchDescriptorExt)config.getRules().get( 0 ).steps().get( 0 );
       //assertThat( match.type(), is("test-type") );
       assertThat( match.operation(), is( "test-op" ) );
       assertThat( match.pattern(), is( "test-pattern" ) );
 
       reader = new StringReader( "<rules><rule name=\"test\"><match><match pattern=\"test-pattern\"></match></match></rule></rules>" );
       config = digester.parse( reader );
-      steps = ((UrlRewriteMatchDescriptor)config.rule( "test" ).steps().get( 0 )).steps();
+      steps = ((UrlRewriteMatchDescriptor)config.getRule( "test" ).steps().get( 0 )).steps();
       assertThat( steps, notNullValue() );
       assertThat( steps.size(), is( 1 ) );
       assertThat( steps.get( 0 ), notNullValue() );
@@ -486,9 +486,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><check></check></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       step = (UrlRewriteCheckDescriptorExt)rule.steps().get( 0 );
@@ -501,9 +501,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><check type=\"test-type\" op=\"test-op\" input=\"test-input\" value=\"test-value\"></check></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       step = (UrlRewriteCheckDescriptorExt)rule.steps().get( 0 );
@@ -524,9 +524,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><action></action></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       step = (AbstractUrlRewriteActionDescriptor)rule.steps().get( 0 );
@@ -537,9 +537,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><action type=\"test-type\" param=\"test-param\"></action></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       step = (AbstractUrlRewriteActionDescriptor)rule.steps().get( 0 );
@@ -558,9 +558,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><control></control></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       UrlRewriteControlDescriptor step = (UrlRewriteControlDescriptor)rule.steps().get( 0 );
@@ -570,9 +570,9 @@ public class XmlFilterReaderTest {
       reader = new StringReader( "<rules><rule><control flow=\"or\"></control></rule></rules>" );
       config = digester.parse( reader );
       assertThat( config, notNullValue() );
-      assertThat( config.rules(), notNullValue() );
-      assertThat( config.rules().size(), is( 1 ) );
-      rule = config.rules().get( 0 );
+      assertThat( config.getRules(), notNullValue() );
+      assertThat( config.getRules().size(), is( 1 ) );
+      rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
       step = (UrlRewriteControlDescriptor)rule.steps().get( 0 );

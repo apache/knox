@@ -19,10 +19,11 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
-import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,14 +31,14 @@ import java.util.Set;
 
 public class UrlRewriteContextImpl implements UrlRewriteContext {
 
-  private Resolver resolver;
+  private UrlRewriteResolver resolver;
   private ContextParameters params;
   private UrlRewriter.Direction direction;
   private Template originalUrl;
   private Template currentUrl;
 
   public UrlRewriteContextImpl(
-      Resolver resolver,
+      UrlRewriteResolver resolver,
       UrlRewriter.Direction direction,
       Template url ) {
     this.resolver = resolver;
@@ -90,7 +91,13 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
     public List<String> resolve( String name ) {
       List<String> values = map.get( name );
       if( values == null ) {
-        values = resolver.resolve( name );
+        try {
+          values = Arrays.asList( resolver.resolve( UrlRewriteContextImpl.this, name ) );
+        } catch( Exception e ) {
+          //TODO: Proper i18n logging.
+          e.printStackTrace();
+          // Ignore it and return null.
+        }
       }
       return values;
     }

@@ -17,10 +17,10 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
-import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteFlowDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;

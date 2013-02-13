@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
@@ -31,6 +32,11 @@ public class TemplateTest {
     Template template = Parser.parse( expect );
     String actual = template.toString();
     assertThat( actual, equalTo( expect ) );
+
+    template = Parser.parse( "{*}://{host}:{*}/{**}?{**}" );
+    actual = template.toString();
+    expect = "{*=*}://{host=*}:{*=*}/{**=*}?{**=*}";
+    assertThat( actual, is( expect ) );
   }
 
   @Test

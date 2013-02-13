@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.ext;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.net.URISyntaxException;

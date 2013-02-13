@@ -42,19 +42,19 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   public void testCreate() throws Exception {
     UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
     assertThat( descriptor, notNullValue() );
-    assertThat( descriptor.rules(), notNullValue() );
-    assertThat( descriptor.rules().isEmpty(), is( true ) );
+    assertThat( descriptor.getRules(), notNullValue() );
+    assertThat( descriptor.getRules().isEmpty(), is( true ) );
 
     UrlRewriteRuleDescriptor rule = descriptor.newRule();
     assertThat( rule, notNullValue() );
-    assertThat( descriptor.rules().isEmpty(), is( true ) );
+    assertThat( descriptor.getRules().isEmpty(), is( true ) );
     rule.name( "first" );
     descriptor.addRule( rule );
-    assertThat( descriptor.rules().size(), is( 1 ) );
-    assertThat( descriptor.rule( "first" ), sameInstance( rule ) );
+    assertThat( descriptor.getRules().size(), is( 1 ) );
+    assertThat( descriptor.getRule( "first" ), sameInstance( rule ) );
 
     rule = descriptor.addRule( "second" );
-    assertThat( descriptor.rules().size(), is( 2 ) );
+    assertThat( descriptor.getRules().size(), is( 2 ) );
   }
 
   private static URL getTestResourceUrl( String name ) throws FileNotFoundException {
@@ -124,7 +124,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   public void testLoadNoopFile() throws IOException {
     UrlRewriteRulesDescriptor config =
         UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "noop.xml", "UTF-8" ) );
-    assertThat( "Rules should be an empty list.", config.rules().isEmpty(), Matchers.is( true ) );
+    assertThat( "Rules should be an empty list.", config.getRules().isEmpty(), Matchers.is( true ) );
   }
 
   @Test

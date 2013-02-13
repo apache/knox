@@ -23,7 +23,9 @@ import org.junit.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class ExpanderTest {
@@ -265,6 +267,19 @@ public class ExpanderTest {
     expanded = Expander.expand( template, params );
     assertThat( expanded.toString(), equalTo( "?query=A&query=B" ) ) ;
 
+  }
+
+  @Test
+  public void testFunctionExpansion() throws Exception {
+    String input = "test-scheme://test-host:0/test-path/test-file?{test-param=$test-function(test-input-value)}";
+    Template template = Parser.parse( input );
+    MockParams params = new MockParams();
+    Expander expander = new Expander();
+
+    String actual = expander.expandToString( template, params );
+
+    assertThat( actual, notNullValue() );
+    assertThat( actual, containsString( "?test-param=test-output-value" ) );
   }
 
 }

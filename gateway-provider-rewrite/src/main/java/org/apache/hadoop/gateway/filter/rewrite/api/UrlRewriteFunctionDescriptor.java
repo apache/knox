@@ -15,31 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.filter.rewrite.api;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
+public interface UrlRewriteFunctionDescriptor<T> {
 
-import java.util.List;
+  String name();
 
-public interface UrlRewriteFlowDescriptor<T> extends UrlRewriteStepDescriptor<T> {
-
-  UrlRewriteStepFlow flow();
-
-  T flow( String flow );
-
-  T flow( UrlRewriteStepFlow flow );
-
-  List<UrlRewriteStepDescriptor> steps();
-
-//  UrlRewriteMatchDescriptor addMatch();
-//
-//  UrlRewriteCheckDescriptor addCheck();
-//
-//  UrlRewriteActionDescriptor addAction();
-//
-//  UrlRewriteControlDescriptor addControl();
-
-  <T extends UrlRewriteStepDescriptor<?>> T addStep( String type );
+  //T name( String name );
 
 }

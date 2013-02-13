@@ -18,10 +18,11 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesExporter;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -59,12 +60,21 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
       Document document = builder.newDocument();
       document.setXmlStandalone( true );
 
-      Element gateway = document.createElement( RULES );
-      document.appendChild( gateway );
+      Element root = document.createElement( ROOT );
+      document.appendChild( root );
 
-      for( UrlRewriteRuleDescriptor rule : descriptor.rules() ) {
+      if( !descriptor.getFunctions().isEmpty() ) {
+        Element functionsElement = document.createElement( FUNCTIONS );
+        root.appendChild( functionsElement );
+        for( UrlRewriteFunctionDescriptor function : descriptor.getFunctions() ) {
+          Element functionElement = createElement( document, function.name(), function );
+          functionsElement.appendChild( functionElement );
+        }
+      }
+
+      for( UrlRewriteRuleDescriptor rule : descriptor.getRules() ) {
         Element ruleElement = createRule( document, rule );
-        gateway.appendChild( ruleElement );
+        root.appendChild( ruleElement );
       }
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();

@@ -17,5 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.ext;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
+
 public interface UrlRewriteControlDescriptor extends UrlRewriteFlowDescriptor<UrlRewriteControlDescriptor> {
 }

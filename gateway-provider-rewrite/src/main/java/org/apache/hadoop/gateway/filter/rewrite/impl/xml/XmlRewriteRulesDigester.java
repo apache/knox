@@ -21,21 +21,27 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.SetPropertiesRule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptorFactory;
-import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteFlowDescriptor;
 import org.xml.sax.Attributes;
 
 public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlRewriteRulesTags {
 
   @Override
   protected void configure() {
-    forPattern( RULES ).addRule( new RulesFactory() );
-    forPattern( RULES ).addRule( new SetPropertiesRule() );
-    forPattern( RULES + "/" + RULE ).addRule( new RuleFactory() );
-    forPattern( RULES + "/" + RULE ).addRule( new SetPropertiesRule() );
+    forPattern( ROOT ).addRule( new RulesFactory() );
+    forPattern( ROOT ).addRule( new SetPropertiesRule() );
+    for( String name : UrlRewriteFunctionDescriptorFactory.getNames() ) {
+      forPattern( ROOT + "/" + FUNCTIONS + "/" + name ).addRule( new FunctionFactory() );
+      forPattern( ROOT + "/" + FUNCTIONS + "/" + name ).addRule( new SetPropertiesRule() );
+    }
+    forPattern( ROOT + "/" + RULE ).addRule( new SetPropertiesRule() );
+    forPattern( ROOT + "/" + RULE ).addRule( new RuleFactory() );
+    forPattern( ROOT + "/" + RULE ).addRule( new SetPropertiesRule() );
     for( String type : UrlRewriteStepDescriptorFactory.getTypes() ) {
       forPattern( "*/" + type ).addRule( new StepFactory() );
       forPattern( "*/" + type ).addRule( new SetPropertiesRule() );
@@ -80,6 +86,14 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFlowDescriptor flow = getDigester().peek();
       return flow.addStep( name );
+    }
+  }
+
+  private class FunctionFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteRulesDescriptor func = getDigester().peek();
+      return func.addFunction( name );
     }
   }
 

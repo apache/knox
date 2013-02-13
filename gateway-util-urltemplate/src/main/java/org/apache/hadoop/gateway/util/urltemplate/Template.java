@@ -140,7 +140,7 @@ public class Template {
   private void buildScheme( StringBuilder b ) {
     if( hasScheme ) {
       if( scheme != null ) {
-        b.append( scheme.getFirstValue().getPattern() );
+        buildSegmentValue( b, scheme, scheme.getFirstValue() );
       }
       b.append( ':' );
     }

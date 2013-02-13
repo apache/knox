@@ -49,6 +49,27 @@ public class MatcherTest {
   }
 
   @Test
+  public void testTopLevelPathGlobMatch() throws Exception {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    patternTemplate = Parser.parse( "{*}://{host}:{*}/{**=**}?{**}" );
+    inputTemplate = Parser.parse( "test-scheme://test-input-host:42/test-path/test-file?test-name=test-value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-math" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the path ** should include both test-path and test-file", match, notNullValue() );
+
+    patternTemplate = Parser.parse( "{*}://{host}:{*}/{**}?{**}" );
+    inputTemplate = Parser.parse( "test-scheme://test-input-host:42/test-path/test-file?test-name=test-value" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-math" );
+    match = matcher.match( inputTemplate );
+    assertThat( "Should match because the path ** should include both test-path and test-file", match, notNullValue() );
+  }
+
+  @Test
   public void testQueryHandling() throws Exception {
     Matcher<String> matcher;
     Template patternTemplate, inputTemplate;

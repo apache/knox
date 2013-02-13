@@ -15,12 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.wip;
+package org.apache.hadoop.gateway.filter.rewrite.api;
 
-public interface UrlRewriteFunctionProcessor<T extends UrlRewriteFunctionDescriptor> extends UrlRewriteResolver {
+import javax.servlet.ServletContext;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-  void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception;
+public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
 
-  void destroy() throws Exception;
+  private ServletContext context;
+
+  public UrlRewriteServletEnvironment( ServletContext context ) {
+    this.context = context;
+  }
+
+  @Override
+  public URL getResource( String name ) throws MalformedURLException {
+    URL url = context.getResource( name );
+    return url;
+  }
 
 }

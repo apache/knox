@@ -36,7 +36,7 @@ import java.util.List;
 public class UrlRewriteDeploymentContributor extends ProviderDeploymentContributorBase {
 
   private static final String PROVIDER_ROLE_NAME = "rewrite";
-  private static final String PROVIDER_NAME = "url-rewrite";
+  private static final String PROVIDER_IMPL_NAME = "url-rewrite";
 
   @Override
   public String getRole() {
@@ -45,7 +45,7 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
 
   @Override
   public String getName() {
-    return PROVIDER_NAME;
+    return PROVIDER_IMPL_NAME;
   }
 
   public void initializeContribution( DeploymentContext context ) {
@@ -69,7 +69,7 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
         new StringAsset( asset ),
         UrlRewriteServletContextListener.DESCRIPTOR_DEFAULT_FILE_NAME );
 
-    // Tell the provider where the location of the descriptor.
+    // Tell the provider the location of the descriptor.
     context.getWebAppDescriptor().createListener().listenerClass( UrlRewriteServletContextListener.class.getName() );
     context.getWebAppDescriptor().createContextParam()
         .paramName( UrlRewriteServletContextListener.DESCRIPTOR_LOCATION_INIT_PARAM_NAME )

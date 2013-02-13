@@ -44,8 +44,10 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
     } catch( IOException e ) {
       throw new IllegalStateException( e );
     }
+    ServletContext context = event.getServletContext();
+    UrlRewriteEnvironment environment = new UrlRewriteServletEnvironment( context );
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
-    processor.initialize( descriptor );
+    processor.initialize( environment, descriptor );
     event.getServletContext().setAttribute( PROCESSOR_ATTRIBUTE_NAME, processor );
   }
 

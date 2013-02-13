@@ -348,7 +348,14 @@ public class Parser {
       // If this is a parameter template (ie {...}
       if( b > 0 ) {
         if( i < 0 ) {
-          a = new String[]{ t.substring( b, e ), Segment.STAR_PATTERN };
+          String n = t.substring( b, e );
+          String p;
+          if( Segment.GLOB_PATTERN.equals( n ) ) {
+            p = Segment.GLOB_PATTERN;
+          } else {
+            p = Segment.STAR_PATTERN;
+          }
+          a = new String[]{ n, p };
         } else {
           a = new String[]{ t.substring( b, i ), t.substring( i+1, e ) };
         }

@@ -19,7 +19,8 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 public interface XmlRewriteRulesTags {
 
-  static final String RULES = "rules";
+  static final String ROOT = "rules";
+  static final String FUNCTIONS = "functions";
   static final String RULE = "rule";
 //  static final String MATCH = "match";
 //  static final String CHECK = "check";

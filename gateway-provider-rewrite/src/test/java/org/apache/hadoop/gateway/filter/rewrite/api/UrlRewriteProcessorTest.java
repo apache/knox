@@ -59,14 +59,15 @@ public class UrlRewriteProcessorTest {
 
   @Test
   public void testBasicPathRewrite() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
-    EasyMock.replay( request, response );
+    EasyMock.replay( environment, request, response );
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
         "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
-    processor.initialize( config );
+    processor.initialize( environment, config );
 
     Template inputUrl = Parser.parse( "test-scheme://test-host:1/test-input-path" );
     Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN );
