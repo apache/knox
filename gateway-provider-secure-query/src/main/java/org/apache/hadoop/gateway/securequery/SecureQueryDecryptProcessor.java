@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.securequery;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
@@ -29,22 +29,22 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public class UrlRewriteActionQueryDecodeProcessor
-    implements UrlRewriteStepProcessor<UrlRewriteActionQueryDecodeDescriptor> {
+public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<SecureQueryDecryptDescriptor> {
 
   private static final String ENCODED_PARAMETER_NAME = "_";
 
   @Override
   public String getType() {
-    return UrlRewriteActionQueryDecodeDescriptor.TYPE_NAME;
+    return SecureQueryDecryptDescriptor.STEP_NAME;
   }
 
   @Override
-  public void initialize( UrlRewriteActionQueryDecodeDescriptor descriptor ) throws Exception {
+  public void initialize( SecureQueryDecryptDescriptor descriptor ) throws Exception {
   }
 
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
+    //TODO: Need some way to get a reference to the keystore service and the encryption key in particular.
     Template currUrl = context.getCurrentUrl();
     Builder newUrl = new Builder( currUrl );
     Map<String,Query> map = newUrl.getQuery();

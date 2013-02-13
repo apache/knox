@@ -96,7 +96,7 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
 //
 //  @Override
 //  public UrlRewriteActionDescriptor addAction() {
-//    UrlRewriteActionDescriptor step = new AbstractUrlRewriteActionDescriptor();
+//    UrlRewriteActionDescriptor step = new UrlRewriteActionDescriptorBase();
 //    steps.add( step );
 //    return step;
 //  }

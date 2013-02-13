@@ -1,0 +1,4 @@
+org.apache.hadoop.gateway.securequery.SecureQueryEncodeDescriptor
+org.apache.hadoop.gateway.securequery.SecureQueryDecodeDescriptor
+org.apache.hadoop.gateway.securequery.SecureQueryEncryptDescriptor
+org.apache.hadoop.gateway.securequery.SecureQueryDecryptDescriptor

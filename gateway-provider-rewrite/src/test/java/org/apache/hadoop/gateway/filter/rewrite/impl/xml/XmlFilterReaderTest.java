@@ -26,11 +26,11 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.hadoop.gateway.filter.rewrite.ext.AbstractUrlRewriteActionDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -124,7 +124,7 @@ public class XmlFilterReaderTest {
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
 
-    System.out.println( outputHtml );
+    //System.out.println( outputHtml );
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "ns", "http://hortonworks.com/xml/ns" );
     assertThat( the( outputHtml ), hasXPath( "/ns:root", ns ) );
@@ -209,8 +209,8 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new MapXmlFilterReader( inputReader, map );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    System.out.println( outputXml );
-    System.out.flush();
+    //System.out.println( outputXml );
+    //System.out.flush();
 
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "n1", "http://hortonworks.com/xml/ns1" );
@@ -519,7 +519,7 @@ public class XmlFilterReaderTest {
       Reader reader;
       UrlRewriteRulesDescriptor config;
       UrlRewriteRuleDescriptor rule;
-      AbstractUrlRewriteActionDescriptor step;
+      UrlRewriteActionDescriptorBase step;
 
       reader = new StringReader( "<rules><rule><action></action></rule></rules>" );
       config = digester.parse( reader );
@@ -529,7 +529,7 @@ public class XmlFilterReaderTest {
       rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
-      step = (AbstractUrlRewriteActionDescriptor)rule.steps().get( 0 );
+      step = (UrlRewriteActionDescriptorBase)rule.steps().get( 0 );
       assertThat( step, notNullValue() );
       //assertThat( step.type(), nullValue() );
       assertThat( step.parameter(), nullValue() );
@@ -542,7 +542,7 @@ public class XmlFilterReaderTest {
       rule = config.getRules().get( 0 );
       assertThat( rule.steps(), notNullValue() );
       assertThat( rule.steps().size(), is( 1 ) );
-      step = (AbstractUrlRewriteActionDescriptor)rule.steps().get( 0 );
+      step = (UrlRewriteActionDescriptorBase)rule.steps().get( 0 );
       assertThat( step, notNullValue() );
       //assertThat( step.type(), is( "test-type" ) );
       assertThat( step.parameter(), is( "test-param" ) );

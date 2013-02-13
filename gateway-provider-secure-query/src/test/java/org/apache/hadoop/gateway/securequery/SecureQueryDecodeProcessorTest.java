@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.securequery;
 
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -30,7 +30,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class UrlRewriteActionQueryDecodeProcessorTest {
+public class SecureQueryDecodeProcessorTest {
 
   @Test
   public void testSimpleQueryDecode() throws Exception {
@@ -46,8 +46,8 @@ public class UrlRewriteActionQueryDecodeProcessorTest {
     context.setCurrentUrl( EasyMock.capture( outTemplate ) );
     EasyMock.replay( context );
 
-    UrlRewriteActionQueryDecodeDescriptor descriptor = new UrlRewriteActionQueryDecodeDescriptor();
-    UrlRewriteActionQueryDecodeProcessor processor = new UrlRewriteActionQueryDecodeProcessor();
+    SecureQueryDecodeDescriptor descriptor = new SecureQueryDecodeDescriptor();
+    SecureQueryDecodeProcessor processor = new SecureQueryDecodeProcessor();
     processor.initialize( descriptor );
     processor.process( context );
 
@@ -70,8 +70,8 @@ public class UrlRewriteActionQueryDecodeProcessorTest {
     context.setCurrentUrl( EasyMock.capture( outTemplate ) );
     EasyMock.replay( context );
 
-    UrlRewriteActionQueryDecodeDescriptor descriptor = new UrlRewriteActionQueryDecodeDescriptor();
-    UrlRewriteActionQueryDecodeProcessor processor = new UrlRewriteActionQueryDecodeProcessor();
+    SecureQueryDecodeDescriptor descriptor = new SecureQueryDecodeDescriptor();
+    SecureQueryDecodeProcessor processor = new SecureQueryDecodeProcessor();
     processor.initialize( descriptor );
     processor.process( context );
 

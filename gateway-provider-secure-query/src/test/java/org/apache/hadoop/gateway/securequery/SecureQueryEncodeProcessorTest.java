@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.securequery;
 
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -28,7 +28,7 @@ import sun.misc.BASE64Encoder;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class UrlRewriteActionQueryEncodeProcessorTest {
+public class SecureQueryEncodeProcessorTest {
 
   @Test
   public void testSimpleQueryEncoding() throws Exception {
@@ -39,8 +39,8 @@ public class UrlRewriteActionQueryEncodeProcessorTest {
     context.setCurrentUrl( EasyMock.capture( outTemplate ) );
     EasyMock.replay( context );
 
-    UrlRewriteActionQueryEncodeDescriptor descriptor = new UrlRewriteActionQueryEncodeDescriptor();
-    UrlRewriteActionQueryEncodeProcessor processor = new UrlRewriteActionQueryEncodeProcessor();
+    SecureQueryEncodeDescriptor descriptor = new SecureQueryEncodeDescriptor();
+    SecureQueryEncodeProcessor processor = new SecureQueryEncodeProcessor();
     processor.initialize( descriptor );
     processor.process( context );
 

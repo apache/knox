@@ -15,38 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.securequery;
 
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
+import org.junit.Test;
 
-public class UrlRewriteActionRewriteDescriptorExt
-    extends UrlRewriteActionDescriptorBase
-    implements UrlRewriteActionDescriptor {
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-  public UrlRewriteActionRewriteDescriptorExt() {
-    super( "rewrite" );
-  }
+public class SecureQueryEncodeDescriptorTest {
 
-  public String template() {
-    return parameter();
-  }
-
-  public UrlRewriteActionRewriteDescriptorExt template( String template ) {
-    parameter( template );
-    return this;
-  }
-
-  public void setTemplate( String template ) {
-    parameter( template );
-  }
-
-  @Override
-  public String getParam() {
-    return null;
-  }
-
-  public String getTemplate() {
-    return parameter();
+  @Test
+  public void testGetAndSet() {
+    SecureQueryEncodeDescriptor descriptor = new SecureQueryEncodeDescriptor();
+    assertThat( descriptor.type(), is( "encode-query" ) );
+    assertThat( descriptor.getParam(), nullValue() );
   }
 
 }

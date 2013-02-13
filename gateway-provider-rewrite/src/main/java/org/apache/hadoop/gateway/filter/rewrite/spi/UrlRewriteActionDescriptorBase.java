@@ -15,18 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.filter.rewrite.spi;
 
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepDescriptorBase;
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionDescriptor;
 
-public abstract class AbstractUrlRewriteActionDescriptor
+public abstract class UrlRewriteActionDescriptorBase
     extends UrlRewriteStepDescriptorBase<UrlRewriteActionDescriptor>
     implements UrlRewriteActionDescriptor {
 
   private String operation;
   private String parameter;
 
-  protected AbstractUrlRewriteActionDescriptor( String type ) {
+  protected UrlRewriteActionDescriptorBase( String type ) {
     super( type );
   }
 

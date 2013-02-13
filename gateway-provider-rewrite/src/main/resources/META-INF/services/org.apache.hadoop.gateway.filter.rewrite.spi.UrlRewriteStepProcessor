@@ -3,5 +3,3 @@ org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchProcessorExt
 org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckProcessorExt
 org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlProcessorExt
 org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteProcessorExt
-org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionQueryEncodeProcessor
-org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionQueryDecodeProcessor

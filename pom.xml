@@ -46,6 +46,7 @@
         <module>gateway-spi</module>
         <module>gateway-provider-rewrite</module>
         <module>gateway-provider-hostmap-static</module>
+        <module>gateway-provider-secure-query</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-service-hdfs</module>
@@ -204,6 +205,16 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-rewrite</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-hostmap-static</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-secure-query</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

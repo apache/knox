@@ -15,16 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.ext;
+package org.apache.hadoop.gateway.securequery;
 
-public class UrlRewriteActionQueryDecodeDescriptor
-    extends AbstractUrlRewriteActionDescriptor
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
+
+public class SecureQueryDecryptDescriptor
+    extends UrlRewriteActionDescriptorBase
     implements UrlRewriteActionDescriptor {
 
-  static final String TYPE_NAME = "decode-query";
+  static final String STEP_NAME = "decrypt-query";
 
-  public UrlRewriteActionQueryDecodeDescriptor() {
-    super( TYPE_NAME );
+  public SecureQueryDecryptDescriptor() {
+    super( STEP_NAME );
   }
 
   @Override

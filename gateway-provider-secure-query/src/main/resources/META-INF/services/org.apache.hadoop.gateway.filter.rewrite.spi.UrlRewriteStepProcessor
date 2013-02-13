@@ -1,0 +1,4 @@
+org.apache.hadoop.gateway.securequery.SecureQueryEncodeProcessor
+org.apache.hadoop.gateway.securequery.SecureQueryDecodeProcessor
+org.apache.hadoop.gateway.securequery.SecureQueryEncryptProcessor
+org.apache.hadoop.gateway.securequery.SecureQueryDecryptProcessor

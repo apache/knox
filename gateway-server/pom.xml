@@ -228,6 +228,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-secure-query</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-hostmap-static</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>gateway-provider-security-shiro</artifactId>
             <scope>test</scope>
