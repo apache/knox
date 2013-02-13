@@ -35,7 +35,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -181,8 +183,12 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
     String location = response.getHeader( "Location" );
+    //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+    assertThat( location, containsString( "?_=" ) );
+    assertThat( location, not(  containsString( "host=" ) ) );
+    assertThat( location, not(  containsString( "port=" ) ) );
   }
 
   @Test
@@ -337,6 +343,10 @@ public class GatewayBasicFuncTest {
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+    assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+    assertThat( location, containsString( "?_=" ) );
+    assertThat( location, not(  containsString( "host=" ) ) );
+    assertThat( location, not(  containsString( "port=" ) ) );
     response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
