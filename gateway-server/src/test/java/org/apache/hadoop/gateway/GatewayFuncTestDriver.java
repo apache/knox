@@ -23,7 +23,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
@@ -97,7 +99,17 @@ public class GatewayFuncTestDriver {
     topology.toStream( stream );
     stream.close();
 
-    gateway = GatewayServer.startGateway( config );
+    GatewayServices srvcs = new GatewayServices();
+    Map<String,String> options = new HashMap<String,String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    gateway = GatewayServer.startGateway( config, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
     log.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );

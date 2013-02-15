@@ -26,6 +26,8 @@ import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
@@ -47,6 +49,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -58,6 +61,7 @@ public class GatewayServer {
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server;
+  private static GatewayServices services;
   private static Properties buildProperties;
 
   private Server jetty;
@@ -80,12 +84,19 @@ public class GatewayServer {
             buildProperties.getProperty( "build.version", "unknown" ),
             buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {
+        services = new GatewayServices();
         GatewayConfig config = new GatewayConfigImpl();
+        Map<String,String> options = new HashMap<String,String>();
+        options.put("persist-master", Boolean.toString(cmd.hasOption("persist-master")));
+        services.init(config, options);
         configureLogging( config );
-        startGateway( config );
+        startGateway( config, services );
       }
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );
+    } catch (ServiceLifecycleException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
@@ -160,10 +171,14 @@ public class GatewayServer {
     input.close();
   }
 
-  public static GatewayServer startGateway( GatewayConfig config ) {
+  public static GatewayServer startGateway( GatewayConfig config, GatewayServices srvics ) {
     try {
       server = new GatewayServer( config );
       synchronized (server ) {
+        if (services == null) {
+          services = srvics;
+        }
+        services.start();
         log.startingGateway();
         server.start();
         log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
@@ -176,8 +191,12 @@ public class GatewayServer {
   }
 
   public GatewayServer( GatewayConfig config ) {
-    this.config = config;
-    this.listener = new InternalTopologyListener();
+    this(config, null);
+  }
+
+  public GatewayServer( GatewayConfig config, Properties options ) {
+      this.config = config;
+      this.listener = new InternalTopologyListener();
   }
 
   private synchronized void start() throws Exception {
@@ -218,6 +237,7 @@ public class GatewayServer {
 
   public synchronized void stop() throws Exception {
     log.stoppingGateway();
+    services.stop();
     monitor.stopMonitor();
     jetty.stop();
     jetty.join();
