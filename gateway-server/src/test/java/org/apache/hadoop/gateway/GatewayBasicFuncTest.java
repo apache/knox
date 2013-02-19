@@ -20,17 +20,25 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.HttpStatus;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
@@ -58,6 +66,8 @@ public class GatewayBasicFuncTest {
   private static final String TEST_HOST = "vm.local";
   private static final boolean MOCK_SERVICES = true;
   private static final boolean USE_GATEWAY = true;
+  //private static final boolean MOCK_SERVICES = false;
+  //private static final boolean USE_GATEWAY = false;
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -72,9 +82,12 @@ public class GatewayBasicFuncTest {
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
-    driver.setupService( "NAMENODE", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", MOCK_SERVICES );
-    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", MOCK_SERVICES );
+    driver.setupService( "NAMENODE", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", MOCK_SERVICES ); // IPC:8020
+    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", MOCK_SERVICES ); // CLIENT:50010, IPC:50020
+    // JobTracker: UI:50030,
+    // TaskTracker: UI:50060, 127.0.0.1:0
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", MOCK_SERVICES );
+    driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api/v1", MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -616,7 +629,7 @@ public class GatewayBasicFuncTest {
     driver.createDir( user, pass, group, root + "/output", "777", 200, 200 );
 
     // Submit the job
-    driver.submitPig( user, pass, group, root+"/script.pig", "-v", root+"/output", 200 );
+    driver.submitPig( user, pass, group, root + "/script.pig", "-v", root + "/output", 200 );
 
     // Check job status (if possible)
     // Check output (if possible)
@@ -648,6 +661,85 @@ public class GatewayBasicFuncTest {
 
     // Cleanup
     driver.deleteFile( user, pass, root, "true", 200 );
+  }
+
+  @Ignore( "WIP" )
+  @Test
+  public void testOozieGlobal() {
+    String user = "oozie";
+    String pass = "oozie-password";
+//    driver.oozieVersions( user, pass );
+  }
+
+  @Ignore( "WIP" )
+  @Test
+  public void testOozieJobSubmission() throws Exception {
+    String root = "/tmp/GatewayBasicFuncTest/testOozieJobSubmission";
+    String user = "hdfs";
+    String pass = "hdfs-password";
+    String group = "hdfs";
+
+    // Cleanup anything that might have been leftover because the test failed previously.
+    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+
+    /* Put the workflow definition into HDFS */
+    driver.createFile( user, pass, group, root+"/workflow.xml", "666", "application/octet-stream", "oozie-workflow.xml", 307, 201, 200 );
+
+    /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+     */
+    driver.createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", "hadoop-examples.jar", 307, 201, 200 );
+
+    /* Put the data file into HDFS (changes.txt)
+    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
+     */
+    driver.createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
+
+    VelocityEngine velocity = new VelocityEngine();
+    velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+    velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+    velocity.init();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "userName", user );
+    context.put( "nameNode", "hdfs://sandbox:8020" );
+    context.put( "jobTracker", "sandbox:50300" );
+    context.put( "appPath", "hdfs://sandbox:8020" + root );
+    context.put( "inputDir", root + "/input" );
+    context.put( "outputDir", root + "/output" );
+
+    //URL url = TestUtils.getResourceUrl( GatewayBasicFuncTest.class, "oozie-jobs-submit-request.xml" );
+    //String name = url.toExternalForm();
+    String name = TestUtils.getResourceName( this.getClass(), "oozie-jobs-submit-request.xml" );
+    Template template = velocity.getTemplate( name );
+    StringWriter sw = new StringWriter();
+    template.merge( context, sw );
+    String request = sw.toString();
+    //System.out.println( "REQUEST=" + request );
+
+    /* Submit the job via Oozie. */
+    String id = driver.oozieSubmitJob( user, pass, request, 201 );
+    //System.out.println( "ID=" + id );
+
+    String success = "SUCCEEDED";
+    String status = "UNKNOWN";
+    long delay = 1000; // 1 second.
+    long limit = 1000 * 60; // 30 seconds.
+    long start = System.currentTimeMillis();
+    while( System.currentTimeMillis() <= start+limit ) {
+      status = driver.oozieQueryJobStatus( user, pass, id, 200 );
+      //System.out.println( "Status=" + status );
+      if( success.equalsIgnoreCase( status ) ) {
+        break;
+      } else {
+        Thread.sleep( delay );
+      }
+    }
+    //System.out.println( "Status is " + status + " after " + ((System.currentTimeMillis()-start)/1000) + " seconds." );
+    assertThat( status, is( success ) );
+
+    // Cleanup anything that might have been leftover because the test failed previously.
+    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
   }
 
 }

@@ -1,0 +1,836 @@
+{
+    "timers": [
+        {
+            "data": [
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 0,
+                    "totalTimeStdDev": 0,
+                    "ownTimeAvg": 0,
+                    "ticks": 2,
+                    "name": "coord_purge.execute",
+                    "ownMaxTime": 1,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 1,
+                    "totalTimeAvg": 0
+                },
+                {
+                    "ownMinTime": 88,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 88,
+                    "ticks": 1,
+                    "name": "job.info.call",
+                    "ownMaxTime": 88,
+                    "totalMinTime": 88,
+                    "totalMaxTime": 88,
+                    "totalTimeAvg": 88
+                },
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 0,
+                    "totalTimeStdDev": 0,
+                    "ownTimeAvg": 1,
+                    "ticks": 2,
+                    "name": "purge.execute",
+                    "ownMaxTime": 1,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 1,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 87,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 87,
+                    "ticks": 1,
+                    "name": "job.info.execute",
+                    "ownMaxTime": 87,
+                    "totalMinTime": 87,
+                    "totalMaxTime": 87,
+                    "totalTimeAvg": 87
+                },
+                {
+                    "ownMinTime": 4,
+                    "ownTimeStdDev": 395.9797974644666,
+                    "totalTimeStdDev": 395.9797974644666,
+                    "ownTimeAvg": 284,
+                    "ticks": 2,
+                    "name": "coord_purge.call",
+                    "ownMaxTime": 564,
+                    "totalMinTime": 4,
+                    "totalMaxTime": 564,
+                    "totalTimeAvg": 284
+                },
+                {
+                    "ownMinTime": 5,
+                    "ownTimeStdDev": 269.40675566882135,
+                    "totalTimeStdDev": 269.40675566882135,
+                    "ownTimeAvg": 195,
+                    "ticks": 2,
+                    "name": "purge.call",
+                    "ownMaxTime": 386,
+                    "totalMinTime": 5,
+                    "totalMaxTime": 386,
+                    "totalTimeAvg": 195
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 0,
+                    "totalTimeStdDev": 0,
+                    "ownTimeAvg": 0,
+                    "ticks": 2,
+                    "name": "bundle_purge.execute",
+                    "ownMaxTime": 0,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 0,
+                    "totalTimeAvg": 0
+                },
+                {
+                    "ownMinTime": 3,
+                    "ownTimeStdDev": 391.7371567773473,
+                    "totalTimeStdDev": 391.7371567773473,
+                    "ownTimeAvg": 280,
+                    "ticks": 2,
+                    "name": "bundle_purge.call",
+                    "ownMaxTime": 557,
+                    "totalMinTime": 3,
+                    "totalMaxTime": 557,
+                    "totalTimeAvg": 280
+                }
+            ],
+            "group": "commands"
+        },
+        {
+            "data": [
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 5.656854249492381,
+                    "totalTimeStdDev": 5.656854249492381,
+                    "ownTimeAvg": 4,
+                    "ticks": 20,
+                    "name": "v1admin",
+                    "ownMaxTime": 20,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 20,
+                    "totalTimeAvg": 4
+                },
+                {
+                    "ownMinTime": 3,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 3,
+                    "ticks": 1,
+                    "name": "v1jobs",
+                    "ownMaxTime": 3,
+                    "totalMinTime": 153,
+                    "totalMaxTime": 153,
+                    "totalTimeAvg": 153
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 0,
+                    "totalTimeStdDev": 0,
+                    "ownTimeAvg": 0,
+                    "ticks": 17,
+                    "name": "version-GET",
+                    "ownMaxTime": 4,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 4,
+                    "totalTimeAvg": 0
+                },
+                {
+                    "ownMinTime": 3,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 3,
+                    "ticks": 1,
+                    "name": "v1jobs-GET",
+                    "ownMaxTime": 3,
+                    "totalMinTime": 153,
+                    "totalMaxTime": 153,
+                    "totalTimeAvg": 153
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 5.656854249492381,
+                    "totalTimeStdDev": 5.656854249492381,
+                    "ownTimeAvg": 4,
+                    "ticks": 20,
+                    "name": "v1admin-GET",
+                    "ownMaxTime": 20,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 20,
+                    "totalTimeAvg": 4
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 0,
+                    "totalTimeStdDev": 0,
+                    "ownTimeAvg": 0,
+                    "ticks": 17,
+                    "name": "version",
+                    "ownMaxTime": 4,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 4,
+                    "totalTimeAvg": 0
+                }
+            ],
+            "group": "webservices"
+        },
+        {
+            "data": [
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 47.989582202807306,
+                    "totalTimeStdDev": 47.989582202807306,
+                    "ownTimeAvg": 6,
+                    "ticks": 82,
+                    "name": "WorkflowActionsRunningGetJPAExecutor",
+                    "ownMaxTime": 436,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 436,
+                    "totalTimeAvg": 6
+                },
+                {
+                    "ownMinTime": 2,
+                    "ownTimeStdDev": 386.78676295861004,
+                    "totalTimeStdDev": 386.78676295861004,
+                    "ownTimeAvg": 275,
+                    "ticks": 2,
+                    "name": "CoordJobsGetForPurgeJPAExecutor",
+                    "ownMaxTime": 549,
+                    "totalMinTime": 2,
+                    "totalMaxTime": 549,
+                    "totalTimeAvg": 275
+                },
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 252.43613053602292,
+                    "totalTimeStdDev": 252.43613053602292,
+                    "ownTimeAvg": 179,
+                    "ticks": 2,
+                    "name": "WorkflowJobsGetForPurgeJPAExecutor",
+                    "ownMaxTime": 358,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 358,
+                    "totalTimeAvg": 179
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 3.4641016151377544,
+                    "totalTimeStdDev": 3.4641016151377544,
+                    "ownTimeAvg": 1,
+                    "ticks": 82,
+                    "name": "BundleJobsGetPausedJPAExecutor",
+                    "ownMaxTime": 32,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 32,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 11.445523142259598,
+                    "totalTimeStdDev": 11.445523142259598,
+                    "ownTimeAvg": 2,
+                    "ticks": 82,
+                    "name": "BundleJobsGetNeedStartJPAExecutor",
+                    "ownMaxTime": 104,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 104,
+                    "totalTimeAvg": 2
+                },
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 1,
+                    "totalTimeStdDev": 1,
+                    "ownTimeAvg": 1,
+                    "ticks": 81,
+                    "name": "CoordActionsGetByLastModifiedTimeJPAExecutor",
+                    "ownMaxTime": 10,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 10,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 56,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 56,
+                    "ticks": 1,
+                    "name": "BundleJobsGetRunningJPAExecutor",
+                    "ownMaxTime": 56,
+                    "totalMinTime": 56,
+                    "totalMaxTime": 56,
+                    "totalTimeAvg": 56
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 7.681145747868608,
+                    "totalTimeStdDev": 7.681145747868608,
+                    "ownTimeAvg": 2,
+                    "ticks": 82,
+                    "name": "CoordActionsGetReadyGroupbyJobIDJPAExecutor",
+                    "ownMaxTime": 70,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 70,
+                    "totalTimeAvg": 2
+                },
+                {
+                    "ownMinTime": 84,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 84,
+                    "ticks": 1,
+                    "name": "WorkflowsJobGetJPAExecutor",
+                    "ownMaxTime": 84,
+                    "totalMinTime": 84,
+                    "totalMaxTime": 84,
+                    "totalTimeAvg": 84
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 1.4142135623730951,
+                    "totalTimeStdDev": 1.4142135623730951,
+                    "ownTimeAvg": 1,
+                    "ticks": 82,
+                    "name": "CoordJobsGetPausedJPAExecutor",
+                    "ownMaxTime": 12,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 12,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 18.681541692269406,
+                    "totalTimeStdDev": 18.681541692269406,
+                    "ownTimeAvg": 2,
+                    "ticks": 82,
+                    "name": "CoordActionsRunningGetJPAExecutor",
+                    "ownMaxTime": 170,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 170,
+                    "totalTimeAvg": 2
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 2,
+                    "totalTimeStdDev": 2,
+                    "ownTimeAvg": 1,
+                    "ticks": 81,
+                    "name": "BundleActionsGetByLastModifiedTimeJPAExecutor",
+                    "ownMaxTime": 13,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 13,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 58.90670590009256,
+                    "totalTimeStdDev": 58.90670590009256,
+                    "ownTimeAvg": 8,
+                    "ticks": 82,
+                    "name": "BundleJobsGetUnpausedJPAExecutor",
+                    "ownMaxTime": 535,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 535,
+                    "totalTimeAvg": 8
+                },
+                {
+                    "ownMinTime": 542,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 542,
+                    "ticks": 1,
+                    "name": "CoordJobsGetPendingJPAExecutor",
+                    "ownMaxTime": 542,
+                    "totalMinTime": 542,
+                    "totalMaxTime": 542,
+                    "totalTimeAvg": 542
+                },
+                {
+                    "ownMinTime": 2,
+                    "ownTimeStdDev": 391.0294106585846,
+                    "totalTimeStdDev": 391.0294106585846,
+                    "ownTimeAvg": 278,
+                    "ticks": 2,
+                    "name": "BundleJobsGetForPurgeJPAExecutor",
+                    "ownMaxTime": 555,
+                    "totalMinTime": 2,
+                    "totalMaxTime": 555,
+                    "totalTimeAvg": 278
+                },
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 135.99264686004167,
+                    "totalTimeStdDev": 135.99264686004167,
+                    "ownTimeAvg": 35,
+                    "ticks": 17,
+                    "name": "CoordJobsToBeMaterializedJPAExecutor",
+                    "ownMaxTime": 563,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 563,
+                    "totalTimeAvg": 35
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 6.4031242374328485,
+                    "totalTimeStdDev": 6.4031242374328485,
+                    "ownTimeAvg": 2,
+                    "ticks": 82,
+                    "name": "CoordJobsGetUnpausedJPAExecutor",
+                    "ownMaxTime": 53,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 53,
+                    "totalTimeAvg": 2
+                },
+                {
+                    "ownMinTime": 81,
+                    "ownTimeStdDev": -1,
+                    "totalTimeStdDev": -1,
+                    "ownTimeAvg": 81,
+                    "ticks": 1,
+                    "name": "BundleJobsGetPendingJPAExecutor",
+                    "ownMaxTime": 81,
+                    "totalMinTime": 81,
+                    "totalMaxTime": 81,
+                    "totalTimeAvg": 81
+                },
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 31.654383582688826,
+                    "totalTimeStdDev": 31.654383582688826,
+                    "ownTimeAvg": 5,
+                    "ticks": 82,
+                    "name": "CoordActionsGetForRecoveryJPAExecutor",
+                    "ownMaxTime": 288,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 288,
+                    "totalTimeAvg": 5
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 46.51881339845203,
+                    "totalTimeStdDev": 46.51881339845203,
+                    "ownTimeAvg": 7,
+                    "ticks": 82,
+                    "name": "WorkflowActionsGetPendingJPAExecutor",
+                    "ownMaxTime": 423,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 423,
+                    "totalTimeAvg": 7
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 3.3166247903554,
+                    "totalTimeStdDev": 3.3166247903554,
+                    "ownTimeAvg": 1,
+                    "ticks": 82,
+                    "name": "BundleActionsGetWaitingOlderJPAExecutor",
+                    "ownMaxTime": 27,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 27,
+                    "totalTimeAvg": 1
+                }
+            ],
+            "group": "jpa"
+        },
+        {
+            "data": [
+                {
+                    "ownMinTime": 1,
+                    "ownTimeStdDev": 1.7320508075688772,
+                    "totalTimeStdDev": 1.7320508075688772,
+                    "ownTimeAvg": 4,
+                    "ticks": 6,
+                    "name": "time.in.queue",
+                    "ownMaxTime": 6,
+                    "totalMinTime": 1,
+                    "totalMaxTime": 6,
+                    "totalTimeAvg": 4
+                }
+            ],
+            "group": "callablequeue"
+        },
+        {
+            "data": [
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 4.358898943540674,
+                    "totalTimeStdDev": 4.358898943540674,
+                    "ownTimeAvg": 1,
+                    "ticks": 102,
+                    "name": "getWorkflowCountWithStatus",
+                    "ownMaxTime": 41,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 41,
+                    "totalTimeAvg": 1
+                },
+                {
+                    "ownMinTime": 0,
+                    "ownTimeStdDev": 1,
+                    "totalTimeStdDev": 1,
+                    "ownTimeAvg": 1,
+                    "ticks": 102,
+                    "name": "getWorkflowCountWithStatusInLastNSecs",
+                    "ownMaxTime": 12,
+                    "totalMinTime": 0,
+                    "totalMaxTime": 12,
+                    "totalTimeAvg": 1
+                }
+            ],
+            "group": "db"
+        }
+    ],
+    "samplers": [
+        {
+            "data": [
+                {
+                    "name": "requests",
+                    "value": -2.9833333333333334
+                },
+                {
+                    "name": "v1admin",
+                    "value": -3
+                },
+                {
+                    "name": "v0admin",
+                    "value": 0
+                },
+                {
+                    "name": "v1jobs",
+                    "value": 0
+                },
+                {
+                    "name": "v0jobs",
+                    "value": 0
+                },
+                {
+                    "name": "callback",
+                    "value": 0
+                },
+                {
+                    "name": "sla",
+                    "value": 0
+                },
+                {
+                    "name": "v0job",
+                    "value": 0
+                },
+                {
+                    "name": "v1job",
+                    "value": 0
+                },
+                {
+                    "name": "version",
+                    "value": 0
+                }
+            ],
+            "group": "webservices"
+        },
+        {
+            "data": [
+                {
+                    "name": "threads.active",
+                    "value": 0
+                },
+                {
+                    "name": "queue.size",
+                    "value": 0
+                }
+            ],
+            "group": "callablequeue"
+        }
+    ],
+    "counters": [
+        {
+            "data": [
+                {
+                    "name": "purge.executions",
+                    "value": 2
+                },
+                {
+                    "name": "bundle_purge.executions",
+                    "value": 2
+                },
+                {
+                    "name": "job.info.executions",
+                    "value": 1
+                },
+                {
+                    "name": "coord_purge.executions",
+                    "value": 2
+                }
+            ],
+            "group": "commands"
+        },
+        {
+            "data": [
+                {
+                    "name": "requests",
+                    "value": 38
+                },
+                {
+                    "name": "v1admin",
+                    "value": 20
+                },
+                {
+                    "name": "v1jobs",
+                    "value": 1
+                },
+                {
+                    "name": "failed",
+                    "value": 3
+                },
+                {
+                    "name": "version-GET",
+                    "value": 17
+                },
+                {
+                    "name": "v1jobs-GET",
+                    "value": 1
+                },
+                {
+                    "name": "v1admin-GET",
+                    "value": 20
+                },
+                {
+                    "name": "version",
+                    "value": 17
+                }
+            ],
+            "group": "webservices"
+        },
+        {
+            "data": [
+                {
+                    "name": "WorkflowActionsRunningGetJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "CoordJobsGetForPurgeJPAExecutor",
+                    "value": 2
+                },
+                {
+                    "name": "WorkflowJobsGetForPurgeJPAExecutor",
+                    "value": 2
+                },
+                {
+                    "name": "BundleJobsGetPausedJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "BundleJobsGetNeedStartJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "CoordActionsGetByLastModifiedTimeJPAExecutor",
+                    "value": 81
+                },
+                {
+                    "name": "BundleJobsGetRunningJPAExecutor",
+                    "value": 1
+                },
+                {
+                    "name": "CoordActionsGetReadyGroupbyJobIDJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "WorkflowsJobGetJPAExecutor",
+                    "value": 1
+                },
+                {
+                    "name": "CoordJobsGetPausedJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "CoordActionsRunningGetJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "BundleActionsGetByLastModifiedTimeJPAExecutor",
+                    "value": 81
+                },
+                {
+                    "name": "BundleJobsGetUnpausedJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "CoordJobsGetPendingJPAExecutor",
+                    "value": 1
+                },
+                {
+                    "name": "BundleJobsGetForPurgeJPAExecutor",
+                    "value": 2
+                },
+                {
+                    "name": "CoordJobsToBeMaterializedJPAExecutor",
+                    "value": 17
+                },
+                {
+                    "name": "CoordJobsGetUnpausedJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "CoordActionsGetForRecoveryJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "BundleJobsGetPendingJPAExecutor",
+                    "value": 1
+                },
+                {
+                    "name": "WorkflowActionsGetPendingJPAExecutor",
+                    "value": 82
+                },
+                {
+                    "name": "BundleActionsGetWaitingOlderJPAExecutor",
+                    "value": 82
+                }
+            ],
+            "group": "jpa"
+        },
+        {
+            "data": [
+                {
+                    "name": "executed",
+                    "value": 6
+                },
+                {
+                    "name": "queued",
+                    "value": 6
+                }
+            ],
+            "group": "callablequeue"
+        }
+    ],
+    "variables": [
+        {
+            "data": [
+                {
+                    "name": "version",
+                    "value": "3.2.0.21"
+                }
+            ],
+            "group": "oozie"
+        },
+        {
+            "data": [
+                {
+                    "name": "from.classpath",
+                    "value": false
+                },
+                {
+                    "name": "log.over.web-service",
+                    "value": true
+                },
+                {
+                    "name": "config.file",
+                    "value": "oozie-log4j.properties"
+                },
+                {
+                    "name": "reload.interval",
+                    "value": 10
+                }
+            ],
+            "group": "logging"
+        },
+        {
+            "data": [
+                {
+                    "name": "config.file",
+                    "value": "/etc/oozie/conf/oozie-site.xml"
+                },
+                {
+                    "name": "config.dir",
+                    "value": "/etc/oozie/conf"
+                }
+            ],
+            "group": "configuration"
+        },
+        {
+            "data": [
+                {
+                    "name": "locks",
+                    "value": 0
+                }
+            ],
+            "group": "locks"
+        },
+        {
+            "data": [
+                {
+                    "name": "PREP",
+                    "value": 0
+                },
+                {
+                    "name": "SUSPENDED",
+                    "value": 0
+                },
+                {
+                    "name": "SUCCEEDED",
+                    "value": 0
+                },
+                {
+                    "name": "RUNNING",
+                    "value": 0
+                },
+                {
+                    "name": "FAILED",
+                    "value": 0
+                },
+                {
+                    "name": "KILLED",
+                    "value": 0
+                }
+            ],
+            "group": "windowjobstatus"
+        },
+        {
+            "data": [
+                {
+                    "name": "PREP",
+                    "value": 0
+                },
+                {
+                    "name": "SUSPENDED",
+                    "value": 0
+                },
+                {
+                    "name": "SUCCEEDED",
+                    "value": 0
+                },
+                {
+                    "name": "RUNNING",
+                    "value": 0
+                },
+                {
+                    "name": "FAILED",
+                    "value": 0
+                },
+                {
+                    "name": "KILLED",
+                    "value": 0
+                }
+            ],
+            "group": "jobstatus"
+        },
+        {
+            "data": [
+                {
+                    "name": "max.memory",
+                    "value": 438108160
+                },
+                {
+                    "name": "total.memory",
+                    "value": 28442624
+                },
+                {
+                    "name": "free.memory",
+                    "value": 13051672
+                }
+            ],
+            "group": "jvm"
+        }
+    ]
+}

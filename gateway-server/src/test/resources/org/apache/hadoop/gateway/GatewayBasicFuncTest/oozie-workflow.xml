@@ -1,0 +1,23 @@
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="wordcount-workflow">
+    <start to="root-node"/>
+    <action name="root-node">
+        <java>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <!-- <name-node>hdfs://sandbox:8020</name-node> -->
+            <main-class>org.apache.hadoop.examples.WordCount </main-class>
+            <!--
+            <arg>/tmp/GatewayBasicFuncTest/testOozieJobSubmission/input</arg>
+            <arg>/tmp/GatewayBasicFuncTest/testOozieJobSubmission/output</arg>
+            -->
+            <arg>${inputDir}</arg>
+            <arg>${outputDir}</arg>
+        </java>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>Java failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

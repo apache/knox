@@ -1,0 +1,39 @@
+<workflow-app
+        xmlns="uri:oozie:workflow:0.2" name="streaming_wordcount_clone">
+    <start to="root-node"/>
+    <action name="root-node">
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>hdfs://sandbox:8020</name-node>
+            <streaming>
+                <mapper>python wordcount.py map</mapper>
+                <reducer>python wordcount.py reduce</reducer>
+            </streaming>
+            <configuration>
+                <property>
+                    <name>mapred.input.dir</name>
+                    <value>/user/hue/jobsub/sample_data</value>
+                </property>
+                <property>
+                    <name>mapred.output.dir</name>
+                    <value>/usr/hue/jobsub/output_data</value>
+                </property>
+                <property>
+                    <name>mapred.reduce.tasks</name>
+                    <value>1</value>
+                </property>
+                <property>
+                    <name>oozie.use.system.libpath</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <file>/user/hue/jobsub/examples/wordcount.py#wordcount.py</file>
+        </map-reduce>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>Streaming failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

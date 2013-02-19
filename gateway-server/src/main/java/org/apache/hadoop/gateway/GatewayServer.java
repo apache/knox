@@ -180,6 +180,29 @@ public class GatewayServer {
     this.listener = new InternalTopologyListener();
   }
 
+//  private void setupSslExample() throws Exception {
+//    SslContextFactory sslContextFactory = new SslContextFactory( true );
+//    sslContextFactory.setCertAlias( "server" );
+//    sslContextFactory.setKeyStorePath( "target/test-classes/server-keystore.jks" );
+//    sslContextFactory.setKeyStorePassword( "password" );
+//    //sslContextFactory.setKeyManagerPassword( "password" );
+//    sslContextFactory.setTrustStore( "target/test-classes/server-truststore.jks" );
+//    sslContextFactory.setTrustStorePassword( "password" );
+//    sslContextFactory.setNeedClientAuth( false );
+//    sslContextFactory.setTrustAll( true );
+//    SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
+//
+//    ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
+//    context.setContextPath( "/" );
+//    ServletHolder servletHolder = new ServletHolder( new MockServlet() );
+//    context.addServlet( servletHolder, "/*" );
+//
+//    jetty = new Server();
+//    jetty.addConnector( sslConnector );
+//    jetty.setHandler( context );
+//    jetty.start();
+//  }
+
   private synchronized void start() throws Exception {
 
 //    Map<String,String> params = new HashMap<String,String>();

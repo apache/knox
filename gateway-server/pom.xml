@@ -320,6 +320,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
             <scope>test</scope>

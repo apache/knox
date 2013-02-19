@@ -26,8 +26,13 @@ import java.net.URL;
 
 public class TestUtils {
 
-  public static URL getResourceUrl( Class clazz, String name ) throws FileNotFoundException {
+  public static String getResourceName( Class clazz, String name ) {
     name = clazz.getName().replaceAll( "\\.", "/" ) + "/" + name;
+    return name;
+  }
+
+  public static URL getResourceUrl( Class clazz, String name ) throws FileNotFoundException {
+    name = getResourceName( clazz, name );
     URL url = ClassLoader.getSystemResource( name );
     if( url == null ) {
       throw new FileNotFoundException( name );

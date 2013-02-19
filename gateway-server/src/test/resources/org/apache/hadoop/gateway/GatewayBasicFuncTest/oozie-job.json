@@ -1,0 +1,43 @@
+{
+    "appPath": "hdfs://sandbox:8020/user/hue/jobsub/_sandbox_-design-4",
+    "acl": null,
+    "status": "SUCCEEDED",
+    "createdTime": "Thu, 14 Feb 2013 17:31:43 GMT",
+    "conf": "<configuration>\r\n  <property>\r\n    <name>user.name</name>\r\n    <value>sandbox</value>\r\n  </property>\r\n  <property>\r\n    <name>oozie.use.system.libpath</name>\r\n    <value>true</value>\r\n  </property>\r\n  <property>\r\n    <name>jobTracker</name>\r\n    <value>sandbox:50300</value>\r\n  </property>\r\n  <property>\r\n    <name>oozie.wf.application.path</name>\r\n    <value>hdfs://sandbox:8020/user/hue/jobsub/_sandbox_-design-4</value>\r\n  </property>\r\n</configuration>",
+    "lastModTime": "Thu, 14 Feb 2013 17:32:31 GMT",
+    "run": 0,
+    "endTime": "Thu, 14 Feb 2013 17:32:31 GMT",
+    "externalId": null,
+    "appName": "streaming_wordcount_clone",
+    "id": "0000000-130214094519989-oozie-oozi-W",
+    "startTime": "Thu, 14 Feb 2013 17:31:43 GMT",
+    "parentId": null,
+    "toString": "Workflow id[0000000-130214094519989-oozie-oozi-W] status[SUCCEEDED]",
+    "group": null,
+    "consoleUrl": "http://sandbox:11000/oozie?job=0000000-130214094519989-oozie-oozi-W",
+    "user": "sandbox",
+    "actions": [
+        {
+            "errorMessage": null,
+            "status": "OK",
+            "stats": null,
+            "data": null,
+            "transition": "end",
+            "externalStatus": "SUCCEEDED",
+            "cred": "null",
+            "conf": "<map-reduce xmlns=\"uri:oozie:workflow:0.2\">\r\n  <job-tracker>sandbox:50300</job-tracker>\r\n  <name-node>hdfs://sandbox:8020</name-node>\r\n  <streaming>\r\n    <mapper>python wordcount.py map</mapper>\r\n    <reducer>python wordcount.py reduce</reducer>\r\n  </streaming>\r\n  <configuration>\r\n    <property>\r\n      <name>mapred.input.dir</name>\r\n      <value>/user/hue/jobsub/sample_data</value>\r\n    </property>\r\n    <property>\r\n      <name>mapred.output.dir</name>\r\n      <value>/usr/hue/jobsub/output_data</value>\r\n    </property>\r\n    <property>\r\n      <name>mapred.reduce.tasks</name>\r\n      <value>1</value>\r\n    </property>\r\n    <property>\r\n      <name>oozie.use.system.libpath</name>\r\n      <value>true</value>\r\n    </property>\r\n  </configuration>\r\n  <file>/user/hue/jobsub/examples/wordcount.py#wordcount.py</file>\r\n</map-reduce>",
+            "type": "map-reduce",
+            "endTime": "Thu, 14 Feb 2013 17:32:31 GMT",
+            "externalId": "job_201302140945_0002",
+            "id": "0000000-130214094519989-oozie-oozi-W@root-node",
+            "startTime": "Thu, 14 Feb 2013 17:31:44 GMT",
+            "externalChildIDs": null,
+            "name": "root-node",
+            "errorCode": null,
+            "trackerUri": "sandbox:50300",
+            "retries": 0,
+            "toString": "Action name[root-node] status[OK]",
+            "consoleUrl": "http://sandbox:50030/jobdetails.jsp?jobid=job_201302140945_0002"
+        }
+    ]
+}

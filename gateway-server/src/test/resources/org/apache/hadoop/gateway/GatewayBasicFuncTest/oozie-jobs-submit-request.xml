@@ -1,0 +1,26 @@
+<configuration>
+    <property>
+        <name>user.name</name>
+        <value>$userName</value>
+    </property>
+    <property>
+        <name>jobTracker</name>
+        <value>$jobTracker</value>
+    </property>
+    <property>
+        <name>nameNode</name>
+        <value>$nameNode</value>
+    </property>
+    <property>
+        <name>oozie.wf.application.path</name>
+        <value>$appPath</value>
+    </property>
+    <property>
+        <name>inputDir</name>
+        <value>$inputDir</value>
+    </property>
+    <property>
+        <name>outputDir</name>
+        <value>$outputDir</value>
+    </property>
+</configuration>

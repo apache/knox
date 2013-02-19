@@ -25,7 +25,12 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.test.mock.MockServer;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -45,6 +50,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isIn;
 import static org.junit.Assert.assertThat;
@@ -113,6 +119,10 @@ public class GatewayFuncTestDriver {
     services.clear();
 
     ldap.stop();
+  }
+
+  public boolean isUseGateway() {
+    return useGateway;
   }
 
   public MockServer getMock( String serviceRole ) {
@@ -247,7 +257,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl( "NAMENODE" ) + file );
+        .when().put( getUrl( "NAMENODE" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     log.trace( "Redirect location: " + response.getHeader( "Location" ) );
     return location;
@@ -298,7 +308,8 @@ public class GatewayFuncTestDriver {
     if( location != null ) {
       int status = createFileDN( user, password, file, location, contentType, resource, dnStatus );
       if( status < 300 && permsOctal != null ) {
-        chownFile( user, password, file, user, group, chownStatus );
+        //chownFile( user, password, file, user, group, chownStatus );
+        chmodFile( user, password, file, permsOctal, chownStatus );
       }
     }
     assertComplete();
@@ -372,7 +383,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file );
+        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
@@ -394,7 +405,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file );
+        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
@@ -501,7 +512,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .statusCode( isIn( ArrayUtils.toObject( status ) ) )
         .when()
-        .delete( getUrl( "NAMENODE" ) + file );
+        .delete( getUrl( "NAMENODE" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
@@ -528,7 +539,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         .content( "boolean", equalTo( true ) )
         .when()
-        .put( getUrl("NAMENODE") + dir );
+        .put( getUrl("NAMENODE") + dir + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     return location;
   }
@@ -665,5 +676,186 @@ public class GatewayFuncTestDriver {
     log.debug( "STATUS=" + status );
     assertComplete();
   }
+
+  /* GET /oozie/versions
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 5
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:47:51 GMT
+  See: oozie-versions.json
+  */
+  public void oozieGetVersions( String user, String password ) throws IOException {
+    given()
+        .auth().preemptive().basic( user, password )
+        .expect()
+        .statusCode( 200 )
+        .body( "", hasItems( 0, 1 ) )
+        .when().get( getUrl( "OOZIE" ) + "/versions" ).asString();
+  }
+
+  /* GET /oozie/v1/admin/status
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 23
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:49:16 GMT
+  See: oozie-admin-status.json
+  */
+
+  /* PUT /oozie/v1/admin/status?safemode=true
+TODO
+  */
+
+  /* GET /oozie/v1/admin/os-env
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 2039
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:51:56 GMT
+  See: oozie-admin-os-env.json
+  */
+
+  /* GET /oozie/v1/admin/java-sys-properties
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 3673
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:53:00 GMT
+  See: oozie-admin-java-sys-properties.json
+  */
+
+  /* GET /oozie/v1/admin/configuration
+  HTTP/1.1 200 OK
+  Transfer-Encoding: Identity
+  Content-Type: application/json;charset=UTF-8
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:53:31 GMT
+  See: oozie-admin-configuration.json
+  */
+
+  /* GET /oozie/v1/admin/instrumentation
+  HTTP/1.1 200 OK
+  Transfer-Encoding: Identity
+  Content-Type: application/json;charset=UTF-8
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:55:43 GMT
+  See: oozie-admin-instrumentation.json
+  */
+
+  /* GET /oozie/v1/admin/build-version
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 27
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 16:08:31 GMT
+  See: oozie-admin-build-version.json
+  */
+
+  /* POST /oozie/v1/jobs (request XML; contains URL, response JSON)
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 45
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 18:10:52 GMT
+  */
+  public String oozieSubmitJob( String user, String password, String request, int status ) throws IOException {
+    getMock( "OOZIE" )
+        .expect()
+        .method( "POST" )
+        .pathInfo( "/v1/jobs" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( getResourceBytes( "oozie-jobs-submit-response.json" ) )
+        .contentType( "application/json" );
+    String json = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .queryParam( "action", "start" )
+        .contentType( "application/xml;charset=UTF-8" )
+        .content( request )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+    //System.out.println( "JSON=" + json );
+    String id = from( json ).getString( "id" );
+    return id;
+  }
+
+  /* GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50 (body JSON; contains URL)
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 46
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 16:10:25 GMT
+  */
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 2611
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 17:39:36 GMT
+  */
+
+  /* http://192.168.56.101:11000/oozie/v1/job/0000000-130214094519989-oozie-oozi-W?action=start&user.name=sandbox
+  HTTP/1.1 200 OK
+  Date: Thu, 14 Feb 2013 17:52:13 GMT
+  Content-Length: 0
+  Server: Apache-Coyote/1.1
+  Set-Cookie: hadoop.auth="u=sandbox&p=sandbox&t=simple&e=1360900333149&s=AU/GeHDNBuK9RBRaBJfrqatjfz8="; Version=1; Path=/
+  */
+
+  /* PUT /oozie/v1/job/job-3?action=rerun (request body XML, contains URL)
+  HTTP/1.1 200 OK
+  Date: Thu, 14 Feb 2013 18:07:45 GMT
+  Content-Length: 0
+  Server: Apache-Coyote/1.1
+  Set-Cookie: hadoop.auth="u=sandbox&p=sandbox&t=simple&e=1360901264892&s=DCOczPqn9mcisCeOb5x2C7LIRc8="; Version=1; Path=/
+  */
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=info (body JSON, contains URL)
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 2611
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 17:45:23 GMT
+  */
+  public String oozieQueryJobStatus( String user, String password, String id, int status ) throws Exception {
+    getMock( "OOZIE" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/v1/job/" + id )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( getResourceBytes( "oozie-job-show-info.json" ) )
+        .contentType( "application/json" );
+
+    //NOTE:  For some reason REST-assured doesn't like this and ends up failing with Content-Length issues.
+    HttpClient client = new DefaultHttpClient();
+    String url = getUrl( "OOZIE" )  + "/v1/job/" + id;
+    HttpGet request = new HttpGet( url );
+    HttpResponse response = client.execute( request );
+    assertThat( response.getStatusLine().getStatusCode(), is( status ) );
+    String json = EntityUtils.toString( response.getEntity() );
+    String jobStatus = from( json ).getString( "status" );
+    return jobStatus;
+  }
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=definition
+  HTTP/1.1 200 OK
+  Content-Type: application/xml;charset=UTF-8
+  Content-Length: 1494
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 17:43:30 GMT
+  */
+
+  /* GET GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=log
+  HTTP/1.1 200 OK
+  Transfer-Encoding: Identity
+  Content-Type: text/plain;charset=UTF-8
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 17:41:43 GMT
+  */
 
 }

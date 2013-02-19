@@ -1,0 +1,27 @@
+{
+    "total": 1,
+    "workflows": [
+        {
+            "appPath": null,
+            "acl": null,
+            "status": "RUNNING",
+            "createdTime": "Thu, 14 Feb 2013 17:31:43 GMT",
+            "conf": null,
+            "lastModTime": "Thu, 14 Feb 2013 17:32:07 GMT",
+            "run": 0,
+            "endTime": null,
+            "externalId": null,
+            "appName": "streaming_wordcount_clone",
+            "id": "0000000-130214094519989-oozie-oozi-W",
+            "startTime": "Thu, 14 Feb 2013 17:31:43 GMT",
+            "parentId": null,
+            "toString": "Workflow id[0000000-130214094519989-oozie-oozi-W] status[RUNNING]",
+            "group": null,
+            "consoleUrl": "http://sandbox:11000/oozie?job=0000000-130214094519989-oozie-oozi-W",
+            "user": "sandbox",
+            "actions": []
+        }
+    ],
+    "len": 50,
+    "offset": 1
+}

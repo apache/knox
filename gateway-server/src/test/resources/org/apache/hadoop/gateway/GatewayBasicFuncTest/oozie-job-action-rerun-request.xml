@@ -1,0 +1,20 @@
+<configuration>
+    <property>
+        <name>user.name</name>
+        <value>sandbox</value>
+    </property>
+    <property>
+        <name>oozie.wf.application.path</name>
+        <value>hdfs://sandbox:8020/user/hue/jobsub/_sandbox_-design-4</value>
+    </property>
+    <!--
+        <property>
+            <name>oozie.wf.rerun.skip.nodes</name>
+            <value>,</value>
+        </property>
+    -->
+    <property>
+        <name>oozie.wf.rerun.failnodes</name>
+        <value>false</value>
+    </property>
+</configuration>
