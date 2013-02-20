@@ -46,6 +46,7 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   //TODO: Need to limit which values are attempted to be filtered by the name.
   private String filterValueString( String name, String value ) {
     try {
+      //TODO: When the input is sandbox:50300 and it doesn't match anything it needs to result in the same value.
       Template input = Parser.parse( value );
       Template output = rewriter.rewrite( resolver, input, direction );
       value = output.toString();

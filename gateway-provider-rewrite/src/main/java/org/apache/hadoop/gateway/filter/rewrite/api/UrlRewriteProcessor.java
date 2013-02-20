@@ -117,14 +117,15 @@ public class UrlRewriteProcessor implements UrlRewriter {
 
   @Override
   public Template rewrite(
-      Resolver resolver, Template uri, Direction direction ) {
+      Resolver resolver, Template inputUri, Direction direction ) {
+    Template outputUri = inputUri;
     Matcher<UrlRewriteStepProcessorHolder>.Match match = null;
     switch( direction ) {
       case IN:
-        match = inbound.match( uri );
+        match = inbound.match( outputUri );
         break;
       case OUT:
-        match = outbound.match( uri );
+        match = outbound.match( outputUri );
         break;
     }
     if( match != null ) {
@@ -134,17 +135,17 @@ public class UrlRewriteProcessor implements UrlRewriter {
         UrlRewriteStepProcessorHolder stepHolder = match.getValue();
         UrlRewriteStepStatus stepStatus = stepHolder.process( context );
         if( UrlRewriteStepStatus.SUCCESS == stepStatus ) {
-          uri = context.getCurrentUrl();
+          outputUri = context.getCurrentUrl();
         } else {
-          uri = null;
+          outputUri = null;
         }
       } catch( Exception e ) {
         //TODO: I18N Log stack trace properly.
         e.printStackTrace();
-        uri = null;
+        outputUri = null;
       }
     }
-    return uri;
+    return outputUri;
   }
 
 }

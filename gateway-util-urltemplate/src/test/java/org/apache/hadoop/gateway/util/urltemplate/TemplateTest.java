@@ -17,13 +17,17 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
+@Category( { UnitTests.class, FastTests.class } )
 public class TemplateTest {
 
   @Test
@@ -35,7 +39,12 @@ public class TemplateTest {
 
     template = Parser.parse( "{*}://{host}:{*}/{**}?{**}" );
     actual = template.toString();
-    expect = "{*=*}://{host=*}:{*=*}/{**=*}?{**=*}";
+    expect = "{*=*}://{host=*}:{*=*}/{**=**}?{**=**}";
+    assertThat( actual, is( expect ) );
+
+    template = Parser.parse( "/path/**?**" );
+    actual = template.toString();
+    expect = "/path/**?**";
     assertThat( actual, is( expect ) );
   }
 

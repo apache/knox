@@ -221,25 +221,26 @@ public class Template {
         } else {
           b.append( '&' );
         }
-        String paramName = segment.getParamName();
+//        String paramName = segment.getParamName();
         for( Segment.Value value: segment.getValues() ) {
-          String valuePattern = value.getPattern();
-          if( paramName != null && paramName.length() > 0 ) {
-            b.append( segment.getQueryName() );
-            b.append( "={" );
-            b.append( segment.getParamName() );
-            if( valuePattern != null ) {
-              b.append( '=' );
-              b.append( valuePattern );
-            }
-            b.append( '}' );
-          } else {
-            b.append( segment.getQueryName() );
-            if( valuePattern != null ) {
-              b.append( "=" );
-              b.append( valuePattern );
-            }
-          }
+          buildQuerySegment( b, segment, value );
+//          String valuePattern = value.getPattern();
+//          if( paramName != null && paramName.length() > 0 ) {
+//            b.append( segment.getQueryName() );
+//            b.append( "={" );
+//            b.append( segment.getParamName() );
+//            if( valuePattern != null ) {
+//              b.append( '=' );
+//              b.append( valuePattern );
+//            }
+//            b.append( '}' );
+//          } else {
+//            b.append( segment.getQueryName() );
+//            if( valuePattern != null ) {
+//              b.append( "=" );
+//              b.append( valuePattern );
+//            }
+//          }
         }
       }
       if( extra != null ) {
@@ -249,10 +250,35 @@ public class Template {
         } else {
           b.append( '&' );
         }
-        buildSegmentValue( b, extra, extra.getFirstValue() );
+        buildQuerySegment( b, extra, extra.getFirstValue() );
       }
       if( count == 0 ) {
         b.append( '?' );
+      }
+    }
+  }
+
+  private void buildQuerySegment( StringBuilder b, Query segment, Segment.Value value ) {
+    String paramName = segment.getParamName();
+    String queryName = segment.getQueryName();
+    String valuePattern = value.getPattern();
+    if( paramName != null && paramName.length() > 0 ) {
+      if( !Segment.GLOB_PATTERN.equals( queryName ) && !Segment.STAR_PATTERN.equals( queryName ) ) {
+        b.append( segment.getQueryName() );
+        b.append( "=" );
+      }
+      b.append( "{" );
+      b.append( segment.getParamName() );
+      if( valuePattern != null ) {
+        b.append( '=' );
+        b.append( valuePattern );
+      }
+      b.append( '}' );
+    } else {
+      b.append( queryName );
+      if( valuePattern != null ) {
+        b.append( "=" );
+        b.append( valuePattern );
       }
     }
   }

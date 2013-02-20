@@ -1,26 +1,26 @@
 <configuration>
     <property>
         <name>user.name</name>
-        <value>$userName</value>
+        <value>$userName</value> <!-- Velocity var: User name for job that will be run. -->
     </property>
     <property>
         <name>jobTracker</name>
-        <value>$jobTracker</value>
+        <value>$jobTracker</value> <!-- Velocity var: The JobTracker's host:port. -->
     </property>
     <property>
         <name>nameNode</name>
-        <value>$nameNode</value>
+        <value>$nameNode</value> <!-- Velocity var: The NameNodes' URL hdfs://host:port -->
     </property>
     <property>
         <name>oozie.wf.application.path</name>
-        <value>$appPath</value>
+        <value>$appPath</value> <!-- Velocity var: The full HDFS app dir path hdfs://host:port/tmp/some-path -->
     </property>
     <property>
         <name>inputDir</name>
-        <value>$inputDir</value>
+        <value>$inputDir</value> <!-- Velocity var: Fully qualified input path /tmp/some-output-path -->
     </property>
     <property>
         <name>outputDir</name>
-        <value>$outputDir</value>
+        <value>$outputDir</value>  <!-- Velocity var: Fully qualified output path /tmp/some-output-path -->
     </property>
 </configuration>

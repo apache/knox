@@ -18,7 +18,10 @@
 package org.apache.hadoop.gateway.util.urltemplate;
 
 
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.net.URISyntaxException;
 
@@ -31,6 +34,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
 //TODO: Test to make sure that extra unmatched query parameters prevent a match.
+@Category( { UnitTests.class, FastTests.class } )
 public class MatcherTest {
 
   private void addTemplate( Matcher<String> matcher, String template ) throws URISyntaxException {

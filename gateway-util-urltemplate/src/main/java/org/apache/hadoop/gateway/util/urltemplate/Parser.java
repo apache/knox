@@ -29,19 +29,16 @@ public class Parser {
   public static final char TEMPLATE_CLOSE_MARKUP = '}';
   public static final char NAME_PATTERN_SEPARATOR = '=';
 
-  private static final int STATE_UNKNOWN = 0;
-  private static final int STATE_SCHEME = 1;
-  private static final int STATE_AUTHORITY = 2;
-  private static final int STATE_PATH = 3;
-  private static final int STATE_QUERY = 4;
-  private static final int STATE_FRAGMENT = 5;
+  private enum State { UNKNOWN, SCHEME, AUTHORITY, PATH, QUERY, FRAGMENT };
 
-  private int state;
   private String template; // Kept this for debugging.
+  private State state;
   private Builder builder;
   private StringTokenizer parser;
-  private String prevToken;
-  private String currToken;
+  private String[] tokens;
+  private int curr;
+//  private String prevToken;
+//  private String currToken;
 
   public static Template parse( String template ) throws URISyntaxException {
     return new Parser().parseTemplate( template );
@@ -49,7 +46,7 @@ public class Parser {
 
   public Template parseTemplate( String template ) throws URISyntaxException {
     this.template = template;
-    state = STATE_UNKNOWN;
+    state = State.UNKNOWN;
     parser = new StringTokenizer( template, ":/?", true ); // Note that the delims are returned.
     builder = new Builder();
     builder.setHasScheme( false );
@@ -58,26 +55,28 @@ public class Parser {
     builder.setIsDirectory( false ); // Assume a file path until found otherwise.
     builder.setHasQuery( false ); // Assume no ? until found otherwise.
     builder.setHasFragment( false );
-    prevToken = null;
-    currToken = null;
+    tokens = new String[3];
+    curr = -1;
+//    prevToken = null;
+//    currToken = null;
     while( more() ) {
       switch( state ) {
-        case( STATE_UNKNOWN ):
+        case UNKNOWN:
           parseUnknown();
           break;
-        case( STATE_SCHEME ):
+        case SCHEME:
           parseScheme();
           break;
-        case( STATE_AUTHORITY ):
+        case AUTHORITY:
           parseAuthority();
           break;
-        case( STATE_PATH ):
+        case PATH:
           parsePath();
           break;
-        case( STATE_QUERY ):
+        case QUERY:
           parseQuery();
           break;
-        case( STATE_FRAGMENT ):
+        case FRAGMENT:
           parseFragment();
           break;
       }
@@ -86,9 +85,22 @@ public class Parser {
     return builder.build();
   }
 
-  private void next( String delim ) {
-    prevToken = currToken;
-    currToken = parser.nextToken( delim );
+  private final String currToken() {
+//    return currToken;
+    return curr < 0 ? null : tokens[ curr ];
+  }
+
+  private final String prevToken( final int rel ) {
+//    return prevToken;
+    int index = curr + rel;
+    return index < 0 ? tokens[ index + tokens.length ] : tokens[ index % tokens.length ];
+  }
+
+  private void nextToken( String delim ) {
+//    prevToken = currToken;
+//    currToken = parser.nextToken( delim );
+    curr = ( curr + 1 ) % tokens.length;
+    tokens[ curr ] = parser.nextToken( delim );
   }
 
   private boolean more() {
@@ -96,19 +108,21 @@ public class Parser {
   }
 
   private void parseUnknown() throws URISyntaxException {
-    next( ":/?#" );
+    nextToken( ":/?#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "/".equals( currToken ) ) {
       if( "/".equals( prevToken ) ) {
-        state = STATE_AUTHORITY;
+        state = State.AUTHORITY;
         builder.setHasAuthority( true );
       } else if( prevToken != null ) {
-        state = STATE_PATH;
+        state = State.PATH;
         consumePathSegmentToken( prevToken ); // Assume anything unknown before the '/' is a relative path.
       } else {
         // Could be the start an absolute path or the start of the authority so get the next token.
       }
     } else if ( "?".equals( currToken ) ) {
-      state = STATE_QUERY;
+      state = State.QUERY;
       builder.setHasQuery( true );
       if( "/".equals( prevToken ) ) {
         builder.setIsAbsolute( true );
@@ -117,15 +131,16 @@ public class Parser {
         consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
       }
     } else if ( ":".equals( currToken ) ) {
-      state = STATE_SCHEME;
+      // TODO: Might be a naked authority (ie host:port), not a scheme.  It has to have a :/ to be a scheme.
+      state = State.SCHEME;
       builder.setHasScheme( true );
       consumeSchemeToken( prevToken );
     } else if( "#".equals( currToken ) ) {
-      state = STATE_FRAGMENT;
+      state = State.FRAGMENT;
       builder.setHasFragment( true );
       consumePathSegmentToken( prevToken );
     } else if( "/".equals( prevToken ) ) {
-      state = STATE_PATH;
+      state = State.PATH;
       builder.setIsAbsolute( true );
       consumePathSegmentToken( currToken );
     } else {
@@ -134,22 +149,24 @@ public class Parser {
   }
 
   private void parseScheme() throws URISyntaxException {
-    next( "/?#" );
+    nextToken( "/?#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "/".equals( currToken ) ) {
       if( "/".equals( prevToken ) ) {
-        state = STATE_AUTHORITY;
+        state = State.AUTHORITY;
         builder.setHasAuthority( true );
       } else {
         // Could be the start an absolute path or the start of the authority so get the next token.
       }
     } else if ( "?".equals( currToken ) ) {
-      state = STATE_QUERY;
+      state = State.QUERY;
       builder.setHasQuery( true );
       if( !":".equals( prevToken ) ) {
         consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
       }
     } else if ( "#".equals( currToken ) ) {
-      state = STATE_FRAGMENT;
+      state = State.FRAGMENT;
       builder.setHasFragment( true );
       if( !":".equals( prevToken ) ) {
         consumePathSegmentToken( prevToken ); // Assume anything unknown before the '?' is a relative path.
@@ -160,21 +177,23 @@ public class Parser {
   }
 
   private void parseAuthority() throws URISyntaxException {
-    next( "/?#" );
+    nextToken( "/?#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "/".equals( currToken ) ) {
-      state = STATE_PATH;
+      state = State.PATH;
       builder.setIsAbsolute( true );
       if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
       }
     } else if( "?".equals( currToken ) ) {
-      state = STATE_QUERY;
+      state = State.QUERY;
       builder.setHasQuery( true );
       if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
       }
     } else if( "#".equals( currToken ) ) {
-      state = STATE_FRAGMENT;
+      state = State.FRAGMENT;
       builder.setHasFragment( true );
       if( !"/".equals( prevToken ) && !":".equals( prevToken ) ) {
         consumeAuthorityToken( prevToken );
@@ -186,17 +205,19 @@ public class Parser {
   }
 
   private void parsePath() {
-    next( "/?#" );
+    nextToken( "/?#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "/".equals( currToken ) ) {
       // Ingore the double /
     } else if( "?".equals( currToken ) ) {
-      state = STATE_QUERY;
+      state = State.QUERY;
       builder.setHasQuery( true );
       if( "/".equals( prevToken ) ) {
         builder.setIsDirectory( true );
       }
     } else if( "#".equals( currToken ) ) {
-      state = STATE_FRAGMENT;
+      state = State.FRAGMENT;
       builder.setHasFragment( true );
       if( "/".equals( prevToken ) ) {
         builder.setIsDirectory( true );
@@ -207,11 +228,13 @@ public class Parser {
   }
 
   private void parseQuery() {
-    next( "?&#" );
+    nextToken( "?&#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "&".equals( currToken ) || "?".equals( currToken ) ) {
       // Ignore the double & and ?
     } else if ( "#".equals( currToken ) ) {
-        state = STATE_FRAGMENT;
+        state = State.FRAGMENT;
         builder.setHasFragment( true );
     } else {
       consumeQuerySegmentToken( currToken );
@@ -219,7 +242,9 @@ public class Parser {
   }
 
   private void parseFragment() {
-    next( "#" );
+    nextToken( "#" );
+    String currToken = currToken();
+    String prevToken = prevToken( -1 );
     if( "#".equals( currToken ) ) {
       // Ignore the double #
     } else {
@@ -228,8 +253,9 @@ public class Parser {
   }
 
   private void parseFinish() {
+    String currToken = currToken();
     switch( state ) {
-      case( STATE_UNKNOWN ):
+      case UNKNOWN:
         if( "/".equals( currToken ) ) {
           builder.setIsAbsolute( true );
           builder.setIsDirectory( true );
@@ -237,22 +263,22 @@ public class Parser {
           consumePathSegmentToken( currToken );
         }
         break;
-      case( STATE_AUTHORITY ):
+      case AUTHORITY:
         if( !"/".equals( currToken ) ) {
           consumeAuthorityToken( currToken );
         }
         break;
-      case( STATE_PATH ):
+      case PATH:
         if( "/".equals( currToken ) ) {
           builder.setIsDirectory( true );
         }
         break;
-      case( STATE_QUERY ):
+      case QUERY:
         if( !"?".equals( currToken ) ) {
           consumeQuerySegmentToken( currToken );
         }
         break;
-      case( STATE_FRAGMENT ):
+      case FRAGMENT:
         if( !"#".equals( currToken ) ) {
           consumeFragmentToken( currToken );
         }
@@ -369,6 +395,7 @@ public class Parser {
     return a;
   }
 
+  // Using this because String.split is very inefficient.
   private static String[] split( String s, char d ) {
     String[] a;
     int i = s.indexOf( d );

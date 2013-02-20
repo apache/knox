@@ -17,11 +17,15 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+@Category( { UnitTests.class, FastTests.class } )
 public class SegmentTest {
 
   @Test

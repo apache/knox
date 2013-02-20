@@ -58,6 +58,7 @@ public class TempletonDeploymentContributor extends ServiceDeploymentContributor
     resource.pattern( TEMPLETON_EXTERNAL_PATH + "/**?**" );
     context.contributeFilter( service, resource, "authentication", null, null );
     context.contributeFilter( service, resource, "rewrite", null, null );
+    context.contributeFilter( service, resource, "identity-assertion", null, null );
     context.contributeFilter( service, resource, "dispatch", null, null );
   }
 

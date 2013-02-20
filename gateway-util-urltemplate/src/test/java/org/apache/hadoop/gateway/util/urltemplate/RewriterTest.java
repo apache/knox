@@ -17,9 +17,12 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.easymock.EasyMock;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +37,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+@Category( { UnitTests.class, FastTests.class } )
 public class RewriterTest {
 
   @Ignore( "Not implemented yet." )
@@ -154,7 +158,6 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
-//    sourcePattern = Parser.parse( "**" );
     sourcePattern = Parser.parse( "*://*:*/{0=**}" );
     targetPattern = Parser.parse( "{0}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
@@ -162,9 +165,8 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/pathA/pathB/pathC" );
-//    sourcePattern = Parser.parse( "*/pathA/*/*" );
     sourcePattern = Parser.parse( "*://*:*/pathA/{1=*}/{2=*}" );
-    targetPattern = Parser.parse( "http://some-other-host:*/{2}/{1}" );
+    targetPattern = Parser.parse( "http://some-other-host/{2}/{1}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     expectOutput = new URI( "http://some-other-host/pathC/pathB" );
     assertThat( actualOutput, equalTo( expectOutput ) );

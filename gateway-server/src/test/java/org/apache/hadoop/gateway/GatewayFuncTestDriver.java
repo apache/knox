@@ -23,16 +23,25 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.test.mock.MockServer;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -44,6 +53,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -302,8 +312,7 @@ public class GatewayFuncTestDriver {
           .status( status );
     }
     Response response = given()
-        //.log().headers()
-        //.log().params()
+        //.log().all()
         .auth().preemptive().basic( user, password )
         .contentType( contentType )
         .content( getResourceBytes( resource ) )
@@ -321,8 +330,10 @@ public class GatewayFuncTestDriver {
     if( location != null ) {
       int status = createFileDN( user, password, file, location, contentType, resource, dnStatus );
       if( status < 300 && permsOctal != null ) {
-        //chownFile( user, password, file, user, group, chownStatus );
         chmodFile( user, password, file, permsOctal, chownStatus );
+        if( group != null ) {
+          chownFile( user, password, file, user, group, chownStatus );
+        }
       }
     }
     assertComplete();
@@ -367,7 +378,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().get( getUrl("NAMENODE") + file );
+        .when().get( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     if( response.getStatusCode() == HttpStatus.SC_OK ) {
       String actualContent = response.asString();
       String expectedContent = getResourceString( resource );
@@ -463,7 +474,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file );
+        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     log.trace( "Redirect location: " + response.getHeader( "Location" ) );
     return location;
@@ -590,14 +601,14 @@ public class GatewayFuncTestDriver {
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
-        //.formParam( "user.name", user )
+        .formParam( "user.name", user )
         .formParam( "jar", jar )    //"/user/hdfs/test/hadoop-examples.jar" )
         .formParam( "class", main ) //"org.apache.org.apache.hadoop.examples.WordCount" )
         .formParam( "arg", input, output ) //.formParam( "arg", "/user/hdfs/test/input", "/user/hdfs/test/output" )
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().post( getUrl( "TEMPLETON" ) + "/mapreduce/jar" ).asString();
+        .when().post( getUrl( "TEMPLETON" ) + "/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
     log.debug( "JOB=" + job );
@@ -619,17 +630,17 @@ public class GatewayFuncTestDriver {
         .auth().preemptive().basic( user, password )
 //BUG: The identity asserter needs to check for this too.
         .formParam( "user.name", user )
-        .queryParam( "group", group )
+        .formParam( "group", group )
         .formParam( "file", file )
-        .queryParam( "arg", arg )
-        .queryParam( "statusdir", statusDir )
+        .formParam( "arg", arg )
+        .formParam( "statusdir", statusDir )
         .expect()
         //.log().all();
         .statusCode( isIn( ArrayUtils.toObject( status ) ) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/pig" )
+        .post( getUrl( "TEMPLETON" ) + "/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -650,16 +661,18 @@ public class GatewayFuncTestDriver {
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
-        .queryParam( "group", group )
-        .queryParam( "file", file )
-        .queryParam( "statusdir", statusDir )
+        .formParam( "user.name", user )
+        .formParam( "group", group )
+        .formParam( "group", group )
+        .formParam( "file", file )
+        .formParam( "statusdir", statusDir )
         .expect()
         //.log().all()
         .statusCode( isIn( ArrayUtils.toObject( status ) ) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/hive" )
+        .post( getUrl( "TEMPLETON" ) + "/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -685,7 +698,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .content( "status.jobId", equalTo( job ) )
         .statusCode( HttpStatus.SC_OK )
-        .when().get( getUrl( "TEMPLETON" ) + "/queue/{job}" ).asString();
+        .when().get( getUrl( "TEMPLETON" ) + "/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
     assertComplete();
   }
@@ -704,7 +717,7 @@ public class GatewayFuncTestDriver {
         .expect()
         .statusCode( 200 )
         .body( "", hasItems( 0, 1 ) )
-        .when().get( getUrl( "OOZIE" ) + "/versions" ).asString();
+        .when().get( getUrl( "OOZIE" ) + "/versions" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
   }
 
   /* GET /oozie/v1/admin/status
@@ -771,7 +784,7 @@ TODO
   Server: Apache-Coyote/1.1
   Date: Thu, 14 Feb 2013 18:10:52 GMT
   */
-  public String oozieSubmitJob( String user, String password, String request, int status ) throws IOException {
+  public String oozieSubmitJob( String user, String password, String request, int status ) throws IOException, URISyntaxException {
     getMock( "OOZIE" )
         .expect()
         .method( "POST" )
@@ -780,16 +793,42 @@ TODO
         .status( HttpStatus.SC_CREATED )
         .content( getResourceBytes( "oozie-jobs-submit-response.json" ) )
         .contentType( "application/json" );
-    String json = given()
-        //.log().all()
-        .auth().preemptive().basic( user, password )
-        .queryParam( "action", "start" )
-        .contentType( "application/xml;charset=UTF-8" )
-        .content( request )
-        .expect()
-        //.log().all()
-        .statusCode( status )
-        .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+    System.out.println( "REQUEST LENGTH = " + request.length() );
+
+    URL url = new URL( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) );
+    HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
+    DefaultHttpClient client = new DefaultHttpClient();
+    client.getCredentialsProvider().setCredentials(
+        new AuthScope( targetHost ),
+        new UsernamePasswordCredentials( user, password ) );
+
+    // Create AuthCache instance
+    AuthCache authCache = new BasicAuthCache();
+    // Generate BASIC scheme object and add it to the local auth cache
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+    // Add AuthCache to the execution context
+    BasicHttpContext localContext = new BasicHttpContext();
+    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+
+    HttpPost post = new HttpPost( url.toURI() );
+    post.getParams().setParameter( "action", "start" );
+    StringEntity entity = new StringEntity( request, ContentType.create( "application/xml", "UTF-8" ) );
+    post.setEntity( entity );
+    HttpResponse response = client.execute( targetHost, post, localContext );
+    assertThat( response.getStatusLine().getStatusCode(), is( status ) );
+    String json = EntityUtils.toString( response.getEntity() );
+
+//    String json = given()
+//        .log().all()
+//        .auth().preemptive().basic( user, password )
+//        .queryParam( "action", "start" )
+//        .contentType( "application/xml;charset=UTF-8" )
+//        .content( request )
+//        .expect()
+//        .log().all()
+//        .statusCode( status )
+//        .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     //System.out.println( "JSON=" + json );
     String id = from( json ).getString( "id" );
     return id;
@@ -845,10 +884,24 @@ TODO
         .contentType( "application/json" );
 
     //NOTE:  For some reason REST-assured doesn't like this and ends up failing with Content-Length issues.
-    HttpClient client = new DefaultHttpClient();
-    String url = getUrl( "OOZIE" )  + "/v1/job/" + id;
-    HttpGet request = new HttpGet( url );
-    HttpResponse response = client.execute( request );
+    URL url = new URL( getUrl( "OOZIE" ) + "/v1/job/" + id + ( isUseGateway() ? "" : "?user.name=" + user ) );
+    HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
+    DefaultHttpClient client = new DefaultHttpClient();
+    client.getCredentialsProvider().setCredentials(
+        new AuthScope( targetHost ),
+        new UsernamePasswordCredentials( user, password ) );
+
+    // Create AuthCache instance
+    AuthCache authCache = new BasicAuthCache();
+    // Generate BASIC scheme object and add it to the local auth cache
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+    // Add AuthCache to the execution context
+    BasicHttpContext localContext = new BasicHttpContext();
+    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+
+    HttpGet request = new HttpGet( url.toURI() );
+    HttpResponse response = client.execute( targetHost, request, localContext );
     assertThat( response.getStatusLine().getStatusCode(), is( status ) );
     String json = EntityUtils.toString( response.getEntity() );
     String jobStatus = from( json ).getString( "status" );
