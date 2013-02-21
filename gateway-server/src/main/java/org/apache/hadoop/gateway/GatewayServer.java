@@ -27,7 +27,6 @@ import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
@@ -179,6 +178,7 @@ public class GatewayServer {
           services = srvics;
         }
         services.start();
+        DeploymentFactory.setGatewayServices(services);
         log.startingGateway();
         server.start();
         log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );

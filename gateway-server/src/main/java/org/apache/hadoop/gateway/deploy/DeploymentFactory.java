@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
+import org.apache.hadoop.gateway.GatewayServices;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
@@ -36,6 +37,7 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
+import java.beans.Statement;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -51,6 +53,7 @@ public abstract class DeploymentFactory {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static GatewayServices services = null;
 
   //private static Set<ServiceDeploymentContributor> SERVICE_CONTRIBUTORS;
   private static Map<String,Map<String,ServiceDeploymentContributor>> SERVICE_CONTRIBUTOR_MAP;
@@ -62,6 +65,10 @@ public abstract class DeploymentFactory {
   private static Map<String,Map<String,ProviderDeploymentContributor>> PROVIDER_CONTRIBUTOR_MAP;
   static {
     loadProviderContributors();
+  }
+  
+  public static void setGatewayServices(GatewayServices services) {
+    DeploymentFactory.services = services;
   }
 
   public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
@@ -169,6 +176,9 @@ public abstract class DeploymentFactory {
     for( String role : providers.keySet() ) {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
         try {
+          if (services != null) {
+            injectServices(contributor);
+          }
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           //TODO: I18N message.
@@ -179,6 +189,9 @@ public abstract class DeploymentFactory {
     for( String role : services.keySet() ) {
       for( ServiceDeploymentContributor contributor : services.get( role ) ) {
         try {
+          if (services != null) {
+            injectServices(contributor);
+          }
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           //TODO: I18N message.
@@ -188,6 +201,27 @@ public abstract class DeploymentFactory {
     }
   }
   
+  private static void injectServices(Object contributor) {
+    if (services != null) {
+      Statement stmt = null;
+      for(String serviceName : services.getServiceNames()) {
+        
+        try {
+          // TODO: this is just a temporary injection solution
+          // TODO: test for the existence of the setter before attempting it
+          // TODO: avoid exception throwing when there is no setter
+          stmt = new Statement(contributor, "set" + serviceName, new Object[]{services.getService(serviceName)});
+          stmt.execute();
+        } catch (NoSuchMethodException e) {
+          // TODO: eliminate the possibility of this being thrown up front
+        } catch (Exception e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
   private static void contribute(
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers,

@@ -1,32 +1,36 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
-import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.services.security.MasterService;
 
 public class DefaultMasterService implements MasterService {
@@ -34,7 +38,7 @@ public class DefaultMasterService implements MasterService {
   private static final String MASTER_PASSPHRASE = "masterpassphrase";
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
   private char[] master = null;
-  private AESHelper aes = new AESHelper(MASTER_PASSPHRASE);
+  private AESEncryptor aes = new AESEncryptor(MASTER_PASSPHRASE);
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.impl.MasterService#getMasterSecret()
@@ -50,7 +54,6 @@ public class DefaultMasterService implements MasterService {
     // for testing only
     if (options.containsKey("master")) {
       this.master = options.get("master").toCharArray();
-//      return;
     }
     else {
       File masterFile = new File(config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security", "master");
@@ -105,14 +108,14 @@ public class DefaultMasterService implements MasterService {
   }
 
   private void persistMaster(char[] master, File masterFile) {
-    AESHelper.PBEAtom atom = encryptMaster(master);
+    EncryptionResult atom = encryptMaster(master);
     // TODO: write it to the file - ensuring permissions are set to just this user
     try {
       ArrayList<String> lines = new ArrayList<String>();
       lines.add(MASTER_PERSISTENCE_TAG);
       String iv = new String(Base64.encodeBase64String(atom.iv));
       String cipher = new String(Base64.encodeBase64String(atom.cipher));
-      String line = Base64.encodeBase64String((iv + "::" + cipher).getBytes());
+      String line = Base64.encodeBase64String((iv + "::" + cipher).getBytes("UTF8"));
       lines.add(line);
       FileUtils.writeLines(masterFile, "UTF8", lines);
       chmod("600", masterFile);
@@ -122,7 +125,7 @@ public class DefaultMasterService implements MasterService {
     }
   }
 
-  private AESHelper.PBEAtom encryptMaster(char[] master) {
+  private EncryptionResult encryptMaster(char[] master) {
     // TODO Auto-generated method stub
     try {
       return aes.encrypt(new String(master));
@@ -186,86 +189,4 @@ public class DefaultMasterService implements MasterService {
     return (File.separatorChar == '/');
   }
   
-  private static class AESHelper {
-    
-    // TODO: randomize the salt
-    private static final byte[] SALT = {
-        (byte) 0xA9, (byte) 0x9B, (byte) 0xC8, (byte) 0x32,
-        (byte) 0x56, (byte) 0x35, (byte) 0xE3, (byte) 0x03
-    };
-    private static final int ITERATION_COUNT = 65536;
-    private static final int KEY_LENGTH = 128;
-    private Cipher ecipher;
-    private Cipher dcipher;
-    private SecretKey secret;
-   
-    AESHelper(String passPhrase) {
-        SecretKeyFactory factory;
-        try {
-          factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-          KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), SALT, ITERATION_COUNT, KEY_LENGTH);
-          SecretKey tmp = factory.generateSecret(spec);
-          secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-   
-          ecipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-          ecipher.init(Cipher.ENCRYPT_MODE, secret);
-         
-          dcipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-          byte[] iv = ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
-          dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
-        } catch (NoSuchAlgorithmException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (InvalidKeyException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (InvalidParameterSpecException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-    }
- 
-    public PBEAtom encrypt(String encrypt) throws Exception {
-        byte[] bytes = encrypt.getBytes("UTF8");
-        PBEAtom atom = encrypt(bytes);
-        //return new Base64().encodeAsString(atom.cipher);
-        return atom;
-    }
- 
-    public PBEAtom encrypt(byte[] plain) throws Exception {
-      PBEAtom atom = new PBEAtom(ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV(), ecipher.doFinal(plain));
-      return atom;
-    }
- 
-    public String decrypt(String iv, String cipher) throws Exception {
-      byte[] ivbytes = Base64.decodeBase64(iv);
-      byte[] bytes = Base64.decodeBase64(cipher);
-      byte[] decrypted = decrypt(ivbytes, bytes);
-      return new String(decrypted, "UTF8");
-    }
- 
-    public byte[] decrypt(byte[] iv, byte[] encrypt) throws Exception {
-      dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
-      byte[] more = dcipher.update(encrypt);
-      return dcipher.doFinal(more);
-    }
-    
-    private class PBEAtom {
-      byte[] iv;
-      byte[] cipher;
-      PBEAtom(byte[] iv, byte[] cipher) {
-        this.iv = iv;
-        this.cipher = cipher;
-      }
-    }
-  }
 }

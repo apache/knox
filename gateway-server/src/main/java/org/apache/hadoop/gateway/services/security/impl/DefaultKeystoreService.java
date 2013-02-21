@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.File;
@@ -79,7 +96,7 @@ public class DefaultKeystoreService implements KeystoreService {
     }
   }
   
-  private KeyStore getCredentialStoreForCluster(String clusterName) {
+  public KeyStore getCredentialStoreForCluster(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     KeyStore credStore = null;
     try {
@@ -121,20 +138,31 @@ public class DefaultKeystoreService implements KeystoreService {
    }
 
    return keyStore;       
-}
-  
-  @Override
-  public void generateAliasForCluster(String clusterName, String alias) {
-    // TODO Auto-generated method stub
-    
   }
 
-  @Override
-  public void addAliasForCluster(String clusterName, String alias, String value) {
+  public void writeKeyStoreToFile(final KeyStore keyStore, final File file)
+         throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+    // TODO: backup the keystore on disk before attempting a write and restore on failure
+      final FileOutputStream  out = new FileOutputStream(file);
+      try
+      {
+          keyStore.store( out, masterService.getMasterSecret());
+      }
+      finally
+      {
+          out.close();
+      }
+  }
+
+  public void setMasterService(MasterService ms) {
+    this.masterService = ms;
+  }
+  
+  public void addCredentialForCluster(String clusterName, String alias, String value) {
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
-      final Key key = new SecretKeySpec(value.getBytes(), "AES");
       try {
+        final Key key = new SecretKeySpec(value.getBytes("UTF8"), "AES");
         ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
         final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
         writeKeyStoreToFile(ks, keyStoreFile);
@@ -154,45 +182,13 @@ public class DefaultKeystoreService implements KeystoreService {
     }
   }
 
-  private void writeKeyStoreToFile(
-      final KeyStore  keyStore,
-      final File      file)
-         throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException
-  {
-    // TODO: backup the keystore on disk before attempting a write and restore on failure
-      final FileOutputStream  out = new FileOutputStream(file);
-      try
-      {
-          keyStore.store( out, masterService.getMasterSecret());
-      }
-      finally
-      {
-          out.close();
-      }
-  } 
-  
   @Override
-  public char[] getAliasForCluster(String clusterName, String alias) {
-    return getAliasForCluster(clusterName, alias, false);
-  }
-
-  @Override
-  public char[] getAliasForCluster(String clusterName, String alias, boolean generate) {
-    String passwordString = null;
+  public char[] getCredentialForCluster(String clusterName, String alias) {
+    char[] credential = null;
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
-      Key key;
       try {
-        key = ks.getKey(alias, masterService.getMasterSecret());
-        if (key != null) {
-          passwordString  = new String(key.getEncoded());
-        }
-        else {
-          if (generate) {
-            passwordString = generatePasscode();
-          }
-          addAliasForCluster(clusterName, alias, passwordString);
-        }
+        credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded()).toCharArray();
       } catch (UnrecoverableKeyException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -204,18 +200,54 @@ public class DefaultKeystoreService implements KeystoreService {
         e.printStackTrace();
       }
     }
-    return passwordString.toCharArray();
-  }
-
-  private String generatePasscode() {
-    // TODO Auto-generated method stub
-    return null;
+    return credential;
   }
 
   @Override
-  public void setMasterService(MasterService ms) {
-    // TODO Auto-generated method stub
-    
+  public byte[] getKeyForCluster(String clusterName, String alias) {
+    byte[] key = null;
+    KeyStore ks = getCredentialStoreForCluster(clusterName);
+    if (ks != null) {
+      try {
+        System.out.println("ALIAS: " + alias);
+        System.out.println("MASTER SERVICE == NULL: " + (masterService == null));
+        key = ks.getKey(alias, masterService.getMasterSecret()).getEncoded();
+      } catch (UnrecoverableKeyException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (KeyStoreException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return key;
   }
 
+  @Override
+  public void addKeyForCluster(String clusterName, String alias, byte[] value) {
+    KeyStore ks = getCredentialStoreForCluster(clusterName);
+    if (ks != null) {
+      final Key key = new SecretKeySpec(value, "AES");
+      try {
+        ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
+        final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
+        writeKeyStoreToFile(ks, keyStoreFile);
+      } catch (KeyStoreException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (CertificateException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+  }
 }
