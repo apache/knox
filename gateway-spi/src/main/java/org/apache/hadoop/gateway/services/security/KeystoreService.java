@@ -34,6 +34,8 @@ public interface KeystoreService extends Service {
   
   public void createCredentialStoreForCluster(String clusterName);
   
+  public boolean isCredentialStoreForClusterAvailable(String clusterName);
+  
   public KeyStore getCredentialStoreForCluster(String clusterName);
 
   public void addCredentialForCluster(String clusterName, String alias, String key);

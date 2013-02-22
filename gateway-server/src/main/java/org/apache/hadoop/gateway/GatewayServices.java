@@ -19,17 +19,23 @@ package org.apache.hadoop.gateway;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
+import org.apache.hadoop.gateway.topology.Provider;
 
-public class GatewayServices {
+public class GatewayServices implements Service, ProviderDeploymentContributor {
   public static String CRYPTO_SERVICE = "CryptoService";
   public static String ALIAS_SERVICE = "AliasService";
 
@@ -84,5 +90,48 @@ public class GatewayServices {
   
   public Service getService(String serviceName) {
     return services.get(serviceName);
+  }
+
+  @Override
+  public String getRole() {
+    // TODO Auto-generated method stub
+    return "Services";
+  }
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    return "GatewayServices";
+  }
+
+  @Override
+  public void initializeContribution(DeploymentContext context) {
+    String clusterName = context.getTopology().getName();
+    if (!ks.isCredentialStoreForClusterAvailable(clusterName)) {
+      System.out.println("creating credentialstore for cluster: " + clusterName);
+      ks.createCredentialStoreForCluster(clusterName);
+    }
+    else {
+      // TODO: log appropriately
+      System.out.println("credentialstore found for: " + clusterName + " - no need to create one");
+    }
+  }
+
+  @Override
+  public void contributeProvider(DeploymentContext context, Provider provider) {
+  }
+
+  @Override
+  public void contributeFilter(DeploymentContext context, Provider provider,
+      org.apache.hadoop.gateway.topology.Service service,
+      ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void finalizeContribution(DeploymentContext context) {
+    // TODO Auto-generated method stub
+    
   }
 }

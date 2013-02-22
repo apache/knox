@@ -53,7 +53,7 @@ public abstract class DeploymentFactory {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayServices services = null;
+  private static GatewayServices gatewayServices = null;
 
   //private static Set<ServiceDeploymentContributor> SERVICE_CONTRIBUTORS;
   private static Map<String,Map<String,ServiceDeploymentContributor>> SERVICE_CONTRIBUTOR_MAP;
@@ -68,7 +68,7 @@ public abstract class DeploymentFactory {
   }
   
   public static void setGatewayServices(GatewayServices services) {
-    DeploymentFactory.services = services;
+    DeploymentFactory.gatewayServices = services;
   }
 
   public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
@@ -173,10 +173,13 @@ public abstract class DeploymentFactory {
     String servletClass = GatewayServlet.class.getName();
     wad.createServlet().servletName( servletName ).servletClass( servletClass );
     wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
+    if (gatewayServices != null) {
+      gatewayServices.initializeContribution(context);
+    }
     for( String role : providers.keySet() ) {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
         try {
-          if (services != null) {
+          if (gatewayServices != null) {
             injectServices(contributor);
           }
           contributor.initializeContribution( context );
@@ -202,15 +205,15 @@ public abstract class DeploymentFactory {
   }
   
   private static void injectServices(Object contributor) {
-    if (services != null) {
+    if (gatewayServices != null) {
       Statement stmt = null;
-      for(String serviceName : services.getServiceNames()) {
+      for(String serviceName : gatewayServices.getServiceNames()) {
         
         try {
           // TODO: this is just a temporary injection solution
           // TODO: test for the existence of the setter before attempting it
           // TODO: avoid exception throwing when there is no setter
-          stmt = new Statement(contributor, "set" + serviceName, new Object[]{services.getService(serviceName)});
+          stmt = new Statement(contributor, "set" + serviceName, new Object[]{gatewayServices.getService(serviceName)});
           stmt.execute();
         } catch (NoSuchMethodException e) {
           // TODO: eliminate the possibility of this being thrown up front
@@ -295,6 +298,9 @@ public abstract class DeploymentFactory {
           .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
           .paramValue( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
 
+      if (gatewayServices != null) {
+        gatewayServices.finalizeContribution(context);
+      }
       for( String role : providers.keySet() ) {
         for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
           try {

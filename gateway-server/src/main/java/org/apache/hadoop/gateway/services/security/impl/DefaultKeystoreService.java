@@ -96,6 +96,42 @@ public class DefaultKeystoreService implements KeystoreService {
     }
   }
   
+  @Override
+  public boolean isCredentialStoreForClusterAvailable(String clusterName) {
+    final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
+    if ( keyStoreFile.exists() )
+    {
+      FileInputStream input = null;
+      try {
+        final KeyStore  keyStore = KeyStore.getInstance("JCEKS");
+        input   = new FileInputStream( keyStoreFile );
+        keyStore.load( input, masterService.getMasterSecret() );
+        return true;
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (CertificateException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (KeyStoreException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      finally {
+          try {
+            input.close();
+          } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+      }
+    }
+    return false;
+  }
+
   public KeyStore getCredentialStoreForCluster(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     KeyStore credStore = null;
