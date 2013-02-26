@@ -28,6 +28,7 @@ import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,6 +42,11 @@ public class SecureQueryDecodeProcessorTest {
     UrlRewriteEnvironment environment = new UrlRewriteEnvironment() {
       @Override
       public URL getResource( String name ) throws IOException {
+        return null;
+      }
+
+      @Override
+      public List<String> resolve( String name ) {
         return null;
       }
     };
@@ -71,6 +77,11 @@ public class SecureQueryDecodeProcessorTest {
     UrlRewriteEnvironment environment = new UrlRewriteEnvironment() {
       @Override
       public URL getResource( String name ) throws IOException {
+        return null;
+      }
+
+      @Override
+      public List<String> resolve( String name ) {
         return null;
       }
     };

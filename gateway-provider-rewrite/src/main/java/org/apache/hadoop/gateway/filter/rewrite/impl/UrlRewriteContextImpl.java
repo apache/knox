@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
@@ -31,6 +32,7 @@ import java.util.Set;
 
 public class UrlRewriteContextImpl implements UrlRewriteContext {
 
+  private UrlRewriteEnvironment environment;
   private UrlRewriteResolver resolver;
   private ContextParameters params;
   private UrlRewriter.Direction direction;
@@ -38,9 +40,11 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
   private Template currentUrl;
 
   public UrlRewriteContextImpl(
+      UrlRewriteEnvironment environment,
       UrlRewriteResolver resolver,
       UrlRewriter.Direction direction,
       Template url ) {
+    this.environment = environment;
     this.resolver = resolver;
     this.params = new ContextParameters();
     this.direction = direction;
@@ -89,10 +93,15 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
 
     @Override
     public List<String> resolve( String name ) {
-      List<String> values = map.get( name );
+      List<String> values = map.get( name ); // Try to fine the name in the context map.
       if( values == null ) {
         try {
-          values = Arrays.asList( resolver.resolve( UrlRewriteContextImpl.this, name ) );
+          String value = resolver.resolve( UrlRewriteContextImpl.this, name );
+          if( value != null ) {
+            values = Arrays.asList( value ); // Try to fine the name in the resolver chain.
+          } else {
+            values = environment.resolve( name ); // Try to fine the name in the environment.
+          }
         } catch( Exception e ) {
           //TODO: Proper i18n logging.
           e.printStackTrace();

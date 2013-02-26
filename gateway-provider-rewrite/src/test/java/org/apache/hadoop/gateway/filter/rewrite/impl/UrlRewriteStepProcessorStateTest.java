@@ -237,5 +237,10 @@ public class UrlRewriteStepProcessorStateTest {
     public URL getResource( String name ) throws IOException {
       return null;
     }
+
+    @Override
+    public List<String> resolve( String name ) {
+      return null;
+    }
   }
 }

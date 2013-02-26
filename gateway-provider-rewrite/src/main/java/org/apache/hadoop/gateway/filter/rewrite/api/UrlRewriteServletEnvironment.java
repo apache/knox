@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import javax.servlet.ServletContext;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
 
@@ -35,13 +37,14 @@ public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
     return url;
   }
 
-//  @Override
-//  public List<String> resolve( String name ) {
-//    List<String> values = null;
-//    String value = context.getInitParameter( name );
-//    if( value != null ) {
-//      values = Arrays.asList( value );
-//    }
-//    return values;
-//  }
+  @Override
+  public List<String> resolve( String name ) {
+    List<String> values = null;
+    String value = context.getInitParameter( name );
+    if( value != null ) {
+      values = Arrays.asList( value );
+    }
+    return values;
+  }
+
 }

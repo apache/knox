@@ -129,7 +129,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
     }
     if( match != null ) {
       UrlRewriteFunctionResolver function = new UrlRewriteFunctionResolver( functions, resolver );
-      UrlRewriteContext context = new UrlRewriteContextImpl( function, direction, uri );
+      UrlRewriteContext context = new UrlRewriteContextImpl( environment, function, direction, uri );
       try {
         UrlRewriteStepProcessorHolder stepHolder = match.getValue();
         UrlRewriteStepStatus stepStatus = stepHolder.process( context );

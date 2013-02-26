@@ -17,10 +17,12 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
+
 import java.io.IOException;
 import java.net.URL;
 
-public interface UrlRewriteEnvironment {
+public interface UrlRewriteEnvironment extends Resolver {
 
   URL getResource( String name ) throws IOException;
 

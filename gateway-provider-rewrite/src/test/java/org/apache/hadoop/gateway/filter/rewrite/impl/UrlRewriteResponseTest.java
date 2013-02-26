@@ -37,6 +37,7 @@ public class UrlRewriteResponseTest {
 
     ServletContext context = EasyMock.createNiceMock( ServletContext.class );
     EasyMock.expect( context.getServletContextName() ).andReturn( "test-cluster-name" ).anyTimes();
+    EasyMock.expect( context.getInitParameter( "test-init-param-name" ) ).andReturn( "test-init-param-value" ).anyTimes();
 
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect( config.getServletContext() ).andReturn( context ).anyTimes();
