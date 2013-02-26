@@ -25,10 +25,15 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
 public class SecureQueryEncryptProcessor
     implements UrlRewriteStepProcessor<SecureQueryEncryptDescriptor> {
 
-  private static final String ENCODED_PARAMETER_NAME = "_";
+  private static final String ENCRYPTED_PARAMETER_NAME = "_";
+
+  private String clusterName;
 
   @Override
   public String getType() {
@@ -37,6 +42,10 @@ public class SecureQueryEncryptProcessor
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryEncryptDescriptor descriptor ) throws Exception {
+    List<String> values = environment.resolve( "cluster.name" );
+    if( values != null && values.size() > 0 ) {
+      this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
+    }
   }
 
   @Override
@@ -54,9 +63,8 @@ public class SecureQueryEncryptProcessor
       }
     }
     if( query != null ) {
-      query = Base64.encodeBase64String( query.getBytes( "UTF-8" ) );
-      query = removeTrailingEquals( query );
-      url = Parser.parse( path + "?" + ENCODED_PARAMETER_NAME +"=" + query );
+      query = encode( query );
+      url = Parser.parse( path + "?" + ENCRYPTED_PARAMETER_NAME +"=" + query );
       context.setCurrentUrl( url );
     }
     return UrlRewriteStepStatus.SUCCESS;
@@ -64,6 +72,12 @@ public class SecureQueryEncryptProcessor
 
   @Override
   public void destroy() {
+  }
+
+  private String encode( String string ) throws UnsupportedEncodingException {
+    string = Base64.encodeBase64String( string.getBytes( "UTF-8" ) );
+    string = removeTrailingEquals( string );
+    return string;
   }
 
   private static String removeTrailingEquals( String s ) {

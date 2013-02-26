@@ -27,12 +27,15 @@ import org.apache.hadoop.gateway.util.urltemplate.Query;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<SecureQueryDecryptDescriptor> {
 
-  private static final String ENCODED_PARAMETER_NAME = "_";
+  private static final String ENCRYPTED_PARAMETER_NAME = "_";
+
+  private String clusterName;
 
   @Override
   public String getType() {
@@ -41,6 +44,10 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryDecryptDescriptor descriptor ) throws Exception {
+    List<String> values = environment.resolve( "cluster.name" );
+    if( values != null && values.size() > 0 ) {
+      this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
+    }
   }
 
   @Override
@@ -49,7 +56,7 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
     Template currUrl = context.getCurrentUrl();
     Builder newUrl = new Builder( currUrl );
     Map<String,Query> map = newUrl.getQuery();
-    Query query = map.remove( ENCODED_PARAMETER_NAME );
+    Query query = map.remove( ENCRYPTED_PARAMETER_NAME );
     if( query != null ) {
       String value = query.getFirstValue().getPattern();
       value = decode( value );
@@ -61,7 +68,7 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
           String paramName = innerParser.nextToken();
           if( innerParser.hasMoreTokens() ) {
             String paramValue = innerParser.nextToken();
-            // Need to take out any existing query param.
+            // Need to remove from the clear parameters any param name in the encoded params.
             // If we don't then someone could override something in the encoded param.
             map.remove( paramName );
             newUrl.addQuery( paramName, "", paramValue );
