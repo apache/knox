@@ -41,12 +41,13 @@ public class EmbeddedApacheDirectoryServer {
 
   private Partition partition;
 
+  @SuppressWarnings("deprecation")
   public static void main( String[] args ) throws Exception {
     EmbeddedApacheDirectoryServer ldap;
     ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, 33389 );
     ldap.start();
     
-    URL userUrl = null;
+    URL userUrl;
     if ( args.length > 0 ) {
       File file = new File( args[0], "users.ldif" );
       if( !file.exists() || !file.canRead() ) {

@@ -59,6 +59,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 //  }
 
   private static final String REQUEST_PARAM_PREFIX = "request.";
+  private static final String CLUSTER_PARAM_PREFIX = "cluster.";
   private static final String GATEWAY_PARAM_PREFIX = "gateway.";
 
   private FilterConfig config;
@@ -155,6 +156,8 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       return Arrays.asList( getRequestParam( name.substring( REQUEST_PARAM_PREFIX.length() ) ) );
     } else if ( name.startsWith( GATEWAY_PARAM_PREFIX ) ) {
       return Arrays.asList( getGatewayParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
+    } else if ( name.startsWith( CLUSTER_PARAM_PREFIX ) ) {
+      return Arrays.asList( getClusterParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
     }  else {
       return Arrays.asList( config.getInitParameter( name ) );
     }
@@ -167,6 +170,14 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       return request.getServerName() + ":" + request.getLocalPort();
     } else if( "path".equals( name ) ) {
       return request.getContextPath();
+    } else {
+      return null;
+    }
+  }
+
+  private String getClusterParam( String name ) {
+    if( "name".equals( name ) ) {
+      return config.getServletContext().getServletContextName();
     } else {
       return null;
     }

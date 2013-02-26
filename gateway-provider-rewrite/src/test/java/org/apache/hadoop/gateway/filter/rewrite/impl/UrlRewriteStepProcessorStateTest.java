@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
@@ -25,6 +26,8 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,10 +55,10 @@ public class UrlRewriteStepProcessorStateTest {
     UrlRewriteStepProcessorHolder holder;
     List<UrlRewriteStepProcessorHolder> steps = new ArrayList<UrlRewriteStepProcessorHolder>();
     holder = new UrlRewriteStepProcessorHolder();
-    holder.initialize( new FakeActionDescriptor( "one" ), new FakeActionProcessor( "one" ) );
+    holder.initialize( new FakeEnvironment(), new FakeActionDescriptor( "one" ), new FakeActionProcessor( "one" ) );
     steps.add( holder );
     holder = new UrlRewriteStepProcessorHolder();
-    holder.initialize( new FakeActionDescriptor( "two" ), new FakeActionProcessor( "two" ) );
+    holder.initialize( new FakeEnvironment(), new FakeActionDescriptor( "two" ), new FakeActionProcessor( "two" ) );
     steps.add( holder );
     UrlRewriteStepProcessorState state = new UrlRewriteStepProcessorState( steps.iterator() );
     assertThat( state.hasNext(), is( true ) );
@@ -86,10 +89,10 @@ public class UrlRewriteStepProcessorStateTest {
     UrlRewriteStepProcessorHolder holder;
     List<UrlRewriteStepProcessorHolder> steps = new ArrayList<UrlRewriteStepProcessorHolder>();
     holder = new UrlRewriteStepProcessorHolder();
-    holder.initialize( new FakeConditionDescriptor( "one" ), new FakeConditionProcessor( "one" ) );
+    holder.initialize( new FakeEnvironment(), new FakeConditionDescriptor( "one" ), new FakeConditionProcessor( "one" ) );
     steps.add( holder );
     holder = new UrlRewriteStepProcessorHolder();
-    holder.initialize( new FakeConditionDescriptor( "two" ), new FakeConditionProcessor( "two" ) );
+    holder.initialize( new FakeEnvironment(), new FakeConditionDescriptor( "two" ), new FakeConditionProcessor( "two" ) );
     steps.add( holder );
     UrlRewriteStepProcessorState state = new UrlRewriteStepProcessorState( steps.iterator() );
     assertThat( state.hasNext(), is( true ) );
@@ -147,7 +150,7 @@ public class UrlRewriteStepProcessorStateTest {
     }
 
     @Override
-    public void initialize( UrlRewriteStepDescriptor<FakeActionDescriptor> descriptor ) throws Exception {
+    public void initialize( UrlRewriteEnvironment environment, UrlRewriteStepDescriptor<FakeActionDescriptor> descriptor ) throws Exception {
     }
 
     @Override
@@ -216,7 +219,7 @@ public class UrlRewriteStepProcessorStateTest {
     }
 
     @Override
-    public void initialize( FakeConditionDescriptor descriptor ) throws Exception {
+    public void initialize( UrlRewriteEnvironment environment, FakeConditionDescriptor descriptor ) throws Exception {
     }
 
     @Override
@@ -226,6 +229,13 @@ public class UrlRewriteStepProcessorStateTest {
 
     @Override
     public void destroy() throws Exception {
+    }
+  }
+
+  private class FakeEnvironment implements UrlRewriteEnvironment {
+    @Override
+    public URL getResource( String name ) throws IOException {
+      return null;
     }
   }
 }

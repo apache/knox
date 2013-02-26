@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
@@ -50,15 +51,15 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
 
   @Override
   @SuppressWarnings( "unchecked" )
-  public void initialize( UrlRewriteStepDescriptor descriptor ) throws Exception {
+  public void initialize( UrlRewriteEnvironment environment, UrlRewriteStepDescriptor descriptor ) throws Exception {
     UrlRewriteStepProcessor processor = UrlRewriteStepProcessorFactory.create( descriptor );
-    processor.initialize( descriptor );
-    initialize( descriptor, processor );
+    processor.initialize( environment, descriptor );
+    initialize( environment, descriptor, processor );
   }
 
   // For unit testing.
   @SuppressWarnings("unchecked")
-  void initialize( UrlRewriteStepDescriptor descriptor, UrlRewriteStepProcessor processor ) throws Exception {
+  void initialize( UrlRewriteEnvironment environment, UrlRewriteStepDescriptor descriptor, UrlRewriteStepProcessor processor ) throws Exception {
     this.descriptor = descriptor;
     this.processor = processor;
     this.isCondition = descriptor instanceof UrlRewriteFlowDescriptor;
@@ -71,7 +72,7 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
         while( stepIterator.hasNext() ) {
           UrlRewriteStepDescriptor stepDescriptor = stepIterator.next();
           UrlRewriteStepProcessorHolder stepProcessor = new UrlRewriteStepProcessorHolder();
-          stepProcessor.initialize( stepDescriptor );
+          stepProcessor.initialize( environment, stepDescriptor );
           childProcessors.add( stepProcessor );
         }
       }

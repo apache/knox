@@ -31,43 +31,12 @@ import java.io.IOException;
 /**
  *
  */
-//<name>request</name><value>url,cookies,headers,body</value>
-//<name>response</name><value>url,cookies,headers,body</value>
-//<name>request.url</name><value>rule-name</value> <!-- Specifies the exact rule to use.  Avoids rematch. -->
-//<name>request.filters</name><value>body-filter-name</value> <!-- Overrides default body createFilter. Mime type can be */*.  These special createFilter would be provided by the service provider (e.g. HDFS) -->
 public class UrlRewriteServletFilter extends AbstractGatewayFilter {
-
-  //TODO: Rewrite headers that contain URLs.
-  //TODO: Rewrite cookies that contain URLs.
-//  private Rewriter rewriter;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init( filterConfig );
-//    try {
-//      rewriter = new Rewriter();
-//      addRule( filterConfig.getInitParameter( "rewrite" ) );
-//      String rewrite;
-//      int i = 0;
-//      do {
-//        rewrite = filterConfig.getInitParameter( "rewrite." + i++ );
-//        addRule( rewrite );
-//      } while( rewrite != null || i == 1 );
-//    } catch( URISyntaxException e ) {
-//      throw new ServletException( e );
-//    }
   }
-
-//  private void addRule( String rewrite ) throws URISyntaxException {
-//    if( rewrite != null ) {
-//      String[] patternFormatPair = rewrite.split( " ", 2 );
-//      if( patternFormatPair.length == 2 ) {
-//        rewriter.addRule(
-//            Parser.parse( patternFormatPair[ 0 ] ),
-//            Parser.parse( patternFormatPair[ 1 ] ) );
-//      }
-//    }
-//  }
 
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain )
@@ -75,7 +44,6 @@ public class UrlRewriteServletFilter extends AbstractGatewayFilter {
     FilterConfig config = getConfig();
     UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( config, request );
     UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, rewriteRequest, response );
-//    rewriteRequest.setAttribute( RESPONSE_STREAMER_ATTRIBUTE_NAME, rewriteResponse );
     chain.doFilter( rewriteRequest, rewriteResponse );
   }
 

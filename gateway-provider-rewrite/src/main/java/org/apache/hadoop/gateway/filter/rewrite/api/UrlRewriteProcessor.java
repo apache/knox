@@ -55,6 +55,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
     initializeRules( descriptor );
   }
 
+  @SuppressWarnings("unchecked")
   private void initializeFunctions( UrlRewriteRulesDescriptor rules ) {
     for( String name : UrlRewriteFunctionDescriptorFactory.getNames() ) {
       try {
@@ -74,7 +75,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
     for( UrlRewriteRuleDescriptor ruleDescriptor : descriptor.getRules() ) {
       try {
         UrlRewriteStepProcessorHolder ruleProcessor = new UrlRewriteStepProcessorHolder();
-        ruleProcessor.initialize( ruleDescriptor );
+        ruleProcessor.initialize( environment, ruleDescriptor );
         Template template = ruleDescriptor.template();
         rules.add( ruleProcessor );
         EnumSet<Direction> directions = ruleDescriptor.directions();

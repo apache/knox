@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.ext;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
@@ -29,7 +30,7 @@ public class UrlRewriteCheckProcessorExt implements UrlRewriteStepProcessor<UrlR
   }
 
   @Override
-  public void initialize( UrlRewriteCheckDescriptor descriptor ) throws Exception {
+  public void initialize( UrlRewriteEnvironment environment, UrlRewriteCheckDescriptor descriptor ) throws Exception {
   }
 
   @Override

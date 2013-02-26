@@ -35,4 +35,13 @@ public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
     return url;
   }
 
+//  @Override
+//  public List<String> resolve( String name ) {
+//    List<String> values = null;
+//    String value = context.getInitParameter( name );
+//    if( value != null ) {
+//      values = Arrays.asList( value );
+//    }
+//    return values;
+//  }
 }

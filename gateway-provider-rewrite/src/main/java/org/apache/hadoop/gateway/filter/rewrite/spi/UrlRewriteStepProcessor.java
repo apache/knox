@@ -17,13 +17,14 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 
 public interface UrlRewriteStepProcessor<T extends UrlRewriteStepDescriptor> {
 
   String getType();
 
-  void initialize( T descriptor ) throws Exception;
+  void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception;
 
   UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception;
 

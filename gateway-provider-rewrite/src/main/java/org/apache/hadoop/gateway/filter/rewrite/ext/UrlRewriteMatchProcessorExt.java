@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.ext;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
@@ -24,7 +25,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 
 public class UrlRewriteMatchProcessorExt implements UrlRewriteStepProcessor<UrlRewriteMatchDescriptor> {
 
-  private UrlRewriteMatchDescriptor descriptor;
+  //private UrlRewriteMatchDescriptor descriptor;
   private Matcher<Void> matcher;
 
   @Override
@@ -33,8 +34,8 @@ public class UrlRewriteMatchProcessorExt implements UrlRewriteStepProcessor<UrlR
   }
 
   @Override
-  public void initialize( UrlRewriteMatchDescriptor descriptor ) throws Exception {
-    this.descriptor = descriptor;
+  public void initialize( UrlRewriteEnvironment environment, UrlRewriteMatchDescriptor descriptor ) throws Exception {
+    //this.descriptor = descriptor;
     this.matcher = new Matcher<Void>( descriptor.template(), null );
   }
 
@@ -51,7 +52,7 @@ public class UrlRewriteMatchProcessorExt implements UrlRewriteStepProcessor<UrlR
 
   @Override
   public void destroy() {
-    descriptor = null;
+    //descriptor = null;
     matcher = null;
   }
 

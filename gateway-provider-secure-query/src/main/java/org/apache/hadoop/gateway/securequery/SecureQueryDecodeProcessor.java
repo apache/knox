@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.securequery;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
@@ -39,7 +40,7 @@ public class SecureQueryDecodeProcessor implements UrlRewriteStepProcessor<Secur
   }
 
   @Override
-  public void initialize( SecureQueryDecodeDescriptor descriptor ) throws Exception {
+  public void initialize( UrlRewriteEnvironment environment, SecureQueryDecodeDescriptor descriptor ) throws Exception {
   }
 
   @Override

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt;
@@ -35,13 +36,13 @@ public class UrlRewriteRuleProcessorImpl implements UrlRewriteStepProcessor<UrlR
   }
 
   @Override
-  public void initialize( UrlRewriteRuleDescriptor descriptor ) throws Exception {
+  public void initialize( UrlRewriteEnvironment environment, UrlRewriteRuleDescriptor descriptor ) throws Exception {
     UrlRewriteMatchDescriptor matchDescriptor = new UrlRewriteMatchDescriptorExt();
     matchDescriptor.operation( "matches" );
     matchDescriptor.flow( descriptor.flow() );
     matchDescriptor.template( descriptor.template() );
     matchProcessor = new UrlRewriteMatchProcessorExt();
-    matchProcessor.initialize( matchDescriptor );
+    matchProcessor.initialize( environment, matchDescriptor );
   }
 
   @Override

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.securequery;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -32,16 +33,19 @@ public class SecureQueryEncodeProcessorTest {
 
   @Test
   public void testSimpleQueryEncoding() throws Exception {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+
     Template inTemplate = Parser.parse( "http://host:0/root/path?query" );
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( context.getCurrentUrl() ).andReturn( inTemplate );
     Capture<Template> outTemplate = new Capture<Template>();
     context.setCurrentUrl( EasyMock.capture( outTemplate ) );
-    EasyMock.replay( context );
+
+    EasyMock.replay( environment, context );
 
     SecureQueryEncodeDescriptor descriptor = new SecureQueryEncodeDescriptor();
     SecureQueryEncodeProcessor processor = new SecureQueryEncodeProcessor();
-    processor.initialize( descriptor );
+    processor.initialize( environment, descriptor );
     processor.process( context );
 
     BASE64Encoder encoder = new BASE64Encoder();
