@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.securequery;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -24,6 +25,9 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import sun.misc.BASE64Encoder;
+
+import java.io.IOException;
+import java.net.URL;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,6 +38,13 @@ public class SecureQueryDecodeProcessorTest {
 
   @Test
   public void testSimpleQueryDecode() throws Exception {
+    UrlRewriteEnvironment environment = new UrlRewriteEnvironment() {
+      @Override
+      public URL getResource( String name ) throws IOException {
+        return null;
+      }
+    };
+
     BASE64Encoder encoder = new BASE64Encoder();
     String encQuery = encoder.encode( "test-query".getBytes("utf-8" ) );
     encQuery = encQuery.replaceAll( "\\=", "" );
@@ -48,7 +59,7 @@ public class SecureQueryDecodeProcessorTest {
 
     SecureQueryDecodeDescriptor descriptor = new SecureQueryDecodeDescriptor();
     SecureQueryDecodeProcessor processor = new SecureQueryDecodeProcessor();
-    processor.initialize( descriptor );
+    processor.initialize( environment, descriptor );
     processor.process( context );
 
     String outActual = outTemplate.getValue().toString();
@@ -57,6 +68,13 @@ public class SecureQueryDecodeProcessorTest {
 
   @Test
   public void testDecodeQueryWithNonEncodedParams() throws Exception {
+    UrlRewriteEnvironment environment = new UrlRewriteEnvironment() {
+      @Override
+      public URL getResource( String name ) throws IOException {
+        return null;
+      }
+    };
+
     BASE64Encoder encoder = new BASE64Encoder();
     String inQuery = "test-query=test-value";
     String encQuery = encoder.encode( inQuery.getBytes( "utf-8" ) );
@@ -72,7 +90,7 @@ public class SecureQueryDecodeProcessorTest {
 
     SecureQueryDecodeDescriptor descriptor = new SecureQueryDecodeDescriptor();
     SecureQueryDecodeProcessor processor = new SecureQueryDecodeProcessor();
-    processor.initialize( descriptor );
+    processor.initialize( environment, descriptor );
     processor.process( context );
 
     String outActual = outTemplate.getValue().toString();
