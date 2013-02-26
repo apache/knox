@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpResponse;
@@ -105,7 +106,7 @@ public class GatewayFuncTestDriver {
     topology.toStream( stream );
     stream.close();
 
-    GatewayServices srvcs = new GatewayServices();
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
     options.put("persist-master", "false");
     options.put("master", "password");

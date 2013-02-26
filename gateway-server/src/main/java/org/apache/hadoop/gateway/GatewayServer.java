@@ -26,6 +26,8 @@ import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
@@ -57,10 +59,13 @@ import java.util.regex.Pattern;
 
 public class GatewayServer {
 
+  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
+  
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server;
-  private static GatewayServices services;
+  private static DefaultGatewayServices services;
+  
   private static Properties buildProperties;
 
   private Server jetty;
@@ -83,7 +88,7 @@ public class GatewayServer {
             buildProperties.getProperty( "build.version", "unknown" ),
             buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {
-        services = new GatewayServices();
+        services = new DefaultGatewayServices();
         GatewayConfig config = new GatewayConfigImpl();
         Map<String,String> options = new HashMap<String,String>();
         options.put("persist-master", Boolean.toString(cmd.hasOption("persist-master")));
@@ -97,6 +102,10 @@ public class GatewayServer {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  public static synchronized GatewayServices getGatewayServices() {
+    return services;
   }
 
   private static void configureLogging( GatewayConfig config ) {
@@ -170,7 +179,7 @@ public class GatewayServer {
     input.close();
   }
 
-  public static GatewayServer startGateway( GatewayConfig config, GatewayServices srvics ) {
+  public static GatewayServer startGateway( GatewayConfig config, DefaultGatewayServices srvics ) {
     try {
       server = new GatewayServer( config );
       synchronized (server ) {

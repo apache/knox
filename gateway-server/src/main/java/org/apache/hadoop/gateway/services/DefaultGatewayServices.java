@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway;
+package org.apache.hadoop.gateway.services;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
@@ -35,7 +36,7 @@ import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
 import org.apache.hadoop.gateway.topology.Provider;
 
-public class GatewayServices implements Service, ProviderDeploymentContributor {
+public class DefaultGatewayServices implements Service, ProviderDeploymentContributor, GatewayServices {
   public static String CRYPTO_SERVICE = "CryptoService";
   public static String ALIAS_SERVICE = "AliasService";
 
@@ -43,7 +44,7 @@ public class GatewayServices implements Service, ProviderDeploymentContributor {
   private DefaultMasterService ms = null;
   private DefaultKeystoreService ks = null;
 
-  public GatewayServices() {
+  public DefaultGatewayServices() {
     super();
   }
 
@@ -84,10 +85,18 @@ public class GatewayServices implements Service, ProviderDeploymentContributor {
     alias.stop();
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.GatewayServices#getServiceNames()
+   */
+  @Override
   public Collection<String> getServiceNames() {
     return services.keySet();
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.GatewayServices#getService(java.lang.String)
+   */
+  @Override
   public Service getService(String serviceName) {
     return services.get(serviceName);
   }
@@ -131,7 +140,7 @@ public class GatewayServices implements Service, ProviderDeploymentContributor {
 
   @Override
   public void finalizeContribution(DeploymentContext context) {
-    // TODO Auto-generated method stub
-    
+    // Tell the provider the location of the descriptor.
+    context.getWebAppDescriptor().createListener().listenerClass( GatewayServicesContextListener.class.getName() );
   }
 }

@@ -19,13 +19,13 @@ package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
-import org.apache.hadoop.gateway.GatewayServices;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -53,7 +53,7 @@ public abstract class DeploymentFactory {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayServices gatewayServices = null;
+  private static DefaultGatewayServices gatewayServices = null;
 
   //private static Set<ServiceDeploymentContributor> SERVICE_CONTRIBUTORS;
   private static Map<String,Map<String,ServiceDeploymentContributor>> SERVICE_CONTRIBUTOR_MAP;
@@ -67,7 +67,7 @@ public abstract class DeploymentFactory {
     loadProviderContributors();
   }
   
-  public static void setGatewayServices(GatewayServices services) {
+  public static void setGatewayServices(DefaultGatewayServices services) {
     DeploymentFactory.gatewayServices = services;
   }
 
