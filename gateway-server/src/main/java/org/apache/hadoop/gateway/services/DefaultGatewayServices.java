@@ -22,11 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -39,6 +41,8 @@ import org.apache.hadoop.gateway.topology.Provider;
 public class DefaultGatewayServices implements Service, ProviderDeploymentContributor, GatewayServices {
   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
+  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+
   public static String CRYPTO_SERVICE = "CryptoService";
   public static String ALIAS_SERVICE = "AliasService";
 
@@ -75,24 +79,22 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
   private void provisionSSLArtifacts() {
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
-      System.out.println("creating credstore for gateway");
+      log.creatingCredentialStoreForGateway();
       ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
       alias.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
     }
     else {
-      // TODO: log appropriately
-      System.out.println("credstore found for gateway - no need to create one");
+      log.credentialStoreForGatewayFoundNotCreating();
     }
 
     if (!ks.isKeystoreForGatewayAvailable()) {
-      System.out.println("creating keystore for gateway");
+      log.creatingKeyStoreForGateway();
       ks.createKeystoreForGateway();
       char[] passphrase = alias.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
       ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
     }
     else {
-      // TODO: log appropriately
-      System.out.println("keystore found for gateway - no need to create one");
+      log.keyStoreForGatewayFoundNotCreating();
     }
   }
   
@@ -146,12 +148,12 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
   public void initializeContribution(DeploymentContext context) {
     String clusterName = context.getTopology().getName();
     if (!ks.isCredentialStoreForClusterAvailable(clusterName)) {
-      System.out.println("creating credentialstore for cluster: " + clusterName);
+      log.creatingCredentialStoreForCluster(clusterName);
       ks.createCredentialStoreForCluster(clusterName);
     }
     else {
       // TODO: log appropriately
-      System.out.println("credentialstore found for: " + clusterName + " - no need to create one");
+      log.credentialStoreForClusterFoundNotCreating(clusterName);
     }
   }
 

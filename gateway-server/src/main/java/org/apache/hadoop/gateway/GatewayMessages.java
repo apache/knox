@@ -115,4 +115,21 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Failed to load logging configuration: {0}" )
   void failedToLoadLoggingConfig( String fileName );
 
+  @Message( level = MessageLevel.INFO, text = "Creating credential store for the gateway instance." )
+  void creatingCredentialStoreForGateway();
+
+  @Message( level = MessageLevel.INFO, text = "Credential store for the gateway instance found - no need to create one." )
+  void credentialStoreForGatewayFoundNotCreating();
+
+  @Message( level = MessageLevel.INFO, text = "Creating keystore for the gateway instance." )
+  void creatingKeyStoreForGateway();
+
+  @Message( level = MessageLevel.INFO, text = "Keystore for the gateway instance found - no need to create one." )
+  void keyStoreForGatewayFoundNotCreating();
+
+  @Message( level = MessageLevel.INFO, text = "Creating credential store for the cluster: {0}" )
+  void creatingCredentialStoreForCluster(String clusterName);
+
+  @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
+  void credentialStoreForClusterFoundNotCreating(String clusterName);
 }
