@@ -220,7 +220,7 @@ public class ExpanderTest {
     params.addValue( "middle", "A" );
     params.addValue( "middle", "B" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "/top/A/bottom" ) ) ;
+    assertThat( expanded.toString(), equalTo( "/top/A/B/bottom" ) ) ;
 
     template = Parser.parse( "/top/{middle=*}/bottom" );
     params = new MockParams();
@@ -253,7 +253,7 @@ public class ExpanderTest {
     params.addValue( "queryParam", "A" );
     params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?query=A" ) ) ;
+    assertThat( expanded.toString(), equalTo( "?query=A&query=B" ) ) ;
 
     template = Parser.parse( "?query={queryParam=*}" );
     params = new MockParams();

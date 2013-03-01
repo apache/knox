@@ -78,6 +78,7 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
         }
       }
       context.setCurrentUrl( newUrl.build() );
+      context.getParameters().resolve( "gateway.name" );
     }
     return UrlRewriteStepStatus.SUCCESS;
   }

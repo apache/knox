@@ -26,6 +26,7 @@ import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
@@ -65,9 +66,9 @@ public class GatewayBasicFuncTest {
 
   private static final String TEST_HOST = "vm.local";
   private static final boolean USE_GATEWAY = true;
+  private static final boolean USE_MOCK_SERVICES = true;
   //private static final boolean USE_SERVICES = true;
   //private static final boolean USE_GATEWAY = false;
-  private static final boolean USE_SERVICES = false;
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -78,16 +79,17 @@ public class GatewayBasicFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    Velocity.setProperty( "runtime.log.logsystem.log4j.logger", "root" ); // Prevent velocity from creating a log file.
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
-    driver.setupService( "NAMENODE", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", USE_SERVICES ); // IPC:8020
-    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", USE_SERVICES ); // CLIENT:50010, IPC:50020
+    driver.setupService( "NAMENODE", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", USE_MOCK_SERVICES ); // IPC:8020
+    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", USE_MOCK_SERVICES ); // CLIENT:50010, IPC:50020
     // JobTracker: UI:50030,
     // TaskTracker: UI:50060, 127.0.0.1:0
-    driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_SERVICES );
-    driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_SERVICES );
+    driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 

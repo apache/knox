@@ -19,12 +19,12 @@ package org.apache.hadoop.gateway.securequery;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
+import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Query;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -67,11 +67,14 @@ public class SecureQueryEncryptDecryptProcessorTest {
 
     UrlRewriteEnvironment decEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( decEnvironment.resolve( "cluster.name" ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
+    Params decParams = EasyMock.createNiceMock( Params.class );
+    EasyMock.expect( decParams.resolve( "cluster.name" ) ).andReturn( Arrays.asList("test-cluster-name") ).anyTimes();
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
+    EasyMock.expect( decContext.getParameters() ).andReturn( decParams );
     Capture<Template> decTemplate = new Capture<Template>();
     decContext.setCurrentUrl( EasyMock.capture( decTemplate ) );
-    EasyMock.replay( decEnvironment, decContext );
+    EasyMock.replay( decEnvironment, decParams, decContext );
 
     SecureQueryDecryptDescriptor descriptor1 = new SecureQueryDecryptDescriptor();
     SecureQueryDecryptProcessor decProcessor = new SecureQueryDecryptProcessor();

@@ -148,7 +148,9 @@ public class Template {
 
   private void buildAuthority( StringBuilder b ) {
     if( hasAuthority ) {
-      b.append( "//" );
+      if( scheme != null || username!=null || password!=null || path.size() > 0 || hasQuery || hasFragment ) {
+        b.append( "//" );
+      }
       if( username != null || password != null ) {
         if( username != null ) {
           buildSegmentValue( b, username, username.getFirstValue() );

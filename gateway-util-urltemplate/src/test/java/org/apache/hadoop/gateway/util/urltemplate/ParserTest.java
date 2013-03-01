@@ -106,9 +106,10 @@ public class ParserTest {
   public void testCompleteUrl() throws URISyntaxException {
     String text;
     Template template;
+    Parser parser = new Parser();
 
     text = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, false, true, 3, 2 );
   }
 
@@ -132,176 +133,177 @@ public class ParserTest {
     text = "{path}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 1, 0 );
-    assertPath( template, 0, "path", "*" );
+    assertPath( template, 0, "path", "**" );
 
     text = "{pathA}/{pathB}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 2, 0 );
-    assertPath( template, 0, "pathA", "*" );
-    assertPath( template, 1, "pathB", "*" );
+    assertPath( template, 0, "pathA", "**" );
+    assertPath( template, 1, "pathB", "**" );
 
     text = "?paramA={valueA}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "paramA", "valueA", "*" );
+    assertQuery( template, "paramA", "valueA", "**" );
 
     text = "?paramA={valueA}&paramB={valueB}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 2 );
-    assertQuery( template, "paramA", "valueA", "*" );
-    assertQuery( template, "paramB", "valueB", "*" );
+    assertQuery( template, "paramA", "valueA", "**" );
+    assertQuery( template, "paramB", "valueB", "**" );
 
     text = "?paramA={valueA}?paramB={valueB}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 2 );
-    assertQuery( template, "paramA", "valueA", "*" );
-    assertQuery( template, "paramB", "valueB", "*" );
+    assertQuery( template, "paramA", "valueA", "**" );
+    assertQuery( template, "paramB", "valueB", "**" );
 
     text = "{pathA}?paramA={valueA}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 1, 1 );
-    assertPath( template, 0, "pathA", "*" );
-    assertQuery( template, "paramA", "valueA", "*" );
+    assertPath( template, 0, "pathA", "**" );
+    assertQuery( template, "paramA", "valueA", "**" );
   }
 
   @Test
   public void testStaticPatterns() throws Exception {
+    Parser parser = new Parser();
     String text;
     Template template;
 
     text = "";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, false, 0, 0 );
 
     text = "/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, false, 0, 0 );
 
     text = "?";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, true, 0, 0 );
 
     text = "#";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, false, 0, 0 );
     assertThat( template.hasFragment(), is( true ) );
     assertThat( template.getFragment(), nullValue() );
 
     text = "path";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
     text = "/path";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, false, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
 //    text = "//path";
-//    template = Parser.parse( text );
+//    template = parser.parseTemplate( text );
 //    assertBasics( template, true, false, false, 1, 0 );
 //    assertPath( template, 0, "", "path" );
 
     text = "path/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, true, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
     text = "path//";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, true, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
     text = "/path/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, false, 1, 0 );
     assertPath( template, 0, "", "path" );
 
 //    text = "//path//";
-//    template = Parser.parse( text );
+//    template = parser.parseTemplate( text );
 //    assertBasics( template, true, true, false, 1, 0 );
 //    assertPath( template, 0, "", "path" );
 
     text = "pathA/pathB";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "pathA//pathB";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "/pathA/pathB";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, false, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "/pathA//pathB";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, false, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "pathA/pathB/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, true, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "pathA//pathB/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, true, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "/pathA/pathB/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "/pathA//pathB/";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, false, 2, 0 );
     assertPath( template, 0, "", "pathA" );
     assertPath( template, 1, "", "pathB" );
 
     text = "/?";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, true, 0, 0 );
 
 //    text = "//??";
-//    template = Parser.parse( text );
+//    template = parser.parseTemplate( text );
 //    assertBasics( template, true, true, true, 0, 0 );
 
     text = "?name=value";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, true, 0, 1 );
     assertQuery( template, "name", "", "value" );
 
     text = "?name1=value1&name2=value2";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, true, 0, 2 );
     assertQuery( template, "name1", "", "value1" );
     assertQuery( template, "name2", "", "value2" );
 
     text = "?name1=value1&&name2=value2";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, false, false, true, 0, 2 );
     assertQuery( template, "name1", "", "value1" );
     assertQuery( template, "name2", "", "value2" );
 
     text = "/?name=value";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, true, 0, 1 );
     assertQuery( template, "name", "", "value" );
 
     text = "/?name1=value1&name2=value2";
-    template = Parser.parse( text );
+    template = parser.parseTemplate( text );
     assertBasics( template, true, true, true, 0, 2 );
     assertQuery( template, "name1", "", "value1" );
     assertQuery( template, "name2", "", "value2" );
@@ -315,7 +317,7 @@ public class ParserTest {
     text = "{path}";
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 1, 0 );
-    assertPath( template, 0, "path", "*", Segment.STAR, 1, 1 );
+    assertPath( template, 0, "path", "**", Segment.GLOB, 1, 1 );
 
     text = "{path=static}";
     template = Parser.parse( text );
@@ -346,7 +348,7 @@ public class ParserTest {
     text = "?query={queryParam}";
     template = Parser.parse( text );
     assertBasics( template, false, false, true, 0, 1 );
-    assertQuery( template, "query", "queryParam", "*", Segment.STAR, 1, 1 );
+    assertQuery( template, "query", "queryParam", "**", Segment.GLOB, 1, 1 );
 
     text = "?query={queryParam=static}";
     template = Parser.parse( text );
@@ -518,8 +520,6 @@ public class ParserTest {
 
     text = "//{host}:{port}";
     template = Parser.parse( text );
-    String image = template.toString();
-    assertThat( image, is( "//{host=*}:{port=*}" ) );
     assertThat( template.hasAuthority(), is( true ) );
     assertThat( template.getUsername(), nullValue() );
     assertThat( template.getPassword(), nullValue() );
@@ -527,6 +527,8 @@ public class ParserTest {
     assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
     assertThat( template.getPort().getParamName(), is( "port" ) );
     assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
+    String image = template.toString();
+    assertThat( image, is( "{host=*}:{port=*}" ) );
   }
 
   @Test
@@ -592,7 +594,7 @@ public class ParserTest {
     template = Parser.parse( text );
     assertBasics( template, false, false, false, 0, 0 );
     assertThat( template.hasFragment(), is( true ) );
-    assertThat( template.getFragment(), nullValue() );
+    assertThat( template.getFragment().getFirstValue().getPattern(), is( "#" ) );
 
     text = "??name=value";
     template = Parser.parse( text );
@@ -619,22 +621,29 @@ public class ParserTest {
 
     text = ":";
     template = parser.parseTemplate( text );
-    assertBasics( template, false, false, false, 0, 0 );
-    assertThat( template.hasScheme(), is( true ) );
+    assertBasics( template, false, false, false, 1, 0 );
+    assertThat( template.hasScheme(), is( false ) );
     assertThat( template.getScheme(), nullValue() );
+    assertThat( template.hasAuthority(), is( false ) );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( ":" ) );
+    assertThat( template.toString(), is( ":" ) );
 
     text = ":?";
     template = Parser.parse( text );
-    assertBasics( template, false, false, true, 0, 0 );
-    assertThat( template.hasScheme(), is( true ) );
+    assertBasics( template, false, false, true, 1, 0 );
+    assertThat( template.hasScheme(), is( false ) );
     assertThat( template.getScheme(), nullValue() );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( ":" ) );
     assertThat( template.hasQuery(), is( true ) );
 
     text = ":#";
     template = Parser.parse( text );
-    assertBasics( template, false, false, false, 0, 0 );
-    assertThat( template.hasScheme(), is( true ) );
+    assertBasics( template, false, false, false, 1, 0 );
+    assertThat( template.hasScheme(), is( false ) );
     assertThat( template.getScheme(), nullValue() );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( ":" ) );
     assertThat( template.hasFragment(), is( true ) );
     assertThat( template.getFragment(), nullValue() );
 
@@ -780,7 +789,7 @@ public class ParserTest {
     assertThat( query, notNullValue() );
     assertThat( query.getQueryName(), is( "*" ) );
     assertThat( query.getParamName(), is( "*" ) );
-    assertThat( query.getFirstValue().getPattern(), is( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), is( "**" ) );
 
     text = "?{**}";
     template = Parser.parse( text );
@@ -798,7 +807,7 @@ public class ParserTest {
     assertThat( query, notNullValue() );
     assertThat( query.getQueryName(), is( "*" ) );
     assertThat( query.getParamName(), is( "*" ) );
-    assertThat( query.getFirstValue().getPattern(), is( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), is( "**" ) );
 
     text = "?**={**}";
     template = Parser.parse( text );
@@ -832,7 +841,7 @@ public class ParserTest {
     assertThat( query, notNullValue() );
     assertThat( query.getQueryName(), is( "queryParam" ) );
     assertThat( query.getParamName(), is( "queryParam" ) );
-    assertThat( query.getFirstValue().getPattern(), is( "*" ) );
+    assertThat( query.getFirstValue().getPattern(), is( "**" ) );
 
     text = "?{queryParam=value}";
     template = Parser.parse( text );
@@ -859,11 +868,24 @@ public class ParserTest {
 
   @Test
   public void testQueryNameWithoutValue() throws URISyntaxException {
+    Parser parser = new Parser();
     Template template;
     String string;
     Expander expander = new Expander();
 
-    template = Parser.parse( "*://*:*/**?X" );
+    template = parser.parseTemplate( "*://*:*/**?X" );
+    assertThat( template.hasScheme(), is( true ) );
+    assertThat( template.getScheme().getParamName(), is( "" ) );
+    assertThat( template.getScheme().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getHost().getParamName(), is( "" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort().getParamName(), is( "" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPath().size(), is( 1 ) );
+    assertThat( template.getPath().get( 0 ).getParamName(), is( "" ) );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "**" ) );
+    assertThat( template.hasAuthority(), is( true ) );
+
     assertThat( template, notNullValue() );
     assertThat( template.getQuery().get( "X" ), notNullValue() );
     string = expander.expandToString( template, null );
@@ -889,7 +911,6 @@ public class ParserTest {
   }
 
   @Test
-  @Ignore( "WIP" )
   public void testTemplateWithOnlyAuthority() throws Exception {
     Template template;
     Parser parser = new Parser();
@@ -910,7 +931,6 @@ public class ParserTest {
   }
 
   @Test
-  @Ignore( "WIP" )
   public void testTemplateWithoutAuthority() throws Exception {
     Template template;
     Parser parser = new Parser();
@@ -922,12 +942,16 @@ public class ParserTest {
     assertThat( template.getPath().size(), is( 1 ) );
     assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "test-path" ) );
     assertThat( template.hasQuery(), is( false ) );
-    assertThat( template.toString(), is( "test-scheme:///test-path" ) );
+    assertThat( template.toString(), is( "test-scheme:/test-path" ) );
 
     template = parser.parseTemplate( "test-scheme:///test-path" );
     assertThat( template.hasScheme(), is( true ) );
     assertThat( template.getScheme().getFirstValue().getPattern(), is( "test-scheme" ) );
-    assertThat( template.hasAuthority(), is( false ) );
+    assertThat( template.hasAuthority(), is( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
     assertThat( template.getPath().size(), is( 1 ) );
     assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "test-path" ) );
     assertThat( template.hasQuery(), is( false ) );
@@ -935,22 +959,29 @@ public class ParserTest {
 
     template = parser.parseTemplate( "{test-scheme}:/{test-path}" );
     assertThat( template.hasScheme(), is( true ) );
-    assertThat( template.getScheme().getFirstValue().getPattern(), is( "test-scheme" ) );
+    assertThat( template.getScheme().getParamName(), is( "test-scheme" ) );
+    assertThat( template.getScheme().getFirstValue().getPattern(), is( "*" ) );
     assertThat( template.hasAuthority(), is( false ) );
     assertThat( template.getPath().size(), is( 1 ) );
-    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "test-path" ) );
+    assertThat( template.getPath().get( 0 ).getParamName(), is( "test-path" ) );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "**" ) );
     assertThat( template.hasQuery(), is( false ) );
-    assertThat( template.toString(), is( "{test-scheme=*}:///{test-path=**}" ) );
+    assertThat( template.toString(), is( "{test-scheme=*}:/{test-path=**}" ) );
 
     template = parser.parseTemplate( "{test-scheme}:///{test-path}" );
     assertThat( template.hasScheme(), is( true ) );
-    assertThat( template.getScheme().getFirstValue().getPattern(), is( "test-scheme" ) );
-    assertThat( template.hasAuthority(), is( false ) );
+    assertThat( template.getScheme().getParamName(), is( "test-scheme" ) );
+    assertThat( template.getScheme().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.hasAuthority(), is( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost(), nullValue() );
+    assertThat( template.getPort(), nullValue() );
     assertThat( template.getPath().size(), is( 1 ) );
-    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "test-path" ) );
+    assertThat( template.getPath().get( 0 ).getParamName(), is( "test-path" ) );
+    assertThat( template.getPath().get( 0 ).getFirstValue().getPattern(), is( "**" ) );
     assertThat( template.hasQuery(), is( false ) );
     assertThat( template.toString(), is( "{test-scheme=*}:///{test-path=**}" ) );
-
   }
 
 }

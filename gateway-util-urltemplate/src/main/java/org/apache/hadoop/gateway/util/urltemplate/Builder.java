@@ -161,8 +161,15 @@ public class Builder {
         fragment, hasFragment );
   }
 
+  public boolean getHashScheme() {
+    return this.hasScheme;
+  }
+
   public void setHasScheme( boolean hasScheme ) {
     this.hasScheme = hasScheme;
+    if( !hasScheme ) {
+      scheme = null;
+    }
   }
 
   public Scheme getScheme() {

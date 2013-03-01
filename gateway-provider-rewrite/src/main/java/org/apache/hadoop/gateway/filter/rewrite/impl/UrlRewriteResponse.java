@@ -193,6 +193,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     } else if ( "context-path".equals( name ) ) {
       return Urls.stripLeadingSlash( request.getContextPath() );
     } else {
+      config.getServletContext().getServletContextName();
       return null;
     }
   }

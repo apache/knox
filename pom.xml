@@ -161,6 +161,12 @@
                 <artifactId>apache-rat-plugin</artifactId>
                 <version>0.8</version>
             </plugin>
+            <!-- mvn javancss:report or mvn site -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>javancss-maven-plugin</artifactId>
+                <version>2.0-beta-2</version>
+            </plugin>
         </plugins>
     </reporting>
 

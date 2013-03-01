@@ -43,6 +43,12 @@
         <!-- ********** ********** ********** ********** ********** ********** -->
 
         <dependency>
+            <groupId>jparsec</groupId>
+            <artifactId>jparsec</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
