@@ -31,6 +31,7 @@ public class Template {
   private Host host;
   private Port port;
   private boolean hasAuthority;
+  private boolean isAuthorityOnly;
   private List<Path> path;
   private boolean isAbsolute;
   private boolean isDirectory;
@@ -50,6 +51,7 @@ public class Template {
       Host host,
       Port port,
       boolean hasAuthority,
+      boolean isAuthorityOnly,
       List<Path> path,
       boolean isAbsolute,
       boolean isDirectory,
@@ -65,6 +67,7 @@ public class Template {
     this.host = host;
     this.port = port;
     this.hasAuthority = hasAuthority;
+    this.isAuthorityOnly = isAuthorityOnly;
     this.path = Collections.unmodifiableList( path );
     this.isAbsolute = isAbsolute;
     this.isDirectory = isDirectory;
@@ -103,6 +106,10 @@ public class Template {
 
   public boolean hasAuthority() {
     return hasAuthority;
+  }
+
+  public boolean isAuthorityOnly() {
+    return isAuthorityOnly;
   }
 
   public List<Path> getPath() {
@@ -148,7 +155,7 @@ public class Template {
 
   private void buildAuthority( StringBuilder b ) {
     if( hasAuthority ) {
-      if( scheme != null || username!=null || password!=null || path.size() > 0 || hasQuery || hasFragment ) {
+      if( !isAuthorityOnly ) {
         b.append( "//" );
       }
       if( username != null || password != null ) {

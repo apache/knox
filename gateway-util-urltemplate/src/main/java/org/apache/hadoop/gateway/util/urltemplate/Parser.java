@@ -88,6 +88,7 @@ public class Parser {
     builder = new Builder();
     builder.setHasScheme( false );
     builder.setHasAuthority( false ); // Assume no until found otherwise.  If true, will cause // in output URL.
+    builder.setIsAuthorityOnly( false );
     builder.setIsAbsolute( false ); // Assume relative until found otherwise.  If true, will cause leading / in output URL.
     builder.setIsDirectory( false ); // Assume a file path until found otherwise.  If true, will cause trailing / in output URL.
     builder.setHasQuery( false ); // Assume no ? until found otherwise.  If true, will cause ? in output URL.
@@ -108,7 +109,7 @@ public class Parser {
 
   private void fixNakedAuthority() {
     if( builder.getHashScheme() &&
-        !builder.getHashAuthority() &&
+        !builder.getHasAuthority() &&
         !builder.getIsAbsolute() &&
         !builder.getIsDirectory() &&
         ( builder.getPath().size() == 1 ) &&
@@ -119,6 +120,7 @@ public class Parser {
       builder.setHost( scheme.getParamName(), makePatternSingular( scheme.getFirstValue().getPattern() ) );
       Path path = builder.getPath().remove( 0 );
       builder.setPort( path.getParamName(), makePatternSingular( path.getFirstValue().getPattern() ) );
+      builder.setIsAuthorityOnly( true );
     }
   }
 

@@ -27,6 +27,7 @@ public class Builder {
   private boolean hasScheme;
   private Scheme scheme;
   private boolean hasAuthority;
+  private boolean isAuthorityOnly;
   private Username username;
   private Password password;
   private Host host;
@@ -44,6 +45,7 @@ public class Builder {
     this.hasScheme = false;
     this.scheme = null;
     this.hasAuthority = false;
+    this.isAuthorityOnly = false;
     this.username = null;
     this.password = null;
     this.host = null;
@@ -62,6 +64,7 @@ public class Builder {
     this.hasScheme = template.hasScheme();
     this.scheme = copyScheme( template.getScheme() );
     this.hasAuthority = template.hasAuthority();
+    this.isAuthorityOnly = template.isAuthorityOnly();
     this.username = copyUsername( template.getUsername() );
     this.password = copyPassword( template.getPassword() );
     this.host = copyHost( template.getHost() );
@@ -155,7 +158,7 @@ public class Builder {
   public Template build() {
     return new Template(
         scheme, hasScheme,
-        username, password, host, port, hasAuthority,
+        username, password, host, port, hasAuthority, isAuthorityOnly,
         path, isAbsolute, isDirectory,
         query, extra, hasQuery,
         fragment, hasFragment );
@@ -181,12 +184,20 @@ public class Builder {
     setHasScheme( true );
   }
 
-  public boolean getHashAuthority() {
+  public boolean getHasAuthority() {
     return hasAuthority;
   }
 
   public void setHasAuthority( boolean hasAuthority ) {
     this.hasAuthority = hasAuthority;
+  }
+
+  public boolean getIsAuthorityOnly() {
+    return isAuthorityOnly;
+  }
+
+  public void setIsAuthorityOnly( boolean isAuthorityOnly ) {
+    this.isAuthorityOnly = isAuthorityOnly;
   }
 
   public Username getUsername() {

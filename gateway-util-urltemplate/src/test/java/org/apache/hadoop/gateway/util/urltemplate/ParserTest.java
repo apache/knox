@@ -461,6 +461,7 @@ public class ParserTest {
   public void testAuthority() throws URISyntaxException {
     String text;
     Template template;
+    String image;
 
     text = "//";
     template = Parser.parse( text );
@@ -527,7 +528,19 @@ public class ParserTest {
     assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
     assertThat( template.getPort().getParamName(), is( "port" ) );
     assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
-    String image = template.toString();
+    image = template.toString();
+    assertThat( image, is( "//{host=*}:{port=*}" ) );
+
+    text = "{host}:{port}";
+    template = Parser.parse( text );
+    assertThat( template.hasAuthority(), is( true ) );
+    assertThat( template.getUsername(), nullValue() );
+    assertThat( template.getPassword(), nullValue() );
+    assertThat( template.getHost().getParamName(), is( "host" ) );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort().getParamName(), is( "port" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
+    image = template.toString();
     assertThat( image, is( "{host=*}:{port=*}" ) );
   }
 
