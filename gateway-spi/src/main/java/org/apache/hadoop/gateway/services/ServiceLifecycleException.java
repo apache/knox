@@ -17,10 +17,15 @@
  */
 package org.apache.hadoop.gateway.services;
 
+@SuppressWarnings("serial")
 public class ServiceLifecycleException extends Exception {
 
   public ServiceLifecycleException(String message) {
     super(message);
+  }
+
+  public ServiceLifecycleException(String message, Exception e) {
+    super(message, e);
   }
 
 }

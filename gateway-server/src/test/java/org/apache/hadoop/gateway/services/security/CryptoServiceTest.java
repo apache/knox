@@ -65,7 +65,7 @@ public class CryptoServiceTest {
     String queryString = "url=http://localhost:50070/api/v1/blahblah";
     AESEncryptor aes0 = new AESEncryptor("password");
     EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes("UTF8"));
-    byte[] decrypted0 = aes0.decrypt(result0.iv, result0.cipher);
+    byte[] decrypted0 = aes0.decrypt(result0.salt, result0.iv, result0.cipher);
     assertEquals(queryString, new String(decrypted0, "UTF8"));
     assertEquals(queryString.getBytes("UTF8").length, decrypted0.length);
     assertEquals(queryString.getBytes("UTF8").length, new String(decrypted0, "UTF8").toCharArray().length);
@@ -73,24 +73,24 @@ public class CryptoServiceTest {
     // password to create key - same Encryptor
     AESEncryptor aes = new AESEncryptor("Test");
     EncryptionResult result = aes.encrypt("larry".getBytes("UTF8"));
-    byte[] decrypted = aes.decrypt(result.iv, result.cipher);
+    byte[] decrypted = aes.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
     // password to create key - different Encryptor
     AESEncryptor aes2 = new AESEncryptor("Test");
-    decrypted = aes2.decrypt(result.iv, result.cipher);
+    decrypted = aes2.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
     
     // password to create key resolved from alias - same Encryptor
     AESEncryptor aes3 = new AESEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
     result = aes3.encrypt("larry".getBytes("UTF8"));
-    decrypted = aes3.decrypt(result.iv, result.cipher);
+    decrypted = aes3.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
     // password to create key resolved from alias - different Encryptor
     AESEncryptor aes4 = new AESEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
-    decrypted = aes4.decrypt(result.iv, result.cipher);
+    decrypted = aes4.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
   }
   
@@ -102,7 +102,7 @@ public class CryptoServiceTest {
     
     EncryptionResult result = cs.encryptForCluster("Test", alias, queryString.getBytes("UTF8"));
     assertTrue("Resulted cipertext length should be a multiple of 16", (result.cipher.length % 16) == 0);
-    byte[] decryptedQueryString = cs.decryptForCluster("Test", alias, result.cipher, result.iv);
+    byte[] decryptedQueryString = cs.decryptForCluster("Test", alias, result.cipher, result.iv, result.salt);
     assertEquals(queryString.getBytes("UTF8").length, decryptedQueryString.length);
   }
 }

@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.services.security.impl;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
@@ -32,24 +33,30 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 
 public class AESEncryptor {
   
   // TODO: randomize the salt
-  private static final byte[] SALT = {
-      (byte) 0xA9, (byte) 0x9B, (byte) 0xC8, (byte) 0x32,
-      (byte) 0x56, (byte) 0x35, (byte) 0xE3, (byte) 0x03
-  };
+//  private static final byte[] SALT = {
+//      (byte) 0xA9, (byte) 0x9B, (byte) 0xC8, (byte) 0x32,
+//      (byte) 0x56, (byte) 0x35, (byte) 0xE3, (byte) 0x03
+//  };
   private static final int ITERATION_COUNT = 65536;
   private static final int KEY_LENGTH = 128;
   private Cipher ecipher;
   private Cipher dcipher;
   private SecretKey secret;
+  private byte[] salt = null;
+  private char[] passPhrase = null;
  
   public AESEncryptor(String passPhrase) {
       try {
+        this.passPhrase = passPhrase.toCharArray();
+        salt = new byte[8];
+        SecureRandom rnd = new SecureRandom();
+        rnd.nextBytes(salt);
+        
         SecretKey tmp = getKeyFromPassword(passPhrase);
         secret = new SecretKeySpec (tmp.getEncoded(), "AES");
  
@@ -106,11 +113,15 @@ public class AESEncryptor {
   }
 
   public SecretKey getKeyFromPassword(String passPhrase) {
+    return getKeyFromPassword(passPhrase, salt);
+  }
+  
+  public SecretKey getKeyFromPassword(String passPhrase, byte[] salt) {
     SecretKeyFactory factory;
     SecretKey key = null;
     try {
       factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-      KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), SALT, ITERATION_COUNT, KEY_LENGTH);
+      KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), salt, ITERATION_COUNT, KEY_LENGTH);
       key = factory.generateSecret(spec);
     } catch (NoSuchAlgorithmException e) {
       // TODO Auto-generated catch block
@@ -130,18 +141,19 @@ public class AESEncryptor {
   }
 
   public EncryptionResult encrypt(byte[] plain) throws Exception {
-    EncryptionResult atom = new EncryptionResult(ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV(), ecipher.doFinal(plain));
+    EncryptionResult atom = new EncryptionResult(salt, ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV(), ecipher.doFinal(plain));
     return atom;
   }
 
-  public String decrypt(String iv, String cipher) throws Exception {
-    byte[] ivbytes = Base64.decodeBase64(iv);
-    byte[] bytes = Base64.decodeBase64(cipher);
-    byte[] decrypted = decrypt(ivbytes, bytes);
+  public String decrypt(String salt, String iv, String cipher) throws Exception {
+    byte[] decrypted = decrypt(salt.getBytes("UTF8"), iv.getBytes("UTF8"), cipher.getBytes("UTF8"));
     return new String(decrypted, "UTF8");
   }
 
-  public byte[] decrypt(byte[] iv, byte[] encrypt) throws Exception {
+  public byte[] decrypt(byte[] salt, byte[] iv, byte[] encrypt) throws Exception {
+    SecretKey tmp = getKeyFromPassword(new String(passPhrase), salt);
+    secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+    
     dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
     return dcipher.doFinal(encrypt);
   }

@@ -58,7 +58,12 @@ public class DefaultMasterService implements MasterService {
     else {
       File masterFile = new File(config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security", "master");
       if (masterFile.exists()) {
-        initializeFromMaster(masterFile);
+        try {
+          initializeFromMaster(masterFile);
+        } catch (Exception e) {
+          // TODO Auto-generated catch block
+          throw new ServiceLifecycleException("Unable to load the persisted master secret.", e);
+        }
       }
       else {
         if(options.get( "persist-master").equals("true")) {
@@ -109,15 +114,18 @@ public class DefaultMasterService implements MasterService {
 
   private void persistMaster(char[] master, File masterFile) {
     EncryptionResult atom = encryptMaster(master);
-    // TODO: write it to the file - ensuring permissions are set to just this user
     try {
       ArrayList<String> lines = new ArrayList<String>();
       lines.add(MASTER_PERSISTENCE_TAG);
-      String iv = new String(Base64.encodeBase64String(atom.iv));
-      String cipher = new String(Base64.encodeBase64String(atom.cipher));
-      String line = Base64.encodeBase64String((iv + "::" + cipher).getBytes("UTF8"));
+      
+      String line = Base64.encodeBase64String((
+          Base64.encodeBase64String(atom.salt) + "::" + 
+          Base64.encodeBase64String(atom.iv) + "::" + 
+          Base64.encodeBase64String(atom.cipher)).getBytes("UTF8"));
       lines.add(line);
       FileUtils.writeLines(masterFile, "UTF8", lines);
+      
+      // restrict os permissions to only the user running this process
       chmod("600", masterFile);
     } catch (IOException e) {
       // TODO log appropriate message that the master secret has not been persisted
@@ -137,22 +145,25 @@ public class DefaultMasterService implements MasterService {
     return null;
   }
 
-  private void initializeFromMaster(File masterFile) {
+  private void initializeFromMaster(File masterFile) throws Exception {
     try {
       List<String> lines = FileUtils.readLines(masterFile, "UTF8");
       String tag = lines.get(0);
       // TODO: log - if appropriate - at least at finest level
       System.out.println("Loading from persistent master: " + tag);
-      System.out.println("Loading from persistent master again: " + tag);
       String line = new String(Base64.decodeBase64(lines.get(1)));
       String[] parts = line.split("::");
-      this.master = aes.decrypt(parts[0], parts[1]).toCharArray();
+//System.out.println("salt: " + parts[0] + " : " + Base64.decodeBase64(parts[0]));
+//System.out.println("iv: " + parts[1]);
+//System.out.println("cipher: " + parts[2]);
+      this.master = new String(aes.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
+      throw e;
     } catch (Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+      throw e;
     }
   }
 

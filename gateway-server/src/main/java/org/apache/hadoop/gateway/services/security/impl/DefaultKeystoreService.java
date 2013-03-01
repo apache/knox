@@ -22,12 +22,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -37,9 +45,23 @@ import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.MasterService;
 
+import sun.security.x509.AlgorithmId;
+import sun.security.x509.CertificateAlgorithmId;
+import sun.security.x509.CertificateIssuerName;
+import sun.security.x509.CertificateSerialNumber;
+import sun.security.x509.CertificateSubjectName;
+import sun.security.x509.CertificateValidity;
+import sun.security.x509.CertificateVersion;
+import sun.security.x509.CertificateX509Key;
+import sun.security.x509.X500Name;
+import sun.security.x509.X509CertImpl;
+import sun.security.x509.X509CertInfo;
+
 public class DefaultKeystoreService implements KeystoreService {
 
+  private static final String TEST_CERT_DN = "CN=hadoop.gateway,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
+  private static final String GATEWAY_KEYSTORE = "gateway.jceks";
   
   private MasterService masterService;
   private String keyStoreDir;
@@ -68,15 +90,89 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public void createKeystoreForGateway() {
+    String filename = keyStoreDir + GATEWAY_KEYSTORE;
+    createKeystore(filename);
   }
 
   @Override
-  public void addSelfSignedCertForGateway(String clusterName, String alias) {
+  public KeyStore getKeystoreForGateway() {
+    final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
+    return getKeystore(keyStoreFile);
   }
+  
+  @Override
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase) {
+    KeyPairGenerator keyPairGenerator;
+    try {
+      keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+      keyPairGenerator.initialize(1024);  
+      KeyPair KPair = keyPairGenerator.generateKeyPair();
+      X509Certificate cert = generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
+
+      KeyStore privateKS = getKeystoreForGateway();
+      privateKS.setKeyEntry(alias, KPair.getPrivate(),  
+          passphrase,  
+          new java.security.cert.Certificate[]{cert});  
+      
+      writeKeystoreToFile(privateKS, new File( keyStoreDir + GATEWAY_KEYSTORE  ));
+    } catch (NoSuchAlgorithmException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (GeneralSecurityException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }  
+  }
+  
+  /** 
+   * Create a self-signed X.509 Certificate
+   * @param dn the X.509 Distinguished Name, eg "CN=Test, L=London, C=GB"
+   * @param pair the KeyPair
+   * @param days how many days from now the Certificate is valid for
+   * @param algorithm the signing algorithm, eg "SHA1withRSA"
+   */ 
+  private X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm)
+    throws GeneralSecurityException, IOException
+  {
+    PrivateKey privkey = pair.getPrivate();
+    X509CertInfo info = new X509CertInfo();
+    Date from = new Date();
+    Date to = new Date(from.getTime() + days * 86400000l);
+    CertificateValidity interval = new CertificateValidity(from, to);
+    BigInteger sn = new BigInteger(64, new SecureRandom());
+    X500Name owner = new X500Name(dn);
+   
+    info.set(X509CertInfo.VALIDITY, interval);
+    info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
+    info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
+    info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
+    info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
+    info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
+    AlgorithmId algo = new AlgorithmId(AlgorithmId.md5WithRSAEncryption_oid);
+    info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
+   
+    // Sign the cert to identify the algorithm that's used.
+    X509CertImpl cert = new X509CertImpl(info);
+    cert.sign(privkey, algorithm);
+   
+    // Update the algorith, and resign.
+    algo = (AlgorithmId)cert.get(X509CertImpl.SIG_ALG);
+    info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
+    cert = new X509CertImpl(info);
+    cert.sign(privkey, algorithm);
+    return cert;
+  }   
 
   @Override
   public void createCredentialStoreForCluster(String clusterName) {
     String filename = keyStoreDir + clusterName + CREDENTIALS_SUFFIX;
+    createKeystore(filename);
+  }
+
+  private void createKeystore(String filename) {
     try {
       FileOutputStream out = new FileOutputStream( filename );
       KeyStore ks = KeyStore.getInstance("JCEKS");  
@@ -103,6 +199,16 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
+    return isKeystoreAvailable(keyStoreFile);
+  }
+
+  @Override
+  public boolean isKeystoreForGatewayAvailable() {
+    final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
+    return isKeystoreAvailable(keyStoreFile);
+  }
+
+  private boolean isKeystoreAvailable(final File keyStoreFile) {
     if ( keyStoreFile.exists() )
     {
       FileInputStream input = null;
@@ -138,6 +244,10 @@ public class DefaultKeystoreService implements KeystoreService {
 
   public KeyStore getCredentialStoreForCluster(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
+    return getKeystore(keyStoreFile);
+  }
+
+  private KeyStore getKeystore(final File keyStoreFile) {
     KeyStore credStore = null;
     try {
       credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret());
@@ -180,7 +290,7 @@ public class DefaultKeystoreService implements KeystoreService {
    return keyStore;       
   }
 
-  public void writeKeyStoreToFile(final KeyStore keyStore, final File file)
+  public void writeKeystoreToFile(final KeyStore keyStore, final File file)
          throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
     // TODO: backup the keystore on disk before attempting a write and restore on failure
       final FileOutputStream  out = new FileOutputStream(file);
@@ -205,7 +315,7 @@ public class DefaultKeystoreService implements KeystoreService {
         final Key key = new SecretKeySpec(value.getBytes("UTF8"), "AES");
         ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
         final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
-        writeKeyStoreToFile(ks, keyStoreFile);
+        writeKeystoreToFile(ks, keyStoreFile);
       } catch (KeyStoreException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -274,7 +384,7 @@ public class DefaultKeystoreService implements KeystoreService {
       try {
         ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
         final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
-        writeKeyStoreToFile(ks, keyStoreFile);
+        writeKeystoreToFile(ks, keyStoreFile);
       } catch (KeyStoreException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -290,4 +400,5 @@ public class DefaultKeystoreService implements KeystoreService {
       }
     }
   }
+
 }

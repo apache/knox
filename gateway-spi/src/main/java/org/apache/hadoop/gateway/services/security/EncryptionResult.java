@@ -18,9 +18,11 @@
 package org.apache.hadoop.gateway.services.security;
 
 public class EncryptionResult {
+  public byte[] salt;
   public byte[] iv;
   public byte[] cipher;
-  public EncryptionResult(byte[] iv, byte[] cipher) {
+  public EncryptionResult(byte[] salt, byte[] iv, byte[] cipher) {
+    this.salt = salt;
     this.iv = iv;
     this.cipher = cipher;
   }

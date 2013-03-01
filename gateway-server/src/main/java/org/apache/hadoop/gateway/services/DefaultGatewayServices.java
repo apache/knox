@@ -37,6 +37,8 @@ import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
 import org.apache.hadoop.gateway.topology.Provider;
 
 public class DefaultGatewayServices implements Service, ProviderDeploymentContributor, GatewayServices {
+  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
+  private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
   public static String CRYPTO_SERVICE = "CryptoService";
   public static String ALIAS_SERVICE = "AliasService";
 
@@ -65,6 +67,33 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
     crypto.setAliasService(alias);
     crypto.init(config, options);
     services.put(CRYPTO_SERVICE, crypto);
+    
+    // do gateway global provisioning
+    provisionSSLArtifacts();
+  }
+
+  private void provisionSSLArtifacts() {
+    DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
+    if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
+      System.out.println("creating credstore for gateway");
+      ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
+      alias.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+    }
+    else {
+      // TODO: log appropriately
+      System.out.println("credstore found for gateway - no need to create one");
+    }
+
+    if (!ks.isKeystoreForGatewayAvailable()) {
+      System.out.println("creating keystore for gateway");
+      ks.createKeystoreForGateway();
+      char[] passphrase = alias.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+      ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
+    }
+    else {
+      // TODO: log appropriately
+      System.out.println("keystore found for gateway - no need to create one");
+    }
   }
   
   public void start() throws ServiceLifecycleException {

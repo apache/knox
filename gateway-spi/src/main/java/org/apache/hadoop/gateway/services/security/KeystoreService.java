@@ -30,11 +30,15 @@ public interface KeystoreService extends Service {
 
   public void createKeystoreForGateway();
 
-  public void addSelfSignedCertForGateway(String clusterName, String alias);
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase);
+  
+  public KeyStore getKeystoreForGateway();
   
   public void createCredentialStoreForCluster(String clusterName);
   
   public boolean isCredentialStoreForClusterAvailable(String clusterName);
+
+  public boolean isKeystoreForGatewayAvailable();
   
   public KeyStore getCredentialStoreForCluster(String clusterName);
 
@@ -42,7 +46,7 @@ public interface KeystoreService extends Service {
 
   public char[] getCredentialForCluster(String clusterName, String alias);
 
-  public void writeKeyStoreToFile(final KeyStore keyStore, final File file)
+  public void writeKeystoreToFile(final KeyStore keyStore, final File file)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException;
 
   public byte[] getKeyForCluster(String clusterName, String alias);

@@ -41,7 +41,7 @@ public class DefaultCryptoService implements CryptoService {
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
     if (as == null) {
-      throw new ServiceLifecycleException("Keystore and/or Alias service is not set");
+      throw new ServiceLifecycleException("Alias service is not set");
     }
   }
 
@@ -87,7 +87,7 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, String cipherText) {
     try {
-      return decryptForCluster(clusterName, alias, cipherText.getBytes("UTF8"), null);
+      return decryptForCluster(clusterName, alias, cipherText.getBytes("UTF8"), null, null);
     } catch (UnsupportedEncodingException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -96,12 +96,12 @@ public class DefaultCryptoService implements CryptoService {
   }
 
   @Override
-  public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv) {
+  public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
   char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
   if (password != null) {
       AESEncryptor aes = new AESEncryptor(new String(password));
       try {
-        return aes.decrypt(iv, cipherText);
+        return aes.decrypt(salt, iv, cipherText);
       } catch (Exception e) {
         // TODO Auto-generated catch block
         e.printStackTrace();

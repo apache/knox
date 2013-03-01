@@ -27,5 +27,5 @@ public interface CryptoService extends Service {
 
   public byte[] decryptForCluster(String clusterName, String alias, String cipherText);
 
-  public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv);
+  public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt);
 }
