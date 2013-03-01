@@ -5,7 +5,7 @@
             <job-tracker>${jobTracker}</job-tracker>
             <name-node>${nameNode}</name-node>
             <!-- <name-node>hdfs://sandbox:8020</name-node> -->
-            <main-class>org.apache.hadoop.examples.WordCount </main-class>
+            <main-class>org.apache.hadoop.examples.WordCount</main-class>
             <!--
             <arg>/tmp/GatewayBasicFuncTest/testOozieJobSubmission/input</arg>
             <arg>/tmp/GatewayBasicFuncTest/testOozieJobSubmission/output</arg>

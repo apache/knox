@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -60,6 +62,8 @@ public class Parser {
       fragment  = $9
    */
 
+  private static final Resources RES = ResourcesFactory.get( Resources.class );
+
   public static final char TEMPLATE_OPEN_MARKUP = '{';
   public static final char TEMPLATE_CLOSE_MARKUP = '}';
   public static final char NAME_PATTERN_SEPARATOR = '=';
@@ -102,7 +106,7 @@ public class Parser {
       consumeFragmentMatch( match );
       fixNakedAuthority();
     } else {
-      throw new IllegalArgumentException( template );
+      throw new URISyntaxException( template, RES.parseTemplateFailureReason( template ) );
     }
     return builder.build();
   }

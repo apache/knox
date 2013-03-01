@@ -682,14 +682,13 @@ public class GatewayBasicFuncTest {
 
   @Ignore( "WIP" )
   @Test
-  public void testOozieGlobal() {
+  public void testOozieGeneralOperations() {
     String user = "oozie";
     String pass = "oozie-password";
 //    driver.oozieVersions( user, pass );
   }
 
   @Test
-  @Ignore( "WIP" )
   public void testOozieJobSubmission() throws Exception {
     String root = "/tmp/GatewayBasicFuncTest/testOozieJobSubmission";
     String user = "hdfs";

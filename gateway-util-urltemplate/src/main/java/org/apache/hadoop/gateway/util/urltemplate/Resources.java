@@ -15,16 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.i18n;
+package org.apache.hadoop.gateway.util.urltemplate;
 
-import org.apache.hadoop.gateway.i18n.messages.Message;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
+import org.apache.hadoop.gateway.i18n.resources.Resource;
 
-@Messages(logger="org.apache.hadoop.gateway")
-public interface UrlRewriteMessages {
+@org.apache.hadoop.gateway.i18n.resources.Resources
+public interface Resources {
 
-    @Message( level = MessageLevel.DEBUG, text = "Failed to parse value as URL: {0}" )
-    void failedToParseValueForUrlRewrite( String value );
+  @Resource( text="Invalid format" )
+  String parseTemplateFailureReason( String template );
 
 }

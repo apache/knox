@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.json;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -27,6 +29,8 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 
 public class JsonUrlRewriteFilterReader extends JsonFilterReader {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private Resolver resolver;
   private UrlRewriter rewriter;
@@ -46,7 +50,7 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
       Template output = rewriter.rewrite( resolver, input, direction );
       value = output.toString();
     } catch( URISyntaxException e ) {
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
   }

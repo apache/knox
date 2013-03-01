@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -30,6 +32,8 @@ import java.net.URISyntaxException;
 import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction;
 
 public class XmlUrlRewriteFilterReader extends XmlFilterReader {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private Resolver resolver;
   private UrlRewriter rewriter;
@@ -46,12 +50,11 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   //TODO: Need to limit which values are attempted to be filtered by the name.
   private String filterValueString( String name, String value ) {
     try {
-      //TODO: When the input is sandbox:50300 and it doesn't match anything it needs to result in the same value.
       Template input = Parser.parse( value );
       Template output = rewriter.rewrite( resolver, input, direction );
       value = output.toString();
     } catch( URISyntaxException e ) {
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
   }

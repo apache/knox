@@ -793,9 +793,9 @@ TODO
         .status( HttpStatus.SC_CREATED )
         .content( getResourceBytes( "oozie-jobs-submit-response.json" ) )
         .contentType( "application/json" );
-    System.out.println( "REQUEST LENGTH = " + request.length() );
+    //System.out.println( "REQUEST LENGTH = " + request.length() );
 
-    URL url = new URL( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) );
+    URL url = new URL( getUrl( "OOZIE" ) + "/v1/jobs?action=start" + ( isUseGateway() ? "" : "&user.name=" + user ) );
     HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
     DefaultHttpClient client = new DefaultHttpClient();
     client.getCredentialsProvider().setCredentials(
@@ -812,7 +812,7 @@ TODO
     localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
 
     HttpPost post = new HttpPost( url.toURI() );
-    post.getParams().setParameter( "action", "start" );
+//    post.getParams().setParameter( "action", "start" );
     StringEntity entity = new StringEntity( request, ContentType.create( "application/xml", "UTF-8" ) );
     post.setEntity( entity );
     HttpResponse response = client.execute( targetHost, post, localContext );
