@@ -32,19 +32,20 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
+import org.apache.hadoop.gateway.services.security.impl.JettySSLService;
 import org.apache.hadoop.gateway.topology.Provider;
 
 public class DefaultGatewayServices implements Service, ProviderDeploymentContributor, GatewayServices {
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
-  private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
-  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static final String SSL_SERVICE = "SSLService";
+  public static final String CRYPTO_SERVICE = "CryptoService";
+  public static final String ALIAS_SERVICE = "AliasService";
 
-  public static String CRYPTO_SERVICE = "CryptoService";
-  public static String ALIAS_SERVICE = "AliasService";
+  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private Map<String,Service> services = new HashMap<String, Service>();
   private DefaultMasterService ms = null;
@@ -72,30 +73,12 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
     crypto.init(config, options);
     services.put(CRYPTO_SERVICE, crypto);
     
-    // do gateway global provisioning
-    provisionSSLArtifacts();
-  }
-
-  private void provisionSSLArtifacts() {
-    DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
-    if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
-      log.creatingCredentialStoreForGateway();
-      ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
-      alias.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-    }
-    else {
-      log.credentialStoreForGatewayFoundNotCreating();
-    }
-
-    if (!ks.isKeystoreForGatewayAvailable()) {
-      log.creatingKeyStoreForGateway();
-      ks.createKeystoreForGateway();
-      char[] passphrase = alias.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-      ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
-    }
-    else {
-      log.keyStoreForGatewayFoundNotCreating();
-    }
+    JettySSLService ssl = new JettySSLService();
+    ssl.setAliasService(alias);
+    ssl.setKeystoreService(ks);
+    ssl.setMasterService(ms);
+    ssl.init(config, options);
+    services.put(SSL_SERVICE, ssl);
   }
   
   public void start() throws ServiceLifecycleException {
@@ -105,6 +88,9 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.start();
+
+    SSLService ssl = (SSLService) services.get(SSL_SERVICE);
+    ssl.start();
   }
 
   public void stop() throws ServiceLifecycleException {
@@ -114,6 +100,9 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.stop();
+
+    SSLService ssl = (SSLService) services.get(SSL_SERVICE);
+    ssl.stop();
   }
   
   /* (non-Javadoc)

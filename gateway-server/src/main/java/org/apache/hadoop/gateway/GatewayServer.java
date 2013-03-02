@@ -29,6 +29,7 @@ import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
@@ -231,6 +232,7 @@ public class GatewayServer {
 //    jetty.start();
 //  }
 
+  
   private synchronized void start() throws Exception {
 
 //    Map<String,String> params = new HashMap<String,String>();
@@ -250,8 +252,18 @@ public class GatewayServer {
 
     // Start Jetty.
     jetty = new Server( address );
+    SSLService ssl = (SSLService) services.getService("SSLService");
+    if (ssl != null) {
+      jetty.addConnector((Connector) ssl.buildSSlConnector(config.getGatewayHomeDir()));
+    }
     jetty.setHandler( contexts );
+    try {
     jetty.start();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      throw e;
+    }
 
     // Create a dir/file based cluster topology provider.
     File topologiesDir = calculateAbsoluteTopologiesDir();

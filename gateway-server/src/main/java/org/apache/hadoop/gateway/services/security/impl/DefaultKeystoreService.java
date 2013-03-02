@@ -61,7 +61,7 @@ public class DefaultKeystoreService implements KeystoreService {
 
   private static final String TEST_CERT_DN = "CN=hadoop.gateway,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
-  private static final String GATEWAY_KEYSTORE = "gateway.jceks";
+  private static final String GATEWAY_KEYSTORE = "gateway.jks";
   
   private MasterService masterService;
   private String keyStoreDir;
@@ -91,13 +91,13 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public void createKeystoreForGateway() {
     String filename = keyStoreDir + GATEWAY_KEYSTORE;
-    createKeystore(filename);
+    createKeystore(filename, "JKS");
   }
 
   @Override
   public KeyStore getKeystoreForGateway() {
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
-    return getKeystore(keyStoreFile);
+    return getKeystore(keyStoreFile, "JKS");
   }
   
   @Override
@@ -169,13 +169,13 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public void createCredentialStoreForCluster(String clusterName) {
     String filename = keyStoreDir + clusterName + CREDENTIALS_SUFFIX;
-    createKeystore(filename);
+    createKeystore(filename, "JCEKS");
   }
 
-  private void createKeystore(String filename) {
+  private void createKeystore(String filename, String keystoreType) {
     try {
       FileOutputStream out = new FileOutputStream( filename );
-      KeyStore ks = KeyStore.getInstance("JCEKS");  
+      KeyStore ks = KeyStore.getInstance(keystoreType);  
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
@@ -199,21 +199,21 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
-    return isKeystoreAvailable(keyStoreFile);
+    return isKeystoreAvailable(keyStoreFile, "JCEKS");
   }
 
   @Override
   public boolean isKeystoreForGatewayAvailable() {
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
-    return isKeystoreAvailable(keyStoreFile);
+    return isKeystoreAvailable(keyStoreFile, "JKS");
   }
 
-  private boolean isKeystoreAvailable(final File keyStoreFile) {
+  private boolean isKeystoreAvailable(final File keyStoreFile, String storeType) {
     if ( keyStoreFile.exists() )
     {
       FileInputStream input = null;
       try {
-        final KeyStore  keyStore = KeyStore.getInstance("JCEKS");
+        final KeyStore  keyStore = KeyStore.getInstance(storeType);
         input   = new FileInputStream( keyStoreFile );
         keyStore.load( input, masterService.getMasterSecret() );
         return true;
@@ -244,13 +244,13 @@ public class DefaultKeystoreService implements KeystoreService {
 
   public KeyStore getCredentialStoreForCluster(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
-    return getKeystore(keyStoreFile);
+    return getKeystore(keyStoreFile, "JCEKS");
   }
 
-  private KeyStore getKeystore(final File keyStoreFile) {
+  private KeyStore getKeystore(final File keyStoreFile, String storeType) {
     KeyStore credStore = null;
     try {
-      credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret());
+      credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
     } catch (CertificateException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -267,11 +267,11 @@ public class DefaultKeystoreService implements KeystoreService {
     return credStore;
   }
   
-  private static KeyStore loadKeyStore( final File keyStoreFile, final char[] masterPassword )
+  private static KeyStore loadKeyStore( final File keyStoreFile, final char[] masterPassword, String storeType )
        throws CertificateException, IOException,
        KeyStoreException, NoSuchAlgorithmException {     
 
-   final KeyStore  keyStore = KeyStore.getInstance("JCEKS");
+   final KeyStore  keyStore = KeyStore.getInstance(storeType);
    if ( keyStoreFile.exists() )
    {
        final FileInputStream   input   = new FileInputStream( keyStoreFile );
