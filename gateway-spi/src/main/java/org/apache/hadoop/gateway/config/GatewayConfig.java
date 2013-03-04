@@ -37,5 +37,7 @@ public interface GatewayConfig {
   String getDeploymentDir();
 
   InetSocketAddress getGatewayAddress() throws UnknownHostException;
+  
+  boolean isSSLEnabled();
 
 }

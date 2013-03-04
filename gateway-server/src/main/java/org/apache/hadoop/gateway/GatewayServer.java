@@ -251,10 +251,18 @@ public class GatewayServer {
     checkAddressAvailability( address );
 
     // Start Jetty.
-    jetty = new Server( address );
-    SSLService ssl = (SSLService) services.getService("SSLService");
-    if (ssl != null) {
-      jetty.addConnector((Connector) ssl.buildSSlConnector(config.getGatewayHomeDir()));
+    if (config.isSSLEnabled()) {
+      jetty = new Server();
+    }
+    else {
+      jetty = new Server(address);
+    }
+    if (config.isSSLEnabled()) {
+      SSLService ssl = (SSLService) services.getService("SSLService");
+      Connector connector = (Connector) ssl.buildSSlConnector(config.getGatewayHomeDir());
+      connector.setHost(address.getHostName());
+      connector.setPort(address.getPort());
+      jetty.addConnector(connector);
     }
     jetty.setHandler( contexts );
     try {

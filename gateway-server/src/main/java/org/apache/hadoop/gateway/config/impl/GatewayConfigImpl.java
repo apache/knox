@@ -99,6 +99,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
+  private static final String SSL_ENABLED = "ssl.enabled";
 //  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
 
   public GatewayConfigImpl() {
@@ -251,6 +252,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     int port = getGatewayPort();
     InetSocketAddress address = new InetSocketAddress( host, port );
     return address;
+  }
+
+  @Override
+  public boolean isSSLEnabled() {
+    String enabled = get( SSL_ENABLED, "true" );
+    
+    return "true".equals(enabled);
   }
 
 }

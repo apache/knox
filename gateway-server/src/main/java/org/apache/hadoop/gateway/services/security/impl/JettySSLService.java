@@ -93,7 +93,6 @@ public class JettySSLService implements SSLService {
     sslContextFactory.setNeedClientAuth( false );
     sslContextFactory.setTrustAll( true );
     SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
-    sslConnector.setPort(8443);
 
     return sslConnector;
   }  

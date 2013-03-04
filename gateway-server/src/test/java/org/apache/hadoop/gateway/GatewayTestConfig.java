@@ -90,4 +90,10 @@ public class GatewayTestConfig implements GatewayConfig {
     return new InetSocketAddress( getGatewayHost(), getGatewayPort() );
   }
 
+  @Override
+  public boolean isSSLEnabled() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
 }
