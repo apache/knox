@@ -26,7 +26,6 @@ import org.apache.hadoop.test.category.MediumTests;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
@@ -79,7 +78,6 @@ public class GatewayBasicFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-    Velocity.setProperty( "runtime.log.logsystem.log4j.logger", "root" ); // Prevent velocity from creating a log file.
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
@@ -712,6 +710,7 @@ public class GatewayBasicFuncTest {
     driver.createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
 
     VelocityEngine velocity = new VelocityEngine();
+    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
     velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     velocity.init();
