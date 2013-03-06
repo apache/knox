@@ -22,9 +22,20 @@
     <parent>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>gateway</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>gateway-i18n-logging-sl4j</artifactId>
+
+    <name>gateway-i18n-logging-sl4j</name>
+    <description>An extension of the logging framework integrating SL4J.</description>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <dependencies>
 

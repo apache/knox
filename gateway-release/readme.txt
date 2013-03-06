@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-README file for Hadoop Gateway v0.1.0
+README file for Hadoop Gateway v0.2.0
 ------------------------------------------------------------------------------
 This distribution includes cryptographic software.  The country in 
 which you currently reside may have restrictions on the import, 
@@ -93,9 +93,9 @@ diagnostic enough.
 Installation and Deployment Instructions
 ------------------------------------------------------------------------------
 1. Install
-     Download and extract the gateway-0.1.0-SNAPSHOT.zip file into the
+     Download and extract the gateway-0.2.0-SNAPSHOT.zip file into the
      installation directory that will contain your GATEWAY_HOME
-       jar xf gateway-0.1.0-SNAPSHOT.zip
+       jar xf gateway-0.2.0-SNAPSHOT.zip
      This will create a directory 'gateway' in your current directory.
 
 2. Enter Gateway Home directory
@@ -119,7 +119,7 @@ Installation and Deployment Instructions
       over if necessary.
    c. Start the LDAP server - pointing it to the config dir where it will find
       the users.ldif file in the conf directory.
-        java -jar bin/gateway-test-ldap-0.1.0-SNAPSHOT.jar conf &
+        java -jar bin/gateway-test-ldap-0.2.0-SNAPSHOT.jar conf &
       There are a number of log messages of the form "Created null." that can
       safely be ignored.  Take note of the port on which it was started as this
       needs to match later configuration.  This will create a directory named
@@ -127,7 +127,7 @@ Installation and Deployment Instructions
       can safely be ignored.
 
 4. Start the Gateway server
-     java -jar bin/gateway-server-0.1.0-SNAPSHOT.jar
+     java -jar bin/gateway-server-0.2.0-SNAPSHOT.jar
    Take note of the port identified in the log output as you will need this
    for accessing the Gateway.
 
@@ -224,7 +224,7 @@ Filing bugs
 ------------------------------------------------------------------------------
 File bugs at hortonworks.jira.com under Project "Hadoop Gateway Development"
 Include the results of
-  java -jar bin/gateway-server-0.1.0-SNAPSHOT.jar -version
+  java -jar bin/gateway-server-0.2.0-SNAPSHOT.jar -version
 in the Environment section.  Also include the version of Hadoop being used.
 
 ------------------------------------------------------------------------------

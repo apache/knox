@@ -21,7 +21,7 @@
         Release build file for the Hadoop Gateway
     </description>
 
-    <property name="version" value="0.1.0-SNAPSHOT"/>
+    <property name="version" value="0.2.0-SNAPSHOT"/>
     <property name="archive" value="target/gateway-${version}.zip"/>
     <property name="gateway_home" value="gateway"/>
 

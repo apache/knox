@@ -1,37 +1,20 @@
+=========================================================================
+==  NOTICE file corresponding to the section 4 d of                    ==
+==  the Apache License, Version 2.0,                                   ==
+==  in this case for the Apache Knox distribution.                     ==
+=========================================================================
+
 Apache Knox
-Copyrite 2012-2013 The Apache Software Foundation
-This product includes software developed at
+Copyright 2012-2013 The Apache Software Foundation
+
+This product includes software developed by
 The Apache Software Foundation (http://www.apache.org/).
 
-Apache Commons (http://commons.apache.org/)
-Apache Hadoop (http://hadoop.apache.org/)
-Apache HttpClient (http://hc.apache.org/httpcomponents-client-ga/index.html)
-Apache log4j (http://logging.apache.org/log4j/1.2/)
-Apache Shiro (http://shiro.apache.org/)
-ApacheDS (http://directory.apache.org/)
+This product includes software (Jerico) developed by
+SourceForge (http://sourceforge.net/projects/jerichohtml/ and see http://jericho.htmlparser.net/)
 
-EasyMock (http://www.easymock.org/)
+This product includes software (Simple Logging Facade for Java, SL4J) developed by
+GitHub (https://github.com/qos-ch/slf4j/ and see http://www.slf4j.org/)
 
-Guava (https://code.google.com/p/guava-libraries/)
-
-Hamcrest (https://code.google.com/p/hamcrest/)
-
-JsonPath (https://code.google.com/p/json-path/)
-
-Jerico (http://jericho.htmlparser.net/docs/index.html)
-
-Jersey (http://jersey.java.net/)
-
-Jetty (http://www.eclipse.org/jetty/)
-
-JUnit (http://junit.sourceforge.net/)
-
-REST-assured (https://code.google.com/p/rest-assured/)
-
-ShrinkWrap (http://www.jboss.org/shrinkwrap)
-
-SL4J (http://www.slf4j.org/)
-
-XML Matchers (https://code.google.com/p/xml-matchers/)
-
-XMLTool (https://code.google.com/p/xmltool/)
+This product includes software (Java EE Servlet API) developed by
+? (?).
