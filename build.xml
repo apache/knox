@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project name="Hadoop Gateway" default="release" basedir=".">
+<project name="Apache Hadoop Gateway" default="release" basedir=".">
 
     <description>
         Release build file for the Hadoop Gateway
@@ -62,6 +62,17 @@
                     includes="gateway-server-${version}.jar"
                     prefix="${gateway_home}/bin"/>
         </zip>
+    </target>
+
+    <target name="site" description="Generate and copy the Apache web site.">
+        <exec executable="mvn">
+            <arg value="--file"/>
+            <arg value="gateway-site/pom.xml"/>
+            <arg value="site"/>
+        </exec>
+        <copy todir="site" overwrite="true">
+            <fileset dir="gateway-site/target/site"/>
+        </copy>
     </target>
 
     <target name="release" depends="init,clean,build,package,archive" description="Create the release."/>
