@@ -27,6 +27,7 @@
 
     <name>Apache Knox Gateway</name>
     <description>The Apache Knox Gateway</description>
+    <url>http://incubator.apache.org/knox</url>
 
     <!-- Need this to pickup JUnit 4.11 which is required to resolve Hamcrest dependency issues between JUnit and RestAssured. -->
     <!--
@@ -82,6 +83,14 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <debug>true</debug>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
                 <version>1.1</version>
@@ -94,6 +103,10 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.5.2</version></plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12.4</version>
@@ -173,7 +186,6 @@
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>2.4</version>
             </plugin>
-            <!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
@@ -181,20 +193,15 @@
                 <configuration>
                     <formats>
                         <format>html</format>
-                        <format>xml</format>
                     </formats>
                     <check/>
                 </configuration>
             </plugin>
-            -->
-            <!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.5.2</version>
             </plugin>
-            -->
-            <!--
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
@@ -213,15 +220,12 @@
                     </excludes>
                 </configuration>
             </plugin>
-            -->
             <!-- Source code metrics: mvn javancss:report or mvn site -->
-            <!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>javancss-maven-plugin</artifactId>
                 <version>2.0-beta-2</version>
             </plugin>
-            -->
         </plugins>
     </reporting>
 
