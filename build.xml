@@ -34,16 +34,9 @@
 
     <target name="build" depends="init" description="Build the product.">
         <exec executable="mvn">
-            <arg value="clean"/>
-            <arg value="install"/>
-        </exec>
-    </target>
-
-    <target name="package" depends="init" description="Build the product.">
-        <exec executable="mvn">
-            <arg value="package"/>
-            <arg value="-DskipTests"/>
             <arg value="-Prelease"/>
+            <arg value="clean"/>
+            <arg value="package"/>
         </exec>
     </target>
 
@@ -76,6 +69,6 @@
         </copy>
     </target>
 
-    <target name="release" depends="init,clean,build,package,archive" description="Create the release."/>
+    <target name="release" depends="init,clean,build,archive" description="Create the release."/>
 
 </project>

@@ -98,7 +98,6 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-service-oozie</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

@@ -29,6 +29,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -47,7 +48,6 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -202,11 +202,11 @@ public class GatewayBasicFuncTest {
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
-      assertThat( location, containsString( "?_=" ) );
+      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
-    assertThat( location, not(  containsString( "host=" ) ) );
-    assertThat( location, not(  containsString( "port=" ) ) );
+    MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
+    MatcherAssert.assertThat( location, not( containsString( "port=" ) ) );
   }
 
   @Test
@@ -361,12 +361,12 @@ public class GatewayBasicFuncTest {
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
-      assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
-      assertThat( location, containsString( "?_=" ) );
+      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
-    assertThat( location, not(  containsString( "host=" ) ) );
-    assertThat( location, not(  containsString( "port=" ) ) );
+    MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
+    MatcherAssert.assertThat( location, not( containsString( "port=" ) ) );
     response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -379,7 +379,7 @@ public class GatewayBasicFuncTest {
     location = response.getHeader( "Location" );
     log.debug( "Created location: " + location );
     if( driver.isUseGateway() ) {
-      assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
     }
     driver.assertComplete();
 
@@ -752,7 +752,7 @@ public class GatewayBasicFuncTest {
       }
     }
     //System.out.println( "Status is " + status + " after " + ((System.currentTimeMillis()-start)/1000) + " seconds." );
-    assertThat( status, is( success ) );
+    MatcherAssert.assertThat( status, is( success ) );
 
     // Cleanup anything that might have been leftover because the test failed previously.
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );

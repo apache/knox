@@ -310,6 +310,11 @@
                 <artifactId>gateway-server</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-release</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>javax.servlet</groupId>
