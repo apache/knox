@@ -94,19 +94,19 @@ public class GatewayFilter implements Filter {
       try {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: Proper I18N exception logging.
         throw e;
       } catch( ServletException e ) {
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: Proper I18N exception logging.
         throw e;
       } catch( RuntimeException e ) {
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: Proper I18N exception logging.
         throw e;
       } catch( ThreadDeath e ) {
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: Proper I18N exception logging.
         throw e;
       } catch( Throwable e ) {
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: Proper I18N exception logging.
         throw new ServletException( e );
       }
     } else {
