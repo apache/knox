@@ -36,9 +36,9 @@ public interface KeystoreService extends Service {
   
   public void createCredentialStoreForCluster(String clusterName);
   
-  public boolean isCredentialStoreForClusterAvailable(String clusterName);
+  public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException;
 
-  public boolean isKeystoreForGatewayAvailable();
+  public boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException;
   
   public KeyStore getCredentialStoreForCluster(String clusterName);
 

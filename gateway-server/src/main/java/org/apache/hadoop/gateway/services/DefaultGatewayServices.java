@@ -32,6 +32,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
@@ -136,13 +137,17 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
   @Override
   public void initializeContribution(DeploymentContext context) {
     String clusterName = context.getTopology().getName();
-    if (!ks.isCredentialStoreForClusterAvailable(clusterName)) {
-      log.creatingCredentialStoreForCluster(clusterName);
-      ks.createCredentialStoreForCluster(clusterName);
-    }
-    else {
-      // TODO: log appropriately
-      log.credentialStoreForClusterFoundNotCreating(clusterName);
+    try {
+      if (!ks.isCredentialStoreForClusterAvailable(clusterName)) {
+        log.creatingCredentialStoreForCluster(clusterName);
+        ks.createCredentialStoreForCluster(clusterName);
+      }
+      else {
+        // TODO: log appropriately
+        log.credentialStoreForClusterFoundNotCreating(clusterName);
+      }
+    } catch (KeystoreServiceException e) {
+      throw new RuntimeException("Credential store was found but was unable to be loaded - the provided (or persisted) master secret may not match the password for the credential store.", e);
     }
   }
 

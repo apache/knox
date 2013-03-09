@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.eclipse.jetty.server.ssl.SslConnector;
@@ -53,26 +54,35 @@ public class JettySSLService implements SSLService {
     this.ks = ks;
   }
 
+  
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
-      log.creatingCredentialStoreForGateway();
-      ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
-      as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-    }
-    else {
-      log.credentialStoreForGatewayFoundNotCreating();
+    try {
+      if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
+        log.creatingCredentialStoreForGateway();
+        ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
+        as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+      }
+      else {
+        log.credentialStoreForGatewayFoundNotCreating();
+      }
+    } catch (KeystoreServiceException e) {
+      throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
     }
 
-    if (!ks.isKeystoreForGatewayAvailable()) {
-      log.creatingKeyStoreForGateway();
-      ks.createKeystoreForGateway();
-      char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-      ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
-    }
-    else {
-      log.keyStoreForGatewayFoundNotCreating();
+    try {
+      if (!ks.isKeystoreForGatewayAvailable()) {
+        log.creatingKeyStoreForGateway();
+        ks.createKeystoreForGateway();
+        char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+        ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
+      }
+      else {
+        log.keyStoreForGatewayFoundNotCreating();
+      }
+    } catch (KeystoreServiceException e) {
+      throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
     }
   }
   

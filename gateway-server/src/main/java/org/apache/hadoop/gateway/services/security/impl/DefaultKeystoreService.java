@@ -43,6 +43,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 
 import sun.security.x509.AlgorithmId;
@@ -197,18 +198,32 @@ public class DefaultKeystoreService implements KeystoreService {
   }
   
   @Override
-  public boolean isCredentialStoreForClusterAvailable(String clusterName) {
+  public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
-    return isKeystoreAvailable(keyStoreFile, "JCEKS");
+    try {
+      return isKeystoreAvailable(keyStoreFile, "JCEKS");
+    } catch (KeyStoreException e) {
+      e.printStackTrace();
+      throw new KeystoreServiceException(e);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      throw new KeystoreServiceException(e);
+    }
   }
 
   @Override
-  public boolean isKeystoreForGatewayAvailable() {
+  public boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
-    return isKeystoreAvailable(keyStoreFile, "JKS");
+    try {
+      return isKeystoreAvailable(keyStoreFile, "JKS");
+    } catch (KeyStoreException e) {
+      throw new KeystoreServiceException(e);
+    } catch (IOException e) {
+      throw new KeystoreServiceException(e);
+    }
   }
 
-  private boolean isKeystoreAvailable(final File keyStoreFile, String storeType) {
+  private boolean isKeystoreAvailable(final File keyStoreFile, String storeType) throws KeyStoreException, IOException {
     if ( keyStoreFile.exists() )
     {
       FileInputStream input = null;
@@ -226,9 +241,10 @@ public class DefaultKeystoreService implements KeystoreService {
       } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
+        throw e;
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
+        throw e;
       }
       finally {
           try {

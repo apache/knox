@@ -67,7 +67,10 @@ public class DefaultMasterService implements MasterService {
       }
       else {
         if(options.get( "persist-master").equals("true")) {
-          displayWarning();
+          displayWarning(true);
+        }
+        else {
+          displayWarning(false);
         }
         promptUser();
         if(options.get( "persist-master").equals("true")) {
@@ -99,17 +102,26 @@ public class DefaultMasterService implements MasterService {
     } while (noMatch);
   }
 
-  private void displayWarning() {
+  private void displayWarning(boolean persisting) {
     Console c = System.console();
     if (c == null) {
         System.err.println("No console.");
         System.exit(1);
     }
-    c.printf("**********************************************************************************************\n");
-    c.printf("You have indicated that you would like to persist the master secret for this gateway instance.\n");
-    c.printf("Be aware that this is less secure than manually entering the secret on startup.\n");
-    c.printf("The persisted file will be encrypted and primarily protected through OS permissions.\n");
-    c.printf("**********************************************************************************************\n");
+    if (persisting) {
+      c.printf("**********************************************************************************************\n");
+      c.printf("You have indicated that you would like to persist the master secret for this gateway instance.\n");
+      c.printf("Be aware that this is less secure than manually entering the secret on startup.\n");
+      c.printf("The persisted file will be encrypted and primarily protected through OS permissions.\n");
+      c.printf("**********************************************************************************************\n");
+    }
+    else {
+      c.printf("**********************************************************************************************\n");
+      c.printf("Be aware that you will need to enter your master secret for future starts exactly as you do here.\n");
+      c.printf("This secret is needed to access protected resources for the gateway process.\n");
+      c.printf("The master secret must be protected, kept secret and not stored in clear text anywhere.\n");
+      c.printf("**********************************************************************************************\n");
+    }
   }
 
   private void persistMaster(char[] master, File masterFile) {
