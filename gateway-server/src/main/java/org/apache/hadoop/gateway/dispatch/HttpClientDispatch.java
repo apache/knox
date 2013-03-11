@@ -51,6 +51,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       HttpServletRequest inboundRequest,
       HttpServletResponse outboundResponse )
           throws IOException {
+    LOG.dispatchRequest( outboundRequest.getMethod(), outboundRequest.getURI() );
     HttpClient client = new DefaultHttpClient();
     HttpResponse inboundResponse = client.execute( outboundRequest );
 

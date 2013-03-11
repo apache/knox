@@ -41,8 +41,8 @@ specific needs for authentication.
 HTTP BASIC authentication with identity being asserted to the rest of the
 cluster via Pseudo/Simple authentication will be demonstrated for security.
 
-For API aggregation, the Gateway will provide a central endpoint for HDFS and
-Templeton APIs for each cluster.
+For API aggregation, the Gateway will provide a central endpoint for HDFS,
+Templeton and Oozie APIs for each cluster.
 
 Future Milestone releases will extend these capabilities with additional
 authentication, identity assertion, API aggregation and eventually management
@@ -67,8 +67,8 @@ Hadoop Cluster:
   addresses of the cluster services are accessible by the gateway where ever
   it happens to be running.
 
-  The Hadoop cluster should be ensured to have WebHDFS and WebHCat
-  (i.e. Templeton) configured and deployed.
+  The Hadoop cluster should be ensured to have WebHDFS, WebHCat
+  (i.e. Templeton) and Oozie configured and deployed.
 
 ------------------------------------------------------------------------------
 Know Issues
@@ -119,7 +119,7 @@ Installation and Deployment Instructions
       over if necessary.
    c. Start the LDAP server - pointing it to the config dir where it will find
       the users.ldif file in the conf directory.
-        java -jar bin/gateway-test-ldap-0.2.0-SNAPSHOT.jar conf &
+        java -jar bin/ldap-0.2.0-SNAPSHOT.jar conf &
       There are a number of log messages of the form "Created null." that can
       safely be ignored.  Take note of the port on which it was started as this
       needs to match later configuration.  This will create a directory named
@@ -134,7 +134,8 @@ Installation and Deployment Instructions
 5. Configure the Gateway with the topology of your Hadoop cluster
    a. Edit the file {GATEWAY_HOME}/deployments/sample.xml
    b. Change the host and port in the urls of the <service> elements for
-      NAMENODE and TEMPLETON services to match your Hadoop cluster deployment.
+      NAMENODE, TEMPLETON and OOZIE services to match your Hadoop cluster
+      deployment.
    c. The default configuration contains the LDAP URL for a LDAP server.  By
       default that file is configured to access the demo ApacheDS based LDAP
       server and its default configuration. By default, this server listens on
@@ -155,7 +156,8 @@ Installation and Deployment Instructions
    Invoke the LISTSATUS operation on HDFS represented by your configured
    NAMENODE by using your web browser or curl:
 
-     curl -u hdfs:hdfs-password -i 'http://localhost:8888/gateway/sample/namenode/api/v1/?op=LISTSTATUS'
+   curl -i -k -u hdfs:hdfs-password -X GET \
+     'https://localhost:8443/gateway/sample/namenode/api/v1/?op=LISTSTATUS'
 
    The results of the above command should result in something to along the
    lines of the output below.  The exact information returned is subject to
@@ -173,12 +175,12 @@ Installation and Deployment Instructions
      {"accessTime":0,"blockSize":0,"group":"hdfs","length":0,"modificationTime":1350595857178,"owner":"hdfs","pathSuffix":"user","permission":"755","replication":0,"type":"DIRECTORY"}
      ]}}
 
-   For additional information on WebHDFS and Templeton REST APIs, see the
-   following URLs respectively:
+   For additional information on WebHDFS, Templeton/WebHCat and Oozie
+   REST APIs, see the following URLs respectively:
 
-   http://hadoop.apache.org/docs/r1.0.4/webhdfs.html
-     and
+   http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html
    http://people.apache.org/~thejas/templeton_doc_v1/
+   http://oozie.apache.org/docs/3.3.1/WebServicesAPI.html
 
 ------------------------------------------------------------------------------
 Mapping Gateway URLs to Hadoop cluster URLs
@@ -197,6 +199,9 @@ and the cluster topology descriptors
   Templeton
     Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api/v1
     Cluster: http://<templeton-host>:50111/templeton/v1
+  Oozie
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/oozie/api/v1
+    Cluster: http://<templeton-host>:11000/oozie/v1
 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via
 the Gateway configuration file (i.e. {GATEWAY_HOME}/gateway-site.xml).
@@ -207,9 +212,10 @@ descriptor (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 The value for <namenode-host> and <templeton-host> is provided via the cluster
 topology descriptor (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 
-Note: The ports 50070 and 50111 are the defaults for NameNode and Templeton
-      respectively. Their values can also be provided via the cluster topology
-      descriptor if your Hadoop cluster uses different ports.
+Note: The ports 50070, 50111 and 11000 are the defaults for NameNode,
+      Templeton and Oozie respectively. Their values can also be provided via
+      the cluster topology descriptor if your Hadoop cluster uses different
+      ports.
 
 ------------------------------------------------------------------------------
 Enabling logging
@@ -224,7 +230,7 @@ Filing bugs
 ------------------------------------------------------------------------------
 File bugs at hortonworks.jira.com under Project "Hadoop Gateway Development"
 Include the results of
-  java -jar bin/gateway-server-0.2.0-SNAPSHOT.jar -version
+  java -jar bin/gateway-0.2.0-SNAPSHOT.jar -version
 in the Environment section.  Also include the version of Hadoop being used.
 
 ------------------------------------------------------------------------------
@@ -238,41 +244,41 @@ by the call to the NameNode is copied for use with the call to the DataNode
 that follows it.
 
 # 1. Create a test input directory /tmp/test/input
-curl -i -u mapred:mapred-password -X PUT \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
+curl -i -k -u mapred:mapred-password -X PUT \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
 
 # 2. Create a test output directory /tmp/test/input
-curl -i -u mapred:mapred-password -X PUT \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
+curl -i -k -u mapred:mapred-password -X PUT \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
 
 # 3. Create the inode for hadoop-examples.jar in /tmp/test
-curl -i -u mapred:mapred-password -X PUT \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
+curl -i -k -u mapred:mapred-password -X PUT \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
 
 # 4. Upload hadoop-examples.jar to /tmp/test.  Use a hadoop-examples.jar from a Hadoop install.
-curl -i -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value Location header from command above}'
+curl -i -k -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value Location header from command above}'
 
 # 5. Create the inode for a sample file readme.txt in /tmp/test/input
-curl -i -u mapred:mapred-password -X PUT \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
+curl -i -k -u mapred:mapred-password -X PUT \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
 
 # 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
-curl -i -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from command above}'
+curl -i -k -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from command above}'
 
 # 7. Submit the word count job
-curl -i -u mapred:mapred-password -X POST \
+curl -i -k -u mapred:mapred-password -X POST \
   -d jar=/tmp/test/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount \
   -d arg=/tmp/test/input -d arg=/tmp/test/output \
-  'http://localhost:8888/gateway/sample/templeton/api/v1/mapreduce/jar'
+  'https://localhost:8443/gateway/sample/templeton/api/v1/mapreduce/jar'
 
 # 8. Look at the status of the job queue
-curl -i -u mapred:mapred-password -X GET \
-  'http://localhost:8888/gateway/sample/templeton/api/v1/queue'
+curl -i -k -u mapred:mapred-password -X GET \
+  'https://localhost:8443/gateway/sample/templeton/api/v1/queue'
 
 # 9. List the contents of the output directory /tmp/test/output
-curl -i -u mapred:mapred-password -X GET \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
+curl -i -k -u mapred:mapred-password -X GET \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
 
 # 10. Cleanup the test directory
-curl -i -u mapred:mapred-password -X DELETE \
-  'http://localhost:8888/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+curl -i -k -u mapred:mapred-password -X DELETE \
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'

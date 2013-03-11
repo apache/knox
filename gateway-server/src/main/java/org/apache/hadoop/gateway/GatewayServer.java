@@ -91,10 +91,10 @@ public class GatewayServer {
       } else {
         services = new DefaultGatewayServices();
         GatewayConfig config = new GatewayConfigImpl();
+        configureLogging( config );
         Map<String,String> options = new HashMap<String,String>();
         options.put("persist-master", Boolean.toString(cmd.hasOption("persist-master")));
         services.init(config, options);
-        configureLogging( config );
         startGateway( config, services );
       }
     } catch( ParseException e ) {

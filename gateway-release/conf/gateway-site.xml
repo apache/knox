@@ -20,7 +20,7 @@ limitations under the License.
 
     <property>
         <name>gateway.port</name>
-        <value>8888</value>
+        <value>8443</value>
         <description>The HTTP port for the Gateway.</description>
     </property>
 

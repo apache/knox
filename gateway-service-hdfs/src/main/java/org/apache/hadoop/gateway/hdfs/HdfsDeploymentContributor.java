@@ -95,6 +95,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     rootResource.role( service.getRole() );
     rootResource.pattern( NAMENODE_EXTERNAL_PATH + "/?**" );
     addAuthenticationFilter( context, service, rootResource );
+    addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 

@@ -105,12 +105,15 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.filter.PostAuthenticationFilter" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "rewrite" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "dispatch" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/name", equalTo( "http-client" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "identity-assertion" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
+
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/name", equalTo( "http-client" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/namenode/api/v1/**?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );

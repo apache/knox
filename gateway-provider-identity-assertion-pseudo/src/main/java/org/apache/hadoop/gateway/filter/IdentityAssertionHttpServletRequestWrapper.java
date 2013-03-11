@@ -35,8 +35,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IdentityAssertionHttpServletRequestWrapper extends
-    HttpServletRequestWrapper {
+public class IdentityAssertionHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
   private static final String PRINCIPAL_PARAM = "user.name";
   

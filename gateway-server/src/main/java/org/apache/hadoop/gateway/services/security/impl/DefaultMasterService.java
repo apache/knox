@@ -17,14 +17,6 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
-import java.io.Console;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
@@ -32,6 +24,14 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.services.security.MasterService;
+
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class DefaultMasterService implements MasterService {
 
@@ -109,18 +109,18 @@ public class DefaultMasterService implements MasterService {
         System.exit(1);
     }
     if (persisting) {
-      c.printf("**********************************************************************************************\n");
+      c.printf("***************************************************************************************************\n");
       c.printf("You have indicated that you would like to persist the master secret for this gateway instance.\n");
       c.printf("Be aware that this is less secure than manually entering the secret on startup.\n");
       c.printf("The persisted file will be encrypted and primarily protected through OS permissions.\n");
-      c.printf("**********************************************************************************************\n");
+      c.printf("***************************************************************************************************\n");
     }
     else {
-      c.printf("**********************************************************************************************\n");
+      c.printf("***************************************************************************************************\n");
       c.printf("Be aware that you will need to enter your master secret for future starts exactly as you do here.\n");
       c.printf("This secret is needed to access protected resources for the gateway process.\n");
       c.printf("The master secret must be protected, kept secret and not stored in clear text anywhere.\n");
-      c.printf("**********************************************************************************************\n");
+      c.printf("***************************************************************************************************\n");
     }
   }
 

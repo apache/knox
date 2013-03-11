@@ -32,6 +32,8 @@ import java.util.ServiceLoader;
 
 public abstract class UrlRewriteStreamFilterFactory {
 
+  private static String DEFAULT_CHARACTER_ENCODING = "ISO-8859-1";
+
   private static Map<String,Map<String,UrlRewriteStreamFilter>> MAP = loadFactories();
 
   private UrlRewriteStreamFilterFactory() {
@@ -48,8 +50,9 @@ public abstract class UrlRewriteStreamFilterFactory {
     InputStream filteredStream = null;
     Map<String,UrlRewriteStreamFilter> nameMap = getNameMap( type );
     UrlRewriteStreamFilter filterFactory = getFilter( nameMap, name );
+    String charset = MimeTypes.getCharset( type, DEFAULT_CHARACTER_ENCODING );
     if( filterFactory != null ) {
-      filteredStream = filterFactory.filter( stream, MimeTypes.getCharset( type ), rewriter, resolver, direction );
+      filteredStream = filterFactory.filter( stream, charset, rewriter, resolver, direction );
     }
     return filteredStream;
   }

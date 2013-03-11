@@ -56,6 +56,11 @@
         </license>
     </licenses>
 
+    <organization>
+        <name>Apache Software Foundation</name>
+        <url>http://www.apache.org</url>
+    </organization>
+
     <scm>
         <connection>scm:svn:http://svn.apache.org/repos/asf/incubator/knox</connection>
         <developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/knox</developerConnection>
@@ -166,10 +171,6 @@
             </organization>
         </developer>
     </developers>
-    <organization>
-        <name>Apache Software Foundation</name>
-        <url>http://www.apache.org/</url>
-    </organization>
 
     <build>
         <resources>

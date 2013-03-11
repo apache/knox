@@ -29,7 +29,7 @@ public class MimeTypes {
     if( base != null ) {
       try {
         type = new MimeType( base );
-        if( encoding != null && getCharset( type ) == null ) {
+        if( encoding != null && getCharset( type, null ) == null ) {
           setCharset( type, encoding );
         }
       } catch( MimeTypeParseException e ) {
@@ -39,10 +39,13 @@ public class MimeTypes {
     return type;
   }
 
-  public static String getCharset( final MimeType type ) {
+  public static String getCharset( final MimeType type, String defaultCharset ) {
     String charset = null;
     if( type != null ) {
       charset = type.getParameter( CHARSET_PARAMETER_NAME );
+    }
+    if( charset == null ) {
+      charset = defaultCharset;
     }
     return charset;
   }

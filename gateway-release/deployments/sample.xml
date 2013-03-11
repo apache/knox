@@ -52,5 +52,9 @@
         <role>TEMPLETON</role>
         <url>http://localhost:50111/templeton/v1</url>
     </service>
+    <service>
+        <role>OOZIE</role>
+        <url>http://localhost:11000/oozie</url>
+    </service>
 
 </topology>

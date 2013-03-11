@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
 import java.io.File;
+import java.net.URI;
 
 /**
  *
@@ -132,4 +133,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
+
+  @Message( level = MessageLevel.DEBUG, text = "Dispatching request: {0} {1}" )
+  void dispatchRequest( String method, URI uri );
 }
