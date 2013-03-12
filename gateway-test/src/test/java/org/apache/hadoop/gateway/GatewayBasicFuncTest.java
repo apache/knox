@@ -66,8 +66,10 @@ public class GatewayBasicFuncTest {
   private static final String TEST_HOST = "vm.local";
   private static final boolean USE_GATEWAY = true;
   private static final boolean USE_MOCK_SERVICES = true;
-  //private static final boolean USE_SERVICES = true;
-  //private static final boolean USE_GATEWAY = false;
+  private static final boolean CLEANUP_TEST = true;
+//  private static final boolean USE_GATEWAY = false;
+//  private static final boolean USE_MOCK_SERVICES = false;
+//  private static final boolean CLEANUP_TEST = false;
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -738,7 +740,7 @@ public class GatewayBasicFuncTest {
 
     String success = "SUCCEEDED";
     String status = "UNKNOWN";
-    long delay = 1000; // 1 second.
+    long delay = 1000 * 20; // 1 second.
     long limit = 1000 * 60; // 60 seconds.
     long start = System.currentTimeMillis();
     while( System.currentTimeMillis() <= start+limit ) {
@@ -754,8 +756,10 @@ public class GatewayBasicFuncTest {
     //System.out.println( "Status is " + status + " after " + ((System.currentTimeMillis()-start)/1000) + " seconds." );
     MatcherAssert.assertThat( status, is( success ) );
 
-    // Cleanup anything that might have been leftover because the test failed previously.
-    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    if( CLEANUP_TEST ) {
+      // Cleanup anything that might have been leftover because the test failed previously.
+      driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    }
   }
 
 }
