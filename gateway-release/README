@@ -127,7 +127,7 @@ Installation and Deployment Instructions
       can safely be ignored.
 
 4. Start the Gateway server
-     java -jar bin/gateway-server-0.2.0-SNAPSHOT.jar
+     java -jar bin/gateway-0.2.0-SNAPSHOT.jar
    Take note of the port identified in the log output as you will need this
    for accessing the Gateway.
 
