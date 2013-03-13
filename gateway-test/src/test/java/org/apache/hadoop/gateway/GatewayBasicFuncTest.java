@@ -622,8 +622,10 @@ public class GatewayBasicFuncTest {
     curl 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
     */
 
-    // Cleanup anything that might have been leftover because the test failed previously.
-    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    if( CLEANUP_TEST ) {
+      // Cleanup anything that might have been leftover because the test failed previously.
+      driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    }
   }
 
   @Test
@@ -740,7 +742,7 @@ public class GatewayBasicFuncTest {
 
     String success = "SUCCEEDED";
     String status = "UNKNOWN";
-    long delay = 1000 * 20; // 1 second.
+    long delay = 1000 * 1; // 1 second.
     long limit = 1000 * 60; // 60 seconds.
     long start = System.currentTimeMillis();
     while( System.currentTimeMillis() <= start+limit ) {

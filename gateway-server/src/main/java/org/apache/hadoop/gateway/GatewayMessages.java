@@ -62,13 +62,13 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Using {1} as GATEWAY_HOME via {0}." )
   void settingGatewayHomeDir( String location, String home );
 
-  @Message( level = MessageLevel.INFO, text = "Loading topology files from directory: {0}" )
+  @Message( level = MessageLevel.INFO, text = "Loading topologies from directory: {0}" )
   void loadingTopologiesFromDirecotry( String topologiesDir );
 
-  @Message( level = MessageLevel.INFO, text = "Loading topology file: {0}" )
+  @Message( level = MessageLevel.DEBUG, text = "Loading topology file: {0}" )
   void loadingTopologyFile( String fileName );
 
-  @Message( level = MessageLevel.INFO, text = "Monitoring topology files in directory: {0}" )
+  @Message( level = MessageLevel.INFO, text = "Monitoring topologies in directory: {0}" )
   void monitoringTopologyChangesInDirectory( String topologiesDir );
 
   @Message( level = MessageLevel.INFO, text = "Deploying topology {0} to {1}" )
@@ -76,6 +76,12 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Deployed topology {0}." )
   void deployedTopology( String clusterName );
+
+  @Message( level = MessageLevel.INFO, text = "Loading topology {0} from {1}" )
+  void redeployingTopology( String clusterName, String warDirName );
+
+  @Message( level = MessageLevel.INFO, text = "Redeployed topology {0}." )
+  void redeployedTopology( String clusterName );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
   void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
@@ -136,4 +142,5 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatching request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
+
 }

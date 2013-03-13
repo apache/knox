@@ -182,6 +182,7 @@ public class GatewayServer {
 
   public static GatewayServer startGateway( GatewayConfig config, DefaultGatewayServices srvics ) {
     try {
+      log.startingGateway();
       server = new GatewayServer( config );
       synchronized (server ) {
         if (services == null) {
@@ -189,7 +190,6 @@ public class GatewayServer {
         }
         services.start();
         DeploymentFactory.setGatewayServices(services);
-        log.startingGateway();
         server.start();
         log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
         return server;
@@ -364,8 +364,13 @@ public class GatewayServer {
                 war = DeploymentFactory.createDeployment( config, topology );
                 File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
                 tmp.renameTo( warDir );
+                internalDeploy( topology, warDir );
+                //log.deployedTopology( topology.getName());
+              } else {
+                log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
+                internalDeploy( topology, warDir );
+                //log.redeployedTopology( topology.getName() );
               }
-              internalDeploy( topology, warDir );
             } catch( Throwable e ) {
               //TODO: This needs proper i18n logging
               e.printStackTrace();

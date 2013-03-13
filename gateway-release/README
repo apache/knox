@@ -49,6 +49,16 @@ authentication, identity assertion, API aggregation and eventually management
 capabilities.
 
 ------------------------------------------------------------------------------
+Changes v0.1.0 - v0.2.0
+------------------------------------------------------------------------------
+HTTPS Support (Client side)
+Oozie Support
+Protected DataNode URL query strings
+Pluggable Identity Asserters
+Principal Mapping
+URL Rewriting Enhancements
+
+------------------------------------------------------------------------------
 Requirements
 ------------------------------------------------------------------------------
 Java: 
@@ -63,27 +73,19 @@ Hadoop Cluster:
   this time.
   
   The instructions that follow assume that the Gateway is *not* collocated
-  with the Hadoop clusters themselves and (most importantly) that the IP
-  addresses of the cluster services are accessible by the gateway where ever
-  it happens to be running.
+  with the Hadoop clusters themselves and (most importantly) that the
+  hostnames and IP addresses of the cluster services are accessible by the
+  gateway where ever it happens to be running.
 
   The Hadoop cluster should be ensured to have WebHDFS, WebHCat
-  (i.e. Templeton) and Oozie configured and deployed.
+  (i.e. Templeton) and Oozie configured, deployed and running.
 
 ------------------------------------------------------------------------------
 Know Issues
 ------------------------------------------------------------------------------
-Currently there is an issue with submitting MapReduce jobs via the WebHCat
-REST APIs.  Therefore step 7 in the Example section currently fails.
-
 The Gateway cannot be be used against either EC2 clusters or Hadoop Sandbox
-VMs unless the gateway is deployed in the EC2 cluster or the on the Sandbox
-VM.
-
-Currently when any of the files in {GATEWAY_HOME}/deployments is changed, all
-deployed cluster topologies will be reloaded.  Therefore, you may see
-unexpected messages of the form "Loading topology file:".  These can safely be
-ignored.
+VMs unless the gateway is deployed within the EC2 cluster or the on the
+Sandbox VM.
 
 If the cluster deployment descriptors in {GATEWAY_HOME}/deployments are
 incorrect, the errors logged by the gateway are overly detailed and not
@@ -196,7 +198,7 @@ and the cluster topology descriptors
   HDFS (NameNode)
     Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/namenode/api/v1
     Cluster: http://<namenode-host>:50070/webhdfs/v1
-  Templeton
+  WebHCat (Templeton)
     Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api/v1
     Cluster: http://<templeton-host>:50111/templeton/v1
   Oozie
@@ -262,28 +264,33 @@ curl -i -k -u mapred:mapred-password -X PUT \
 # 4. Upload hadoop-examples.jar to /tmp/test.  Use a hadoop-examples.jar from a Hadoop install.
 curl -i -k -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value Location header from command above}'
 
-# 5. Create the inode for a sample file readme.txt in /tmp/test/input
+# 5. Create the inode for a sample file README in /tmp/test/input
 curl -i -k -u mapred:mapred-password -X PUT \
-  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/readme.txt?op=CREATE'
+  'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/README?op=CREATE'
 
 # 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
-curl -i -k -u mapred:mapred-password -T readme.txt -X PUT '{Value of Location header from command above}'
+curl -i -k -u mapred:mapred-password -T README -X PUT '{Value of Location header from command above}'
 
-# 7. Submit the word count job
+# 7. Submit the word count job via WebHCat/Templeton.
+# Take note of the Job ID in the JSON response as this will be used in the next step.
 curl -i -k -u mapred:mapred-password -X POST \
-  -d jar=/tmp/test/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount \
+  -d jar=/tmp/test/hadoop-examples.jar -d class=wordcount \
   -d arg=/tmp/test/input -d arg=/tmp/test/output \
   'https://localhost:8443/gateway/sample/templeton/api/v1/mapreduce/jar'
 
-# 8. Look at the status of the job queue
+# 8. Look at the status of the job
+curl -i -k -u mapred:mapred-password -X GET \
+  'https://localhost:8443/gateway/sample/templeton/api/v1/queue/{Job ID returned in JSON body from previous step}'
+
+# 9. Look at the status of the job queue
 curl -i -k -u mapred:mapred-password -X GET \
   'https://localhost:8443/gateway/sample/templeton/api/v1/queue'
 
-# 9. List the contents of the output directory /tmp/test/output
+# 10. List the contents of the output directory /tmp/test/output
 curl -i -k -u mapred:mapred-password -X GET \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
 
-# 10. Optionally cleanup the test directory
+# 11. Optionally cleanup the test directory
 curl -i -k -u mapred:mapred-password -X DELETE \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
 
@@ -300,32 +307,32 @@ required.  These replacement values are identivied with { } markup.
 curl -i -k -u mapred:mapred-password -X DELETE \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
 
-# . Create the inode for workflow definition file in /tmp/test
+# 1. Create the inode for workflow definition file in /tmp/test
 curl -i -k -u mapred:mapred-password -X PUT \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/workflow.xml?op=CREATE'
 
-# . Upload the workflow definition file.  This file can be found in {GATEWAY_HOME}/templates
+# 2. Upload the workflow definition file.  This file can be found in {GATEWAY_HOME}/templates
 curl -i -k -u mapred:mapred-password -T templates/workflow-definition.xml -X PUT \
   '{Value Location header from command above}'
 
-# . Create the inode for hadoop-examples.jar in /tmp/test/lib
+# 3. Create the inode for hadoop-examples.jar in /tmp/test/lib
 curl -i -k -u mapred:mapred-password -X PUT \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/lib/hadoop-examples.jar?op=CREATE'
 
-# . Upload hadoop-examples.jar to /tmp/test/lib.  Use a hadoop-examples.jar from a Hadoop install.
+# 4. Upload hadoop-examples.jar to /tmp/test/lib.  Use a hadoop-examples.jar from a Hadoop install.
 curl -i -k -u mapred:mapred-password -T hadoop-examples.jar -X PUT \
   '{Value Location header from command above}'
 
-# . Create the inode for a sample input file readme.txt in /tmp/test/input.
+# 5. Create the inode for a sample input file readme.txt in /tmp/test/input.
 curl -i -k -u mapred:mapred-password -X PUT \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/README?op=CREATE'
 
-# . Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
+# 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
 # The sample below uses this README file found in {GATEWAY_HOME}.
 curl -i -k -u mapred:mapred-password -T README -X PUT \
   '{Value of Location header from command above}'
 
-# . Create the job configuration file by replacing the {NameNode host:port} and {JobTracker host:port}
+# 7. Create the job configuration file by replacing the {NameNode host:port} and {JobTracker host:port}
 # in the command below to values that match your Hadoop configuration.
 # NOTE: The hostnames must be resolvable by the Oozie daemon.  The ports are the RPC ports not the HTTP ports.
 # For example {NameNode host:port} might be sandbox:8020 and {JobTracker host:port} sandbox:50300
@@ -335,18 +342,19 @@ sed -e s/REPLACE.NAMENODE.RPCHOSTPORT/{NameNode host:port}/ \
   -e s/REPLACE.JOBTRACKER.RPCHOSTPORT/{JobTracker host:port}/ \
   <templates/workflow-configuration.xml >workflow-configuration.xml
 
-# . Submit the job via Oozie
+# 8. Submit the job via Oozie
+# Take note of the Job ID in the JSON response as this will be used in the next step.
 curl -i -k -u mapred:mapred-password -T workflow-configuration.xml -X POST \
   'https://localhost:8443/gateway/oozie/api/v1/jobs?action=start'
 
-# . Query the job status via Oozie.
+# 9. Query the job status via Oozie.
 curl -i -k -u mapred:mapred-password -X GET \
-  'https://localhost:8443/gateway/sample/oozie/api/v1/job/{Job ID returned in JSON body from command above}'
+  'https://localhost:8443/gateway/sample/oozie/api/v1/job/{Job ID returned in JSON body from previous step}'
 
-# . List the contents of the output directory /tmp/test/output
+# 10. List the contents of the output directory /tmp/test/output
 curl -i -k -u mapred:mapred-password -X GET \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
 
-# . Optionally cleanup the test directory
+# 11. Optionally cleanup the test directory
 curl -i -k -u mapred:mapred-password -X DELETE \
   'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
