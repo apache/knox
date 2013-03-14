@@ -55,6 +55,10 @@
                     dir="gateway-release/target"
                     includes="gateway-release-${version}.jar"
                     fullpath="${gateway_home}/bin/gateway-${version}.jar"/>
+            <zipfileset
+                    dir="gateway-shell/target"
+                    includes="gateway-shell-${version}.jar"
+                    fullpath="${gateway_home}/bin/shell-${version}.jar"/>
         </zip>
     </target>
 

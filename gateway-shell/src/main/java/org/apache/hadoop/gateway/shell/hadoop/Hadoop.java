@@ -35,8 +35,8 @@ public class Hadoop {
   }
 
   public RequestSpecification request() {
-    return with().log().all().auth().preemptive().basic( username, password );
-    //return with().auth().preemptive().basic( username, password );
+    //return with().log().all().auth().preemptive().basic( username, password );
+    return with().auth().preemptive().basic( username, password );
   }
 
   public ResponseSpecification response() {

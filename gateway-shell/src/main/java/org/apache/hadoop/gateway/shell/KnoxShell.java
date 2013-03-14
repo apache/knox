@@ -19,32 +19,29 @@ package org.apache.hadoop.gateway.shell;
 
 import org.codehaus.groovy.tools.shell.AnsiDetector;
 import org.codehaus.groovy.tools.shell.Groovysh;
-import org.codehaus.groovy.tools.shell.IO;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class KnoxShell {
 
   static {
     AnsiConsole.systemInstall();
     Ansi.setDetector( new AnsiDetector() );
+    System.setProperty( "groovysh.prompt", "knox" );
   }
 
   public static void main( String... args ) {
+    StringWriter buffer = new StringWriter();
+    PrintWriter imports = new PrintWriter( buffer );
+    imports.println( "import org.apache.hadoop.gateway.shell.hadoop.Hadoop;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.job.Job;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow;" );
     Groovysh shell = new Groovysh();
-    shell.execute( "import org.apache.commons.io.FileUtils" );
-    shell.execute( "import static org.apache.commons.io.FileUtils.*" );
-    shell.execute( "import com.jayway.restassured.RestAssured" );
-    shell.execute( "import static com.jayway.restassured.RestAssured.*" );
-    shell.execute( "import com.jayway.restassured.path.json.JsonPath" );
-    shell.execute( "import static com.jayway.restassured.path.json.JsonPath.*" );
-    shell.execute( "import org.apache.hadoop.gateway.shell.hadoop.Hadoop" );
-    shell.execute( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs" );
-    shell.execute( "import static org.apache.hadoop.gateway.shell.hdfs.Hdfs.*" );
-    shell.execute( "import org.apache.hadoop.gateway.shell.job.Job" );
-    shell.execute( "import static org.apache.hadoop.gateway.shell.job.Job.*" );
-    shell.execute( "import org.apache.hadoop.gateway.shell.workflow.Workflow" );
-    shell.execute( "import static org.apache.hadoop.gateway.shell.workflow.Workflow.*" );
+    shell.execute( buffer.toString() );
     shell.run( args );
   }
 

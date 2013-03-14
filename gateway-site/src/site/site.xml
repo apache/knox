@@ -79,8 +79,8 @@
         </head>
 
         <links>
+            <item name="Git" href="https://git-wip-us.apache.org/repos/asf/incubator-knox.git" />
             <item name="Jira" href="https://issues.apache.org/jira/browse/KNOX" />
-            <item name="SVN" href="https://svn.apache.org/repos/asf/incubator/knox/" />
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox" />
         </links>
 
@@ -108,7 +108,7 @@
         </menu>
 
         <menu name="Resources">
-            <item name="Source Code" href="https://svn.apache.org/repos/asf/incubator/knox/"/>
+            <item name="Source Code" href="https://git-wip-us.apache.org/repos/asf/incubator-knox.git"/>
             <item name="Project Team" href="team-list.html"/>
             <item name="Mailing Lists" href="mail-lists.html"/>
             <item name="Issue Tracking" href="issue-tracking.html"/>

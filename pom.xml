@@ -61,8 +61,8 @@
         <module>gateway-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
+        <module>gateway-shell</module>
         <module>gateway-site</module>
-        <!-- <module>gateway-shell</module> -->
     </modules>
 
     <properties>
@@ -85,7 +85,7 @@
     </organization>
 
     <scm>
-        <connection>scm:git:git://@github.com/hortonworks/knox.git</connection>
+        <connection>scm:git:git://git-wip-us.apache.org/repos/asf/incubator-knox.git</connection>
     </scm>
 
     <build>
