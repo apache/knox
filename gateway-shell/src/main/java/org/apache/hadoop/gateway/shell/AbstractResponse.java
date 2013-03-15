@@ -55,6 +55,10 @@ public abstract class AbstractResponse {
     return consumed;
   }
 
+  public int getStatusCode() {
+    return response.getStatusLine().getStatusCode();
+  }
+
   public long getContentLength() {
     return response.getEntity().getContentLength();
   }

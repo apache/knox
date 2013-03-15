@@ -10,6 +10,8 @@ import org.apache.http.message.BasicNameValuePair;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -28,7 +30,7 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public abstract class AbstractRequest {
+public abstract class AbstractRequest<T> {
 
   private Hadoop hadoop;
 
@@ -41,7 +43,7 @@ public abstract class AbstractRequest {
   }
 
   protected HttpResponse execute( HttpRequest request ) throws IOException {
-    return hadoop.execute( request );
+    return hadoop.executeNow( request );
   }
 
   protected URIBuilder uri( String... parts ) throws URISyntaxException {
@@ -58,6 +60,16 @@ public abstract class AbstractRequest {
     if( value != null ) {
       list.add( new BasicNameValuePair( name, value ) );
     }
+  }
+
+  abstract protected Callable<T> callable();
+
+  public T now() throws Exception, URISyntaxException {
+    return callable().call();
+  }
+
+  public Future<T> later() {
+    return hadoop().executeLater( callable() );
   }
 
 }

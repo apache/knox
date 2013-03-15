@@ -26,10 +26,11 @@ import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 class Mkdir {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     String dir = null;
     String perm = null;
@@ -48,12 +49,17 @@ class Mkdir {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Hdfs.SERVICE_PATH, dir );
-      addQueryParam( uri, "op", "MKDIRS" );
-      addQueryParam( uri, "permissions", perm );
-      HttpPut request = new HttpPut( uri.build() );
-      return new Response( execute( request ) );
+    public Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Hdfs.SERVICE_PATH, dir );
+          addQueryParam( uri, "op", "MKDIRS" );
+          addQueryParam( uri, "permissions", perm );
+          HttpPut request = new HttpPut( uri.build() );
+          return new Response( execute( request ) );
+        }
+      };
     }
 
   }

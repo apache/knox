@@ -32,16 +32,18 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 class Put {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
-    String text;
-    String from;
-    String to;
+    private String text;
+    private String file;
+    private String to;
 
     Request( Hadoop hadoop ) {
       super( hadoop );
@@ -53,7 +55,7 @@ class Put {
     }
 
     public Request file( String file ) {
-      this.from = file;
+      this.file = file;
       return this;
     }
 
@@ -62,29 +64,34 @@ class Put {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Hdfs.SERVICE_PATH, to );
-      addQueryParam( uri, "op", "CREATE" );
-      HttpPut nn = new HttpPut( uri.build() );
-      HttpResponse r = execute( nn );
-      if( r.getStatusLine().getStatusCode() != HttpStatus.SC_TEMPORARY_REDIRECT ) {
-        throw new HadoopException( r.getStatusLine().toString() );
-      }
-      EntityUtils.consumeQuietly( r.getEntity() );
-      Header[] h = r.getHeaders( "Location" );
-      if( h == null || h.length != 1 ) {
-        throw new HadoopException( "Invalid Location header." );
-      }
-      String loc = h[0].getValue();
-      HttpPut dn = new HttpPut( loc );
-      HttpEntity e = null;
-      if( text != null ) {
-        e = new StringEntity( text );
-      } else if( from != null ) {
-        e = new FileEntity( new File( from ) );
-      }
-      dn.setEntity( e );
-      return new Response( execute( dn ) );
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Hdfs.SERVICE_PATH, to );
+          addQueryParam( uri, "op", "CREATE" );
+          HttpPut nn = new HttpPut( uri.build() );
+          HttpResponse r = execute( nn );
+          if( r.getStatusLine().getStatusCode() != HttpStatus.SC_TEMPORARY_REDIRECT ) {
+            throw new HadoopException( r.getStatusLine().toString() );
+          }
+          EntityUtils.consumeQuietly( r.getEntity() );
+          Header[] h = r.getHeaders( "Location" );
+          if( h == null || h.length != 1 ) {
+            throw new HadoopException( "Invalid Location header." );
+          }
+          String loc = h[0].getValue();
+          HttpPut dn = new HttpPut( loc );
+          HttpEntity e = null;
+          if( text != null ) {
+            e = new StringEntity( text );
+          } else if( file != null ) {
+            e = new FileEntity( new File( file ) );
+          }
+          dn.setEntity( e );
+          return new Response( execute( dn ) );
+        }
+      };
     }
 
   }

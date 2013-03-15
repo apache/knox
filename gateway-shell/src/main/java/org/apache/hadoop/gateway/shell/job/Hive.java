@@ -28,13 +28,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class Hive {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     private String group;
     private String file;
@@ -65,15 +65,20 @@ public class Hive {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Job.SERVICE_PATH, "/hive" );
-      addParam( params, "group", group );
-      addParam( params, "file", file );
-      addParam( params, "statusdir", statusDir );
-      UrlEncodedFormEntity form = new UrlEncodedFormEntity( params );
-      HttpPost request = new HttpPost( uri.build() );
-      request.setEntity( form );
-      return new Response( execute( request ) );
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Job.SERVICE_PATH, "/hive" );
+          addParam( params, "group", group );
+          addParam( params, "file", file );
+          addParam( params, "statusdir", statusDir );
+          UrlEncodedFormEntity form = new UrlEncodedFormEntity( params );
+          HttpPost request = new HttpPost( uri.build() );
+          request.setEntity( form );
+          return new Response( execute( request ) );
+        }
+      };
     }
 
   }

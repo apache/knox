@@ -32,6 +32,7 @@ import org.apache.http.entity.StringEntity;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 class Submit {
 
@@ -60,18 +61,23 @@ class Submit {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Workflow.SERVICE_PATH, "/jobs" );
-      addQueryParam( uri, "action", action );
-      HttpPost request = new HttpPost( uri.build() );
-      HttpEntity entity = null;
-      if( text != null ) {
-        entity = new StringEntity( text, ContentType.create( "application/xml", "UTF-8" ) );
-      } else if( file != null ) {
-        entity = new FileEntity( new File( file ), ContentType.create( "application/xml" ) );
-      }
-      request.setEntity( entity );
-      return new Response( execute( request ) );
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Workflow.SERVICE_PATH, "/jobs" );
+          addQueryParam( uri, "action", action );
+          HttpPost request = new HttpPost( uri.build() );
+          HttpEntity entity = null;
+          if( text != null ) {
+            entity = new StringEntity( text, ContentType.create( "application/xml", "UTF-8" ) );
+          } else if( file != null ) {
+            entity = new FileEntity( new File( file ), ContentType.create( "application/xml" ) );
+          }
+          request.setEntity( entity );
+          return new Response( execute( request ) );
+        }
+      };
     }
 
   }

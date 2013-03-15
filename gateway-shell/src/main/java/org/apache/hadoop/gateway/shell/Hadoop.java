@@ -39,6 +39,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Hadoop {
 
@@ -48,12 +52,14 @@ public class Hadoop {
   BasicHttpContext context;
   String username;
   String password;
+  ExecutorService executor;
 
   public static Hadoop login( String url, String username, String password ) throws URISyntaxException {
     return new Hadoop( url, username, password );
   }
 
   private Hadoop( String url, String username, String password ) throws HadoopException, URISyntaxException {
+    this.executor = Executors.newCachedThreadPool();
     this.base = url;
     this.username = username;
     this.password = password;
@@ -90,48 +96,12 @@ public class Hadoop {
     return base;
   }
 
-  public HttpResponse execute( HttpRequest request ) throws IOException {
+  public HttpResponse executeNow( HttpRequest request ) throws IOException {
     return client.execute( host, request, context );
   }
 
-//  SSLContext ctx = SSLContext.getInstance( "TLS" );
-//  KeyManager[] keyManagers = createKeyManagers( "jks", "target/test-classes/client-keystore.jks", "horton" );
-//  TrustManager[] trustManagers = createTrustManagers( "jks", "target/test-classes/client-truststore.jks", "horton" );
-//  ctx.init( keyManagers, trustManagers, new SecureRandom() );
-//
-//  SSLSocketFactory socketFactory = new SSLSocketFactory( ctx, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER );
-//
-//  SchemeRegistry schemes = new SchemeRegistry();
-//  schemes.register( new Scheme( "https", port, socketFactory ) );
-//  ClientConnectionManager cm = new BasicClientConnectionManager( schemes );
-//
-//  HttpClient client = new DefaultHttpClient( cm );
-//
-//  HttpGet get = new HttpGet( url );
-//  ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-//  client.execute( get ).getEntity().writeTo( buffer );
-//  assertThat( buffer.toString(), equalTo( "<html>Hello!</html>" ) );
-//}
-//
-//  private static KeyManager[] createKeyManagers( String keyStoreType, String keyStorePath, String keyStorePassword ) throws Exception {
-//    KeyStore keyStore = loadKeyStore( keyStoreType, keyStorePath, keyStorePassword );
-//    KeyManagerFactory kmf = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
-//    kmf.init( keyStore, keyStorePassword.toCharArray() );
-//    return kmf.getKeyManagers();
-//  }
-//
-//  private static TrustManager[] createTrustManagers( String trustStoreType, String trustStorePath, String trustStorePassword ) throws Exception {
-//    KeyStore trustStore = loadKeyStore( trustStoreType, trustStorePath, trustStorePassword );
-//    TrustManagerFactory tmf = TrustManagerFactory.getInstance( TrustManagerFactory.getDefaultAlgorithm() );
-//    tmf.init( trustStore );
-//    return tmf.getTrustManagers();
-//  }
-//
-//  private static KeyStore loadKeyStore( String type, String path, String password ) throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException {
-//    KeyStore keyStore = KeyStore.getInstance( type );
-//    InputStream keystoreInput = new FileInputStream( path );
-//    keyStore.load( keystoreInput, password.toCharArray() );
-//    return keyStore;
-//  }
+  public <T> Future<T> executeLater( Callable<T> callable ) {
+    return executor.submit( callable );
+  }
 
 }

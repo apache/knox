@@ -25,11 +25,11 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 class Rm {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     String file;
     Boolean recursive;
@@ -52,12 +52,17 @@ class Rm {
       return recursive( true );
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Hdfs.SERVICE_PATH, file );
-      addQueryParam( uri, "op", "DELETE" );
-      addQueryParam( uri, "recursive", recursive );
-      HttpDelete request = new HttpDelete( uri.build() );
-      return new Response( execute( request ) );
+    public Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Hdfs.SERVICE_PATH, file );
+          addQueryParam( uri, "op", "DELETE" );
+          addQueryParam( uri, "recursive", recursive );
+          HttpDelete request = new HttpDelete( uri.build() );
+          return new Response( execute( request ) );
+        }
+      };
     }
 
   }

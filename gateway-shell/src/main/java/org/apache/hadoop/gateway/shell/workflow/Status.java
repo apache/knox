@@ -24,8 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 class Status {
 
@@ -42,10 +41,15 @@ class Status {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Workflow.SERVICE_PATH, "/job/", jobId );
-      HttpGet request = new HttpGet( uri.build() );
-      return new Response( execute( request ) );
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Workflow.SERVICE_PATH, "/job/", jobId );
+          HttpGet request = new HttpGet( uri.build() );
+          return new Response( execute( request ) );
+        }
+      };
     }
 
   }

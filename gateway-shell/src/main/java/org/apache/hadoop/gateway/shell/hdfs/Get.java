@@ -21,25 +21,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.gateway.shell.AbstractRequest;
 import org.apache.hadoop.gateway.shell.AbstractResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
-import org.apache.hadoop.gateway.shell.HadoopException;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 public class Get {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
-    String from;
-    String to;
+    private String from;
+    private String to;
 
     Request( Hadoop hadoop ) {
       super( hadoop );
@@ -55,11 +50,17 @@ public class Get {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Hdfs.SERVICE_PATH, from );
-      addQueryParam( uri, "op", "OPEN" );
-      HttpGet request = new HttpGet( uri.build() );
-      return new Response( execute( request ), to );
+
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Hdfs.SERVICE_PATH, from );
+          addQueryParam( uri, "op", "OPEN" );
+          HttpGet request = new HttpGet( uri.build() );
+          return new Response( execute( request ), to );
+        }
+      };
     }
 
   }

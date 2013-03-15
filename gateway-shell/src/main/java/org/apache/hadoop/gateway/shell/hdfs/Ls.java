@@ -23,14 +23,12 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
 
 class Ls {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     String dir;
 
@@ -43,11 +41,16 @@ class Ls {
       return this;
     }
 
-    public Response now() throws IOException, URISyntaxException {
-      URIBuilder uri = uri( Hdfs.SERVICE_PATH, dir );
-      addQueryParam( uri, "op", "LISTSTATUS" );
-      HttpGet get = new HttpGet( uri.build() );
-      return new Response( execute( get ) );
+    protected Callable<Response> callable() {
+      return new Callable<Response>() {
+        @Override
+        public Response call() throws Exception {
+          URIBuilder uri = uri( Hdfs.SERVICE_PATH, dir );
+          addQueryParam( uri, "op", "LISTSTATUS" );
+          HttpGet get = new HttpGet( uri.build() );
+          return new Response( execute( get ) );
+        }
+      };
     }
 
   }
