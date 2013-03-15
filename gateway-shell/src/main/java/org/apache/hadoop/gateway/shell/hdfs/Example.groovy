@@ -41,3 +41,7 @@ hdfs.get(hadoop).file( "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTP
 
 future = hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE2" ).later()
 println future.get().statusCode
+
+hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE3" ).later() {
+  println it.statusCode
+}

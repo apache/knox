@@ -1,5 +1,6 @@
 package org.apache.hadoop.gateway.shell;
 
+import groovy.lang.Closure;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -70,6 +71,10 @@ public abstract class AbstractRequest<T> {
 
   public Future<T> later() {
     return hadoop().executeLater( callable() );
+  }
+
+  public void later( Closure<T> closure ) {
+    hadoop().executeLater( callable(), closure );
   }
 
 }

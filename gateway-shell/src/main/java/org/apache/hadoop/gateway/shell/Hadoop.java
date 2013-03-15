@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.shell;
 
+import groovy.lang.Closure;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -102,6 +103,16 @@ public class Hadoop {
 
   public <T> Future<T> executeLater( Callable<T> callable ) {
     return executor.submit( callable );
+  }
+
+  public <T> void executeLater( final Callable<T> callable, final Closure<T> closure ) {
+    executor.submit( new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        closure.call( callable.call() );
+        return null;
+      }
+    } );
   }
 
 }
