@@ -1,19 +1,3 @@
-package org.apache.hadoop.gateway.shell;
-
-import groovy.lang.Closure;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.message.BasicNameValuePair;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -31,6 +15,22 @@ import java.util.concurrent.Future;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.hadoop.gateway.shell;
+
+import groovy.lang.Closure;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.message.BasicNameValuePair;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 public abstract class AbstractRequest<T> {
 
   private Hadoop hadoop;
@@ -73,8 +73,14 @@ public abstract class AbstractRequest<T> {
     return hadoop().executeLater( callable() );
   }
 
-  public void later( Closure<T> closure ) {
-    hadoop().executeLater( callable(), closure );
+  public void later( final Closure<T> closure ) {
+    hadoop().executeLater( new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return closure.call( callable().call() );
+      }
+    } );
+
   }
 
 }

@@ -37,11 +37,10 @@ hdfs.mkdir(hadoop).dir( "/tmp/test").now()
 
 hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE" ).now()
 
-hdfs.get(hadoop).file( "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT" ).from( "/tmp/test/input/LICENSE" ).now()
-
 future = hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE2" ).later()
 println future.get().statusCode
 
-hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE3" ).later() {
-  println it.statusCode
-}
+hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE3" ).later() { println it.statusCode }
+
+hdfs.get(hadoop).file( "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT" ).from( "/tmp/test/input/LICENSE" ).now()
+
