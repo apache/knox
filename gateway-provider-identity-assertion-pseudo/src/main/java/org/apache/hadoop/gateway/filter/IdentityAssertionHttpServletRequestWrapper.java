@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.filter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.PseudoIdentityAsserterMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IdentityAssertionHttpServletRequestWrapper extends HttpServletRequestWrapper {
+
+  private static PseudoIdentityAsserterMessages log = MessagesFactory.get( PseudoIdentityAsserterMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
   
@@ -159,31 +163,36 @@ public class IdentityAssertionHttpServletRequestWrapper extends HttpServletReque
     }
   }
 
-  static String urlEncode( Map<String,String[]> map, String encoding ) {
+  static String urlEncode( Map<String, String[]> map, String encoding ) {
     StringBuilder sb = new StringBuilder();
-    for (Map.Entry<?,?> entry : map.entrySet()) {
-        if (sb.length() > 0) {
-            sb.append("&");
-        }
-        String[] values = (String[]) entry.getValue();
-        for (int i = 0; i < values.length; i++) {
-          if (values[i] != null) {
-            try {
-            sb.append(String.format("%s=%s",
-                urlEncode( entry.getKey().toString(), encoding ),
-                urlEncode( values[i], encoding )
-            ));
-            }
-            catch (IllegalArgumentException e) {
-              e.printStackTrace();
-              System.out.println("SKIPPING PARAM: " + entry.getKey().toString() + " with value: " + values[i]);
+    for( Map.Entry<String,String[]> entry : map.entrySet() ) {
+      String name = entry.getKey();
+      if( name != null && name.length() > 0 ) {
+        String[] values = entry.getValue();
+        if( values == null || values.length == 0 ) {
+          sb.append( entry.getKey() );
+        } else {
+          for( int i = 0; i < values.length; i++ ) {
+            String value = values[ i ];
+            if( value != null ) {
+              if( sb.length() > 0 ) {
+                sb.append( "&" );
+              }
+              try {
+                sb.append( urlEncode( name, encoding ) );
+                sb.append( "=" );
+                sb.append( urlEncode( value, encoding ) );
+              } catch( IllegalArgumentException e ) {
+                log.skippingUnencodableParameter( name, value, encoding, e );
+              }
             }
           }
         }
+      }
     }
-    return sb.toString();       
-}  
-  
+    return sb.toString();
+  }
+
   @SuppressWarnings({ "deprecation", "unchecked" })
   private static Map<String,String[]> parseQueryString( String queryString ) {
     return javax.servlet.http.HttpUtils.parseQueryString( queryString );

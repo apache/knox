@@ -27,9 +27,11 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 @Category( { UnitTests.class, FastTests.class } )
@@ -200,6 +202,32 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
     assertThat( output, containsString( "user.name=output-user" ) );
     assertThat( output, not( containsString( "input-user" ) ) );
+  }
+
+  @Test
+  public void testUrlEncode() {
+    String s;
+    HashMap<String,String[]> m;
+
+    m = new HashMap<String,String[]>();
+    m.put( "null-values", null );
+    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    assertThat( s, is( "null-values" ) );
+
+    m = new HashMap<String,String[]>();
+    m.put( "no-values", new String[0] );
+    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    assertThat( s, is( "no-values" ) );
+
+    m = new HashMap<String,String[]>();
+    m.put( "one-value", new String[]{ "value1" } );
+    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    assertThat( s, is( "one-value=value1" ) );
+
+    m = new HashMap<String,String[]>();
+    m.put( "two-values", new String[]{ "value1", "value2" } );
+    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    assertThat( s, is( "two-values=value1&two-values=value2" ) );
   }
 
 }
