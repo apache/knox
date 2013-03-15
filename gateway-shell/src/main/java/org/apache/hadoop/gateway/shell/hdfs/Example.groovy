@@ -15,19 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell.workflow;
+package org.apache.hadoop.gateway.shell.hdfs
 
-import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
 
-class WorkflowSubmitRequest extends AbstractRequest {
+import org.apache.hadoop.gateway.shell.Hadoop
 
-  WorkflowSubmitRequest( Hadoop hadoop ) {
-    super( hadoop );
-  }
+gateway = "https://localhost:8443/gateway/sample"
+username = "mapred"
+password = "mapred-password"
+inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
+jarFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/hadoop-examples.jar"
 
-  public WorkflowSubmitResponse go() {
-    return new WorkflowSubmitResponse( request().post( Workflow.SERVICE_PATH ) );
-  }
+hadoop = Hadoop.login( gateway, username, password )
 
-}
+println Hdfs.ls(hadoop).dir( "/" ).now().string
+
+hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
+
+hdfs.mkdir(hadoop).dir( "/tmp/test").now()
+
+hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE" ).now()
+
+hdfs.get(hadoop).file( "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT" ).from( "/tmp/test/input/LICENSE" ).now()

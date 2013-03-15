@@ -17,28 +17,45 @@
  */
 package org.apache.hadoop.gateway.shell.job;
 
-import com.jayway.restassured.response.Response;
+import org.apache.hadoop.gateway.shell.AbstractRequest;
 import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.Hadoop;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 
-import static com.jayway.restassured.path.json.JsonPath.from;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
-public class JobJavaResponse extends AbstractResponse {
+class Status {
 
-  String json = null;
+  static class Request extends AbstractRequest {
 
-  public JobJavaResponse( Response response ) {
-    super( response );
-  }
+    private String jobId;
 
-  public String getJson() {
-    if( json == null ) {
-      json = response().asString();
+    public Request( Hadoop hadoop ) {
+      super( hadoop );
     }
-    return json;
+
+    public Request jobId( String jobId ) {
+      this.jobId = jobId;
+      return this;
+    }
+
+    public Response now() throws IOException, URISyntaxException {
+      URIBuilder uri = uri( Job.SERVICE_PATH, "/queue/", jobId );
+      HttpGet request = new HttpGet( uri.build() );
+      return new Response( execute( request ) );
+    }
+
   }
 
-  public String getJobId() {
-    return from( getJson() ).getString( "id" );
+  static class Response extends AbstractResponse {
+
+    protected Response( HttpResponse response ) {
+      super( response );
+    }
+
   }
 
 }

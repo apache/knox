@@ -25,7 +25,7 @@ import org.fusesource.jansi.AnsiConsole;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class KnoxShell {
+public class Shell {
 
   static {
     AnsiConsole.systemInstall();
@@ -36,10 +36,10 @@ public class KnoxShell {
   public static void main( String... args ) {
     StringWriter buffer = new StringWriter();
     PrintWriter imports = new PrintWriter( buffer );
-    imports.println( "import org.apache.hadoop.gateway.shell.hadoop.Hadoop;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.job.Job;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.Hadoop;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.job.Job as job;" );
+    imports.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow as workflow;" );
     Groovysh shell = new Groovysh();
     shell.execute( buffer.toString() );
     shell.run( args );

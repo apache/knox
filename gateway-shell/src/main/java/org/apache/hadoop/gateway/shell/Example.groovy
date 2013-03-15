@@ -1,9 +1,3 @@
-package org.apache.hadoop.gateway.shell
-
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs
-import org.apache.hadoop.gateway.shell.job.Job
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -21,17 +15,26 @@ import org.apache.hadoop.gateway.shell.hadoop.Hadoop
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-hadoop = Hadoop.login( "http://localhost:8443/gateway/sample", "mapred", "mapred-password" )
-println Hdfs.ls(hadoop).dir( "/" ).go().json
-Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().go()
-Hdfs.mkdir(hadoop).dir( "/tmp/test").go()
-Hdfs.put(hadoop).from("LICENSE").to("/tmp/test/input/LICENSE").go()
-Hdfs.put(hadoop).from("hadoop-examples.jar").to("/tmp/test/hadoop-examples.jar").go()
-println Job.java(hadoop) \
-    .jar("/tmp/test/hadoop-examples.jar") \
-    .app("wordcount") \
-    .input("/temp/test/input") \
-    .output("/temp/test/output") \
-    .go().jobId
+package org.apache.hadoop.gateway.shell
 
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
+import org.apache.hadoop.gateway.shell.job.Job as job
 
+hadoop = Hadoop.login( "https://localhost:8443/gateway/sample", "mapred", "mapred-password" )
+
+println Hdfs.ls(hadoop).dir( "/" ).now().asString
+
+hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
+
+hdfs.mkdir(hadoop).dir( "/tmp/test").now()
+
+hdfs.put(hadoop).file("LICENSE").to("/tmp/test/input/LICENSE").now()
+
+hdfs.put(hadoop).file("hadoop-examples.jar").to("/tmp/test/hadoop-examples.jar").now()
+
+println job.submitJava(hadoop) \
+  .jar("/tmp/test/hadoop-examples.jar") \
+  .app("wordcount") \
+  .input("/temp/test/input") \
+  .output("/temp/test/output") \
+  .now().jobId

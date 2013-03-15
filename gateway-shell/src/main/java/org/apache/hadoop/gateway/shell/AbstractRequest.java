@@ -1,9 +1,15 @@
 package org.apache.hadoop.gateway.shell;
 
-import com.jayway.restassured.specification.RequestSpecification;
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.message.BasicNameValuePair;
 
-import static com.jayway.restassured.RestAssured.with;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -25,19 +31,33 @@ import static com.jayway.restassured.RestAssured.with;
 public abstract class AbstractRequest {
 
   private Hadoop hadoop;
-  private RequestSpecification request;
 
   public AbstractRequest( Hadoop hadoop ) {
     this.hadoop = hadoop;
-    request = with().spec( hadoop.request() );
   }
 
   protected Hadoop hadoop() {
     return hadoop;
   }
 
-  protected RequestSpecification request() {
-    return request;
+  protected HttpResponse execute( HttpRequest request ) throws IOException {
+    return hadoop.execute( request );
+  }
+
+  protected URIBuilder uri( String... parts ) throws URISyntaxException {
+    return new URIBuilder( hadoop.base() + StringUtils.join( parts ) );
+  }
+
+  protected void addQueryParam( URIBuilder uri, String name, Object value ) {
+    if( value != null ) {
+      uri.addParameter( name, value.toString() );
+    }
+  }
+
+  protected void addParam( List<NameValuePair> list, String name, String value ) {
+    if( value != null ) {
+      list.add( new BasicNameValuePair( name, value ) );
+    }
   }
 
 }

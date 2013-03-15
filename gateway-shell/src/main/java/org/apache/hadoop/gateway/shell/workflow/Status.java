@@ -17,13 +17,45 @@
  */
 package org.apache.hadoop.gateway.shell.workflow;
 
-import com.jayway.restassured.response.Response;
+import org.apache.hadoop.gateway.shell.AbstractRequest;
 import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.Hadoop;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 
-class WorkflowSubmitResponse extends AbstractResponse {
+import java.io.IOException;
+import java.net.URISyntaxException;
 
-  WorkflowSubmitResponse( Response response ) {
-    super( response );
+class Status {
+
+  static class Request extends AbstractRequest {
+
+    private String jobId;
+
+    Request( Hadoop hadoop ) {
+      super( hadoop );
+    }
+
+    public Request jobId( String jobId ) {
+      this.jobId = jobId;
+      return this;
+    }
+
+    public Response now() throws IOException, URISyntaxException {
+      URIBuilder uri = uri( Workflow.SERVICE_PATH, "/job/", jobId );
+      HttpGet request = new HttpGet( uri.build() );
+      return new Response( execute( request ) );
+    }
+
+  }
+
+  static class Response extends AbstractResponse {
+
+    Response( HttpResponse response ) {
+      super( response );
+    }
+
   }
 
 }

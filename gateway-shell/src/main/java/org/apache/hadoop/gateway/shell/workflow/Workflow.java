@@ -17,14 +17,18 @@
  */
 package org.apache.hadoop.gateway.shell.workflow;
 
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Workflow {
 
-  static String SERVICE_PATH = "oozie";
+  static String SERVICE_PATH = "/oozie/api/v1";
 
-  public static WorkflowSubmitRequest submit( Hadoop hadoop ) {
-    return new WorkflowSubmitRequest( hadoop );
+  public static Submit.Request submit( Hadoop hadoop ) {
+    return new Submit.Request( hadoop );
+  }
+
+  public static Status.Request status( Hadoop hadoop ) {
+    return new Status.Request( hadoop );
   }
 
 }

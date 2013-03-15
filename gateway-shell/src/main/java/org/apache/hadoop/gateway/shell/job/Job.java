@@ -17,14 +17,30 @@
  */
 package org.apache.hadoop.gateway.shell.job;
 
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Job {
 
   static String SERVICE_PATH = "/templeton/api/v1";
 
-  public static JobJavaRequest java( Hadoop hadoop ) {
-    return new JobJavaRequest( hadoop );
+  public static Java.Request submitJava( Hadoop hadoop ) {
+    return new Java.Request( hadoop );
+  }
+
+  public static Pig.Request submitPig( Hadoop hadoop ) {
+    return new Pig.Request( hadoop );
+  }
+
+  public static Hive.Request submitHive( Hadoop hadoop ) {
+    return new Hive.Request( hadoop );
+  }
+
+  public static Queue.Request queryQueue( Hadoop hadoop ) {
+    return new Queue.Request( hadoop );
+  }
+
+  public static Status.Request queryStatus( Hadoop hadoop ) {
+    return new Status.Request( hadoop );
   }
 
 }

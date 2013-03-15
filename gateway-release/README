@@ -273,7 +273,7 @@ curl -i -k -u mapred:mapred-password -T README -X PUT '{Value of Location header
 
 # 7. Submit the word count job via WebHCat/Templeton.
 # Take note of the Job ID in the JSON response as this will be used in the next step.
-curl -i -k -u mapred:mapred-password -X POST \
+curl -v -i -k -u mapred:mapred-password -X POST \
   -d jar=/tmp/test/hadoop-examples.jar -d class=wordcount \
   -d arg=/tmp/test/input -d arg=/tmp/test/output \
   'https://localhost:8443/gateway/sample/templeton/api/v1/mapreduce/jar'
@@ -344,8 +344,8 @@ sed -e s/REPLACE.NAMENODE.RPCHOSTPORT/{NameNode host:port}/ \
 
 # 8. Submit the job via Oozie
 # Take note of the Job ID in the JSON response as this will be used in the next step.
-curl -i -k -u mapred:mapred-password -T workflow-configuration.xml -X POST \
-  'https://localhost:8443/gateway/oozie/api/v1/jobs?action=start'
+curl -i -k -u mapred:mapred-password -T workflow-configuration.xml -H Content-Type:application/xml -X POST \
+  'https://localhost:8443/gateway/oozie/sample/api/v1/jobs?action=start'
 
 # 9. Query the job status via Oozie.
 curl -i -k -u mapred:mapred-password -X GET \

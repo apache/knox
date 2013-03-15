@@ -17,41 +17,47 @@
  */
 package org.apache.hadoop.gateway.shell.hdfs;
 
-import com.jayway.restassured.response.Response;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.Hadoop;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.util.EntityUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
-import static com.jayway.restassured.RestAssured.with;
+class Ls {
 
-public class HdfsPutRequest extends AbstractRequest {
+  static class Request extends AbstractRequest {
 
-  String from;
-  String to;
+    String dir;
 
-  HdfsPutRequest( Hadoop hadoop ) {
-    super( hadoop );
+    Request( Hadoop hadoop ) {
+      super( hadoop );
+    }
+
+    public Request dir( String dir ) {
+      this.dir = dir;
+      return this;
+    }
+
+    public Response now() throws IOException, URISyntaxException {
+      URIBuilder uri = uri( Hdfs.SERVICE_PATH, dir );
+      addQueryParam( uri, "op", "LISTSTATUS" );
+      HttpGet get = new HttpGet( uri.build() );
+      return new Response( execute( get ) );
+    }
+
   }
 
-  public HdfsPutRequest from( String file ) {
-    this.from = file;
-    return this;
-  }
+  static class Response extends AbstractResponse {
 
-  public HdfsPutRequest to( String file ) {
-    this.to = file;
-    return this;
-  }
+    Response( HttpResponse response ) {
+      super( response );
+    }
 
-  public HdfsPutResponse go() throws IOException {
-    Response response = with().spec( hadoop().request() ).queryParam( "op", "CREATE" )
-        .expect().statusCode( 307 ).when().put( Hdfs.SERVICE_PATH + to );
-    String url = response.getHeader( "Location" );
-    request().body( FileUtils.readFileToByteArray( new File( from ) ) );
-    return new HdfsPutResponse( request().put( url ) );
   }
 
 }

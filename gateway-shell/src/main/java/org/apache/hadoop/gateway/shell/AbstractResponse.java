@@ -1,6 +1,11 @@
 package org.apache.hadoop.gateway.shell;
 
-import com.jayway.restassured.response.Response;
+import org.apache.http.HttpResponse;
+import org.apache.http.entity.ContentType;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,14 +26,69 @@ import com.jayway.restassured.response.Response;
  */
 public abstract class AbstractResponse {
 
-  private Response response;
+  private HttpResponse response;
+  private boolean consumed = false;
+  private String string;
+  private InputStream stream;
+  private byte[] bytes;
 
-  protected AbstractResponse( Response response ) {
+  protected AbstractResponse( HttpResponse response ) {
     this.response = response;
   }
 
-  protected Response response() {
+  public void consume() {
+    if( !consumed ) {
+      EntityUtils.consumeQuietly( response.getEntity() );
+      consumed = true;
+    }
+  }
+
+  public void close() {
+    consume();
+  }
+
+  protected HttpResponse response() {
     return response;
+  }
+
+  public boolean isConsumed() {
+    return consumed;
+  }
+
+  public long getContentLength() {
+    return response.getEntity().getContentLength();
+  }
+
+  public String getContentType() {
+    return ContentType.getOrDefault( response.getEntity() ).getMimeType();
+  }
+
+  public String getContentEncoding() {
+    return ContentType.getOrDefault( response.getEntity() ).getCharset().name();
+  }
+
+  public InputStream getStream() throws IOException {
+    if( !consumed && stream == null ) {
+      stream = response.getEntity().getContent();
+      consumed = true;
+    }
+    return stream;
+  }
+
+  public String getString() throws IOException {
+    if( !consumed && string == null ) {
+      string = EntityUtils.toString( response.getEntity() );
+      consumed = true;
+    }
+    return string;
+  }
+
+  public byte[] getBytes() throws IOException {
+    if( !consumed && bytes == null ) {
+      bytes = EntityUtils.toByteArray( response.getEntity() );
+      consumed = true;
+    }
+    return bytes;
   }
 
 }

@@ -18,41 +18,37 @@
 package org.apache.hadoop.gateway.shell.job;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.Hadoop;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 
-public class JobJavaRequest extends AbstractRequest {
+import java.io.IOException;
+import java.net.URISyntaxException;
 
-  String input;
-  String output;
+class Queue {
 
-  public JobJavaRequest( Hadoop hadoop ) {
-    super( hadoop );
+  static class Request extends AbstractRequest {
+
+    public Request( Hadoop hadoop ) {
+      super( hadoop );
+    }
+
+    public Response now() throws IOException, URISyntaxException {
+      URIBuilder uri = uri( Job.SERVICE_PATH, "/queue" );
+      HttpGet request = new HttpGet( uri.build() );
+      return new Response( execute( request ) );
+    }
+
   }
 
-  public JobJavaRequest jar( String jar ) {
-    request().formParam( "jar", jar );
-    return this;
-  }
+  static class Response extends AbstractResponse {
 
-  public JobJavaRequest app( String app ) {
-    request().formParam( "class", app );
-    return this;
-  }
+    protected Response( HttpResponse response ) {
+      super( response );
+    }
 
-  public JobJavaRequest input( String dir ) {
-    input = dir;
-    return this;
-  }
-
-  public JobJavaRequest output( String dir ) {
-    output = dir;
-    return this;
-  }
-
-  public JobJavaResponse go() {
-    request().formParam( "arg", input );
-    request().formParam( "arg", output );
-    return new JobJavaResponse( request().post( Job.SERVICE_PATH + "/mapreduce/jar" ) );
   }
 
 }

@@ -15,32 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell.hdfs;
+package org.apache.hadoop.gateway.shell;
 
-import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+public class HadoopException extends RuntimeException {
 
-public class HdfsMkdirRequest extends AbstractRequest {
-
-  String dir;
-
-  HdfsMkdirRequest( Hadoop hadoop ) {
-    super( hadoop );
-    request().queryParam( "op", "MKDIRS" );
+  public HadoopException( String message ) {
+    super( message );
   }
 
-  public HdfsMkdirRequest perm( String perm ) {
-    request().queryParam( "permission", perm );
-    return this;
-  }
-
-  public HdfsMkdirRequest dir( String dir ) {
-    this.dir = dir;
-    return this;
-  }
-
-  public HdfsMkdirResponse go() {
-    return new HdfsMkdirResponse( request().put( Hdfs.SERVICE_PATH + dir ) );
+  public HadoopException( String message, Throwable throwable ) {
+    super( message, throwable );
   }
 
 }

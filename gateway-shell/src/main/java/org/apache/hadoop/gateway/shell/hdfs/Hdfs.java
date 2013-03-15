@@ -17,26 +17,30 @@
  */
 package org.apache.hadoop.gateway.shell.hdfs;
 
-import org.apache.hadoop.gateway.shell.hadoop.Hadoop;
+import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Hdfs {
 
   static String SERVICE_PATH = "/namenode/api/v1";
 
-  public static HdfsLsRequest ls( Hadoop hadoop ) {
-    return new HdfsLsRequest( hadoop );
+  public static Ls.Request ls( Hadoop hadoop ) {
+    return new Ls.Request( hadoop );
   }
 
-  public static HdfsRmRequest rm( Hadoop hadoop ) {
-    return new HdfsRmRequest( hadoop );
+  public static Rm.Request rm( Hadoop hadoop ) {
+    return new Rm.Request( hadoop );
   }
 
-  public static HdfsPutRequest put( Hadoop hadoop ) {
-    return new HdfsPutRequest( hadoop );
+  public static Put.Request put( Hadoop hadoop ) {
+    return new Put.Request( hadoop );
   }
 
-  public static HdfsMkdirRequest mkdir( Hadoop hadoop ) {
-    return new HdfsMkdirRequest( hadoop );
+  public static Get.Request get( Hadoop hadoop ) {
+    return new Get.Request( hadoop );
+  }
+
+  public static Mkdir.Request mkdir( Hadoop hadoop ) {
+    return new Mkdir.Request( hadoop );
   }
 
 }
