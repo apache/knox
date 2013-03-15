@@ -119,7 +119,12 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   }
 
   private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "authentication", null, null );
+    if (topologyContainsProviderType(context, "authentication")) {
+      context.contributeFilter( service, resource, "authentication", null, null );
+    }
+    if (topologyContainsProviderType(context, "federation")) {
+      context.contributeFilter( service, resource, "federation", null, null );
+    }
   }
 
   private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {

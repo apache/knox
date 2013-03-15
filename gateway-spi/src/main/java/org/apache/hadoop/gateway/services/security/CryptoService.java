@@ -28,4 +28,8 @@ public interface CryptoService extends Service {
   public byte[] decryptForCluster(String clusterName, String alias, String cipherText);
 
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt);
+
+  public boolean verify(String algorithm, String alias, String payloadToSign, byte[] signaturePayload);
+
+  public byte[] sign(String algorithm, String alias, String payloadToSign);
 }

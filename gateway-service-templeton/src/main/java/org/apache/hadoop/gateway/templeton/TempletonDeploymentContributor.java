@@ -56,7 +56,12 @@ public class TempletonDeploymentContributor extends ServiceDeploymentContributor
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role( service.getRole() );
     resource.pattern( TEMPLETON_EXTERNAL_PATH + "/**?**" );
-    context.contributeFilter( service, resource, "authentication", null, null );
+    if (topologyContainsProviderType(context, "authentication")) {
+      context.contributeFilter( service, resource, "authentication", null, null );
+    }
+    if (topologyContainsProviderType(context, "federation")) {
+      context.contributeFilter( service, resource, "federation", null, null );
+    }
     context.contributeFilter( service, resource, "rewrite", null, null );
     context.contributeFilter( service, resource, "identity-assertion", null, null );
     context.contributeFilter( service, resource, "dispatch", null, null );

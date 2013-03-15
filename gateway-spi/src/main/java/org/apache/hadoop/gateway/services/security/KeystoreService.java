@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.services.security;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +35,8 @@ public interface KeystoreService extends Service {
   
   public KeyStore getKeystoreForGateway();
   
+  public Key getKeyForGateway(String alias) throws KeystoreServiceException;
+
   public void createCredentialStoreForCluster(String clusterName);
   
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException;

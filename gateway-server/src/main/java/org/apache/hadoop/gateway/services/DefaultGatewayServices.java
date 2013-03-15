@@ -70,6 +70,7 @@ public class DefaultGatewayServices implements Service, ProviderDeploymentContri
     services.put(ALIAS_SERVICE, alias);
 
     DefaultCryptoService crypto = new DefaultCryptoService();
+    crypto.setKeystoreService(ks);
     crypto.setAliasService(alias);
     crypto.init(config, options);
     services.put(CRYPTO_SERVICE, crypto);

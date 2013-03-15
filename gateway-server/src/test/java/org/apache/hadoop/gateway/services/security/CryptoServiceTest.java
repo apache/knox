@@ -73,6 +73,18 @@ public class CryptoServiceTest {
       @Override
       public void generateAliasForCluster(String clusterName, String alias) {
       }
+
+      @Override
+      public char[] getPasswordFromAliasForGateway(String alias) {
+        // TODO Auto-generated method stub
+        return null;
+      }
+
+      @Override
+      public void generateAliasForGateway(String alias) {
+        // TODO Auto-generated method stub
+        
+      }
     };
     cs = new DefaultCryptoService().setAliasService(as);
   }

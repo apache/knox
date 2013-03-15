@@ -52,6 +52,7 @@
         <module>gateway-provider-rewrite</module>
         <module>gateway-provider-hostmap-static</module>
         <module>gateway-provider-secure-query</module>
+        <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-service-hdfs</module>
@@ -268,6 +269,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-spi</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-jwt</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -617,7 +623,6 @@
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>0.8.1</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>

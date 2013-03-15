@@ -17,6 +17,10 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import java.util.Collection;
+
+import org.apache.hadoop.gateway.topology.Provider;
+
 public abstract class ServiceDeploymentContributorBase extends DeploymentContributorBase implements ServiceDeploymentContributor {
 
   public void initializeContribution( DeploymentContext context ) {
@@ -25,6 +29,16 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
 
   public void finalizeContribution( DeploymentContext context ) {
     // Noop.
+  }
+
+  protected boolean topologyContainsProviderType(DeploymentContext context, String role) {
+    Collection<Provider> providers = context.getTopology().getProviders();
+    for (Provider provider : providers) {
+      if (role.equals(provider.getRole())) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

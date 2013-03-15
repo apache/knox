@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
+import java.security.Key;
+
 import org.apache.hadoop.gateway.services.Service;
 
 public interface AliasService extends Service {
@@ -28,4 +30,8 @@ public interface AliasService extends Service {
   public abstract char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate);
 
   void generateAliasForCluster(String clusterName, String alias);
+
+  public abstract char[] getPasswordFromAliasForGateway(String alias);
+
+  void generateAliasForGateway(String alias);
 }

@@ -19,18 +19,31 @@ package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 
 public class DefaultCryptoService implements CryptoService {
   
   private AliasService as = null;
+  private KeystoreService ks = null;
+
+  public void setKeystoreService(KeystoreService ks) {
+    this.ks = ks;
+  }
 
   public CryptoService setAliasService(AliasService as) {
     this.as = as;
@@ -106,6 +119,61 @@ public class DefaultCryptoService implements CryptoService {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean verify(String algorithm, String alias, String signed, byte[] signature) {
+    boolean verified = false;
+    try {
+      Signature sig=Signature.getInstance(algorithm);
+      sig.initVerify(ks.getKeystoreForGateway().getCertificate(alias).getPublicKey());
+      sig.update(signed.getBytes("UTF-8"));
+      verified = sig.verify(signature);
+    } catch (SignatureException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (NoSuchAlgorithmException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (InvalidKeyException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (KeyStoreException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    System.out.println("Signature verified: " + verified);  
+    return verified;
+  }
+
+  @Override
+  public byte[] sign(String algorithm, String alias, String payloadToSign) {
+    try {
+      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias);
+      Signature signature = Signature.getInstance(algorithm);
+      signature.initSign(privateKey);
+      signature.update(payloadToSign.getBytes("UTF-8"));
+      return signature.sign();
+    } catch (NoSuchAlgorithmException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (InvalidKeyException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (SignatureException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (KeystoreServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
     return null;
   }

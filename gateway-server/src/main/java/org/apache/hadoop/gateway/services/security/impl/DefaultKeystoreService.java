@@ -258,6 +258,27 @@ public class DefaultKeystoreService implements KeystoreService {
     return false;
   }
 
+  @Override
+  public Key getKeyForGateway(String alias) throws KeystoreServiceException {
+    Key key = null;
+    KeyStore ks = getKeystoreForGateway();
+    if (ks != null) {
+      try {
+        key = ks.getKey(alias, masterService.getMasterSecret());
+      } catch (UnrecoverableKeyException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (KeyStoreException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return key;
+  }  
+  
   public KeyStore getCredentialStoreForCluster(String clusterName) {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     return getKeystore(keyStoreFile, "JCEKS");
@@ -308,6 +329,7 @@ public class DefaultKeystoreService implements KeystoreService {
 
   public void writeKeystoreToFile(final KeyStore keyStore, final File file)
          throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+    // TODO: does this really need to be part of the interface?
     // TODO: backup the keystore on disk before attempting a write and restore on failure
       final FileOutputStream  out = new FileOutputStream(file);
       try

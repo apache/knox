@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import java.security.Key;
+import java.security.KeyStore;
 import java.util.Map;
 import java.util.Random;
 
@@ -24,6 +26,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 
 public class DefaultAliasService implements AliasService {
 
@@ -100,6 +103,16 @@ public class DefaultAliasService implements AliasService {
   @Override
   public void addAliasForCluster(String clusterName, String alias, String value) {
     keystoreService.addCredentialForCluster(clusterName, alias, value);
+  }
+
+  @Override
+  public char[] getPasswordFromAliasForGateway(String alias) {
+    return getPasswordFromAliasForCluster("__gateway", alias);
+  }
+
+  @Override
+  public void generateAliasForGateway(String alias) {
+    generateAliasForCluster("__gateway", alias);
   }
 
 }
