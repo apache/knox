@@ -25,6 +25,13 @@
     <property name="archive" value="target/gateway-${version}.zip"/>
     <property name="gateway_home" value="gateway-${version}"/>
 
+    <condition property="mvn.cmd" value="mvn">
+        <os family="unix" />
+    </condition>
+    <condition property="mvn.cmd" value="mvn.bat">
+        <os family="windows" />
+    </condition>
+
     <target name="init" description="Initialize the build.">
     </target>
 
@@ -33,7 +40,7 @@
     </target>
 
     <target name="build" depends="init" description="Build the product.">
-        <exec executable="mvn">
+        <exec executable="${mvn.cmd}">
             <arg value="-Prelease"/>
             <arg value="clean"/>
             <arg value="package"/>
@@ -63,7 +70,7 @@
     </target>
 
     <target name="site" description="Generate and copy the Apache web site.">
-        <exec executable="mvn">
+        <exec executable="${mvn.cmd}">
             <arg value="--file"/>
             <arg value="gateway-site/pom.xml"/>
             <arg value="site"/>
