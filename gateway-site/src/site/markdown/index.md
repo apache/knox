@@ -15,13 +15,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-### Introduction
+Introduction
+------------
 The charter for the Apache Knox Gateway project is to simplify and normalize
 the deployment and implementation of secure Hadoop clusters as well as be
 a central access point for the service specific REST APIs exposed from
 within the Hadoop clusters.
 
-### Disclaimer
+Disclaimer
+----------
 The Apache Knox Gateway is an effort undergoing incubation at the
 Apache Software Foundation (ASF), sponsored by the Apache Incubator PMC.
 

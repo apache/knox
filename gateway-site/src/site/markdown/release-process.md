@@ -15,10 +15,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-### Contribution Process
-TODO
+Release Process
+---------------
+TODO: Here we will describe how to release the project.
 
-### Disclaimer
+Disclaimer
+----------
 The Apache Knox Gateway is an effort undergoing incubation at the
 Apache Software Foundation (ASF), sponsored by the Apache Incubator PMC.
 

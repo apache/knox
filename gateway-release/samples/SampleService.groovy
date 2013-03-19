@@ -19,14 +19,14 @@ import org.apache.hadoop.gateway.shell.Hadoop
 
 class SampleService {
 
-  static String PATH = "/namenode/api/v1";
+  static String PATH = "/namenode/api/v1"
 
-  static SimpleCommand simple( Hadoop hadoop ) {
-    return new SimpleCommand( hadoop );
+  static SampleSimpleCommand simple( Hadoop hadoop ) {
+    return new SampleSimpleCommand( hadoop )
   }
 
-  static ComplexCommand.Request complex( Hadoop hadoop ) {
-    return new ComplexCommand.Request( hadoop );
+  static SampleComplexCommand.Request complex( Hadoop hadoop ) {
+    return new SampleComplexCommand.Request( hadoop )
   }
 
 }

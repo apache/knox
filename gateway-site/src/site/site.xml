@@ -99,20 +99,19 @@
             <!--
             <item name="Install" href="install"/>
             -->
-            <item name="Client" href="client.html"/>
+            <item name="Client (KnoxShell)" href="client.html"/>
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>
 
         <menu name="Releases">
-            <!--
-            <item name="0.2.0 (coming soon)" href="whats-coming.html"/>
-            -->
+            <item name="0.2.0 (coming soon)" href="readme-0-2-0.html"/>
+            <item name="0.3.0 (planning)" href="roadmap-0-3-0.html"/>
         </menu>
 
         <menu name="Processes">
-            <item name="Build" href="build.html"/>
-            <item name="Release" href="release.html"/>
-            <item name="Contribute" href="contribute.html"/>
+            <item name="Build" href="build-process.html"/>
+            <item name="Release" href="release-process.html"/>
+            <item name="Contribute" href="contribute-process.html"/>
         </menu>
 
         <menu name="Resources">
@@ -136,7 +135,7 @@
                 All other marks mentioned may be trademarks or registered trademarks of their respective owners.
             </div>
             <div class="row span12">
-                <a href="${project.url}/privacy-policy.html">Privacy Policy</a>
+                <a href="privacy-policy.html">Privacy Policy</a>
             </div>
         </footer>
 

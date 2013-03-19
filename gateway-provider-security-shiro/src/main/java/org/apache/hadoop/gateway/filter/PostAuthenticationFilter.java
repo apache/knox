@@ -17,22 +17,21 @@
    */
 package org.apache.hadoop.gateway.filter;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+  import org.apache.shiro.SecurityUtils;
+  import org.apache.shiro.subject.Subject;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
-
-import java.io.IOException;
-import java.security.Principal;
-import java.security.PrivilegedExceptionAction;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
+  import javax.servlet.Filter;
+  import javax.servlet.FilterChain;
+  import javax.servlet.FilterConfig;
+  import javax.servlet.ServletException;
+  import javax.servlet.ServletRequest;
+  import javax.servlet.ServletResponse;
+  import java.io.IOException;
+  import java.security.Principal;
+  import java.security.PrivilegedExceptionAction;
+  import java.util.HashSet;
+  import java.util.Set;
+  import java.util.concurrent.Callable;
 
 public class PostAuthenticationFilter implements Filter {
 
@@ -72,6 +71,7 @@ public class PostAuthenticationFilter implements Filter {
         }
       };
       Subject shiroSubject = SecurityUtils.getSubject();
+      shiroSubject.login(null);
       final String principal = (String) shiroSubject.getPrincipal();
       HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<Principal>();

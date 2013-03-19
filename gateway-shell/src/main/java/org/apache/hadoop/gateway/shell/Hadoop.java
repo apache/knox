@@ -132,6 +132,10 @@ public class Hadoop {
     }
   }
 
+  public void shutdown() throws InterruptedException {
+    executor.shutdownNow();
+  }
+
   public boolean shutdown( long timeout, TimeUnit unit ) throws InterruptedException {
     executor.shutdown();
     return executor.awaitTermination( timeout, unit );

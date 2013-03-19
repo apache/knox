@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.shell.hdfs;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.BasicResponse;
+import org.apache.hadoop.gateway.shell.EmptyResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.hadoop.gateway.shell.HadoopException;
 import org.apache.http.Header;
@@ -93,11 +93,10 @@ class Put {
 
   }
 
-  static class Response extends BasicResponse {
+  static class Response extends EmptyResponse {
 
     Response( HttpResponse response ) {
       super( response );
-      consume();
     }
 
   }

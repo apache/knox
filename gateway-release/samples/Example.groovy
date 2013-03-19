@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,37 +16,22 @@
  * limitations under the License.
  */
 
-import org.apache.hadoop.gateway.shell.AbstractRequest
-import org.apache.hadoop.gateway.shell.BasicResponse
+import groovy.json.JsonSlurper
 import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.utils.URIBuilder
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
-import java.util.concurrent.Callable
+gateway = "https://localhost:8443/gateway/sample"
+username = "mapred"
+password = "mapred-password"
+dataFile = "README"
 
-class SimpleCommand extends AbstractRequest<BasicResponse> {
+hadoop = Hadoop.login( gateway, username, password )
+Hdfs.rm( hadoop ).file( "/tmp/example" ).recursive().now()
+Hdfs.put( hadoop ).file( dataFile ).to( "/tmp/example/README" ).now().string
+text = Hdfs.ls( hadoop ).dir( "/tmp/example" ).now().string
+json = (new JsonSlurper()).parseText( text )
+println json.FileStatuses.FileStatus.pathSuffix
+hadoop.shutdown()
 
-  SimpleCommand( Hadoop hadoop ) {
-    super( hadoop )
-  }
 
-  private String param;
-  SimpleCommand param( String param ) {
-    this.param = param;
-    return this;
-  }
 
-  @Override
-  protected Callable<BasicResponse> callable() {
-    return new Callable<BasicResponse>() {
-      @Override
-      BasicResponse call() {
-        URIBuilder uri = uri( SampleService.PATH, param );
-        addQueryParam( uri, "op", "LISTSTATUS" );
-        HttpGet get = new HttpGet( uri.build() );
-        return new BasicResponse( execute( get ) );
-      }
-    }
-  }
-
-}

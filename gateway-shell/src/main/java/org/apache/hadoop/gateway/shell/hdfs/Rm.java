@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.shell.hdfs;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.BasicResponse;
+import org.apache.hadoop.gateway.shell.EmptyResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -67,11 +67,10 @@ class Rm {
 
   }
 
-  static class Response extends BasicResponse {
+  static class Response extends EmptyResponse {
 
     Response( HttpResponse response ) throws IOException {
       super( response );
-      consume();
     }
 
   }

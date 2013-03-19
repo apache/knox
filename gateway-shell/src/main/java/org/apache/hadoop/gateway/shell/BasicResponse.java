@@ -32,7 +32,7 @@ public class BasicResponse {
   private InputStream stream;
   private byte[] bytes;
 
-  protected BasicResponse( HttpResponse response ) {
+  public BasicResponse( HttpResponse response ) {
     this.response = response;
   }
 

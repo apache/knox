@@ -15,56 +15,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.AbstractRequest
 import org.apache.hadoop.gateway.shell.BasicResponse
 import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.utils.URIBuilder
 
 import java.util.concurrent.Callable
 
-class ComplexCommand {
+class SampleSimpleCommand extends AbstractRequest<BasicResponse> {
 
-  static class Request extends AbstractRequest<Response> {
-
-    Request( Hadoop hadoop ) {
-      super( hadoop )
-    }
-
-    private String param;
-    Request param( String param ) {
-      this.param = param;
-      return this;
-    }
-
-    @Override
-    protected Callable<Response> callable() {
-      return new Callable<Response>() {
-        @Override
-        Response call() {
-          URIBuilder uri = uri( SampleService.PATH, param );
-          addQueryParam( uri, "op", "LISTSTATUS" );
-          HttpGet get = new HttpGet( uri.build() );
-          return new Response( execute( get ) );
-        }
-      }
-    }
-
+  SampleSimpleCommand( Hadoop hadoop ) {
+    super( hadoop )
   }
 
-  static class Response extends BasicResponse {
+  private String param
+  SampleSimpleCommand param( String param ) {
+    this.param = param
+    return this
+  }
 
-    Response(HttpResponse response) {
-      super(response)
+  @Override
+  protected Callable<BasicResponse> callable() {
+    return new Callable<BasicResponse>() {
+      @Override
+      BasicResponse call() {
+        URIBuilder uri = uri( SampleService.PATH, param )
+        addQueryParam( uri, "op", "LISTSTATUS" )
+        HttpGet get = new HttpGet( uri.build() )
+        return new BasicResponse( execute( get ) )
+      }
     }
-
-    public List<String> getNames() {
-      return JsonPath.read( string, "\$.FileStatuses.FileStatus[*].pathSuffix" );
-    }
-
   }
 
 }
