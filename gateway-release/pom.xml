@@ -124,6 +124,12 @@
             <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-shell</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.shell.job;
 
 import com.jayway.jsonpath.JsonPath;
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.BasicResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -83,7 +83,7 @@ public class Hive {
 
   }
 
-  static class Response extends AbstractResponse {
+  static class Response extends BasicResponse {
 
     protected Response( HttpResponse response ) {
       super( response );

@@ -24,7 +24,7 @@ import java.io.InputStream;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public abstract class AbstractResponse {
+public class BasicResponse {
 
   private HttpResponse response;
   private boolean consumed = false;
@@ -32,7 +32,7 @@ public abstract class AbstractResponse {
   private InputStream stream;
   private byte[] bytes;
 
-  protected AbstractResponse( HttpResponse response ) {
+  protected BasicResponse( HttpResponse response ) {
     this.response = response;
   }
 

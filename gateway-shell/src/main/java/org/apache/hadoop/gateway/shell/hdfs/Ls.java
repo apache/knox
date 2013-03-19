@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.shell.hdfs;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.BasicResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -55,7 +55,7 @@ class Ls {
 
   }
 
-  static class Response extends AbstractResponse {
+  static class Response extends BasicResponse {
 
     Response( HttpResponse response ) {
       super( response );

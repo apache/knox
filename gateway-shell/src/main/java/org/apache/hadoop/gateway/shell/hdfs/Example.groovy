@@ -17,30 +17,39 @@
  */
 package org.apache.hadoop.gateway.shell.hdfs
 
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
-
 import org.apache.hadoop.gateway.shell.Hadoop
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
 username = "mapred"
 password = "mapred-password"
-inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
 jarFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/hadoop-examples.jar"
+inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
+outputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT"
 
 hadoop = Hadoop.login( gateway, username, password )
 
 println Hdfs.ls(hadoop).dir( "/" ).now().string
 
-hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
+Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
 
-hdfs.mkdir(hadoop).dir( "/tmp/test").now()
+Hdfs.mkdir(hadoop).dir( "/tmp/test").now()
 
-hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE" ).now()
+Hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE" ).now()
 
-future = hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE2" ).later()
-println future.get().statusCode
+future = Hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE2" ).later()
+println "Done=" + future.isDone()
+hadoop.waitFor( future )
+println "Status=" + future.get().statusCode
 
-hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE3" ).later() { println it.statusCode }
+future = Hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/LICENSE3" ).later() { println "Status=" + it.statusCode }
+hadoop.waitFor( future )
+println "Status=" + future.get().statusCode
 
-hdfs.get(hadoop).file( "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT" ).from( "/tmp/test/input/LICENSE" ).now()
+Hdfs.get(hadoop).file( outputFile ).from( "/tmp/test/input/LICENSE" ).now()
+
+hadoop.shutdown( 10, SECONDS );
+
+
 

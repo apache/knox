@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.shell.workflow;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.BasicResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 class Status {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     private String jobId;
 
@@ -54,7 +54,7 @@ class Status {
 
   }
 
-  static class Response extends AbstractResponse {
+  static class Response extends BasicResponse {
 
     Response( HttpResponse response ) {
       super( response );

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,42 +15,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell.job;
 
-import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.BasicResponse;
-import org.apache.hadoop.gateway.shell.Hadoop;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
+import com.jayway.jsonpath.JsonPath
+import org.apache.hadoop.gateway.shell.AbstractRequest
+import org.apache.hadoop.gateway.shell.BasicResponse
+import org.apache.hadoop.gateway.shell.Hadoop
+import org.apache.http.HttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.utils.URIBuilder
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.Callable
 
-class Queue {
+class ComplexCommand {
 
   static class Request extends AbstractRequest<Response> {
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop hadoop ) {
+      super( hadoop )
     }
 
+    private String param;
+    Request param( String param ) {
+      this.param = param;
+      return this;
+    }
+
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override
-        public Response call() throws Exception {
-          URIBuilder uri = uri( Job.SERVICE_PATH, "/queue" );
-          HttpGet request = new HttpGet( uri.build() );
-          return new Response( execute( request ) );
+        Response call() {
+          URIBuilder uri = uri( SampleService.PATH, param );
+          addQueryParam( uri, "op", "LISTSTATUS" );
+          HttpGet get = new HttpGet( uri.build() );
+          return new Response( execute( get ) );
         }
-      };
+      }
     }
 
   }
 
   static class Response extends BasicResponse {
 
-    protected Response( HttpResponse response ) {
-      super( response );
+    Response(HttpResponse response) {
+      super(response)
+    }
+
+    public List<String> getNames() {
+      return JsonPath.read( string, "\$.FileStatuses.FileStatus[*].pathSuffix" );
     }
 
   }

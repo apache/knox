@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.shell.workflow;
 
 import com.jayway.jsonpath.JsonPath;
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.BasicResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -31,12 +31,11 @@ import org.apache.http.entity.StringEntity;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 
 class Submit {
 
-  static class Request extends AbstractRequest {
+  static class Request extends AbstractRequest<Response> {
 
     private String text;
     private String file;
@@ -82,7 +81,7 @@ class Submit {
 
   }
 
-  static class Response extends AbstractResponse {
+  static class Response extends BasicResponse {
 
     Response( HttpResponse response ) {
       super( response );

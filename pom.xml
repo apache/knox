@@ -43,6 +43,7 @@
     <modules>
         <module>gateway-test-utils</module>
         <module>gateway-util-common</module>
+        <module>gateway-util-launcher</module>
         <module>gateway-util-urltemplate</module>
         <module>gateway-test-ldap</module>
         <module>gateway-i18n</module>
@@ -59,10 +60,10 @@
         <module>gateway-service-templeton</module>
         <module>gateway-service-oozie</module>
         <module>gateway-server</module>
+        <module>gateway-shell</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
-        <module>gateway-shell</module>
         <module>gateway-site</module>
     </modules>
 
@@ -248,6 +249,16 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-util-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-util-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-util-urltemplate</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -319,6 +330,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-server</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-shell</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

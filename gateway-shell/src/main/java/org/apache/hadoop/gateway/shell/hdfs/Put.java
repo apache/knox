@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.shell.hdfs;
 
 import org.apache.hadoop.gateway.shell.AbstractRequest;
-import org.apache.hadoop.gateway.shell.AbstractResponse;
+import org.apache.hadoop.gateway.shell.BasicResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.hadoop.gateway.shell.HadoopException;
 import org.apache.http.Header;
@@ -32,10 +32,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 class Put {
 
@@ -96,7 +93,7 @@ class Put {
 
   }
 
-  static class Response extends AbstractResponse {
+  static class Response extends BasicResponse {
 
     Response( HttpResponse response ) {
       super( response );

@@ -35,7 +35,7 @@ public abstract class AbstractRequest<T> {
 
   private Hadoop hadoop;
 
-  public AbstractRequest( Hadoop hadoop ) {
+  protected AbstractRequest( Hadoop hadoop ) {
     this.hadoop = hadoop;
   }
 
@@ -65,22 +65,27 @@ public abstract class AbstractRequest<T> {
 
   abstract protected Callable<T> callable();
 
-  public T now() throws Exception, URISyntaxException {
-    return callable().call();
+  public T now() throws HadoopException {
+    try {
+      return callable().call();
+    } catch( Exception e ) {
+      throw new HadoopException( e );
+    }
   }
 
   public Future<T> later() {
     return hadoop().executeLater( callable() );
   }
 
-  public void later( final Closure<T> closure ) {
-    hadoop().executeLater( new Callable<T>() {
+  public Future<T> later( final Closure<Void> closure ) {
+    return hadoop().executeLater( new Callable<T>() {
       @Override
       public T call() throws Exception {
-        return closure.call( callable().call() );
+        T result = callable().call();
+        closure.call( result );
+        return result;
       }
     } );
-
   }
 
 }

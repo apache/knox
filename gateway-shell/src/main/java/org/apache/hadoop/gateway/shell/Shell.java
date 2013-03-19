@@ -17,11 +17,13 @@
  */
 package org.apache.hadoop.gateway.shell;
 
+import groovy.ui.GroovyMain;
 import org.codehaus.groovy.tools.shell.AnsiDetector;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -33,16 +35,23 @@ public class Shell {
     System.setProperty( "groovysh.prompt", "knox" );
   }
 
-  public static void main( String... args ) {
-    StringWriter buffer = new StringWriter();
-    PrintWriter imports = new PrintWriter( buffer );
-    imports.println( "import org.apache.hadoop.gateway.shell.Hadoop;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.job.Job as job;" );
-    imports.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow as workflow;" );
-    Groovysh shell = new Groovysh();
-    shell.execute( buffer.toString() );
-    shell.run( args );
+  public static void main( String... args ) throws IOException {
+    if( args.length > 0 ) {
+      GroovyMain.main( args );
+    } else {
+      StringWriter buffer = new StringWriter();
+      PrintWriter setup = new PrintWriter( buffer );
+      setup.println( "import org.apache.hadoop.gateway.shell.Hadoop;" );
+      setup.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs;" );
+      setup.println( "import org.apache.hadoop.gateway.shell.job.Job;" );
+      setup.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow;" );
+      setup.println( "import java.util.concurrent.TimeUnit;" );
+      //setup.println( "set verbosity QUIET;" );
+      //setup.println( "set show-last-result false;" );
+      Groovysh shell = new Groovysh();
+      shell.execute( buffer.toString() );
+      shell.run();
+    }
   }
 
 }

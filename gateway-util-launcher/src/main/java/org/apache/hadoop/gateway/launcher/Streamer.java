@@ -15,20 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell;
+package org.apache.hadoop.gateway.launcher;
 
-public class HadoopException extends RuntimeException {
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-  public HadoopException( String message ) {
-    super( message );
+public class Streamer extends Thread {
+
+  InputStream input;
+  OutputStream output;
+  byte[] buffer;
+
+  private Streamer( String name, InputStream input, OutputStream output, int buffer, int priority ) {
+    this.buffer = new byte[ buffer ];
+    this.setName( name );
+    this.setPriority( priority );
+    this.start();
   }
 
-  public HadoopException( Throwable throwable ) {
-    super( throwable );
-  }
-
-  public HadoopException( String message, Throwable throwable ) {
-    super( message, throwable );
+  @Override
+  public void run() {
+    try {
+      int read = input.read( buffer );
+      while( read >= 0 ) {
+        output.write( buffer, 0, read );
+        read = input.read( buffer );
+      }
+    } catch( IOException e ) {
+      e.printStackTrace();
+    }
   }
 
 }

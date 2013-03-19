@@ -15,26 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell
+package org.apache.hadoop.gateway.shell;
 
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
-import org.apache.hadoop.gateway.shell.job.Job as job
+import org.apache.http.HttpResponse;
 
-hadoop = Hadoop.login( "https://localhost:8443/gateway/sample", "mapred", "mapred-password" )
+class ErrorResponse extends RuntimeException {
 
-println Hdfs.ls(hadoop).dir( "/" ).now().asString
+  HttpResponse response;
 
-hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
+  ErrorResponse( HttpResponse response ) {
+    super( "" + response.getStatusLine() );
+    this.response = response;
+  }
 
-hdfs.mkdir(hadoop).dir( "/tmp/test").now()
+  public HttpResponse getReponse() {
+    return response;
+  }
 
-hdfs.put(hadoop).file("LICENSE").to("/tmp/test/input/LICENSE").now()
-
-hdfs.put(hadoop).file("hadoop-examples.jar").to("/tmp/test/hadoop-examples.jar").now()
-
-println job.submitJava(hadoop) \
-  .jar("/tmp/test/hadoop-examples.jar") \
-  .app("wordcount") \
-  .input("/temp/test/input") \
-  .output("/temp/test/output") \
-  .now().jobId
+}

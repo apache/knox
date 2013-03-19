@@ -46,11 +46,11 @@
 
     <service>
         <role>NAMENODE</role>
-        <url>http://localhost:50070/webhdfs/v1</url>
+        <url>http://vm:50070/webhdfs/v1</url>
     </service>
     <service>
         <role>TEMPLETON</role>
-        <url>http://localhost:50111/templeton/v1</url>
+        <url>http://vm:50111/templeton/v1</url>
     </service>
 
 </topology>

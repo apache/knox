@@ -40,9 +40,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class Hadoop {
 
@@ -97,11 +100,41 @@ public class Hadoop {
   }
 
   public HttpResponse executeNow( HttpRequest request ) throws IOException {
-    return client.execute( host, request, context );
+    HttpResponse response = client.execute( host, request, context );
+    if( response.getStatusLine().getStatusCode() < 400 ) {
+      return response;
+    } else {
+      throw new ErrorResponse( response );
+    }
   }
 
   public <T> Future<T> executeLater( Callable<T> callable ) {
     return executor.submit( callable );
+  }
+
+  public void waitFor( Future<?>... futures ) throws ExecutionException, InterruptedException {
+    if( futures != null ) {
+      for( Future future : futures ) {
+        future.get();
+      }
+    }
+  }
+
+  public void waitFor( long timeout, TimeUnit units, Future<?>... futures ) throws ExecutionException, TimeoutException, InterruptedException {
+    if( futures != null ) {
+      timeout = TimeUnit.MILLISECONDS.convert( timeout, units );
+      long start;
+      for( Future future : futures ) {
+        start = System.currentTimeMillis();
+        future.get( timeout, TimeUnit.MILLISECONDS );
+        timeout -= ( System.currentTimeMillis() - start );
+      }
+    }
+  }
+
+  public boolean shutdown( long timeout, TimeUnit unit ) throws InterruptedException {
+    executor.shutdown();
+    return executor.awaitTermination( timeout, unit );
   }
 
 }

@@ -15,20 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.shell;
+package org.apache.hadoop.gateway.launcher;
 
-public class HadoopException extends RuntimeException {
+class Forker {
 
-  public HadoopException( String message ) {
-    super( message );
-  }
-
-  public HadoopException( Throwable throwable ) {
-    super( throwable );
-  }
-
-  public HadoopException( String message, Throwable throwable ) {
-    super( message, throwable );
+  static void fork( Command command ) {
+    throw new UnsupportedOperationException();
+//    String[] cmd = null;
+//    String[] env = null;
+//    Runtime.getRuntime().exec( cmd, env );
+//    System.getenv();
+//    ProcessBuilder pb = new ProcessBuilder();
+//    Process process = pb.start();
   }
 
 }
