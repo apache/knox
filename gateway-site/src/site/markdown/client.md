@@ -14,12 +14,37 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
 ### Introduction
-The charter for the Apache Knox Gateway project is to simplify and normalize
-the deployment and implementation of secure Hadoop clusters as well as be
-a central access point for the service specific REST APIs exposed from
-within the Hadoop clusters.
+
+Usable from data workers local host
+  Super light weight
+  Zero configuration
+  Does not depend on Hadoop install
+Easily extensible
+Support "single sing on"
+
+
+### Usage
+
+### Examples
+
+### Constructs
+
+### Services
+
+### HDFS Commands
+
+### Job Commands
+
+### Workflow Commands
+
+### Futures
+
+### Closures
+
+### Extension
+
+### Groovy
 
 ### Disclaimer
 The Apache Knox Gateway is an effort undergoing incubation at the

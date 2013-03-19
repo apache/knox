@@ -80,6 +80,7 @@
 
         <links>
             <item name="Git" href="https://git-wip-us.apache.org/repos/asf/incubator-knox.git" />
+            <item name="Svn" href="https://svn.apache.org/repos/asf/incubator/knox/site" />
             <item name="Jira" href="https://issues.apache.org/jira/browse/KNOX" />
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox" />
         </links>
@@ -91,20 +92,27 @@
         <menu name="Knox">
             <item name="Welcome" href="index.html"/>
             <item name="News" href="news.html"/>
-            <item name="Project License" href="license.html"/>
+            <item name="License" href="license.html"/>
+        </menu>
+
+        <menu name="Documentation">
+            <!--
+            <item name="Install" href="install"/>
+            -->
+            <item name="Client" href="client.html"/>
+            <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>
 
         <menu name="Releases">
             <!--
-            <item name="0.2.0 (coming soon)" href="whats-comming.html"/>
+            <item name="0.2.0 (coming soon)" href="whats-coming.html"/>
             -->
         </menu>
 
-        <menu name="Documentation">
-            <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
-            <!--
-            <item name="Install Guide for 1.2.1" href="1.2.1/installing-hadoop-using-ambari/content/index.html"/>
-            -->
+        <menu name="Processes">
+            <item name="Build" href="build.html"/>
+            <item name="Release" href="release.html"/>
+            <item name="Contribute" href="contribute.html"/>
         </menu>
 
         <menu name="Resources">
@@ -114,9 +122,9 @@
             <item name="Issue Tracking" href="issue-tracking.html"/>
         </menu>
 
-        <menu name="ADF">
+        <menu name="ASF">
             <item name="How Apache Works" href="http://www.apache.org/foundation/how-it-works.html"/>
-            <item name="Foundating" href="http://www.apache.org/foundation/"/>
+            <item name="Foundation" href="http://www.apache.org/foundation/"/>
             <item name="Sponsoring Apache" href="http://www.apache.org/foundation/sponsorship.html"/>
             <item name="Thanks" href="http://www.apache.org/foundation/thanks.html"/>
         </menu>
