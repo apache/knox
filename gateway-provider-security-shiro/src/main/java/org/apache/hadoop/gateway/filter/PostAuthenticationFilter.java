@@ -71,7 +71,6 @@ public class PostAuthenticationFilter implements Filter {
         }
       };
       Subject shiroSubject = SecurityUtils.getSubject();
-      shiroSubject.login(null);
       final String principal = (String) shiroSubject.getPrincipal();
       HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<Principal>();
