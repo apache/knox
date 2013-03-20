@@ -83,7 +83,7 @@ Also when running interactively use the `exit` command to terminate the shell.
 Using `^C` to exit can sometimes leaves the parent shell in a problematic state.
 
 
-Example
+Examples
 --------
 Once the shell can be launched the DSL can be used to interact with the gateway and Hadoop.
 Below is a very simple example of an interactive shell session to upload a file to HDFS.

@@ -86,11 +86,7 @@
             <arg value="https://svn.apache.org/repos/asf/incubator/knox/site"/>
         </exec>
         <delete quiet="true" verbose="true">
-            <fileset dir="gateway-site/target/site">
-                <filename name="**/*.html"/>
-                <filename name="**/*.css"/>
-                <filename name="**/*.png"/>
-                <filename name="**/*.gif"/>
+            <fileset dir="gateway-site/target/site" includes="**/*.html,**/*.css,**/*.png,**/*.gif">
             </fileset>
         </delete>
         <exec executable="${mvn.cmd}" dir="gateway-site">
