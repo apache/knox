@@ -96,9 +96,7 @@
         </menu>
 
         <menu name="Documentation">
-            <!--
-            <item name="Install" href="install"/>
-            -->
+            <item name="Getting Started" href="setup.html"/>
             <item name="Client (KnoxShell DSL)" href="client.html"/>
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>

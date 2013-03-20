@@ -66,7 +66,7 @@ To simplify use, the distribution contains an embedded version of the Groovy she
 
 The shell can be run interactively.
 
-    java -jar bin/shell-0.2.0-SNAPSHOT.jar
+    java -jar bin/shell-${gateway-version}.jar
 
 The shell can also be used to execute a script by passing a single filename argument.
 
