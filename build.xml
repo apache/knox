@@ -94,7 +94,7 @@
         </exec>
         <exec executable="${svn.cmd}" dir="gateway-site/target/site">
             <arg value="add"/>
-            <arg value="-q"/>
+            <arg value="--force"/>
             <arg value="."/>
         </exec>
         <exec executable="${svn.cmd}" dir="gateway-site/target/site">

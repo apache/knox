@@ -16,7 +16,228 @@ limitations under the License.
 -->
 
 ------------------------------------------------------------------------------
-Example #3: WebHDFS & Templeton/WebHCat
+Apache Knox Gateway - Usage Examples
+------------------------------------------------------------------------------
+This guide provides detailed examples for how to do some basic interactions
+with Hadoop via the Apache Knox Gateway.
+
+The first two examples submit a Java MapReduce job and workflow using the
+KnoxShell DSL
+
+* Example #1: WebHDFS & Templeton/WebHCat via KnoxShell DSL
+* Example #2: WebHDFS & Oozie via KnoxShell DSL
+
+The second two examples submit the same job and workflow but do so using only
+the [cURL](http://curl.haxx.se/) command line HTTP client.
+
+* Example #1: WebHDFS & Templeton/WebHCat via cURL
+* Example #2: WebHDFS & Oozie via KnoxShell cURL
+
+------------------------------------------------------------------------------
+Assumptions
+------------------------------------------------------------------------------
+This document assumes a few things about your environment in order to
+simplify the examples.
+
+1. The JVM is executable as simply java.
+2. The Apache Knox Gateway is installed and functional.
+3. The example commands are executed within the context of the GATEWAY_HOME
+   current directory. The GATEWAY_HOME directory is the directory within the
+   Apache Knox Gateway installation that contains the README file and the bin,
+   conf and deployments directories.
+4. A few examples optionally require the use of commands from a standard
+   Groovy installation.  These examples are optional but to try them you will
+   need Groovy [installed][gii].
+
+[gii]: http://groovy.codehaus.org/Installing+Groovy
+
+------------------------------------------------------------------------------
+Customization
+------------------------------------------------------------------------------
+These examples may need to be tailored to the execution environment.  In
+particular hostnames and ports may need to be changes to match your
+environment.  In particular there are two example files in the distribution
+that may need to be customized.  Take a moment to review these files.
+All of the values that may need to be customized can be found together at the
+top of each file.
+
+* samples/ExampleSubmitJob.groovy
+* samples/ExampleSubmitWorkflow.groovy
+
+If you are using the Sandbox VM for your Hadoop cluster you may want to
+review [these configuration tips][sb].
+
+[sb]: sandbox.html
+
+------------------------------------------------------------------------------
+Example #1: WebHDFS & Templeton/WebHCat via KnoxShell DSL
+------------------------------------------------------------------------------
+This example will submit the familiar WordCount Java MapReduce job to the
+Hadoop cluster via the gateway using the KnoxShell DSL.  There are several
+ways to do this depending upon your preference.
+
+You can use the "embedded" Groovy interpreter provided with the distribution.
+
+    java -jar bin/shell-${gateway-version}.jar samples/ExampleSubmitJob.groovy
+
+You can load the KnoxShell DSL script into the standard Groovy Console.
+
+    groovyConsole -cp bin/shell-${gateway-version}.jar samples/ExampleSubmitJob.groovy
+
+You can manually type in the KnoxShell DSL script into the "embedded" Groovy
+interpreter provided with the distribution.
+
+    java -jar bin/shell-${gateway-version}.jar
+
+Each line from the file below will need to be typed or copied into the
+interactive shell.
+
+***samples/ExampleSubmitJob***
+
+    import com.jayway.jsonpath.JsonPath
+    import org.apache.hadoop.gateway.shell.Hadoop
+    import org.apache.hadoop.gateway.shell.hdfs.Hdfs
+    import org.apache.hadoop.gateway.shell.job.Job
+
+    import static java.util.concurrent.TimeUnit.SECONDS
+
+    gateway = "https://localhost:8443/gateway/sample"
+    username = "mapred"
+    password = "mapred-password"
+    dataFile = "LICENSE"
+    jarFile = "samples/hadoop-examples.jar"
+
+    hadoop = Hadoop.login( gateway, username, password )
+
+    println "Delete /tmp/test " + Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now().statusCode
+    println "Create /tmp/test " + Hdfs.mkdir(hadoop).dir( "/tmp/test").now().statusCode
+
+    putData = Hdfs.put(hadoop).file( dataFile ).to( "/tmp/test/input/FILE" ).later() {
+      println "Put /tmp/test/input/FILE " + it.statusCode }
+    putJar = Hdfs.put(hadoop).file( jarFile ).to( "/tmp/test/hadoop-examples.jar" ).later() {
+      println "Put /tmp/test/hadoop-examples.jar " + it.statusCode }
+    hadoop.waitFor( putData, putJar )
+
+    jobId = Job.submitJava(hadoop) \
+      .jar( "/tmp/test/hadoop-examples.jar" ) \
+      .app( "wordcount" ) \
+      .input( "/tmp/test/input" ) \
+      .output( "/tmp/test/output" ) \
+      .now().jobId
+    println "Submitted job " + jobId
+
+    done = false
+    count = 0
+    while( !done && count++ < 60 ) {
+      sleep( 1000 )
+      json = Job.queryStatus(hadoop).jobId(jobId).now().string
+      done = JsonPath.read( json, "\$.status.jobComplete" )
+    }
+    println "Done " + done
+
+    println "Shutdown " + hadoop.shutdown( 10, SECONDS )
+
+------------------------------------------------------------------------------
+Example #2: WebHDFS & Oozie via KnoxShell DSL
+------------------------------------------------------------------------------
+This example will also submit the familiar WordCount Java MapReduce job to the
+Hadoop cluster via the gateway using the KnoxShell DSL.  However in this case
+the job will be submitted via a Oozie workflow.  There are several ways to do
+this depending upon your preference.
+
+You can use the "embedded" Groovy interpreter provided with the distribution.
+    java -jar bin/shell-${gateway-version}.jar samples/ExampleSubmitWorkflow.groovy
+
+You can load the KnoxShell DSL script into the standard Groovy Console.
+    groovyConsole -cp bin/shell-${gateway-version}.jar samples/ExampleSubmitWorkflow.groovy
+
+You can manually type in the KnoxShell DSL script into the "embedded" Groovy
+interpreter provided with the distribution.
+
+    java -jar bin/shell-${gateway-version}.jar
+
+Each line from the file below will need to be typed or copied into the
+interactive shell.
+
+***samples/ExampleSubmitWorkflow.groovy***
+
+    import com.jayway.jsonpath.JsonPath
+    import org.apache.hadoop.gateway.shell.Hadoop
+    import org.apache.hadoop.gateway.shell.hdfs.Hdfs
+    import org.apache.hadoop.gateway.shell.workflow.Workflow
+
+    import static java.util.concurrent.TimeUnit.SECONDS
+
+    gateway = "https://localhost:8443/gateway/sample"
+    jobTracker = "sandbox:50300";
+    nameNode = "sandbox:8020";
+    username = "mapred"
+    password = "mapred-password"
+    inputFile = "LICENSE"
+    jarFile = "samples/hadoop-examples.jar"
+
+    definition = """\
+    <workflow-app xmlns="uri:oozie:workflow:0.2" name="wordcount-workflow">
+        <start to="root-node"/>
+        <action name="root-node">
+            <java>
+                <job-tracker>$jobTracker</job-tracker>
+                <name-node>hdfs://$nameNode</name-node>
+                <main-class>org.apache.hadoop.examples.WordCount</main-class>
+                <arg>/tmp/test/input</arg>
+                <arg>/tmp/test/output</arg>
+            </java>
+            <ok to="end"/>
+            <error to="fail"/>
+        </action>
+        <kill name="fail">
+            <message>Java failed</message>
+        </kill>
+        <end name="end"/>
+    </workflow-app>
+    """
+
+    configuration = """\
+    <configuration>
+        <property>
+            <name>user.name</name>
+            <value>$username</value>
+        </property>
+        <property>
+            <name>oozie.wf.application.path</name>
+            <value>hdfs://$nameNode/tmp/test</value>
+        </property>
+    </configuration>
+    """
+
+    hadoop = Hadoop.login( gateway, username, password )
+
+    println "Delete /tmp/test " + Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now().statusCode
+    println "Mkdir /tmp/test " + Hdfs.mkdir(hadoop).dir( "/tmp/test").now().statusCode
+    putWorkflow = Hdfs.put(hadoop).text( definition ).to( "/tmp/test/workflow.xml" ).later() {
+      println "Put /tmp/test/workflow.xml " + it.statusCode }
+    putData = Hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/FILE" ).later() {
+      println "Put /tmp/test/input/FILE " + it.statusCode }
+    putJar = Hdfs.put(hadoop).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar" ).later() {
+      println "Put /tmp/test/lib/hadoop-examples.jar " + it.statusCode }
+    hadoop.waitFor( putWorkflow, putData, putJar )
+
+    jobId = Workflow.submit(hadoop).text( configuration ).now().jobId
+    println "Submitted job " + jobId
+
+    status = "UNKNOWN";
+    count = 0;
+    while( status != "SUCCEEDED" && count++ < 60 ) {
+      sleep( 1000 )
+      json = Workflow.status(hadoop).jobId( jobId ).now().string
+      status = JsonPath.read( json, "\$.status" )
+    }
+    println "Job status " + status;
+
+    println "Shutdown " + hadoop.shutdown( 10, SECONDS )
+
+------------------------------------------------------------------------------
+Example #3: WebHDFS & Templeton/WebHCat via cURL
 ------------------------------------------------------------------------------
 The example below illustrates the sequence of curl commands that could be used
 to run a "word count" map reduce job.  It utilizes the hadoop-examples.jar
@@ -75,7 +296,7 @@ DataNode that follows it.
       'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
 
 ------------------------------------------------------------------------------
-Example #4: WebHDFS & Oozie
+Example #4: WebHDFS & Oozie via cURL
 ------------------------------------------------------------------------------
 The example below illustrates the sequence of curl commands that could be used
 to run a "word count" map reduce job via an Oozie workflow.  It utilizes the
@@ -138,7 +359,6 @@ required.  These replacement values are identivied with { } markup.
     # 11. Optionally cleanup the test directory
     curl -i -k -u mapred:mapred-password -X DELETE \
       'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
-
 
 ------------------------------------------------------------------------------
 Disclaimer

@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
@@ -46,8 +45,9 @@ jobId = Job.submitJava(hadoop) \
   .input( "/tmp/test/input" ) \
   .output( "/tmp/test/output" ) \
   .now().jobId
-println "Submit job " + jobId
+println "Submitted job " + jobId
 
+println "Polling for completion..."
 done = false
 count = 0
 while( !done && count++ < 60 ) {

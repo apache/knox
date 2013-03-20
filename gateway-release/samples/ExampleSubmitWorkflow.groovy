@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
@@ -78,8 +77,9 @@ putJar = Hdfs.put(hadoop).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar
 hadoop.waitFor( putWorkflow, putData, putJar )
 
 jobId = Workflow.submit(hadoop).text( configuration ).now().jobId
-println "Submit job " + jobId
+println "Submitted job " + jobId
 
+println "Polling for completion..."
 status = "UNKNOWN";
 count = 0;
 while( status != "SUCCEEDED" && count++ < 60 ) {

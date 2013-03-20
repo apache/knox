@@ -99,6 +99,7 @@
             <item name="Getting Started" href="getting-started.html"/>
             <item name="Usage Examples" href="examples.html"/>
             <item name="Client (KnoxShell DSL)" href="client.html"/>
+            <item name="Sandbox Configuration" href="sandbox.html"/>
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>
 

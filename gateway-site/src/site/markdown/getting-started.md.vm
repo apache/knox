@@ -16,7 +16,7 @@ limitations under the License.
 -->
 
 ------------------------------------------------------------------------------
-Getting Started
+Apache Knox Gateway - Getting Started
 ------------------------------------------------------------------------------
 This guide describes the steps required to install, deploy and validate the
 Apache Knox Gateway.
@@ -45,6 +45,12 @@ gateway where ever it happens to be running.
 
 The Hadoop cluster should be ensured to have WebHDFS, WebHCat
 (i.e. Templeton) and Oozie configured, deployed and running.
+
+This release of the Apache Knox Gateway has been tested against the
+[Hortonworks Sandbox 1.2][hsb] with [these changes][sb].
+
+[hsb]: http://hortonworks.com/products/hortonworks-sandbox/
+[sb]: sandbox.html
 
 ------------------------------------------------------------------------------
 Installation
