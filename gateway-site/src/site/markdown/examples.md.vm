@@ -1,0 +1,155 @@
+<!---
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+------------------------------------------------------------------------------
+Example #3: WebHDFS & Templeton/WebHCat
+------------------------------------------------------------------------------
+The example below illustrates the sequence of curl commands that could be used
+to run a "word count" map reduce job.  It utilizes the hadoop-examples.jar
+from a Hadoop install for running a simple word count job.  Take care to
+follow the instructions below for steps 4/5 and 6/7 where the Location header
+returned by the call to the NameNode is copied for use with the call to the
+DataNode that follows it.
+
+    # 0. Optionally cleanup the test directory in case a previous example was run without cleaning up.
+    curl -i -k -u mapred:mapred-password -X DELETE \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+
+    # 1. Create a test input directory /tmp/test/input
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input?op=MKDIRS'
+
+    # 2. Create a test output directory /tmp/test/input
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=MKDIRS'
+
+    # 3. Create the inode for hadoop-examples.jar in /tmp/test
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/hadoop-examples.jar?op=CREATE'
+
+    # 4. Upload hadoop-examples.jar to /tmp/test.  Use a hadoop-examples.jar from a Hadoop install.
+    curl -i -k -u mapred:mapred-password -T hadoop-examples.jar -X PUT '{Value Location header from command above}'
+
+    # 5. Create the inode for a sample file README in /tmp/test/input
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/README?op=CREATE'
+
+    # 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
+    curl -i -k -u mapred:mapred-password -T README -X PUT '{Value of Location header from command above}'
+
+    # 7. Submit the word count job via WebHCat/Templeton.
+    # Take note of the Job ID in the JSON response as this will be used in the next step.
+    curl -v -i -k -u mapred:mapred-password -X POST \
+      -d jar=/tmp/test/hadoop-examples.jar -d class=wordcount \
+      -d arg=/tmp/test/input -d arg=/tmp/test/output \
+      'https://localhost:8443/gateway/sample/templeton/api/v1/mapreduce/jar'
+
+    # 8. Look at the status of the job
+    curl -i -k -u mapred:mapred-password -X GET \
+      'https://localhost:8443/gateway/sample/templeton/api/v1/queue/{Job ID returned in JSON body from previous step}'
+
+    # 9. Look at the status of the job queue
+    curl -i -k -u mapred:mapred-password -X GET \
+      'https://localhost:8443/gateway/sample/templeton/api/v1/queue'
+
+    # 10. List the contents of the output directory /tmp/test/output
+    curl -i -k -u mapred:mapred-password -X GET \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
+
+    # 11. Optionally cleanup the test directory
+    curl -i -k -u mapred:mapred-password -X DELETE \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+
+------------------------------------------------------------------------------
+Example #4: WebHDFS & Oozie
+------------------------------------------------------------------------------
+The example below illustrates the sequence of curl commands that could be used
+to run a "word count" map reduce job via an Oozie workflow.  It utilizes the
+hadoop-examples.jar from a Hadoop install for running a simple word count job.
+Take care to follow the instructions below where replacement values are
+required.  These replacement values are identivied with { } markup.
+
+    # 0. Optionally cleanup the test directory in case a previous example was run without cleaning up.
+    curl -i -k -u mapred:mapred-password -X DELETE \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+
+    # 1. Create the inode for workflow definition file in /tmp/test
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/workflow.xml?op=CREATE'
+
+    # 2. Upload the workflow definition file.  This file can be found in {GATEWAY_HOME}/templates
+    curl -i -k -u mapred:mapred-password -T templates/workflow-definition.xml -X PUT \
+      '{Value Location header from command above}'
+
+    # 3. Create the inode for hadoop-examples.jar in /tmp/test/lib
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/lib/hadoop-examples.jar?op=CREATE'
+
+    # 4. Upload hadoop-examples.jar to /tmp/test/lib.  Use a hadoop-examples.jar from a Hadoop install.
+    curl -i -k -u mapred:mapred-password -T hadoop-examples.jar -X PUT \
+      '{Value Location header from command above}'
+
+    # 5. Create the inode for a sample input file readme.txt in /tmp/test/input.
+    curl -i -k -u mapred:mapred-password -X PUT \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/input/README?op=CREATE'
+
+    # 6. Upload readme.txt to /tmp/test/input.  Use the readme.txt in {GATEWAY_HOME}.
+    # The sample below uses this README file found in {GATEWAY_HOME}.
+    curl -i -k -u mapred:mapred-password -T README -X PUT \
+      '{Value of Location header from command above}'
+
+    # 7. Create the job configuration file by replacing the {NameNode host:port} and {JobTracker host:port}
+    # in the command below to values that match your Hadoop configuration.
+    # NOTE: The hostnames must be resolvable by the Oozie daemon.  The ports are the RPC ports not the HTTP ports.
+    # For example {NameNode host:port} might be sandbox:8020 and {JobTracker host:port} sandbox:50300
+    # The source workflow-configuration.xml file can be found in {GATEWAY_HOME}/templates
+    # Alternatively, this file can copied and edited manually for environments without the sed utility.
+    sed -e s/REPLACE.NAMENODE.RPCHOSTPORT/{NameNode host:port}/ \
+      -e s/REPLACE.JOBTRACKER.RPCHOSTPORT/{JobTracker host:port}/ \
+      <templates/workflow-configuration.xml >workflow-configuration.xml
+
+    # 8. Submit the job via Oozie
+    # Take note of the Job ID in the JSON response as this will be used in the next step.
+    curl -i -k -u mapred:mapred-password -T workflow-configuration.xml -H Content-Type:application/xml -X POST \
+      'https://localhost:8443/gateway/oozie/sample/api/v1/jobs?action=start'
+
+    # 9. Query the job status via Oozie.
+    curl -i -k -u mapred:mapred-password -X GET \
+      'https://localhost:8443/gateway/sample/oozie/api/v1/job/{Job ID returned in JSON body from previous step}'
+
+    # 10. List the contents of the output directory /tmp/test/output
+    curl -i -k -u mapred:mapred-password -X GET \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test/output?op=LISTSTATUS'
+
+    # 11. Optionally cleanup the test directory
+    curl -i -k -u mapred:mapred-password -X DELETE \
+      'https://localhost:8443/gateway/sample/namenode/api/v1/tmp/test?op=DELETE&recursive=true'
+
+
+------------------------------------------------------------------------------
+Disclaimer
+------------------------------------------------------------------------------
+The Apache Knox Gateway is an effort undergoing incubation at the
+Apache Software Foundation (ASF), sponsored by the Apache Incubator PMC.
+
+Incubation is required of all newly accepted projects until a further review
+indicates that the infrastructure, communications, and decision making process
+have stabilized in a manner consistent with other successful ASF projects.
+
+While incubation status is not necessarily a reflection of the completeness
+or stability of the code, it does indicate that the project has yet to be
+fully endorsed by the ASF.

@@ -28,6 +28,14 @@ If the repository has already been cloned the following process should be used.
     git pull
     ant publish
 
+Unfortunately there are two know issues with this process.
+
+1.  All files in the site are updated in Subversion even if they have not change.
+    As the site becomes larger and contains more images this may become a serious issue.
+
+2.  Any renamed or removed files will result in "orphaned" files in Subversion.
+    These will need to be cleaned up explicitly.
+
 
 
 

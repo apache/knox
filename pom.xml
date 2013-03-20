@@ -254,11 +254,6 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-util-launcher</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-util-urltemplate</artifactId>
                 <version>${gateway-version}</version>
             </dependency>

@@ -32,6 +32,12 @@
     <description>Knox is a gateway for Hadoop clusters.</description>
     <url>http://incubator.apache.org/knox</url>
 
+    <properties>
+        <HHH>###</HHH>
+        <HHHH>####</HHHH>
+        <HHHHH>#####</HHHHH>
+    </properties>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>

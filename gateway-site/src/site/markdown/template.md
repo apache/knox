@@ -15,12 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+------------------------------------------------------------------------------
 Section
--------
+------------------------------------------------------------------------------
 
 
+------------------------------------------------------------------------------
 Disclaimer
-----------
+------------------------------------------------------------------------------
 The Apache Knox Gateway is an effort undergoing incubation at the
 Apache Software Foundation (ASF), sponsored by the Apache Incubator PMC.
 

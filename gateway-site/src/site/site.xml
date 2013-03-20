@@ -96,13 +96,14 @@
         </menu>
 
         <menu name="Documentation">
-            <item name="Getting Started" href="setup.html"/>
+            <item name="Getting Started" href="getting-started.html"/>
+            <item name="Usage Examples" href="examples.html"/>
             <item name="Client (KnoxShell DSL)" href="client.html"/>
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>
 
         <menu name="Releases">
-            <item name="0.2.0 (coming soon)" href="readme-0-2-0.html"/>
+            <item name="0.2.0 (coming soon)" href="release-0-2-0.html"/>
             <item name="0.3.0 (planning)" href="roadmap-0-3-0.html"/>
         </menu>
 

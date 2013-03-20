@@ -55,7 +55,7 @@ This document assumes a few things about your environment in order to simplify t
 2. The Apache Knox Gateway is installed and functional.
 3. The example commands are executed within the context of the GATEWAY_HOME current directory.
 The GATEWAY_HOME directory is the directory within the Apache Knox Gateway installation that contains the README file and the bin, conf and deployments directories.
-4. A few examples require the use of commands from a standard Groovy installation.
+4. A few examples require the use of commands from a standard Groovy installation.  These examples are optional but to try them you will need Groovy [installed][15].
 
 
 Usage
@@ -162,7 +162,7 @@ Constructs
 ----------
 In order to understand the DSL there are three primary constructs that need to be understood.
 
-### Hadoop
+${HHH} Hadoop
 This construct encapsulates the client side session state that will be shared between all command invocations.
 In particular it will simplify the management of any tokens that need to be presented with each command invocation.
 It also manages a thread pool that is used by all asynchronous commands which is why it is important to call one of the shutdown methods.
@@ -170,7 +170,7 @@ It also manages a thread pool that is used by all asynchronous commands which is
 The syntax associated with this is expected to change we expect that credentials will not need to be provided to the gateway.
 Rather it is expected that some form of access token will be used to initialize the session.
 
-### Services
+${HHH} Services
 Services are the primary extension point for adding new suites of commands.
 The built in examples are: Hdfs, Job and Workflow.
 The desire for extensibility is the reason for the slightly awkward Hdfs.ls(hadoop) syntax.
@@ -179,16 +179,16 @@ At a minimum it would result in extension commands with a different syntax from 
 
 The service objects essentially function as a factory for a suite of commands.
 
-### Commands
+${HHH} Commands
 Commands provide the behavior of the DSL.
 They typically follow a Fluent interface style in order to allow for single line commands.
 There are really three parts to each command: Request, Invocation, Response
 
-#### Request
+${HHHH} Request
 The request is populated by all of the methods following the "verb" method and the "invoke" method.
 For example in Hdfs.rm(hadoop).ls(dir).now() the request is populated between the "verb" method rm() and the "invoke" method now().
 
-#### Invocation
+${HHHH} Invocation
 The invocation method controls how the request is invoked.
 Currently supported synchronous and asynchronous invocation.
 The now() method executes the request and returns the result immediately.
@@ -196,7 +196,7 @@ The later() method submits the request to be executed later and returns a future
 In addition later() invocation method can optionally be provided a closure to execute when the request is complete.
 See the Futures and Closures sections below for additional detail and examples.
 
-#### Response
+${HHHH} Response
 The response contains the results of the invocation of the request.
 In most cases the response is a thin wrapper over the HTTP response.
 In fact many commands will share a single BasicResponse type that only provides a few simple methods.
@@ -233,22 +233,22 @@ Services
 --------
 There are three basic DSL services and commands bundled with the shell.
 
-### HDFS
+${HHH} HDFS
 Provides basic HDFS commands.
 ***Using these DSL commands requires that WebHDFS be running in the Hadoop cluster.***
 
-### Jobs (Templeton/WebHCat)
+${HHH} Jobs (Templeton/WebHCat)
 Provides basic job submission and status commands.
 ***Using these DSL commands requires that Templeton/WebHCat be running in the Hadoop cluster.***
 
-### Workflow (Oozie)
+${HHH} Workflow (Oozie)
 Provides basic workflow submission and status commands.
 ***Using these DSL commands requires that Oozie be running in the Hadoop cluster.***
 
 
 HDFS Commands (WebHDFS)
 -----------------------
-### ls() - List the contents of a HDFS directory.
+${HHH} ls() - List the contents of a HDFS directory.
 * Request
     * dir (String) - The HDFS directory to list.
 * Response
@@ -256,7 +256,7 @@ HDFS Commands (WebHDFS)
 * Example
     * `Hdfs.ls(hadoop).ls().dir("/").now()`
 
-### rm() - Remove a HDFS file or directory.
+${HHH} rm() - Remove a HDFS file or directory.
 * Request
     * file (String) - The HDFS file or directory to remove.
     * recursive (Boolean) - If the file is a directory also remove any contained files and directories. Optional: default=false
@@ -265,7 +265,7 @@ HDFS Commands (WebHDFS)
 * Example
     * `Hdfs.rm(hadoop).file("/tmp/example").recursive().now()`
 
-### put() - Copy a file from the local file system to HDFS.
+${HHH} put() - Copy a file from the local file system to HDFS.
 * Request
     * text (String) - The text to copy to the remote file.
     * file (String) - The name of a local file to copy to the remote file.
@@ -275,7 +275,7 @@ HDFS Commands (WebHDFS)
 * Example
     * `Hdfs.put(hadoop).file("localFile").to("/tmp/example/remoteFile").now()`
 
-### get() - Copy a file from HDFS to the local file system.
+${HHH} get() - Copy a file from HDFS to the local file system.
 * Request
     * file (String) - The name of the local file to create from the remote file.  If this isn't specified the file content must be read from the response.
     * from (String) - The name of the remote file to copy.
@@ -284,7 +284,7 @@ HDFS Commands (WebHDFS)
 * Example
     * `Hdfs.get(hadoop).file("localFile").from("/tmp/example/remoteFile").now()`
 
-### mkdir() - Create a directory in HDFS.
+${HHH} mkdir() - Create a directory in HDFS.
 * Request
     * dir (String) - The name of the remote directory to create.
     * perm (String) - The permissions to create the remote directory with.  Optional: default="777"
@@ -296,7 +296,7 @@ HDFS Commands (WebHDFS)
 
 Job Commands (WebHCat/Templeton)
 --------------------------------
-### submitJava() - Submit a Java MapReduce job.
+${HHH} submitJava() - Submit a Java MapReduce job.
 * Request
     * jar (String) - The remote file name of the JAR containing the app to execute.
     * app (String) - The app name to execute.  This is wordcount for example not the class name.
@@ -307,7 +307,7 @@ Job Commands (WebHCat/Templeton)
 * Example
     * `Job.submitJava(hadoop).jar(remoteJarName).app(appName).input(remoteInputDir).output(remoteOutputDir).now().jobId`
 
-### submitPig() - Submit a Pig job.
+${HHH} submitPig() - Submit a Pig job.
 * Request
     * file (String) - The remote file name of the pig script.
     * arg (String) - An argument to pass to the script.
@@ -317,7 +317,7 @@ Job Commands (WebHCat/Templeton)
 * Example
     * `Job.submitPig(hadoop).file(remotePigFileName).arg("-v").statusDir(remoteStatusDir).now()`
 
-### submitHive() - Submit a Hive job.
+${HHH} submitHive() - Submit a Hive job.
 * Request
     * file (String) - The remote file name of the hive script.
     * arg (String) - An argument to pass to the script.
@@ -327,7 +327,7 @@ Job Commands (WebHCat/Templeton)
 * Example
     * `Job.submitHive(hadoop).file(remoteHiveFileName).arg("-v").statusDir(remoteStatusDir).now()`
 
-### queryQueue() - Return a list of all job IDs registered to the user.
+${HHH} queryQueue() - Return a list of all job IDs registered to the user.
 * Request
     * No request parameters.
 * Response
@@ -335,7 +335,7 @@ Job Commands (WebHCat/Templeton)
 * Example
     * `Job.queryQueue(hadoop).now().string`
 
-### queryStatus() - Check the status of a job and get related job information given its job ID.
+${HHH} queryStatus() - Check the status of a job and get related job information given its job ID.
 * Request
     * jobId (String) - The job ID to check. This is the ID received when the job was created.
 * Response
@@ -346,7 +346,7 @@ Job Commands (WebHCat/Templeton)
 
 Workflow Commands (Oozie)
 -------------------------
-### submit() - Submit a workflow job.
+${HHH} submit() - Submit a workflow job.
 * Request
     * text (String) - XML formatted workflow configuration string.
     * file (String) - A filename containing XML formatted workflow configuration.
@@ -356,7 +356,7 @@ Workflow Commands (Oozie)
 * Example
     * `Workflow.submit(hadoop).file(localFile).action("start").now()`
 
-### status() - Query the status of a workflow job.
+${HHH} status() - Query the status of a workflow job.
 * Request
     * jobId (String) - The job ID to check. This is the ID received when the job was created.
 * Response
@@ -438,7 +438,7 @@ The easiest way to add these to the shell is to compile them directory into the 
 
 These source files are available in the samples directory of the distribution but these are included here for convenience.
 
-### Sample Service (Groovy)
+${HHH} Sample Service (Groovy)
     import org.apache.hadoop.gateway.shell.Hadoop
 
     class SampleService {
@@ -455,7 +455,7 @@ These source files are available in the samples directory of the distribution bu
 
     }
 
-### Sample Simple Command (Groovy)
+${HHH} Sample Simple Command (Groovy)
     import org.apache.hadoop.gateway.shell.AbstractRequest
     import org.apache.hadoop.gateway.shell.BasicResponse
     import org.apache.hadoop.gateway.shell.Hadoop
@@ -491,7 +491,7 @@ These source files are available in the samples directory of the distribution bu
 
     }
 
-### Sample Complex Command (Groovy)
+${HHH} Sample Complex Command (Groovy)
     import com.jayway.jsonpath.JsonPath
     import org.apache.hadoop.gateway.shell.AbstractRequest
     import org.apache.hadoop.gateway.shell.BasicResponse
@@ -549,7 +549,7 @@ These source files are available in the samples directory of the distribution bu
 Groovy
 ------
 The shell included in the distribution is basically an unmodified packaging of the Groovy shell.
-Therefore these command are functionally equivalent if you have Groovy installed.
+Therefore these command are functionally equivalent if you have Groovy [installed][15].
 
     java -jar bin/shell-0.2.0-SNAPSHOT.jar sample/SmokeTestJob.groovy
     groovy -cp bin/shell-0.2.0-SNAPSHOT.jar sample/SmokeTestJob.groovy
@@ -587,13 +587,14 @@ There are a variety of Groovy tools that make it very easy to work with the stan
 In Groovy the creation of XML or JSON is typically done via a "builder" and parsing done via a "slurper".
 In addition once JSON or XML is "slurped" the GPath, an XPath like feature build into Groovy can be used to access data.
 * XML
-  * Markup Builder [Overview](http://groovy.codehaus.org/Creating+XML+using+Groovy's+MarkupBuilder), [API](http://groovy.codehaus.org/api/groovy/xml/MarkupBuilder.html)
-  * XML Slurper [Overview](http://groovy.codehaus.org/Reading+XML+using+Groovy's+XmlSlurper), [API](http://groovy.codehaus.org/api/groovy/util/XmlSlurper.html)
-  * XPath [Overview](http://groovy.codehaus.org/GPath), [API]
+  * Markup Builder [Overview][5], [API][6]
+  * XML Slurper [Overview][7], [API][8]
+  * XPath [Overview][9], [API][10]
 * JSON
-  * JSON Builder [API](http://groovy.codehaus.org/gapi/groovy/json/JsonBuilder.html)
-  * JSON Slurper [API](http://groovy.codehaus.org/gapi/groovy/json/JsonSlurper.html)
-* GPath [Overview](http://groovy.codehaus.org/GPath)
+  * JSON Builder [API][11]
+  * JSON Slurper [API][12]
+  * JSON Path [API][14]
+* GPath [Overview][13]
 
 
 Disclaimer
@@ -613,3 +614,14 @@ fully endorsed by the ASF.
 [2]: http://groovy.codehaus.org/
 [3]: https://code.google.com/p/rest-assured/
 [4]: http://en.wikipedia.org/wiki/Fluent_interface
+[5]: http://groovy.codehaus.org/Creating+XML+using+Groovy's+MarkupBuilder
+[6]: http://groovy.codehaus.org/api/groovy/xml/MarkupBuilder.html
+[7]: http://groovy.codehaus.org/Reading+XML+using+Groovy's+XmlSlurper
+[8]: http://groovy.codehaus.org/api/groovy/util/XmlSlurper.html
+[9]: http://groovy.codehaus.org/GPath
+[10]: http://docs.oracle.com/javase/1.5.0/docs/api/javax/xml/xpath/XPath.html
+[11]: http://groovy.codehaus.org/gapi/groovy/json/JsonBuilder.html
+[12]: http://groovy.codehaus.org/gapi/groovy/json/JsonSlurper.html
+[13]: http://groovy.codehaus.org/GPath
+[14]: https://code.google.com/p/json-path/
+[15]: http://groovy.codehaus.org/Installing+Groovy
