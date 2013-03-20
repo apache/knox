@@ -17,7 +17,16 @@ limitations under the License.
 
 Build Process
 -------------
-TODO: Here we will describe how to build the project.
+The following process can be used to build the project without an existing repository clone.
+
+    git clone https://git-wip-us.apache.org/repos/asf/incubator-knox.git knox
+    mvn clean install
+
+If the repository has already been cloned the following process should be used.
+
+    git pull
+    mvn clean install
+
 
 Disclaimer
 ----------

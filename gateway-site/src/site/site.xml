@@ -99,7 +99,7 @@
             <!--
             <item name="Install" href="install"/>
             -->
-            <item name="Client (KnoxShell)" href="client.html"/>
+            <item name="Client (KnoxShell DSL)" href="client.html"/>
             <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox"/>
         </menu>
 
@@ -112,6 +112,7 @@
             <item name="Build" href="build-process.html"/>
             <item name="Release" href="release-process.html"/>
             <item name="Contribute" href="contribute-process.html"/>
+            <item name="Site Publication" href="site-process.html"/>
         </menu>
 
         <menu name="Resources">

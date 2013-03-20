@@ -15,9 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-Contribution Process
---------------------
-TODO: Here we will describe how to contribute to the project.
+Development & Contribute Process
+================================
+
+Non-Member
+----------
+TODO: Here we will describe how to develop and contribute to the project as a non-member.
+
+Member
+------
+TODO: Here we will describe how to develop and contribute to the project as a member.
+
 
 Disclaimer
 ----------

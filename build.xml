@@ -32,6 +32,13 @@
         <os family="windows" />
     </condition>
 
+    <condition property="svn.cmd" value="svn">
+        <os family="unix" />
+    </condition>
+    <condition property="svn.cmd" value="svn">
+        <os family="windows" />
+    </condition>
+
     <target name="init" description="Initialize the build.">
     </target>
 
@@ -69,15 +76,36 @@
         </zip>
     </target>
 
-    <target name="site" description="Generate and copy the Apache web site.">
-        <exec executable="${mvn.cmd}">
-            <arg value="--file"/>
-            <arg value="gateway-site/pom.xml"/>
+    <target name="publish" description="Generate and publish the Apache web site.">
+        <exec executable="${mvn.cmd}" dir="gateway-site">
+            <arg value="clean"/>
+        </exec>
+        <mkdir dir="gateway-site/target/site"/>
+        <exec executable="${svn.cmd}" dir="gateway-site/target">
+            <arg value="checkout"/>
+            <arg value="https://svn.apache.org/repos/asf/incubator/knox/site"/>
+        </exec>
+        <delete quiet="true" verbose="true">
+            <fileset dir="gateway-site/target/site">
+                <filename name="**/*.html"/>
+                <filename name="**/*.css"/>
+                <filename name="**/*.png"/>
+                <filename name="**/*.gif"/>
+            </fileset>
+        </delete>
+        <exec executable="${mvn.cmd}" dir="gateway-site">
             <arg value="site"/>
         </exec>
-        <copy todir="site" overwrite="true">
-            <fileset dir="gateway-site/target/site"/>
-        </copy>
+        <exec executable="${svn.cmd}" dir="gateway-site/target/site">
+            <arg value="add"/>
+            <arg value="-q"/>
+            <arg value="."/>
+        </exec>
+        <exec executable="${svn.cmd}" dir="gateway-site/target/site">
+            <arg value="commit"/>
+            <arg value="-m"/>
+            <arg value="Publish site from Git repository."/>
+        </exec>
     </target>
 
     <target name="release" depends="init,clean,build,archive" description="Create the release."/>
