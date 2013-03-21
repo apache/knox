@@ -17,12 +17,12 @@
  */
 package org.apache.hadoop.gateway.i18n.resources;
 
-import org.apache.hadoop.gateway.i18n.messages.Messages;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ListResourceBundle;
+import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
