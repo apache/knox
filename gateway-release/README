@@ -73,13 +73,15 @@ http://knox.incubator.apache.org/examples.html
 ------------------------------------------------------------------------------
 Filing bugs
 ------------------------------------------------------------------------------
-Current the Jira infrastructure for the Apache Knox project is not setup.
-If you have access, file bugs at hortonworks.jira.com under
-  Project: Bug DB
-  Component: Knox
+Currently we do not have Jira setup for Knox.  Therefore if you find an issue
+please send an email to the Knox user list (user AT knox.incubator.apache.org)
+with a subject prefix of [BUG] describing the issue.  Please include the
+results of this command in the email.
 
-Include the results of this command
-
-  java -jar bin/gateway-0.2.0-SNAPSHOT.jar -version
+    java -jar bin/gateway-${gateway-version}.jar -version
 
 in the Environment section.  Also include the version of Hadoop being used.
+
+One we have Jira setup the email archive will be reviewed and Jira issues
+created for each bug.
+
