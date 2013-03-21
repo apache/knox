@@ -119,12 +119,12 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <loadfile property="deploy-message" srcFile="DEPLOY">
+        <loadfile property="stage-message" srcFile="STAGE">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </loadfile>
-        <echo message="${deploy-message}"/>
+        <echo message="${stage-message}"/>
     </target>
 
     <target name="publish" description="Generate and publish the Apache web site.">
