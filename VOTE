@@ -1,0 +1,20 @@
+From: ${release-manager}@apache.org
+To: dev@${gateway-project}.apache.org
+Subject: [VOTE] Release ${gateway-name} ${gateway-version}
+
+A candidate for the ${gateway-name} ${gateway-version} release is available at:
+
+http://people.apache.org/~${release-manager}/${gateway-project}/${gateway-version}/
+
+The release candidate is a zip archive of the sources in:
+
+http://svn.apache.org/repos/asf/${gateway-project}/tags/${gateway-version}/
+
+The SHA1 checksum of the archive is ${checksum}.
+
+Please vote on releasing this package as ${gateway-name} ${gateay-version}.
+The vote is open for the next 72 hours and passes if a majority of at
+least three +1 ${project-name} PMC votes are cast.
+
+[ ] +1 Release this package as ${gateway-name} ${gateway-version}
+[ ] -1 Do not release this package because...${line.separator}

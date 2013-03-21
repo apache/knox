@@ -68,9 +68,11 @@
     </modules>
 
     <properties>
-        <gateway-group>org.apache.hadoop</gateway-group>
-        <gateway-artifact>gateway</gateway-artifact>
+        <gateway-name>Apache Knox (Incubator)</gateway-name>
+        <gateway-project>knox</gateway-project>
+        <gateway-artifact>knox</gateway-artifact>
         <gateway-version>0.2.0-SNAPSHOT</gateway-version>
+        <gateway-group>org.apache.hadoop</gateway-group>
     </properties>
 
     <licenses>
@@ -135,28 +137,28 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9</version>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <outputDirectory>target/${pom.version}</outputDirectory>
+                            <finalName>${gateway-artifact}-${pom.version}</finalName>
+                        </configuration>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
+                                <id>src</id>
                                 <goals>
-                                    <goal>jar</goal>
+                                    <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
                             </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
-                        <executions>
                             <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
+                                <id>source-release-assembly</id>
+                                <configuration>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -184,6 +186,34 @@
                             </excludes>
                         </configuration>
                     </plugin>
+                    <!--
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    -->
                 </plugins>
             </build>
         </profile>
@@ -219,6 +249,8 @@
                 <configuration>
                     <excludeSubProjects>false</excludeSubProjects>
                     <excludes>
+                        <exclude>VOTE</exclude>
+                        <exclude>DEPLOY</exclude>
                         <exclude>.git/**</exclude>
                         <exclude>.svn/**</exclude>
                         <exclude>.idea/**</exclude>
@@ -227,6 +259,8 @@
                         <exclude>**/target/**</exclude>
                         <exclude>**/test/resources/**</exclude>
                         <exclude>**/main/resources/**/*.json</exclude>
+                        <exclude>gateway-release/CHANGES</exclude>
+                        <exclude>gateway-release/ISSUES</exclude>
                     </excludes>
                 </configuration>
             </plugin>

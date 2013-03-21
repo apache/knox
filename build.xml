@@ -21,9 +21,13 @@
         Release build file for the Hadoop Gateway
     </description>
 
-    <property name="version" value="0.2.0-SNAPSHOT"/>
-    <property name="archive" value="target/gateway-${version}.zip"/>
-    <property name="gateway_home" value="gateway-${version}"/>
+    <property name="gateway-name" value="Apache Knox (Incubator)"/>
+    <property name="gateway-project" value="knox"/>
+    <property name="gateway-artifact" value="knox"/>
+    <property name="gateway-version" value="0.2.0-SNAPSHOT"/>
+    <property name="release-manager" value="kminder"/>
+
+    <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
 
     <condition property="mvn.cmd" value="mvn">
         <os family="unix" />
@@ -43,7 +47,7 @@
     </target>
 
     <target name="clean" depends="init" description="Clean up any build artifacts.">
-        <delete file="${archive}"/>
+        <delete file="target/${gateway-version}"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">
@@ -55,25 +59,72 @@
     </target>
 
     <target name="archive" depends="init" description="Create the release ZIP.">
-        <zip destfile="${archive}">
+        <zip destfile="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip">
             <zipfileset
                     dir="gateway-release"
                     includes="**/*"
                     excludes="src,target,*.xml,*.iml,*.md"
-                    prefix="${gateway_home}"/>
+                    prefix="${gateway-home}"/>
             <zipfileset
                     dir="gateway-test-ldap/target"
-                    includes="gateway-test-ldap-${version}.jar"
-                    fullpath="${gateway_home}/bin/ldap-${version}.jar"/>
+                    includes="gateway-test-ldap-${gateway-version}.jar"
+                    fullpath="${gateway-home}/bin/ldap-${gateway-version}.jar"/>
             <zipfileset
                     dir="gateway-release/target"
-                    includes="gateway-release-${version}.jar"
-                    fullpath="${gateway_home}/bin/gateway-${version}.jar"/>
+                    includes="gateway-release-${gateway-version}.jar"
+                    fullpath="${gateway-home}/bin/gateway-${gateway-version}.jar"/>
             <zipfileset
                     dir="gateway-shell/target"
-                    includes="gateway-shell-${version}.jar"
-                    fullpath="${gateway_home}/bin/shell-${version}.jar"/>
+                    includes="gateway-shell-${gateway-version}.jar"
+                    fullpath="${gateway-home}/bin/shell-${gateway-version}.jar"/>
         </zip>
+    </target>
+
+    <target name="release" depends="init,clean,build,archive" description="Create the release."/>
+
+    <target name="sign" depends="init" description="Sign a previously created release.">
+        <checksum algorithm="MD5" fileext=".md5">
+            <fileset dir="target/${gateway-version}">
+                <include name="*.zip" />
+                <include name="*.jar" />
+                <include name="*.tar" />
+            </fileset>
+        </checksum>
+        <checksum algorithm="SHA1" fileext=".sha">
+            <fileset dir="target/${gateway-version}">
+                <include name="*.zip" />
+                <include name="*.jar" />
+                <include name="*.tar" />
+            </fileset>
+        </checksum>
+        <exec executable="gpg" dir="target/${gateway-version}">
+            <arg value="--armor"/>
+            <arg value="--detach-sig"/>
+            <arg value="${gateway-artifact}-${gateway-version}.zip"/>
+        </exec>
+        <exec executable="gpg" dir="target/${gateway-version}">
+            <arg value="--armor"/>
+            <arg value="--detach-sig"/>
+            <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
+        </exec>
+        <exec executable="gpg" dir="target/${gateway-version}">
+            <arg value="--export"/>
+            <arg value="--armor"/>
+            <arg value="--output"/>
+            <arg value="KEYS"/>
+        </exec>
+        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
+        <copy file="VOTE" tofile="target/vote.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <loadfile property="deploy-message" srcFile="DEPLOY">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </loadfile>
+        <echo message="${deploy-message}"/>
     </target>
 
     <target name="publish" description="Generate and publish the Apache web site.">
@@ -103,7 +154,5 @@
             <arg value="Publish site from Git repository."/>
         </exec>
     </target>
-
-    <target name="release" depends="init,clean,build,archive" description="Create the release."/>
 
 </project>
