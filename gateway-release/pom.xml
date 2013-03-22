@@ -53,7 +53,7 @@
                             <outputDirectory>../target</outputDirectory>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
-                                <descriptor>assembly.xml</descriptor>
+                                <descriptor>src/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>

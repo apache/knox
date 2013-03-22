@@ -23,16 +23,12 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory></directory>
+            <directory>home</directory>
             <outputDirectory></outputDirectory>
             <includes>
                 <include>**</include>
             </includes>
             <excludes>
-                <exclude>src/**</exclude>
-                <exclude>target/**</exclude>
-                <exclude>**/assembly.xml</exclude>
-                <exclude>**/pom.xml</exclude>
                 <exclude>**/.idea/**</exclude>
                 <exclude>**/*.iml</exclude>
                 <exclude>**/.project</exclude>
