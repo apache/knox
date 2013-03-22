@@ -104,12 +104,12 @@
             <arg value="KEYS"/>
         </exec>
         <checksum file="target/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
-        <copy file="VOTE" tofile="target/vote.txt">
+        <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
-        <loadfile property="stage-message" srcFile="STAGE">
+        <loadfile property="stage-message" srcFile="src/stage.txt">
             <filterchain>
                 <expandproperties/>
             </filterchain>

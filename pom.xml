@@ -139,7 +139,7 @@
                         <configuration>
                             <finalName>${gateway-artifact}-${gateway-version}</finalName>
                             <descriptors>
-                                <descriptor>assembly.xml</descriptor>
+                                <descriptor>src/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
