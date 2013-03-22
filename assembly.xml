@@ -15,17 +15,24 @@
  limitations under the License.
 -->
 <assembly>
-  <id>src</id>
-  <formats>
-    <format>zip</format>
-  </formats>
-  <fileSets>
-    <fileSet>
-      <directory>${project.basedir}</directory>
-      <excludes>
-        <exclude>**/target/**</exclude>
-        <exclude>**/.*/**</exclude>
-      </excludes>
-    </fileSet>
-  </fileSets>
+    <id>src</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory></directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>**/target/**</exclude>
+                <exclude>**/.project</exclude>
+                <exclude>**/.settings/**</exclude>
+                <exclude>**/.idea/**</exclude>
+                <exclude>**/*.iml</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
 </assembly>
