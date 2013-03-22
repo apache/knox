@@ -92,7 +92,7 @@ over if necessary.
 Start the LDAP server - pointing it to the config dir where it will find
 the users.ldif file in the conf directory.
 
-    java -jar bin/ldap-${gateway-version}.jar conf &
+    java -jar bin/ldap.jar conf &
 
 There are a number of log messages of the form `Created null.` that can
 safely be ignored.  Take note of the port on which it was started as this
@@ -102,7 +102,7 @@ can safely be ignored.
 
 ${HHH} 4. Start the Gateway server
 
-    java -jar bin/gateway-server-${gateway-version}.jar
+    java -jar bin/server.jar
 
 Take note of the port identified in the logging output as you will need this
 for accessing the gateway.
@@ -341,7 +341,7 @@ please send an email to the Knox user list (user AT knox.incubator.apache.org)
 with a subject prefix of [BUG] describing the issue.  Please include the
 results of this command in the email.
 
-    java -jar bin/gateway-${gateway-version}.jar -version
+    java -jar bin/server.jar -version
 
 in the Environment section.  Also include the version of Hadoop being used.
 

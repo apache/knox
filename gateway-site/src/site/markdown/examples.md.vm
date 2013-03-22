@@ -78,7 +78,7 @@ ways to do this depending upon your preference.
 
 You can use the "embedded" Groovy interpreter provided with the distribution.
 
-    java -jar bin/shell-${gateway-version}.jar samples/ExampleSubmitJob.groovy
+    java -jar bin/shell.jar samples/ExampleSubmitJob.groovy
 
 You can load the KnoxShell DSL script into the standard Groovy Console.
 
@@ -87,7 +87,7 @@ You can load the KnoxShell DSL script into the standard Groovy Console.
 You can manually type in the KnoxShell DSL script into the "embedded" Groovy
 interpreter provided with the distribution.
 
-    java -jar bin/shell-${gateway-version}.jar
+    java -jar bin/shell.jar
 
 Each line from the file below will need to be typed or copied into the
 interactive shell.
@@ -146,7 +146,7 @@ the job will be submitted via a Oozie workflow.  There are several ways to do
 this depending upon your preference.
 
 You can use the "embedded" Groovy interpreter provided with the distribution.
-    java -jar bin/shell-${gateway-version}.jar samples/ExampleSubmitWorkflow.groovy
+    java -jar bin/shell.jar samples/ExampleSubmitWorkflow.groovy
 
 You can load the KnoxShell DSL script into the standard Groovy Console.
     groovyConsole -cp bin/shell-${gateway-version}.jar samples/ExampleSubmitWorkflow.groovy
@@ -154,7 +154,7 @@ You can load the KnoxShell DSL script into the standard Groovy Console.
 You can manually type in the KnoxShell DSL script into the "embedded" Groovy
 interpreter provided with the distribution.
 
-    java -jar bin/shell-${gateway-version}.jar
+    java -jar bin/shell.jar
 
 Each line from the file below will need to be typed or copied into the
 interactive shell.

@@ -129,6 +129,9 @@ class Command {
         }
       }
     }
+//    for( URL url : urls ) {
+//      System.out.println( url );
+//    }
     return urls;
   }
 
@@ -141,7 +144,7 @@ class Command {
     private WildcardFilenameFilter( String filter ) {
       filter = filter.replace( ".", SAFE );
       filter = filter.replace( "*", ".*" );
-      filter.replace( SAFE, "\\." );
+      filter = filter.replace( SAFE, "\\." );
       pattern = Pattern.compile( filter );
     }
 

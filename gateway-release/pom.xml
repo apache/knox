@@ -102,6 +102,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-server-launcher</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-service-hdfs</artifactId>
         </dependency>
         <dependency>
@@ -140,7 +144,19 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-shell</artifactId>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-shell-launcher</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-test-ldap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-test-ldap-launcher</artifactId>
         </dependency>
 
     </dependencies>

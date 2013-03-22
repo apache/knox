@@ -40,7 +40,7 @@
         <dependencySet>
             <outputDirectory>dep</outputDirectory>
             <excludes>
-                <exclude>maven-test:*</exclude>
+                <exclude>${gateway-group}:*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
@@ -58,7 +58,7 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>gateway.jar</outputFileNameMapping>
+            <outputFileNameMapping>server.jar</outputFileNameMapping>
             <includes>
                 <include>${gateway-group}:gateway-server-launcher</include>
             </includes>

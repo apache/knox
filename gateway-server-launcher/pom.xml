@@ -53,7 +53,7 @@
                             </descriptorRefs>
                             <archive>
                                 <manifest>
-                                    <mainClass>test.launcher.Launcher</mainClass>
+                                    <mainClass>org.apache.hadoop.gateway.launcher.Launcher</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

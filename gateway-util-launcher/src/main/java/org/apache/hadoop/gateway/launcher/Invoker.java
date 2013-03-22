@@ -34,7 +34,7 @@ class Invoker {
     ClassLoader mainLoader = createClassLoader( command.classPath );
     Class mainClass = loadMainClass( mainLoader, command.mainClass );
     Method mainMethod = findMainMethod( mainClass, command.mainMethod );
-    invokeMainMethod( mainMethod, command.mainArgs );
+    invokeMainMethod( mainLoader, mainMethod, command.mainArgs );
   }
 
   private static void setSysProps( Properties properties ) {
@@ -59,7 +59,8 @@ class Invoker {
     return method;
   }
 
-  private static void invokeMainMethod( Method method, String[] args ) throws InvocationTargetException, IllegalAccessException {
+  private static void invokeMainMethod( ClassLoader loader, Method method, String[] args ) throws InvocationTargetException, IllegalAccessException {
+    Thread.currentThread().setContextClassLoader( loader );
     method.invoke( method.getClass(), (Object)args );
   }
 
