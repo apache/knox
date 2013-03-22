@@ -39,6 +39,10 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>dep</outputDirectory>
+            <!--
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            -->
+            <scope>runtime</scope>
             <excludes>
                 <exclude>${gateway-group}:*</exclude>
             </excludes>

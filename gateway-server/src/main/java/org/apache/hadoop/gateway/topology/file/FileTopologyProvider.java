@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.topology.file;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.vfs2.FileChangeEvent;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileListener;
@@ -35,7 +36,6 @@ import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
 import org.apache.hadoop.gateway.topology.xml.XmlTopologyRules;
-import org.codehaus.plexus.util.FileUtils;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -50,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
+
+//import org.codehaus.plexus.util.FileUtils;
 
 public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, FileListener {
 
@@ -80,7 +82,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
     Topology topology = digester.parse( content.getInputStream() );
-    topology.setName( FileUtils.removeExtension( file.getName().getBaseName() ) );
+    topology.setName( FilenameUtils.removeExtension( file.getName().getBaseName() ) );
     topology.setTimestamp( content.getLastModifiedTime() );
     return topology;
   }
