@@ -27,7 +27,7 @@ dataFile = "README"
 
 hadoop = Hadoop.login( gateway, username, password )
 Hdfs.rm( hadoop ).file( "/tmp/example" ).recursive().now()
-Hdfs.put( hadoop ).file( dataFile ).to( "/tmp/example/README" ).now().string
+Hdfs.put( hadoop ).file( dataFile ).to( "/tmp/example/README" ).now()
 text = Hdfs.ls( hadoop ).dir( "/tmp/example" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
