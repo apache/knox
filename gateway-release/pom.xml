@@ -27,7 +27,7 @@
     <artifactId>gateway-release</artifactId>
 
     <name>gateway-release</name>
-    <description>The gateway server release packaging.</description>
+    <description>The gateway binary release packaging.</description>
 
     <licenses>
         <license>
@@ -37,49 +37,30 @@
         </license>
     </licenses>
 
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-shade-plugin</artifactId>
-                        <version>2.0</version>
+    <build>
+        <plugins>
+            <plugin>
+                <inherited>false</inherited>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>binary</id>
+                        <phase>package</phase>
+                        <goals><goal>single</goal></goals>
                         <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>org.apache.hadoop.gateway.launcher.Launcher</Main-Class>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-                            <!-- Excludes signed manifests -->
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
+                            <finalName>${gateway-artifact}-${gateway-version}</finalName>
+                            <outputDirectory>../target</outputDirectory>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>assembly.xml</descriptor>
+                            </descriptors>
                         </configuration>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>shade</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
 
