@@ -46,6 +46,7 @@
         <module>gateway-util-launcher</module>
         <module>gateway-util-urltemplate</module>
         <module>gateway-test-ldap</module>
+        <module>gateway-test-ldap-launcher</module>
         <module>gateway-i18n</module>
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
@@ -60,7 +61,9 @@
         <module>gateway-service-templeton</module>
         <module>gateway-service-oozie</module>
         <module>gateway-server</module>
+        <module>gateway-server-launcher</module>
         <module>gateway-shell</module>
+        <module>gateway-shell-launcher</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
@@ -355,7 +358,17 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-server-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-shell</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-shell-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -531,6 +544,17 @@
                 <version>3.2</version>
             </dependency>
 
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-test-ldap</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-test-ldap-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+
             <!-- ********** ********** ********** ********** ********** ********** -->
             <!-- ********** Test Dependencies                           ********** -->
             <!-- ********** ********** ********** ********** ********** ********** -->
@@ -540,11 +564,6 @@
                 <artifactId>gateway-test-utils</artifactId>
                 <version>${gateway-version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test-ldap</artifactId>
-                <version>${gateway-version}</version>
             </dependency>
 
             <dependency>
