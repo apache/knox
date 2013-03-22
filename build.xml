@@ -52,12 +52,13 @@
 
     <target name="build" depends="init" description="Build the product.">
         <exec executable="${mvn.cmd}">
-            <arg value="-Prelease"/>
+            <!-- <arg value="-Prelease"/> -->
             <arg value="clean"/>
             <arg value="package"/>
         </exec>
     </target>
 
+    <!--
     <target name="archive" depends="init" description="Create the release ZIP.">
         <zip destfile="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip">
             <zipfileset
@@ -79,41 +80,30 @@
                     fullpath="${gateway-home}/bin/shell-${gateway-version}.jar"/>
         </zip>
     </target>
+    -->
 
+    <!--
     <target name="release" depends="init,clean,build,archive" description="Create the release."/>
+    -->
 
     <target name="sign" depends="init" description="Sign a previously created release.">
-        <checksum algorithm="MD5" fileext=".md5">
-            <fileset dir="target/${gateway-version}">
-                <include name="*.zip" />
-                <include name="*.jar" />
-                <include name="*.tar" />
-            </fileset>
-        </checksum>
-        <checksum algorithm="SHA1" fileext=".sha">
-            <fileset dir="target/${gateway-version}">
-                <include name="*.zip" />
-                <include name="*.jar" />
-                <include name="*.tar" />
-            </fileset>
-        </checksum>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        <exec executable="gpg" dir="target">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        <exec executable="gpg" dir="target">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        <exec executable="gpg" dir="target">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
             <arg value="KEYS"/>
         </exec>
-        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
+        <checksum file="target/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
         <copy file="VOTE" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>

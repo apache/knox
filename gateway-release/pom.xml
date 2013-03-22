@@ -59,6 +59,38 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <tasks>
+                                <checksum algorithm="MD5" fileext=".md5">
+                                    <fileset dir="../target">
+                                        <include name="*.zip" />
+                                        <include name="*.tar.gz" />
+                                    </fileset>
+                                </checksum>
+                                <checksum algorithm="SHA1" fileext=".sha">
+                                    <fileset dir="../target">
+                                        <include name="*.zip" />
+                                        <include name="*.tar.gz" />
+                                    </fileset>
+                                </checksum>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant-nodeps</artifactId>
+                        <version>1.8.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 
