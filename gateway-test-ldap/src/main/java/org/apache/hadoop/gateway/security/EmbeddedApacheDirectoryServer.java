@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.security;
 
-import com.google.common.io.Files;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.DirectoryService;
 import org.apache.directory.server.core.entry.ServerEntry;
@@ -30,8 +29,10 @@ import org.apache.directory.shared.ldap.name.LdapDN;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.UUID;
 
 public class EmbeddedApacheDirectoryServer {
 
@@ -98,7 +99,7 @@ public class EmbeddedApacheDirectoryServer {
     directory.setShutdownHookEnabled( true );
     directory.getChangeLog().setEnabled( false );
     directory.setDenormalizeOpAttrsEnabled( true );
-    directory.setWorkingDirectory( initWorkDir( workDir ) );
+    directory.setWorkingDirectory( initWorkDir( null ) );
     return directory;
   }
 
@@ -113,14 +114,19 @@ public class EmbeddedApacheDirectoryServer {
     return transport;
   }
 
-  private static File initWorkDir( File workDir ) {
+  private static File initWorkDir( File workDir ) throws IOException {
     File dir = workDir;
-    if( dir == null ) {
-      dir = new File( System.getProperty( "user.dir" ), EmbeddedApacheDirectoryServer.class.getName() );
-    }
-    if( dir.exists() ) {
-      dir = Files.createTempDir();
-    }
+//    if( dir == null ) {
+//      dir = new File( System.getProperty( "user.dir" ), EmbeddedApacheDirectoryServer.class.getName() );
+//    }
+//    if( dir.exists() ) {
+      File file = File.createTempFile( "ApacheDS", "." + UUID.randomUUID() );
+      file.delete();
+      if( !file.mkdirs() ) {
+        throw new IOException( "Failed to create temp dir " + file );
+      }
+      dir = file;
+//    }
     return dir;
   }
 
