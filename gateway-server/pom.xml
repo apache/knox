@@ -98,6 +98,7 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
@@ -114,10 +115,12 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-jaspi</artifactId>
         </dependency>
+        -->
         <dependency>
             <groupId>org.eclipse.jetty.aggregate</groupId>
             <artifactId>jetty-all</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.apache.geronimo.components</groupId>
             <artifactId>geronimo-jaspi</artifactId>
@@ -240,11 +243,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>test-jetty-servlet</artifactId>
             <scope>test</scope>
         </dependency>
+        -->
 
         <dependency>
             <groupId>org.hamcrest</groupId>
