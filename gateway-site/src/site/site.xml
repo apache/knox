@@ -82,7 +82,7 @@
             <item name="Git" href="https://git-wip-us.apache.org/repos/asf/incubator-knox.git" />
             <item name="Svn" href="https://svn.apache.org/repos/asf/incubator/knox/site" />
             <item name="Jira" href="https://issues.apache.org/jira/browse/KNOX" />
-            <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Knox" />
+            <item name="Wiki" href="https://cwiki.apache.org/confluence/display/KNOX/Index" />
         </links>
 
         <breadcrumbs>

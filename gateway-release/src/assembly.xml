@@ -44,14 +44,14 @@
             -->
             <scope>runtime</scope>
             <excludes>
-                <exclude>${gateway-group}:*</exclude>
+                <exclude>${gateway-group}:gateway-*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
             <includes>
-                <include>${gateway-group}:*</include>
+                <include>${gateway-group}:gateway-*</include>
             </includes>
             <excludes>
                 <exclude>${gateway-group}:gateway-util-launcher</exclude>
