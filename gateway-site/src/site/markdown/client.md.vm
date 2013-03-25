@@ -116,7 +116,7 @@ The example below shows the use of JsonSlurper and GPath to extract content from
 
     knox:000> import groovy.json.JsonSlurper
     knox:000> text = Hdfs.ls( hadoop ).dir( "/tmp/example" ).now().string
-    knox:000> json = (new JsonSlurper()).parseText( json )
+    knox:000> json = (new JsonSlurper()).parseText( text )
     knox:000> println json.FileStatuses.FileStatus.pathSuffix
     [README, README2]
 
