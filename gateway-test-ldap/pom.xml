@@ -37,6 +37,7 @@
         </license>
     </licenses>
 
+    <!--
     <build>
         <plugins>
             <plugin>
@@ -52,21 +53,11 @@
                 </executions>
                 <configuration>
                     <mainClass>org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer</mainClass>
-                    <!--
-                    <arguments>
-                        <argument>argument1</argument>
-                    </arguments>
-                    <systemProperties>
-                        <systemProperty>
-                            <key>myproperty</key>
-                            <value>myvalue</value>
-                        </systemProperty>
-                    </systemProperties>
-                    -->
                 </configuration>
             </plugin>
         </plugins>
     </build>
+    -->
 
     <!--
     <profiles>
@@ -117,6 +108,19 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-server-integ</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-core-entry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.shared</groupId>
+            <artifactId>shared-ldap</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -128,14 +132,9 @@
 
         <!--
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        -->
-
-        <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
+            <version>1.5.5</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.directory.shared</groupId>
@@ -143,6 +142,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        -->
 
         <dependency>
             <groupId>junit</groupId>

@@ -58,9 +58,15 @@
 
     <dependencies>
 
+        <!--
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>org.eclipse.jetty.orbit</groupId>
+            <artifactId>javax.servlet</artifactId>
         </dependency>
 
         <dependency>
@@ -98,7 +104,6 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!--
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
@@ -111,24 +116,12 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-jaspi</artifactId>
         </dependency>
         -->
-        <dependency>
-            <groupId>org.eclipse.jetty.aggregate</groupId>
-            <artifactId>jetty-all</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.geronimo.components</groupId>
-            <artifactId>geronimo-jaspi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-osgi-locator</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -152,7 +145,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-digester3</artifactId>
-            <classifier>with-deps</classifier>
         </dependency>
 
         <dependency>
@@ -243,14 +235,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!--
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>test-jetty-servlet</artifactId>
-            <scope>test</scope>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -298,18 +282,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.directory.shared</groupId>
-                    <artifactId>shared-ldap-schema</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <scope>test</scope>
@@ -327,13 +299,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!--
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>com.mycila.xmltool</groupId>
             <artifactId>xmltool</artifactId>
@@ -347,11 +312,13 @@
             <scope>test</scope>
         </dependency>
         -->
-        <!-- dependency>
+        <!--
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>gateway-provider-security-hawk</artifactId>
             <scope>test</scope>
-        </dependency-->
+        </dependency>
+        -->
 
     </dependencies>
 

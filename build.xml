@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project name="Apache Hadoop Gateway" default="release" basedir=".">
+<project name="Apache Hadoop Gateway" default="build" basedir=".">
 
     <description>
         Release build file for the Hadoop Gateway
@@ -52,7 +52,13 @@
 
     <target name="build" depends="init" description="Build the product.">
         <exec executable="${mvn.cmd}">
-            <!-- <arg value="-Prelease"/> -->
+            <arg value="clean"/>
+            <arg value="install"/>
+        </exec>
+    </target>
+
+    <target name="package" depends="init" description="Build the product.">
+        <exec executable="${mvn.cmd}">
             <arg value="clean"/>
             <arg value="package"/>
         </exec>
