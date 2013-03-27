@@ -55,7 +55,6 @@
         <module>gateway-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
-        <module>gateway-site</module>
     </modules>
 
     <properties>
