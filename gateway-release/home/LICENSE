@@ -204,13 +204,14 @@
 
 Apache Knox Subcomponents:
 
-Apache Knox includes a number of subcomponents with separate copyright notices
-and license terms.  Your use of these subcomponents is subject to the terms and
-conditions of the following licenses.
+Apache Knox includes a number of sub-components with separate copyright
+notices and license terms.  Your use of these sub-components is subject
+to the terms and conditions of the following licenses.
 
 
-For TODO.jar (Jerico)
-
+------------------------------------------------------------------------------
+From Jetty and Jerico
+------------------------------------------------------------------------------
 Eclipse Public License - v 1.0
 
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC

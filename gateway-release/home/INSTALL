@@ -24,9 +24,9 @@ Hadoop Cluster:
 Installation and Deployment Instructions
 ------------------------------------------------------------------------------
 1. Install
-     Download and extract the gateway-0.2.0-SNAPSHOT.zip file into the
+     Download and extract the knox-{VERSION}.zip file into the
      installation directory that will contain your GATEWAY_HOME
-       jar xf gateway-0.2.0-SNAPSHOT.zip
+       jar xf knox-{VERSION}.zip
      This will create a directory 'gateway' in your current directory.
 
 2. Enter Gateway Home directory
@@ -50,7 +50,7 @@ Installation and Deployment Instructions
       over if necessary.
    c. Start the LDAP server - pointing it to the config dir where it will find
       the users.ldif file in the conf directory.
-        java -jar bin/ldap-0.2.0-SNAPSHOT.jar conf &
+        java -jar bin/ldap.jar conf &
       There are a number of log messages of the form "Created null." that can
       safely be ignored.  Take note of the port on which it was started as this
       needs to match later configuration.  This will create a directory named
@@ -58,7 +58,7 @@ Installation and Deployment Instructions
       can safely be ignored.
 
 4. Start the Gateway server
-     java -jar bin/gateway-server-0.2.0-SNAPSHOT.jar
+     java -jar bin/server.jar
    a. Take note of the port identified in the logging output as you will need this for
       accessing the gateway.
    b. The server will prompt you for the master secret (password). This secret is used
@@ -199,7 +199,6 @@ NOTE: the SSL certificate will need special consideration depending on the type 
 to be shared across all gateway instances in a cluster. When certs are dedicated to specific machines the gateway identity
 store will not be able to be blindly replicated as hostname verification problems will ensue. Obviously, truststores will
 need to be taken into account as well.
-
 
 ------------------------------------------------------------------------------
 Mapping Gateway URLs to Hadoop cluster URLs

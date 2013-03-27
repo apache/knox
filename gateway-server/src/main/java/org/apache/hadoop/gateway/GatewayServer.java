@@ -128,7 +128,7 @@ public class GatewayServer {
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
-    InputStream inputStream = ClassLoader.getSystemResourceAsStream( "build.properties" );
+    InputStream inputStream = GatewayServer.class.getClassLoader().getResourceAsStream( "build.properties" );
     if( inputStream != null ) {
       try {
         properties.load( inputStream );

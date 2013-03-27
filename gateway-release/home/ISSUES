@@ -1,9 +1,8 @@
 ------------------------------------------------------------------------------
 Know Issues
 ------------------------------------------------------------------------------
-The Gateway cannot be be used against either EC2 clusters or Hadoop Sandbox
-VMs unless the gateway is deployed within the EC2 cluster or the on the
-Sandbox VM.
+The Gateway cannot be be used against either EC2 cluster unless the gateway
+is deployed within the EC2.
 
 If the cluster deployment descriptors in {GATEWAY_HOME}/deployments are
 incorrect, the errors logged by the gateway are overly detailed and not
