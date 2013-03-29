@@ -57,10 +57,20 @@
         </exec>
     </target>
 
-    <target name="package" depends="init" description="Build the product.">
+    <target name="verify" depends="package" description="Perform the verification build."/>
+    <target name="package" depends="init" description="Build and package the product.">
         <exec executable="${mvn.cmd}">
+            <arg value="-Prelease"/>
             <arg value="clean"/>
-            <arg value="package"/>
+            <arg value="install"/>
+        </exec>
+    </target>
+
+    <target name="daily" depends="init" description="Perform the daily build.">
+        <exec executable="${mvn.cmd}">
+            <arg value="-Panalyze"/>
+            <arg value="-Prelease"/>
+            <arg value="site"/>
         </exec>
     </target>
 

@@ -26,7 +26,7 @@
 
     <name>gateway</name>
     <description>The Apache Knox Gateway</description>
-    <url>http://incubator.apache.org/knox</url>
+    <url>http://knox.incubator.apache.org/</url>
 
     <modules>
         <module>gateway-test-utils</module>
@@ -58,6 +58,8 @@
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gateway-name>Apache Knox (Incubator)</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
@@ -82,8 +84,89 @@
         <connection>scm:git:git://git-wip-us.apache.org/repos/asf/incubator-knox.git</connection>
     </scm>
 
+    <profiles>
+        <profile>
+            <id>analyze</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>cobertura-maven-plugin</artifactId>
+                        <version>2.5.2</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <inherited>false</inherited>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.4</version>
+                        <executions>
+                            <execution>
+                                <id>source</id>
+                                <phase>package</phase>
+                                <goals><goal>single</goal></goals>
+                                <configuration>
+                                    <finalName>${gateway-artifact}-${gateway-version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.8</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <excludes>
+                        <exclude>.git/**</exclude>
+                        <exclude>.svn/**</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>src/stage.txt</exclude>
+                        <exclude>src/vote.txt</exclude>
+                        <exclude>**/*.iml</exclude>
+                        <exclude>**/target/**</exclude>
+                        <exclude>**/test/resources/**</exclude>
+                        <exclude>**/main/resources/**/*.json</exclude>
+                        <exclude>**/home/CHANGES</exclude>
+                        <exclude>**/home/ISSUES</exclude>
+                        <exclude>**/home/samples/*.jar</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -101,105 +184,8 @@
                     </excludedGroups>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.1</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <inherited>false</inherited>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <id>source</id>
-                        <phase>package</phase>
-                        <goals><goal>single</goal></goals>
-                        <configuration>
-                            <finalName>${gateway-artifact}-${gateway-version}</finalName>
-                            <descriptors>
-                                <descriptor>src/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>cobertura-maven-plugin</artifactId>
-                        <version>2.5.2</version></plugin>
-                    <plugin>
-                        <groupId>org.apache.rat</groupId>
-                        <artifactId>apache-rat-plugin</artifactId>
-                        <version>0.8</version>
-                        <executions>
-                            <execution>
-                                <phase>verify</phase>
-                                <goals><goal>check</goal></goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <excludeSubProjects>false</excludeSubProjects>
-                            <excludes>
-                                <exclude>.git/**</exclude>
-                                <exclude>.svn/**</exclude>
-                                <exclude>.idea/**</exclude>
-                                <exclude>**/*.iml</exclude>
-                                <exclude>**/dependency-reduced-pom.xml</exclude>
-                                <exclude>**/target/**</exclude>
-                                <exclude>**/test/resources/**</exclude>
-                                <exclude>**/main/resources/**/*.json</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                    <!--
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    -->
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <reporting>
         <plugins>
@@ -207,6 +193,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>2.4</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                            <report>modules</report>
+                            <report>dependencies</report>
+                            <!--
+                            <report>project-team</report>
+                            <report>mailing-list</report>
+                            <report>issue-tracking</report>
+                            <report>license</report>
+                            <report>cim</report>
+                            <report>scm</report>
+                            -->
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -224,33 +227,26 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.5.2</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <version>0.8</version>
-                <configuration>
-                    <excludeSubProjects>false</excludeSubProjects>
-                    <excludes>
-                        <exclude>VOTE</exclude>
-                        <exclude>DEPLOY</exclude>
-                        <exclude>.git/**</exclude>
-                        <exclude>.svn/**</exclude>
-                        <exclude>.idea/**</exclude>
-                        <exclude>**/*.iml</exclude>
-                        <exclude>**/dependency-reduced-pom.xml</exclude>
-                        <exclude>**/target/**</exclude>
-                        <exclude>**/test/resources/**</exclude>
-                        <exclude>**/main/resources/**/*.json</exclude>
-                        <exclude>gateway-release/CHANGES</exclude>
-                        <exclude>gateway-release/ISSUES</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
             <!-- Source code metrics: mvn javancss:report or mvn site -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>javancss-maven-plugin</artifactId>
                 <version>2.0-beta-2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
+                <!--
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                -->
             </plugin>
         </plugins>
     </reporting>
