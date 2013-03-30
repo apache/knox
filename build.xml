@@ -103,23 +103,23 @@
     -->
 
     <target name="sign" depends="init" description="Sign a previously created release.">
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
             <arg value="KEYS"/>
         </exec>
-        <checksum file="target/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
+        <checksum file="target/dist/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>
