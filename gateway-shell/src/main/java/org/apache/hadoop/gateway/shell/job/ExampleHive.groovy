@@ -26,7 +26,7 @@ import org.apache.hadoop.gateway.shell.Hadoop
 gateway = "https://localhost:8443/gateway/sample"
 username = "mapred"
 password = "mapred-password"
-inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
+inputFile = "LICENSE"
 
 script = "select+*+from+pokes;"
 
