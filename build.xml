@@ -24,7 +24,7 @@
     <property name="gateway-name" value="Apache Knox (Incubator)"/>
     <property name="gateway-project" value="knox"/>
     <property name="gateway-artifact" value="knox"/>
-    <property name="gateway-version" value="0.2.0-SNAPSHOT"/>
+    <property name="gateway-version" value="0.3.0-SNAPSHOT"/>
     <property name="release-manager" value="kminder"/>
 
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
@@ -47,7 +47,7 @@
     </target>
 
     <target name="clean" depends="init" description="Clean up any build artifacts.">
-        <delete file="target/${gateway-version}"/>
+        <delete file="target/dist/${gateway-version}"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">
@@ -58,7 +58,7 @@
     </target>
 
     <target name="verify" depends="package" description="Perform the verification build."/>
-    <target name="package" depends="init" description="Build and package the product.">
+    <target name="package" depends="init" description="Build and package the product (aka verify).">
         <exec executable="${mvn.cmd}">
             <arg value="-Prelease"/>
             <arg value="clean"/>
@@ -66,7 +66,8 @@
         </exec>
     </target>
 
-    <target name="daily" depends="init" description="Perform the daily build.">
+    <target name="daily" depends="package" description="Perform the daily build."/>
+    <target name="full" depends="init" description="Perform a full build (aka daily).">
         <exec executable="${mvn.cmd}">
             <arg value="-Panalyze"/>
             <arg value="-Prelease"/>
@@ -103,23 +104,23 @@
     -->
 
     <target name="sign" depends="init" description="Sign a previously created release.">
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="target">
+        <exec executable="gpg" dir="target/dist">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
             <arg value="KEYS"/>
         </exec>
-        <checksum file="target/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
+        <checksum file="target/dist/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>
@@ -138,7 +139,7 @@
             <arg value="clean"/>
         </exec>
         <mkdir dir="gateway-site/target/site"/>
-        <exec executable="${svn.cmd}" dir="gateway-site/target">
+        <exec executable="${svn.cmd}" dir="gateway-site/target/dist">
             <arg value="checkout"/>
             <arg value="https://svn.apache.org/repos/asf/incubator/knox/site"/>
         </exec>

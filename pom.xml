@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.hadoop</groupId>
     <artifactId>gateway</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -63,7 +63,7 @@
         <gateway-name>Apache Knox (Incubator)</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
-        <gateway-version>0.2.0-SNAPSHOT</gateway-version>
+        <gateway-version>0.3.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.hadoop</gateway-group>
     </properties>
 
@@ -112,6 +112,7 @@
                                 <goals><goal>single</goal></goals>
                                 <configuration>
                                     <finalName>${gateway-artifact}-${gateway-version}</finalName>
+                                    <outputDirectory>target/dist</outputDirectory>
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
                                     </descriptors>

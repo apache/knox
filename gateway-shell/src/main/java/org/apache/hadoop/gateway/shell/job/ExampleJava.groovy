@@ -26,8 +26,8 @@ import org.apache.hadoop.gateway.shell.Hadoop
 gateway = "https://localhost:8443/gateway/sample"
 username = "mapred"
 password = "mapred-password"
-inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
-jarFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/hadoop-examples.jar"
+inputFile = "LICENSE"
+jarFile = "samples/hadoop-examples.jar"
 
 hadoop = Hadoop.login( gateway, username, password )
 

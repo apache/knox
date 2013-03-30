@@ -36,6 +36,7 @@ class Command {
   private static String MAIN_METHOD = "main.method";
   private static String MAIN_ARGS = "main.args";
   private static String CLASS_PATH = "class.path";
+  private static String CLASS_PATH_DELIM = ",;";
   private static String FORK = "fork";
   private static String REDIRECT = "redirect";
   private static String RESTREAM = "restream";
@@ -113,7 +114,7 @@ class Command {
 
   private static List<URL> loadClassPath( File base, String classPath ) throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
-    StringTokenizer parser = new StringTokenizer( classPath, ";", false );
+    StringTokenizer parser = new StringTokenizer( classPath, CLASS_PATH_DELIM, false );
     while( parser.hasMoreTokens() ) {
       String libPath = parser.nextToken().trim();
       File libFile = new File( base, libPath );

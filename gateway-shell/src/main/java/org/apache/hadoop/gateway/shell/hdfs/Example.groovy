@@ -24,9 +24,9 @@ import static java.util.concurrent.TimeUnit.SECONDS
 gateway = "https://localhost:8443/gateway/sample"
 username = "mapred"
 password = "mapred-password"
-jarFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/hadoop-examples.jar"
-inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
-outputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/OUTPUT"
+jarFile = "samples/hadoop-examples.jar"
+inputFile = "LICENSE"
+outputFile = "OUTPUT"
 
 hadoop = Hadoop.login( gateway, username, password )
 

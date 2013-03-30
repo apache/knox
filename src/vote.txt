@@ -1,5 +1,5 @@
 From: ${release-manager}@apache.org
-To: dev@${gateway-project}.apache.org
+To: dev@${gateway-project}.incubator.apache.org
 Subject: [VOTE] Release ${gateway-name} ${gateway-version}
 
 A candidate for the ${gateway-name} ${gateway-version} release is available at:
@@ -8,7 +8,8 @@ http://people.apache.org/~${release-manager}/${gateway-project}/${gateway-versio
 
 The release candidate is a zip archive of the sources in:
 
-http://svn.apache.org/repos/asf/${gateway-project}/tags/${gateway-version}/
+https://git-wip-us.apache.org/repos/asf/incubator-knox.git
+Branch v${gateway-version}/
 
 The SHA1 checksum of the archive is ${checksum}.
 

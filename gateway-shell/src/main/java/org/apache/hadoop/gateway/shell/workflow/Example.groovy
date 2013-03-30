@@ -28,8 +28,8 @@ jobTracker = "sandbox:50300";
 nameNode = "sandbox:8020";
 username = "mapred"
 password = "mapred-password"
-inputFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/LICENSE"
-jarFile = "/Users/kevin.minder/Projects/gateway-0.2.0-SNAPSHOT/hadoop-examples.jar"
+inputFile = "LICENSE"
+jarFile = "samples/hadoop-examples.jar"
 
 definition = """\
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="wordcount-workflow">
