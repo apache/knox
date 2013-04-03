@@ -32,6 +32,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
   private static final String FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
   private static final String FILTER_CLASSNAME2 = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
+  private static final String FILTER_CLASSNAME3 = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
 
   @Override
   public String getRole() {
@@ -54,14 +55,15 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 //    context.getWebAppDescriptor().createFilterMapping().filterName("PostShiroFilter").servletName("cluster");
     // Write the provider specific config out to the war for cluster specific config
 //    String config = provider.getParams().get( "config" );
-    String config = new ShiroConfig(provider).toString();
-    if ( config != null ) {
+    String config = new ShiroConfig( provider ).toString();
+    if( config != null ) {
       context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
     }
   }
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+    resource.addFilter().name( "Pre" + getName() ).role( getRole() ).impl( FILTER_CLASSNAME3 ).params( params );
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
     resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( FILTER_CLASSNAME2 ).params( params );
   }

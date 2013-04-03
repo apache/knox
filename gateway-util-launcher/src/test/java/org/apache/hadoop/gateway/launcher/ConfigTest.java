@@ -28,6 +28,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ConfigTest {
 
+  private final static String NEWLINE = System.getProperty( "line.separator" );
+
   @Test
   public void testLoad() throws Exception {
     Config c;
@@ -47,7 +49,7 @@ public class ConfigTest {
     assertThat( c.get( null, "name" ), is( "value" ) );
     assertThat( c.get( null, "wrong-name" ), nullValue() );
 
-    s = "name1=value1\n\n[section1]\nname1=value2";
+    s = "name1=value1" + NEWLINE + "[section1]" + NEWLINE + "name1=value2";
     c = new Config();
     c.load( new StringReader( s ) );
     assertThat( c.get( "", "name1" ), is( "value1" ) );
@@ -73,14 +75,14 @@ public class ConfigTest {
     c.set( null, null, null );
     w = new StringWriter();
     c.save( w );
-    assertThat( w.toString(), is( "=\n" ) );
+    assertThat( w.toString(), is( "=" + NEWLINE ) );
 
     c = new Config();
     c.set( null, "name1", "value1" );
     c.set( "section1", "name1", "value2" );
     w = new StringWriter();
     c.save( w );
-    assertThat( w.toString(), is( "name1=value1\n\n[section1]\nname1=value2" ) );
+    assertThat( w.toString(), is( "name1=value1" + NEWLINE + NEWLINE + "[section1]" + NEWLINE + "name1=value2" ) );
   }
 
   @Test
