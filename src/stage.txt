@@ -1,6 +1,6 @@
 The release candidate has been prepared in:
 
-    target/dist
+    target/${gateway-version}
 
 Please stage it to people.apache.org like this:
 
@@ -8,4 +8,4 @@ Please stage it to people.apache.org like this:
 
 A release vote template has been generated here:
 
-    target/vote.eml
+    target/vote.txt

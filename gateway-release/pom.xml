@@ -53,7 +53,7 @@
                                 <goals><goal>single</goal></goals>
                                 <configuration>
                                     <finalName>${gateway-artifact}-${gateway-version}</finalName>
-                                    <outputDirectory>../target/dist</outputDirectory>
+                                    <outputDirectory>../target/${gateway-version}</outputDirectory>
                                     <appendAssemblyId>false</appendAssemblyId>
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
@@ -71,13 +71,13 @@
                                 <configuration>
                                     <tasks>
                                         <checksum algorithm="MD5" fileext=".md5">
-                                            <fileset dir="../target/dist">
+                                            <fileset dir="../target/${gateway-version}">
                                                 <include name="*.zip" />
                                                 <include name="*.tar.gz" />
                                             </fileset>
                                         </checksum>
                                         <checksum algorithm="SHA1" fileext=".sha">
-                                            <fileset dir="../target/dist">
+                                            <fileset dir="../target/${gateway-version}">
                                                 <include name="*.zip" />
                                                 <include name="*.tar.gz" />
                                             </fileset>

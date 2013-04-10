@@ -112,7 +112,7 @@
                                 <goals><goal>single</goal></goals>
                                 <configuration>
                                     <finalName>${gateway-artifact}-${gateway-version}</finalName>
-                                    <outputDirectory>target/dist</outputDirectory>
+                                    <outputDirectory>target/${gateway-version}</outputDirectory>
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
                                     </descriptors>
