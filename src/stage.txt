@@ -1,11 +1,11 @@
 The release candidate has been prepared in:
 
-    target/dist
+    target/${gateway-version}
 
 Please stage it to people.apache.org like this:
 
-    scp -r target ${release-manager}:people.apache.org:public_html/${gateway-project}/${gateway-version}
+    scp -r target/${gateway-version} ${release-manager}@people.apache.org:public_html/${gateway-project}
 
 A release vote template has been generated here:
 
-    file://target/vote.txt
+    target/vote.txt

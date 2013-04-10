@@ -47,7 +47,7 @@
     </target>
 
     <target name="clean" depends="init" description="Clean up any build artifacts.">
-        <delete file="target/dist/${gateway-version}"/>
+        <delete file="target/${gateway-version}"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">
@@ -66,7 +66,7 @@
         </exec>
     </target>
 
-    <target name="daily" depends="package" description="Perform the daily build."/>
+    <target name="daily" depends="full" description="Perform the daily build."/>
     <target name="full" depends="init" description="Perform a full build (aka daily).">
         <exec executable="${mvn.cmd}">
             <arg value="-Panalyze"/>
@@ -104,23 +104,23 @@
     -->
 
     <target name="sign" depends="init" description="Sign a previously created release.">
-        <exec executable="gpg" dir="target/dist">
+        <exec executable="gpg" dir="target/${gateway-version}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
-        <exec executable="gpg" dir="target/dist">
+        <exec executable="gpg" dir="target/${gateway-version}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="target/dist">
+        <exec executable="gpg" dir="target/${gateway-version}">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
             <arg value="KEYS"/>
         </exec>
-        <checksum file="target/dist/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
+        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>
