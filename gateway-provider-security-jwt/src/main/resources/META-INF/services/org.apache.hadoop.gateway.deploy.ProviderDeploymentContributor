@@ -16,4 +16,5 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTDeploymentContributor
+org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTFederationContributor
+org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTAccessTokenAssertionContributor

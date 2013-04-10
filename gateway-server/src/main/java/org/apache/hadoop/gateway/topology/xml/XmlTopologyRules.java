@@ -47,6 +47,7 @@ public class XmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG ).createObject().ofType( Provider.class ).then().setNext( "addProvider" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ROLE_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ENABLED_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG ).createObject().ofType( ProviderParam.class ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();

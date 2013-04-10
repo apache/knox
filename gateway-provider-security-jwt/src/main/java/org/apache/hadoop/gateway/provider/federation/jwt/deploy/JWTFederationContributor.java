@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy.impl;
+package org.apache.hadoop.gateway.provider.federation.jwt.deploy;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
@@ -23,37 +23,25 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
-import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 import java.util.List;
 
-public class DeploymentContributor extends ProviderDeploymentContributorBase {
+public class JWTFederationContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.PseudoIdentityAssertionFilter";
-  private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
+  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.provider.federation.jwt.filter.JWTFederationFilter";
 
   @Override
   public String getRole() {
-    return "identity-assertion";
+    return "federation";
   }
 
   @Override
   public String getName() {
-    return "Pseudo";
+    return "JWTProvider";
   }
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
-    String mappings = provider.getParams().get(PRINCIPAL_MAPPING_PARAM_NAME);
-
-//    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
-//    servlet.createInitParam()
-//        .paramName( PRINCIPAL_MAPPING_PARAM_NAME )
-//        .paramValue( mappings );
-    
-    context.getWebAppDescriptor().createContextParam().paramName(PRINCIPAL_MAPPING_PARAM_NAME).paramValue(mappings);
   }
 
   @Override

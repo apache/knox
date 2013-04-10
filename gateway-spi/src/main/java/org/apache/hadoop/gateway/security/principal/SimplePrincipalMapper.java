@@ -52,7 +52,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
         // do not leave table in an unknown state - clear it instead
         // no principal mapping will occur
         table.clear();
-        throw new PrincipalMappingException("Unable to load mappings from provided string - no principal mapping will be provided.");
+        throw new PrincipalMappingException("Unable to load mappings from provided string: " + principalMapping + " - no principal mapping will be provided.");
       }
     }
   }

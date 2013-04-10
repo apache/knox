@@ -59,9 +59,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class GatewayServer {
-
-  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
-  
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server;

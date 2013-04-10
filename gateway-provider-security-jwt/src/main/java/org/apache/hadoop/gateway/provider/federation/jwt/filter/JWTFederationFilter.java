@@ -29,6 +29,10 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
+
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
@@ -40,14 +44,13 @@ import java.util.Set;
 public class JWTFederationFilter implements Filter {
 
   private static final String BEARER = "Bearer ";
-  private static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
   
   private JWTAuthority authority = null;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
-    GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GATEWAY_SERVICES_ATTRIBUTE);
-    CryptoService crypto = (CryptoService) services.getService("CryptoService");
+    GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    CryptoService crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
     authority = new JWTAuthority(crypto);
   }
 
@@ -65,6 +68,7 @@ public class JWTFederationFilter implements Filter {
       if (verified) {
         // TODO: validate expiration
         // TODO: confirm that audience matches intended target
+        // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
         Subject subject = createSubjectFromToken(token);
         continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
       }

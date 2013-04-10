@@ -15,23 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services;
+package org.apache.hadoop.gateway.provider.federation.jwt;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import org.apache.hadoop.gateway.i18n.messages.Message;
+import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
+import org.apache.hadoop.gateway.i18n.messages.Messages;
 
-import org.apache.hadoop.gateway.GatewayServer;
+/**
+ *
+ */
+@Messages(logger="org.apache.hadoop.gateway")
+public interface JWTProviderMessages {
 
-public class GatewayServicesContextListener implements ServletContextListener {
+  @Message( level = MessageLevel.DEBUG, text = "Rendering JWT Token for the wire: {0}" )
+  void renderingJWTTokenForTheWire(String string);
 
-  @Override
-  public void contextInitialized(ServletContextEvent sce) {
-    GatewayServices gs = GatewayServer.getGatewayServices();
-    sce.getServletContext().setAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE, gs);
-  }
-
-  @Override
-  public void contextDestroyed(ServletContextEvent sce) {
-  }
+  @Message( level = MessageLevel.DEBUG, text = "Parsing JWT Token from the wire: {0}" )
+  void parsingToken(String wireToken);
 
 }

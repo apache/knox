@@ -62,8 +62,13 @@ public class Topology {
   public Provider getProvider( String role, String name ) {
     Provider provider = null;
     Map<String,Provider> nameMap = providerMap.get( role );
-    if( nameMap != null ) {
-      provider = nameMap.get( name );
+    if( nameMap != null) { 
+      if( name != null ) {
+        provider = nameMap.get( name );
+      }
+      else {
+        provider = (Provider) nameMap.values().toArray()[0];
+      }
     }
     return provider;
   }

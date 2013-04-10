@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.net.URISyntaxException;
@@ -132,7 +133,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   }
 
   private void addDispatchFilter(
-      DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+    DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
     context.contributeFilter( service, resource, role, name, null );
   }
 

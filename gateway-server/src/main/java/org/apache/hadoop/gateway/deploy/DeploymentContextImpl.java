@@ -118,9 +118,9 @@ public class DeploymentContextImpl implements DeploymentContext {
       List<FilterParamDescriptor> params ) {
     ProviderDeploymentContributor contributor = DeploymentFactory.getProviderContributor( providers, role, name );
     Provider provider = getTopology().getProvider( role, name );
-    if( provider == null ) {
-      provider = getTopology().getProvider( role, null );
-    }
+//    if( provider != null ) {
+//      System.out.println("=================== provider found by name: " + name + " with actual name of: " + provider.getName());
+//    }
     if( provider == null ) {
       provider = new Provider();
       provider.setRole( role );

@@ -42,10 +42,6 @@ import org.apache.hadoop.gateway.services.security.impl.JettySSLService;
 import org.apache.hadoop.gateway.topology.Provider;
 
 public class DefaultGatewayServices implements Service, ProviderDeploymentContributor, GatewayServices {
-  private static final String SSL_SERVICE = "SSLService";
-  public static final String CRYPTO_SERVICE = "CryptoService";
-  public static final String ALIAS_SERVICE = "AliasService";
-
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private Map<String,Service> services = new HashMap<String, Service>();

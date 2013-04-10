@@ -119,8 +119,12 @@ public class GatewayBasicFuncTest {
                 .addTag( "value" ).addText( "simple" ).gotoParent()
               .addTag( "param" )
                 .addTag( "name" ).addText( "urls./**" )
-                .addTag( "value" ).addText( "authcBasic" ).gotoParent()
-        .gotoRoot()
+                .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+            .addTag( "provider" )
+              .addTag( "role" ).addText( "identity-assertion" )
+              .addTag( "enabled" ).addText( "true" )
+              .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+          .gotoRoot()
           .addTag( "service" )
             .addTag( "role" ).addText( "NAMENODE" )
             .addTag( "url" ).addText( driver.getRealUrl( "NAMENODE" ) ).gotoParent()
@@ -604,7 +608,7 @@ public class GatewayBasicFuncTest {
 
     /* Submit the job
     curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/templeton/api/v1/mapreduce/jar'
-    ﻿{"id":"job_201210301335_0059"}
+    {"id":"job_201210301335_0059"}
     */
     String job = driver.submitJava(
         user, pass,

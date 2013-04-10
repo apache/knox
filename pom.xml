@@ -141,8 +141,13 @@
                     <excludeSubProjects>false</excludeSubProjects>
                     <excludes>
                         <exclude>.git/**</exclude>
+                        <exclude>.gitignore/**</exclude>
                         <exclude>.svn/**</exclude>
                         <exclude>.idea/**</exclude>
+                        <exclude>**/.gitignore/**</exclude>
+												<exclude>**/.project/**</exclude>
+												<exclude>**/.settings/**</exclude>
+												<exclude>**/.classpath/**</exclude>
                         <exclude>src/stage.txt</exclude>
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>
@@ -506,7 +511,7 @@
                     </exclusion>
                     <exclusion>
                         <groupId>org.codehaus.jackson</groupId>
-                        <artifactId>ackson-mapper-asl</artifactId>
+                        <artifactId>jackson-mapper-asl</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>net.java.dev.jets3t</groupId>
@@ -534,6 +539,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+						<dependency>
+							<groupId>com.fasterxml.jackson.core</groupId>
+							<artifactId>jackson-databind</artifactId>
+							<version>2.1.4</version>
+						</dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>

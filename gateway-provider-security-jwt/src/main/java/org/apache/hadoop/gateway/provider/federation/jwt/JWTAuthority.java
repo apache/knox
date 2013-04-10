@@ -15,7 +15,7 @@
    * See the License for the specific language governing permissions and
    * limitations under the License.
    */
-package org.apache.hadoop.gateway.provider.federation.jwt.filter;
+package org.apache.hadoop.gateway.provider.federation.jwt;
 
 import java.security.Principal;
 
@@ -30,7 +30,7 @@ public class JWTAuthority {
     this.crypto = crypto;
   }
   
-  public JWTToken issueToken(Subject subject) {
+  public JWTToken issueToken(Subject subject, String algorithm, byte[] secret) {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
     String[] claimArray = new String[4];
     claimArray[0] = "gateway";
@@ -40,12 +40,18 @@ public class JWTAuthority {
     // TODO: make the validity period configurable
     claimArray[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
 
-    JWTToken token = new JWTToken("RS256", claimArray);
-    signToken(token);
+    JWTToken token = null;
+    if ("RS256".equals(algorithm)) {
+      new JWTToken("RS256", claimArray);
+      signToken(token);
+    }
+    else {
+      // log inappropriate alg
+    }
     
     return token;
   }
-  
+
   private void signToken(JWTToken token) {
     byte[] signature = null;
     signature = crypto.sign("SHA256withRSA","gateway-identity",token.getPayloadToSign());
@@ -57,4 +63,5 @@ public class JWTAuthority {
     rc = crypto.verify("SHA256withRSA", "gateway-identity", token.getPayloadToSign(), token.getSignaturePayload());
     return rc;
   }
+
 }

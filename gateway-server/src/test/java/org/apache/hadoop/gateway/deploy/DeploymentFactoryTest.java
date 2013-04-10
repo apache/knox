@@ -82,6 +82,11 @@ public class DeploymentFactoryTest {
     param.setValue( "classpath:app-context-security.xml" );
     provider.addParam( param );
     topology.addProvider( provider );
+    Provider asserter = new Provider();
+    asserter.setRole( "identity-assertion" );
+    asserter.setName("Pseudo");
+    asserter.setEnabled( true );
+    topology.addProvider( asserter );
 
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
@@ -113,7 +118,7 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.hadoop.gateway.filter.PseudoIdentityAssertionFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/name", equalTo( "http-client" ) ) );
@@ -135,7 +140,7 @@ public class DeploymentFactoryTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/class", equalTo( "org.apache.hadoop.gateway.filter.IdentityAssertionFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/class", equalTo( "org.apache.hadoop.gateway.filter.PseudoIdentityAssertionFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[6]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[6]/name", equalTo( "http-client" ) ) );

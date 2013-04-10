@@ -17,20 +17,19 @@
  */
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
-import org.apache.hadoop.gateway.i18n.messages.Message;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
+import java.io.IOException;
 
-/**
- *
- */
-@Messages(logger="org.apache.hadoop.gateway")
-public interface JWTProviderMessages {
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
-  @Message( level = MessageLevel.DEBUG, text = "Rendering JWT Token for the wire: {0}" )
-  void renderingJWTTokenForTheWire(String string);
+import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter;
 
-  @Message( level = MessageLevel.DEBUG, text = "Parsing JWT Token from the wire: {0}" )
-  void parsingToken(String wireToken);
+public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter {
 
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response,
+      FilterChain chain) throws IOException, ServletException {
+  }
 }

@@ -17,36 +17,47 @@
  */
 package org.apache.hadoop.gateway.provider.federation.jwt.deploy;
 
+import java.util.List;
+
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
 
-import java.util.List;
-
-public class JWTDeploymentContributor extends ProviderDeploymentContributorBase {
-
-  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.provider.authn.jwt.filter.JWTFederationFilter";
+public class JWTAccessTokenAssertionContributor extends
+    ProviderDeploymentContributorBase {
+  private static final String ENCRYPT_ACCESS_TOKENS = "encrypt_access_tokens";
+  private static final String GATEWAY = "__gateway";
+  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.provider.federation.jwt.filter.JWTAccessTokenAssertionFilter";
+  private CryptoService crypto;
 
   @Override
   public String getRole() {
-    return "federation";
+    return "identity-assertion";
   }
 
   @Override
   public String getName() {
-    return "JWTProvider";
+    return "JWTAccessTokenAsserter";
   }
 
   @Override
-  public void contributeProvider( DeploymentContext context, Provider provider ) {
+  public void initializeContribution(DeploymentContext context) {
+    // TODO Auto-generated method stub
+    super.initializeContribution(context);
+    crypto.createAndStoreEncryptionKeyForCluster(GATEWAY, ENCRYPT_ACCESS_TOKENS);
   }
 
   @Override
-  public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+  public void contributeFilter(DeploymentContext context, Provider provider, Service service, 
+      ResourceDescriptor resource, List<FilterParamDescriptor> params) {
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
+  }
+  
+  public void setCryptoService(CryptoService crypto) {
+    this.crypto = crypto;
   }
 }

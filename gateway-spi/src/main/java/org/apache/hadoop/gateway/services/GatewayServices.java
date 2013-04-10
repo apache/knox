@@ -21,6 +21,10 @@ import java.util.Collection;
 
 
 public interface GatewayServices {
+  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
+  public static final String SSL_SERVICE = "SSLService";
+  public static final String CRYPTO_SERVICE = "CryptoService";
+  public static final String ALIAS_SERVICE = "AliasService";
 
   public abstract Collection<String> getServiceNames();
 

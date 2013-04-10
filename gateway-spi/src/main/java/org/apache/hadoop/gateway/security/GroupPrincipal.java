@@ -15,23 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services;
+package org.apache.hadoop.gateway.security;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import java.security.Principal;
 
-import org.apache.hadoop.gateway.GatewayServer;
+public class GroupPrincipal implements Principal {
+  private String name = null;
 
-public class GatewayServicesContextListener implements ServletContextListener {
-
-  @Override
-  public void contextInitialized(ServletContextEvent sce) {
-    GatewayServices gs = GatewayServer.getGatewayServices();
-    sce.getServletContext().setAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE, gs);
+  public GroupPrincipal(String name) {
+    
   }
-
-  @Override
-  public void contextDestroyed(ServletContextEvent sce) {
+  
+  public String getName() {
+    return name;
   }
-
 }

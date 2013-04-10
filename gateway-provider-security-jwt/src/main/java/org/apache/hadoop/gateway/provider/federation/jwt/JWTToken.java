@@ -15,7 +15,7 @@
    * See the License for the specific language governing permissions and
    * limitations under the License.
    */
-package org.apache.hadoop.gateway.provider.federation.jwt.filter;
+package org.apache.hadoop.gateway.provider.federation.jwt;
 
 import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
@@ -105,9 +105,9 @@ public class JWTToken {
     log.parsingToken(wireToken);
     String[] parts = wireToken.split("\\.");
     token = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
-    System.out.println("header: " + token.header);
-    System.out.println("claims: " + token.claims);
-    System.out.println("payload: " + new String(token.payload));
+//    System.out.println("header: " + token.header);
+//    System.out.println("claims: " + token.claims);
+//    System.out.println("payload: " + new String(token.payload));
     
     return token;
   }
