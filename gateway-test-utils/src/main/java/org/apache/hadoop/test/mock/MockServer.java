@@ -28,6 +28,21 @@ import javax.servlet.Servlet;
 import java.util.LinkedList;
 import java.util.Queue;
 
+/**
+ * An embedded Jetty server with a single servlet deployed on "/*".
+ * It is used by populating a queue of "interactions".
+ * Each interaction is an expected request and a resulting response.
+ * These interactions are added to a queue in a fluent API style.
+ * So in most of the tests like GatewayBasicFuncTest.testBasicJsonUseCase you will see calls like
+ * driver.getMock( "NAMENODE" ).expect()....respond()...;
+ * This adds a single interaction to the mock server which is returned via the driver.getMock( "NAMENODE" ) above.
+ * Any number of interactions may be added.
+ * When the request comes in it will check the request against the expected request.
+ * If it matches return the response otherwise it will return a 500 error.
+ * Typically at the end of a test you should check to make sure the interaction queue is consumed by calling isEmpty().
+ * The reset() method can be used to ensure everything is cleaned up so that the mock server can be reused beteween tests.
+ * The whole idea was modeled after how the REST testing framework REST-assured and aims to be a server side equivalent.
+ */
 public class MockServer {
 
   private Logger log = LoggerFactory.getLogger( this.getClass() );

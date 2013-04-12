@@ -31,6 +31,7 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -52,6 +53,8 @@ import static org.hamcrest.CoreMatchers.startsWith;
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
+  // Uncomment to cause the test to hang after the gateway instance is setup.
+  // This will allow the gateway instance to be hit directly via some external client.
 //  @Test
 //  public void hang() throws IOException {
 //    System.out.println( "Server on port " + driver.gateway.getAddresses()[0].getPort() );
@@ -63,10 +66,22 @@ public class GatewayBasicFuncTest {
 
   public static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
 
+  // Controls the host name to which the gateway dispatch requests.  This may be the name of a sandbox VM
+  // or an EC2 instance.  Currently only a single host is supported.
   private static final String TEST_HOST = "vm.local";
+
+  // Specifies if the test requests should go through the gateway or directly to the services.
+  // This is frequently used to verify the behavior of the test both with and without the gateway.
   private static final boolean USE_GATEWAY = true;
+
+  // Specifies if the test requests should be sent to mock services or the real services.
+  // This is frequently used to verify the behavior of the test both with and without mock services.
   private static final boolean USE_MOCK_SERVICES = true;
+
+  // Specifies if the GATEWAY_HOME created for the test should be deleted when the test suite is complete.
+  // This is frequently used during debugging to keep the GATEWAY_HOME around for inspection.
   private static final boolean CLEANUP_TEST = true;
+
 //  private static final boolean USE_GATEWAY = false;
 //  private static final boolean USE_MOCK_SERVICES = false;
 //  private static final boolean CLEANUP_TEST = false;
@@ -78,6 +93,13 @@ public class GatewayBasicFuncTest {
     return port;
   }
 
+  /**
+   * Creates a deployment of a gateway instance that all test methods will share.  This method also creates a
+   * registry of sorts for all of the services that will be used by the test methods.
+   * The createTopology method is used to create the topology file that would normally be read from disk.
+   * The driver.setupGateway invocation is where the creation of GATEWAY_HOME occurs.
+   * @throws Exception Thrown if any failure occurs.
+   */
   @BeforeClass
   public static void setupSuite() throws Exception {
     GatewayTestConfig config = new GatewayTestConfig();
@@ -93,11 +115,23 @@ public class GatewayBasicFuncTest {
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
+  @AfterClass
+  public static void cleanupSuite() throws Exception {
+    if( CLEANUP_TEST ) {
+      driver.cleanup();
+    }
+  }
+
   @After
   public void cleanupTest() {
     driver.reset();
   }
 
+  /**
+   * Creates a topology that is deployed to the gateway instance for the test suite.
+   * Note that this topology is shared by all of the test methods in this suite.
+   * @return A populated XML structure for a topology file.
+   */
   private static XMLTag createTopology() {
     XMLTag xml = XMLDoc.newDocument( true )
         .addRoot( "topology" )

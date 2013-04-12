@@ -68,6 +68,14 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isIn;
 import static org.junit.Assert.assertThat;
 
+/**
+ * This class was created to reduce much of the duplication and boiler plate that was ending up in the GatewayBasicFuncTest class.
+ * It basically does a number of different things.
+ * 1) Creates a GATEWAY_HOME starts a gateway instance and deployes a test topology.
+ * 2) Provides a registry of mock Hadoop services.
+ * 3) Provides "bundled" methods for common Hadoop operations to avoid duplication in tests.
+ * 4) Provides methods to access test resources.
+ */
 public class GatewayFuncTestDriver {
 
   private static Logger log = LoggerFactory.getLogger( GatewayFuncTestDriver.class );
@@ -79,10 +87,20 @@ public class GatewayFuncTestDriver {
   public GatewayServer gateway;
   public GatewayConfig config;
 
+  /**
+   * Sets the class from which relative test resource names should be resolved.
+   * @param resourceBaseClass The class from which relative test resource names should be resolved.
+   */
   public void setResourceBase( Class<?> resourceBaseClass ) {
     this.resourceBaseClass = resourceBaseClass;
   }
 
+  /**
+   * Starts an embedded LDAP server of the specified port.
+   * @param port The desired port the LDAP server should listen on.
+   * @return The actual port the LDAP server is listening on.
+   * @throws Exception Thrown if a failure occurs.
+   */
   public int setupLdap( int port ) throws Exception {
     URL usersUrl = getResourceUrl( "users.ldif" );
     ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, port );
@@ -92,12 +110,18 @@ public class GatewayFuncTestDriver {
     return port;
   }
 
+  /**
+   * Adds a mock service to the registry.
+   */
   public void setupService( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
     Service service = new Service( role, realUrl, gatewayPath, mock );
     services.put( role, service );
     log.info( role + " port = " + service.server.getPort() );
   }
 
+  /**
+   * Creates a GATEWAY_HOME, starts a gateway intance and deploys a test topology.
+   */
   public void setupGateway( GatewayTestConfig config, String cluster, XMLTag topology, boolean use ) throws IOException {
     this.useGateway = use;
 
