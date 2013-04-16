@@ -35,7 +35,7 @@ public interface KeystoreService extends Service {
   
   public KeyStore getKeystoreForGateway();
   
-  public Key getKeyForGateway(String alias) throws KeystoreServiceException;
+  public Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
 
   public void createCredentialStoreForCluster(String clusterName);
   

@@ -21,6 +21,7 @@
         <provider>
             <role>authentication</role>
             <enabled>true</enabled>
+            <name>ShiroProvider</name>
             <param>
                 <name>main.ldapRealm</name>
                 <value>org.apache.shiro.realm.ldap.JndiLdapRealm</value>
@@ -41,6 +42,11 @@
                 <name>urls./**</name>
                 <value>authcBasic</value>
             </param>
+        </provider>
+        <provider>
+        	<role>identity-assertion</role>
+        	<enabled>true</enabled>
+        	<name>Pseudo</name>
         </provider>
     </gateway>
 

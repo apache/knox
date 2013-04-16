@@ -21,6 +21,7 @@ import java.security.Principal;
 
 import javax.security.auth.Subject;
 
+import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 
 public class JWTAuthority {
@@ -30,7 +31,7 @@ public class JWTAuthority {
     this.crypto = crypto;
   }
   
-  public JWTToken issueToken(Subject subject, String algorithm, byte[] secret) {
+  public JWTToken issueToken(Subject subject, String algorithm) {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
     String[] claimArray = new String[4];
     claimArray[0] = "gateway";
@@ -42,7 +43,7 @@ public class JWTAuthority {
 
     JWTToken token = null;
     if ("RS256".equals(algorithm)) {
-      new JWTToken("RS256", claimArray);
+      token = new JWTToken("RS256", claimArray);
       signToken(token);
     }
     else {

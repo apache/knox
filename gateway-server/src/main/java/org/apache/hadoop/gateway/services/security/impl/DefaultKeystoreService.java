@@ -259,12 +259,12 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   @Override
-  public Key getKeyForGateway(String alias) throws KeystoreServiceException {
+  public Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException {
     Key key = null;
     KeyStore ks = getKeystoreForGateway();
     if (ks != null) {
       try {
-        key = ks.getKey(alias, masterService.getMasterSecret());
+        key = ks.getKey(alias, passphrase);
       } catch (UnrecoverableKeyException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();

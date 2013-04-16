@@ -37,6 +37,7 @@ import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 
 public class DefaultCryptoService implements CryptoService {
+  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
   
   private AliasService as = null;
   private KeystoreService ks = null;
@@ -154,7 +155,8 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] sign(String algorithm, String alias, String payloadToSign) {
     try {
-      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias);
+      char[] passphrase = as.getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
+      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
       signature.update(payloadToSign.getBytes("UTF-8"));

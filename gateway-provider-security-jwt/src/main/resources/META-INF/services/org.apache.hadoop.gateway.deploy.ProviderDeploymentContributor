@@ -18,3 +18,5 @@
 
 org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTFederationContributor
 org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTAccessTokenAssertionContributor
+org.apache.hadoop.gateway.provider.federation.jwt.deploy.JWTAuthCodeAssertionContributor
+org.apache.hadoop.gateway.provider.federation.jwt.deploy.AccessTokenFederationContributor
