@@ -142,5 +142,8 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatching request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
+  
+  @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
+  void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.DEBUG) Exception e );
 
 }

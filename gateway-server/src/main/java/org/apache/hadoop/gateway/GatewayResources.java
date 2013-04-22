@@ -32,4 +32,7 @@ public interface GatewayResources {
   @Resource( text="Apache Hadoop Gateway" )
   String gatewayServletInfo();
 
+  @Resource( text="Service connectivity error." )
+  String dispatchConnectionError();
+
 }

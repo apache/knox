@@ -18,7 +18,9 @@
 package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -45,6 +47,7 @@ import java.net.URISyntaxException;
 public class HttpClientDispatch extends AbstractGatewayDispatch {
 
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
 
   protected void executeRequest(
       HttpUriRequest outboundRequest,
@@ -53,7 +56,14 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
           throws IOException {
     LOG.dispatchRequest( outboundRequest.getMethod(), outboundRequest.getURI() );
     HttpClient client = new DefaultHttpClient();
-    HttpResponse inboundResponse = client.execute( outboundRequest );
+    HttpResponse inboundResponse;
+    try {
+      inboundResponse = client.execute( outboundRequest );
+    } catch (IOException e) {
+      // we do not want to expose back end host. port end points to clients, see JIRA KNOX-58
+      LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
+      throw new IOException( RES.dispatchConnectionError() );
+    }
 
     // Copy the client respond header to the server respond.
     outboundResponse.setStatus( inboundResponse.getStatusLine().getStatusCode() );
