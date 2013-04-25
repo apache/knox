@@ -43,6 +43,10 @@
         <os family="windows" />
     </condition>
 
+    <condition property="distributive_builder" value="./gateway-rpm/build_knox_rpm.sh">
+        <os family="unix" />
+    </condition>
+
     <target name="init" description="Initialize the build.">
     </target>
 
@@ -75,6 +79,15 @@
         </exec>
     </target>
 
+    <target name="make_distributive" depends="package" description="Build rpm of the product.">
+        <exec executable="${distributive_builder}">
+            <arg value="target"/>
+            <arg value="${gateway-artifact}"/>
+            <arg value="${gateway-version}"/>
+            <arg value="${release-manager}"/>
+        </exec>
+    </target>	
+	
     <!--
     <target name="archive" depends="init" description="Create the release ZIP.">
         <zip destfile="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip">
