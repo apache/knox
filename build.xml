@@ -15,10 +15,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project name="Apache Hadoop Gateway" default="build" basedir=".">
+<project name="Apache Knox Gateway" default="build" basedir=".">
 
     <description>
-        Release build file for the Hadoop Gateway
+        Release build file for the Apache Knox Gateway
     </description>
 
     <property name="gateway-name" value="Apache Knox (Incubator)"/>
@@ -28,6 +28,10 @@
     <property name="release-manager" value="kminder"/>
 
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
+
+    <condition property="isUnix">
+        <os family="unix"/>
+    </condition>
 
     <condition property="mvn.cmd" value="mvn">
         <os family="unix" />
@@ -43,7 +47,7 @@
         <os family="windows" />
     </condition>
 
-    <condition property="distributive_builder" value="./gateway-rpm/build_knox_rpm.sh">
+    <condition property="rpm-builder" value="./gateway-rpm/build_knox_rpm.sh">
         <os family="unix" />
     </condition>
 
@@ -79,42 +83,19 @@
         </exec>
     </target>
 
-    <target name="make_distributive" depends="package" description="Build rpm of the product.">
-        <exec executable="${distributive_builder}">
+    <target name="set-rpm-builder-privs" if="isUnix">
+        <chmod file="${rpm-builder}" perm="700"/>	     
+    </target>
+
+    <target name="rpm" depends="package,set-rpm-builder-privs,_rpm" description="Package and build RPM of the product."/>
+    <target name="_rpm" depends="init" description="Build RPM of the product from existing package.">
+        <exec executable="${rpm-builder}">
             <arg value="target"/>
             <arg value="${gateway-artifact}"/>
             <arg value="${gateway-version}"/>
             <arg value="${release-manager}"/>
         </exec>
-    </target>	
-	
-    <!--
-    <target name="archive" depends="init" description="Create the release ZIP.">
-        <zip destfile="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip">
-            <zipfileset
-                    dir="gateway-release"
-                    includes="**/*"
-                    excludes="src,target,*.xml,*.iml,*.md"
-                    prefix="${gateway-home}"/>
-            <zipfileset
-                    dir="gateway-test-ldap/target"
-                    includes="gateway-test-ldap-${gateway-version}.jar"
-                    fullpath="${gateway-home}/bin/ldap-${gateway-version}.jar"/>
-            <zipfileset
-                    dir="gateway-release/target"
-                    includes="gateway-release-${gateway-version}.jar"
-                    fullpath="${gateway-home}/bin/gateway-${gateway-version}.jar"/>
-            <zipfileset
-                    dir="gateway-shell/target"
-                    includes="gateway-shell-${gateway-version}.jar"
-                    fullpath="${gateway-home}/bin/shell-${gateway-version}.jar"/>
-        </zip>
     </target>
-    -->
-
-    <!--
-    <target name="release" depends="init,clean,build,archive" description="Create the release."/>
-    -->
 
     <target name="sign" depends="init" description="Sign a previously created release.">
         <exec executable="gpg" dir="target/${gateway-version}">
@@ -145,34 +126,6 @@
             </filterchain>
         </loadfile>
         <echo message="${stage-message}"/>
-    </target>
-
-    <target name="publish" description="Generate and publish the Apache web site.">
-        <exec executable="${mvn.cmd}" dir="gateway-site">
-            <arg value="clean"/>
-        </exec>
-        <mkdir dir="gateway-site/target/site"/>
-        <exec executable="${svn.cmd}" dir="gateway-site/target/dist">
-            <arg value="checkout"/>
-            <arg value="https://svn.apache.org/repos/asf/incubator/knox/site"/>
-        </exec>
-        <delete quiet="true" verbose="true">
-            <fileset dir="gateway-site/target/site" includes="**/*.html,**/*.css,**/*.png,**/*.gif">
-            </fileset>
-        </delete>
-        <exec executable="${mvn.cmd}" dir="gateway-site">
-            <arg value="site"/>
-        </exec>
-        <exec executable="${svn.cmd}" dir="gateway-site/target/site">
-            <arg value="add"/>
-            <arg value="--force"/>
-            <arg value="."/>
-        </exec>
-        <exec executable="${svn.cmd}" dir="gateway-site/target/site">
-            <arg value="commit"/>
-            <arg value="-m"/>
-            <arg value="Publish site from Git repository."/>
-        </exec>
     </target>
 
 </project>
