@@ -21,13 +21,13 @@
 
 Summary: Knox
 Name: %_knox_name
-Version: 0.3.0
+Version: 0.0.0
 Release: 1
 License: Apache License, Version 2.0
 Group: Applications/Server
 Vendor: Hortonworks.
 Packager: Hortonworks <packager@hortonworks.com>
-BuildArch: i386
+BuildArch: %_build_arch
 
 #knox-0.3.0-SNAPSHOT.tar.gz
 Source: %{name}-%{_knox_ver}.tar.gz

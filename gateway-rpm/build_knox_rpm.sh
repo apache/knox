@@ -22,19 +22,24 @@ KNOX_PACKAGE_TARGET=$1
 # knox
 KNOX_NAME=$2
 # 0.3.0-SNAPSHOT
-KNOX_VERSION=$3
+KNOX_VER=$3
 # target/RPM base directory
-KNOX_RPM_BUILD_ROOT="$(pwd)"/$KNOX_PACKAGE_TARGET/RPM
-
+KNOX_TOPDIR="$(pwd)"/$KNOX_PACKAGE_TARGET/RPM
+# Hardware platform
+KNOX_BUILD_ARCH="$(arch)"
+#RPM name
+KNOX_RPMFILENAME="$KNOX_NAME-$KNOX_VER.rpm"
 
 #SOURCES Contains the original sources, patches, and icon files.
 #SPECS Contains the spec files used to contrl the build process. 
 #The BUILD directory in which the sources are unpacked, and the software is built.
 #RPMS Contains the binary package files created by the build process.
 #SRPMS Contains the source package files created by the build process.
-mkdir -p $KNOX_RPM_BUILD_ROOT/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
+mkdir -p $KNOX_TOPDIR/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
 
-cp ./gateway-rpm/knox.spec $KNOX_RPM_BUILD_ROOT/SPECS
-cp ./$KNOX_PACKAGE_TARGET/$KNOX_VERSION/$KNOX_NAME-$KNOX_VERSION.tar.gz $KNOX_RPM_BUILD_ROOT/SOURCES
+cp ./gateway-rpm/knox.spec $KNOX_TOPDIR/SPECS
+cp ./$KNOX_PACKAGE_TARGET/$KNOX_VER/$KNOX_NAME-$KNOX_VER.tar.gz $KNOX_TOPDIR/SOURCES
 
-rpmbuild --define "_topdir $KNOX_RPM_BUILD_ROOT" --define "_knox_name $KNOX_NAME" --define "_knox_ver $KNOX_VERSION" -bb $KNOX_RPM_BUILD_ROOT/SPECS/knox.spec 
+rpmbuild --define "_rpmfilename $KNOX_RPMFILENAME" --define "_topdir $KNOX_TOPDIR" --define "_knox_name $KNOX_NAME" --define "_knox_ver $KNOX_VER" --define "_build_arch $KNOX_BUILD_ARCH" --bb $KNOX_TOPDIR/SPECS/knox.spec  
+
+cp $KNOX_TOPDIR/RPMS/$KNOX_RPMFILENAME $KNOX_PACKAGE_TARGET/$KNOX_VER

@@ -101,6 +101,11 @@
         <exec executable="gpg" dir="target/${gateway-version}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
+            <arg value="${gateway-artifact}-${gateway-version}.rpm"/>
+        </exec>
+        <exec executable="gpg" dir="target/${gateway-version}">
+            <arg value="--armor"/>
+            <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
         <exec executable="gpg" dir="target/${gateway-version}">
