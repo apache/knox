@@ -95,6 +95,8 @@
             <arg value="${gateway-version}"/>
             <arg value="${release-manager}"/>
         </exec>
+        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="MD5" fileext=".md5" forceOverwrite="yes"/>
+        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA1" fileext=".sha" forceOverwrite="yes"/>
     </target>
 
     <target name="sign" depends="init" description="Sign a previously created release.">
@@ -108,6 +110,7 @@
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
+        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum"/>
         <exec executable="gpg" dir="target/${gateway-version}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
@@ -119,7 +122,6 @@
             <arg value="--output"/>
             <arg value="KEYS"/>
         </exec>
-        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum" />
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
                 <expandproperties/>
@@ -132,5 +134,7 @@
         </loadfile>
         <echo message="${stage-message}"/>
     </target>
+
+    <target name="release" depends="package,rpm,sign"/>
 
 </project>
