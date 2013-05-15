@@ -35,13 +35,11 @@ KNOX_JAR="$KNOX_SCRIPT_DIR/server.jar"
 #Name of PID file
 PID_DIR="/var/run/$KNOX_NAME"
 PID_FILE="$PID_DIR/$KNOX_NAME.pid"
-PID_PERM_FILE="$PID_DIR/$KNOX_NAME.perm"
 
 #Name of LOG/OUT/ERR file
 LOG_DIR="/var/log/$KNOX_NAME"
 OUT_FILE="$LOG_DIR/$KNOX_NAME.out"
 ERR_FILE="$LOG_DIR/$KNOX_NAME.err"
-LOG_PERM_FILE="$LOG_DIR/$KNOX_NAME.perm"
 
 #The max time to wait
 MAX_WAIT_TIME=10
@@ -79,10 +77,7 @@ function knoxStart {
    
    rm -f $PID_FILE
 
-   echo $KNOX_JAR
-   echo $ERR_FILE
-   echo $PID_FILE
-   nohup java -jar $KNOX_JAR >> $OUT_FILE 2>>$ERR_FILE & printf $! >$PID_FILE "\n"|| return 1
+   nohup java -jar $KNOX_JAR >>$OUT_FILE 2>>$ERR_FILE & printf $!>$PID_FILE || return 1
    
    getPID
    knoxIsRunning $PID
@@ -166,8 +161,15 @@ function getPID {
 }
 
 function knoxIsRunning {
-   if [ -e /proc/$1 ]; then return 1; fi
-   return 0
+   if [ $1 -eq 0 ]; then return 0; fi
+
+   ps -p $1 > /dev/null
+
+   if [ $? -eq 1 ]; then
+     return 0
+   else
+     return 1
+   fi
 }
 
 function knoxKill {
