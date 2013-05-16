@@ -20,8 +20,11 @@
 #Knox PID
 PID=0
 
-#start, stop or status
+#start, stop, status, clean or setup
 KNOX_LAUNCH_COMMAND=$1
+
+#User Name for setup parameter
+KNOX_LAUNCH_USER=$2
 
 #start/stop script location
 KNOX_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -58,14 +61,17 @@ function main {
       clean) 
          knoxClean
          ;;
+      setup) 
+         setupEnv $KNOX_LAUNCH_USER
+         ;;
       *)
-         printf "Usage: $0 {start|stop|status|clean}\n"
+         printf "Usage: $0 {start|stop|status|clean|setup [USER_NAME]}\n"
          ;;
    esac
 }
 
 function knoxStart {
-   prepareEnv
+   createLogFiles
 
    getPID
    if [ $? -eq 0 ]; then
@@ -134,14 +140,7 @@ function knoxClean {
    getPID
    knoxIsRunning $PID
    if [ $? -eq 0 ]; then 
-     rm -f $PID_FILE
-     printf "Removed the Knox PID file: $PID_FILE.\n"
-     
-     rm -f $OUT_FILE
-     printf "Removed the Knox OUT file: $OUT_FILE.\n"
-     
-     rm -f $ERR_FILE
-     printf "Removed the Knox ERR file: $ERR_FILE.\n"
+     deleteLogFiles
      return 0
    else
      printf "Can't clean files the Knox is run with PID=$PID.\n" 
@@ -191,11 +190,65 @@ function knoxKill {
    return 1
 }
 
-function prepareEnv {
-   if [ ! -d "$PID_DIR" ]; then mkdir -p $PID_DIR; fi
-   if [ ! -d "$LOG_DIR" ]; then mkdir -p $LOG_DIR; fi
+function createLogFiles {
    if [ ! -f "$OUT_FILE" ]; then touch $OUT_FILE; fi
    if [ ! -f "$ERR_FILE" ]; then touch $ERR_FILE; fi   
+}
+
+function deleteLogFiles {
+     rm -f $PID_FILE
+     printf "Removed the Knox PID file: $PID_FILE.\n"
+     
+     rm -f $OUT_FILE
+     printf "Removed the Knox OUT file: $OUT_FILE.\n"
+     
+     rm -f $ERR_FILE
+     printf "Removed the Knox ERR file: $ERR_FILE.\n"  
+}
+
+function setDirPermission {
+   local dirName=$1
+   local userName=$2
+
+   if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
+   if [ $? -ne 0 ]; then
+      printf "Can't access or create \"$dirName\" folder.\n"
+      return 1
+   fi
+
+   chown -f $userName $dirName
+   if [ $? -ne 0 ]; then
+      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.\n" 
+      return 1
+   fi
+
+   chmod o=rwx $dirName 
+   if [ $? -ne 0 ]; then
+      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\"\n" 
+      return 1
+   fi
+
+   return 0
+}
+
+function setupEnv {
+   local userName=$1
+   
+   if [ -z $userName ]; then 
+      printf "Empty user name is not allowed. Parameters: setup [USER_NAME]\n"
+      return 1
+   fi
+
+   id -u $1 >/dev/null 2>&1
+   if [ $? -eq 1 ]; then
+      printf "\"$userName\" is not valid user name. Parameters: setup [USER_NAME]\n"
+      return 1
+   fi
+
+   setDirPermission $PID_DIR $userName
+   setDirPermission $LOG_DIR $userName
+
+   java -jar $KNOX_JAR -persist-master 
 }
 
 #Starting main
