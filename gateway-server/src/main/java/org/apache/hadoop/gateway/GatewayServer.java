@@ -348,10 +348,12 @@ public class GatewayServer {
           File warDir = calculateDeploymentDir( topology );
           if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
             File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
-            for( File file : files ) {
-              log.deletingDeployment( file.getAbsolutePath() );
-              internalUndeploy( topology );
-              FileUtils.deleteQuietly( file );
+            if( files != null ) {
+              for( File file : files ) {
+                log.deletingDeployment( file.getAbsolutePath() );
+                internalUndeploy( topology );
+                FileUtils.deleteQuietly( file );
+              }
             }
           } else {
             try {
