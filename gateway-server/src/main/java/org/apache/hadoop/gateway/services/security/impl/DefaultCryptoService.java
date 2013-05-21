@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -27,8 +26,9 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
@@ -38,7 +38,8 @@ import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 
 public class DefaultCryptoService implements CryptoService {
   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
-  
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class ); 
+
   private AliasService as = null;
   private KeystoreService ks = null;
 
@@ -85,14 +86,11 @@ public class DefaultCryptoService implements CryptoService {
         aes = new AESEncryptor(new String(password));
         return aes.encrypt(clear);
       } catch (NoSuchAlgorithmException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
+        LOG.failedToEncryptPasswordForCluster( clusterName, e1 );
       } catch (InvalidKeyException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToEncryptPasswordForCluster( clusterName, e );
       } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToEncryptPasswordForCluster( clusterName, e );
       }
     }
     return null;
@@ -103,8 +101,7 @@ public class DefaultCryptoService implements CryptoService {
     try {
       return decryptForCluster(clusterName, alias, cipherText.getBytes("UTF8"), null, null);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
     return null;
   }
@@ -117,8 +114,7 @@ public class DefaultCryptoService implements CryptoService {
       try {
         return aes.decrypt(salt, iv, cipherText);
       } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToDecryptPasswordForCluster( clusterName, e );
       }
     }
     return null;
@@ -133,22 +129,17 @@ public class DefaultCryptoService implements CryptoService {
       sig.update(signed.getBytes("UTF-8"));
       verified = sig.verify(signature);
     } catch (SignatureException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToVerifySignature( e );
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToVerifySignature( e );
     } catch (InvalidKeyException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToVerifySignature( e );
     } catch (KeyStoreException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToVerifySignature( e );
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToVerifySignature( e );
     }
-    System.out.println("Signature verified: " + verified);  
+    LOG.signatureVerified( verified );
     return verified;
   }
 
@@ -162,20 +153,15 @@ public class DefaultCryptoService implements CryptoService {
       signature.update(payloadToSign.getBytes("UTF-8"));
       return signature.sign();
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToSignData( e );
     } catch (InvalidKeyException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToSignData( e );
     } catch (SignatureException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToSignData( e );
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToSignData( e );
     } catch (KeystoreServiceException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToSignData( e );
     }
     return null;
   }

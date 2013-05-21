@@ -40,7 +40,9 @@ import java.util.Map;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
@@ -63,6 +65,7 @@ public class DefaultKeystoreService implements KeystoreService {
   private static final String TEST_CERT_DN = "CN=hadoop.gateway,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
   private static final String GATEWAY_KEYSTORE = "gateway.jks";
+  private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   
   private MasterService masterService;
   private String keyStoreDir;
@@ -117,14 +120,11 @@ public class DefaultKeystoreService implements KeystoreService {
       
       writeKeystoreToFile(privateKS, new File( keyStoreDir + GATEWAY_KEYSTORE  ));
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToAddSeflSignedCertForGateway( alias, e );
     } catch (GeneralSecurityException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToAddSeflSignedCertForGateway( alias, e );
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToAddSeflSignedCertForGateway( alias, e );
     }  
   }
   
@@ -180,20 +180,15 @@ public class DefaultKeystoreService implements KeystoreService {
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (CertificateException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToCreateKeystore( filename, keystoreType, e );
     }
   }
   
@@ -203,10 +198,8 @@ public class DefaultKeystoreService implements KeystoreService {
     try {
       return isKeystoreAvailable(keyStoreFile, "JCEKS");
     } catch (KeyStoreException e) {
-      e.printStackTrace();
       throw new KeystoreServiceException(e);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       throw new KeystoreServiceException(e);
     }
   }
@@ -233,25 +226,21 @@ public class DefaultKeystoreService implements KeystoreService {
         keyStore.load( input, masterService.getMasterSecret() );
         return true;
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
       } catch (CertificateException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
         throw e;
       } catch (KeyStoreException e) {
-        e.printStackTrace();
+        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
         throw e;
       }
       finally {
           try {
             input.close();
           } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
           }
       }
     }
@@ -266,14 +255,11 @@ public class DefaultKeystoreService implements KeystoreService {
       try {
         key = ks.getKey(alias, passphrase);
       } catch (UnrecoverableKeyException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForGateway( alias, e );
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForGateway( alias, e );
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForGateway( alias, e );
       }
     }
     return key;
@@ -289,17 +275,13 @@ public class DefaultKeystoreService implements KeystoreService {
     try {
       credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
     } catch (CertificateException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
     } catch (KeyStoreException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
     }
     return credStore;
   }
@@ -355,17 +337,13 @@ public class DefaultKeystoreService implements KeystoreService {
         final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
         writeKeystoreToFile(ks, keyStoreFile);
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddCredentialForCluster( clusterName, e );
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddCredentialForCluster( clusterName, e );
       } catch (CertificateException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddCredentialForCluster( clusterName, e );
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddCredentialForCluster( clusterName, e );
       }
     }
   }
@@ -378,14 +356,11 @@ public class DefaultKeystoreService implements KeystoreService {
       try {
         credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded()).toCharArray();
       } catch (UnrecoverableKeyException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetCredentialForCluster( clusterName, e );
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetCredentialForCluster( clusterName, e );
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetCredentialForCluster( clusterName, e );
       }
     }
     return credential;
@@ -397,18 +372,15 @@ public class DefaultKeystoreService implements KeystoreService {
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
       try {
-        System.out.println("ALIAS: " + alias);
-        System.out.println("MASTER SERVICE == NULL: " + (masterService == null));
+        LOG.printClusterAlias( alias );
+        LOG.printMasterServiceIsNull( masterService == null );
         key = ks.getKey(alias, masterService.getMasterSecret()).getEncoded();
       } catch (UnrecoverableKeyException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForCluster( clusterName, e );
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForCluster( clusterName, e );
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToGetKeyForCluster( clusterName, e );
       }
     }
     return key;
@@ -424,17 +396,13 @@ public class DefaultKeystoreService implements KeystoreService {
         final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
         writeKeystoreToFile(ks, keyStoreFile);
       } catch (KeyStoreException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddKeyForCluster( clusterName, e );
       } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddKeyForCluster( clusterName, e );
       } catch (CertificateException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddKeyForCluster( clusterName, e );
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.failedToAddKeyForCluster( clusterName, e );
       }
     }
   }

@@ -21,6 +21,8 @@ import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTProviderMessages;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -31,6 +33,7 @@ public class JWTToken {
   public static final String ISSUER = "iss";
   public static final String AUDIENCE = "aud";
   public static final String EXPIRES = "exp";
+  private static final JWTProviderMessages LOG = MessagesFactory.get( JWTProviderMessages.class );
 
   public String header = null;
   public String claims = null;
@@ -43,8 +46,7 @@ public class JWTToken {
       this.claims = new String(claims, "UTF-8");
       this.payload = signature;
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
   }
 
@@ -65,15 +67,14 @@ public class JWTToken {
       sb.append(".");
       sb.append(Base64.encodeBase64URLSafeString(claims.getBytes("UTF-8")));
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
     
     return sb.toString();
   }
 
   public String toString() {
-    System.out.println("Rendering JWT token for the wire");
+    
     StringBuffer sb = new StringBuffer();
     try {
       sb.append(Base64.encodeBase64URLSafeString(header.getBytes("UTF-8")));
@@ -82,11 +83,10 @@ public class JWTToken {
       sb.append(".");
       sb.append(Base64.encodeBase64URLSafeString(payload));
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
     
-    System.out.println("Returning JWT token for the wire: " + sb.toString());
+    LOG.renderingJWTTokenForTheWire(sb.toString());
     return sb.toString();
   }
   
@@ -100,12 +100,13 @@ public class JWTToken {
 
   public static JWTToken parseToken(String wireToken) {
     JWTToken token = null;
-    System.out.println("token off the wire: " + wireToken);
+    LOG.parsingToken(wireToken);
     String[] parts = wireToken.split("\\.");
     token = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
-    System.out.println("header: " + token.header);
-    System.out.println("claims: " + token.claims);
-    System.out.println("payload: " + new String(token.payload));
+    
+    LOG.printTokenHeader( token.header );
+    LOG.printTokenClaims( token.claims );
+    LOG.printTokenPayload( token.payload );
     
     return token;
   }

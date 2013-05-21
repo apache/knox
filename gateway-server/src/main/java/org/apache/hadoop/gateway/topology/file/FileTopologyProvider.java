@@ -95,9 +95,11 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
           try {
             map.put( file.getName(), loadTopology( file ) );
           } catch( IOException e ) {
-            e.printStackTrace();
+            // Maybe it makes sense to throw exception
+            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
           } catch( SAXException e ) {
-            e.printStackTrace();
+            // Maybe it makes sense to throw exception
+            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
           }
         }
       }
@@ -115,7 +117,8 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
         notifyChangeListeners( events );
       }
     } catch( FileSystemException e ) {
-      e.printStackTrace();
+      // Maybe it makes sense to throw exception
+      log.failedToReloadTopologies( e );
     }
   }
 
@@ -149,7 +152,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
       try {
         listener.handleTopologyEvent( events );
       } catch( RuntimeException e ) {
-        e.printStackTrace();
+        log.failedToHandleTopologyEvents( e );
       }
     }
   }

@@ -26,6 +26,10 @@ import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
 
 import javax.xml.namespace.QName;
+
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -36,6 +40,8 @@ import java.util.Stack;
 
 public abstract class XmlFilterReader extends Reader {
 
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  
   private Stack<Element> stack;
   private Reader reader;
   private StreamedSource parser;
@@ -150,8 +156,7 @@ public abstract class XmlFilterReader extends Reader {
         outputValue = inputValue;
       }
     } catch ( Exception e ) {
-      //TODO: Log the exception.
-      e.printStackTrace();
+      LOG.failedToFilterAttribute( attribute.getName(), e );
     }
     writer.write( " " );
     writer.write( attribute.getName() );
@@ -175,8 +180,7 @@ public abstract class XmlFilterReader extends Reader {
         outputValue = inputValue;
       }
     } catch ( Exception e ) {
-      //TODO: Log the exception.
-      e.printStackTrace();
+      LOG.failedToFilterValue( inputValue, e );
     }
     writer.write( outputValue );
   }

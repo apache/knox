@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.json;
 
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -28,6 +30,8 @@ import java.io.StringWriter;
 
 public class JsonFilterReader extends Reader {
 
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  
   private int offset;
   private JsonParser parser;
   private JsonGenerator generator;
@@ -141,8 +145,7 @@ public class JsonFilterReader extends Reader {
     try {
       name = filterFieldName( name );
     } catch( Exception e ) {
-      //TODO: Log a proper i18n error
-      e.printStackTrace();
+      LOG.failedToFilterFieldName( name, e );
       // Write original name.
     }
     generator.writeFieldName( name );
@@ -154,8 +157,7 @@ public class JsonFilterReader extends Reader {
     try {
       value = filterValueString( name, value );
     } catch( Exception e ) {
-      //TODO: Log a proper i18n error
-      e.printStackTrace();
+      LOG.failedToFilterValue( value, e );
       // Write original value.
     }
     generator.writeString( value );

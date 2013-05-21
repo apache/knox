@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.html;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -28,6 +30,8 @@ import java.net.URISyntaxException;
 
 public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
 
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  
   private Resolver resolver;
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;
@@ -49,8 +53,7 @@ public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
         value = output.toString();
       }
     } catch( URISyntaxException e ) {
-      //TODO: Proper i18n logging of stack trace.
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
   }

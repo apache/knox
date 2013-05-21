@@ -20,7 +20,9 @@ package org.apache.hadoop.gateway.services.security.impl;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.services.security.MasterService;
@@ -37,6 +39,7 @@ public class DefaultMasterService implements MasterService {
 
   private static final String MASTER_PASSPHRASE = "masterpassphrase";
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private char[] master = null;
   private AESEncryptor aes = new AESEncryptor(MASTER_PASSPHRASE);
 
@@ -140,8 +143,8 @@ public class DefaultMasterService implements MasterService {
       // restrict os permissions to only the user running this process
       chmod("600", masterFile);
     } catch (IOException e) {
-      // TODO log appropriate message that the master secret has not been persisted
-      e.printStackTrace();
+
+      LOG.failedToPersistMasterSecret( e );
     }
   }
 
@@ -150,9 +153,8 @@ public class DefaultMasterService implements MasterService {
     try {
       return aes.encrypt(new String(master));
     } catch (Exception e) {
-      // TODO log failed encryption attempt
       // need to ensure that we don't persist now
-      e.printStackTrace();
+      LOG.failedToEncryptMasterSecret( e );
     }
     return null;
   }
@@ -161,8 +163,7 @@ public class DefaultMasterService implements MasterService {
     try {
       List<String> lines = FileUtils.readLines(masterFile, "UTF8");
       String tag = lines.get(0);
-      // TODO: log - if appropriate - at least at finest level
-      System.out.println("Loading from persistent master: " + tag);
+      LOG.loadingFromPersistentMaster( tag );
       String line = new String(Base64.decodeBase64(lines.get(1)));
       String[] parts = line.split("::");
 //System.out.println("salt: " + parts[0] + " : " + Base64.decodeBase64(parts[0]));
@@ -170,11 +171,10 @@ public class DefaultMasterService implements MasterService {
 //System.out.println("cipher: " + parts[2]);
       this.master = new String(aes.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.failedToInitializeFromPersistentMaster( masterFile.getName(), e );
       throw e;
     } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToInitializeFromPersistentMaster( masterFile.getName(), e );
       throw e;
     }
   }

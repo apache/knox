@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -50,6 +51,8 @@ public class GatewayFilter implements Filter {
     public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     }
   };
+  
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   private Set<Holder> holders;
   private Matcher<Chain> chains;
@@ -94,19 +97,19 @@ public class GatewayFilter implements Filter {
       try {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
-        e.printStackTrace(); //TODO: Proper I18N exception logging.
+        LOG.failedToExecuteFilter( e );
         throw e;
       } catch( ServletException e ) {
-        e.printStackTrace(); //TODO: Proper I18N exception logging.
+        LOG.failedToExecuteFilter( e );
         throw e;
       } catch( RuntimeException e ) {
-        e.printStackTrace(); //TODO: Proper I18N exception logging.
+        LOG.failedToExecuteFilter( e );
         throw e;
       } catch( ThreadDeath e ) {
-        e.printStackTrace(); //TODO: Proper I18N exception logging.
+        LOG.failedToExecuteFilter( e );
         throw e;
       } catch( Throwable e ) {
-        e.printStackTrace(); //TODO: Proper I18N exception logging.
+        LOG.failedToExecuteFilter( e );
         throw new ServletException( e );
       }
     } else {

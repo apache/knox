@@ -19,8 +19,10 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
@@ -31,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class UrlRewriteContextImpl implements UrlRewriteContext {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private UrlRewriteEnvironment environment;
   private UrlRewriteResolver resolver;
@@ -103,8 +107,7 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
             values = environment.resolve( name ); // Try to fine the name in the environment.
           }
         } catch( Exception e ) {
-          //TODO: Proper i18n logging.
-          e.printStackTrace();
+          LOG.failedToFindValuesByParameter( name, e );
           // Ignore it and return null.
         }
       }

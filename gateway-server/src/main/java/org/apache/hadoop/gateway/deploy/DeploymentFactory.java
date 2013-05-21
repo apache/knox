@@ -184,8 +184,7 @@ public abstract class DeploymentFactory {
           }
           contributor.initializeContribution( context );
         } catch( Exception e ) {
-          //TODO: I18N message.
-          e.printStackTrace();
+          log.failedToInitializeContribution( e );
         }
       }
     }
@@ -197,8 +196,7 @@ public abstract class DeploymentFactory {
           }
           contributor.initializeContribution( context );
         } catch( Exception e ) {
-          //TODO: I18N message.
-          e.printStackTrace();
+          log.failedToInitializeContribution( e );
         }
       }
     }
@@ -218,8 +216,8 @@ public abstract class DeploymentFactory {
         } catch (NoSuchMethodException e) {
           // TODO: eliminate the possibility of this being thrown up front
         } catch (Exception e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          // Maybe it makes sense to throw exception
+          log.failedToInjectService( serviceName, e );
         }
       }
     }
@@ -236,8 +234,8 @@ public abstract class DeploymentFactory {
         try {
           contributor.contributeProvider( context, provider );
         } catch( Exception e ) {
-          //TODO: I18N message.
-          e.printStackTrace();
+          // Maybe it makes sense to throw exception
+          log.failedToContributeProvider( provider.getName(), provider.getRole(), e );
         }
       }
     }
@@ -247,8 +245,8 @@ public abstract class DeploymentFactory {
         try {
           contributor.contributeService( context, service );
         } catch( Exception e ) {
-          //TODO: I18N message.
-          e.printStackTrace();
+          // Maybe it makes sense to throw exception
+          log.failedToContributeService( service.getName(), service.getRole(), e );
         }
       }
     }
@@ -306,8 +304,8 @@ public abstract class DeploymentFactory {
           try {
             contributor.finalizeContribution( context );
           } catch( Exception e ) {
-            //TODO: I18N message.
-            e.printStackTrace();
+            // Maybe it makes sense to throw exception
+            log.failedToFinalizeContribution( e );
           }
         }
       }
@@ -316,8 +314,8 @@ public abstract class DeploymentFactory {
           try {
             contributor.finalizeContribution( context );
           } catch( Exception e ) {
-            //TODO: I18N message.
-            e.printStackTrace();
+            // Maybe it makes sense to throw exception
+            log.failedToFinalizeContribution( e );
           }
         }
       }

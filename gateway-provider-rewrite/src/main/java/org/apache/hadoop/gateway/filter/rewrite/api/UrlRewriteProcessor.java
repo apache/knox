@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionResolver;
@@ -24,6 +25,7 @@ import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteStepProcessorHold
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -39,6 +41,8 @@ import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction
 
 public class UrlRewriteProcessor implements UrlRewriter {
 
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  
   UrlRewriteEnvironment environment;
   List<UrlRewriteStepProcessorHolder> rules = new ArrayList<UrlRewriteStepProcessorHolder>();
   Matcher<UrlRewriteStepProcessorHolder> inbound = new Matcher<UrlRewriteStepProcessorHolder>();
@@ -64,8 +68,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
         processor.initialize( environment, descriptor );
         functions.put( name, processor );
       } catch( Exception e ) {
-        //TODO: Proper i18n stack trace logging.
-        e.printStackTrace();
+        LOG.failedToInitializeRewriteFunctions( e );
         // Ignore it and it won't be available as a function.
       }
     }
@@ -88,8 +91,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
           outbound.add( template, ruleProcessor );
         }
       } catch( Exception e ) {
-        //TODO: Log stack trace properly.
-        e.printStackTrace();
+        LOG.failedToInitializeRewriteRules( e );
       }
     }
   }
@@ -99,18 +101,14 @@ public class UrlRewriteProcessor implements UrlRewriter {
       try {
         rule.destroy();
       } catch ( Exception e ) {
-        //TODO: Log i18n stack trace properly.
-        e.printStackTrace();
-        // Ignore it.
+        LOG.failedToDestroyRewriteRuleProcessor( e );
       }
     }
     for( UrlRewriteFunctionProcessor function : functions.values() ) {
       try {
         function.destroy();
       } catch( Exception e ) {
-        //TODO: Log i18n stack trace properly.
-        e.printStackTrace();
-        // Ignore it.
+        LOG.failedToDestroyRewriteFunctionProcessor( e );
       }
     }
   }
@@ -140,8 +138,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
           outputUri = null;
         }
       } catch( Exception e ) {
-        //TODO: I18N Log stack trace properly.
-        e.printStackTrace();
+        LOG.failedToRewriteUrl( e );
         outputUri = null;
       }
     }

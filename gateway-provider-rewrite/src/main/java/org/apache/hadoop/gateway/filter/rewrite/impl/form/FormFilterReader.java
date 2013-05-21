@@ -21,7 +21,12 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
 public class FormFilterReader extends Reader {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private int offset;
   private StringWriter writer;
@@ -72,8 +77,7 @@ public class FormFilterReader extends Reader {
     try {
       pair.setValue( filterValue( pair.getName(), pair.getValue() ) );
     } catch( Exception e ) {
-      //TODO: Log a proper i18n error
-      e.printStackTrace();
+      LOG.failedToFilterValue( pair.getValue(), e );
       // Write original value.
     }
     generator.writePair( pair );

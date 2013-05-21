@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 
 import javax.servlet.Filter;
@@ -42,6 +43,7 @@ public class GatewayServlet implements Servlet {
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
 
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   private FilterConfigAdapter filterConfig;
   private volatile GatewayFilter filter;
@@ -81,10 +83,10 @@ public class GatewayServlet implements Servlet {
         filter.init( filterConfig );
       }
     } catch( ServletException e ) {
-      e.printStackTrace();
+      LOG.failedToInitializeServletInstace( e );
       throw e;
     } catch( RuntimeException e ) {
-      e.printStackTrace();
+      LOG.failedToInitializeServletInstace( e );
       throw e;
     }
   }
@@ -101,10 +103,10 @@ public class GatewayServlet implements Servlet {
       try {
         f.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
-        e.printStackTrace();
+        LOG.failedToExecuteFilter( e );
         throw e;
       } catch( ServletException e ) {
-        e.printStackTrace();
+        LOG.failedToExecuteFilter( e );
         throw e;
       }
     } else {

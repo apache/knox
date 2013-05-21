@@ -25,6 +25,8 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -37,6 +39,7 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
 
   private static final String PROVIDER_ROLE_NAME = "rewrite";
   private static final String PROVIDER_IMPL_NAME = "url-rewrite";
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   @Override
   public String getRole() {
@@ -62,7 +65,7 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
     try {
       UrlRewriteRulesDescriptorFactory.store( descriptor, "xml", writer );
     } catch( IOException e ) {
-      e.printStackTrace();
+      LOG.failedToWriteRulesDescriptor( e );
     }
     String asset = writer.toString();
     context.getWebArchive().addAsWebInfResource(

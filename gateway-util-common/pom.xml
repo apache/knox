@@ -62,7 +62,10 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-i18n</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>

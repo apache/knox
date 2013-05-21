@@ -21,9 +21,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.gateway.i18n.GatewayUtilCommonMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +34,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUtils {
   
+  private static final GatewayUtilCommonMessages LOG = MessagesFactory.get( GatewayUtilCommonMessages.class );
+
   public static String renderAsJsonString(Map<String, Object> map) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper();
@@ -38,13 +43,9 @@ public class JsonUtils {
     try {
       // write JSON to a file
       json = mapper.writeValueAsString((Object)map);
-   
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
+    
+    } catch ( JsonProcessingException e ) {
+      LOG.failedToSerializeMapToJSON( map, e );
     }
     return json;
   }
@@ -58,14 +59,11 @@ public class JsonUtils {
     try {
       map = mapper.readValue(json, typeRef);
     } catch (JsonParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToGetMapFromJsonString( json, e );
     } catch (JsonMappingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToGetMapFromJsonString( json, e );
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.failedToGetMapFromJsonString( json, e );
     } 
     return map;
   }   

@@ -45,8 +45,7 @@ public class JWTToken {
       this.claims = new String(claims, "UTF-8");
       this.payload = signature;
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      log.unsupportedEncoding( e );
     }
   }
 
@@ -67,8 +66,7 @@ public class JWTToken {
       sb.append(".");
       sb.append(Base64.encodeBase64URLSafeString(claims.getBytes("UTF-8")));
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      log.unsupportedEncoding( e );
     }
     
     return sb.toString();
@@ -83,8 +81,7 @@ public class JWTToken {
       sb.append(".");
       sb.append(Base64.encodeBase64URLSafeString(payload));
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      log.unsupportedEncoding( e );
     }
     
     log.renderingJWTTokenForTheWire(sb.toString());

@@ -97,8 +97,7 @@ public class GatewayServer {
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );
     } catch (ServiceLifecycleException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      log.failedToStartGateway( e );
     }
   }
 
@@ -266,7 +265,7 @@ public class GatewayServer {
     jetty.start();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      log.failedToStartGateway( e );
       throw e;
     }
 
@@ -371,8 +370,7 @@ public class GatewayServer {
                 //log.redeployedTopology( topology.getName() );
               }
             } catch( Throwable e ) {
-              //TODO: This needs proper i18n logging
-              e.printStackTrace();
+              log.failedToDeployTopology( topology.getName(), e );
             }
           }
         }

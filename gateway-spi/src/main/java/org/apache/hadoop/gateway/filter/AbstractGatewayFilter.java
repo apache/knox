@@ -25,6 +25,10 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
 import java.io.IOException;
 
 /**
@@ -35,6 +39,7 @@ public abstract class AbstractGatewayFilter implements Filter {
   public static final String SOURCE_REQUEST_URL_ATTRIBUTE_NAME = "sourceRequestUrl";
   public static final String TARGET_REQUEST_URL_ATTRIBUTE_NAME = "targetRequestUrl";
 //  public static final String RESPONSE_STREAMER_ATTRIBUTE_NAME = "responseStreamer";
+  private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
 
   private FilterConfig config;
 
@@ -53,13 +58,13 @@ public abstract class AbstractGatewayFilter implements Filter {
     try {
       doFilter( (HttpServletRequest)request, (HttpServletResponse)response, chain );
     } catch( IOException e ) {
-      e.printStackTrace();
+      LOG.failedToExecuteFilter( e );
       throw e;
     } catch( ServletException e ) {
-      e.printStackTrace();
+      LOG.failedToExecuteFilter( e );
       throw e;
     } catch( Throwable t ) {
-      t.printStackTrace();
+      LOG.failedToExecuteFilter( t );
       throw new ServletException( t );
     }
   }

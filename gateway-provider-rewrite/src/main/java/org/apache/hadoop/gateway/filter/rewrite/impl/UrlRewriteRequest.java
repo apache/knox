@@ -22,6 +22,8 @@ import org.apache.hadoop.gateway.filter.GatewayRequestWrapper;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -39,6 +41,8 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private UrlRewriter rewriter;
 
@@ -63,8 +67,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     try {
       urlTemplate = Parser.parse( urlString.toString() );
     } catch( URISyntaxException e ) {
-      //TODO: Proper I18 stack logging.
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( urlString.toString() );
       // Shouldn't be possible given that the URL is constructed from parts of an existing URL.
       urlTemplate = null;
     }
@@ -125,7 +128,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN );
       value = output.toString();
     } catch( URISyntaxException e ) {
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
   }

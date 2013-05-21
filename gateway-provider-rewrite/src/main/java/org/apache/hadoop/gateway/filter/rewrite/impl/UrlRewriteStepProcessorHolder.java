@@ -21,15 +21,19 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
+
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private boolean isCondition;
   private UrlRewriteStepDescriptor descriptor;
@@ -220,8 +224,8 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
       try {
         processor.destroy();
       } catch( Exception e ) {
-        //TODO: Log stack properly.
-        e.printStackTrace();
+        // Maybe it makes sense to throw exception
+        LOG.failedToDestroyRewriteRuleProcessor( e );
       }
     }
   }

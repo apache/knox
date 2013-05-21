@@ -20,6 +20,10 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +38,7 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
   public static final String DESCRIPTOR_LOCATION_INIT_PARAM_NAME = "rewriteDescriptorLocation";
   public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "rewrite.xml";
   public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   @Override
   public void contextInitialized( ServletContextEvent event ) {
@@ -93,7 +98,7 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
     try {
       reader.close();
     } catch( IOException closeException ) {
-      closeException.printStackTrace();
+      LOG.failedToLoadRewriteRulesDescriptor( closeException );
     }
     return descriptor;
   }

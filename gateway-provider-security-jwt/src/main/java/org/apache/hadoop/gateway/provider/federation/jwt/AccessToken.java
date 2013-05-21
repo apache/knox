@@ -20,12 +20,14 @@ package org.apache.hadoop.gateway.provider.federation.jwt;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 
 public class AccessToken {
   private static final String ENCRYPT_ACCESS_TOKENS = "encrypt_access_tokens";
   private static final String GATEWAY = "__gateway";
+  private static final JWTProviderMessages LOG = MessagesFactory.get( JWTProviderMessages.class );
   
   private CryptoService crypto = null;
   private String tokenStr = null;
@@ -50,8 +52,7 @@ public class AccessToken {
           Base64.encodeBase64URLSafeString(result.salt) + "+" + 
           Base64.encodeBase64URLSafeString(result.cipher);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
     return tokenStr;
   }
@@ -67,8 +68,7 @@ public class AccessToken {
       token = new AccessToken(crypto, claimz[0], Long.parseLong(claimz[1]));
       token.setTokenStr(wireToken);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.unsupportedEncoding( e );
     }
     return token;
   }

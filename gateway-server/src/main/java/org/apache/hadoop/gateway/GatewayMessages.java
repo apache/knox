@@ -84,7 +84,7 @@ public interface GatewayMessages {
   void redeployedTopology( String clusterName );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
-  void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
+  void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Throwable e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to undeploy topology {0}: {1}" )
   void failedToUndeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
@@ -146,4 +146,105 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
   void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.DEBUG) Exception e );
 
+  @Message( level = MessageLevel.DEBUG, text = "Signature verified: {0}" )
+  void signatureVerified( boolean verified );
+
+  @Message( level = MessageLevel.DEBUG, text = "Apache Hadoop Gateway {0} ({1})" )
+  void gatewayVersionMessage( String version, String hash );
+
+  @Message( level = MessageLevel.DEBUG, text = "Loading from persistent master: {0}" )
+  void loadingFromPersistentMaster( String tag );
+
+  @Message( level = MessageLevel.DEBUG, text = "ALIAS: {0}" )
+  void printClusterAlias( String alias );
+
+  @Message( level = MessageLevel.DEBUG, text = "MASTER SERVICE == NULL: {0}" )
+  void printMasterServiceIsNull( boolean masterServiceIsNull );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to inject service {0}: {1}" )
+  void failedToInjectService( String serviceName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to finalize contribution: {0}" )
+  void failedToFinalizeContribution( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to contribute service [name={0}, role={1}]: {2}" )
+  void failedToContributeService( String name, String role, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to contribute provider [name={0}, role={1}]: {2}" )
+  void failedToContributeProvider( String name, String role, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to initialize contribution: {0}" )
+  void failedToInitializeContribution( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to initialize servlet instace: {0}" )
+  void failedToInitializeServletInstace( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to execute filter: {0}" )
+  void failedToExecuteFilter( @StackTrace( level = MessageLevel.DEBUG ) Throwable t );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to load topology {0}: {1}")
+  void failedToLoadTopology( String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to handle topology events: {0}" )
+  void failedToHandleTopologyEvents( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to reload topologies: {0}" )
+  void failedToReloadTopologies( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.FATAL, text = "Unsupported encoding: {0}" )
+  void unsupportedEncoding( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to persist master secret: {0}" )
+  void failedToPersistMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to encrypt master secret: {0}" )
+  void failedToEncryptMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to initialize master service from persistent master {0}: {1}" )
+  void failedToInitializeFromPersistentMaster( String masterFileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to encode passphrase: {0}" )
+  void failedToEncodePassphrase( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to verify signature: {0}")
+  void failedToVerifySignature( @StackTrace(level=MessageLevel.DEBUG) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to sign the data: {0}")
+  void failedToSignData( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to decrypt password for cluster {0}: {1}" )
+  void failedToDecryptPasswordForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to encrypt password for cluster {0}: {1}")
+  void failedToEncryptPasswordForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to create keystore [filename={0}, type={1}]: {2}" )
+  void failedToCreateKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to load keystore [filename={0}, type={1}]: {2}" )
+  void failedToLoadKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to add key for cluster {0}: {1}" )
+  void failedToAddKeyForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to add credential for cluster {0}: {1}" )
+  void failedToAddCredentialForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to get key for Gateway {0}: {1}" )
+  void failedToGetKeyForGateway( String alias, @StackTrace( level=MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to get credential for cluster {0}: {1}" )
+  void failedToGetCredentialForCluster( String clusterName, @StackTrace(level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to get key for cluster {0}: {1}" )
+  void failedToGetKeyForCluster( String clusterName, @StackTrace(level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to add self signed certificate for Gateway {0}: {1}" )
+  void failedToAddSeflSignedCertForGateway( String alias, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to generate secret key from password: {0}" )
+  void failedToGenerateKeyFromPassword( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to establish connection to {0}: {1}" )
+  void failedToEstablishConnectionToUrl( String url, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 }

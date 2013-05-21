@@ -15,35 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.provider.federation.jwt;
+package org.apache.hadoop.gateway.i18n;
 
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
-/**
- *
- */
 @Messages(logger="org.apache.hadoop.gateway")
-public interface JWTProviderMessages {
+public interface GatewaySpiMessages {
 
-  @Message( level = MessageLevel.DEBUG, text = "Rendering JWT Token for the wire: {0}" )
-  void renderingJWTTokenForTheWire(String string);
+  @Message( level = MessageLevel.ERROR, text = "Failed to load the internal principal mapping table: {0}" )
+  void failedToLoadPrincipalMappingTable( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.DEBUG, text = "Parsing JWT Token from the wire: {0}" )
-  void parsingToken(String wireToken);
-
-  @Message( level = MessageLevel.DEBUG, text = "header: {0}" )
-  void printTokenHeader( String header );
-
-  @Message( level = MessageLevel.DEBUG, text = "claims: {0}" )
-  void printTokenClaims( String claims );
-
-  @Message( level = MessageLevel.DEBUG, text = "payload: {0}" )
-  void printTokenPayload( byte[] payload );
-
-  @Message( level = MessageLevel.FATAL, text = "Unsupported encoding: {0}" )
-  void unsupportedEncoding( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-
+  @Message( level = MessageLevel.ERROR, text = "Failed to execute filter: {0}" )
+  void failedToExecuteFilter( @StackTrace( level = MessageLevel.DEBUG ) Throwable t );
 }

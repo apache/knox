@@ -25,6 +25,8 @@ import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
+import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.security.principal.PrincipalMapper;
 import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
@@ -32,6 +34,7 @@ import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
 public abstract class AbstractIdentityAssertionFilter implements Filter {
 
+  private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
   protected PrincipalMapper mapper = new SimplePrincipalMapper();
 
   public AbstractIdentityAssertionFilter() {
@@ -45,8 +48,7 @@ public abstract class AbstractIdentityAssertionFilter implements Filter {
         mapper.loadMappingTable(principalMapping);
       }
       catch (PrincipalMappingException pme) {
-        // TODO: log this appropriately
-        pme.printStackTrace();
+        LOG.failedToLoadPrincipalMappingTable( pme );
       }
     }
   }

@@ -23,7 +23,9 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesExporter;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -47,6 +49,8 @@ import java.lang.reflect.InvocationTargetException;
 
 public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlRewriteRulesTags {
 
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  
   @Override
   public String getFormat() {
     return "xml";
@@ -93,13 +97,13 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
     } catch( TransformerException e ) {
       throw new IOException( e );
     } catch( InvocationTargetException e ) {
-      e.printStackTrace();
+      LOG.failedToWriteRulesDescriptor( e );
     } catch( NoSuchMethodException e ) {
-      e.printStackTrace();
+      LOG.failedToWriteRulesDescriptor( e );
     } catch( IntrospectionException e ) {
-      e.printStackTrace();
+      LOG.failedToWriteRulesDescriptor( e );
     } catch( IllegalAccessException e ) {
-      e.printStackTrace();
+      LOG.failedToWriteRulesDescriptor( e );
     }
   }
 

@@ -15,35 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.provider.federation.jwt;
+package org.apache.hadoop.gateway.i18n;
+
+import java.util.Map;
 
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
-/**
- *
- */
 @Messages(logger="org.apache.hadoop.gateway")
-public interface JWTProviderMessages {
+public interface GatewayUtilCommonMessages {
 
-  @Message( level = MessageLevel.DEBUG, text = "Rendering JWT Token for the wire: {0}" )
-  void renderingJWTTokenForTheWire(String string);
+  @Message( level = MessageLevel.ERROR, text = "Failed to serialize map to Json string {0}: {1}" )
+  void failedToSerializeMapToJSON( Map<String, Object> map, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.DEBUG, text = "Parsing JWT Token from the wire: {0}" )
-  void parsingToken(String wireToken);
-
-  @Message( level = MessageLevel.DEBUG, text = "header: {0}" )
-  void printTokenHeader( String header );
-
-  @Message( level = MessageLevel.DEBUG, text = "claims: {0}" )
-  void printTokenClaims( String claims );
-
-  @Message( level = MessageLevel.DEBUG, text = "payload: {0}" )
-  void printTokenPayload( byte[] payload );
-
-  @Message( level = MessageLevel.FATAL, text = "Unsupported encoding: {0}" )
-  void unsupportedEncoding( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  @Message( level = MessageLevel.ERROR, text = "Failed to get map from Json string {0}: {1}" )
+  void failedToGetMapFromJsonString( String json, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
 }

@@ -22,6 +22,8 @@ import org.apache.hadoop.gateway.filter.ResponseStreamer;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -49,6 +51,7 @@ import java.util.Set;
 public class UrlRewriteResponse extends GatewayResponseWrapper implements Params, ResponseStreamer {
 
   private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<String>();
+  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
   static {
     IGNORE_HEADER_NAMES.add( "Content-Length" );
   }
@@ -90,7 +93,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT );
       value = output.toString();
     } catch( URISyntaxException e ) {
-      e.printStackTrace();
+      LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
   }

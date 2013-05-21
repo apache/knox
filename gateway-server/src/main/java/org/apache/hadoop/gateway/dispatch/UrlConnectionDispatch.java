@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -43,6 +45,8 @@ import java.util.Enumeration;
  *
  */
 public class UrlConnectionDispatch extends AbstractGatewayDispatch {
+
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   @Override
   public void doGet( URI url, HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
@@ -85,9 +89,9 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
         paramStr.append( "&" );
       }
     }
-
+    String urlStr = targetUri.toString() + paramStr.toString();
     try {
-      URL clientUrl = new URL( targetUri.toString() + paramStr.toString() );
+      URL clientUrl = new URL( urlStr );
       //System.out.println( "Resolved query: " + clientUrl );
       AuthenticatedURL.Token token = new AuthenticatedURL.Token();
       KerberosAuthenticator authenticator = new KerberosAuthenticator();
@@ -105,10 +109,10 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
       }
     } catch( AuthenticationException e ) {
       response.sendError( HttpServletResponse.SC_UNAUTHORIZED );
-      e.printStackTrace();
+      LOG.failedToEstablishConnectionToUrl( urlStr, e );
     } catch( FileNotFoundException e ) {
       response.sendError( HttpServletResponse.SC_NOT_FOUND );
-      e.printStackTrace();
+      LOG.failedToEstablishConnectionToUrl( urlStr, e );
     }
 
   }
