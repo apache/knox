@@ -33,20 +33,15 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 
 public class AESEncryptor {
+  private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
   
-  // TODO: randomize the salt
-//  private static final byte[] SALT = {
-//      (byte) 0xA9, (byte) 0x9B, (byte) 0xC8, (byte) 0x32,
-//      (byte) 0x56, (byte) 0x35, (byte) 0xE3, (byte) 0x03
-//  };
   private static final int ITERATION_COUNT = 65536;
   private static final int KEY_LENGTH = 128;
-  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   
   private Cipher ecipher;
   private Cipher dcipher;
@@ -71,15 +66,15 @@ public class AESEncryptor {
         byte[] iv = ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
         dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
       } catch (NoSuchAlgorithmException e) {
-        LOG.failedToEncodePassphrase( e );
+        LOG.failedToEncryptPassphrase( e );
       } catch (NoSuchPaddingException e) {
-        LOG.failedToEncodePassphrase( e );
+        LOG.failedToEncryptPassphrase( e );
       } catch (InvalidKeyException e) {
-        LOG.failedToEncodePassphrase( e );
+        LOG.failedToEncryptPassphrase( e );
       } catch (InvalidParameterSpecException e) {
-        LOG.failedToEncodePassphrase( e );
+        LOG.failedToEncryptPassphrase( e );
       } catch (InvalidAlgorithmParameterException e) {
-        LOG.failedToEncodePassphrase( e );
+        LOG.failedToEncryptPassphrase( e );
       }
   }
   
@@ -94,15 +89,15 @@ public class AESEncryptor {
       byte[] iv = ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
       dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
     } catch (NoSuchAlgorithmException e) {
-      LOG.failedToEncodePassphrase( e );
+      LOG.failedToEncryptPassphrase( e );
     } catch (NoSuchPaddingException e) {
-      LOG.failedToEncodePassphrase( e );
+      LOG.failedToEncryptPassphrase( e );
     } catch (InvalidKeyException e) {
-      LOG.failedToEncodePassphrase( e );
+      LOG.failedToEncryptPassphrase( e );
     } catch (InvalidParameterSpecException e) {
-      LOG.failedToEncodePassphrase( e );
+      LOG.failedToEncryptPassphrase( e );
     } catch (InvalidAlgorithmParameterException e) {
-      LOG.failedToEncodePassphrase( e );
+      LOG.failedToEncryptPassphrase( e );
     }
   }
 

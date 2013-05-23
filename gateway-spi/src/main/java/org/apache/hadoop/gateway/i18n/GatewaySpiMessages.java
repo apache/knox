@@ -30,4 +30,38 @@ public interface GatewaySpiMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to execute filter: {0}" )
   void failedToExecuteFilter( @StackTrace( level = MessageLevel.DEBUG ) Throwable t );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to encrypt passphrase: {0}" )
+  void failedToEncryptPassphrase( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to generate secret key from password: {0}" )
+  void failedToGenerateKeyFromPassword( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to create keystore [filename={0}, type={1}]: {2}" )
+  void failedToCreateKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to load keystore [filename={0}, type={1}]: {2}" )
+  void failedToLoadKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to add credential: {1}" )
+  void failedToAddCredential( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to get credential: {1}" )
+  void failedToGetCredential(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to persist master secret: {0}" )
+  void failedToPersistMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to encrypt master secret: {0}" )
+  void failedToEncryptMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to initialize master service from persistent master {0}: {1}" )
+  void failedToInitializeFromPersistentMaster( String masterFileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to add self signed certificate for Gateway {0}: {1}" )
+  void failedToAddSeflSignedCertForGateway( String alias, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to get key {0}: {1}" )
+  void failedToGetKey(String alias, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
 }

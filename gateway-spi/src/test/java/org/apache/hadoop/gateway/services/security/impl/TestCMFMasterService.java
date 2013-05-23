@@ -15,10 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services.security;
+package org.apache.hadoop.gateway.services.security.impl;
 
-public interface MasterService {
 
-  public abstract char[] getMasterSecret();
+public class TestCMFMasterService extends CMFMasterService {
 
+  public TestCMFMasterService(String serviceName) {
+    super(serviceName);
+  }
+
+  @Override
+  protected void promptUser() {
+    master = "testmastersecret".toCharArray();
+  }
+
+  @Override
+  protected void displayWarning(boolean persisting) {
+  }
+  
+  
 }

@@ -17,17 +17,10 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.Key;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 
-import org.apache.hadoop.gateway.services.Service;
-
-public interface KeystoreService extends Service {
+public interface KeystoreService {
 
   public void createKeystoreForGateway();
 
@@ -49,10 +42,4 @@ public interface KeystoreService extends Service {
 
   public char[] getCredentialForCluster(String clusterName, String alias);
 
-  public void writeKeystoreToFile(final KeyStore keyStore, final File file)
-      throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException;
-
-  public byte[] getKeyForCluster(String clusterName, String alias);
-
-  public void addKeyForCluster(String clusterName, String alias, byte[] key);
 }
