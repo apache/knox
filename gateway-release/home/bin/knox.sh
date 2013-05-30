@@ -64,6 +64,9 @@ function main {
       setup) 
          setupEnv $KNOX_LAUNCH_USER
          ;;
+      help)
+         printHelp
+         ;;
       *)
          printf "Usage: $0 {start|stop|status|clean|setup [USER_NAME]}\n"
          ;;
@@ -248,7 +251,14 @@ function setupEnv {
    setDirPermission $PID_DIR $userName
    setDirPermission $LOG_DIR $userName
 
-   java -jar $KNOX_JAR -persist-master 
+   java -jar $KNOX_JAR -persist-master -nostart
+
+   return 0
+}
+
+function printHelp {
+   java -jar $KNOX_JAR -help
+   return 0
 }
 
 #Starting main

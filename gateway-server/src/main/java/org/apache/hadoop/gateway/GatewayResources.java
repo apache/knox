@@ -35,4 +35,15 @@ public interface GatewayResources {
   @Resource( text="Service connectivity error." )
   String dispatchConnectionError();
 
+  @Resource( text="Display command line help." )
+  String helpMessage();
+
+  @Resource( text="This parameter causes the server to exit before starting to service requests. This is typically used with the -persist-master parameter." )
+  String nostartHelpMessage();
+
+  @Resource( text="This parameter causes the provider master secret to be persisted. This prevents the server from prompting for a master secret on subsequent starts." )
+  String persistmasterHelpMessage();
+
+  @Resource( text="Display server version information." )
+  String versionHelpMessage();
 }

@@ -76,11 +76,9 @@ public class GatewayServer {
   public static void main( String[] args ) {
     try {
       CommandLine cmd = GatewayCommandLine.parse( args );
-      if( cmd.hasOption( "help" ) ) {
+      if( cmd.hasOption( GatewayCommandLine.HELP_LONG ) ) {
         GatewayCommandLine.printHelp();
-//      } else if( cmd.hasOption( "setup" ) ) {
-//        setupGateway();
-      } else if( cmd.hasOption( "version" ) ) {
+      } else if( cmd.hasOption( GatewayCommandLine.VERSION_LONG ) ) {
         buildProperties = loadBuildProperties();
         System.out.println( res.gatewayVersionMessage(
             buildProperties.getProperty( "build.version", "unknown" ),
@@ -90,9 +88,11 @@ public class GatewayServer {
         GatewayConfig config = new GatewayConfigImpl();
         configureLogging( config );
         Map<String,String> options = new HashMap<String,String>();
-        options.put("persist-master", Boolean.toString(cmd.hasOption("persist-master")));
+        options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
         services.init(config, options);
-        startGateway( config, services );
+        if (!cmd.hasOption(GatewayCommandLine.NOSTART_LONG)) {
+          startGateway( config, services );
+        }
       }
     } catch( ParseException e ) {
       log.failedToParseCommandLine( e );

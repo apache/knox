@@ -23,22 +23,13 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 
 import java.io.PrintWriter;
 
-public class GatewayCommandLine {
+import static org.apache.commons.cli.HelpFormatter.*;
 
-  public static Options createCommandLine() {
-    Options options = new Options();
-    //Option option = new Option( "short-flag", "long-flag", true, "desc" );
-    //option.setRequired( true );
-    //options.addOption( options );
-    options.addOption( "h", "help", false, "Help" );
-    options.addOption( "v", "version", false, "Version" );
-    options.addOption( "pm", "persist-master", false, "Persist Master Secret" );
-//    options.addOption( "s", "setup", false, "Setup" );
-    return options;
-  }
+public class GatewayCommandLine {
 
   public static CommandLine parse( String[] args ) throws ParseException {
     CommandLineParser parser = new PosixParser();
@@ -48,14 +39,41 @@ public class GatewayCommandLine {
 
   public static void printUsage() {
     PrintWriter printer = new PrintWriter( System.err );
-    new HelpFormatter().printUsage( printer, 80, "gateway", createCommandLine() );
+    new HelpFormatter().printUsage( printer, LINE_WIDTH, COMMAND_NAME, createCommandLine() );
     printer.flush();
   }
 
   public static void printHelp() {
     PrintWriter printer = new PrintWriter( System.err );
-    new HelpFormatter().printUsage( printer, 80, "gateway", createCommandLine() );
+    new HelpFormatter().printHelp(printer, LINE_WIDTH, COMMAND_NAME, null, createCommandLine(), DEFAULT_LEFT_PAD, DEFAULT_DESC_PAD, null);
     printer.flush();
   }
 
+  /** default number of characters per line */
+  public static final int LINE_WIDTH = 80;
+  /** Name of the command to use in the command line */
+  public static final String COMMAND_NAME= "knox";
+
+  public static final String HELP_LONG = "help";
+  public static final String HELP_SHORT = "h";
+
+  public static final String VERSION_LONG = "version";
+  public static final String VERSION_SHORT = "v";
+
+  public static final String PERSIST_LONG = "persist-master";
+  public static final String PERSIST_SHORT = "pm";
+
+  public static final String NOSTART_LONG = "nostart";
+  public static final String NOSTART_SHORT = "n";
+
+  private static Options createCommandLine() {
+    Options options = new Options();
+    options.addOption( HELP_SHORT, HELP_LONG, false, res.helpMessage() );
+    options.addOption( VERSION_SHORT, VERSION_LONG, false, res.versionHelpMessage() );
+    options.addOption( PERSIST_SHORT, PERSIST_LONG, false, res.persistmasterHelpMessage() );
+    options.addOption( NOSTART_SHORT, NOSTART_LONG, false, res.nostartHelpMessage() );
+    return options;
+  }
+
+  private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
 }
