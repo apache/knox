@@ -33,11 +33,21 @@ public class JWTAuthority {
   
   public JWTToken issueToken(Subject subject, String algorithm) {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
+    return issueToken(p, algorithm);
+  }
+  
+  public JWTToken issueToken(Principal p, String algorithm) {
+    return issueToken(p, null, algorithm);
+  }
+  
+  public JWTToken issueToken(Principal p, String audience, String algorithm) {
     String[] claimArray = new String[4];
-    claimArray[0] = "gateway";
+    claimArray[0] = "HSSO";
     claimArray[1] = p.getName();
-    // TODO: what do we need here and how do we determine what it should be?
-    claimArray[2] = "https://login.hadoop.example.org";
+    if (audience == null) {
+      audience = "HSSO";
+    }
+    claimArray[2] = audience;
     // TODO: make the validity period configurable
     claimArray[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
 
@@ -61,6 +71,9 @@ public class JWTAuthority {
   
   public boolean verifyToken(JWTToken token) {
     boolean rc = false;
+    
+    // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
+    // consider jwk for specifying the key too
     rc = crypto.verify("SHA256withRSA", "gateway-identity", token.getPayloadToSign(), token.getSignaturePayload());
     return rc;
   }

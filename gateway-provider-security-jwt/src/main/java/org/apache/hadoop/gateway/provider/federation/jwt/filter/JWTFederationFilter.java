@@ -67,10 +67,16 @@ public class JWTFederationFilter implements Filter {
       boolean verified = authority.verifyToken(token);
       if (verified) {
         // TODO: validate expiration
-        // TODO: confirm that audience matches intended target
-        // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
-        Subject subject = createSubjectFromToken(token);
-        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        // confirm that audience matches intended target - which for this filter must be HSSO
+        if (token.getAudience().equals("HSSO")) {
+          // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
+          Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        }
+        else {
+          ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+          return; //break filter chain
+        }
       }
       else {
         ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);

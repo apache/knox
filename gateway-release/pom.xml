@@ -111,7 +111,15 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-as</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-service-hdfs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-oozie</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
@@ -119,7 +127,7 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-oozie</artifactId>
+            <artifactId>gateway-service-tgs</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.AccessController;
+import java.security.Principal;
 import java.util.HashMap;
 
 import javax.security.auth.Subject;
@@ -32,7 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter;
-import org.apache.hadoop.gateway.provider.federation.jwt.AccessToken;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.CryptoService;
@@ -69,6 +70,14 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
       JWTToken token = JWTToken.parseToken(wireToken);
+      // ensure that there is a valid jwt token available and that there isn't a misconfiguration of filters
+      if (token != null) {
+        JWTAuthority authority = new JWTAuthority(crypto);
+        authority.verifyToken(token);
+      }
+      else {
+        throw new ServletException("Expected JWT Token not provided as Bearer token");
+      }
       
       // authorization of the user for the requested service (and resource?) should have been done by
       // the JWTFederationFilter - once we get here we can assume that it is authorized and we just need
@@ -81,7 +90,8 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       // calculate expiration timestamp: validity * 1000 + currentTimeInMillis
       long expires = System.currentTimeMillis() + validity * 1000;
       
-      String accessToken = getAccessToken(principalName, expires);
+      String serviceName = request.getParameter("service-name");
+      String accessToken = getAccessToken(principalName, serviceName, expires);
       
       HashMap<String, Object> map = new HashMap<String, Object>();
       // TODO: populate map from JWT authorization code
@@ -104,10 +114,20 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     }
   }
 
-  private String getAccessToken(String principalName, long expires) {
+  private String getAccessToken(final String principalName, String serviceName, long expires) {
     String accessToken = null;
 
-    AccessToken token = new AccessToken(crypto, principalName, expires);
+    JWTAuthority authority = new JWTAuthority(crypto);
+    Principal p = new Principal() {
+
+      @Override
+      public String getName() {
+        // TODO Auto-generated method stub
+        return principalName;
+      }
+    };
+    JWTToken token = authority.issueToken(p, serviceName, "RS256");
+//    AccessToken token = new AccessToken(crypto, principalName, expires);
     accessToken = token.toString();
     
     return accessToken;

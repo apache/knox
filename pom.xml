@@ -45,9 +45,11 @@
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
+        <module>gateway-service-as</module>
         <module>gateway-service-hdfs</module>
-        <module>gateway-service-templeton</module>
         <module>gateway-service-oozie</module>
+        <module>gateway-service-templeton</module>
+        <module>gateway-service-tgs</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
         <module>gateway-shell</module>
@@ -322,6 +324,16 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-secure-query</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-tgs</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-as</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

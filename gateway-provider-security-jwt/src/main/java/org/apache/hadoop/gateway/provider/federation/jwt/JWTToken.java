@@ -39,7 +39,7 @@ public class JWTToken {
   
   byte[] payload = null;
   
-  public JWTToken(byte[] header, byte[] claims, byte[] signature) {
+  private JWTToken(byte[] header, byte[] claims, byte[] signature) {
     try {
       this.header = new String(header, "UTF-8");
       this.claims = new String(claims, "UTF-8");

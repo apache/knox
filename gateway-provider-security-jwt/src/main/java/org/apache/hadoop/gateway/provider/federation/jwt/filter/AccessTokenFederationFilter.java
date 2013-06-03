@@ -34,7 +34,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.provider.federation.jwt.AccessToken;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 
@@ -42,11 +43,14 @@ public class AccessTokenFederationFilter implements Filter {
   private static final String BEARER = "Bearer ";
   
   private CryptoService crypto = null;
+
+  private JWTAuthority authority;
   
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    authority = new JWTAuthority(crypto);
   }
 
   public void destroy() {
@@ -58,16 +62,20 @@ public class AccessTokenFederationFilter implements Filter {
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
-      AccessToken token = AccessToken.parseToken(crypto, wireToken);
-// LJM TODO: replace with actual verification - should we do it in the authority? Probably.
-//      boolean verified = authority.verifyAccessToken(token);
-      boolean verified = true;
+      JWTToken token = JWTToken.parseToken(wireToken);
+      boolean verified = authority.verifyToken(token);
       if (verified) {
         // TODO: validate expiration
         // TODO: confirm that audience matches intended target
-        // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
-        Subject subject = createSubjectFromToken(token);
-        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        if (token.getAudience().equals(getAudienceFromRequest(request))) {
+          // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
+          Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        }
+        else {
+          ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+          return; //break filter chain
+        }
       }
       else {
         ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -82,6 +90,11 @@ public class AccessTokenFederationFilter implements Filter {
     }
   }
   
+  private String getAudienceFromRequest(ServletRequest request) {
+    // TODO determine the audience value that would match the requested resource
+    return "HDFS";
+  }
+
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
     try {
       Subject.doAs(
@@ -109,8 +122,8 @@ public class AccessTokenFederationFilter implements Filter {
     }
   }
   
-  private Subject createSubjectFromToken(AccessToken token) {
-    final String principal = token.getPrincipalName();
+  private Subject createSubjectFromToken(JWTToken token) {
+    final String principal = token.getPrincipal();
 
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<Principal>();
