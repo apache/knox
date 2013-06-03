@@ -87,6 +87,9 @@ public class GatewayServer {
         services = new DefaultGatewayServices();
         GatewayConfig config = new GatewayConfigImpl();
         configureLogging( config );
+        if (config.isHadoopKerberosSecured()) {
+          configureKerberosSecurity( config );
+        }
         Map<String,String> options = new HashMap<String,String>();
         options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
         services.init(config, options);
@@ -122,6 +125,15 @@ public class GatewayServer {
     }
   }
 
+  private static void configureKerberosSecurity( GatewayConfig config ) {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    System.setProperty(GatewayConfig.KRB5_CONFIG, config.getKerberosConfig());
+    System.setProperty(GatewayConfig.KRB5_DEBUG, 
+        Boolean.toString(config.isKerberosDebugEnabled()));
+    System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
+    System.setProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
+  }
+  
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
     InputStream inputStream = GatewayServer.class.getClassLoader().getResourceAsStream( "build.properties" );

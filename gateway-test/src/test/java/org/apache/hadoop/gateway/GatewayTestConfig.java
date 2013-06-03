@@ -30,6 +30,10 @@ public class GatewayTestConfig implements GatewayConfig {
   private int gatewayPort = 0;
   private String gatewayPath = "gateway";
   private String deployDir = "clusters";
+  private boolean hadoopKerberosSecured = false;
+  private String kerberosConfig = "/etc/knox/conf/krb5.conf";
+  private boolean kerberosDebugEnabled = false;
+  private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
 
   @Override
   public String getGatewayHomeDir() {
@@ -96,4 +100,40 @@ public class GatewayTestConfig implements GatewayConfig {
     return false;
   }
 
+  @Override
+  public boolean isHadoopKerberosSecured() {
+    return hadoopKerberosSecured;
+  }
+
+  public void setHadoopKerberosSecured(boolean hadoopKerberosSecured) {
+    this.hadoopKerberosSecured = hadoopKerberosSecured;
+  }
+  
+  @Override
+  public String getKerberosConfig() {
+    return kerberosConfig;
+  }
+  
+  public void setKerberosConfig(String kerberosConfig) {
+    this.kerberosConfig = kerberosConfig;
+  }
+
+  @Override
+  public boolean isKerberosDebugEnabled() {
+    return kerberosDebugEnabled;
+  }
+  
+  public void setKerberosDebugEnabled(boolean kerberosConfigEnabled) {
+    this.kerberosDebugEnabled = kerberosDebugEnabled;
+  }
+  
+  @Override
+  public String getKerberosLoginConfig() {
+    return kerberosLoginConfig;
+  }
+  
+  public void setKerberosLoginConfig(String kerberosLoginConfig) {
+   this.kerberosLoginConfig = kerberosLoginConfig;
+  }
+  
 }

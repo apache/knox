@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.PseudoIdentityAsserterMessages;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import javax.servlet.ServletInputStream;
@@ -42,6 +43,7 @@ public class IdentityAssertionHttpServletRequestWrapper extends HttpServletReque
   private static PseudoIdentityAsserterMessages log = MessagesFactory.get( PseudoIdentityAsserterMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
+  private static final String DOAS_PRINCIPAL_PARAM = "doas";
   
   String username = null;
 
@@ -101,8 +103,12 @@ public class IdentityAssertionHttpServletRequestWrapper extends HttpServletReque
     ArrayList<String> al = new ArrayList<String>();
     al.add(username);
     String[] a = {""};
-    params.put(PRINCIPAL_PARAM, al.toArray(a));
-
+    
+    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
+      params.put(DOAS_PRINCIPAL_PARAM, al.toArray(a));
+    } else {
+      params.put(PRINCIPAL_PARAM, al.toArray(a));
+    }
     return params;
   }
 

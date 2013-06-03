@@ -101,7 +101,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   private static final String SSL_ENABLED = "ssl.enabled";
 //  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
-
+  
   public GatewayConfigImpl() {
     init();
   }
@@ -261,4 +261,26 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return "true".equals(enabled);
   }
 
+  @Override
+  public boolean isHadoopKerberosSecured() {
+    String hadoopKerberosSecured = get( HADOOP_KERBEROS_SECURED, "false" );
+    return "true".equals(hadoopKerberosSecured);
+  }
+
+  @Override
+  public String getKerberosConfig() {
+    return get( KRB5_CONFIG ) ;
+  }
+
+  @Override
+  public boolean isKerberosDebugEnabled() {
+    String kerberosDebugEnabled = get( KRB5_DEBUG, "false" );
+    return "true".equals(kerberosDebugEnabled);
+  }
+  
+  @Override
+  public String getKerberosLoginConfig() {
+    return get( KRB5_LOGIN_CONFIG );
+  }
+  
 }

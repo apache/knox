@@ -60,3 +60,14 @@ cn: HCat
 sn: HCat
 uid: hcat
 userPassword:hcat-password
+
+# entry for a sample user
+#dn: uid=bob,ou=people,dc=hadoop,dc=apache,dc=org
+#objectclass:top
+#objectclass:person
+#objectclass:organizationalPerson
+#objectclass:inetOrgPerson
+#cn: Bob
+#sn: Smith
+#uid: bob
+#userPassword:bob-password
