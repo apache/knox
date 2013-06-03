@@ -23,6 +23,8 @@ dependency-reduced-pom.xml
 .idea/
 .iml/
 *.iml
+*.ipr
+*.iws
 .DS_Store
 target
 org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
