@@ -46,6 +46,7 @@
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-service-as</module>
+        <module>gateway-service-hbase</module>
         <module>gateway-service-hdfs</module>
         <module>gateway-service-oozie</module>
         <module>gateway-service-templeton</module>
@@ -334,6 +335,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-as</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-hbase</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

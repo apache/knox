@@ -61,6 +61,16 @@ sn: HCat
 uid: hcat
 userPassword:hcat-password
 
+dn: uid=hbase,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HBase
+sn: Hbase
+uid: hbase
+userPassword:hbase-password
+
 # entry for a sample user
 #dn: uid=bob,ou=people,dc=hadoop,dc=apache,dc=org
 #objectclass:top
@@ -71,3 +81,4 @@ userPassword:hcat-password
 #sn: Smith
 #uid: bob
 #userPassword:bob-password
+

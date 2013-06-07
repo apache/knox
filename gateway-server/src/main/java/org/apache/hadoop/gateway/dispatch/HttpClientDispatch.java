@@ -155,6 +155,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
   public void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     HttpGet method = new HttpGet( url );
+    copyRequestHeaderFields( method, request );
     executeRequest( method, request, response );
   }
 
@@ -171,6 +172,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     HttpPut method = new HttpPut( url );
     HttpEntity entity = createRequestEntity( request );
     method.setEntity( entity );
+    copyRequestHeaderFields( method, request );
     executeRequest( method, request, response );
   }
 
@@ -180,6 +182,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     HttpPost method = new HttpPost( url );
     HttpEntity entity = createRequestEntity( request );
     method.setEntity( entity );
+    copyRequestHeaderFields( method, request );
     executeRequest( method, request, response );
   }
 
@@ -187,6 +190,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
   public void doDelete( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     HttpDelete method = new HttpDelete( url );
+    copyRequestHeaderFields( method, request );
     executeRequest( method, request, response );
   }
   

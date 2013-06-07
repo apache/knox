@@ -128,7 +128,7 @@ public abstract class XmlFilterReader extends Reader {
     if( "<".equals( tag.getTagType().getStartDelimiter() ) ) {
       stack.push( new Element( tag ) );
       writer.write( "<" );
-      writer.write( tag.getName() );
+      writer.write( tag.getNameSegment().toString() );
       Attributes attributes = tag.getAttributes();
       if( !attributes.isEmpty() ) {
         for( Attribute attribute : attributes ) {

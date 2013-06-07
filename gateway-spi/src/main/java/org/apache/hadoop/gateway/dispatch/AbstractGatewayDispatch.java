@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.dispatch;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.GatewayResponse;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -30,14 +31,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractGatewayDispatch extends AbstractGatewayFilter implements Dispatch {
 
   private static Map<String,Adapter> METHOD_ADAPTERS = createMethodAdapters();
   private static int STREAM_COPY_BUFFER_SIZE = 4096;
+  private static final List<String> EXCLUDE_HEADERS = Arrays.asList( "Content-Length" );
 
   private static Map<String,Adapter> createMethodAdapters() {
     Map<String,Adapter> map = new HashMap<String,Adapter>();
@@ -155,6 +160,19 @@ public abstract class AbstractGatewayDispatch extends AbstractGatewayFilter impl
     public void doMethod( Dispatch dispatch, HttpServletRequest request, HttpServletResponse response )
         throws IOException, ServletException, URISyntaxException {
       dispatch.doOptions( getDispatchUrl( request ), request, response );
+    }
+  }
+  
+  public static void copyRequestHeaderFields(HttpUriRequest outboundRequest,
+      HttpServletRequest inboundRequest) {
+    Enumeration<String> headerNames = inboundRequest.getHeaderNames();
+    while( headerNames.hasMoreElements() ) {
+      String name = (String) headerNames.nextElement();
+      if ( !outboundRequest.containsHeader( name )
+          && !EXCLUDE_HEADERS.contains( name ) ) {
+        String vaule = inboundRequest.getHeader( name );
+        outboundRequest.addHeader( name, vaule );
+      }
     }
   }
 
