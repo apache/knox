@@ -119,6 +119,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-hive</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-service-hdfs</artifactId>
         </dependency>
         <dependency>
