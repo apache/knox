@@ -252,7 +252,7 @@ public class GatewayFuncTestDriver {
     return IOUtils.toByteArray( getResourceStream( resource ) );
   }
 
-  private String getResourceString( String resource ) throws IOException {
+  public String getResourceString( String resource ) throws IOException {
     return IOUtils.toString( getResourceBytes( resource ), "UTF-8" );
   }
 

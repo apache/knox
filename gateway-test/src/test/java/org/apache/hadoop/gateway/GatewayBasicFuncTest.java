@@ -112,6 +112,7 @@ public class GatewayBasicFuncTest {
     // TaskTracker: UI:50060, 127.0.0.1:0
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
+    driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -170,7 +171,10 @@ public class GatewayBasicFuncTest {
             .addTag( "url" ).addText( driver.getRealUrl( "TEMPLETON" ) ).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "OOZIE" )
-            .addTag( "url" ).addText( driver.getRealUrl( "OOZIE" ) )
+            .addTag( "url" ).addText( driver.getRealUrl( "OOZIE" ) ).gotoParent()
+          .addTag( "service" )
+            .addTag( "role" ).addText( "HIVE" )
+            .addTag( "url" ).addText( driver.getRealUrl( "HIVE" ) )
         .gotoRoot();
     return xml;
   }
@@ -802,4 +806,371 @@ public class GatewayBasicFuncTest {
     }
   }
 
+  @Test
+  public void testBasicHiveJDBCUseCase() throws IOException {
+    String root = "/tmp/GatewayHiveJDBCFuncTest/testBasicHiveUseCase";
+    String username = "hive";
+    String password = "hive-password";
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    // This use case emulates simple JDBC scenario which consists of following steps:
+    // -open connection;
+    // -configure Hive using 'execute' statements (this also includes execution of 'close operation' requests internally);
+    // -execution of create table command;
+    // -execution of select from table command;
+    // Data insertion is omitted because it causes a lot of additional command during insertion/querying.
+    // All binary data was intercepted during real scenario and stored into files as array of bytes.
+
+    // open session
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/open-session-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/open-session-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/open-session-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/open-session-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'set hive.fetch.output.serde=...' (is called internally be JDBC driver)
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-set-fetch-output-serde-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'set hive.fetch.output.serde=...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-1-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-1-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-1-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-1-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'set hive.server2.http.path=...' (is called internally be JDBC driver)
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-set-server2-http-path-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'set hive.server2.http.path=...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-2-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-2-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-2-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-2-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'set hive.server2.servermode=...' (is called internally be JDBC driver)
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-set-server2-servermode-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'set hive.server2.servermode=...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-3-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-3-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-3-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-3-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'set hive.security.authorization.enabled=...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-set-security-authorization-enabled-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'set hive.security.authorization.enabled=...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-4-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-4-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-4-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-4-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'create table...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-create-table-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-create-table-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-create-table-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-create-table-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'create table...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-5-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-5-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-5-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-5-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'select * from...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/execute-select-from-table-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/execute-select-from-table-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/execute-select-from-table-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/execute-select-from-table-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'GetResultSetMetadata' (is called internally be JDBC driver)
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/get-result-set-metadata-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/get-result-set-metadata-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/get-result-set-metadata-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/get-result-set-metadata-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // execute 'FetchResults' (is called internally be JDBC driver)
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/fetch-results-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/fetch-results-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/fetch-results-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/fetch-results-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close operation for execute 'select * from...'
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-operation-6-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-operation-6-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-operation-6-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-operation-6-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+
+    // close session
+    driver.getMock( "HIVE" )
+        .expect()
+        .method( "POST" )
+        .content( driver.getResourceBytes( "hive/close-session-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .respond()
+        .characterEncoding( "UTF-8" )
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "hive/close-session-result.bin" ) )
+        .contentType( "application/x-thrift" );
+    given()
+        .auth().preemptive().basic( username, password )
+        .content( driver.getResourceBytes( "hive/close-session-request.bin" ) )
+        .contentType( "application/x-thrift" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .content( is( driver.getResourceString( "hive/close-session-result.bin" ) ) )
+        .contentType( "application/x-thrift" )
+        .when().post( driver.getUrl( "HIVE" ) );
+    driver.assertComplete();
+  }
 }
