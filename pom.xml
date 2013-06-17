@@ -161,6 +161,7 @@
                         <exclude>**/home/CHANGES</exclude>
                         <exclude>**/home/ISSUES</exclude>
                         <exclude>**/home/samples/*.jar</exclude>
+                        <exclude>**/.externalToolBuilders/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
