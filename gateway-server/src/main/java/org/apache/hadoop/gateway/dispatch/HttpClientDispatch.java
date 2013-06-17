@@ -17,16 +17,6 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.security.Principal;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
@@ -53,16 +43,27 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.security.Principal;
+
 /**
  *
  */
 public class HttpClientDispatch extends AbstractGatewayDispatch {
 
   private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
+  private static final String CT_APP_XML = "application/xml";
 
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
   private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
+  private static final int REPLAY_BUFFER_MAX_SIZE = 1024 * 1024; // limit to 1MB
 
   protected void executeRequest(
       HttpUriRequest outboundRequest,
@@ -126,17 +127,23 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     String contentType = request.getContentType();
     String contentEncoding = request.getCharacterEncoding();
     HttpEntity entity = null;
-    if ((contentType != null)
-        && contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED)) {
-      if (contentEncoding == null) {
-        contentEncoding = Charset.defaultCharset().name();
+    if ((contentLength > 0) && (contentType != null)
+        && (contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED) || 
+            contentType.equalsIgnoreCase(CT_APP_XML))) {
+      if (contentLength <= REPLAY_BUFFER_MAX_SIZE) {
+        if (contentEncoding == null) {
+          contentEncoding = Charset.defaultCharset().name();
+        }
+        String body = IOUtils.toString(contentStream, contentEncoding);
+        // ASCII is OK here because the urlEncode about should have already
+        // escaped
+        byte[] bodyBytes = body.getBytes("US-ASCII");
+        ContentType ct = contentType.equalsIgnoreCase(CT_APP_XML) ? ContentType.APPLICATION_XML
+            : ContentType.APPLICATION_FORM_URLENCODED;
+        entity = new ByteArrayEntity(bodyBytes, ct);
+      } else {
+        entity = new InputStreamEntity(contentStream, contentLength);
       }
-      String body = IOUtils.toString(contentStream, contentEncoding);
-      // ASCII is OK here because the urlEncode about should have already
-      // escaped
-      byte[] bodyBytes = body.getBytes("US-ASCII");
-      entity = new ByteArrayEntity(bodyBytes,
-          ContentType.APPLICATION_FORM_URLENCODED);
     } else {
       InputStreamEntity streamEntity = new RepeatableInputStreamEntity(
           contentStream, contentLength); // DILLI
