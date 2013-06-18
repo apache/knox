@@ -208,9 +208,9 @@
                     <reportSet>
                         <reports>
                             <report>index</report>
-                            <report>modules</report>
                             <report>dependencies</report>
                             <!--
+                            <report>modules</report>
                             <report>project-team</report>
                             <report>mailing-list</report>
                             <report>issue-tracking</report>
