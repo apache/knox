@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -49,6 +50,10 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
+import static org.xmlmatchers.transform.XmlConverters.the;
+import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
+
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -113,6 +118,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive", USE_MOCK_SERVICES );
+    driver.setupService( "HBASE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -174,7 +180,10 @@ public class GatewayBasicFuncTest {
             .addTag( "url" ).addText( driver.getRealUrl( "OOZIE" ) ).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "HIVE" )
-            .addTag( "url" ).addText( driver.getRealUrl( "HIVE" ) )
+            .addTag( "url" ).addText( driver.getRealUrl( "HIVE" ) ).gotoParent()
+          .addTag( "service" )
+            .addTag( "role" ).addText( "HBASE" )
+            .addTag( "url" ).addText( driver.getRealUrl( "HBASE" ) )
         .gotoRoot();
     return xml;
   }
@@ -1173,4 +1182,574 @@ public class GatewayBasicFuncTest {
         .when().post( driver.getUrl( "HIVE" ) );
     driver.assertComplete();
   }
+
+  @Test
+  public void testHbaseGetTableList() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    String resourceName = "hbase/table-list";
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( "/" )
+    .header( "Accept", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+    
+    Response response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.XML.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.XML )
+    .when().get( driver.getUrl( "HBASE" ) );
+    
+    MatcherAssert
+        .assertThat(
+            the( response.getBody().asString() ),
+            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( "/" )
+    .header( "Accept", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() );
+    
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.JSON.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.JSON )
+    .when().get( driver.getUrl( "HBASE" ) );
+    
+    MatcherAssert
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( "/" )
+    .header( "Accept", "application/x-protobuf" )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" );
+    
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", "application/x-protobuf")
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .content( is( driver.getResourceString( resourceName + ".protobuf" ) )  )
+    .contentType( "application/x-protobuf" )
+    .when().get( driver.getUrl( "HBASE" ) );
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testHbaseCreateTableAndVerifySchema() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    String resourceName = "hbase/table-schema";
+    String path = "/table/schema";
+
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( path )
+    .respond()
+    .status( HttpStatus.SC_CREATED )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  )
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_CREATED )
+    .contentType( ContentType.XML )
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .when().put( driver.getUrl( "HBASE" ) + path );
+    driver.assertComplete();
+
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( path )
+    .respond()
+    .status( HttpStatus.SC_CREATED )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() );
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  )
+    
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_CREATED )
+    .contentType( ContentType.JSON )
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .when().put( driver.getUrl( "HBASE" ) + path );
+    driver.assertComplete();
+
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( path )
+    .respond()
+    .status( HttpStatus.SC_CREATED )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" );
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_CREATED )
+    .contentType( "application/x-protobuf" )
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .when().put( driver.getUrl( "HBASE" ) + path );
+    driver.assertComplete();
+
+  }
+
+  @Test
+  public void testHbaseGetTableSchema() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    String resourceName = "hbase/table-metadata";
+    String path = "/table/schema";
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( path )
+    .header( "Accept", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+
+    Response response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.XML.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.XML )
+    .when().get( driver.getUrl( "HBASE" ) + path );
+
+    MatcherAssert
+        .assertThat(
+            the( response.getBody().asString() ),
+            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( path )
+    .header( "Accept", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() );
+
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.JSON.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.JSON )
+    .when().get( driver.getUrl( "HBASE" ) + path );
+    
+    MatcherAssert
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( path )
+    .header( "Accept", "application/x-protobuf" )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" );
+
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", "application/x-protobuf" )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .content( is( driver.getResourceString( resourceName + ".protobuf" ) ) )
+    .contentType( "application/x-protobuf" )
+    .when().get( driver.getUrl( "HBASE" ) + path );
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testHbaseInsertDataIntoTable() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    
+    String resourceName = "hbase/table-data";
+    String singleRowPath = "/table/testrow";
+    String multipleRowPath = "/table/false-row-key";
+    
+    //PUT request
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( multipleRowPath )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceStream( resourceName + ".xml" ) )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( singleRowPath )
+    .header( "Content-Type", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", ContentType.JSON.toString() )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().put( driver.getUrl( "HBASE" ) + singleRowPath );
+    driver.assertComplete();
+ 
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( multipleRowPath )
+    .header( "Content-Type", "application/x-protobuf" )
+    .content( driver.getResourceStream( resourceName + ".protobuf" ) )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", "application/x-protobuf" )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
+    driver.assertComplete();
+    
+    //POST request
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "POST" )
+    .pathInfo( multipleRowPath )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceStream( resourceName + ".xml" ) )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "POST" )
+    .pathInfo( singleRowPath )
+    .header( "Content-Type", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", ContentType.JSON.toString() )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().post( driver.getUrl( "HBASE" ) + singleRowPath );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "POST" )
+    .pathInfo( multipleRowPath )
+    .header( "Content-Type", "application/x-protobuf" )
+    .content( driver.getResourceStream( resourceName + ".protobuf" ) )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", "application/x-protobuf" )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testHbaseDeleteDataFromTable() {
+    String username = "hbase";
+    String password = "hbase-password";
+    
+    String tableId = "table";
+    String rowId = "row";
+    String familyId = "family";
+    String columnId = "column";
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "DELETE" )
+    .pathInfo( "/" + tableId + "/" + rowId )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "DELETE" )
+    .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
+    driver.assertComplete();
+
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "DELETE" )
+    .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
+    driver.assertComplete();
+
+  }
+
+  @Test
+  public void testHbaseQueryTableData() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    
+    String resourceName = "hbase/table-data";
+    
+    String allRowsPath = "/table/*";
+    String rowsStartsWithPath = "/table/row*";
+    String rowsWithKeyPath = "/table/row";
+    String rowsWithKeyAndColumnPath = "/table/row/family:col";
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( allRowsPath )
+    .header( "Accept", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+
+    Response response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.XML.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.XML )
+    .when().get( driver.getUrl( "HBASE" ) + allRowsPath );
+    
+    MatcherAssert
+    .assertThat(
+        the( response.getBody().asString() ),
+        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( rowsStartsWithPath )
+    .header( "Accept", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.XML.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.XML )
+    .when().get( driver.getUrl( "HBASE" ) + rowsStartsWithPath );
+    
+    MatcherAssert
+    .assertThat(
+        the( response.getBody().asString() ),
+        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( rowsWithKeyPath )
+    .header( "Accept", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() );
+
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.JSON.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.JSON )
+    .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyPath );
+    
+    MatcherAssert
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    driver.assertComplete();
+    
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( rowsWithKeyAndColumnPath )
+    .header( "Accept", ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() );
+
+    response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.JSON.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.JSON )
+    .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyAndColumnPath );
+    
+    MatcherAssert
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testHbaseUseScanner() throws IOException {
+    String username = "hbase";
+    String password = "hbase-password";
+    
+    String scannerDefinitionResourceName = "hbase/scanner-definition";
+    String tableDataResourceName = "hbase/table-data";
+    String scannerPath = "/table/scanner";
+    String scannerId = "13705290446328cff5ed";
+    
+    //Create scanner for table using PUT and POST requests
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "PUT" )
+    .pathInfo( scannerPath )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_CREATED );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceBytes( scannerDefinitionResourceName + ".xml" ) )
+    .expect()
+    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
+    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + createScannerPath ) )
+    .statusCode( HttpStatus.SC_CREATED )
+    .when().put( driver.getUrl( "HBASE" ) + scannerPath );
+    driver.assertComplete();
+    
+    //Get the values of the next cells found by the scanner 
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "GET" )
+    .pathInfo( scannerPath + "/" + scannerId )
+    .header( "Accept", ContentType.XML.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( tableDataResourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() );
+
+    Response response = given()
+    .auth().preemptive().basic( username, password )
+    .header( "Accept", ContentType.XML.toString() )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .contentType( ContentType.XML )
+    .when().get( driver.getUrl( "HBASE" ) + scannerPath + "/" + scannerId );
+    
+    MatcherAssert
+    .assertThat(
+        the( response.getBody().asString() ),
+        isEquivalentTo( the( driver.getResourceString( tableDataResourceName + ".xml" ) ) ) );
+    driver.assertComplete();
+    
+    //Delete scanner
+    driver.getMock( "HBASE" )
+    .expect()
+    .method( "DELETE" )
+    .pathInfo( scannerPath + "/" + scannerId )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    given()
+    .auth().preemptive().basic( username, password )
+    .expect()
+    .statusCode( HttpStatus.SC_OK )
+    .when().delete( driver.getUrl( "HBASE" ) + scannerPath + "/" + scannerId );
+    driver.assertComplete();
+  }
+
 }
