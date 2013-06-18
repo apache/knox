@@ -78,6 +78,16 @@ sn: User
 uid: hcat
 userPassword:hcat-password
 
+dn: uid=hbase,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: HBaseUser
+sn: User
+uid: hbase
+userPassword:hbase-password
+
 dn: uid=kminder,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person

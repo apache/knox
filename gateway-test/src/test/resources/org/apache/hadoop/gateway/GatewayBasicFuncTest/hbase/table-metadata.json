@@ -1,0 +1,37 @@
+{
+  "name": "table",
+  "IS_META": "false",
+  "IS_ROOT": "false",
+  "ColumnSchema": [
+    {
+      "name": "family1",
+      "BLOCKSIZE": "65536",
+      "BLOOMFILTER": "NONE",
+      "MIN_VERSIONS": "0",
+      "KEEP_DELETED_CELLS": "false",
+      "ENCODE_ON_DISK": "true",
+      "BLOCKCACHE": "true",
+      "COMPRESSION": "NONE",
+      "VERSIONS": "3",
+      "REPLICATION_SCOPE": "0",
+      "TTL": "2147483647",
+      "DATA_BLOCK_ENCODING": "NONE",
+      "IN_MEMORY": "false"
+    },
+    {
+      "name": "family2",
+      "BLOCKSIZE": "65536",
+      "BLOOMFILTER": "NONE",
+      "MIN_VERSIONS": "0",
+      "KEEP_DELETED_CELLS": "false",
+      "ENCODE_ON_DISK": "true",
+      "BLOCKCACHE": "true",
+      "COMPRESSION": "NONE",
+      "VERSIONS": "3",
+      "REPLICATION_SCOPE": "0",
+      "TTL": "2147483647",
+      "DATA_BLOCK_ENCODING": "NONE",
+      "IN_MEMORY": "false"
+    }
+  ]
+}

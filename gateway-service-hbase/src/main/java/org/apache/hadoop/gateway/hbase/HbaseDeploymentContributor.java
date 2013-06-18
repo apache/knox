@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.gateway.hbase;
 
-import java.net.URISyntaxException;
-
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
@@ -27,6 +25,8 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.topology.Service;
+
+import java.net.URISyntaxException;
 
 public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase {
 
@@ -66,13 +66,13 @@ public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl().toExternalForm() + "/{**}?{**}" );
     
-    rule = rules.addRule( getRole() + "/" + getName() + "/hbase/outbound" )
-        .directions( "outbound" )
-        .pattern( "*://*:*/**?**" );
-    match = rule.addStep( "match" );
-    match.pattern( "*://{host}:{port}/{path=**}?{**}" );
-    rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/{path=**}" );
+//    rule = rules.addRule( getRole() + "/" + getName() + "/hbase/outbound" )
+//        .directions( "outbound" )
+//        .pattern( "*://*:*/**?**" );
+//    match = rule.addStep( "match" );
+//    match.pattern( "*://{host}:{port}/{path=**}?{**}" );
+//    rewrite = rule.addStep( "rewrite" );
+//    rewrite.template( service.getUrl().toExternalForm() + "/{path=**}" );
   }
 
   private void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {

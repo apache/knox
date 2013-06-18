@@ -24,12 +24,10 @@ import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
-
-import javax.xml.namespace.QName;
-
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -135,7 +133,7 @@ public abstract class XmlFilterReader extends Reader {
           processAttribute( attribute );
         }
       }
-      if( tag.isEmptyElementTag() ) {
+      if( tag.toString().trim().endsWith( "/>" ) || tag.isEmptyElementTag() ) {
         stack.pop();
         writer.write( "/>" );
       } else {

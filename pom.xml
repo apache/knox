@@ -745,6 +745,12 @@
                 <version>1.2.1</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>uk.co.datumedge</groupId>
+                <artifactId>hamcrest-json</artifactId>
+                <version>0.2</version>
+                <scope>test</scope>
+            </dependency>
 
             <!-- JUnit must be before Junit otherwise it is messes up the hamcrest dependencies -->
             <dependency>

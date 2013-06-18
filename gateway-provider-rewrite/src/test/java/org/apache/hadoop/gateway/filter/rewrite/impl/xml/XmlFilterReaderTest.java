@@ -580,4 +580,25 @@ public class XmlFilterReaderTest {
       assertThat( step.flow(), is( UrlRewriteStepFlow.OR ) );
     }
   }
+  
+  @Test
+  public void testTagNameLetterCase() throws IOException {
+    String inputXml = "<Root/>";
+    StringReader inputReader = new StringReader( inputXml );
+    
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    assertThat( the( outputXml ), hasXPath( "/Root" ) );
+  }
+  
+  @Test
+  public void testXmlWithHtmlTagNames() throws IOException {
+    String inputXml = "<root><br><table name=\"table1\"/><table name=\"table2\"/></br></root>";
+    StringReader inputReader = new StringReader( inputXml );
+    
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    assertThat( the( outputXml ), hasXPath( "/root/br/table[1]/@name", equalTo( "table1" ) ) );
+    assertThat( the( outputXml ), hasXPath( "/root/br/table[2]/@name", equalTo( "table2" ) ) );
+  }
 }

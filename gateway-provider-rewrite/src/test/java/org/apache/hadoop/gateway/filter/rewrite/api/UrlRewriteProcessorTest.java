@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.easymock.EasyMock;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
@@ -77,6 +78,30 @@ public class UrlRewriteProcessorTest {
     assertThat(
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "test-scheme://test-host:1/test-output-path" ) );
+    processor.destroy();
+  }
+
+  @Ignore("Occasionally fails due to randomness in rules selection")
+  @Test
+  public void testMultipleRewriteOutputRules() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl = Parser.parse( "scheme://host:1/test-input-path" );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT );
+
+    assertThat( "Expect rewrite to produce a new URL",
+        outputUrl, notNullValue() );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "http://host1:1/test-input-path" ) );
     processor.destroy();
   }
 
