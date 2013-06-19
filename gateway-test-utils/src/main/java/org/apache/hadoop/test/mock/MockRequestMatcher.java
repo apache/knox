@@ -18,6 +18,7 @@
 package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -51,6 +52,7 @@ public class MockRequestMatcher {
   private String characterEncoding = null;
   private Integer contentLength = null;
   private byte[] entity = null;
+  private Map<String,String[]> formParams = null;
 
   public MockRequestMatcher( MockResponseProvider response ) {
     this.response = response;
@@ -114,6 +116,23 @@ public class MockRequestMatcher {
     return this;
   }
 
+  public MockRequestMatcher formParam( String name, String... values ) {
+    if( entity != null ) {
+      throw new IllegalStateException( "Entity already specified." );
+    }
+    if( formParams == null ) {
+      formParams = new HashMap<String, String[]>();
+    }
+    String[] currentValues = formParams.get( name );
+    if( currentValues == null ) {
+      currentValues = values;
+    } else if ( values != null ) {
+      currentValues = ArrayUtils.addAll( currentValues, values );
+    }
+    formParams.put( name, currentValues );
+    return this;
+  }
+
   public MockRequestMatcher content( String string, Charset charset ) {
     characterEncoding( charset.name() );
     content( string.getBytes( charset ) );
@@ -121,6 +140,9 @@ public class MockRequestMatcher {
   }
 
   public MockRequestMatcher content( byte[] entity ) {
+    if( formParams != null ) {
+      throw new IllegalStateException( "Form params already specified." );
+    }
     this.entity = entity;
     return this;
   }
@@ -205,22 +227,6 @@ public class MockRequestMatcher {
               " does not have the required content length",
           request.getContentLength(), is( contentLength ) );
     }
-    if( entity != null ) {
-      if( characterEncoding == null || request.getCharacterEncoding() == null ) {
-        byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
-        assertThat(
-            "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " content does not match the required content",
-            bytes, is( entity ) );
-      } else {
-        String expect = new String( entity, characterEncoding );
-        String actual = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
-        assertThat(
-            "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " content does not match the required content",
-            actual, is( expect ) );
-      }
-    }
     if( attributes != null ) {
       for( String name: attributes.keySet() ) {
         assertThat(
@@ -248,6 +254,40 @@ public class MockRequestMatcher {
             "Request " + request.getMethod() + " " + request.getRequestURL() +
                 " query string " + queryString + " is missing a value for parameter '" + name + "'",
             Arrays.asList( values ), hasItem( queryParams.get( name ) ) );
+      }
+    }
+    if( formParams != null ) {
+      String paramString = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
+      Map<String,String[]> requestParams = parseQueryString( paramString == null ? "" : paramString );
+      for( String name: formParams.keySet() ) {
+        String[] actualValues = requestParams.get( name );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " form params " + paramString + " is missing parameter '" + name + "'",
+            actualValues, notNullValue() );
+        String[] expectedValues = formParams.get( name );
+        for( String expectedValue : expectedValues ) {
+          assertThat(
+              "Request " + request.getMethod() + " " + request.getRequestURL() +
+                  " form params " + paramString + " is missing a value " + expectedValue + " for parameter '" + name + "'",
+              Arrays.asList( actualValues ), hasItem( expectedValue ) );
+        }
+      }
+    }
+    if( entity != null ) {
+      if( characterEncoding == null || request.getCharacterEncoding() == null ) {
+        byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " content does not match the required content",
+            bytes, is( entity ) );
+      } else {
+        String expect = new String( entity, characterEncoding );
+        String actual = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
+        assertThat(
+            "Request " + request.getMethod() + " " + request.getRequestURL() +
+                " content does not match the required content",
+            actual, is( expect ) );
       }
     }
   }
