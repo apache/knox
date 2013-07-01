@@ -16,69 +16,22 @@
 
 version: 1
 
+# entry for a sample people container
+# please replace with site specific values
 dn: ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
 ou: people
 
-dn: uid=hdfs,ou=people,dc=hadoop,dc=apache,dc=org
+# entry for a sample end user
+# please replace with site specific values
+dn: uid=bob,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: HDFS
-sn: HDFS
-uid: hdfs
-userPassword:hdfs-password
-
-dn: uid=mapred,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: MapReduce
-sn: MapReduce
-uid: mapred
-userPassword:mapred-password
-
-dn: uid=hive,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: Hive
-sn: Hive
-uid: hive
-userPassword:hive-password
-
-dn: uid=hcat,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: HCat
-sn: HCat
-uid: hcat
-userPassword:hcat-password
-
-dn: uid=hbase,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: HBase
-sn: Hbase
-uid: hbase
-userPassword:hbase-password
-
-# entry for a sample user
-#dn: uid=bob,ou=people,dc=hadoop,dc=apache,dc=org
-#objectclass:top
-#objectclass:person
-#objectclass:organizationalPerson
-#objectclass:inetOrgPerson
-#cn: Bob
-#sn: Smith
-#uid: bob
-#userPassword:bob-password
+cn: Bob
+sn: Smith
+uid: bob
+userPassword:bob-password
 
