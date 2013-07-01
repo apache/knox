@@ -127,7 +127,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     String contentType = request.getContentType();
     String contentEncoding = request.getCharacterEncoding();
     HttpEntity entity = null;
-    if ((contentLength > 0) && (contentType != null)
+    if ((contentType != null)
         && (contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED) || 
             contentType.equalsIgnoreCase(CT_APP_XML))) {
       if (contentLength <= REPLAY_BUFFER_MAX_SIZE) {
@@ -146,7 +146,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       }
     } else {
       InputStreamEntity streamEntity = new RepeatableInputStreamEntity(
-          contentStream, contentLength); // DILLI
+          contentStream, contentLength);
       if (contentType != null) {
         streamEntity.setContentType(contentType);
       }
