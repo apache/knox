@@ -53,7 +53,6 @@
             <includes>
                 <include>${gateway-group}:gateway-*</include>
                 <include>${gateway-group}:hsso-*</include>
-                <include>${gateway-group}:gateway-release-*</include>
             </includes>
             <excludes>
                 <exclude>${gateway-group}:gateway-util-launcher</exclude>

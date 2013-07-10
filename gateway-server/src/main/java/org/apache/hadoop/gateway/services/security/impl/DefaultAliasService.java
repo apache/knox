@@ -45,14 +45,10 @@ public class DefaultAliasService implements AliasService {
 
   @Override
   public void start() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-
   }
   
   /* (non-Javadoc)

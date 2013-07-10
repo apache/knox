@@ -57,6 +57,7 @@
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>gateway-release</module>
+        <module>hsso-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
     </modules>
@@ -387,6 +388,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>hsso-release</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Map;
 
 /**
  *
@@ -247,4 +248,13 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to establish connection to {0}: {1}" )
   void failedToEstablishConnectionToUrl( String url, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to instantiate the internal gateway services." )
+  void failedToInstantiateGatewayServices();
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to serialize map to Json string {0}: {1}" )
+  void failedToSerializeMapToJSON( Map<String, Object> map, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to get map from Json string {0}: {1}" )
+  void failedToGetMapFromJsonString( String json, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 }

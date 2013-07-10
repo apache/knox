@@ -15,7 +15,7 @@
    * See the License for the specific language governing permissions and
    * limitations under the License.
    */
-package org.apache.hadoop.gateway.provider.federation.jwt;
+package org.apache.hadoop.gateway.services.security.token.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;

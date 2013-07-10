@@ -1,0 +1,87 @@
+------------------------------------------------------------------------------
+README file for Apache Knox Gateway
+------------------------------------------------------------------------------
+This distribution includes cryptographic software.  The country in 
+which you currently reside may have restrictions on the import, 
+possession, use, and/or re-export to another country, of 
+encryption software.  BEFORE using any encryption software, please 
+check your country's laws, regulations and policies concerning the
+import, possession, or use, and re-export of encryption software, to 
+see if this is permitted.  See <http://www.wassenaar.org/> for more
+information.
+
+The U.S. Government Department of Commerce, Bureau of Industry and
+Security (BIS), has classified this software as Export Commodity 
+Control Number (ECCN) 5D002.C.1, which includes information security
+software using or performing cryptographic functions with asymmetric
+algorithms.  The form and manner of this Apache Software Foundation
+distribution makes it eligible for export under the License Exception
+ENC Technology Software Unrestricted (TSU) exception (see the BIS 
+Export Administration Regulations, Section 740.13) for both object 
+code and source code.
+
+The following provides more details on the included cryptographic
+software:
+  This package includes the use of ApacheDS which is dependent upon the 
+Bouncy Castle Crypto APIs written by the Legion of the Bouncy Castle
+http://www.bouncycastle.org/ feedback-crypto@bouncycastle.org.
+
+------------------------------------------------------------------------------
+Description
+------------------------------------------------------------------------------
+The charter for the Gateway project is to simplify and normalize the
+deployment and implementation of secure Hadoop clusters as well as be
+a centralize access point for the service specific REST APIs exposed from
+within the cluster.
+
+Milestone-1 of this project intends to demonstrate the ability to dynamically
+provision reverse proxy capabilities with filter chains that meet the cluster
+specific needs for authentication.
+
+HTTP BASIC authentication with identity being asserted to the rest of the
+cluster via Pseudo/Simple authentication will be demonstrated for security.
+
+For API aggregation, the Gateway will provide a central endpoint for HDFS,
+Templeton and Oozie APIs for each cluster.
+
+Future Milestone releases will extend these capabilities with additional
+authentication, identity assertion, API aggregation and eventually management
+capabilities.
+
+------------------------------------------------------------------------------
+Changes
+------------------------------------------------------------------------------
+Please see the CHANGES file.
+
+------------------------------------------------------------------------------
+Known Issues
+------------------------------------------------------------------------------
+Please see the ISSUES file.
+
+------------------------------------------------------------------------------
+Installation
+------------------------------------------------------------------------------
+Please see the INSTALL file or the Apache Knox Gateway website.
+http://knox.incubator.apache.org/getting-started.html
+
+------------------------------------------------------------------------------
+Examples
+------------------------------------------------------------------------------
+Please see the Apache Knox Gateway website for detailed examples.
+http://knox.incubator.apache.org/examples.html
+
+------------------------------------------------------------------------------
+Filing bugs
+------------------------------------------------------------------------------
+Currently we do not have Jira setup for Knox.  Therefore if you find an issue
+please send an email to the Knox user list (user AT knox.incubator.apache.org)
+with a subject prefix of [BUG] describing the issue.  Please include the
+results of this command in the email.
+
+    java -jar bin/gateway-${gateway-version}.jar -version
+
+in the Environment section.  Also include the version of Hadoop being used.
+
+One we have Jira setup the email archive will be reviewed and Jira issues
+created for each bug.
+

@@ -18,7 +18,6 @@
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.HashMap;
@@ -33,19 +32,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
 import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
+import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.JsonUtils;
 
 public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilter {
+  private static final String SVC_URL = "svc";
   private static final String EXPIRES_IN = "expires_in";
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String BEARER = "Bearer ";
   private long validity;
-  private CryptoService crypto = null;
+  private JWTokenAuthority authority = null;
+  private ServiceRegistry sr;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -57,7 +58,8 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     validity = Long.parseLong(validityStr);
 
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+    sr = (ServiceRegistry) services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
   }
   
   @Override
@@ -72,7 +74,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       JWTToken token = JWTToken.parseToken(wireToken);
       // ensure that there is a valid jwt token available and that there isn't a misconfiguration of filters
       if (token != null) {
-        JWTAuthority authority = new JWTAuthority(crypto);
         authority.verifyToken(token);
       }
       else {
@@ -91,13 +92,19 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       long expires = System.currentTimeMillis() + validity * 1000;
       
       String serviceName = request.getParameter("service-name");
+      String clusterName = request.getParameter("cluster-name");
       String accessToken = getAccessToken(principalName, serviceName, expires);
+      
+      String serviceURL = sr.lookupServiceURL(clusterName, serviceName);
       
       HashMap<String, Object> map = new HashMap<String, Object>();
       // TODO: populate map from JWT authorization code
       map.put(ACCESS_TOKEN, accessToken);
       map.put(TOKEN_TYPE, BEARER);
       map.put(EXPIRES_IN, expires);
+      
+      // TODO: this url needs to be rewritten when in gateway deployments....
+      map.put(SVC_URL, serviceURL);
       
       jsonResponse = JsonUtils.renderAsJsonString(map);
       
@@ -117,7 +124,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   private String getAccessToken(final String principalName, String serviceName, long expires) {
     String accessToken = null;
 
-    JWTAuthority authority = new JWTAuthority(crypto);
     Principal p = new Principal() {
 
       @Override
@@ -127,7 +133,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       }
     };
     JWTToken token = authority.issueToken(p, serviceName, "RS256");
-//    AccessToken token = new AccessToken(crypto, principalName, expires);
     accessToken = token.toString();
     
     return accessToken;

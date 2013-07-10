@@ -18,7 +18,8 @@
 package org.apache.hadoop.gateway.provider.federation;
 
 import junit.framework.TestCase;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
+
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
 public class JWTTokenTest extends TestCase {

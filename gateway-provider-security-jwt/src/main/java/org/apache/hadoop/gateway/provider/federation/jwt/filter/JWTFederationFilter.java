@@ -18,7 +18,8 @@
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
 import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -30,9 +31,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
-
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
@@ -40,18 +38,16 @@ import java.security.PrivilegedExceptionAction;
 import java.util.HashSet;
 import java.util.Set;
 
-
 public class JWTFederationFilter implements Filter {
 
   private static final String BEARER = "Bearer ";
   
-  private JWTAuthority authority = null;
+  private JWTokenAuthority authority = null;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    CryptoService crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
-    authority = new JWTAuthority(crypto);
+    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
   }
 
   public void destroy() {

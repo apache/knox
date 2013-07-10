@@ -15,23 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services;
+package org.apache.hadoop.gateway.provider.federation.jwt;
 
-import java.util.Collection;
+import org.apache.hadoop.gateway.i18n.messages.Message;
+import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
+import org.apache.hadoop.gateway.i18n.messages.Messages;
 
-import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
+@Messages(logger="org.apache.hadoop.gateway.provider.federation.jwt")
+public interface JWTMessages {
+  @Message( level = MessageLevel.INFO, text = "Failed to validate the audience attribute." )
+  void failedToValidateAudience();
 
-
-public interface GatewayServices extends Service, ProviderDeploymentContributor {
-  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
-  public static final String SSL_SERVICE = "SSLService";
-  public static final String CRYPTO_SERVICE = "CryptoService";
-  public static final String ALIAS_SERVICE = "AliasService";
-  public static final String TOKEN_SERVICE = "TokenService";
-  public static final String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
-
-  public abstract Collection<String> getServiceNames();
-
-  public abstract Service getService(String serviceName);
-
+  @Message( level = MessageLevel.INFO, text = "Failed to verify the token signature." )
+  void failedToVerifyTokenSignature();
 }

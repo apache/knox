@@ -25,7 +25,8 @@ import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
-import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -53,7 +54,7 @@ public abstract class DeploymentFactory {
 
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static DefaultGatewayServices gatewayServices = null;
+  private static GatewayServices gatewayServices = null;
 
   //private static Set<ServiceDeploymentContributor> SERVICE_CONTRIBUTORS;
   private static Map<String,Map<String,ServiceDeploymentContributor>> SERVICE_CONTRIBUTOR_MAP;
@@ -67,7 +68,7 @@ public abstract class DeploymentFactory {
     loadProviderContributors();
   }
   
-  public static void setGatewayServices(DefaultGatewayServices services) {
+  public static void setGatewayServices(GatewayServices services) {
     DeploymentFactory.gatewayServices = services;
   }
 
@@ -244,6 +245,13 @@ public abstract class DeploymentFactory {
       if( contributor != null ) {
         try {
           contributor.contributeService( context, service );
+          if (gatewayServices != null) {
+            ServiceRegistry sr = (ServiceRegistry) gatewayServices.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+            if (sr != null) {
+              String regCode = sr.getRegistrationCode(topology.getName());
+              sr.registerService(regCode, topology.getName(), service.getRole(), service.getUrl().toExternalForm());
+            }
+          }
         } catch( Exception e ) {
           // Maybe it makes sense to throw exception
           log.failedToContributeService( service.getName(), service.getRole(), e );

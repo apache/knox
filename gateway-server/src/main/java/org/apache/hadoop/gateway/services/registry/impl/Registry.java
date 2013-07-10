@@ -15,23 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services;
+package org.apache.hadoop.gateway.services.registry.impl;
 
-import java.util.Collection;
+import java.util.HashMap;
 
-import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
+class Registry extends HashMap<String,HashMap<String,RegEntry>> {
 
-
-public interface GatewayServices extends Service, ProviderDeploymentContributor {
-  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
-  public static final String SSL_SERVICE = "SSLService";
-  public static final String CRYPTO_SERVICE = "CryptoService";
-  public static final String ALIAS_SERVICE = "AliasService";
-  public static final String TOKEN_SERVICE = "TokenService";
-  public static final String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
-
-  public abstract Collection<String> getServiceNames();
-
-  public abstract Service getService(String serviceName);
-
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+  
+  public Registry() {
+    super();
+  }
+  
 }

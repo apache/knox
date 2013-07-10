@@ -42,7 +42,7 @@ import org.apache.hadoop.gateway.services.security.impl.JettySSLService;
 import org.apache.hadoop.gateway.services.token.impl.DefaultTokenAuthorityService;
 import org.apache.hadoop.gateway.topology.Provider;
 
-public class DefaultGatewayServices implements GatewayServices {
+public class HssoGatewayServices implements GatewayServices {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
@@ -50,7 +50,7 @@ public class DefaultGatewayServices implements GatewayServices {
   private DefaultMasterService ms = null;
   private DefaultKeystoreService ks = null;
 
-  public DefaultGatewayServices() {
+  public HssoGatewayServices() {
     super();
   }
 
@@ -78,6 +78,11 @@ public class DefaultGatewayServices implements GatewayServices {
     ts.init(config, options);
     // prolly should not allow the token service to be looked up?
     services.put(TOKEN_SERVICE, ts);
+    
+    DefaultServiceRegistryService sr = new DefaultServiceRegistryService();
+    sr.setCryptoService(crypto);
+    sr.init(config, options);
+    services.put(SERVICE_REGISTRY_SERVICE, sr);
     
     JettySSLService ssl = new JettySSLService();
     ssl.setAliasService(alias);

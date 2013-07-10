@@ -15,23 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services;
+package org.apache.hadoop.gateway.services.security.token;
 
-import java.util.Collection;
+import java.security.Principal;
 
-import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
+import javax.security.auth.Subject;
 
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
-public interface GatewayServices extends Service, ProviderDeploymentContributor {
-  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
-  public static final String SSL_SERVICE = "SSLService";
-  public static final String CRYPTO_SERVICE = "CryptoService";
-  public static final String ALIAS_SERVICE = "AliasService";
-  public static final String TOKEN_SERVICE = "TokenService";
-  public static final String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
+public interface JWTokenAuthority {
 
-  public abstract Collection<String> getServiceNames();
+  public abstract JWTToken issueToken(Subject subject, String algorithm);
 
-  public abstract Service getService(String serviceName);
+  public abstract JWTToken issueToken(Principal p, String algorithm);
 
+  public abstract JWTToken issueToken(Principal p, String audience,
+      String algorithm);
+
+  public abstract boolean verifyToken(JWTToken token);
 }

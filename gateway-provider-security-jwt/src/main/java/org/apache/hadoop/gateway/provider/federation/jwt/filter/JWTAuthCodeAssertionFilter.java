@@ -27,20 +27,20 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
 import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
+import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.JsonUtils;
 
 public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter {
   private static final String BEARER = "Bearer ";
   
-  private CryptoService crypto = null;
+  private JWTokenAuthority authority = null;
+
+  private ServiceRegistry sr;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -52,7 +52,8 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
 //    validity = Long.parseLong(validityStr);
 
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+    sr = (ServiceRegistry) services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
   }
   
   @Override
@@ -62,8 +63,13 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
       principalName = mapper.mapPrincipal(principalName);
-      JWTAuthority authority = new JWTAuthority(crypto);
       JWTToken authCode = authority.issueToken(subject, "RS256");
+      
+      // get the url for the token service
+      String url = null; 
+      if (sr != null) {
+        url = sr.lookupServiceURL("token", "TGS");
+      }
       
       HashMap<String, Object> map = new HashMap<String, Object>();
       // TODO: populate map from JWT authorization code
@@ -72,6 +78,9 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
       map.put("aud", authCode.getAudience());
       map.put("exp", authCode.getExpires());
       map.put("code", authCode.toString());
+      if (url != null) {
+        map.put("tke", url);
+      }
       
       String jsonResponse = JsonUtils.renderAsJsonString(map);
       

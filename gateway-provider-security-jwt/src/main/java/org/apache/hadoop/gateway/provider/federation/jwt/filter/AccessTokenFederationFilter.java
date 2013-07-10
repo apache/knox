@@ -34,23 +34,22 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTAuthority;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTToken;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 public class AccessTokenFederationFilter implements Filter {
+  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static final String BEARER = "Bearer ";
   
-  private CryptoService crypto = null;
-
-  private JWTAuthority authority;
+  private JWTokenAuthority authority;
   
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    crypto = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
-    authority = new JWTAuthority(crypto);
+    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
   }
 
   public void destroy() {
@@ -67,17 +66,19 @@ public class AccessTokenFederationFilter implements Filter {
       if (verified) {
         // TODO: validate expiration
         // TODO: confirm that audience matches intended target
-        if (token.getAudience().equals(getAudienceFromRequest(request))) {
+        if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase()) != -1) {
           // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
           Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
         }
         else {
+          log.failedToValidateAudience();
           ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
           return; //break filter chain
         }
       }
       else {
+        log.failedToVerifyTokenSignature();
         ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
         return; //break filter chain
       }
@@ -90,11 +91,6 @@ public class AccessTokenFederationFilter implements Filter {
     }
   }
   
-  private String getAudienceFromRequest(ServletRequest request) {
-    // TODO determine the audience value that would match the requested resource
-    return "HDFS";
-  }
-
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
     try {
       Subject.doAs(

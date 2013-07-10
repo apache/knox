@@ -24,11 +24,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
+import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
@@ -52,9 +54,11 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -62,7 +66,7 @@ public class GatewayServer {
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServer server;
-  private static DefaultGatewayServices services;
+  private static GatewayServices services;
   
   private static Properties buildProperties;
 
@@ -84,7 +88,10 @@ public class GatewayServer {
             buildProperties.getProperty( "build.version", "unknown" ),
             buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {
-        services = new DefaultGatewayServices();
+        services = instantiateGatewayServices();
+        if (services == null) {
+          log.failedToInstantiateGatewayServices();
+        }
         GatewayConfig config = new GatewayConfigImpl();
         configureLogging( config );
         if (config.isHadoopKerberosSecured()) {
@@ -92,7 +99,7 @@ public class GatewayServer {
         }
         Map<String,String> options = new HashMap<String,String>();
         options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
-        services.init(config, options);
+        ((org.apache.hadoop.gateway.services.Service) services).init(config, options);
         if (!cmd.hasOption(GatewayCommandLine.NOSTART_LONG)) {
           startGateway( config, services );
         }
@@ -102,6 +109,15 @@ public class GatewayServer {
     } catch (ServiceLifecycleException e) {
       log.failedToStartGateway( e );
     }
+  }
+
+  private static GatewayServices instantiateGatewayServices() {
+    ServiceLoader<GatewayServices> loader = ServiceLoader.load( GatewayServices.class );
+    Iterator<GatewayServices> services = loader.iterator();
+    if (services.hasNext()) {
+      return services.next();
+    }
+    return null;
   }
 
   public static synchronized GatewayServices getGatewayServices() {
@@ -188,13 +204,13 @@ public class GatewayServer {
     input.close();
   }
 
-  public static GatewayServer startGateway( GatewayConfig config, DefaultGatewayServices srvics ) {
+  public static GatewayServer startGateway( GatewayConfig config, GatewayServices svcs ) {
     try {
       log.startingGateway();
       server = new GatewayServer( config );
       synchronized (server ) {
         if (services == null) {
-          services = srvics;
+          services = svcs;
         }
         services.start();
         DeploymentFactory.setGatewayServices(services);
@@ -338,6 +354,10 @@ public class GatewayServer {
   private synchronized void internalUndeploy( Topology topology ) {
     WebAppContext context = deployments.remove( topology.getName() );
     if( context != null ) {
+      ServiceRegistry sr = (ServiceRegistry) this.getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+      if (sr != null) {
+        sr.removeClusterServices(topology.getName());
+      }
       contexts.removeHandler( context ) ;
       try {
         context.stop();
