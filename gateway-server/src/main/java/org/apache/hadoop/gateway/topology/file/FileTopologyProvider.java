@@ -35,7 +35,9 @@ import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
-import org.apache.hadoop.gateway.topology.xml.XmlTopologyRules;
+import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
+import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
+import org.apache.hadoop.gateway.topology.xml.KnoxFormatXmlTopologyRules;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -56,7 +58,7 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, FileListener {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static DigesterLoader digesterLoader = newLoader( new XmlTopologyRules() );
+  private static DigesterLoader digesterLoader = newLoader( new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules() );
 
   private DefaultFileMonitor monitor;
   private FileObject directory;
@@ -81,7 +83,8 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     log.loadingTopologyFile( file.getName().getFriendlyURI() );
     Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
-    Topology topology = digester.parse( content.getInputStream() );
+    TopologyBuilder topologyBuilder = digester.parse( content.getInputStream() );
+    Topology topology = topologyBuilder.build();
     topology.setName( FilenameUtils.removeExtension( file.getName().getBaseName() ) );
     topology.setTimestamp( content.getLastModifiedTime() );
     return topology;
@@ -98,6 +101,9 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
             // Maybe it makes sense to throw exception
             log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
           } catch( SAXException e ) {
+            // Maybe it makes sense to throw exception
+            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
+          } catch ( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
           }

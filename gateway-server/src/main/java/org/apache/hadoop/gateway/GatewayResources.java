@@ -46,4 +46,22 @@ public interface GatewayResources {
 
   @Resource( text="Display server version information." )
   String versionHelpMessage();
+
+  @Resource( text="Topology is required." )
+  String topologyIsRequiredError();
+
+  @Resource( text="Provider is required." )
+  String providerIsRequiredError();
+
+  @Resource( text="Unsupported property's token: {0}" )
+  String unsupportedPropertyTokenError(String token);
+
+  @Resource( text="Failed to build topology: wrong data format." )
+  String wrongTopologyDataFormatError();
+
+  @Resource( text="Provider parameter name is required." )
+  String providerParameterNameIsRequiredError();
+
+  @Resource( text="Provider parameter value is required." )
+  String providerParameterValueIsRequiredError();
 }

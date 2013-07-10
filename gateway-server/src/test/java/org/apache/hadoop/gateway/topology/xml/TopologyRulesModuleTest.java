@@ -22,6 +22,7 @@ import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import java.net.URL;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -42,7 +44,7 @@ public class TopologyRulesModuleTest {
 
   @Before
   public void setUp() throws Exception {
-    loader = newLoader( new XmlTopologyRules() );
+    loader = newLoader( new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules() );
   }
 
   @After
@@ -50,13 +52,14 @@ public class TopologyRulesModuleTest {
   }
 
   @Test
-  public void testParseSimpleTopologyXml() throws IOException, SAXException {
+  public void testParseSimpleTopologyXmlInKnoxFormat() throws IOException, SAXException {
     Digester digester = loader.newDigester();
-    String name = "org/apache/hadoop/gateway/topology/xml/simple-topology.xml";
+    String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-knox-format.xml";
     URL url = ClassLoader.getSystemResource( name );
     assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
     File file = new File( url.getFile() );
-    Topology topology = digester.parse( url );
+    TopologyBuilder topologyBuilder = digester.parse( url );
+    Topology topology = topologyBuilder.build();
     assertThat( "Failed to parse resource " + name, topology, notNullValue() );
     topology.setTimestamp( file.lastModified() );
 
@@ -74,6 +77,64 @@ public class TopologyRulesModuleTest {
     assertThat( provider.isEnabled(), is(true) );
     assertThat( provider.getRole(), is( "authentication" ) );
     assertThat( provider.getParams().size(), is(5));
+  }
+
+  @Test
+  public void testParseSimpleTopologyXmlInHadoopFormat() throws IOException, SAXException {
+    Digester digester = loader.newDigester();
+    String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-ambari-format.xml";
+    URL url = ClassLoader.getSystemResource( name );
+    assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
+    File file = new File( url.getFile() );
+    TopologyBuilder topologyBuilder = digester.parse( url );
+    Topology topology = topologyBuilder.build();
+    assertThat( "Failed to parse resource " + name, topology, notNullValue() );
+    topology.setTimestamp( file.lastModified() );
+
+    assertThat( topology.getName(), is( "topology2" ) );
+    assertThat( topology.getTimestamp(), is( file.lastModified() ) );
+    assertThat( topology.getServices().size(), is( 4 ) );
+    assertThat( topology.getProviders().size(), is( 2 ) );
+
+    Service namenodeService = topology.getService( "NAMENODE", null );
+    assertThat( namenodeService, notNullValue() );
+    assertThat( namenodeService.getRole(), is( "NAMENODE" ) );
+    assertThat( namenodeService.getName(), nullValue() );
+    assertThat( namenodeService.getUrl(), is( new URL( "http://host:50070/webhdfs/v1" ) ) );
+
+    Service templetonService = topology.getService( "TEMPLETON", null );
+    assertThat( templetonService, notNullValue() );
+    assertThat( templetonService.getRole(), is( "TEMPLETON" ) );
+    assertThat( templetonService.getName(), nullValue() );
+    assertThat( templetonService.getUrl(), is( new URL( "http://host:50111/templeton/v1" ) ) );
+
+    Service oozieService = topology.getService( "OOZIE", null );
+    assertThat( oozieService, notNullValue() );
+    assertThat( oozieService.getRole(), is( "OOZIE" ) );
+    assertThat( oozieService.getName(), nullValue() );
+    assertThat( oozieService.getUrl(), is( new URL( "http://host:11000/oozie" ) ) );
+
+    Service hiveService = topology.getService( "HIVE", null );
+    assertThat( hiveService, notNullValue() );
+    assertThat( hiveService.getRole(), is( "HIVE" ) );
+    assertThat( hiveService.getName(), nullValue() );
+    assertThat( hiveService.getUrl(), is( new URL( "http://host:10000" ) ) );
+
+    Provider authenticationProvider = topology.getProvider( "authentication", "ShiroProvider" );
+    assertThat( authenticationProvider, notNullValue() );
+    assertThat( authenticationProvider.isEnabled(), is( true ) );
+    assertThat( authenticationProvider.getRole(), is( "authentication" ) );
+    assertThat( authenticationProvider.getName(), is( "ShiroProvider" ) );
+    assertThat( authenticationProvider.getParams().size(), is( 5 ) );
+    assertThat( authenticationProvider.getParams().get("main.ldapRealm.contextFactory.url"), is( "ldap://localhost:33389" ) );
+
+    Provider identityAssertionProvider = topology.getProvider( "identity-assertion", "Pseudo" );
+    assertThat( identityAssertionProvider, notNullValue() );
+    assertThat( identityAssertionProvider.isEnabled(), is( false ) );
+    assertThat( identityAssertionProvider.getRole(), is( "identity-assertion" ) );
+    assertThat( identityAssertionProvider.getName(), is( "Pseudo" ) );
+    assertThat( identityAssertionProvider.getParams().size(), is( 2 ) );
+    assertThat( identityAssertionProvider.getParams().get("name"), is( "user.name" ) );
   }
 
 }

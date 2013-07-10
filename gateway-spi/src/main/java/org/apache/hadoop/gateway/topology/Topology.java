@@ -30,6 +30,7 @@ public class Topology {
   private List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
   private List<Service> services = new ArrayList<Service>();
+  private Map<String, Map<String, Service>> serviceMap = new HashMap<String, Map<String, Service>>();
 
   public String getName() {
     return name;
@@ -51,8 +52,27 @@ public class Topology {
     return services;
   }
 
+  public Service getService( String role, String name ) {
+    Service service = null;
+    Map<String, Service> nameMap = serviceMap.get( role );
+    if( nameMap != null) {
+      service = nameMap.get( name );
+      if ( service == null && !nameMap.values().isEmpty() ) {
+        service = (Service) nameMap.values().toArray()[0];
+      }
+    }
+    return service;
+  }
+
   public void addService( Service service ) {
     services.add( service );
+    String role = service.getRole();
+    Map<String, Service> nameMap = serviceMap.get( role );
+    if( nameMap == null ) {
+      nameMap = new HashMap<String, Service>();
+      serviceMap.put( role, nameMap );
+    }
+    nameMap.put( service.getName(), service );
   }
 
   public Collection<Provider> getProviders() {

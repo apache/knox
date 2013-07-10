@@ -249,6 +249,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to establish connection to {0}: {1}" )
   void failedToEstablishConnectionToUrl( String url, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to interpret property \"{0}\": {1}")
+  void failedToInterpretProperty( String property, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
   @Message( level = MessageLevel.ERROR, text = "Failed to instantiate the internal gateway services." )
   void failedToInstantiateGatewayServices();
 
