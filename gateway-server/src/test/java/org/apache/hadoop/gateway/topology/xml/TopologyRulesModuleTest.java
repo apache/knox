@@ -82,7 +82,7 @@ public class TopologyRulesModuleTest {
   @Test
   public void testParseSimpleTopologyXmlInHadoopFormat() throws IOException, SAXException {
     Digester digester = loader.newDigester();
-    String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-ambari-format.xml";
+    String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-ambari-format.conf";
     URL url = ClassLoader.getSystemResource( name );
     assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
     File file = new File( url.getFile() );

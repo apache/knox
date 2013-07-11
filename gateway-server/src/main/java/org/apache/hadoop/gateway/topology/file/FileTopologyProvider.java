@@ -59,6 +59,11 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static DigesterLoader digesterLoader = newLoader( new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules() );
+  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<String>();
+  static {
+      SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("xml");
+      SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("conf");
+  }
 
   private DefaultFileMonitor monitor;
   private FileObject directory;
@@ -94,7 +99,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     Map<FileName, Topology> map = new HashMap<FileName, Topology>();
     if( directory.exists() && directory.getType().hasChildren() ) {
       for( FileObject file : directory.getChildren() ) {
-        if( file.exists() && !file.getType().hasChildren() && "xml".equals( file.getName().getExtension() ) ) {
+        if( file.exists() && !file.getType().hasChildren() && SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.contains( file.getName().getExtension() )) {
           try {
             map.put( file.getName(), loadTopology( file ) );
           } catch( IOException e ) {
