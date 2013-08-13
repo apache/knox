@@ -30,9 +30,9 @@ import java.util.List;
 public class ShiroDeploymentContributor extends ProviderDeploymentContributorBase {
 
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
-  private static final String FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
-  private static final String FILTER_CLASSNAME2 = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
-  private static final String FILTER_CLASSNAME3 = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
+  private static final String SHIRO_FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
+  private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
+  private static final String COOKIE_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
 
   @Override
   public String getRole() {
@@ -48,13 +48,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   public void contributeProvider( DeploymentContext context, Provider provider ) {
     // add servletContextListener
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
-    // LJM TEMP: add filter
-//    context.getWebAppDescriptor().createFilter().filterName("ShiroFilter").filterClass(FILTER_CLASSNAME);
-//    context.getWebAppDescriptor().createFilter().filterName("PostShiroFilter").filterClass(FILTER_CLASSNAME2);
-//    context.getWebAppDescriptor().createFilterMapping().filterName("ShiroFilter").servletName("cluster");
-//    context.getWebAppDescriptor().createFilterMapping().filterName("PostShiroFilter").servletName("cluster");
     // Write the provider specific config out to the war for cluster specific config
-//    String config = provider.getParams().get( "config" );
     String config = new ShiroConfig( provider ).toString();
     if( config != null ) {
       context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
@@ -63,8 +57,16 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().name( "Pre" + getName() ).role( getRole() ).impl( FILTER_CLASSNAME3 ).params( params );
-    resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
-    resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( FILTER_CLASSNAME2 ).params( params );
+	// Leveraging a third party filter is a primary usecase for Knox
+	// in order to do so, we need to make sure that the end result of the third party integration
+	// puts a standard javax.security.auth.Subject on the current thread through a doAs.
+	// As many filters do not use the standard java Subject, often times a post processing filter will
+	// need to be added in order to canonicalize the result into an expected security context.
+	
+	// You may also need to do some additional processing of the response in order to not return cookies or other
+	// filter specifics that are not needed for integration with Knox. Below we do that in the pre-processing filter.
+    resource.addFilter().name( "Pre" + getName() ).role( getRole() ).impl( COOKIE_FILTER_CLASSNAME ).params( params );
+    resource.addFilter().name( getName() ).role( getRole() ).impl( SHIRO_FILTER_CLASSNAME ).params( params );
+    resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( POST_FILTER_CLASSNAME ).params( params );
   }
 }
