@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.json;
 
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
@@ -47,11 +48,12 @@ public class JsonUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
       String encoding,
       UrlRewriter rewriter,
       Resolver resolver,
-      UrlRewriter.Direction direction )
+      UrlRewriter.Direction direction,
+      UrlRewriteFilterContentDescriptor config )
           throws IOException {
     return new ReaderInputStream(
         new JsonUrlRewriteFilterReader(
-            new InputStreamReader( stream, encoding ), rewriter, resolver, direction ) );
+            new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
   }
 
 }

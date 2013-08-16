@@ -17,19 +17,24 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.parsing.Parser;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.hadoop.io.UTF8;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
+import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.eclipse.jetty.util.log.Log;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -44,12 +49,16 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.nio.charset.Charset;
 
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.RestAssured.responseContentType;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -57,6 +66,8 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
+
+  private static final Charset UTF8 = Charset.forName("UTF-8");
 
   // Uncomment to cause the test to hang after the gateway instance is setup.
   // This will allow the gateway instance to be hit directly via some external client.
@@ -107,6 +118,7 @@ public class GatewayBasicFuncTest {
    */
   @BeforeClass
   public static void setupSuite() throws Exception {
+    Log.setLog( new NoOpLogger() );
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
@@ -802,7 +814,7 @@ public class GatewayBasicFuncTest {
       if( success.equalsIgnoreCase( status ) ) {
         break;
       } else {
-        System.out.println( "Status=" + status );
+        //System.out.println( "Status=" + status );
         Thread.sleep( delay );
       }
     }
@@ -841,15 +853,17 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/open-session-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    Response response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/open-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/open-session-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/open-session-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/open-session-result.bin" ) ) );
+
     driver.assertComplete();
 
     // execute 'set hive.fetch.output.serde=...' (is called internally be JDBC driver)
@@ -863,15 +877,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-set-fetch-output-serde-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'set hive.fetch.output.serde=...'
@@ -885,15 +900,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-1-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-1-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-1-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-1-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-1-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'set hive.server2.http.path=...' (is called internally be JDBC driver)
@@ -907,15 +923,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-set-server2-http-path-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-set-server2-http-path-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-set-server2-http-path-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'set hive.server2.http.path=...'
@@ -929,15 +946,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-2-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-2-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-2-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-2-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-2-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'set hive.server2.servermode=...' (is called internally be JDBC driver)
@@ -951,15 +969,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-set-server2-servermode-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-set-server2-servermode-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-set-server2-servermode-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'set hive.server2.servermode=...'
@@ -973,15 +992,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-3-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-3-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-3-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-3-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-3-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'set hive.security.authorization.enabled=...'
@@ -995,15 +1015,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-set-security-authorization-enabled-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'set hive.security.authorization.enabled=...'
@@ -1017,15 +1038,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-4-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-4-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-4-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-4-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-4-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'create table...'
@@ -1039,15 +1061,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-create-table-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-create-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-create-table-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-create-table-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-create-table-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'create table...'
@@ -1061,15 +1084,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-5-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-5-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-5-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-5-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-5-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'select * from...'
@@ -1083,15 +1107,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-select-from-table-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/execute-select-from-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/execute-select-from-table-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/execute-select-from-table-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/execute-select-from-table-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'GetResultSetMetadata' (is called internally be JDBC driver)
@@ -1105,15 +1130,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/get-result-set-metadata-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/get-result-set-metadata-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/get-result-set-metadata-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/get-result-set-metadata-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/get-result-set-metadata-result.bin" ) ) );
     driver.assertComplete();
 
     // execute 'FetchResults' (is called internally be JDBC driver)
@@ -1127,15 +1153,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/fetch-results-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/fetch-results-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/fetch-results-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/fetch-results-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/fetch-results-result.bin" ) ) );
     driver.assertComplete();
 
     // close operation for execute 'select * from...'
@@ -1149,15 +1176,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-6-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-operation-6-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-operation-6-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-operation-6-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-operation-6-result.bin" ) ) );
     driver.assertComplete();
 
     // close session
@@ -1171,15 +1199,16 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-session-result.bin" ) )
         .contentType( "application/x-thrift" );
-    given()
+    response = given()
         .auth().preemptive().basic( username, password )
         .content( driver.getResourceBytes( "hive/close-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
         .statusCode( HttpStatus.SC_OK )
-        .content( is( driver.getResourceString( "hive/close-session-result.bin" ) ) )
+        //.content( is( driver.getResourceBytes( "hive/close-session-result.bin" ) ) )
         .contentType( "application/x-thrift" )
         .when().post( driver.getUrl( "HIVE" ) );
+    assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-session-result.bin" ) ) );
     driver.assertComplete();
   }
 
@@ -1210,7 +1239,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
         .assertThat(
             the( response.getBody().asString() ),
-            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1232,7 +1261,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "HBASE" ) );
     
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1242,16 +1271,16 @@ public class GatewayBasicFuncTest {
     .header( "Accept", "application/x-protobuf" )
     .respond()
     .status( HttpStatus.SC_OK )
-    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .content( driver.getResourceString( resourceName + ".protobuf", UTF8 ), UTF8 )
     .contentType( "application/x-protobuf" );
     
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Accept", "application/x-protobuf")
+    .header( "Accept", "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .content( is( driver.getResourceString( resourceName + ".protobuf" ) )  )
     .contentType( "application/x-protobuf" )
+    .content( is( driver.getResourceString( resourceName + ".protobuf", UTF8 ) ) )
     .when().get( driver.getUrl( "HBASE" ) );
     driver.assertComplete();
   }
@@ -1356,7 +1385,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
         .assertThat(
             the( response.getBody().asString() ),
-            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1378,7 +1407,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "HBASE" ) + path );
     
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1396,9 +1425,11 @@ public class GatewayBasicFuncTest {
     .header( "Accept", "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .content( is( driver.getResourceString( resourceName + ".protobuf" ) ) )
+    //.content( is( driver.getResourceBytes( resourceName + ".protobuf" ) ) )
     .contentType( "application/x-protobuf" )
     .when().get( driver.getUrl( "HBASE" ) + path );
+    // RestAssured seems to be screwing up the binary comparison so do it explicitly.
+    assertThat( driver.getResourceBytes( resourceName + ".protobuf" ), is( response.body().asByteArray() ) );
     driver.assertComplete();
   }
 
@@ -1417,15 +1448,17 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "PUT" )
     .pathInfo( multipleRowPath )
-    .header( "Content-Type", ContentType.XML.toString() )
-    .content( driver.getResourceStream( resourceName + ".xml" ) )
+    //.header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Content-Type", ContentType.XML.toString() )
+    //.header( "Content-Type", ContentType.XML.toString() )
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
@@ -1435,14 +1468,16 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "PUT" )
     .pathInfo( singleRowPath )
-    .header( "Content-Type", ContentType.JSON.toString() )
+    //.header( "Content-Type", ContentType.JSON.toString() )
+    .contentType( ContentType.JSON.toString() )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Content-Type", ContentType.JSON.toString() )
+    //.header( "Content-Type", ContentType.JSON.toString() )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().put( driver.getUrl( "HBASE" ) + singleRowPath );
@@ -1452,15 +1487,17 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "PUT" )
     .pathInfo( multipleRowPath )
-    .header( "Content-Type", "application/x-protobuf" )
-    .content( driver.getResourceStream( resourceName + ".protobuf" ) )
+    //.header( "Content-Type", "application/x-protobuf" )
+    .contentType( "application/x-protobuf" )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Content-Type", "application/x-protobuf" )
+    //.header( "Content-Type", "application/x-protobuf" )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
@@ -1472,32 +1509,36 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "POST" )
     .pathInfo( multipleRowPath )
-    .header( "Content-Type", ContentType.XML.toString() )
-    .content( driver.getResourceStream( resourceName + ".xml" ) )
+    //.header( "Content-Type", ContentType.XML.toString() )
+    .content( driver.getResourceBytes( resourceName + ".xml" ) )
+    .contentType( ContentType.XML.toString() )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
-    .auth().preemptive().basic( username, password )
-    .header( "Content-Type", ContentType.XML.toString() )
-    .content( driver.getResourceBytes( resourceName + ".xml" ) )
-    .expect()
-    .statusCode( HttpStatus.SC_OK )
-    .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
+      .auth().preemptive().basic( username, password )
+      //.header( "Content-Type", ContentType.XML.toString() )
+      .content( driver.getResourceBytes( resourceName + ".xml" ) )
+      .contentType( ContentType.XML.toString() )
+      .expect()
+      .statusCode( HttpStatus.SC_OK )
+      .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
     .expect()
     .method( "POST" )
     .pathInfo( singleRowPath )
-    .header( "Content-Type", ContentType.JSON.toString() )
+    //.header( "Content-Type", ContentType.JSON.toString() )
+    .contentType( ContentType.JSON.toString() )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Content-Type", ContentType.JSON.toString() )
+    //.header( "Content-Type", ContentType.JSON.toString() )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().post( driver.getUrl( "HBASE" ) + singleRowPath );
@@ -1507,15 +1548,17 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "POST" )
     .pathInfo( multipleRowPath )
-    .header( "Content-Type", "application/x-protobuf" )
-    .content( driver.getResourceStream( resourceName + ".protobuf" ) )
+    //.header( "Content-Type", "application/x-protobuf" )
+    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" )
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header( "Content-Type", "application/x-protobuf" )
+    //.header( "Content-Type", "application/x-protobuf" )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType( "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
@@ -1609,7 +1652,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1633,7 +1676,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
+        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1655,7 +1698,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyPath );
     
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
     driver.getMock( "HBASE" )
@@ -1677,7 +1720,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyAndColumnPath );
     
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json" ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
   }
 
@@ -1733,7 +1776,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( tableDataResourceName + ".xml" ) ) ) );
+        isEquivalentTo( the( driver.getResourceString( tableDataResourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
     //Delete scanner

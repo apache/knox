@@ -15,7 +15,45 @@
   limitations under the License.
 -->
 <rules>
-    <rule name="test" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
-        <rewrite param="{scheme}://{host}:{port}/test-output-path"/>
+
+    <rule name="test-rule-1" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
+        <rewrite param="{scheme}://{host}:{port}/test-output-path-1"/>
     </rule>
+
+    <rule name="test-rule-2" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
+        <rewrite param="{scheme}://{host}:{port}/test-output-path-2"/>
+    </rule>
+
+    <filter name="test-filter-1">
+        <content type="application/json">
+            <apply path="$.url" rule="test-rule-1"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/root/@url" rule="test-rule-1"/>
+            <apply path="/root/url" rule="test-rule-1"/>
+        </content>
+    </filter>
+
+    <filter name="test-filter-2">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="test-rule-2"/>
+        </content>
+        <content type="application/x-www-form-urlencoded">
+            <apply path="url" rule="test-rule-2"/>
+        </content>
+        <content type="application/json">
+            <apply path="$.url" rule="test-rule-2"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/root/@url" rule="test-rule-2"/>
+            <apply path="/root/url" rule="test-rule-2"/>
+        </content>
+    </filter>
+
+    <filter name="test-filter-3">
+        <content type="*/xml">
+            <apply path="$.url" rule="test-rule-2"/>
+        </content>
+    </filter>
+
 </rules>

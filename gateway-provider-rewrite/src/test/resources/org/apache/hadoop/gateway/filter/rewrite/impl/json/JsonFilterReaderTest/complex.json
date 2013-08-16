@@ -1,0 +1,16 @@
+{
+  "test-str": "text",
+  "test-int": 42,
+  "test-flt": 3.1415927,
+  "test-bool": true,
+  "test-null": null,
+  "test-obj-empty": {},
+  "test-ary-empty": [],
+  "test-obj-simple": { "obj-inner-name" : "obj-inner-value" },
+  "test-ary-simple": [ "ary-inner-value" ],
+  "test-obj-nest": { "nested-name": { "obj-inner-name" : "obj-inner-value" } },
+  "test-ary-nest": [["nested-value"]],
+  "test-ary-obj": [ { "obj-inner-name": "obj-inner-value" } ],
+  "test-ary-multi": [ "text", 3.14, { "obj-inner-name": "obj-inner-value" }, [ "arry-inner-value" ] ],
+  "test-obj-multi": { "val":"text", "obj": { "obj-inner-name": "obj-inner-value" }, "ary": [ "arry-inner-value" ] }
+}

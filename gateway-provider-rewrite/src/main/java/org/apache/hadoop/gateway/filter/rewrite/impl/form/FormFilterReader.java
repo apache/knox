@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 public class FormFilterReader extends Reader {
@@ -34,9 +36,11 @@ public class FormFilterReader extends Reader {
   private Reader reader;
   private FormReader parser;
   private FormWriter generator;
+  private UrlRewriteFilterContentDescriptor config;
 
-  public FormFilterReader( Reader reader ) throws IOException {
+  public FormFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException {
     this.reader = reader;
+    this.config = config;
     parser = new FormReader( reader );
     writer = new StringWriter();
     buffer = writer.getBuffer();
@@ -75,7 +79,11 @@ public class FormFilterReader extends Reader {
   private void processPair() throws IOException {
     FormPair pair = parser.getCurrentPair();
     try {
-      pair.setValue( filterValue( pair.getName(), pair.getValue() ) );
+      String name = pair.getName();
+      String value = pair.getValue();
+      String rule = UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch( config, name );
+      value = filterValue( name, pair.getValue(), rule );
+      pair.setValue( value );
     } catch( Exception e ) {
       LOG.failedToFilterValue( pair.getValue(), e );
       // Write original value.
@@ -83,7 +91,7 @@ public class FormFilterReader extends Reader {
     generator.writePair( pair );
   }
 
-  protected String filterValue( String name, String value ) {
+  protected String filterValue( String name, String value, String rule ) {
     return value;
   }
 

@@ -98,16 +98,19 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public Servlet getServlet( String s ) throws ServletException {
     return null;
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public Enumeration<Servlet> getServlets() {
     return null;
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public Enumeration<String> getServletNames() {
     return null;
   }
@@ -117,6 +120,7 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void log( Exception e, String s ) {
   }
 

@@ -1,0 +1,19 @@
+{ "properties" :
+  [
+    { "property" :
+      { "property-name" : "test-name-1",
+        "property-value" : "test-value-1"
+      }
+    },
+    { "property" :
+      { "property-name" : "test-name-2",
+        "property-value" : "test-value-2"
+      }
+    },
+    { "property" :
+      { "property-name" : "test-name-3",
+        "property-value" : "test-value-3"
+      }
+    }
+  ]
+}

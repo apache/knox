@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.form;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
@@ -36,18 +37,19 @@ public class FormUrlRewriteFilterReader extends FormFilterReader {
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;
 
-  public FormUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction ) throws IOException {
-    super( reader );
+  public FormUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction, UrlRewriteFilterContentDescriptor config  ) throws IOException {
+    super( reader, config );
     this.resolver = resolver;
     this.rewriter = rewriter;
     this.direction = direction;
   }
 
   //TODO: Need to limit which values are attempted to be filtered by the name.
-  protected String filterValue( String name, String value ) {
+  @Override
+  protected String filterValue( String name, String value, String rule ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( resolver, input, direction );
+      Template output = rewriter.rewrite( resolver, input, direction, rule );
       value = output.toString();
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );

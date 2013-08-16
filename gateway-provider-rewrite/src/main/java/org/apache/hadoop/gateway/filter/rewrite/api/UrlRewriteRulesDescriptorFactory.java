@@ -17,11 +17,14 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteResources;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRulesDescriptorImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlUrlRewriteRulesExporter;
 import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlUrlRewriteRulesImporter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesExporter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesImporter;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -30,6 +33,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class UrlRewriteRulesDescriptorFactory {
+
+  private static UrlRewriteResources RES = ResourcesFactory.get( UrlRewriteResources.class );
 
   private static Map<String, UrlRewriteRulesImporter> IMPORTERS = loadImporters();
   private static Map<String, UrlRewriteRulesExporter> EXPORTERS = loadExporters();
@@ -44,8 +49,7 @@ public abstract class UrlRewriteRulesDescriptorFactory {
   public static UrlRewriteRulesDescriptor load( String format, Reader reader ) throws IOException {
     UrlRewriteRulesImporter importer = IMPORTERS.get( format );
     if( importer == null ) {
-      //TODO: I18N
-      throw new IllegalArgumentException( "No importer for descriptor format " + format );
+      throw new IllegalArgumentException( RES.noImporterForFormat( format ) );
     }
     return importer.load( reader );
   }
@@ -53,8 +57,7 @@ public abstract class UrlRewriteRulesDescriptorFactory {
   public static void store( UrlRewriteRulesDescriptor descriptor, String format, Writer writer ) throws IOException {
     UrlRewriteRulesExporter exporter = EXPORTERS.get( format );
     if( exporter == null ) {
-      //TODO: I18N
-      throw new IllegalArgumentException( "No exporter for descriptor format " + format );
+      throw new IllegalArgumentException( RES.noExporterForFormat( format ) );
     }
     exporter.store( descriptor, writer );
   }

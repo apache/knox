@@ -19,15 +19,20 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.GatewayRequestWrapper;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import javax.activation.MimeType;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -40,11 +45,27 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+import static org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch;
+
 public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
+  private static final String REQUEST_URL_RULE_PARAM = "request.url";
+  private static final String REQUEST_BODY_FILTER_PARAM = "request.body";
+  private static final String REQUEST_HEADERS_FILTER_PARAM = "request.headers";
+  private static final String REQUEST_COOKIES_FILTER_PARAM = "request.cookies";
+
+  private static final MimeType HEADERS_MIME_TYPE = MimeTypes.create( "application/x-http-headers", null );
+  private static final MimeType COOKIES_MIME_TYPE = MimeTypes.create( "application/x-http-cookies", null );
+
   private UrlRewriter rewriter;
+  private String urlRuleName;
+  private String bodyFilterName;
+  private String headersFilterName;
+  private UrlRewriteFilterContentDescriptor headersFilterConfig;
+  private String cookiesFilterName;
+  private UrlRewriteFilterContentDescriptor cookiesFilterConfig;
 
   /**
    * Constructs a request object wrapping the given request.
@@ -54,6 +75,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   public UrlRewriteRequest( FilterConfig config, HttpServletRequest request ) throws IOException {
     super( request );
     this.rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );
+    this.urlRuleName = config.getInitParameter( REQUEST_URL_RULE_PARAM );
+    this.bodyFilterName = config.getInitParameter( REQUEST_BODY_FILTER_PARAM );
+    this.headersFilterName = config.getInitParameter( REQUEST_HEADERS_FILTER_PARAM );
+    this.headersFilterConfig = getRewriteFilterConfig( headersFilterName, HEADERS_MIME_TYPE );
+    this.cookiesFilterName = config.getInitParameter( REQUEST_COOKIES_FILTER_PARAM );
+    this.cookiesFilterConfig = getRewriteFilterConfig( cookiesFilterName, COOKIES_MIME_TYPE );
   }
 
   private Template getSourceUrl() {
@@ -82,7 +109,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
       targetUrl = (Template)getAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME );
       if( targetUrl == null ) {
         Template sourceUrl = getSourceUrl();
-        targetUrl = rewriter.rewrite( this, sourceUrl, UrlRewriter.Direction.IN );
+        targetUrl = rewriter.rewrite( this, sourceUrl, UrlRewriter.Direction.IN, urlRuleName );
         setAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, targetUrl );
       }
     } else {
@@ -122,10 +149,10 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     }
   }
 
-  public String rewriteValue( UrlRewriter rewriter, String value ) {
+  private String rewriteValue( UrlRewriter rewriter, String value, String rule ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN );
+      Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN, rule );
       value = output.toString();
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
@@ -137,29 +164,31 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   public String getHeader( String name ) {
     String value = super.getHeader( name );
     if( value != null ) {
-      value = rewriteValue( rewriter, super.getHeader( name ) );
+      value = rewriteValue( rewriter, super.getHeader( name ), pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
     }
     return value;
   }
 
   @SuppressWarnings("unchecked")
   public Enumeration getHeaders( String name ) {
-    return new EnumerationRewriter( rewriter, (Enumeration<String>)super.getHeaders( name ) );
+    return new EnumerationRewriter( rewriter, super.getHeaders( name ), pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
   }
 
   @Override
   public List<String> resolve( String name ) {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   private class EnumerationRewriter implements Enumeration<String> {
 
     private UrlRewriter rewriter;
     private Enumeration<String> delegate;
+    private String rule;
 
-    private EnumerationRewriter( UrlRewriter rewriter, Enumeration<String> delegate ) {
+    private EnumerationRewriter( UrlRewriter rewriter, Enumeration<String> delegate, String rule ) {
       this.rewriter = rewriter;
       this.delegate = delegate;
+      this.rule = rule;
     }
 
     @Override
@@ -169,20 +198,40 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
     @Override
     public String nextElement() {
-      return rewriteValue( rewriter, delegate.nextElement() );
+      return rewriteValue( rewriter, delegate.nextElement(), rule );
     }
   }
 
   @Override
   public ServletInputStream getInputStream() throws IOException {
+    MimeType mimeType = getMimeType();
+    UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
     InputStream stream = UrlRewriteStreamFilterFactory.create(
-        getMimeType(), null, super.getInputStream(), rewriter, this, UrlRewriter.Direction.IN );
+        mimeType, null, super.getInputStream(), rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
     return new UrlRewriteRequestStream( stream );
   }
 
   @Override
   public BufferedReader getReader() throws IOException {
     return new BufferedReader( new InputStreamReader( getInputStream(), getCharacterEncoding() ) );
+  }
+
+  @Override
+  public int getContentLength() {
+    // The rewrite might change the content length so return the default of -1 to indicate the length is unknown.
+    return -1;
+  }
+
+  private UrlRewriteFilterContentDescriptor getRewriteFilterConfig( String filterName, MimeType mimeType ) {
+    UrlRewriteFilterContentDescriptor filterContentConfig = null;
+    UrlRewriteRulesDescriptor rewriteConfig = rewriter.getConfig();
+    if( rewriteConfig != null ) {
+      UrlRewriteFilterDescriptor filterConfig = rewriteConfig.getFilter( filterName );
+      if( filterConfig != null ) {
+        filterContentConfig = filterConfig.getContent( mimeType );
+      }
+    }
+    return filterContentConfig;
   }
 
 }

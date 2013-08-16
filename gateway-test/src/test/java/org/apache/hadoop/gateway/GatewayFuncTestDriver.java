@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.io.UTF8;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -55,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -147,8 +149,7 @@ public class GatewayFuncTestDriver {
     try {
       srvcs.init(config, options);
     } catch (ServiceLifecycleException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      e.printStackTrace(); // I18N not required.
     }
     gateway = GatewayServer.startGateway( config, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
@@ -252,7 +253,7 @@ public class GatewayFuncTestDriver {
     return IOUtils.toByteArray( getResourceStream( resource ) );
   }
 
-  public String getResourceString( String resource ) throws IOException {
+  public String getResourceString( String resource, Charset charset ) throws IOException {
     return IOUtils.toString( getResourceBytes( resource ), "UTF-8" );
   }
 
@@ -405,7 +406,7 @@ public class GatewayFuncTestDriver {
         .when().get( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     if( response.getStatusCode() == HttpStatus.SC_OK ) {
       String actualContent = response.asString();
-      String expectedContent = getResourceString( resource );
+      String expectedContent = getResourceString( resource, Charset.forName("UTF-8") );
       assertThat( actualContent, is( expectedContent ) );
     }
     assertComplete();

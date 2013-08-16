@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
@@ -32,7 +33,13 @@ public interface UrlRewriteStreamFilter {
 
   String[] getNames();
 
-  InputStream filter( InputStream stream, String encoding, UrlRewriter rewriter, Resolver resolver, Direction direction )
-      throws IOException;
+  InputStream filter(
+      InputStream stream,
+      String encoding,
+      UrlRewriter rewriter,
+      Resolver resolver,
+      Direction direction,
+      UrlRewriteFilterContentDescriptor config )
+          throws IOException;
 
 }

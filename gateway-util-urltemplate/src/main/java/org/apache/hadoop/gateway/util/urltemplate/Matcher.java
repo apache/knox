@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +57,7 @@ public class Matcher<V> {
   private PathNode root;
 
   public Matcher() {
-    map = new HashMap<Template,V>();
+    map = new LinkedHashMap<Template,V>();
     root = new PathNode( null, null );
   }
 
@@ -94,9 +96,11 @@ public class Matcher<V> {
     node = add( node, template.getFragment() );
 
     if( template.getQuery().isEmpty() && template.getExtra() == null ) {
-      // This might overwrite the template/value of an existing pathNode.  Last in wins.
-      node.template = template;
-      node.value = value;
+      // The first template with a value at this node wins.
+      if( node.value == null ) {
+        node.template = template;
+        node.value = value;
+      }
     } else {
       // Insert a query pathNode into the tree.
       node.addQuery( template, value );
@@ -420,7 +424,7 @@ public class Matcher<V> {
 
     private PathNode addPath( Segment path ) {
       if( children == null ) {
-        children = new HashMap<Segment,PathNode>();
+        children = new LinkedHashMap<Segment,PathNode>();
       }
       PathNode child = new PathNode( this, path );
       children.put( path, child );
@@ -429,7 +433,7 @@ public class Matcher<V> {
 
     private QueryNode addQuery( Template template, V value ) {
       if( queries == null ) {
-        queries = new HashSet<QueryNode>();
+        queries = new LinkedHashSet<QueryNode>();
       }
       QueryNode query = new QueryNode( template, value );
       queries.add( query );

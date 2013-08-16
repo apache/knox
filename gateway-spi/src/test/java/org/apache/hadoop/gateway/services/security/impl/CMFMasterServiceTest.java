@@ -45,7 +45,7 @@ public class CMFMasterServiceTest {
   public void testMasterService() {
     try {
       ms.setupMasterSecret(".", true);
-      System.out.println("MASTER: " + new String(ms.getMasterSecret()));
+      //System.out.println("MASTER: " + new String(ms.getMasterSecret()));
       assertTrue(new String(ms.getMasterSecret()).equals("testmastersecret"));
       File file = new File("ambari-master");
       assertTrue(file.exists());

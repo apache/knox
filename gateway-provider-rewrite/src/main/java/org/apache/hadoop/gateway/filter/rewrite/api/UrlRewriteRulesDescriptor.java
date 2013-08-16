@@ -24,21 +24,32 @@ import java.util.List;
  */
 public interface UrlRewriteRulesDescriptor {
 
-  UrlRewriteRuleDescriptor getRule( String name );
-
-  List<UrlRewriteRuleDescriptor> getRules();
-
-  UrlRewriteRuleDescriptor addRule( String name );
-
-  UrlRewriteRuleDescriptor newRule();
-
-  void addRule( UrlRewriteRuleDescriptor rule );
-
-
   List<UrlRewriteFunctionDescriptor> getFunctions();
 
   <T extends UrlRewriteFunctionDescriptor<?>> T getFunction( String name );
 
   <T extends UrlRewriteFunctionDescriptor<?>> T addFunction( String name );
+
+
+  List<UrlRewriteRuleDescriptor> getRules();
+
+  UrlRewriteRuleDescriptor getRule( String name );
+
+  UrlRewriteRuleDescriptor newRule();
+
+  UrlRewriteRuleDescriptor addRule( String name );
+
+  void addRule( UrlRewriteRuleDescriptor rule );
+
+
+  List<UrlRewriteFilterDescriptor> getFilters();
+
+  UrlRewriteFilterDescriptor getFilter( String name );
+
+  UrlRewriteFilterDescriptor newFilter();
+
+  UrlRewriteFilterDescriptor addFilter( String name );
+
+  void addFilter( UrlRewriteFilterDescriptor filter );
 
 }

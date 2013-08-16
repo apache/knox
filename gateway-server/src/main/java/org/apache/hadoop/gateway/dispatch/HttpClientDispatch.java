@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
@@ -43,6 +44,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import javax.activation.MimeType;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -122,39 +124,57 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
 
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
-    InputStream contentStream = request.getInputStream();
-    int contentLength = request.getContentLength();
+
     String contentType = request.getContentType();
-    String contentEncoding = request.getCharacterEncoding();
-    HttpEntity entity = null;
-    if ((contentType != null)
-        && (contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED) || 
-            contentType.equalsIgnoreCase(CT_APP_XML))) {
-      if (contentLength <= REPLAY_BUFFER_MAX_SIZE) {
-        if (contentEncoding == null) {
-          contentEncoding = Charset.defaultCharset().name();
-        }
-        String body = IOUtils.toString(contentStream, contentEncoding);
-        // ASCII is OK here because the urlEncode about should have already
-        // escaped
-        byte[] bodyBytes = body.getBytes("US-ASCII");
-        ContentType ct = contentType.equalsIgnoreCase(CT_APP_XML) ? ContentType.APPLICATION_XML
-            : ContentType.APPLICATION_FORM_URLENCODED;
-        entity = new ByteArrayEntity(bodyBytes, ct);
-      } else {
-        entity = new InputStreamEntity(contentStream, contentLength);
-      }
+//    String contentEncoding = request.getCharacterEncoding();
+    int contentLength = request.getContentLength();
+    InputStream contentStream = request.getInputStream();
+
+    HttpEntity entity;
+    if( contentType == null ) {
+      entity = new InputStreamEntity( contentStream, contentLength );
     } else {
-      InputStreamEntity streamEntity = new RepeatableInputStreamEntity(
-          contentStream, contentLength);
-      if (contentType != null) {
-        streamEntity.setContentType(contentType);
-      }
-      if (contentEncoding != null) {
-        streamEntity.setContentEncoding(contentEncoding);
-      }
-      entity = streamEntity;
+      entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse( contentType ) );
     }
+    //TODO: Need a better solution than this for replaying bodies when required.
+    // Perhaps we should pessimistically buffer the first REPLAY_BUFFER_MAX_SIZE bytes and then
+    // switch to the remaining stream once that is consumed.  The buffer size would probably need
+    // to match the underlying socket buffer size for this to be meaningful.
+    // This would require writing a special version of HttpEntity/BufferedHttpEntity.
+    // Might also look into mark()/reset() as a solution.
+    if( contentLength <= REPLAY_BUFFER_MAX_SIZE ) {
+      entity = new BufferedHttpEntity( entity );
+    }
+
+//    HttpEntity entity = null;
+//    if ((contentType != null)
+//        && (contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED) ||
+//            contentType.equalsIgnoreCase(CT_APP_XML))) {
+//      if (contentLength <= REPLAY_BUFFER_MAX_SIZE) {
+//        if (contentEncoding == null) {
+//          contentEncoding = Charset.defaultCharset().name();
+//        }
+//        String body = IOUtils.toString(contentStream, contentEncoding);
+//        // ASCII is OK here because the urlEncode about should have already
+//        // escaped
+//        byte[] bodyBytes = body.getBytes("US-ASCII");
+//        ContentType ct = contentType.equalsIgnoreCase(CT_APP_XML) ? ContentType.APPLICATION_XML
+//            : ContentType.APPLICATION_FORM_URLENCODED;
+//        entity = new ByteArrayEntity(bodyBytes, ct);
+//      } else {
+//        entity = new InputStreamEntity(contentStream, contentLength);
+//      }
+//    } else {
+//      InputStreamEntity streamEntity = new RepeatableInputStreamEntity(
+//          contentStream, contentLength);
+//      if (contentType != null) {
+//        streamEntity.setContentType(contentType);
+//      }
+//      if (contentEncoding != null) {
+//        streamEntity.setContentEncoding(contentEncoding);
+//      }
+//      entity = streamEntity;
+//    }
     return entity;
   }
 
@@ -201,24 +221,24 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     executeRequest( method, request, response );
   }
   
-  private static class RepeatableInputStreamEntity extends InputStreamEntity {
-
-    public RepeatableInputStreamEntity(InputStream contentStream,
-        int contentLength) {
-      super(contentStream, contentLength);
-    }
-
-    @Override
-    public boolean isRepeatable() {
-      return true;
-    }
-
-    @Override
-    public InputStream getContent() throws IOException {
-      return super.getContent();
-    }
-
-  }
+//  private static class RepeatableInputStreamEntity extends InputStreamEntity {
+//
+//    public RepeatableInputStreamEntity(InputStream contentStream,
+//        int contentLength) {
+//      super(contentStream, contentLength);
+//    }
+//
+//    @Override
+//    public boolean isRepeatable() {
+//      return true;
+//    }
+//
+//    @Override
+//    public InputStream getContent() throws IOException {
+//      return super.getContent();
+//    }
+//
+//  }
   
   private static class EmptyJaasCredentials implements Credentials {
 

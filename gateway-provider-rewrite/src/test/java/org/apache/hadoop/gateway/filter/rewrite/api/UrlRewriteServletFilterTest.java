@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import com.jayway.jsonassert.JsonAssert;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.hadoop.test.mock.MockInteraction;
 import org.apache.hadoop.test.mock.MockServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -26,8 +28,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.testing.HttpTester;
 import org.eclipse.jetty.testing.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -44,10 +47,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
+import static org.xmlmatchers.XmlMatchers.hasXPath;
+import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class UrlRewriteServletFilterTest {
 
@@ -63,9 +71,10 @@ public class UrlRewriteServletFilterTest {
     return url;
   }
 
-  @Before
-  public void setUp() throws Exception {
+  public void setUp( Map<String,String> initParams ) throws Exception {
     String descriptorUrl = getTestResource( "rewrite.xml" ).toExternalForm();
+
+    Log.setLog( new NoOpLogger() );
 
     server = new ServletTester();
     server.setContextPath( "/" );
@@ -76,6 +85,11 @@ public class UrlRewriteServletFilterTest {
     FilterHolder setupFilter = server.addFilter( SetupFilter.class, "/*", EnumSet.of( DispatcherType.REQUEST ) );
     setupFilter.setFilter( new SetupFilter() );
     FilterHolder rewriteFilter = server.addFilter( UrlRewriteServletFilter.class, "/*", EnumSet.of( DispatcherType.REQUEST ) );
+    if( initParams != null ) {
+      for( Map.Entry<String,String> entry : initParams.entrySet() ) {
+        rewriteFilter.setInitParameter( entry.getKey(), entry.getValue() );
+      }
+    }
     rewriteFilter.setFilter( new UrlRewriteServletFilter() );
 
     interactions = new ArrayQueue<MockInteraction>();
@@ -92,15 +106,18 @@ public class UrlRewriteServletFilterTest {
 
   @After
   public void tearDown() throws Exception {
-    server.stop();
+    if( server != null ) {
+      server.stop();
+    }
   }
 
   @Test
   public void testInboundRequestUrlRewrite() throws Exception {
+    setUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
-        .requestURL( "http://mock-host:1/test-output-path" );
+        .requestUrl( "http://mock-host:1/test-output-path-1" );
     interaction.respond().status( 200 ).content( "test-response-content".getBytes() );
     interactions.add( interaction );
     // Create the client request.
@@ -118,11 +135,12 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundHeaderRewrite() throws Exception {
+    setUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
-        .requestURL( "http://mock-host:1/test-output-path" )
-        .header( "Location", "http://mock-host:1/test-output-path" );
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
+        .header( "Location", "http://mock-host:1/test-output-path-1" );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -141,10 +159,11 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testOutboundHeaderRewrite() throws Exception {
+    setUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
-        .requestURL( "http://mock-host:1/test-output-path" );
+        .requestUrl( "http://mock-host:1/test-output-path-1" );
     interaction.respond()
         .status( 201 )
         .header( "Location", "http://mock-host:1/test-input-path" );
@@ -159,16 +178,17 @@ public class UrlRewriteServletFilterTest {
 
     // Test the results.
     assertThat( response.getStatus(), is( 201 ) );
-    assertThat( response.getHeader( "Location" ), is( "http://mock-host:1/test-output-path" ) );
+    assertThat( response.getHeader( "Location" ), is( "http://mock-host:1/test-output-path-1" ) );
   }
 
   @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
   @Test
-  public void testInboundCookieRewrite() throws Exception {
+  public void testRequestCookieRewrite() throws Exception {
+    setUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
-        .requestURL( "http://mock-host:1/test-output-path" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
         .header( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
     interaction.respond()
         .status( 201 );
@@ -190,11 +210,12 @@ public class UrlRewriteServletFilterTest {
 
   @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
   @Test
-  public void testOutboundCookieRewrite() throws Exception {
+  public void testResponseCookieRewrite() throws Exception {
+    setUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
-        .requestURL( "http://mock-host:1/test-output-path" );
+        .requestUrl( "http://mock-host:1/test-output-path-1" );
     interaction.respond()
         .status( 200 )
         .header( "Set-Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
@@ -216,13 +237,15 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundJsonBodyRewrite() throws Exception {
+    setUp( null );
+
     String inputJson = "{\"url\":\"http://mock-host:1/test-input-path\"}";
-    String outputJson = "{\"url\":\"http://mock-host:1/test-output-path\"}";
+    String outputJson = "{\"url\":\"http://mock-host:1/test-output-path-1\"}";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
         .content( outputJson, Charset.forName( "UTF-8" ) );
     interaction.respond()
         .status( 200 );
@@ -242,41 +265,16 @@ public class UrlRewriteServletFilterTest {
   }
 
   @Test
-  public void testOutboundJsonBodyRewrite() throws Exception {
-    String inputJson = "{\"url\":\"http://mock-host:1/test-input-path\"}";
-    String outputJson = "{\"url\":\"http://mock-host:1/test-output-path\"}";
-
-    // Setup the server side request/response interaction.
-    interaction.expect()
-        .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" );
-    interaction.respond()
-        .status( 200 )
-        .contentType( "application/json" )
-        .content( inputJson, Charset.forName( "UTF-8" ) );
-    interactions.add( interaction );
-    request.setMethod( "PUT" );
-    request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
-    request.setHeader( "Host", "mock-host:1" );
-
-    // Execute the request.
-    response.parse( server.getResponses( request.generate() ) );
-
-    // Test the results.
-    assertThat( response.getStatus(), is( 200 ) );
-    assertThat( response.getContent(), is( outputJson ) );
-  }
-
-  @Test
   public void testInboundXmlBodyRewrite() throws Exception {
+    setUp( null );
+
     String input = "<root attribute=\"http://mock-host:1/test-input-path\">http://mock-host:1/test-input-path</root>";
-    String output = "<root attribute=\"http://mock-host:1/test-output-path\">http://mock-host:1/test-output-path</root>";
+    String output = "<?xml version=\"1.0\" standalone=\"no\"?><root attribute=\"http://mock-host:1/test-output-path-1\">http://mock-host:1/test-output-path-1</root>";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
         .content( output, Charset.forName( "UTF-8" ) );
     interaction.respond()
         .status( 200 );
@@ -297,14 +295,16 @@ public class UrlRewriteServletFilterTest {
 
   // MatcherAssert.assertThat( XmlConverters.the( outputHtml ), XmlMatchers.hasXPath( "/html" ) );
   @Test
-  public void testOutboundXmlBodyRewrite() throws Exception {
+  public void testOutboundJsonBodyRewrite() throws Exception {
+    setUp( null );
+
     String input = "{\"url\":\"http://mock-host:1/test-input-path\"}";
-    String expect = "{\"url\":\"http://mock-host:1/test-output-path\"}";
+    String expect = "{\"url\":\"http://mock-host:1/test-output-path-1\"}";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" );
+        .requestUrl( "http://mock-host:1/test-output-path-1" );
     interaction.respond()
         .status( 200 )
         .contentType( "application/json" )
@@ -325,14 +325,15 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testOutboundHtmlBodyRewrite() throws Exception {
+    setUp( null );
 
     String input = "<html><head></head><body><a href=\"http://mock-host:1/test-input-path\">link text</a></body></html>";
-    String output = "<html><head></head><body><a href=\"http://mock-host:1/test-output-path\">link text</a></body></html>";
+    String output = "<html><head></head><body><a href=\"http://mock-host:1/test-output-path-1\">link text</a></body></html>";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
         .content( output, Charset.forName( "UTF-8" ) );
     interaction.respond()
         .status( 200 );
@@ -341,7 +342,7 @@ public class UrlRewriteServletFilterTest {
     request.setURI( "/test-input-path" );
     request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
-    request.setContentType( "application/xml; charset=UTF-8" );
+    request.setContentType( "application/html; charset=UTF-8" );
     request.setContent( input );
 
     // Execute the request.
@@ -353,13 +354,15 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundHtmlFormRewrite() throws Exception {
+    setUp( null );
+
     String input = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-input-path";
-    String expect = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-output-path";
+    String expect = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-output-path-1";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
-        .requestURL( "http://mock-host:1/test-output-path" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
         .content( expect, Charset.forName( "UTF-8" ) );
     interaction.respond()
         .status( 200 );
@@ -376,6 +379,321 @@ public class UrlRewriteServletFilterTest {
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Test
+  public void testRequestUrlRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "request.url", "test-rule-2" );
+    setUp( initParams );
+
+    String input = "<root/>";
+    String expect = "<root/>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-2" )
+        .contentType( "text/xml" )
+        .characterEncoding( "UTF-8" )
+        .content( expect, Charset.forName( "UTF-8" ) );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setContentType( "text/xml; charset=UTF-8" );
+    request.setContent( input );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Test
+  public void testRequestHeaderRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "request.headers", "test-filter-2" );
+    setUp( initParams );
+
+    String input = "<root/>";
+    String expect = "<root/>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" )
+        .contentType( "text/xml" )
+        .characterEncoding( "UTF-8" )
+        .content( expect, Charset.forName( "UTF-8" ) )
+        .header( "Location", "http://mock-host:42/test-output-path-2" );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Location", "http://mock-host:42/test-input-path-1" );
+    request.setContentType( "text/xml; charset=UTF-8" );
+    request.setContent( input );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Ignore( "Not Implemented Yet" )
+  @Test
+  public void testRequestCookieRewriteWithFilterInitParam() {
+    fail( "TODO" );
+  }
+
+  @Test
+  public void testRequestJsonBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    //initParams.put( "url, "" );
+    initParams.put( "request.body", "test-filter-2" );
+    //initParams.put( "response", "" );
+    setUp( initParams );
+
+    String inputJson = "{\"url\":\"http://mock-host:42/test-input-path-1\"}";
+    String expectJson = "{\"url\":\"http://mock-host:42/test-output-path-2\"}";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" )
+        .contentType( "application/json" )
+        .content( expectJson, Charset.forName( "UTF-8" ) );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setContentType( "application/json; charset=UTF-8" );
+    request.setContent( inputJson );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Test
+  public void testRequestXmlBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "request.body", "test-filter-2" );
+    setUp( initParams );
+
+    String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-1</url></root>";
+    String expect = "<root url='http://mock-host:42/test-output-path-2'><url>http://mock-host:42/test-output-path-2</url></root>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" )
+        .contentType( "text/xml" )
+        .characterEncoding( "UTF-8" )
+        .content( expect, Charset.forName( "UTF-8" ) );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setContentType( "text/xml; charset=UTF-8" );
+    request.setContent( input );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Test
+  public void testRequestXmlBodyRewriteWithFilterInitParamForInvalidFilterConfig() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "request.body", "test-filter-3" );
+    setUp( initParams );
+
+    String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
+    String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" )
+        .contentType( "text/xml" )
+        .characterEncoding( "UTF-8" )
+        .content( expect, Charset.forName( "UTF-8" ) );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setContentType( "text/xml; charset=UTF-8" );
+    request.setContent( input );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 500 ) );
+  }
+
+  @Test
+  public void testRequestFormBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "request.body", "test-filter-2" );
+    setUp( initParams );
+
+    String input = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-input-path";
+    String expect = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-output-path-2";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:1/test-output-path-1" )
+        .content( expect, Charset.forName( "UTF-8" ) )
+        .characterEncoding( "UTF-8" );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:1" );
+    request.setContentType( "application/x-www-form-urlencoded; charset=UTF-8" );
+    request.setContent( input );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+  }
+
+  @Test
+  public void testResponseHeaderRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "response.headers", "test-filter-2" );
+    setUp( initParams );
+
+    String output = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-3</url></root>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .content( output, Charset.forName( "UTF-8" ) )
+        .contentType( "text/xml" )
+        .header( "Location", "http://mock-host:42/test-input-path-4" )
+        .status( 307 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path-1" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 307 ) );
+    assertThat( response.getHeader( "Location" ), is( "http://mock-host:42/test-output-path-2" ) );
+
+    String actual = response.getContent();
+
+    assertThat( the( actual ), hasXPath( "/root/@url", equalTo( "http://mock-host:42/test-output-path-1" ) ) );
+    assertThat( the( actual ), hasXPath( "/root/url/text()", equalTo( "http://mock-host:42/test-output-path-1" ) ) );
+  }
+
+  @Ignore( "Not Implemented Yet" )
+  @Test
+  public void testResponseCookieRewriteWithFilterInitParam() {
+    fail( "TODO" );
+  }
+
+  @Test
+  public void testResponseJsonBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    //initParams.put( "url, "" );
+    initParams.put( "response.body", "test-filter-2" );
+    //initParams.put( "response", "" );
+    setUp( initParams );
+
+    String responseJson = "{\"url\":\"http://mock-host:42/test-input-path-1\"}";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "application/json" )
+        .content( responseJson, Charset.forName( "UTF-8" ) )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setContentType( "application/json; charset=UTF-8" );
+    request.setContent( responseJson );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    assertThat( response.getStatus(), is( 200 ) );
+    JsonAssert.with( response.getContent() ).assertThat( "$.url", is( "http://mock-host:42/test-output-path-2" ) );
+  }
+
+  @Test
+  public void testResponseXmlBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    initParams.put( "response.body", "test-filter-2" );
+    setUp( initParams );
+
+    String output = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-1</url></root>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .content( output, Charset.forName( "UTF-8" ) )
+        .contentType( "text/xml" )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+
+    // Execute the request.
+    response.parse( server.getResponses( request.generate() ) );
+
+    // Test the results.
+    assertThat( response.getStatus(), is( 200 ) );
+
+    String actual = response.getContent();
+
+    assertThat( the( actual ), hasXPath( "/root/@url", equalTo( "http://mock-host:42/test-output-path-2" ) ) );
+    assertThat( the( actual ), hasXPath( "/root/url/text()", equalTo( "http://mock-host:42/test-output-path-2" ) ) );
   }
 
   private static class SetupFilter implements Filter {

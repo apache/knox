@@ -17,6 +17,10 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteProcessor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -35,9 +39,12 @@ public class UrlRewriteResponseTest {
   @Test
   public void testResolve() throws Exception {
 
+    UrlRewriteProcessor rewriter = EasyMock.createNiceMock( UrlRewriteProcessor.class );
+
     ServletContext context = EasyMock.createNiceMock( ServletContext.class );
     EasyMock.expect( context.getServletContextName() ).andReturn( "test-cluster-name" ).anyTimes();
     EasyMock.expect( context.getInitParameter( "test-init-param-name" ) ).andReturn( "test-init-param-value" ).anyTimes();
+    EasyMock.expect( context.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriter ).anyTimes();
 
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect( config.getServletContext() ).andReturn( context ).anyTimes();
@@ -45,7 +52,7 @@ public class UrlRewriteResponseTest {
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
 
-    EasyMock.replay( context, config, request, response );
+    EasyMock.replay( rewriter, context, config, request, response );
 
     UrlRewriteResponse reponse = new UrlRewriteResponse( config, request, response );
 

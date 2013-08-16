@@ -19,6 +19,7 @@ package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.xmlmatchers.transform.StringSource;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -37,8 +38,14 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
+import static org.xmlmatchers.transform.XmlConverters.the;
+import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class MockRequestMatcher {
+
+  private static final Charset UTF8 = Charset.forName( "UTF-8" );
 
   private MockResponseProvider response;
   private Set<String> methods = null;
@@ -79,8 +86,8 @@ public class MockRequestMatcher {
     return this;
   }
 
-  public MockRequestMatcher requestURL( String requestURL ) {
-    this.requestURL = requestURL;
+  public MockRequestMatcher requestUrl( String requestUrl ) {
+    this.requestURL = requestUrl;
     return this;
   }
 
@@ -134,7 +141,6 @@ public class MockRequestMatcher {
   }
 
   public MockRequestMatcher content( String string, Charset charset ) {
-    characterEncoding( charset.name() );
     content( string.getBytes( charset ) );
     return this;
   }
@@ -219,7 +225,7 @@ public class MockRequestMatcher {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the required character encoding",
-          request.getCharacterEncoding(), is( characterEncoding ) );
+          request.getCharacterEncoding(), equalToIgnoringCase( characterEncoding ) );
     }
     if( contentLength != null ) {
       assertThat(
@@ -275,7 +281,19 @@ public class MockRequestMatcher {
       }
     }
     if( entity != null ) {
-      if( characterEncoding == null || request.getCharacterEncoding() == null ) {
+      if( contentType != null && contentType.endsWith( "/xml" ) ) {
+        String expectEncoding = characterEncoding;
+        String expect = new String( entity, ( expectEncoding == null ? UTF8.name() : expectEncoding ) );
+        String actualEncoding = request.getCharacterEncoding();
+        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? UTF8.name() : actualEncoding );
+        assertThat( the( actual ), isEquivalentTo( the( expect ) ) );
+      } else if ( contentType != null && contentType.endsWith( "/json" ) )  {
+        String expectEncoding = characterEncoding;
+        String expect = new String( entity, ( expectEncoding == null ? UTF8.name() : expectEncoding ) );
+        String actualEncoding = request.getCharacterEncoding();
+        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? UTF8.name() : actualEncoding );
+        assertThat( actual, sameJSONAs( expect ) );
+      } else if( characterEncoding == null || request.getCharacterEncoding() == null ) {
         byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +

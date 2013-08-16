@@ -21,20 +21,27 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.hamcrest.Matchers;
 import org.junit.Test;
+import org.xmlmatchers.transform.XmlConverters;
 
+import javax.xml.transform.Source;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.net.URL;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.xmlmatchers.XmlMatchers.hasXPath;
 
 public class UrlRewriteRulesDescriptorFactoryTest {
 
@@ -131,6 +138,116 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   public void testLoadSimpleFile() throws IOException {
     UrlRewriteRulesDescriptor config =
         UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "simple.xml", "UTF-8" ) );
+    assertThat( "Failed to load simple config file.", config, notNullValue() );
+  }
+
+  @Test
+  public void testLoadSimpleFilterFile() throws IOException {
+    UrlRewriteRulesDescriptor config =
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-simple.xml", "UTF-8" ) );
+    List<UrlRewriteFilterDescriptor> filters = config.getFilters();
+    assertThat( filters.size(), is( 1 ) );
+    UrlRewriteFilterDescriptor filter = config.getFilter( "test-filter-1" );
+    assertThat( filter, notNullValue() );
+    assertThat( config.getFilters().get(0), sameInstance( filter ) );
+  }
+
+  @Test
+  public void testLoadStoreCompleteFilterFile() throws IOException {
+    UrlRewriteRulesDescriptor config =
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-complete.xml", "UTF-8" ) );
+
+    List<UrlRewriteFilterDescriptor> filters = config.getFilters();
+    assertThat( filters.size(), is( 1 ) );
+
+    UrlRewriteFilterDescriptor filter = config.getFilter( "test-filter-name-1" );
+    assertThat( filter, notNullValue() );
+    assertThat( config.getFilters().get(0), sameInstance( filter ) );
+    assertThat( filter.name(), is( "test-filter-name-1" ) );
+
+    UrlRewriteFilterContentDescriptor content = filter.getContent( "test-content-type-1/test-content-subtype-1" );
+    assertThat( content, notNullValue() );
+    assertThat( content.type(), is( "test-content-type-1/test-content-subtype-1" ) );
+
+    List<UrlRewriteFilterPathDescriptor> selectors = content.getSelectors();
+    assertThat( selectors, notNullValue() );
+    assertThat( selectors.size(), is( 3 ) );
+
+    UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selectors.get( 0 );
+    assertThat( apply, notNullValue() );
+    assertThat( apply.path(), is( "test-apply-path-1" ) );
+    assertThat( apply.rule(), is( "test-apply-rule-1" ) );
+    assertThat( apply.compiledPath(), nullValue() );
+
+    UrlRewriteFilterScopeDescriptor scope = (UrlRewriteFilterScopeDescriptor)selectors.get( 1 );
+    assertThat( scope, notNullValue() );
+    assertThat( scope.path(), is( "test-scope-path-1" ) );
+    assertThat( scope.compiledPath(), nullValue() );
+    List<UrlRewriteFilterPathDescriptor> scopeSelectors = scope.getSelectors();
+    assertThat( scopeSelectors, notNullValue() );
+    assertThat( scopeSelectors.size(), is( 1 ) );
+    UrlRewriteFilterApplyDescriptor scopeApply = (UrlRewriteFilterApplyDescriptor)scopeSelectors.get( 0 );
+    assertThat( scopeApply, notNullValue() );
+    assertThat( scopeApply.path(), is( "test-apply-path-2" ) );
+    assertThat( scopeApply.compiledPath(), nullValue() );
+    assertThat( scopeApply.rule(), is( "test-apply-rule-2" ) );
+
+    UrlRewriteFilterBufferDescriptor buffer = (UrlRewriteFilterBufferDescriptor)selectors.get( 2 );
+    assertThat( buffer, notNullValue() );
+    assertThat( buffer.path(), is( "test-buffer-path-1" ) );
+    assertThat( buffer.compiledPath(), nullValue() );
+    List<UrlRewriteFilterPathDescriptor> bufferSelectors = buffer.getSelectors();
+    assertThat( bufferSelectors, notNullValue() );
+    assertThat( bufferSelectors.size(), is( 2 ) );
+    UrlRewriteFilterApplyDescriptor bufferApply = (UrlRewriteFilterApplyDescriptor)bufferSelectors.get( 0 );
+    assertThat( bufferApply, notNullValue() );
+    assertThat( bufferApply.path(), is( "test-apply-path-3" ) );
+    assertThat( bufferApply.compiledPath(), nullValue() );
+    assertThat( bufferApply.rule(), is( "test-apply-rule-3" ) );
+    UrlRewriteFilterDetectDescriptor bufferDetect = (UrlRewriteFilterDetectDescriptor)bufferSelectors.get( 1 );
+    assertThat( bufferDetect, notNullValue() );
+    assertThat( bufferDetect.value(), is( "test-detect-value-1" ) );
+    assertThat( bufferDetect.compiledValue(), nullValue() );
+    List<UrlRewriteFilterPathDescriptor> detectSelectors = bufferDetect.getSelectors();
+    assertThat( detectSelectors, notNullValue() );
+    assertThat( detectSelectors.size(), is( 1 ) );
+    UrlRewriteFilterApplyDescriptor detectApply = (UrlRewriteFilterApplyDescriptor)detectSelectors.get( 0 );
+    assertThat( detectApply, notNullValue() );
+    assertThat( detectApply.path(), is( "test-apply-path-4" ) );
+    assertThat( detectApply.compiledPath(), nullValue() );
+    assertThat( detectApply.rule(), is( "test-apply-rule-4" ) );
+
+    StringWriter writer = new StringWriter();
+    UrlRewriteRulesDescriptorFactory.store( config, "xml", writer );
+    Source xml = XmlConverters.the( writer.toString() );
+
+    assertThat( xml, notNullValue() );
+    assertThat( xml, hasXPath( "/" ) );
+    assertThat( xml, hasXPath( "/rules" ) );
+    assertThat( xml, hasXPath( "/rules/filter" ) );
+    assertThat( xml, hasXPath( "/rules/filter/@name", equalTo( "test-filter-name-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/@type", equalTo( "test-content-type-1/test-content-subtype-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply/@path", equalTo( "test-apply-path-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply/@rule", equalTo( "test-apply-rule-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/scope" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/scope/@path", equalTo( "test-scope-path-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/scope/apply" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/scope/apply/@path", equalTo( "test-apply-path-2" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/scope/apply/@rule", equalTo( "test-apply-rule-2" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/@path", equalTo( "test-buffer-path-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/apply" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/apply/@path", equalTo( "test-apply-path-3" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/apply/@rule", equalTo( "test-apply-rule-3" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/@path", equalTo( "test-detect-path-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/@value", equalTo( "test-detect-value-1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply" ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@path", equalTo( "test-apply-path-4" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@rule", equalTo( "test-apply-rule-4" ) ) );
+
   }
 
 }

@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
@@ -41,7 +42,10 @@ public class DispatchDeploymentContributor extends ProviderDeploymentContributor
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().name( getName() ).role( getRole() ).impl( HttpClientDispatch.class );
+    FilterDescriptor filter = resource.addFilter().name( getName() ).role( getRole() ).impl( HttpClientDispatch.class );
+    if( context.getGatewayConfig().isHadoopKerberosSecured() ) {
+      filter.param().name("kerberos").value("true");
+    }
   }
 
 }

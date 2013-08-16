@@ -17,36 +17,67 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.json;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterBufferDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDetectDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterGroupDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
+import org.apache.hadoop.gateway.util.JsonPath;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Stack;
+import java.util.regex.Pattern;
 
-public class JsonFilterReader extends Reader {
+class JsonFilterReader extends Reader {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
-  
-  private int offset;
+
+  private static final UrlRewriteFilterPathDescriptor.Compiler<JsonPath.Expression> JPATH_COMPILER = new JsonPathCompiler();
+  private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
+
+  private JsonFactory factory;
   private JsonParser parser;
   private JsonGenerator generator;
+  private ObjectMapper mapper;
+
+  private Reader reader;
+  private int offset;
   private StringWriter writer;
   private StringBuffer buffer;
-  private Reader reader;
+  private Stack<Level> stack;
+  private Level bufferingLevel;
+  private UrlRewriteFilterBufferDescriptor bufferingConfig;
+  private UrlRewriteFilterGroupDescriptor config;
 
-  public JsonFilterReader( Reader reader ) throws IOException {
+
+  public JsonFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException {
     this.reader = reader;
-    JsonFactory parserFactory = new JsonFactory();
-    parser = parserFactory.createJsonParser( reader );
+    factory = new JsonFactory();
+    mapper = new ObjectMapper();
+    parser = factory.createParser( reader );
     writer = new StringWriter();
     buffer = writer.getBuffer();
     offset = 0;
-    generator = parserFactory.createJsonGenerator( writer );
+    generator = factory.createGenerator( writer );
+    stack = new Stack<Level>();
+    bufferingLevel = null;
+    bufferingConfig = null;
+    this.config = config;
   }
 
   @Override
@@ -80,35 +111,33 @@ public class JsonFilterReader extends Reader {
   private void processCurrentToken() throws IOException {
     switch( parser.getCurrentToken() ) {
       case START_OBJECT:
-        generator.writeStartObject();
+        processStartObject();
         break;
       case END_OBJECT:
-        generator.writeEndObject();
+        processEndObject();
         break;
       case START_ARRAY:
-        generator.writeStartArray();
+        processStartArray();
         break;
       case END_ARRAY:
-        generator.writeEndArray();
+        processEndArray();
         break;
       case FIELD_NAME:
-        processFieldName();
+        processFieldName(); // Could be the name of an object, array or value.
         break;
       case VALUE_STRING:
         processValueString();
         break;
       case VALUE_NUMBER_INT:
       case VALUE_NUMBER_FLOAT:
-        processNumber();
+        processValueNumber();
         break;
       case VALUE_TRUE:
-        generator.writeBoolean( true );
-        break;
       case VALUE_FALSE:
-        generator.writeBoolean( false );
+        processValueBoolean();
         break;
       case VALUE_NULL:
-        generator.writeNull();
+        processValueNull();
         break;
       case NOT_AVAILABLE:
         // Ignore it.
@@ -117,57 +146,386 @@ public class JsonFilterReader extends Reader {
     generator.flush();
   }
 
-  private void processNumber() throws IOException {
-    switch( parser.getNumberType() ) {
-      case INT:
-        generator.writeNumber( parser.getIntValue() );
-        break;
-      case LONG:
-        generator.writeNumber( parser.getLongValue() );
-        break;
-      case BIG_INTEGER:
-        generator.writeNumber( parser.getBigIntegerValue() );
-        break;
-      case FLOAT:
-        generator.writeNumber( parser.getFloatValue() );
-        break;
-      case DOUBLE:
-        generator.writeNumber( parser.getDoubleValue() );
-        break;
-      case BIG_DECIMAL:
-        generator.writeNumber( parser.getDecimalValue() );
-        break;
+  private Level pushLevel( String field, JsonNode node, JsonNode scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
+    if( !stack.isEmpty() ) {
+      Level top = stack.peek();
+      if( scopeNode == null ) {
+        scopeNode = top.scopeNode;
+        scopeConfig = top.scopeConfig;
+      }
+    }
+    Level level = new Level( field, node, scopeNode, scopeConfig );
+    stack.push( level );
+    return level;
+  }
+
+  private void processStartObject() throws IOException {
+    JsonNode node;
+    Level child;
+    Level parent;
+    if( stack.isEmpty() ) {
+      node = mapper.createObjectNode();
+      child = pushLevel( null, node, node, config );
+    } else {
+      child = stack.peek();
+      if( child.node == null ) {
+        child.node = mapper.createObjectNode();
+        parent = stack.get( stack.size()-2 );
+        switch( parent.node.asToken() ) {
+          case START_ARRAY:
+            ((ArrayNode)parent.node ).add( child.node );
+            break;
+          case START_OBJECT:
+            ((ObjectNode)parent.node ).put( child.field, child.node );
+            break;
+          default:
+            throw new IllegalStateException();
+        }
+      } else if( child.isArray() ) {
+        parent = child;
+        node = mapper.createObjectNode();
+        child = pushLevel( null, node, null, null );
+        ((ArrayNode)parent.node ).add( child.node );
+      } else {
+        throw new IllegalStateException();
+      }
+    }
+    if( bufferingLevel == null ) {
+      if( !startBuffering( child ) ) {
+        generator.writeStartObject();
+      }
+    }
+  }
+
+  private void processEndObject() throws IOException {
+    Level child;
+    Level parent;
+    child = stack.pop();
+    if( bufferingLevel == child ) {
+      filterBufferedNode( child );
+      mapper.writeTree( generator, child.node );
+      bufferingLevel = null;
+      bufferingConfig = null;
+    } else if( bufferingLevel == null ) {
+      generator.writeEndObject();
+      if( !stack.isEmpty() ) {
+        parent = stack.peek();
+        switch( parent.node.asToken() ) {
+          case START_ARRAY:
+            ((ArrayNode)parent.node ).removeAll();
+            break;
+          case START_OBJECT:
+            ((ObjectNode)parent.node ).removeAll();
+            break;
+          default:
+            throw new IllegalStateException();
+        }
+      }
+    }
+  }
+
+  private void processStartArray() throws IOException {
+    JsonNode node;
+    Level child;
+    Level parent;
+    if( stack.isEmpty() ) {
+      node = mapper.createObjectNode();
+      child = pushLevel( null, node, node, config );
+    } else {
+      child = stack.peek();
+      if( child.node == null ) {
+        child.node = mapper.createArrayNode();
+        parent = stack.get( stack.size() - 2 );
+        switch( parent.node.asToken() ) {
+          case START_ARRAY:
+            ((ArrayNode)parent.node ).add( child.node );
+            break;
+          case START_OBJECT:
+            ((ObjectNode)parent.node ).put( child.field, child.node );
+            break;
+          default:
+            throw new IllegalStateException();
+        }
+      } else if( child.isArray() ) {
+        parent = child;
+        child = pushLevel( null, mapper.createArrayNode(), null, null );
+        ((ArrayNode)parent.node ).add( child.node );
+      } else {
+        throw new IllegalStateException();
+      }
+    }
+    if( bufferingLevel == null ) {
+      if( !startBuffering( child ) ) {
+        generator.writeStartArray();
+      }
+    }
+  }
+
+  private void processEndArray() throws IOException {
+    Level child;
+    Level parent;
+    child = stack.pop();
+    if( bufferingLevel == child ) {
+      filterBufferedNode( child );
+      mapper.writeTree( generator, child.node );
+      bufferingLevel = null;
+      bufferingConfig = null;
+    } else if( bufferingLevel == null ) {
+      generator.writeEndArray();
+      if( !stack.isEmpty() ) {
+        parent = stack.peek();
+        switch( parent.node.asToken() ) {
+          case START_ARRAY:
+            ((ArrayNode)parent.node ).removeAll();
+            break;
+          case START_OBJECT:
+            ((ObjectNode)parent.node ).removeAll();
+            break;
+          default:
+            throw new IllegalStateException();
+        }
+      }
     }
   }
 
   private void processFieldName() throws IOException {
-    String name = parser.getCurrentName();
+    Level child = pushLevel( parser.getCurrentName(), null, null, null );
     try {
-      name = filterFieldName( name );
+      child.field = filterFieldName( child.field );
     } catch( Exception e ) {
-      LOG.failedToFilterFieldName( name, e );
+      LOG.failedToFilterFieldName( child.field, e );
       // Write original name.
     }
-    generator.writeFieldName( name );
+    if( bufferingLevel == null ) {
+      generator.writeFieldName( child.field );
+    }
   }
 
   private void processValueString() throws IOException {
-    String name = parser.getCurrentName();
-    String value = parser.getText();
+    Level child;
+    Level parent;
+    String value = null;
+    parent = stack.peek();
+    if( parent.isArray() ) {
+      ArrayNode array = (ArrayNode)parent.node;
+      array.add( parser.getText() );
+      if( bufferingLevel == null ) {
+        value = filterStreamValue( parent );
+        array.set( array.size()-1, new TextNode( value ) );
+      } else {
+        array.removeAll();
+      }
+    } else {
+      child = stack.pop();
+      parent = stack.peek();
+      ((ObjectNode)parent.node ).put( child.field, parser.getText() );
+      if( bufferingLevel == null ) {
+        child.node = parent.node; // Populate the JsonNode of the child for filtering.
+        value = filterStreamValue( child );
+      }
+    }
+    if( bufferingLevel == null ) {
+      ((ObjectNode)parent.node ).removeAll();// child.field );
+      generator.writeString( value );
+    }
+  }
+
+  private void processValueNumber() throws IOException {
+    Level child;
+    Level parent;
+    parent = stack.peek();
+    if( parent.isArray() ) {
+      if( bufferingLevel != null ) {
+        ArrayNode array = (ArrayNode)parent.node;
+        array.add( parser.getDecimalValue() );
+      }
+    } else {
+      child = stack.pop();
+      if( bufferingLevel != null ) {
+        parent = stack.peek();
+        ObjectNode object = (ObjectNode)parent.node;
+        object.put( child.field, parser.getDecimalValue() );
+      }
+    }
+    if( bufferingLevel == null ) {
+      switch( parser.getNumberType() ) {
+        case INT:
+          generator.writeNumber( parser.getIntValue() );
+          break;
+        case LONG:
+          generator.writeNumber( parser.getLongValue() );
+          break;
+        case BIG_INTEGER:
+          generator.writeNumber( parser.getBigIntegerValue() );
+          break;
+        case FLOAT:
+          generator.writeNumber( parser.getFloatValue() );
+          break;
+        case DOUBLE:
+          generator.writeNumber( parser.getDoubleValue() );
+          break;
+        case BIG_DECIMAL:
+          generator.writeNumber( parser.getDecimalValue() );
+          break;
+      }
+    }
+  }
+
+  private void processValueBoolean() throws IOException {
+    Level child;
+    Level parent;
+    parent = stack.peek();
+    if( parent.isArray() ) {
+      ((ArrayNode)parent.node ).add( parser.getBooleanValue() );
+      //dump();
+      if( bufferingLevel == null ) {
+        ((ArrayNode)parent.node ).removeAll();
+      }
+    } else {
+      child = stack.pop();
+      parent = stack.peek();
+      ((ObjectNode)parent.node ).put( child.field, parser.getBooleanValue() );
+      //dump();
+      if( bufferingLevel == null ) {
+        ((ObjectNode)parent.node ).remove( child.field );
+      }
+    }
+    if( bufferingLevel == null ) {
+      generator.writeBoolean( parser.getBooleanValue() );
+    }
+  }
+
+  private void processValueNull() throws IOException {
+    Level child;
+    Level parent = stack.peek();
+    if( parent.isArray() ) {
+      ((ArrayNode)parent.node ).addNull();
+      //dump();
+      if( bufferingLevel == null ) {
+        ((ArrayNode)parent.node ).removeAll();
+      }
+    } else {
+      child = stack.pop();
+      parent = stack.peek();
+      ((ObjectNode)parent.node ).putNull( child.field );
+      //dump();
+      if( bufferingLevel == null ) {
+        ((ObjectNode)parent.node ).remove( child.field );
+      }
+    }
+    if( bufferingLevel == null ) {
+      generator.writeNull();
+    }
+  }
+
+  protected boolean startBuffering( Level node ) {
+    boolean buffered = false;
+    UrlRewriteFilterGroupDescriptor scope = node.scopeConfig;
+    if( scope != null ) {
+      for( UrlRewriteFilterPathDescriptor selector : scope.getSelectors() ) {
+        JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
+        List<JsonPath.Match> matches = path.evaluate( node.scopeNode );
+        if( matches != null && matches.size() > 0 ) {
+          if( selector instanceof UrlRewriteFilterBufferDescriptor ) {
+            bufferingLevel = node;
+            bufferingConfig = (UrlRewriteFilterBufferDescriptor)selector;
+            buffered = true;
+          }
+          break;
+        }
+      }
+    }
+    return buffered;
+  }
+
+  protected String filterStreamValue( Level node ) {
+    String rule = null;
+    String field = node.field;
+    String value = node.node.get( node.field ).asText();
+    UrlRewriteFilterGroupDescriptor scope = node.scopeConfig;
+    //TODO: Scan the top level apply rules for the first match.
+    if( scope != null ) {
+      for( UrlRewriteFilterPathDescriptor selector : scope.getSelectors() ) {
+        JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
+        List<JsonPath.Match> matches = path.evaluate( node.scopeNode );
+        if( matches != null && matches.size() > 0 ) {
+          JsonPath.Match match = matches.get( 0 );
+          if( match.getNode().isTextual() ) {
+            if( selector instanceof UrlRewriteFilterApplyDescriptor ) {
+              UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+              rule = apply.rule();
+              break;
+            }
+          }
+        }
+      }
+    }
     try {
-      value = filterValueString( name, value );
+      value = filterValueString( field, value, rule );
+      ((ObjectNode)node.node ).put( field, value );
     } catch( Exception e ) {
       LOG.failedToFilterValue( value, e );
-      // Write original value.
     }
-    generator.writeString( value );
+    return value;
   }
 
-  protected String filterFieldName( String name ) {
-    return name;
+  private void filterBufferedNode( Level node ) {
+    for( UrlRewriteFilterPathDescriptor selector : bufferingConfig.getSelectors() ) {
+      JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
+      List<JsonPath.Match> matches = path.evaluate( node.node );
+      for( JsonPath.Match match : matches ) {
+        if( selector instanceof UrlRewriteFilterApplyDescriptor ) {
+          if( match.getNode().isTextual() ) {
+            filterBufferedValue( match, (UrlRewriteFilterApplyDescriptor)selector );
+          }
+        } else if( selector instanceof UrlRewriteFilterDetectDescriptor ) {
+          UrlRewriteFilterDetectDescriptor detectConfig = (UrlRewriteFilterDetectDescriptor)selector;
+          JsonPath.Expression detectPath = (JsonPath.Expression)detectConfig.compiledPath( JPATH_COMPILER );
+          List<JsonPath.Match> detectMatches = detectPath.evaluate( node.node );
+          for( JsonPath.Match detectMatch : detectMatches ) {
+            if( detectMatch.getNode().isTextual() ) {
+              String detectValue = detectMatch.getNode().asText();
+              Pattern detectPattern = detectConfig.compiledValue( REGEX_COMPILER );
+              if( detectPattern.matcher( detectValue ).matches() ) {
+                filterBufferedValues( node, detectConfig.getSelectors() );
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  protected String filterValueString( String name, String value ) {
+  private void filterBufferedValues( Level node, List<UrlRewriteFilterPathDescriptor> selectors ) {
+    for( UrlRewriteFilterPathDescriptor selector : selectors ) {
+      JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
+      List<JsonPath.Match> matches = path.evaluate( node.node );
+      for( JsonPath.Match match : matches ) {
+        if( match.getNode().isTextual() ) {
+          if( selector instanceof UrlRewriteFilterApplyDescriptor ) {
+            filterBufferedValue( match, (UrlRewriteFilterApplyDescriptor)selector );
+          }
+        }
+      }
+    }
+  }
+
+  private void filterBufferedValue( JsonPath.Match match, UrlRewriteFilterApplyDescriptor apply ) {
+    String field = match.getField();
+    String value = match.getNode().asText();
+    try {
+      value = filterValueString( field, value, apply.rule() );
+      ((ObjectNode)match.getParent().getNode()).put( field, value );
+    } catch( Exception e ) {
+      LOG.failedToFilterValue( value, e );
+    }
+  }
+
+  protected String filterFieldName( String field ) {
+    return field;
+  }
+
+  protected String filterValueString( String name, String value, String rule ) {
     return value;
   }
 
@@ -178,6 +536,45 @@ public class JsonFilterReader extends Reader {
     parser.close();
     reader.close();
   }
+
+  private static class Level {
+    String field;
+    JsonNode node;
+    JsonNode scopeNode;
+    UrlRewriteFilterGroupDescriptor scopeConfig;
+    private Level( String field, JsonNode node, JsonNode scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
+      this.field = field;
+      this.node = node;
+      this.scopeNode = scopeNode;
+      this.scopeConfig = scopeConfig;
+    }
+    public boolean isArray() {
+      return node != null && node.isArray();
+    }
+  }
+
+  private static class JsonPathCompiler implements UrlRewriteFilterPathDescriptor.Compiler<JsonPath.Expression> {
+    @Override
+    public JsonPath.Expression compile( String expression, JsonPath.Expression compiled ) {
+      return JsonPath.compile( expression );
+    }
+  }
+
+  private static class RegexCompiler implements UrlRewriteFilterPathDescriptor.Compiler<Pattern> {
+    @Override
+    public Pattern compile( String expression, Pattern compiled ) {
+      if( compiled != null ) {
+        return compiled;
+      } else {
+        return Pattern.compile( expression );
+      }
+    }
+  }
+
+//  private void dump() throws IOException {
+//    mapper.writeTree( factory.createGenerator( System.out ), stack.get( 0 ).node );
+//    System.out.println();
+//  }
 
 }
 

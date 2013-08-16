@@ -45,7 +45,7 @@ public class MockServlet extends HttpServlet {
       interaction.expect().match( request );
       interaction.respond().apply( response );
     } catch( AssertionError e ) {
-      e.printStackTrace();
+      e.printStackTrace(); // I18N not required.
       throw new ServletException( e );
     }
   }

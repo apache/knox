@@ -152,7 +152,7 @@ public class CMFMasterService {
         List<String> lines = FileUtils.readLines(masterFile, "UTF8");
         String tag = lines.get(0);
         // TODO: log - if appropriate - at least at finest level
-        System.out.println("Loading from persistent master: " + tag);
+        System.out.println("Loading from persistent master: " + tag); //TODO: I18N
         String line = new String(Base64.decodeBase64(lines.get(1)));
         String[] parts = line.split("::");
         this.master = new String(aes.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();

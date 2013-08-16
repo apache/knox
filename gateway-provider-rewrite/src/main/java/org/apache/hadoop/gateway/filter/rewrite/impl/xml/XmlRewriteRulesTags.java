@@ -17,14 +17,38 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
+/**
+ * <rules>
+ *   <filter name="">
+ *     <content type="json"> == <scope path="$"/>
+ *       <apply/>
+ *       <select>
+ *         <choice>
+ *           <apply/>
+ *         </choice>
+ *       </select>
+ *     </content>
+ *   </filter>
+ * </rules>
+ */
 public interface XmlRewriteRulesTags {
 
   static final String ROOT = "rules";
+
   static final String FUNCTIONS = "functions";
+
   static final String RULE = "rule";
+
 //  static final String MATCH = "match";
 //  static final String CHECK = "check";
 //  static final String CONTROL = "control";
 //  static final String ACTION = "action";
+
+  static final String FILTER = "filter";
+  static final String CONTENT = "content";
+  static final String SCOPE = "scope";
+  static final String BUFFER = "buffer";
+  static final String DETECT = "detect";
+  static final String APPLY = "apply";
 
 }

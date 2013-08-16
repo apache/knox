@@ -18,10 +18,13 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,11 +50,18 @@ public class XmlUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
       String encoding,
       UrlRewriter rewriter,
       Resolver resolver,
-      UrlRewriter.Direction direction )
+      UrlRewriter.Direction direction,
+      UrlRewriteFilterContentDescriptor config )
           throws IOException {
-    return new ReaderInputStream(
-        new XmlUrlRewriteFilterReader(
-            new InputStreamReader( stream, encoding ), rewriter, resolver, direction ) );
+    try {
+      return new ReaderInputStream(
+          new XmlUrlRewriteFilterReader(
+              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+    } catch( ParserConfigurationException e ) {
+      throw new IOException( e );
+    } catch( XMLStreamException e ) {
+      throw new IOException( e );
+    }
   }
 
 }

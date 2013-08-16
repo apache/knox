@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
@@ -25,6 +26,8 @@ import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URISyntaxException;
@@ -39,19 +42,19 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   private UrlRewriter rewriter;
   private Direction direction;
 
-  public XmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, Direction direction )
-      throws IOException {
-    super( reader );
+  public XmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, Direction direction, UrlRewriteFilterContentDescriptor config )
+      throws IOException, ParserConfigurationException, XMLStreamException {
+    super( reader, config );
     this.resolver = resolver;
     this.rewriter = rewriter;
     this.direction = direction;
   }
 
   //TODO: Need to limit which values are attempted to be filtered by the name.
-  private String filterValueString( String name, String value ) {
+  private String filterValueString( String name, String value, String rule ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( resolver, input, direction );
+      Template output = rewriter.rewrite( resolver, input, direction, rule );
       value = output.toString();
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
@@ -60,12 +63,12 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   }
 
   @Override
-  protected String filterAttribute( QName elementName, QName attributeName, String attributeValue ) {
-    return filterValueString( attributeName.getLocalPart(), attributeValue );
+  protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+    return filterValueString( attributeName.getLocalPart(), attributeValue, ruleName );
   }
 
   @Override
-  protected String filterText( QName elementName, String text ) {
-    return filterValueString( elementName.getLocalPart(), text );
+  protected String filterText( QName elementName, String text, String ruleName ) {
+    return filterValueString( elementName.getLocalPart(), text, ruleName );
   }
 }

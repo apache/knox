@@ -45,14 +45,15 @@ public abstract class UrlRewriteStreamFilterFactory {
       InputStream stream,
       UrlRewriter rewriter,
       Resolver resolver,
-      UrlRewriter.Direction direction )
+      UrlRewriter.Direction direction,
+      UrlRewriteFilterContentDescriptor config )
           throws IOException {
     InputStream filteredStream = null;
     Map<String,UrlRewriteStreamFilter> nameMap = getNameMap( type );
-    UrlRewriteStreamFilter filterFactory = getFilter( nameMap, name );
+    UrlRewriteStreamFilter filter = getFilter( nameMap, name );
     String charset = MimeTypes.getCharset( type, DEFAULT_CHARACTER_ENCODING );
-    if( filterFactory != null ) {
-      filteredStream = filterFactory.filter( stream, charset, rewriter, resolver, direction );
+    if( filter != null ) {
+      filteredStream = filter.filter( stream, charset, rewriter, resolver, direction, config );
     }
     return filteredStream;
   }

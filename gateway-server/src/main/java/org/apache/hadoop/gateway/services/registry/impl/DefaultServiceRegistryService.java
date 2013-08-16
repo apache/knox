@@ -111,7 +111,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
         rc = true;
       } catch (IOException e) {
         // log appropriately
-        e.printStackTrace();
+        e.printStackTrace(); //TODO: I18N
       }
     }
     
@@ -127,7 +127,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       json = mapper.writeValueAsString((Object)registry);
     
     } catch ( JsonProcessingException e ) {
-      e.printStackTrace();
+      e.printStackTrace(); //TODO: I18N
     }
     return json;
   }

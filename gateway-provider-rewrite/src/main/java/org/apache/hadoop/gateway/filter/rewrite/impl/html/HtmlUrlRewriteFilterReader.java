@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.html;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
@@ -24,6 +25,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URISyntaxException;
@@ -36,8 +38,8 @@ public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;
 
-  public HtmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction )
-      throws IOException {
+  public HtmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction, UrlRewriteFilterContentDescriptor config )
+      throws IOException, ParserConfigurationException {
     super( reader );
     this.resolver = resolver;
     this.rewriter = rewriter;
@@ -45,10 +47,10 @@ public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
   }
 
   //TODO: Need to limit which values are attempted to be filtered by the name.
-  protected String filterValueString( String name, String value ) {
+  protected String filterValueString( String name, String value, String rule ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( resolver, input, direction );
+      Template output = rewriter.rewrite( resolver, input, direction, rule );
       if( output != null ) {
         value = output.toString();
       }
@@ -59,13 +61,13 @@ public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
   }
 
   @Override
-  protected String filterAttribute( String tagName, String attributeName, String attributeValue ) {
-    return filterValueString( attributeName, attributeValue );
+  protected String filterAttribute( String tagName, String attributeName, String attributeValue, String ruleName ) {
+    return filterValueString( attributeName, attributeValue, ruleName );
   }
 
   @Override
-  protected String filterText( String tagName, String text ) {
-    return filterValueString( tagName, text );
+  protected String filterText( String tagName, String text, String ruleName ) {
+    return filterValueString( tagName, text, ruleName );
   }
 
 }

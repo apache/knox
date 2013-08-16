@@ -17,31 +17,61 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
+import net.htmlparser.jericho.Attribute;
+import net.htmlparser.jericho.Segment;
+import net.htmlparser.jericho.StartTag;
+import net.htmlparser.jericho.StreamedSource;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.api.*;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
+import org.apache.hadoop.test.TestUtils;
 import org.hamcrest.Matchers;
+import org.jdom2.Content;
+import org.jdom2.filter.AttributeFilter;
+import org.jdom2.filter.ContentFilter;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+import org.jdom2.xpath.XPathExpression;
+import org.jdom2.xpath.XPathFactory;
 import org.junit.Before;
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.xmlmatchers.namespace.SimpleNamespaceContext;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -52,24 +82,26 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class XmlFilterReaderTest {
 
   public static class NoopXmlFilterReader extends XmlFilterReader {
-    public NoopXmlFilterReader( Reader reader ) throws IOException {
-      super( reader );
+    public NoopXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException, XMLStreamException {
+      super( reader, config );
     }
 
     @Override
-    protected String filterText( QName elementName, String text ) {
+    protected String filterText( QName elementName, String text, String ruleName ) {
       return text;
     }
 
     @Override
-    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue ) {
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
       return attributeValue;
     }
   }
@@ -77,36 +109,78 @@ public class XmlFilterReaderTest {
   public static class MapXmlFilterReader extends XmlFilterReader {
     private Map<String,String> map;
 
-    public MapXmlFilterReader( Reader reader, Map<String,String> map ) throws IOException {
-      super( reader );
+    public MapXmlFilterReader( Reader reader, Map<String,String> map ) throws IOException, ParserConfigurationException, XMLStreamException {
+      super( reader, null );
       this.map = map;
     }
 
     @Override
-    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue ) {
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
       return map.get( attributeValue.trim() );
     }
 
     @Override
-    protected String filterText( QName elementName, String text ) {
+    protected String filterText( QName elementName, String text, String ruleName ) {
       return map.get( text.trim() );
     }
   }
 
   @Test
-  public void testSimple() throws IOException {
+  public void testSimple() throws IOException, ParserConfigurationException, XMLStreamException {
     String inputXml = "<root/>";
     StringReader inputReader = new StringReader( inputXml );
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputHtml ), hasXPath( "/root" ) );
   }
 
   @Test
-  public void testSimpleNested() throws IOException {
+  public void testSimpleStreaming() throws IOException, ParserConfigurationException, XMLStreamException {
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+
+    String inputXml = "<root/>";
+    StringReader inputReader = new StringReader( inputXml );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
+    String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
+    assertThat( the( outputHtml ), hasXPath( "/root" ) );
+  }
+
+//  @Test
+//  public void testSimpleScoped() throws IOException, ParserConfigurationException, XMLStreamException {
+//    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+//    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+//    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+//
+//    String inputXml = "<root/>";
+//    StringReader inputReader = new StringReader( inputXml );
+//    XmlStaxFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+//    String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
+//    assertThat( the( outputHtml ), hasXPath( "/root" ) );
+//  }
+
+  @Test
+  public void testSimpleBuffered() throws IOException, ParserConfigurationException, XMLStreamException {
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+
+    String input = "<root/>";
+    //System.out.println( "INPUT=" + input );
+    StringReader inputReader = new StringReader( input );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
+    String output = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( "OUTPUT=" + output );
+    assertThat( the( output ), hasXPath( "/root" ) );
+  }
+
+  @Test
+  public void testSimpleNested() throws IOException, ParserConfigurationException, XMLStreamException {
     String inputXml = "<root><child1><child11/><child12/></child1><child2><child21/><child22/></child2></root>";
     StringReader inputReader = new StringReader( inputXml );
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputHtml ), hasXPath( "/root" ) );
     assertThat( the( outputHtml ), hasXPath( "/root/child1" ) );
@@ -118,10 +192,10 @@ public class XmlFilterReaderTest {
   }
 
   @Test
-  public void testSimpleWithNamespace() throws IOException {
+  public void testSimpleWithNamespace() throws IOException, ParserConfigurationException, XMLStreamException {
     String inputXml = "<ns:root xmlns:ns='http://hortonworks.com/xml/ns'></ns:root>";
     StringReader inputReader = new StringReader( inputXml );
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
 
     //System.out.println( outputHtml );
@@ -131,27 +205,57 @@ public class XmlFilterReaderTest {
   }
 
   @Test
-  public void testSimpleTextNode() throws IOException {
+  public void testSimpleTextNode() throws IOException, ParserConfigurationException, XMLStreamException {
     String inputXml = "<root>text</root>";
     StringReader inputReader = new StringReader( inputXml );
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( "OUTPUT=" + outputXml );
+    assertThat( the( outputXml ), hasXPath( "/root/text()", equalTo( "text" ) ) );
+  }
+
+  @Test
+  public void testSimpleAttribute() throws IOException, ParserConfigurationException, XMLStreamException {
+    String inputXml = "<root name='value'/>";
+    StringReader inputReader = new StringReader( inputXml );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( outputHtml );
+    assertThat( the( outputXml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
+  }
+
+  @Test
+  public void testSimpleTextNodeBuffered() throws IOException, ParserConfigurationException, XMLStreamException {
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+
+    String inputXml = "<root>text</root>";
+    StringReader inputReader = new StringReader( inputXml );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
     //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/text()", equalTo( "text" ) ) );
   }
 
   @Test
-  public void testSimpleAttribute() throws IOException {
+  public void testSimpleAttributeBuffered() throws IOException, ParserConfigurationException, XMLStreamException {
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+
     String inputXml = "<root name='value'/>";
     StringReader inputReader = new StringReader( inputXml );
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
     //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
   }
 
   @Test
-  public void testMappedText() throws IOException {
+  public void testMappedText() throws IOException, ParserConfigurationException, XMLStreamException {
     Map<String,String> map = new HashMap<String,String>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root>input-text</root>";
@@ -163,7 +267,7 @@ public class XmlFilterReaderTest {
   }
 
   @Test
-  public void testMappedAttribute() throws IOException {
+  public void testMappedAttribute() throws IOException, ParserConfigurationException, XMLStreamException {
     Map<String,String> map = new HashMap<String,String>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root attribute='input-text'/>";
@@ -175,7 +279,7 @@ public class XmlFilterReaderTest {
   }
 
   @Test
-  public void testCombined() throws IOException {
+  public void testCombined() throws IOException, ParserConfigurationException, XMLStreamException {
     Map<String,String> map = new HashMap<String,String>();
     map.put( "attr1-input", "attr1-output" );
     map.put( "attr2-input", "attr2-output" );
@@ -580,25 +684,257 @@ public class XmlFilterReaderTest {
       assertThat( step.flow(), is( UrlRewriteStepFlow.OR ) );
     }
   }
-  
+
   @Test
-  public void testTagNameLetterCase() throws IOException {
+  public void testTagNameLetterCase() throws Exception {
     String inputXml = "<Root/>";
     StringReader inputReader = new StringReader( inputXml );
-    
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputXml ), hasXPath( "/Root" ) );
   }
-  
+
   @Test
-  public void testXmlWithHtmlTagNames() throws IOException {
+  public void testXmlWithHtmlTagNames() throws Exception {
     String inputXml = "<root><br><table name=\"table1\"/><table name=\"table2\"/></br></root>";
     StringReader inputReader = new StringReader( inputXml );
-    
-    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader );
+
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputXml ), hasXPath( "/root/br/table[1]/@name", equalTo( "table1" ) ) );
     assertThat( the( outputXml ), hasXPath( "/root/br/table[2]/@name", equalTo( "table2" ) ) );
   }
+
+  @Test
+  public void testStreamedApplyForElements() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value/text()", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "text:test-rule-2{test-value-1}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/name/text()", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/value/text()", equalTo( "text:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/name/text()", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/value/text()", equalTo( "text:test-rule-2{test-value-3}" ) ) );
+  }
+
+  @Test
+  public void testStreamedApplyForElementsConfigShortcut() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "text:test-rule-2{test-value-1}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/name/text()", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/value/text()", equalTo( "text:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/name/text()", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/value/text()", equalTo( "text:test-rule-2{test-value-3}" ) ) );
+  }
+
+  @Test
+  public void testStreamedApplyForAttributes() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/@value", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "attr:test-rule-2{test-value-1}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@name", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@value", equalTo( "attr:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@name", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@value", equalTo( "attr:test-rule-2{test-value-3}" ) ) );
+  }
+
+  @Test
+  public void testBufferedApplyForAttributes() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor bufferconfig = contentConfig.addBuffer( "/properties/property" );
+    UrlRewriteFilterApplyDescriptor applyConfig = bufferconfig.addApply( "@value", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "attr:test-rule-2{test-value-1}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@name", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@value", equalTo( "attr:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@name", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@value", equalTo( "attr:test-rule-2{test-value-3}" ) ) );
+  }
+
+  @Test
+  public void testBufferedDetectApplyForElements() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "/properties/property" );
+    UrlRewriteFilterDetectDescriptor detectConfig = bufferConfig.addDetect( "name", "test-name-2" );
+    UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "value", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "test-value-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/name/text()", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/value/text()", equalTo( "text:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/name/text()", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/value/text()", equalTo( "test-value-3" ) ) );
+  }
+
+  @Test
+  public void testBufferedDetectApplyForAttributes() throws Exception {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
+    UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "/properties/property" );
+    UrlRewriteFilterDetectDescriptor detectConfig = bufferConfig.addDetect( "@name", "test-name-2" );
+    UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "@value", "test-rule-2" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "test-value-1" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@name", equalTo( "test-name-2" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[2]/@value", equalTo( "attr:test-rule-2{test-value-2}" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@name", equalTo( "test-name-3" ) ) );
+    assertThat( the( output ), hasXPath( "/properties/property[3]/@value", equalTo( "test-value-3" ) ) );
+  }
+
+  @Test
+  public void testInvalidConfigShouldThrowException() throws Exception {
+    String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "*/xml" );
+    contentConfig.addApply( "$.url", "test-rule" );
+
+    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
+
+    try {
+      XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
+      IOUtils.toString( filter );
+      fail( "Should have thrown an IllegalArgumentException." );
+    } catch ( IOException e ) {
+      fail( "Should have thrown an IllegalArgumentException." );
+    } catch ( IllegalArgumentException e ) {
+      assertThat( e.getMessage(), containsString( "$.url" ) );
+    }
+  }
+
+  private class TestXmlFilterReader extends XmlFilterReader {
+
+    protected TestXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor contentConfig ) throws IOException, ParserConfigurationException, XMLStreamException {
+      super( reader, contentConfig );
+    }
+
+    @Override
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+      return "attr:" + ruleName + "{" + attributeValue + "}";
+    }
+
+    @Override
+    protected String filterText( QName elementName, String text, String ruleName ) {
+      return "text:" + ruleName + "{" + text + "}";
+    }
+
+  }
+
+  public void dump( Node node, Writer writer ) throws TransformerException {
+    Transformer t = TransformerFactory.newInstance().newTransformer();
+    t.setOutputProperty( OutputKeys.METHOD, "xml" );
+    t.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
+    t.setOutputProperty( OutputKeys.INDENT, "yes" );
+    t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+    t.transform( new DOMSource( node ), new StreamResult( writer ) );
+  }
+
+  public void dump( Node node, OutputStream stream ) throws TransformerException {
+    Transformer t = TransformerFactory.newInstance().newTransformer();
+    t.setOutputProperty( OutputKeys.METHOD, "xml" );
+    t.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
+    t.setOutputProperty( OutputKeys.INDENT, "yes" );
+    t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+    t.transform( new DOMSource( node ), new StreamResult( stream ) );
+  }
+
+//  public void dump( Node node ) throws TransformerException {
+//    dump( node, System.out );
+//  }
+
 }

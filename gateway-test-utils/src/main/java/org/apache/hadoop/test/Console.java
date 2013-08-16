@@ -31,7 +31,7 @@ public class Console {
     newErrBuf = new ByteArrayOutputStream();
     newErr = new PrintStream( newErrBuf );
 
-    oldOut = System.out;
+    oldOut = System.out; // I18N not required.
     newOutBuf = new ByteArrayOutputStream();
     newOut = new PrintStream( newOutBuf );
 

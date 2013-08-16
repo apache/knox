@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 <rules>
-    <rule name="test" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
+    <rule name="test-rule-1" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
         <rewrite param="{scheme}://{host}:{port}/test-output-path"/>
     </rule>
 </rules>

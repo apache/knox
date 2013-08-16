@@ -15,12 +15,25 @@
   limitations under the License.
 -->
 <rules>
-    <rule dir="OUT" name="test1" pattern="*://*:*/**?**">
+
+    <rule name="test-rule-1" dir="OUT" pattern="*://*:*/**?**">
         <match pattern="*://{host}:{port}/{path=**}?{**}" />
-        <rewrite template="http://host1:{port}/{path=**}" />
+        <rewrite template="output-mock-scheme-1://output-mock-host-1:{port}/{path=**}" />
     </rule>
-    <rule dir="OUT" name="test2" pattern="*://*:*/**?**">
+
+    <rule name="test-rule-2" dir="OUT" pattern="*://*:*/**?**">
         <match pattern="*://{host}:{port}/{path=**}?{**}" />
-        <rewrite template="http://host2:{port}/{path=**}" />
+        <rewrite template="output-mock-scheme-2://output-mock-host-2:{port}/{path=**}" />
     </rule>
+
+    <rule name="test-rule-3" dir="OUT" pattern="*://*:*/no-query">
+        <match pattern="{scheme}://{host}:{port}/{path=**}" />
+        <rewrite template="{scheme}://output-mock-host-3:{port}/{path=**}" />
+    </rule>
+
+    <rule name="test-rule-4" dir="OUT" pattern="*://*:*/no-query">
+        <match pattern="{scheme}://{host}:{port}/{path=**}" />
+        <rewrite template="{scheme}://output-mock-host-4:{port}/{path=**}" />
+    </rule>
+
 </rules>

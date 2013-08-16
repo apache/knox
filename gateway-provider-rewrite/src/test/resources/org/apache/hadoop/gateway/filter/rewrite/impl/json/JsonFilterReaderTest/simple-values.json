@@ -1,0 +1,7 @@
+{
+  "test-str": "text",
+  "test-int": 42,
+  "test-flt": 3.1415927,
+  "test-bool": true,
+  "test-null": null
+}

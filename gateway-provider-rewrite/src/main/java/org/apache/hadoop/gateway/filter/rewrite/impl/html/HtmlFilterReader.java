@@ -17,9 +17,8 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.html;
 
-import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlFilterReader;
-
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -32,24 +31,24 @@ import java.io.Reader;
 //String markup = "<a href=\"dfsnodelist.jsp?whatNodes=DECOMMISSIONING\">";
 //String markup = "th class=headerASC onClick=\"window.document.location='/dfsnodelist.jsp?whatNodes=LIVE&sorter/field=name&sorter/order=DSC'\" title=\"sort on this column\">";
 
-public abstract class HtmlFilterReader extends XmlFilterReader {
+public abstract class HtmlFilterReader extends HtmlFilterReaderBase {
 
-  public HtmlFilterReader( Reader reader ) throws IOException {
+  public HtmlFilterReader( Reader reader ) throws IOException, ParserConfigurationException {
     super( reader );
   }
 
-  protected abstract String filterAttribute( String tagName, String attributeName, String attributeValue );
+  protected abstract String filterAttribute( String tagName, String attributeName, String attributeValue, String ruleName );
 
-  protected abstract String filterText( String tagName, String text );
+  protected abstract String filterText( String tagName, String text, String ruleName );
 
   @Override
-  protected final String filterAttribute( QName elementName, QName attributeName, String attributeValue ) {
-    return filterAttribute( elementName.getLocalPart(), attributeName.getLocalPart(), attributeValue );
+  protected final String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+    return filterAttribute( elementName.getLocalPart(), attributeName.getLocalPart(), attributeValue, ruleName );
   }
 
   @Override
-  protected final String filterText( QName elementName, String text ) {
-    return filterText( elementName.getLocalPart(), text );
+  protected final String filterText( QName elementName, String text, String ruleName ) {
+    return filterText( elementName.getLocalPart(), text, ruleName );
   }
 
 }

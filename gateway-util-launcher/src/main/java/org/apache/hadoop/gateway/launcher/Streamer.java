@@ -43,7 +43,7 @@ public class Streamer extends Thread {
         read = input.read( buffer );
       }
     } catch( IOException e ) {
-      e.printStackTrace();
+      e.printStackTrace(); // I18N not possible/required.
     }
   }
 

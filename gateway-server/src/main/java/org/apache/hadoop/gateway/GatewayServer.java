@@ -84,7 +84,7 @@ public class GatewayServer {
         GatewayCommandLine.printHelp();
       } else if( cmd.hasOption( GatewayCommandLine.VERSION_LONG ) ) {
         buildProperties = loadBuildProperties();
-        System.out.println( res.gatewayVersionMessage(
+        System.out.println( res.gatewayVersionMessage( // I18N not required.
             buildProperties.getProperty( "build.version", "unknown" ),
             buildProperties.getProperty( "build.hash", "unknown" ) ) );
       } else {

@@ -47,7 +47,7 @@ public class SoutMessageLogger implements MessageLogger {
 
   @Override
   public void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
-    System.out.println( MessageFormat.format( getFormat( id ), level, id, message ) );
+    System.out.println( MessageFormat.format( getFormat( id ), level, id, message ) ); // I18N not required.
     if( thrown != null ) {
       thrown.printStackTrace();
     }

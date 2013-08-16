@@ -71,7 +71,7 @@ public class UrlRewriteProcessorTest {
     processor.initialize( environment, config );
 
     Template inputUrl = Parser.parse( "test-scheme://test-host:1/test-input-path" );
-    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, null );
 
     assertThat( "Expect rewrite to produce a new URL",
         outputUrl, notNullValue() );
@@ -81,9 +81,8 @@ public class UrlRewriteProcessorTest {
     processor.destroy();
   }
 
-  @Ignore("Occasionally fails due to randomness in rules selection")
   @Test
-  public void testMultipleRewriteOutputRules() throws IOException, URISyntaxException {
+  public void testMultipleIdenticalRewriteOutputRules() throws IOException, URISyntaxException {
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
@@ -94,14 +93,61 @@ public class UrlRewriteProcessorTest {
         "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
     processor.initialize( environment, config );
 
-    Template inputUrl = Parser.parse( "scheme://host:1/test-input-path" );
-    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT );
+    Template inputUrl = Parser.parse( "scheme://input-mock-host:42/test-input-path" );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, null );
+
+    assertThat( "Expect rewrite to produce a new URL",
+        outputUrl, notNullValue() );
+    // Should always pick the first one.
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "output-mock-scheme-1://output-mock-host-1:42/test-input-path" ) );
+
+    inputUrl = Parser.parse( "mock-scheme://input-mock-host:42/no-query" );
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, null );
+
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "mock-scheme://output-mock-host-3:42/no-query" ) );
+
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-4" );
+
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "mock-scheme://output-mock-host-4:42/no-query" ) );
+
+    processor.destroy();
+  }
+
+  @Test
+  public void testRewriteViaRuleNameWithAmbiguousRules() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl = Parser.parse( "input-mock-scheme-1://input-mock-host-1:42/test-input-path" );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
 
     assertThat( "Expect rewrite to produce a new URL",
         outputUrl, notNullValue() );
     assertThat(
         "Expect rewrite to contain the correct path.",
-        outputUrl.toString(), is( "http://host1:1/test-input-path" ) );
+        outputUrl.toString(), is( "output-mock-scheme-2://output-mock-host-2:42/test-input-path" ) );
+
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-1" );
+
+    assertThat( "Expect rewrite to produce a new URL",
+        outputUrl, notNullValue() );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "output-mock-scheme-1://output-mock-host-1:42/test-input-path" ) );
+
     processor.destroy();
   }
 

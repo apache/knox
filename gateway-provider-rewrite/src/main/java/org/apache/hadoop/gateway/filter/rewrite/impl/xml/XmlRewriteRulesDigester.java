@@ -21,12 +21,19 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.SetPropertiesRule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterGroupDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptorFactory;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterApplyDescriptorImpl;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterBufferDescriptorImpl;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterDetectDescriptorImpl;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterScopeDescriptorImpl;
 import org.xml.sax.Attributes;
 
 public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlRewriteRulesTags {
@@ -35,17 +42,36 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
   protected void configure() {
     forPattern( ROOT ).addRule( new RulesFactory() );
     forPattern( ROOT ).addRule( new SetPropertiesRule() );
+
     for( String name : UrlRewriteFunctionDescriptorFactory.getNames() ) {
       forPattern( ROOT + "/" + FUNCTIONS + "/" + name ).addRule( new FunctionFactory() );
       forPattern( ROOT + "/" + FUNCTIONS + "/" + name ).addRule( new SetPropertiesRule() );
     }
-    forPattern( ROOT + "/" + RULE ).addRule( new SetPropertiesRule() );
+
     forPattern( ROOT + "/" + RULE ).addRule( new RuleFactory() );
     forPattern( ROOT + "/" + RULE ).addRule( new SetPropertiesRule() );
     for( String type : UrlRewriteStepDescriptorFactory.getTypes() ) {
       forPattern( "*/" + type ).addRule( new StepFactory() );
       forPattern( "*/" + type ).addRule( new SetPropertiesRule() );
     }
+
+    forPattern( ROOT + "/" + FILTER ).addRule( new FilterFactory() );
+    forPattern( ROOT + "/" + FILTER ).addRule( new SetPropertiesRule() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT ).addRule( new FilterContentFactory() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT ).addRule( new SetPropertiesRule() );
+
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/*/" + APPLY ).addRule( new FilterApplyFactory() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/*/" + APPLY ).addRule( new SetPropertiesRule() );
+
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + SCOPE ).addRule( new FilterScopeFactory() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + SCOPE ).addRule( new SetPropertiesRule() );
+
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + BUFFER ).addRule( new FilterBufferFactory() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + BUFFER ).addRule( new SetPropertiesRule() );
+
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + BUFFER + "/" + DETECT ).addRule( new FilterDetectFactory() );
+    forPattern( ROOT + "/" + FILTER + "/" + CONTENT + "/" + BUFFER + "/" + DETECT ).addRule( new SetPropertiesRule() );
+
 //    forPattern( "*/" + MATCH ).addRule( new MatchFactory() );
 //    forPattern( "*/" + MATCH ).addRule( new SetPropertiesRule() );
 //    forPattern( "*/" + CHECK ).addRule( new CheckFactory() );
@@ -92,8 +118,68 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
   private class FunctionFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
-      UrlRewriteRulesDescriptor func = getDigester().peek();
-      return func.addFunction( name );
+      UrlRewriteRulesDescriptor rules = getDigester().peek();
+      return rules.addFunction( name );
+    }
+  }
+
+  private class FilterFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteRulesDescriptor parent = getDigester().peek();
+      return parent.addFilter( attributes.getValue( "name" ) );
+    }
+  }
+
+  private class FilterContentFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFilterDescriptor parent = getDigester().peek();
+      return parent.addContent( attributes.getValue( "type" ) );
+    }
+  }
+
+  private class FilterApplyFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
+      UrlRewriteFilterPathDescriptor child = new UrlRewriteFilterApplyDescriptorImpl();
+      child.path( attributes.getValue( "path" ) );
+      parent.addSelector( child );
+      return child;
+    }
+  }
+
+  private class FilterScopeFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
+      UrlRewriteFilterPathDescriptor child = new UrlRewriteFilterScopeDescriptorImpl();
+      child.path( attributes.getValue( "path" ) );
+      parent.addSelector( child );
+      return child;
+    }
+  }
+
+  private class FilterBufferFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
+      UrlRewriteFilterPathDescriptor child = new UrlRewriteFilterBufferDescriptorImpl();
+      child.path( attributes.getValue( "path" ) );
+      parent.addSelector( child );
+      return child;
+    }
+  }
+
+  private class FilterDetectFactory extends FactoryRule {
+    @Override
+    public Object create( String namespace, String name, Attributes attributes ) {
+      UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
+      UrlRewriteFilterPathDescriptor child = new UrlRewriteFilterDetectDescriptorImpl();
+      child.path( attributes.getValue( "path" ) );
+      parent.addSelector( child );
+      return child;
     }
   }
 

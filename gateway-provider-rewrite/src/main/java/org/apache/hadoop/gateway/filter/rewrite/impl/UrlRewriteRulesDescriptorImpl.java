@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
@@ -33,6 +34,8 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   private List<UrlRewriteFunctionDescriptor> funcList = new ArrayList<UrlRewriteFunctionDescriptor>();
   private List<UrlRewriteRuleDescriptor> ruleList = new ArrayList<UrlRewriteRuleDescriptor>();
   private Map<String,UrlRewriteRuleDescriptor> ruleMap = new HashMap<String,UrlRewriteRuleDescriptor>();
+  private List<UrlRewriteFilterDescriptor> filterList = new ArrayList<UrlRewriteFilterDescriptor>();
+  private Map<String,UrlRewriteFilterDescriptor> filterMap = new HashMap<String,UrlRewriteFilterDescriptor>();
 
   @Override
   public UrlRewriteRuleDescriptor getRule( String name ) {
@@ -93,6 +96,36 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   protected void addFunction( UrlRewriteFunctionDescriptor descriptor ) {
     funcList.add( descriptor );
     funcMap.put( descriptor.name(), descriptor );
+  }
+
+
+  @Override
+  public List<UrlRewriteFilterDescriptor> getFilters() {
+    return filterList;
+  }
+
+  @Override
+  public UrlRewriteFilterDescriptor getFilter( String name ) {
+    return filterMap.get( name );
+  }
+
+  @Override
+  public UrlRewriteFilterDescriptor newFilter() {
+    return new UrlRewriteFilterDescriptorImpl();
+  }
+
+  @Override
+  public UrlRewriteFilterDescriptor addFilter( String name ) {
+    UrlRewriteFilterDescriptor filter = newFilter();
+    filter.name( name );
+    addFilter( filter );
+    return filter;
+  }
+
+  @Override
+  public void addFilter( UrlRewriteFilterDescriptor descriptor ) {
+    filterList.add( descriptor );
+    filterMap.put( descriptor.name(), descriptor );
   }
 
 }

@@ -18,11 +18,7 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.*;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesExporter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
@@ -76,9 +72,18 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
         }
       }
 
-      for( UrlRewriteRuleDescriptor rule : descriptor.getRules() ) {
-        Element ruleElement = createRule( document, rule );
-        root.appendChild( ruleElement );
+      if( !descriptor.getRules().isEmpty() ) {
+        for( UrlRewriteRuleDescriptor rule : descriptor.getRules() ) {
+          Element ruleElement = createRule( document, rule );
+          root.appendChild( ruleElement );
+        }
+      }
+
+      if( !descriptor.getFilters().isEmpty() ) {
+        for( UrlRewriteFilterDescriptor filter : descriptor.getFilters() ) {
+          Element filterElement = createFilter( document, filter );
+          root.appendChild( filterElement );
+        }
       }
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -107,9 +112,41 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
     }
   }
 
+  private Element createFilter( Document document, UrlRewriteFilterDescriptor parent )
+      throws IntrospectionException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+    Element parentElement = createElement( document, FILTER, parent );
+    for( UrlRewriteFilterContentDescriptor child: parent.getContents() ) {
+      Element childElement = createFilterContent( document, child );
+      parentElement.appendChild( childElement );
+    }
+    return parentElement;
+  }
+
+  private Element createFilterContent( Document document, UrlRewriteFilterContentDescriptor parent )
+      throws IntrospectionException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+    Element parentElement = createElement( document, CONTENT, parent );
+    for( UrlRewriteFilterPathDescriptor child: parent.getSelectors() ) {
+      Element childElement = createFilterSelector( document, child );
+      parentElement.appendChild( childElement );
+    }
+    return parentElement;
+  }
+
+  private Element createFilterSelector( Document document, UrlRewriteFilterPathDescriptor parent )
+      throws IntrospectionException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+    Element parentElement = createElement( document, toTagName( parent ), parent );
+    if( parent instanceof UrlRewriteFilterGroupDescriptor ) {
+      for( UrlRewriteFilterPathDescriptor child: ((UrlRewriteFilterGroupDescriptor)parent).getSelectors() ) {
+        Element childElement = createFilterSelector( document, child );
+        parentElement.appendChild( childElement );
+      }
+    }
+    return parentElement;
+  }
+
   private Element createRule( Document document, UrlRewriteRuleDescriptor rule )
       throws IntrospectionException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-    Element ruleElement = createElement( document, "rule", rule );
+    Element ruleElement = createElement( document, RULE, rule );
     for( UrlRewriteStepDescriptor step: rule.steps() ) {
       Element childElement = createStep( document, step );
       ruleElement.appendChild( childElement );
@@ -150,6 +187,20 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
       }
     }
     return element;
+  }
+
+  private static String toTagName( final UrlRewriteFilterPathDescriptor descriptor ) {
+    if( descriptor instanceof UrlRewriteFilterApplyDescriptor ) {
+      return APPLY;
+    } else if( descriptor instanceof UrlRewriteFilterDetectDescriptor ) {
+      return DETECT;
+    } else if( descriptor instanceof UrlRewriteFilterBufferDescriptor ) {
+      return BUFFER;
+    } else if( descriptor instanceof UrlRewriteFilterScopeDescriptor ) {
+      return SCOPE;
+    } else {
+      throw new IllegalArgumentException();
+    }
   }
 
 }

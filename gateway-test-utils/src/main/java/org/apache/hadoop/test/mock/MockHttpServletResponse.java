@@ -47,6 +47,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public String encodeUrl( String s ) {
     return null;
   }
@@ -97,6 +98,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void setStatus( int i, String s ) {
   }
 

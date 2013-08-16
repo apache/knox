@@ -17,8 +17,22 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.i18n;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
+import org.apache.hadoop.gateway.i18n.resources.Resource;
 import org.apache.hadoop.gateway.i18n.resources.Resources;
 
 @Resources
-public class UrlRewriteResources {
+public interface UrlRewriteResources {
+
+  @Resource( text="No importer for descriptor format {0}" )
+  String noImporterForFormat( String format );
+
+  @Resource( text="No exporter for descriptor format {0}" )
+  String noExporterForFormat( String format );
+
+  @Resource( text="Unexpected selector type {0}" )
+  String unexpectedRewritePathSelector( UrlRewriteFilterPathDescriptor selector );
+
+  @Resource( text="Unexpected selected node type {0}" )
+  String unexpectedSelectedNodeType( Object node );
 }

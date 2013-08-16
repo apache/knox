@@ -24,6 +24,8 @@ public interface UrlRewriter {
 
   enum Direction { IN, OUT }
 
-  Template rewrite( Resolver resolver, Template uri, Direction direction );
+  UrlRewriteRulesDescriptor getConfig();
+
+  Template rewrite( Resolver resolver, Template uri, Direction direction, String ruleName );
 
 }
