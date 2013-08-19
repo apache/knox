@@ -224,6 +224,10 @@ public class Builder {
 
   public void setHost( String paramName, String valuePattern ) {
     setHasAuthority( true );
+    // Make sure that ** is converted to * since ** doesn't make any sense in this context.
+    if( Segment.GLOB_PATTERN.equals( valuePattern ) ) {
+      valuePattern = Segment.STAR_PATTERN;
+    }
     host = new Host( paramName, valuePattern );
   }
 
@@ -233,6 +237,10 @@ public class Builder {
 
   public void setPort( String paramName, String valuePattern ) {
     setHasAuthority( true );
+    // Make sure that ** is converted to * since ** doesn't make any sense in this context.
+    if( Segment.GLOB_PATTERN.equals( valuePattern ) ) {
+      valuePattern = Segment.STAR_PATTERN;
+    }
     port = new Port( paramName, valuePattern );
   }
 

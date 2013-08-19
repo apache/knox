@@ -613,6 +613,33 @@ public class MatcherTest {
     assertThat( params.resolve( "mid" ).size(), equalTo( 2 ) );
     assertThat( params.resolve( "mid" ), hasItem( "A" ) );
     assertThat( params.resolve( "mid" ), hasItem( "B" ) );
+
+    template = Parser.parse( "*://*:*/{path=**}?{**}" );
+    input = Parser.parse( "http://host:port/pathA/pathB" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
+    assertThat( params.resolve( "path" ), hasItem( "pathB" ) );
+    assertThat( params.resolve( "path" ).size(), is( 2 ) );
+
+    template = Parser.parse( "*://*:*/{path=**}?{**}" );
+    input = Parser.parse( "http://host:port/pathA/pathB" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
+    assertThat( params.resolve( "path" ), hasItem( "pathB" ) );
+    assertThat( params.resolve( "path" ).size(), is( 2 ) );
+
+    template = Parser.parse( "*://*:*/{path=**}?{**}" );
+    input = Parser.parse( "http://host:port/pathA/pathB" );
+    matcher = new Matcher<Void>( template, null );
+    match = matcher.match( input );
+    params = match.getParams();
+    assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
+    assertThat( params.resolve( "path" ), hasItem( "pathB" ) );
+    assertThat( params.resolve( "path" ).size(), is( 2 ) );
   }
 
   @Test

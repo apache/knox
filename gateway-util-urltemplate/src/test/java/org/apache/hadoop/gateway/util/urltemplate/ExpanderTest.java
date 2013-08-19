@@ -135,7 +135,7 @@ public class ExpanderTest {
     template = Parser.parse( "?" );
     params = new MockParams();
     expanded = Expander.expand( template, params );
-    assertThat( expanded.toString(), equalTo( "?" ) ) ;
+    assertThat( expanded.toString(), equalTo( "" ) ) ;
 
     template = Parser.parse( "?query-name={queryParam-name}" );
     params = new MockParams();

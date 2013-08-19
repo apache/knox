@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
@@ -287,6 +288,22 @@ public class RewriterTest {
     expectOutput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
     assertThat( actualOutput, equalTo( expectOutput ) );
+  }
+
+  @Test
+  public void testRewriteExcludesQueryDelimWhenInputHasNoQueryParams() throws Exception {
+    Template inputTemplate, outputTemplate;
+    URI actualInput, actualOutput, expectOutput;
+
+    inputTemplate = Parser.parse( "{scheme}://{host}:*/{path=**}?{**}" );
+    outputTemplate = Parser.parse( "{scheme}://{host}:777/test-output/{path=**}?{**}" );
+
+    actualInput = new URI( "http://host:42/pathA/pathB" );
+    expectOutput = new URI( "http://host:777/test-output/pathA/pathB" );
+
+    actualOutput = Rewriter.rewrite( actualInput, inputTemplate, outputTemplate, null );
+
+    assertThat( actualOutput, is( expectOutput ) );
   }
   
   private class TestResolver implements Params {

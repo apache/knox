@@ -19,15 +19,19 @@ package org.apache.hadoop.gateway.hdfs;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
-import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase {
 
@@ -59,19 +63,19 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     UrlRewriteActionRewriteDescriptorExt rewrite;
     UrlRewriteMatchDescriptor match;
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/namenode/root/inbound" )
+    rule = rules.addRule( getQualifiedName() + "/namenode/root/inbound" )
         .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/namenode/file/inbound" )
+    rule = rules.addRule( getQualifiedName() + "/namenode/file/inbound" )
         .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/inbound" )
+    rule = rules.addRule( getQualifiedName() + "/datanode/inbound" )
         .directions( "inbound" )
         .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?**" );
     //TODO: If the input type is wrong it throws a NPE.
@@ -81,14 +85,18 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( "http://{host}:{port}/{path=**}?{**}" );
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/datanode/outbound" )
-        .directions( "outbound" )
-        .pattern( "*://*:*/**?**" );
+    rule = rules.addRule( getQualifiedName() + "/datanode/outbound" )
+        .directions( "outbound" );
+//        .pattern( "*://*:*/**?**" );
     match = rule.addStep( "match" );
     match.pattern( "*://{host}:{port}/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
     rule.addStep( "encode-query" );
+
+    UrlRewriteFilterDescriptor filter = rules.addFilter( getQualifiedName() + "/outbound" );
+    UrlRewriteFilterContentDescriptor content = filter.addContent( "application/x-http-headers" );
+    content.addApply( "Location", getQualifiedName() + "/datanode/outbound" );
   }
 
   public void contributeNameNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
@@ -139,8 +147,14 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
   private void addRewriteFilter(
       DeploymentContext context, Service service, ResourceDescriptor resource ) throws URISyntaxException {
-    context.contributeFilter( service, resource, "rewrite", null, null );
+    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+    params.add( resource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/outbound" ) );
+    context.contributeFilter( service, resource, "rewrite", null, params );
 
+  }
+
+  private String getQualifiedName() {
+    return getRole() + "/" + getName();
   }
 
 }

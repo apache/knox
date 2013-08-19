@@ -18,4 +18,10 @@
     <rule name="test-rule-1" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
         <rewrite param="{scheme}://{host}:{port}/test-output-path"/>
     </rule>
+
+    <rule dir="OUT" name="test-rule-2">
+        <match pattern="*://*:*/{path=**}?{**}"/>
+        <rewrite template="test-scheme-output://test-host-output:777/test-path-output/{path}?{**}"/>
+    </rule>
+
 </rules>

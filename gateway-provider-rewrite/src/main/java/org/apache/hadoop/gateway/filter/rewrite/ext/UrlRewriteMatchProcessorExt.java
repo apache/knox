@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 public class UrlRewriteMatchProcessorExt implements UrlRewriteStepProcessor<UrlRewriteMatchDescriptor> {
 
@@ -35,24 +36,30 @@ public class UrlRewriteMatchProcessorExt implements UrlRewriteStepProcessor<UrlR
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteMatchDescriptor descriptor ) throws Exception {
-    //this.descriptor = descriptor;
-    this.matcher = new Matcher<Void>( descriptor.template(), null );
+    Template template = descriptor.template();
+    if( template == null ) {
+      this.matcher = null;
+    } else {
+      this.matcher = new Matcher<Void>( descriptor.template(), null );
+    }
   }
 
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
-    UrlRewriteStepStatus status = UrlRewriteStepStatus.FAILURE;
-    Matcher.Match match = matcher.match( context.getCurrentUrl() );
-    if( match != null ) {
-      context.addParameters( match.getParams() );
-      status = UrlRewriteStepStatus.SUCCESS;
+    UrlRewriteStepStatus status = UrlRewriteStepStatus.SUCCESS;
+    if( matcher != null ) {
+      status = UrlRewriteStepStatus.FAILURE;
+      Matcher.Match match = matcher.match( context.getCurrentUrl() );
+      if( match != null ) {
+        context.addParameters( match.getParams() );
+        status = UrlRewriteStepStatus.SUCCESS;
+      }
     }
     return status;
   }
 
   @Override
   public void destroy() {
-    //descriptor = null;
     matcher = null;
   }
 

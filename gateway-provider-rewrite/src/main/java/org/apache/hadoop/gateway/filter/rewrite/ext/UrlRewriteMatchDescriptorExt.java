@@ -98,7 +98,12 @@ public class UrlRewriteMatchDescriptorExt
   @Override
   public UrlRewriteMatchDescriptor template( Template template ) {
     this.template = template;
-    this.pattern = template.toString();
+    // The template is now optional for rules.
+    if( template == null ) {
+      this.pattern = null;
+    } else {
+      this.pattern = template.toString();
+    }
     return this;
   }
 

@@ -108,7 +108,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     try {
       Template input = Parser.parse( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT, rule );
-      value = output.toString();
+      if( output != null ) {
+        value = output.toString();
+      }
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
     }
@@ -127,8 +129,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   // Ignore the Content-Length from the dispatch respond since the respond body may be rewritten.
   @Override
   public void addHeader( String name, String value ) {
-    if( !ignoreHeader( name) ) {
-      value = rewriteValue( value, pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
+    if( !ignoreHeader( name ) ) {
+      String rule = pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name );
+      value = rewriteValue( value, rule );
       super.addHeader( name, value );
     }
   }

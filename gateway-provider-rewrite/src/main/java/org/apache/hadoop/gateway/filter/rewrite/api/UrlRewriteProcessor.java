@@ -85,18 +85,20 @@ public class UrlRewriteProcessor implements UrlRewriter {
       try {
         UrlRewriteStepProcessorHolder ruleProcessor = new UrlRewriteStepProcessorHolder();
         ruleProcessor.initialize( environment, ruleDescriptor );
-        Template template = ruleDescriptor.template();
         if( !rules.containsKey( ruleDescriptor.name() ) ) {
           rules.put( ruleDescriptor.name(), ruleProcessor );
         }
-        EnumSet<Direction> directions = ruleDescriptor.directions();
-        if( directions == null || directions.isEmpty() ) {
-          inbound.add( template, ruleProcessor );
-          outbound.add( template, ruleProcessor );
-        } else if( directions.contains( IN ) ) {
-          inbound.add( template, ruleProcessor );
-        } else if ( directions.contains( OUT ) ) {
-          outbound.add( template, ruleProcessor );
+        Template template = ruleDescriptor.template();
+        if( template != null ) {
+          EnumSet<Direction> directions = ruleDescriptor.directions();
+          if( directions == null || directions.isEmpty() ) {
+            inbound.add( template, ruleProcessor );
+            outbound.add( template, ruleProcessor );
+          } else if( directions.contains( IN ) ) {
+            inbound.add( template, ruleProcessor );
+          } else if ( directions.contains( OUT ) ) {
+            outbound.add( template, ruleProcessor );
+          }
         }
       } catch( Exception e ) {
         LOG.failedToInitializeRewriteRules( e );
@@ -153,7 +155,6 @@ public class UrlRewriteProcessor implements UrlRewriter {
           outputUri = null;
         }
       } catch( Exception e ) {
-        e.printStackTrace();
         LOG.failedToRewriteUrl( e );
         outputUri = null;
       }

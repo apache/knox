@@ -997,4 +997,25 @@ public class ParserTest {
     assertThat( template.toString(), is( "{test-scheme=*}:///{test-path=**}" ) );
   }
 
+  @Test
+  public void testAuthorityWildcards() throws Exception {
+    Template template;
+
+    template = Parser.parse( "*://*:*/" );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
+
+    template = Parser.parse( "*://**/" );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort(), nullValue() );
+
+    template = Parser.parse( "*://*/" );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort(), nullValue() );
+
+    template = Parser.parse( "*://**:**/" );
+    assertThat( template.getHost().getFirstValue().getPattern(), is( "*" ) );
+    assertThat( template.getPort().getFirstValue().getPattern(), is( "*" ) );
+  }
+
 }

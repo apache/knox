@@ -146,9 +146,10 @@ public class Expander {
     AtomicInteger index = new AtomicInteger( 0 );
     expandExplicitQuery( template, names, params, builder, index );
     expandExtraQuery( template, names, params, builder, index );
-    if( template.hasQuery() && index.get() == 0 ) {
-      builder.append( '?' );
-    }
+    //Kevin: I took this out because it causes '?' to be added to expanded templates when there are not query params.
+//    if( template.hasQuery() && index.get() == 0 ) {
+//      builder.append( '?' );
+//    }
   }
 
   private static void expandExplicitQuery( Template template, Set<String> names, Params params, StringBuilder builder, AtomicInteger index ) {

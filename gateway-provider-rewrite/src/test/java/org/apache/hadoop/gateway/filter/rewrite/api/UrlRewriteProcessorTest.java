@@ -151,4 +151,26 @@ public class UrlRewriteProcessorTest {
     processor.destroy();
   }
 
+  @Test
+  public void testRewriteViaRuleWithWildcardTemplateAndOptionalQuery() throws Exception {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two" );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
+
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "test-scheme-output://test-host-output:777/test-path-output/test-path-input-one/test-path-input-two" ) );
+
+    processor.destroy();
+  }
+
 }

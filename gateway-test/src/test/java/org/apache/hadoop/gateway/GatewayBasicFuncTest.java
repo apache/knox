@@ -1299,17 +1299,15 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
-    .contentType( ContentType.XML.toString() );
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  )
+    .contentType( ContentType.XML.toString() )
+    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
 
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.XML )
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
     .when().put( driver.getUrl( "HBASE" ) + path );
     driver.assertComplete();
 
@@ -1320,17 +1318,15 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
-    .contentType( ContentType.JSON.toString() );
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  )
+    .contentType( ContentType.JSON.toString() )
+    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
     
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.JSON )
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
     .when().put( driver.getUrl( "HBASE" ) + path );
     driver.assertComplete();
 
@@ -1341,17 +1337,15 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
-    .contentType( "application/x-protobuf" );
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", driver.getRealUrl( "HBASE" ) + path  );
+    .contentType( "application/x-protobuf" )
+    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
 
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( "application/x-protobuf" )
-    //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
+    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
     .when().put( driver.getUrl( "HBASE" ) + path );
     driver.assertComplete();
 
