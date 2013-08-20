@@ -57,9 +57,9 @@
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>gateway-release</module>
-        <module>hsso-release</module>
         <module>gateway-test</module>
         <module>gateway-demo</module>
+        <module>hsso-release</module>
     </modules>
 
     <properties>
@@ -67,7 +67,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gateway-name>Apache Knox (Incubator)</gateway-name>
         <gateway-project>knox</gateway-project>
-        <gateway-artifact>knox</gateway-artifact>
+        <gateway-artifact>knox-incubating</gateway-artifact>
         <gateway-version>0.3.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.hadoop</gateway-group>
     </properties>
@@ -458,18 +458,18 @@
                 <version>4.2.3</version>
             </dependency>
 
-        <!--
-        <dependency>
-            <groupId>org.apache.geronimo.components</groupId>
-            <artifactId>geronimo-jaspi</artifactId>
-            <version>2.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-osgi-locator</artifactId>
-            <version>1.1</version>
-        </dependency>
-        -->
+            <!--
+            <dependency>
+                <groupId>org.apache.geronimo.components</groupId>
+                <artifactId>geronimo-jaspi</artifactId>
+                <version>2.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-osgi-locator</artifactId>
+                <version>1.1</version>
+            </dependency>
+            -->
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>

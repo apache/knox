@@ -23,11 +23,14 @@
 
     <property name="gateway-name" value="Apache Knox (Incubator)"/>
     <property name="gateway-project" value="knox"/>
-    <property name="gateway-artifact" value="knox"/>
+    <property name="gateway-artifact" value="knox-incubator"/>
     <property name="gateway-version" value="0.3.0-SNAPSHOT"/>
     <property name="release-manager" value="kminder"/>
 
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
+
+    <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/incubator/${gateway-project}" />
+    <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/incubator/${gateway-project}" />
 
     <condition property="isUnix">
         <os family="unix"/>
