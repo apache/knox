@@ -28,8 +28,8 @@ import org.junit.Test;
 public class AppCookieManagerTest {
 
   @Test
-  public void getCachedKnoxAppCookie() {
-    assertNull(new AppCookieManager().getCachedKnoxAppCookie());
+  public void getCachedAppCookie() {
+    assertNull(new AppCookieManager().getCachedAppCookie());
   }
 
   @Test

@@ -89,7 +89,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       } else { 
         // Kerberos secured, no delegation token in query string
         outboundRequest.removeHeaders(COOKIE);
-        String appCookie = appCookieManager.getCachedKnoxAppCookie();
+        String appCookie = appCookieManager.getCachedAppCookie();
         if (appCookie != null) {
           outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
         }

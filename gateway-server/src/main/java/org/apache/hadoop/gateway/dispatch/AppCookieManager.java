@@ -138,7 +138,7 @@ public class AppCookieManager {
    * 
    * @return the cached app cookie, can be null
    */
-  public String getCachedKnoxAppCookie() {
+  public String getCachedAppCookie() {
     return appCookie;
   }
   
