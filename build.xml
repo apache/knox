@@ -23,7 +23,7 @@
 
     <property name="gateway-name" value="Apache Knox (Incubator)"/>
     <property name="gateway-project" value="knox"/>
-    <property name="gateway-artifact" value="knox-incubator"/>
+    <property name="gateway-artifact" value="knox-incubating"/>
     <property name="gateway-version" value="0.3.0-SNAPSHOT"/>
     <property name="release-manager" value="kminder"/>
 

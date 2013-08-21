@@ -20,8 +20,11 @@ package org.apache.hadoop.gateway.dispatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.params.BasicHttpParams;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.eclipse.jetty.server.HttpOutput;
 import org.junit.Test;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -40,7 +43,7 @@ public class HttpClientDispatchTest {
 
   // Make sure Hadoop cluster topology isn't exposed to client when there is a connectivity issue.
   @Test
-  public void testJiraKnox58() throws URISyntaxException {
+  public void testJiraKnox58() throws URISyntaxException, IOException {
 
     URI uri = new URI( "http://unreachable-host" );
     BasicHttpParams params = new BasicHttpParams();
@@ -53,6 +56,17 @@ public class HttpClientDispatchTest {
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
 
     HttpServletResponse outboundResponse = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.expect( outboundResponse.getOutputStream() ).andAnswer( new IAnswer<ServletOutputStream>() {
+      @Override
+      public ServletOutputStream answer() throws Throwable {
+        return new ServletOutputStream() {
+          @Override
+          public void write( int b ) throws IOException {
+            throw new IOException( "unreachable-host" );
+          }
+        };
+      }
+    });
 
     EasyMock.replay( outboundRequest, inboundRequest, outboundResponse );
 
