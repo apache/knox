@@ -31,3 +31,4 @@ org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
 velocity.log
 *.pyc
 *.py~
+*.patch
