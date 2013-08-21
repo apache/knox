@@ -26,10 +26,10 @@ import org.apache.hadoop.gateway.i18n.resources.Resources;
 @Resources
 public interface GatewayResources {
 
-  @Resource( text="Apache Hadoop Gateway {0} ({1})" )
+  @Resource( text="Apache Knox Gateway {0} ({1})" )
   String gatewayVersionMessage( String version, String hash );
 
-  @Resource( text="Apache Hadoop Gateway" )
+  @Resource( text="Apache Knox Gateway" )
   String gatewayServletInfo();
 
   @Resource( text="Service connectivity error." )

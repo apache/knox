@@ -150,7 +150,7 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Signature verified: {0}" )
   void signatureVerified( boolean verified );
 
-  @Message( level = MessageLevel.DEBUG, text = "Apache Hadoop Gateway {0} ({1})" )
+  @Message( level = MessageLevel.DEBUG, text = "Apache Knox Gateway {0} ({1})" )
   void gatewayVersionMessage( String version, String hash );
 
   @Message( level = MessageLevel.DEBUG, text = "Loading from persistent master: {0}" )
