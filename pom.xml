@@ -163,6 +163,7 @@
                         <exclude>**/home/ISSUES</exclude>
                         <exclude>**/home/samples/*.jar</exclude>
                         <exclude>**/.externalToolBuilders/*</exclude>
+                        <exclude>*.patch</exclude>
                     </excludes>
                 </configuration>
             </plugin>

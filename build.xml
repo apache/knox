@@ -75,7 +75,10 @@
             <arg value="clean"/>
             <arg value="install"/>
         </exec>
-        <copy file="gateway-release/home/CHANGES" todir="target/${gateway-version}"/>
+        <copy file="KEYS" todir="target/${gateway-version}">
+            <fileset file="KEYS"/>
+            <fileset file="gateway-release/home/CHANGES"/>
+        </copy>
     </target>
 
     <target name="daily" depends="full" description="Perform the daily build."/>
