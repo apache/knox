@@ -2,6 +2,47 @@
 Changes v0.2.0 - v0.3.0
 ------------------------------------------------------------------------------
 
+Release Notes - Apache Knox - Version 0.3.0
+
+** Bug
+    * [KNOX-21] - Utilize hadoop.auth cookie to prevent re-authentication for every request
+    * [KNOX-47] - Clean up i18n logging and any System.out or printStackTrace usages
+    * [KNOX-57] - NPE when GATEWAY_HOME deleted out from underneath a running gateway instance
+    * [KNOX-58] - NameNode endpoint exposed to gateway clients in runtime exception
+    * [KNOX-60] - getting started - incorrect path to gateway-site.xml
+    * [KNOX-69] - Branch expansion for specdir breaks on jenkins
+    * [KNOX-70] - Add unit and functional testing for HBase
+    * [KNOX-71] - Add unit and functional tests for Hive
+    * [KNOX-75] - make Knox work with Secure Oozie
+    * [KNOX-76] - users.ldif file bundled with knox should not have hadoop service principals
+    * [KNOX-77] - Need per-service outbound URL rewriting rules
+    * [KNOX-78] - spnego authorization to cluster is failing
+    * [KNOX-79] - post parameters are lost while request flows from knox to secure cluster
+    * [KNOX-81] - Fix naming of release artifacts to include the word incubating
+    * [KNOX-83] - do not use mapred as end user prinicpal in examples
+    * [KNOX-84] - use EXAMPLE.COM instead of sample.com in template files for kerberos relam
+    * [KNOX-94] - Document How to Add a Service to Knox
+
+** Improvement
+    * [KNOX-9] - Support Hive via JDBC+ODBC/Thrift/HTTP
+    * [KNOX-45] - Clean up usage and help output from server command line
+    * [KNOX-49] - Prevent Shiro rememberMe cookie from being returned
+    * [KNOX-55] - Support finer grain control over what is included in the URL rewrite
+    * [KNOX-56] - Populate RC directory with CHANGES on people.a.o
+    * [KNOX-63] - Integate Knox with Apache BigTop
+    * [KNOX-68] - Create start/stop scripts for gateway
+    * [KNOX-82] - Support properties file format for topology files
+
+** New Feature
+    * [KNOX-8] - Support HBase via HBase/Stargate
+    * [KNOX-11] - Access Token Federation Provider
+    * [KNOX-27] - Access Kerberos secured Hadoop cluster via gateway using basic auth credentials
+    * [KNOX-31] - Create lifecycle scripts for gateway server
+    * [KNOX-61] - Create RPM packaging of Knox
+
+** Test
+    * [KNOX-40] - Verify LDAP over SSL
+
 ------------------------------------------------------------------------------
 Changes v0.1.0 - v0.2.0
 ------------------------------------------------------------------------------

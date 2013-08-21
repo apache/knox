@@ -75,6 +75,7 @@
             <arg value="clean"/>
             <arg value="install"/>
         </exec>
+        <copy file="gateway-release/home/CHANGES" todir="target/${gateway-version}"/>
     </target>
 
     <target name="daily" depends="full" description="Perform the daily build."/>
@@ -138,6 +139,35 @@
         <echo message="${stage-message}"/>
     </target>
 
-    <target name="release" depends="package,rpm,sign"/>
+    <target name="release" depends="package,rpm,sign" description="Build release artifacts including RPM and sign."/>
+
+    <target name="stage-release" description="Stage release artifacts.">
+        <exec executable="svn">
+            <arg value="import" />
+            <arg value="target/${gateway-version}"/>
+            <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
+            <arg value="-m"/>
+            <arg value="Staging Apache Knox Gateway version ${gateway-version}."/>
+        </exec>
+    </target>
+
+    <target name="unstage-release" description="Delete staged release artifacts.">
+        <exec executable="svn">
+            <arg value="delete" />
+            <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
+            <arg value="-m"/>
+            <arg value="Removing Apache Knox Gateway version ${gateway-version} from staging."/>
+        </exec>
+    </target>
+
+    <target name="promote-release" description="Promote staged artifacts to release area.">
+        <exec executable="svn">
+            <arg value="move"/>
+            <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}"/>
+            <arg value="${svn.release.path}"/>
+            <arg value="-m"/>
+            <arg value="Releasing Apache Knox Gateway version ${gateway-version}." />
+        </exec>
+    </target>
 
 </project>
