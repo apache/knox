@@ -260,4 +260,10 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to get map from Json string {0}: {1}" )
   void failedToGetMapFromJsonString( String json, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.INFO, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
+  void successfulSPNegoAuthn(String uri);
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
+  void failedSPNegoAuthn(String uri);
 }

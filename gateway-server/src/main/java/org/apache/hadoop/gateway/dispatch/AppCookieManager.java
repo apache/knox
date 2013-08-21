@@ -1,0 +1,190 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.hadoop.gateway.dispatch;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.Principal;
+
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.impl.auth.SPNegoSchemeFactory;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+/**
+ * Handles SPNego authentication as a client of hadoop service, caches
+ * hadoop.auth cookie returned by hadoop service on successful SPNego
+ * authentication. Refreshes hadoop.auth cookie on demand if the cookie has
+ * expired.
+ * 
+ */
+public class AppCookieManager {
+
+  static final String HADOOP_AUTH = "hadoop.auth";
+  private static final String HADOOP_AUTH_EQ = "hadoop.auth=";
+  private static final String SET_COOKIE = "Set-Cookie";
+
+  private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+
+  private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
+
+  String appCookie;
+
+  /**
+   * Utility method to excerise AppCookieManager directly
+   * @param args element 0 of args should be a URL to hadoop service protected by SPengo
+   * @throws IOException in case of errors
+   */
+  public static void main(String[] args) throws IOException {
+    HttpUriRequest outboundRequest = new HttpGet(args[0]);
+    new AppCookieManager().getAppCookie(outboundRequest, false);
+  }
+
+  public AppCookieManager() {
+  }
+
+  /**
+   * Fetches hadoop.auth cookie from hadoop service authenticating using SpNego
+   * 
+   * @param outboundRequest
+   *          out going request
+   * @param refresh
+   *          flag indicating whether to refresh the cached cookie
+   * @return hadoop.auth cookie from hadoop service authenticating using SpNego
+   * @throws IOException
+   *           in case of errors
+   */
+  public String getAppCookie(HttpUriRequest outboundRequest, boolean refresh)
+      throws IOException {
+
+    URI uri = outboundRequest.getURI();
+    String scheme = uri.getScheme();
+    String host = uri.getHost();
+    int port = uri.getPort();
+    String path = uri.getPath();
+    if (!refresh) {
+      if (appCookie != null) {
+        return appCookie;
+      }
+    }
+
+    DefaultHttpClient client = new DefaultHttpClient();
+    SPNegoSchemeFactory spNegoSF = new SPNegoSchemeFactory(
+    /* stripPort */true);
+    // spNegoSF.setSpengoGenerator(new BouncySpnegoTokenGenerator());
+    client.getAuthSchemes().register(AuthPolicy.SPNEGO, spNegoSF);
+    client.getCredentialsProvider().setCredentials(
+        new AuthScope(/* host */null, /* port */-1, /* realm */null),
+        EMPTY_JAAS_CREDENTIALS);
+
+    clearAppCookie();
+    String hadoopAuthCookie = null;
+    HttpResponse httpResponse = null;
+    try {
+      HttpHost httpHost = new HttpHost(host, port, scheme);
+      HttpRequest httpRequest = new HttpOptions(path);
+      httpResponse = client.execute(httpHost, httpRequest);
+      Header[] headers = httpResponse.getHeaders(SET_COOKIE);
+      hadoopAuthCookie = getHadoopAuthCookieValue(headers);
+      if (hadoopAuthCookie == null) {
+        LOG.failedSPNegoAuthn(uri.toString());
+        throw new IOException(
+            "SPNego authn failed, can not get hadoop.auth cookie");
+      }
+    } finally {
+      if (httpResponse != null) {
+        HttpEntity entity = httpResponse.getEntity();
+        if (entity != null) {
+          entity.getContent().close();
+        }
+      }
+
+    }
+    LOG.successfulSPNegoAuthn(uri.toString());
+    hadoopAuthCookie = HADOOP_AUTH_EQ + quote(hadoopAuthCookie);
+    setAppCookie(hadoopAuthCookie);
+    return appCookie;
+  }
+
+  /**
+   * Returns the cached app cookie
+   * 
+   * @return the cached app cookie, can be null
+   */
+  public String getCachedKnoxAppCookie() {
+    return appCookie;
+  }
+  
+  private void setAppCookie(String appCookie) {
+    this.appCookie = appCookie;
+  }
+
+  private void clearAppCookie() {
+    appCookie = null;
+  }
+  
+  static String quote(String s) {
+    return s == null ? s : "\"" + s + "\"";
+  }
+
+  static String getHadoopAuthCookieValue(Header[] headers) {
+    if (headers == null) {
+      return null;
+    }
+    for (Header header : headers) {
+      HeaderElement[] elements = header.getElements();
+      for (HeaderElement element : elements) {
+        String cookieName = element.getName();
+        if (cookieName.equals(HADOOP_AUTH)) {
+          if (element.getValue() != null) {
+            String trimmedVal = element.getValue().trim();
+            if (!trimmedVal.isEmpty()) {
+              return trimmedVal;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static class EmptyJaasCredentials implements Credentials {
+
+    public String getPassword() {
+      return null;
+    }
+
+    public Principal getUserPrincipal() {
+      return null;
+    }
+
+  }
+
+}

@@ -17,7 +17,15 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.commons.io.IOUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -26,7 +34,7 @@ import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -34,39 +42,32 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-
-import javax.activation.MimeType;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.security.Principal;
+import org.apache.http.message.BasicHeader;
 
 /**
  *
  */
 public class HttpClientDispatch extends AbstractGatewayDispatch {
-
-  private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
-  private static final String CT_APP_XML = "application/xml";
+  
+  // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
+  // private static final String CT_APP_XML = "application/xml";
+  private static final String Q_DELEGATION_EQ = "?delegation=";
+  private static final String AMP_DELEGATION_EQ = "&delegation=";
+  private static final String COOKIE = "Cookie";
+  private static final String SET_COOKIE = "Set-Cookie";
+  private static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+  private static final String NEGOTIATE = "Negotiate";
 
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
-  private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
   private static final int REPLAY_BUFFER_MAX_SIZE = 1024 * 1024; // limit to 1MB
 
+  private AppCookieManager appCookieManager = new AppCookieManager();;
+  
   protected void executeRequest(
       HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest,
@@ -74,22 +75,46 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
           throws IOException {
     LOG.dispatchRequest( outboundRequest.getMethod(), outboundRequest.getURI() );
     DefaultHttpClient client = new DefaultHttpClient();
-    
-    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-      SPNegoSchemeFactory nsf = new SPNegoSchemeFactory(/* stripPort */ true);
-      // nsf.setSpengoGenerator(new BouncySpnegoTokenGenerator());
-      client.getAuthSchemes().register(AuthPolicy.SPNEGO, nsf);
 
-      client.getCredentialsProvider().setCredentials(
-          new AuthScope(/* host */ null, /* port */ -1, /* realm */ null),
-          EMPTY_JAAS_CREDENTIALS);
-    }
-
-    HttpContext localContext = new BasicHttpContext();
-    
     HttpResponse inboundResponse;
     try {
-      inboundResponse = client.execute(outboundRequest, localContext);
+      String query = outboundRequest.getURI().getQuery();
+      if (!"true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
+        // Hadoop cluster not Kerberos enabled
+        inboundResponse = client.execute(outboundRequest);
+      } else if (query.contains(Q_DELEGATION_EQ) ||
+        // query string carries delegation token
+        query.contains(AMP_DELEGATION_EQ)) {
+        inboundResponse = client.execute(outboundRequest);
+      } else { 
+        // Kerberos secured, no delegation token in query string
+        outboundRequest.removeHeaders(COOKIE);
+        String appCookie = appCookieManager.getCachedKnoxAppCookie();
+        if (appCookie != null) {
+          outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
+        }
+        inboundResponse = client.execute(outboundRequest);
+        // if inBoundResponse has status 401 and header WWW-Authenticate: Negoitate
+        // refresh hadoop.auth.cookie and attempt one more time
+        int statusCode = inboundResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_UNAUTHORIZED ) {
+          Header[] wwwAuthHeaders = inboundResponse.getHeaders(WWW_AUTHENTICATE) ;
+          if (wwwAuthHeaders != null && wwwAuthHeaders.length != 0 && 
+              wwwAuthHeaders[0].getValue().trim().startsWith(NEGOTIATE)) {
+            appCookie = appCookieManager.getAppCookie(outboundRequest, true);
+            outboundRequest.removeHeaders(COOKIE);
+            outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
+            client = new DefaultHttpClient();
+            inboundResponse = client.execute(outboundRequest);
+          } else {
+            // no supported authentication type found
+            // we would let the original response propogate
+          }
+        } else {
+          // not a 401 Unauthorized status code
+          // we would let the original response propogate
+        }
+      }
     } catch (IOException e) {
       // we do not want to expose back end host. port end points to clients, see JIRA KNOX-58
       LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
@@ -101,6 +126,9 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     Header[] headers = inboundResponse.getAllHeaders();
     for( Header header : headers ) {
       String name = header.getName();
+      if (name.equals(SET_COOKIE) || name.equals(WWW_AUTHENTICATE)) {
+        continue;
+      }
       String value = header.getValue();
       outboundResponse.addHeader( name, value );
     }
@@ -239,18 +267,5 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
 //    }
 //
 //  }
-  
-  private static class EmptyJaasCredentials implements Credentials {
-
-    public String getPassword() {
-      return null;
-    }
-
-    public Principal getUserPrincipal() {
-      return null;
-    }
-
-  }
-  
 
 }
