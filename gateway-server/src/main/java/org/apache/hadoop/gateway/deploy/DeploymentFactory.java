@@ -186,6 +186,7 @@ public abstract class DeploymentFactory {
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
+          throw new DeploymentException("Failed to initialize contribution.", e);
         }
       }
     }
@@ -198,6 +199,7 @@ public abstract class DeploymentFactory {
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
+          throw new DeploymentException("Failed to initialize contribution.", e);
         }
       }
     }
@@ -219,6 +221,7 @@ public abstract class DeploymentFactory {
         } catch (Exception e) {
           // Maybe it makes sense to throw exception
           log.failedToInjectService( serviceName, e );
+          throw new DeploymentException("Failed to inject service.", e);
         }
       }
     }
@@ -237,6 +240,7 @@ public abstract class DeploymentFactory {
         } catch( Exception e ) {
           // Maybe it makes sense to throw exception
           log.failedToContributeProvider( provider.getName(), provider.getRole(), e );
+          throw new DeploymentException("Failed to contribute provider.", e);
         }
       }
     }
@@ -255,6 +259,7 @@ public abstract class DeploymentFactory {
         } catch( Exception e ) {
           // Maybe it makes sense to throw exception
           log.failedToContributeService( service.getName(), service.getRole(), e );
+          throw new DeploymentException("Failed to contribute provider.", e);
         }
       }
     }
@@ -314,6 +319,7 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
+            throw new DeploymentException("Failed to finalize contribution.", e);
           }
         }
       }
@@ -324,6 +330,7 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
+            throw new DeploymentException("Failed to finalize contribution.", e);
           }
         }
       }
