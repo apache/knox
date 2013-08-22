@@ -31,7 +31,7 @@ public class HiveDeploymentContributor extends ServiceDeploymentContributorBase 
 
   private static final String ROLE = "HIVE";
   private static final String NAME = "hive";
-  private static final String EXTERNAL_PATH = "/hive";
+  private static final String EXTERNAL_PATH = "/hive/api/vi";
 
   @Override
   public String getRole() {

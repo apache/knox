@@ -20,17 +20,17 @@ limitations under the License.
     <property>
         <name>jobTracker</name>
         <value>REPLACE.JOBTRACKER.RPCHOSTPORT</value>
-        <!-- Example: <value>sandbox:50300</value> -->
+        <!-- Example: <value>localhost:50300</value> -->
     </property>
     <property>
         <name>nameNode</name>
         <value>hdfs://REPLACE.NAMENODE.RPCHOSTPORT</value>
-        <!-- Example: <value>hdfs://sandbox:8020</value> -->
+        <!-- Example: <value>hdfs://localhost:8020</value> -->
     </property>
     <property>
         <name>oozie.wf.application.path</name>
         <value>hdfs://REPLACE.NAMENODE.RPCHOSTPORT/tmp/test</value>
-        <!-- Example: <value>hdfs://sandbox:8020/tmp/test</value> -->
+        <!-- Example: <value>hdfs://localhost:8020/tmp/test</value> -->
     </property>
     <property>
         <name>user.name</name>

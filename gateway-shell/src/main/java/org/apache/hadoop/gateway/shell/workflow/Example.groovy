@@ -24,8 +24,8 @@ import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.Hadoop
 
 gateway = "https://localhost:8443/gateway/sample"
-jobTracker = "sandbox:50300";
-nameNode = "sandbox:8020";
+jobTracker = "localhost:50300";
+nameNode = "localhost:8020";
 username = "mapred"
 password = "mapred-password"
 inputFile = "LICENSE"

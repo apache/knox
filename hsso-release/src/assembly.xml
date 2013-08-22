@@ -63,7 +63,7 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>server.jar</outputFileNameMapping>
+            <outputFileNameMapping>hsso.jar</outputFileNameMapping>
             <includes>
                 <include>${gateway-group}:gateway-server-launcher</include>
             </includes>

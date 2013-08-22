@@ -35,7 +35,7 @@ import java.util.List;
 
 public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase {
 
-  private static final String EXTERNAL_PATH = "/hbase/api";
+  private static final String EXTERNAL_PATH = "/hbase/api/v1";
   private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
   @Override

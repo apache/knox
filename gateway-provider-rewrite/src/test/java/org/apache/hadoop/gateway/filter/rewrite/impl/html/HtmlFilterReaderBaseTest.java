@@ -33,12 +33,6 @@ import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt
 import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlRewriteRulesDigester;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
 import org.hamcrest.Matchers;
-import org.jdom2.filter.AttributeFilter;
-import org.jdom2.filter.ContentFilter;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
-import org.jdom2.xpath.XPathExpression;
-import org.jdom2.xpath.XPathFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Document;

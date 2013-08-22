@@ -64,7 +64,7 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>server.jar</outputFileNameMapping>
+            <outputFileNameMapping>gateway.jar</outputFileNameMapping>
             <includes>
                 <include>${gateway-group}:gateway-server-launcher</include>
             </includes>
