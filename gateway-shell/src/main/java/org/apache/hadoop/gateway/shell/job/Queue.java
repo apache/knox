@@ -30,8 +30,8 @@ class Queue {
 
   static class Request extends AbstractRequest<Response> {
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    public Request( Hadoop session ) {
+      super( session );
     }
 
     protected Callable<Response> callable() {

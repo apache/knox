@@ -41,8 +41,8 @@ class Submit {
     private String file;
     private String action = "start";
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request text( String text ) {

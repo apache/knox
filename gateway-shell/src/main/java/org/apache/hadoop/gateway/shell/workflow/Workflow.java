@@ -23,12 +23,12 @@ public class Workflow {
 
   static String SERVICE_PATH = "/oozie/api/v1";
 
-  public static Submit.Request submit( Hadoop hadoop ) {
-    return new Submit.Request( hadoop );
+  public static Submit.Request submit( Hadoop session ) {
+    return new Submit.Request( session );
   }
 
-  public static Status.Request status( Hadoop hadoop ) {
-    return new Status.Request( hadoop );
+  public static Status.Request status( Hadoop session ) {
+    return new Status.Request( session );
   }
 
 }

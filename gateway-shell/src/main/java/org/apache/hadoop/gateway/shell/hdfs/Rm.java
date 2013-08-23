@@ -34,8 +34,8 @@ class Rm {
     String file;
     Boolean recursive;
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request file( String file ) {

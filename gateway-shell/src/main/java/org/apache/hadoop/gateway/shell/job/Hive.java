@@ -41,8 +41,8 @@ public class Hive {
     private String statusDir;
     List<NameValuePair> params = new ArrayList<NameValuePair>();
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    public Request( Hadoop session ) {
+      super( session );
     }
 
     public Request group( String group ) {

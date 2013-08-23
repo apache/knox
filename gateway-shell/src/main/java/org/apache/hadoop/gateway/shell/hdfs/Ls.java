@@ -32,8 +32,8 @@ class Ls {
 
     String dir;
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request dir( String dir ) {

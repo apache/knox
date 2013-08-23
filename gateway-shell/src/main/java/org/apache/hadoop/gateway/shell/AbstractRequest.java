@@ -33,22 +33,22 @@ import java.util.concurrent.Future;
 
 public abstract class AbstractRequest<T> {
 
-  private Hadoop hadoop;
+  private Hadoop session;
 
-  protected AbstractRequest( Hadoop hadoop ) {
-    this.hadoop = hadoop;
+  protected AbstractRequest( Hadoop session ) {
+    this.session = session;
   }
 
   protected Hadoop hadoop() {
-    return hadoop;
+    return session;
   }
 
   protected HttpResponse execute( HttpRequest request ) throws IOException {
-    return hadoop.executeNow( request );
+    return session.executeNow( request );
   }
 
   protected URIBuilder uri( String... parts ) throws URISyntaxException {
-    return new URIBuilder( hadoop.base() + StringUtils.join( parts ) );
+    return new URIBuilder( session.base() + StringUtils.join( parts ) );
   }
 
   protected void addQueryParam( URIBuilder uri, String name, Object value ) {

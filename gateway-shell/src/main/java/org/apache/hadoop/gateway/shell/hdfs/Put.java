@@ -42,8 +42,8 @@ class Put {
     private String file;
     private String to;
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request text( String text ) {

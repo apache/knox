@@ -21,9 +21,9 @@ gateway = "https://localhost:8443/gateway/sample"
 username = "mapred"
 password = "mapred-password"
 
-hadoop = Hadoop.login( gateway, username, password )
+session = Hadoop.login( gateway, username, password )
 
-println "JSON=" + SampleService.simple(hadoop).param("/tmp").now().string
+println "JSON=" + SampleService.simple(session).param("/tmp").now().string
 
-println "Names=" + SampleService.complex(hadoop).param("/tmp").now().names
+println "Names=" + SampleService.complex(session).param("/tmp").now().names
 

@@ -33,8 +33,8 @@ class Mkdir {
     String dir = null;
     String perm = null;
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request perm( String perm ) {

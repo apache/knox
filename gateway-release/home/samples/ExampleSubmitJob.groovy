@@ -28,18 +28,18 @@ password = "mapred-password"
 dataFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 
-hadoop = Hadoop.login( gateway, username, password )
+session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now().statusCode
-println "Create /tmp/test " + Hdfs.mkdir(hadoop).dir( "/tmp/test").now().statusCode
+println "Delete /tmp/test " + Hdfs.rm(session).file( "/tmp/test" ).recursive().now().statusCode
+println "Create /tmp/test " + Hdfs.mkdir(session).dir( "/tmp/test").now().statusCode
 
-putData = Hdfs.put(hadoop).file( dataFile ).to( "/tmp/test/input/FILE" ).later() {
+putData = Hdfs.put(session).file( dataFile ).to( "/tmp/test/input/FILE" ).later() {
   println "Put /tmp/test/input/FILE " + it.statusCode }
-putJar = Hdfs.put(hadoop).file( jarFile ).to( "/tmp/test/hadoop-examples.jar" ).later() {
+putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/hadoop-examples.jar" ).later() {
   println "Put /tmp/test/hadoop-examples.jar " + it.statusCode }
-hadoop.waitFor( putData, putJar )
+session.waitFor( putData, putJar )
 
-jobId = Job.submitJava(hadoop) \
+jobId = Job.submitJava(session) \
   .jar( "/tmp/test/hadoop-examples.jar" ) \
   .app( "wordcount" ) \
   .input( "/tmp/test/input" ) \
@@ -52,10 +52,10 @@ done = false
 count = 0
 while( !done && count++ < 60 ) {
   sleep( 1000 )
-  json = Job.queryStatus(hadoop).jobId(jobId).now().string
+  json = Job.queryStatus(session).jobId(jobId).now().string
   done = JsonPath.read( json, "\$.status.jobComplete" )
 }
 println "Done " + done
 
-println "Shutdown " + hadoop.shutdown( 10, SECONDS )
+println "Shutdown " + session.shutdown( 10, SECONDS )
 

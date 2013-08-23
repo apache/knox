@@ -41,8 +41,8 @@ public class Pig {
     private String arg;
     private String statusDir;
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    public Request( Hadoop session ) {
+      super( session );
     }
 
     public Request group( String group ) {

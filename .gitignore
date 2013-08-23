@@ -25,6 +25,7 @@ dependency-reduced-pom.xml
 *.iml
 *.ipr
 *.iws
+atlassian-ide-plugin.xml
 .DS_Store
 target
 org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/

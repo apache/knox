@@ -23,24 +23,24 @@ public class Hdfs {
 
   static String SERVICE_PATH = "/namenode/api/v1";
 
-  public static Ls.Request ls( Hadoop hadoop ) {
-    return new Ls.Request( hadoop );
+  public static Ls.Request ls( Hadoop session ) {
+    return new Ls.Request( session );
   }
 
-  public static Rm.Request rm( Hadoop hadoop ) {
-    return new Rm.Request( hadoop );
+  public static Rm.Request rm( Hadoop session ) {
+    return new Rm.Request( session );
   }
 
-  public static Put.Request put( Hadoop hadoop ) {
-    return new Put.Request( hadoop );
+  public static Put.Request put( Hadoop session ) {
+    return new Put.Request( session );
   }
 
-  public static Get.Request get( Hadoop hadoop ) {
-    return new Get.Request( hadoop );
+  public static Get.Request get( Hadoop session ) {
+    return new Get.Request( session );
   }
 
-  public static Mkdir.Request mkdir( Hadoop hadoop ) {
-    return new Mkdir.Request( hadoop );
+  public static Mkdir.Request mkdir( Hadoop session ) {
+    return new Mkdir.Request( session );
   }
 
 }

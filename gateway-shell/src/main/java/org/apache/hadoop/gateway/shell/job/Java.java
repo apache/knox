@@ -42,8 +42,8 @@ class Java {
     String input;
     String output;
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    public Request( Hadoop session ) {
+      super( session );
     }
 
     public Request jar( String jar ) {

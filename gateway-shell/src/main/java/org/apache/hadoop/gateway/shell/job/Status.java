@@ -32,8 +32,8 @@ class Status {
 
     private String jobId;
 
-    public Request( Hadoop hadoop ) {
-      super( hadoop );
+    public Request( Hadoop session ) {
+      super( session );
     }
 
     public Request jobId( String jobId ) {

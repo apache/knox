@@ -23,24 +23,24 @@ public class Job {
 
   static String SERVICE_PATH = "/templeton/api/v1";
 
-  public static Java.Request submitJava( Hadoop hadoop ) {
-    return new Java.Request( hadoop );
+  public static Java.Request submitJava( Hadoop session ) {
+    return new Java.Request( session );
   }
 
-  public static Pig.Request submitPig( Hadoop hadoop ) {
-    return new Pig.Request( hadoop );
+  public static Pig.Request submitPig( Hadoop session ) {
+    return new Pig.Request( session );
   }
 
-  public static Hive.Request submitHive( Hadoop hadoop ) {
-    return new Hive.Request( hadoop );
+  public static Hive.Request submitHive( Hadoop session ) {
+    return new Hive.Request( session );
   }
 
-  public static Queue.Request queryQueue( Hadoop hadoop ) {
-    return new Queue.Request( hadoop );
+  public static Queue.Request queryQueue( Hadoop session ) {
+    return new Queue.Request( session );
   }
 
-  public static Status.Request queryStatus( Hadoop hadoop ) {
-    return new Status.Request( hadoop );
+  public static Status.Request queryStatus( Hadoop session ) {
+    return new Status.Request( session );
   }
 
 }

@@ -36,8 +36,8 @@ public class Get {
     private String from;
     private String to;
 
-    Request( Hadoop hadoop ) {
-      super( hadoop );
+    Request( Hadoop session ) {
+      super( session );
     }
 
     public Request from( String file ) {

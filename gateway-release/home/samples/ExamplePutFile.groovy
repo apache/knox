@@ -25,13 +25,13 @@ username = "mapred"
 password = "mapred-password"
 dataFile = "README"
 
-hadoop = Hadoop.login( gateway, username, password )
-Hdfs.rm( hadoop ).file( "/tmp/example" ).recursive().now()
-Hdfs.put( hadoop ).file( dataFile ).to( "/tmp/example/README" ).now()
-text = Hdfs.ls( hadoop ).dir( "/tmp/example" ).now().string
+session = Hadoop.login( gateway, username, password )
+Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
+Hdfs.put( session ).file( dataFile ).to( "/tmp/example/README" ).now()
+text = Hdfs.ls( session ).dir( "/tmp/example" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
-hadoop.shutdown()
+session.shutdown()
 
 
 

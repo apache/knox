@@ -64,19 +64,19 @@ configuration = """\
 </configuration>
 """
 
-hadoop = Hadoop.login( gateway, username, password )
+session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now().statusCode
-println "Mkdir /tmp/test " + Hdfs.mkdir(hadoop).dir( "/tmp/test").now().statusCode
-putWorkflow = Hdfs.put(hadoop).text( definition ).to( "/tmp/test/workflow.xml" ).later() {
+println "Delete /tmp/test " + Hdfs.rm(session).file( "/tmp/test" ).recursive().now().statusCode
+println "Mkdir /tmp/test " + Hdfs.mkdir(session).dir( "/tmp/test").now().statusCode
+putWorkflow = Hdfs.put(session).text( definition ).to( "/tmp/test/workflow.xml" ).later() {
   println "Put /tmp/test/workflow.xml " + it.statusCode }
-putData = Hdfs.put(hadoop).file( inputFile ).to( "/tmp/test/input/FILE" ).later() {
+putData = Hdfs.put(session).file( inputFile ).to( "/tmp/test/input/FILE" ).later() {
   println "Put /tmp/test/input/FILE " + it.statusCode }
-putJar = Hdfs.put(hadoop).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar" ).later() {
+putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar" ).later() {
   println "Put /tmp/test/lib/hadoop-examples.jar " + it.statusCode }
-hadoop.waitFor( putWorkflow, putData, putJar )
+session.waitFor( putWorkflow, putData, putJar )
 
-jobId = Workflow.submit(hadoop).text( configuration ).now().jobId
+jobId = Workflow.submit(session).text( configuration ).now().jobId
 println "Submitted job " + jobId
 
 println "Polling for completion..."
@@ -84,9 +84,9 @@ status = "UNKNOWN";
 count = 0;
 while( status != "SUCCEEDED" && count++ < 60 ) {
   sleep( 1000 )
-  json = Workflow.status(hadoop).jobId( jobId ).now().string
+  json = Workflow.status(session).jobId( jobId ).now().string
   status = JsonPath.read( json, "\$.status" )
 }
 println "Job status " + status;
 
-println "Shutdown " + hadoop.shutdown( 10, SECONDS )
+println "Shutdown " + session.shutdown( 10, SECONDS )
