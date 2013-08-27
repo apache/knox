@@ -46,9 +46,16 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
+	// Many filter based authentication mechanisms require a ServletContextListener
+	// to be added and the Knox deployment machinery provides the ability to add this
+	// through the DeploymentContext.
+	
     // add servletContextListener
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
-    // Write the provider specific config out to the war for cluster specific config
+
+    // Writing provider specific config out to the war for cluster specific config can be
+	// accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
+	// used to write the asset to the war.
     String config = new ShiroConfig( provider ).toString();
     if( config != null ) {
       context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
