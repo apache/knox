@@ -165,7 +165,8 @@ public class Expander {
         }
         Query segment = iterator.next();
         String queryName = segment.getQueryName();
-        String paramName = segment.getParamName();
+        String funcName = segment.getParamName();
+        String paramName = extractParamNameFromFunction( funcName );
         names.remove( paramName );
         for( Segment.Value value: segment.getValues() ) {
           switch( value.getType() ) {
@@ -181,7 +182,7 @@ public class Expander {
             case( Segment.GLOB ):
             case( Segment.STAR ):
             case( Segment.REGEX ):
-              List<String> values = params.resolve( paramName );
+              List<String> values = params.resolve( funcName );
               expandQueryValues( segment, queryName, values, builder );
               break;
             default:
@@ -269,6 +270,20 @@ public class Expander {
           break;
       }
     }
+  }
+
+  private static String extractParamNameFromFunction( String function ) {
+    String param = function;
+    if( param != null && param.startsWith( "$" ) ) {
+      int stop = param.lastIndexOf( ')' );
+      if( stop > 1 ) {
+        int start = param.indexOf( '(' );
+        if( start > -1 ) {
+          param = param.substring( start+1, stop );
+        }
+      }
+    }
+    return param;
   }
 
   private static class EmptyParams implements Params {

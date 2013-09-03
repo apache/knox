@@ -271,4 +271,49 @@ public class ExpanderTest {
 
   }
 
+  @Test
+  public void testExtraParamHandling() throws Exception {
+    Template template;
+    MockParams params;
+    URI expanded;
+
+    params = new MockParams();
+    params.addValue(  "scheme", "schemeA"  );
+    params.addValue( "host", "hostA" );
+    params.addValue( "query", "queryA" );
+    params.addValue( "query", "queryB" );
+    params.addValue( "path", "pathA" );
+    params.addValue( "path", "pathB" );
+    params.addValue( "extra", "extraA" );
+
+    template = Parser.parse( "{scheme}://host/{path=*]?{query=*}" );
+    expanded = Expander.expand( template, params );
+    assertThat( expanded.toString(), equalTo( "schemeA://host/pathA?query=queryA" ) );
+
+    template = Parser.parse( "{scheme}://host/{path=**}?{query=**}" );
+    expanded = Expander.expand( template, params );
+    assertThat( expanded.toString(), equalTo( "schemeA://host/pathA/pathB?query=queryA&query=queryB" ) );
+
+    template = Parser.parse( "{scheme}://host/{path=**}?{host}&{query=**}&{**}" );
+    expanded = Expander.expand( template, params );
+    assertThat(
+        expanded.toString(),
+        equalTo( "schemeA://host/pathA/pathB?host=hostA&query=queryA&query=queryB&extra=extraA" ) );
+
+    template = Parser.parse( "{scheme}://host/{path=**}?server={host}&{query=**}&{**}" );
+    expanded = Expander.expand( template, params );
+    assertThat(
+        expanded.toString(),
+        equalTo( "schemeA://host/pathA/pathB?server=hostA&query=queryA&query=queryB&extra=extraA" ) );
+
+    // In this case "server-host" is treated as a param name and not found in the params so it
+    // is copied.  I'm not really sure what the correct behavior should be.  My initial thinking
+    // is that if something within {} isn't resolve to a param it should be dropped from the output.
+    template = Parser.parse( "{scheme}://host/{path=**}?{server=host}&{query=**}&{**}" );
+    expanded = Expander.expand( template, params );
+    assertThat(
+        expanded.toString(),
+        equalTo( "schemeA://host/pathA/pathB?server=host&query=queryA&query=queryB&host=hostA&extra=extraA" ) );
+  }
+
 }

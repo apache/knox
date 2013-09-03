@@ -1,4 +1,3 @@
-##########################################################################
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -14,23 +13,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-##########################################################################
 
-.classpath
-.project
-.settings
-dependency-reduced-pom.xml
-.idea/
-.iml/
-*.iml
-*.ipr
-*.iws
-atlassian-ide-plugin.xml
-.DS_Store
-target
-install
-org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
-velocity.log
-*.pyc
-*.py~
-*.patch
+test-external-host=test-inbound-internal-host

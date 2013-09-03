@@ -145,7 +145,7 @@ public interface GatewayMessages {
   void dispatchRequest( String method, URI uri );
   
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
-  void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.DEBUG) Exception e );
+  void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.WARN) Exception e );
 
   @Message( level = MessageLevel.DEBUG, text = "Signature verified: {0}" )
   void signatureVerified( boolean verified );

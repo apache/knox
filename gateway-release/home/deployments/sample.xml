@@ -20,8 +20,8 @@
     <gateway>
         <provider>
             <role>authentication</role>
-            <enabled>true</enabled>
             <name>ShiroProvider</name>
+            <enabled>true</enabled>
             <param>
                 <name>main.ldapRealm</name>
                 <value>org.apache.shiro.realm.ldap.JndiLdapRealm</value>
@@ -45,8 +45,17 @@
         </provider>
         <provider>
             <role>identity-assertion</role>
-            <enabled>true</enabled>
             <name>Pseudo</name>
+            <enabled>true</enabled>
+        </provider>
+        <provider>
+            <role>hostmap</role>
+            <name>static</name>
+            <enabled>true</enabled>
+            <param>
+                <name>localhost</name>
+                <value>sandbox</value>
+            </param>
         </provider>
     </gateway>
 

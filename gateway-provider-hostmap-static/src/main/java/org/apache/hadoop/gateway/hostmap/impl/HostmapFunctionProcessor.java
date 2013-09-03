@@ -90,6 +90,7 @@ public class HostmapFunctionProcessor
     if( value == null ) {
       value = parameter;
     }
+//    System.out.println( "HOSTMAP: " + parameter + "->" + value );
     return value;
   }
 

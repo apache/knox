@@ -87,11 +87,10 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
     rule = rules.addRule( getQualifiedName() + "/datanode/outbound" )
         .directions( "outbound" );
-//        .pattern( "*://*:*/**?**" );
     match = rule.addStep( "match" );
     match.pattern( "*://{host}:{port}/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
+    rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?host={$hostmap(host)}&{port}&{**}" );
     rule.addStep( "encode-query" );
 
     UrlRewriteFilterDescriptor filter = rules.addFilter( getQualifiedName() + "/outbound" );

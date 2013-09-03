@@ -173,4 +173,30 @@
         </exec>
     </target>
 
+    <target name="install-test-home" description="Install package release into install directory.">
+        <delete dir="install" quiet="true"/>
+        <unzip src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip/" dest="install"/>
+        <echo file="install/${gateway-artifact}-${gateway-version}/conf/security/master">#1.0# Mon, Aug 26 2013 14:25:31.483
+cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2N3c9PQ==</echo>
+        <chmod file="install/${gateway-artifact}-${gateway-version}/conf/security/master" perm="600"/>
+    </target>
+
+    <target name="start-test-ldap">
+        <exec executable="java" dir="install/${gateway-artifact}-${gateway-version}" spawn="true">
+            <arg value="-jar"/>
+            <arg value="bin/ldap.jar"/>
+            <arg value="conf"/>
+        </exec>
+    </target>
+
+    <target name="start-test-gateway">
+        <exec executable="java" dir="install/${gateway-artifact}-${gateway-version}" inputstring="knox\nknox\n">
+            <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"/>
+            <arg value="-jar"/>
+            <arg value="bin/gateway.jar"/>
+        </exec>
+    </target>
+
+    <target name="start-test-servers" depends="install-test-home,start-test-ldap,start-test-gateway"/>
+
 </project>

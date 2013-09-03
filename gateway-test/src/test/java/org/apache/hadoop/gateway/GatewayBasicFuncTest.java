@@ -197,6 +197,7 @@ public class GatewayBasicFuncTest {
             .addTag( "role" ).addText( "HBASE" )
             .addTag( "url" ).addText( driver.getRealUrl( "HBASE" ) )
         .gotoRoot();
+    // System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
   }
 

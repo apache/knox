@@ -21,8 +21,8 @@ import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "mapred"
-password = "mapred-password"
+username = "bob"
+password = "bob-password"
 dataFile = "README"
 
 session = Hadoop.login( gateway, username, password )

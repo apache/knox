@@ -66,4 +66,151 @@ public class HostmapFunctionProcessorTest {
     assertThat( output.getHost().getFirstValue().getPattern(), is( "test-inbound-rewritten-host" ) );
   }
 
+  @Test
+  public void testHdfsUseCase() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hdfs-hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-internal-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://test-static-host:{*}/{**}?server={$hostmap(host)}&{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse(
+        "test-scheme://test-external-host:42/test-path/test-file?test-name-1=test-value-1&test-name-2=test-value-2" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.OUT, "test-rule" );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-static-host" ) );
+    assertThat( output.getQuery().get( "server" ).getFirstValue().getPattern(), is( "test-external-host" ) );
+    assertThat( output.getQuery().get( "server" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().get( "test-name-1" ).getFirstValue().getPattern(), is( "test-value-1" ) );
+    assertThat( output.getQuery().get( "test-name-1" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().get( "test-name-2" ).getFirstValue().getPattern(), is( "test-value-2" ) );
+    assertThat( output.getQuery().get( "test-name-2" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().size(), is( 3 ) );
+  }
+
+  @Test
+  public void testQueryToPathRewriteWithFunction() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hdfs-hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-internal-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{qp1}&{qp2}&{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://test-static-host:{*}/{qp1}/{qp2}/{**}?server={$hostmap(host)}&{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse(
+        "test-scheme://test-external-host:42/test-path/test-file?qp1=qp1-val&qp2=qp2-val&test-name-1=test-value-1&test-name-2=test-value-2" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.OUT, "test-rule" );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-static-host" ) );
+    assertThat( output.getQuery().get( "server" ).getFirstValue().getPattern(), is( "test-external-host" ) );
+    assertThat( output.getQuery().get( "server" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().get( "test-name-1" ).getFirstValue().getPattern(), is( "test-value-1" ) );
+    assertThat( output.getQuery().get( "test-name-1" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().get( "test-name-2" ).getFirstValue().getPattern(), is( "test-value-2" ) );
+    assertThat( output.getQuery().get( "test-name-2" ).getValues().size(), is( 1 ) );
+    assertThat( output.getQuery().size(), is( 3 ) );
+  }
+
+  @Test
+  public void testUnmappedUseCase() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-inbound-unmapped-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://{$hostmap(host)}:{*}/{**}?{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse(
+        "test-scheme://test-inbound-unmapped-host:42/test-path/test-file?test-name-1=test-value-1&test-name-2=test-value-2" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-inbound-unmapped-host" ) );
+  }
+
+  @Test
+  public void testMissingFunctionUseCase() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-inbound-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://{$invalid-function(host)}:{*}/{**}?{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-inbound-host" ) );
+  }
+
+  @Test
+  public void testEmptyHostmapUseCase() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "empty-hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-inbound-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://{$invalid-function(host)}:{*}/{**}?{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-inbound-host" ) );
+  }
+
 }

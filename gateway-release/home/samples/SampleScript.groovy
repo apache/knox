@@ -18,8 +18,8 @@
 import org.apache.hadoop.gateway.shell.Hadoop
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "mapred"
-password = "mapred-password"
+username = "bob"
+password = "bob-password"
 
 session = Hadoop.login( gateway, username, password )
 

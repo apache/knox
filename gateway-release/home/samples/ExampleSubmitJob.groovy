@@ -23,8 +23,8 @@ import org.apache.hadoop.gateway.shell.job.Job
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "mapred"
-password = "mapred-password"
+username = "bob"
+password = "bob-password"
 dataFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 

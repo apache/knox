@@ -25,8 +25,8 @@ import static java.util.concurrent.TimeUnit.SECONDS
 gateway = "https://localhost:8443/gateway/sample"
 jobTracker = "localhost:50300";
 nameNode = "localhost:8020";
-username = "mapred"
-password = "mapred-password"
+username = "bob"
+password = "bob-password"
 inputFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 

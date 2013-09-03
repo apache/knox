@@ -159,6 +159,8 @@ public class UrlRewriteProcessor implements UrlRewriter {
         outputUri = null;
       }
     }
+//    System.out.println( "REWRITE: " + inputUri );
+//    System.out.println( "       : " + outputUri );
     return outputUri;
   }
 

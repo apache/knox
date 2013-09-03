@@ -43,6 +43,7 @@ public class UrlRewriteFunctionResolver implements UrlRewriteResolver {
 
   @Override
   public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
+//    System.out.println( "RESOLVE: " + parameter );
     String value = null;
     String function = null;
     if( parameter != null && parameter.startsWith( "$" ) ) {
@@ -67,7 +68,12 @@ public class UrlRewriteFunctionResolver implements UrlRewriteResolver {
         }
       }
       if( tokenType.equals( TokenType.INDIRECT_PARAMETER ) ) {
-        parameter = invokeDelegate( parameter );
+        value = getFirstValue( context.getParameters().resolve( parameter ) );
+        if( value != null ) {
+          parameter = value;
+        } else {
+          parameter = invokeDelegate( parameter );
+        }
       }
       value = invokeFunction( context, function, parameter );
     } else {

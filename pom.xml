@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <name>gateway</name>
-    <description>The Apache Knox Gateway</description>
+    <description>The Apache Knox Project</description>
     <url>http://knox.incubator.apache.org/</url>
 
     <modules>
@@ -157,6 +157,7 @@
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>
                         <exclude>**/target/**</exclude>
+                        <exclude>**/install/**</exclude>
                         <exclude>**/test/resources/**</exclude>
                         <exclude>**/main/resources/**/*.json</exclude>
                         <exclude>**/home/CHANGES</exclude>
@@ -164,6 +165,7 @@
                         <exclude>**/home/samples/*.jar</exclude>
                         <exclude>**/.externalToolBuilders/*</exclude>
                         <exclude>*.patch</exclude>
+                        <exclude>atlassian-ide-plugin.xml</exclude>
                     </excludes>
                 </configuration>
             </plugin>
