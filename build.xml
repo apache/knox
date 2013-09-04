@@ -197,6 +197,6 @@ cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2
         </exec>
     </target>
 
-    <target name="start-test-servers" depends="install-test-home,start-test-ldap,start-test-gateway"/>
+    <target name="start-test-servers" depends="start-test-ldap,start-test-gateway"/>
 
 </project>
