@@ -31,7 +31,7 @@ Hdfs.put( session ).file( dataFile ).to( "/tmp/example/README" ).now()
 text = Hdfs.ls( session ).dir( "/tmp/example" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
-text = Hdfs.get( session ).from( "tmp/example/README" ).now().string
+text = Hdfs.get( session ).from( "/tmp/example/README" ).now().string
 println text
 Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
 session.shutdown()
