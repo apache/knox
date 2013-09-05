@@ -23,20 +23,22 @@ import org.apache.hadoop.gateway.shell.job.Job
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "bob"
-password = "bob-password"
+username = "hue"
+password = "hue-password"
 dataFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 
 session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm(session).file( "/tmp/test" ).recursive().now().statusCode
-println "Create /tmp/test " + Hdfs.mkdir(session).dir( "/tmp/test").now().statusCode
+println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
+println "Create /tmp/test " + Hdfs.mkdir( session ).dir( "/tmp/test").now().statusCode
 
 putData = Hdfs.put(session).file( dataFile ).to( "/tmp/test/input/FILE" ).later() {
   println "Put /tmp/test/input/FILE " + it.statusCode }
+
 putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/hadoop-examples.jar" ).later() {
   println "Put /tmp/test/hadoop-examples.jar " + it.statusCode }
+
 session.waitFor( putData, putJar )
 
 jobId = Job.submitJava(session) \
@@ -57,5 +59,6 @@ while( !done && count++ < 60 ) {
 }
 println "Done " + done
 
-println "Shutdown " + session.shutdown( 10, SECONDS )
+println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
 
+println "Shutdown " + session.shutdown( 10, SECONDS )

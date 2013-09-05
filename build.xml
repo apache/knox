@@ -181,8 +181,16 @@ cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2
         <chmod file="install/${gateway-artifact}-${gateway-version}/conf/security/master" perm="600"/>
     </target>
 
-    <target name="start-test-ldap" description="Spawn test LDAP server.">
+    <target name="spawn-test-ldap" description="Spawn test LDAP server.">
         <exec executable="java" dir="install/${gateway-artifact}-${gateway-version}" spawn="true">
+            <arg value="-jar"/>
+            <arg value="bin/ldap.jar"/>
+            <arg value="conf"/>
+        </exec>
+    </target>
+
+    <target name="start-test-ldap" description="Spawn test LDAP server.">
+        <exec executable="java" dir="install/${gateway-artifact}-${gateway-version}">
             <arg value="-jar"/>
             <arg value="bin/ldap.jar"/>
             <arg value="conf"/>
@@ -197,6 +205,6 @@ cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2
         </exec>
     </target>
 
-    <target name="start-test-servers" depends="start-test-ldap,start-test-gateway" description="Spawn test LDAP server and start test gateway server."/>
+    <target name="start-test-servers" depends="spawn-test-ldap,start-test-gateway" description="Spawn test LDAP server and start test gateway server."/>
 
 </project>

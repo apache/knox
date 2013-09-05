@@ -23,10 +23,10 @@ import org.apache.hadoop.gateway.shell.workflow.Workflow
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-jobTracker = "localhost:50300";
-nameNode = "localhost:8020";
-username = "bob"
-password = "bob-password"
+jobTracker = "sandbox.hortonworks.com:8050"
+nameNode = "sandbox.hortonworks.com:8020"
+username = "hue"
+password = "hue-password"
 inputFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 
@@ -66,14 +66,18 @@ configuration = """\
 
 session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm(session).file( "/tmp/test" ).recursive().now().statusCode
-println "Mkdir /tmp/test " + Hdfs.mkdir(session).dir( "/tmp/test").now().statusCode
+println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
+println "Mkdir /tmp/test " + Hdfs.mkdir( session ).dir( "/tmp/test" ).now().statusCode
+
 putWorkflow = Hdfs.put(session).text( definition ).to( "/tmp/test/workflow.xml" ).later() {
   println "Put /tmp/test/workflow.xml " + it.statusCode }
+
 putData = Hdfs.put(session).file( inputFile ).to( "/tmp/test/input/FILE" ).later() {
   println "Put /tmp/test/input/FILE " + it.statusCode }
+
 putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar" ).later() {
   println "Put /tmp/test/lib/hadoop-examples.jar " + it.statusCode }
+
 session.waitFor( putWorkflow, putData, putJar )
 
 jobId = Workflow.submit(session).text( configuration ).now().jobId
@@ -88,5 +92,7 @@ while( status != "SUCCEEDED" && count++ < 60 ) {
   status = JsonPath.read( json, "\$.status" )
 }
 println "Job status " + status;
+
+println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
 
 println "Shutdown " + session.shutdown( 10, SECONDS )

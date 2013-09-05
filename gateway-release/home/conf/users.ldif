@@ -35,3 +35,12 @@ sn: Smith
 uid: bob
 userPassword:bob-password
 
+dn: uid=hue,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Hue
+sn: Hue
+uid: hue
+userPassword:hue-password

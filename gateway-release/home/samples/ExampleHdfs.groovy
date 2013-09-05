@@ -21,8 +21,8 @@ import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "bob"
-password = "bob-password"
+username = "hue"
+password = "hue-password"
 dataFile = "README"
 
 session = Hadoop.login( gateway, username, password )
@@ -35,6 +35,3 @@ text = Hdfs.get( session ).from( "/tmp/example/README" ).now().string
 println text
 Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
 session.shutdown()
-
-
-

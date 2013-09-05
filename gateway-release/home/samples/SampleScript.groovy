@@ -18,12 +18,11 @@
 import org.apache.hadoop.gateway.shell.Hadoop
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "bob"
-password = "bob-password"
+username = "hue"
+password = "hue-password"
 
 session = Hadoop.login( gateway, username, password )
 
 println "JSON=" + SampleService.simple(session).param("/tmp").now().string
 
 println "Names=" + SampleService.complex(session).param("/tmp").now().names
-
