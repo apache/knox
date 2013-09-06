@@ -17,22 +17,17 @@
  */
 package org.apache.hadoop.gateway.filter.security;
 
-import java.security.Principal;
-import java.util.Set;
-
-import javax.security.auth.Subject;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.security.principal.PrincipalMapper;
 import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
 import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
-public abstract class AbstractIdentityAssertionFilter implements Filter {
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+
+public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
   protected PrincipalMapper mapper = new SimplePrincipalMapper();
@@ -51,32 +46,6 @@ public abstract class AbstractIdentityAssertionFilter implements Filter {
         LOG.failedToLoadPrincipalMappingTable( pme );
       }
     }
-  }
-
-  /**
-   * Retrieve the principal to represent the asserted identity from
-   * the provided Subject.
-   * @param subject
-   * @return principalName
-   */
-  protected String getPrincipalName(Subject subject) {
-    // look first for the knox specific PrimaryPrincipal to use as the asserted identity
-    // if not found fallback to the first principal found
-    String name = null;
-    Set<PrimaryPrincipal> primaryPrincipals = subject.getPrincipals(PrimaryPrincipal.class);
-    if (primaryPrincipals.size() > 0) {
-      return ((PrimaryPrincipal)primaryPrincipals.toArray()[0]).getName();
-    }
-    
-    // LJM TODO: this implementation assumes the first one found 
-    // should configure through context param based on knowledge
-    // of the authentication provider in use
-    Set<Principal> principals = subject.getPrincipals();
-    for (Principal p : principals) {
-      name = p.getName();
-      break;
-    }
-    return name;
   }
 
   @Override

@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter;
+package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.PseudoIdentityAsserterMessages;
+import org.apache.hadoop.gateway.IdentityAsserterMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
@@ -38,16 +38,16 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IdentityAssertionHttpServletRequestWrapper extends HttpServletRequestWrapper {
+public class IdentityAsserterHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-  private static PseudoIdentityAsserterMessages log = MessagesFactory.get( PseudoIdentityAsserterMessages.class );
+  private static IdentityAsserterMessages log = MessagesFactory.get( IdentityAsserterMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   
   String username = null;
 
-  public IdentityAssertionHttpServletRequestWrapper(HttpServletRequest request, String principal) {
+  public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
     super(request);
     username = principal;
   }

@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.identityasserter.filter.IdentityAsserterDeploymentContributor
+org.apache.hadoop.gateway.identityasserter.function.UsernameFunctionProcessor

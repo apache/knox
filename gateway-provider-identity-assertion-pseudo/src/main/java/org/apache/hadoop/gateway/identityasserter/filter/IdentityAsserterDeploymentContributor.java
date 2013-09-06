@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy.impl;
+package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
@@ -23,15 +23,12 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
-import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 import java.util.List;
 
-public class DeploymentContributor extends ProviderDeploymentContributorBase {
+public class IdentityAsserterDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.PseudoIdentityAssertionFilter";
+  private static final String FILTER_CLASSNAME = IdentityAsserterFilter.class.getName();
   private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
 
   @Override

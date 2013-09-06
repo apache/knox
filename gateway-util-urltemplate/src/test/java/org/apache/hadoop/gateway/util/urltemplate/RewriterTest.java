@@ -67,6 +67,7 @@ public class RewriterTest {
     // would tell the rewriter to look the value 'some-host' up in the resolver and place that in the
     // output URI.
     // I want to discuss the '$' syntax hoping you have a better suggestion.
+    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
     inputUri = new URI( "http://some-known-host:80" );
     inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
@@ -75,13 +76,14 @@ public class RewriterTest {
 
     // What should happen if the param value cannot be resolved to something else?
     // Right now it uses the empty string.
+    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
     inputUri = new URI( "http://some-unknown-host:80" );
     inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
     outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
     assertThat( outputUri.toString(), equalTo( "http://:80" ) );
 
-    // Should there be another syntax that uses the original value if it cannot resolve the extraced value?
+    // Should there be another syntax that uses the original value if it cannot resolve the extracted value?
     // Should this be the default and only behavior?
     // See the '?' in the output template below.
     inputUri = new URI( "http://some-unknown-host:80" );

@@ -67,12 +67,14 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
         .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/?{**}" );
     rewrite = rule.addStep( "rewrite" );
+    //rewrite.template( service.getUrl().toExternalForm() + "/?user.name={$username}&{**}" );
     rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
 
     rule = rules.addRule( getQualifiedName() + "/namenode/file/inbound" )
         .directions( "inbound" )
         .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
+    //rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?user.name={$username}&{**}" );
     rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
 
     rule = rules.addRule( getQualifiedName() + "/datanode/inbound" )

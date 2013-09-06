@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter;
+package org.apache.hadoop.gateway.identityasserter.filter;
 
 
 import javax.security.auth.Subject;
@@ -30,7 +30,7 @@ import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter
 import java.io.IOException;
 import java.security.AccessController;
 
-public class PseudoIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
+public class IdentityAsserterFilter extends AbstractIdentityAssertionFilter {
 
   /**
    * Obtain the standard javax.security.auth.Subject, retrieve the caller principal, map
@@ -46,8 +46,8 @@ public class PseudoIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     principalName = mapper.mapPrincipal(principalName);
 //    System.out.println("+++++++++++++ Identity Assertion Filtering with Principal: " + principalName);
 
-    IdentityAssertionHttpServletRequestWrapper wrapper = 
-        new IdentityAssertionHttpServletRequestWrapper(
+    IdentityAsserterHttpServletRequestWrapper wrapper =
+        new IdentityAsserterHttpServletRequestWrapper(
         (HttpServletRequest)request, 
         principalName);
     chain.doFilter( wrapper, response );

@@ -15,9 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter;
+package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.identityasserter.filter.IdentityAsserterHttpServletRequestWrapper;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.apache.hadoop.test.mock.MockHttpServletRequest;
@@ -47,8 +48,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
 
@@ -64,8 +65,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
 
@@ -82,8 +83,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setCharacterEncoding( "ISO-8859-1" );
     request.setMethod("POST");
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
 
@@ -100,8 +101,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
     
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
 
@@ -118,8 +119,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setCharacterEncoding( "UTF-8" );
     request.setContentType( "text/plain" );
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
 
@@ -134,8 +135,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -149,8 +150,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -164,8 +165,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -180,8 +181,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setQueryString( input );
     request.setMethod("POST");
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -195,8 +196,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAssertionHttpServletRequestWrapper wrapper
-        = new IdentityAssertionHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -211,22 +212,22 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
     m = new HashMap<String,String[]>();
     m.put( "null-values", null );
-    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "null-values" ) );
 
     m = new HashMap<String,String[]>();
     m.put( "no-values", new String[0] );
-    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "no-values" ) );
 
     m = new HashMap<String,String[]>();
     m.put( "one-value", new String[]{ "value1" } );
-    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "one-value=value1" ) );
 
     m = new HashMap<String,String[]>();
     m.put( "two-values", new String[]{ "value1", "value2" } );
-    s = IdentityAssertionHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "two-values=value1&two-values=value2" ) );
   }
 

@@ -15,17 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway;
+package org.apache.hadoop.gateway.filter.rewrite.spi;
 
-import org.apache.hadoop.gateway.i18n.messages.Message;
-import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
-import org.apache.hadoop.gateway.i18n.messages.Messages;
-import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 
-@Messages(logger="org.apache.hadoop.gateway")
-public interface PseudoIdentityAsserterMessages {
+public abstract class UrlRewriteFunctionProcessorBase<T extends UrlRewriteFunctionDescriptor> implements UrlRewriteFunctionProcessor<T> {
 
-  @Message( level = MessageLevel.WARN, text = "Skipping unencodable parameter {0}={1}, {2}: {3}" )
-  void skippingUnencodableParameter( String name, String value, String encoding, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  public void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception {
+  }
+
+  public void destroy() throws Exception {
+  }
 
 }

@@ -41,13 +41,16 @@
     <dependencies>
 
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
 
         <dependency>

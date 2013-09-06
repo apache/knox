@@ -203,7 +203,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testBasicJsonUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicJsonUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
 
@@ -242,7 +242,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testBasicOutboundHeaderUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicOutboundHeaderUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
