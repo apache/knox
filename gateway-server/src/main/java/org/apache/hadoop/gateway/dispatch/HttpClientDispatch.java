@@ -77,7 +77,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     LOG.dispatchRequest( outboundRequest.getMethod(), outboundRequest.getURI() );
     DefaultHttpClient client = new DefaultHttpClient();
 
-    HttpResponse inboundResponse;
+    HttpResponse inboundResponse = null;
     try {
       String query = outboundRequest.getURI().getQuery();
       if (!"true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
@@ -96,8 +96,10 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
       throw new IOException( RES.dispatchConnectionError() );
     } finally {
-      int statusCode = inboundResponse.getStatusLine().getStatusCode();
-      LOG.dispatchResponseStatusCode( statusCode );
+      if (inboundResponse != null) {
+        int statusCode = inboundResponse.getStatusLine().getStatusCode();
+        LOG.dispatchResponseStatusCode( statusCode );
+      }
     }
 
     // Copy the client respond header to the server respond.
