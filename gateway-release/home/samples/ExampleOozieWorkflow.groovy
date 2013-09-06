@@ -35,8 +35,8 @@ definition = """\
     <start to="root-node"/>
     <action name="root-node">
         <java>
-            <job-tracker>$jobTracker</job-tracker>
-            <name-node>hdfs://$nameNode</name-node>
+            <job-tracker>set-via-configuration-property</job-tracker>
+            <name-node>set-via-configuration-property</name-node>
             <main-class>org.apache.hadoop.examples.WordCount</main-class>
             <arg>/tmp/test/input</arg>
             <arg>/tmp/test/output</arg>
@@ -56,6 +56,14 @@ configuration = """\
     <property>
         <name>user.name</name>
         <value>$username</value>
+    </property>
+    <property>
+        <name>nameNode</name>
+        <value>hdfs://$nameNode</value>
+    </property>
+    <property>
+        <name>jobTracker</name>
+        <value>$jobTracker</value>
     </property>
     <property>
         <name>oozie.wf.application.path</name>
@@ -92,7 +100,5 @@ while( status != "SUCCEEDED" && count++ < 60 ) {
   status = JsonPath.read( json, "\$.status" )
 }
 println "Job status " + status;
-
-println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
 
 println "Shutdown " + session.shutdown( 10, SECONDS )

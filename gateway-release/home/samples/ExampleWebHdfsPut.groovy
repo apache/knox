@@ -23,15 +23,13 @@ import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 gateway = "https://localhost:8443/gateway/sample"
 username = "hue"
 password = "hue-password"
+dataDir = "/user/" + username + "/example"
 dataFile = "README"
 
 session = Hadoop.login( gateway, username, password )
-Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
-Hdfs.put( session ).file( dataFile ).to( "/tmp/example/README" ).now()
-text = Hdfs.ls( session ).dir( "/tmp/example" ).now().string
+Hdfs.rm( session ).file( dataDir ).recursive().now()
+Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).now()
+text = Hdfs.ls( session ).dir( dataDir ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
-text = Hdfs.get( session ).from( "/tmp/example/README" ).now().string
-println text
-Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
 session.shutdown()

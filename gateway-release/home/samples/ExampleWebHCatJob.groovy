@@ -59,6 +59,4 @@ while( !done && count++ < 60 ) {
 }
 println "Done " + done
 
-println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
-
 println "Shutdown " + session.shutdown( 10, SECONDS )

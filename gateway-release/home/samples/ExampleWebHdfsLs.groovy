@@ -23,12 +23,9 @@ import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 gateway = "https://localhost:8443/gateway/sample"
 username = "hue"
 password = "hue-password"
-dataFile = "README"
 
 session = Hadoop.login( gateway, username, password )
-Hdfs.rm( session ).file( "/tmp/example" ).recursive().now()
-Hdfs.put( session ).file( dataFile ).to( "/tmp/example/README" ).now()
-text = Hdfs.ls( session ).dir( "/tmp/example" ).now().string
+text = Hdfs.ls( session ).dir( "/" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
 session.shutdown()
