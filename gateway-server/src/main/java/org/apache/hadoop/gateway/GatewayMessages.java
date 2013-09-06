@@ -266,4 +266,7 @@ public interface GatewayMessages {
   
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
+
+  @Message( level = MessageLevel.DEBUG, text = "Status Code Returned from Request Dispatch: {0}" )
+  void dispatchResponseStatusCode(int statusCode);
 }

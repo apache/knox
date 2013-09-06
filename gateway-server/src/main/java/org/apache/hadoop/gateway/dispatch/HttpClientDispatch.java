@@ -36,6 +36,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpOptions;
@@ -88,37 +89,15 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
         inboundResponse = client.execute(outboundRequest);
       } else { 
         // Kerberos secured, no delegation token in query string
-        outboundRequest.removeHeaders(COOKIE);
-        String appCookie = appCookieManager.getCachedAppCookie();
-        if (appCookie != null) {
-          outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
-        }
-        inboundResponse = client.execute(outboundRequest);
-        // if inBoundResponse has status 401 and header WWW-Authenticate: Negoitate
-        // refresh hadoop.auth.cookie and attempt one more time
-        int statusCode = inboundResponse.getStatusLine().getStatusCode();
-        if (statusCode == HttpStatus.SC_UNAUTHORIZED ) {
-          Header[] wwwAuthHeaders = inboundResponse.getHeaders(WWW_AUTHENTICATE) ;
-          if (wwwAuthHeaders != null && wwwAuthHeaders.length != 0 && 
-              wwwAuthHeaders[0].getValue().trim().startsWith(NEGOTIATE)) {
-            appCookie = appCookieManager.getAppCookie(outboundRequest, true);
-            outboundRequest.removeHeaders(COOKIE);
-            outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
-            client = new DefaultHttpClient();
-            inboundResponse = client.execute(outboundRequest);
-          } else {
-            // no supported authentication type found
-            // we would let the original response propogate
-          }
-        } else {
-          // not a 401 Unauthorized status code
-          // we would let the original response propogate
-        }
+        inboundResponse = executeKerberosDispatch(outboundRequest, client);
       }
     } catch (IOException e) {
       // we do not want to expose back end host. port end points to clients, see JIRA KNOX-58
       LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
       throw new IOException( RES.dispatchConnectionError() );
+    } finally {
+      int statusCode = inboundResponse.getStatusLine().getStatusCode();
+      LOG.dispatchResponseStatusCode( statusCode );
     }
 
     // Copy the client respond header to the server respond.
@@ -148,6 +127,38 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
 //]
       writeResponse( inboundRequest, outboundResponse, entity.getContent() );
     }
+  }
+
+  private HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
+      DefaultHttpClient client) throws IOException, ClientProtocolException {
+    HttpResponse inboundResponse;
+    outboundRequest.removeHeaders(COOKIE);
+    String appCookie = appCookieManager.getCachedAppCookie();
+    if (appCookie != null) {
+      outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
+    }
+    inboundResponse = client.execute(outboundRequest);
+    // if inBoundResponse has status 401 and header WWW-Authenticate: Negoitate
+    // refresh hadoop.auth.cookie and attempt one more time
+    int statusCode = inboundResponse.getStatusLine().getStatusCode();
+    if (statusCode == HttpStatus.SC_UNAUTHORIZED ) {
+      Header[] wwwAuthHeaders = inboundResponse.getHeaders(WWW_AUTHENTICATE) ;
+      if (wwwAuthHeaders != null && wwwAuthHeaders.length != 0 && 
+          wwwAuthHeaders[0].getValue().trim().startsWith(NEGOTIATE)) {
+        appCookie = appCookieManager.getAppCookie(outboundRequest, true);
+        outboundRequest.removeHeaders(COOKIE);
+        outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
+        client = new DefaultHttpClient();
+        inboundResponse = client.execute(outboundRequest);
+      } else {
+        // no supported authentication type found
+        // we would let the original response propogate
+      }
+    } else {
+      // not a 401 Unauthorized status code
+      // we would let the original response propogate
+    }
+    return inboundResponse;
   }
 
   protected HttpEntity createRequestEntity(HttpServletRequest request)
