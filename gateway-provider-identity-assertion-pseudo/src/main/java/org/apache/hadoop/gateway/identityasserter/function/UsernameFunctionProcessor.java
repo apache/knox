@@ -23,8 +23,6 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.security.principal.PrincipalMapper;
-import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
 import javax.security.auth.Subject;
 import java.security.AccessController;
@@ -34,9 +32,7 @@ public class UsernameFunctionProcessor
     implements UrlRewriteFunctionProcessor<UsernameFunctionDescriptor> {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
-  protected PrincipalMapper mapper = new SimplePrincipalMapper();
-//  private UrlRewriteEnvironment environment;
-//  private UsernameFunctionDescriptor descriptor;
+//  private PrincipalMapper mapper = null;
 
   @Override
   public String name() {
@@ -45,8 +41,12 @@ public class UsernameFunctionProcessor
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, UsernameFunctionDescriptor descriptor ) throws Exception {
-//    this.environment = environment;
-//    this.descriptor = descriptor;
+//    if( environment != null ) {
+//      GatewayServices services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
+//      if( services != null ) {
+//        mapper = (PrincipalMapper)services.getService( "PrincipalMapperService" /*GatewayServices.PRINCIPAL_MAPPER_SERVICE*/ );
+//      }
+//    }
   }
 
   @Override
@@ -59,6 +59,9 @@ public class UsernameFunctionProcessor
     Subject subject = Subject.getSubject( AccessController.getContext() );
     if( subject != null ) {
       value = getPrincipalName( subject );
+//      if( mapper != null ) {
+//        value = mapper.mapPrincipal( value );
+//      }
     }
     return value;
   }

@@ -38,6 +38,12 @@ public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
   }
 
   @Override
+  public <T> T getAttribute( String name ) {
+    T attribute = (T)context.getAttribute( name );
+    return attribute;
+  }
+
+  @Override
   public List<String> resolve( String name ) {
     List<String> values = null;
     String value = context.getInitParameter( name );

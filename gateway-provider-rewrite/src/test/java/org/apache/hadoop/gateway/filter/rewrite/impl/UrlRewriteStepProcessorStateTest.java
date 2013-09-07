@@ -239,6 +239,11 @@ public class UrlRewriteStepProcessorStateTest {
     }
 
     @Override
+    public <T> T getAttribute( String name ) {
+      return null;
+    }
+
+    @Override
     public List<String> resolve( String name ) {
       return null;
     }

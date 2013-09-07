@@ -46,6 +46,11 @@ public class SecureQueryDecodeProcessorTest {
       }
 
       @Override
+      public <T> T getAttribute( String name ) {
+        return null;
+      }
+
+      @Override
       public List<String> resolve( String name ) {
         return null;
       }
@@ -77,6 +82,11 @@ public class SecureQueryDecodeProcessorTest {
     UrlRewriteEnvironment environment = new UrlRewriteEnvironment() {
       @Override
       public URL getResource( String name ) throws IOException {
+        return null;
+      }
+
+      @Override
+      public <T> T getAttribute( String name ) {
         return null;
       }
 

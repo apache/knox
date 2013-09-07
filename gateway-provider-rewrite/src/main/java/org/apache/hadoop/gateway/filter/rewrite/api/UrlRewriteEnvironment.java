@@ -26,4 +26,6 @@ public interface UrlRewriteEnvironment extends Resolver {
 
   URL getResource( String name ) throws IOException;
 
+  <T> T getAttribute( String name );
+
 }
