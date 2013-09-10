@@ -15,49 +15,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.identityasserter.filter;
+package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
-public class IdentityAsserterDeploymentContributor extends ProviderDeploymentContributorBase {
+public class AclsAuthzDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = IdentityAsserterFilter.class.getName();
-  private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
-  private static final String GROUP_PRINCIPAL_MAPPING_PARAM_NAME = "group.principal.mapping";
+  private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.AclsAuthorizationFilter";
 
   @Override
   public String getRole() {
-    return "identity-assertion";
+    return "authorization";
   }
 
   @Override
   public String getName() {
-    return "Pseudo";
+    return "AclsAuthz";
+  }
+
+  @Override
+  public void initializeContribution(DeploymentContext context) {
+    super.initializeContribution(context);
   }
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
-    String mappings = provider.getParams().get(PRINCIPAL_MAPPING_PARAM_NAME);
-    String groupMappings = provider.getParams().get(GROUP_PRINCIPAL_MAPPING_PARAM_NAME);
-
-//    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
-//    servlet.createInitParam()
-//        .paramName( PRINCIPAL_MAPPING_PARAM_NAME )
-//        .paramValue( mappings );
-    
-    context.getWebAppDescriptor().createContextParam().paramName(PRINCIPAL_MAPPING_PARAM_NAME).paramValue(mappings);
-    context.getWebAppDescriptor().createContextParam().paramName(GROUP_PRINCIPAL_MAPPING_PARAM_NAME).paramValue(groupMappings);
   }
 
   @Override
-  public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+  public void contributeFilter( DeploymentContext context, Provider provider, Service service, 
+      ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+    if (params == null) {
+      params = new ArrayList<FilterParamDescriptor>();
+    }
+    // add resource role to params so that we can determine the acls to enforce at runtime
+    params.add( resource.createFilterParam().name( "resource.role" ).value(resource.role() ) );
+
+    // blindly add all the provider params as filter init params
+    // this will include any {resource.role}-ACLS parameters to be enforced - such as NAMENODE-ACLS
+    Map<String, String> providerParams = provider.getParams();
+    for(Entry<String, String> entry : providerParams.entrySet()) {
+      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+    }
+
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }
 }

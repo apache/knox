@@ -64,6 +64,7 @@ public class TempletonDeploymentContributor extends ServiceDeploymentContributor
     }
     context.contributeFilter( service, resource, "rewrite", null, null );
     context.contributeFilter( service, resource, "identity-assertion", null, null );
+    addAuthorizationFilter(context, service, resource);
     context.contributeFilter( service, resource, "dispatch", null, null );
   }
 

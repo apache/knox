@@ -72,6 +72,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     addAuthenticationFilter( context, service, rootResource );
     addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );
+    addAuthorizationFilter(context, service, rootResource);
     addDispatchFilter( context, service, rootResource );
 
     ResourceDescriptor apiResource = context.getGatewayDescriptor().addResource();
@@ -80,16 +81,8 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     addAuthenticationFilter( context, service, apiResource );
     addRewriteFilter( context, service, apiResource );
     addIdentityAssertionFilter( context, service, apiResource );
+    addAuthorizationFilter(context, service, apiResource);
     addDispatchFilter( context, service, apiResource );
-  }
-
-  private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    if (topologyContainsProviderType(context, "authentication")) {
-      context.contributeFilter( service, resource, "authentication", null, null );
-    }
-    if (topologyContainsProviderType(context, "federation")) {
-      context.contributeFilter( service, resource, "federation", null, null );
-    }
   }
 
   private void addRewriteFilter(
@@ -97,12 +90,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     context.contributeFilter( service, resource, "rewrite", null, null );
   }
 
-  private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    context.contributeFilter( service, resource, "identity-assertion", null, null );
-  }
-
-  private void addDispatchFilter(
-      DeploymentContext context, Service service, ResourceDescriptor resource ) {
+  private void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource ) {
     context.contributeFilter( service, resource, "dispatch", null, null );
   }
 

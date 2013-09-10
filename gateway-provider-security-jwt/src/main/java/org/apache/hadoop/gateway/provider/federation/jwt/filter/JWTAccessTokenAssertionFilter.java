@@ -86,7 +86,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
 
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
-      principalName = mapper.mapPrincipal(principalName);
+      principalName = mapper.mapUserPrincipal(principalName);
       
       // calculate expiration timestamp: validity * 1000 + currentTimeInMillis
       long expires = System.currentTimeMillis() + validity * 1000;

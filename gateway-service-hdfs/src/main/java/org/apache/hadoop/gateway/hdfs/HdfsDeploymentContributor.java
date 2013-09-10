@@ -107,6 +107,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     addAuthenticationFilter( context, service, rootResource );
     addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );
+    addAuthorizationFilter( context, service, rootResource );
     addDispatchFilter( context, service, rootResource, "dispatch", null );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
@@ -115,6 +116,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     addAuthenticationFilter( context, service, fileResource );
     addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
+    addAuthorizationFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
   }
 
@@ -123,27 +125,10 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     fileResource.role( service.getRole() );
     fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
-    addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
+    addAuthorizationFilter( context, service, fileResource );
+    addRewriteFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
-  }
-
-  private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    if (topologyContainsProviderType(context, "authentication")) {
-      context.contributeFilter( service, resource, "authentication", null, null );
-    }
-    if (topologyContainsProviderType(context, "federation")) {
-      context.contributeFilter( service, resource, "federation", null, null );
-    }
-  }
-
-  private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    context.contributeFilter( service, resource, "identity-assertion", null, null );
-  }
-
-  private void addDispatchFilter(
-    DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
-    context.contributeFilter( service, resource, role, name, null );
   }
 
   private void addRewriteFilter(

@@ -219,6 +219,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
+            <artifactId>gateway-provider-security-authz-acls</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
             <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
             <scope>test</scope>
         </dependency>

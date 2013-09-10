@@ -99,16 +99,8 @@ public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase
     addAuthenticationFilter( context, service, fileResource );
     addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
+    addAuthorizationFilter(context, service, fileResource);
     addDispatchFilter( context, service, fileResource );
-  }
-
-  private void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    if (topologyContainsProviderType( context, "authentication" )) {
-      context.contributeFilter( service, resource, "authentication", null, null );
-    }
-    if ( topologyContainsProviderType( context, "federation" ) ) {
-      context.contributeFilter( service, resource, "federation", null, null );
-    }
   }
 
   private void addRewriteFilter(
@@ -116,10 +108,6 @@ public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
     params.add( resource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/hbase/outbound" ) );
     context.contributeFilter( service, resource, "rewrite", null, params );
-  }
-
-  private void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    context.contributeFilter( service, resource, "identity-assertion", null, null );
   }
 
   private void addDispatchFilter(

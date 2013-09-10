@@ -25,7 +25,7 @@ public interface PrincipalMapper {
    * actual[,another-actual]=mapped;...
    * @param principalMapping
    */
-  public abstract void loadMappingTable(String principalMapping)
+  public abstract void loadMappingTable(String principalMapping, String groupMapping)
       throws PrincipalMappingException;
 
   /**
@@ -35,6 +35,13 @@ public interface PrincipalMapper {
    * @param principalName
    * @return principal name to be used in the assertion
    */
-  public abstract String mapPrincipal(String principalName);
+  public abstract String mapUserPrincipal(String principalName);
 
+  /**
+   * Acquire array of group principal names from the mapping table
+   * as appropriate. Otherwise, return null.
+   * @param principalName
+   * @return group principal names to be used in the assertion
+   */
+  public abstract String[] mapGroupPrincipal(String principalName);
 }

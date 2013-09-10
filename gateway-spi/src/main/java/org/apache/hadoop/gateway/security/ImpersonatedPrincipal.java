@@ -15,16 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.security.principal;
+package org.apache.hadoop.gateway.security;
 
-public class PrincipalMappingException extends Exception {
+import java.security.Principal;
 
-  public PrincipalMappingException(String message) {
-    super(message);
+public class ImpersonatedPrincipal implements Principal {
+  private String name = null;
+  
+  public ImpersonatedPrincipal(String name) {
+    this.name = name;
   }
-
-  public PrincipalMappingException(String message, Exception e) {
-    super(message, e);
+  
+  @Override
+  public String getName() {
+    return name;
   }
-
 }

@@ -59,6 +59,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -177,6 +178,16 @@ public class GatewayBasicFuncTest {
               .addTag( "role" ).addText( "identity-assertion" )
               .addTag( "enabled" ).addText( "true" )
               .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+            .addTag( "provider" )
+              .addTag( "role" ).addText( "authorization" )
+              .addTag( "enabled" ).addText( "true" )
+              .addTag( "name" ).addText( "AclsAuthz" ).gotoParent()
+              .addTag( "param" )
+                .addTag( "name" ).addText( "namenode-acls" )
+                .addTag( "value" ).addText( "hdfs;*;*" ).gotoParent()
+              .addTag( "param" )
+                .addTag( "name" ).addText( "acl.processing.mode" )
+                .addTag( "value" ).addText( "AND" ).gotoParent().gotoParent()
           .gotoRoot()
           .addTag( "service" )
             .addTag( "role" ).addText( "NAMENODE" )
@@ -206,7 +217,6 @@ public class GatewayBasicFuncTest {
     String root = "/tmp/GatewayWebHdfsFuncTest/testBasicJsonUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
-
     /* Create a directory.
     curl -i -X PUT "http://<HOST>:<PORT>/<PATH>?op=MKDIRS[&permission=<OCTAL>]"
 
@@ -362,20 +372,32 @@ public class GatewayBasicFuncTest {
         //.log().all()
         .auth().preemptive().basic( username, "invalid-password" )
         .queryParam( "op", "LISTSTATUS" )
-        .expect()
+    .expect()
         //.log().ifError()
-        .statusCode( HttpStatus.SC_UNAUTHORIZED );
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+    .when().get( driver.getUrl( "NAMENODE" ) + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a bad user.
     given()
         //.log().all()
-        .auth().preemptive().basic( "invalid-user", "invalid-password" )
+        .auth().preemptive().basic( "hdfs-user", "hdfs-password" )
         .queryParam( "op", "LISTSTATUS" )
-        .expect()
+    .expect()
         //.log().ifError()
-        .statusCode( HttpStatus.SC_UNAUTHORIZED );
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+    .when().get( driver.getUrl( "NAMENODE" ) + root );
     driver.assertComplete();
+
+    //NEGATIVE: Test a valid but unauthorized user.
+    given()
+      //.log().all()
+      .auth().preemptive().basic( "mapred-user", "mapred-password" )
+      .queryParam( "op", "LISTSTATUS" )
+   .expect()
+      //.log().ifError()
+      .statusCode( HttpStatus.SC_UNAUTHORIZED )
+   .when().get( driver.getUrl( "NAMENODE" ) + root );
 
     /* Add a file.
     curl -i -X PUT "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=CREATE

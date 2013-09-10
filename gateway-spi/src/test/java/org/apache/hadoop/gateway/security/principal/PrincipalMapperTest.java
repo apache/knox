@@ -39,107 +39,135 @@ public class PrincipalMapperTest {
   }
   
   @Test
-  public void testNonNullSimplePrincipalMapping() {
+  public void testNonNullSimplePrincipalMappingWithGroups() {
     String principalMapping = "lmccay,kminder=hdfs;newuser=mapred";
+    String groupMapping = "hdfs=group1;mapred=mrgroup,mrducks";
     try {
-      mapper.loadMappingTable(principalMapping);
+      mapper.loadMappingTable(principalMapping, groupMapping);
     }
     catch (PrincipalMappingException pme) {
+      pme.printStackTrace();
       fail();
     }
     
-    assertTrue(mapper.mapPrincipal("lmccay").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("kminder").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("hdfs"));
+    assertTrue(mapper.mapGroupPrincipal("hdfs")[0].equals("group1"));
+
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("hdfs"));
     
-    assertTrue(mapper.mapPrincipal("newuser").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("mapred"));
+    assertTrue(mapper.mapGroupPrincipal("mapred")[0].equals("mrgroup"));
+    assertTrue(mapper.mapGroupPrincipal("mapred")[1].equals("mrducks"));
 
-    assertTrue(mapper.mapPrincipal("hdfs").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("mapred").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("stink").equals("stink"));
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
+  }
+
+  @Test
+  public void testNonNullSimplePrincipalMapping() {
+    String principalMapping = "lmccay,kminder=hdfs;newuser=mapred";
+    try {
+      mapper.loadMappingTable(principalMapping, null);
+    }
+    catch (PrincipalMappingException pme) {
+      pme.printStackTrace();
+      fail();
+    }
+    
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("hdfs"));
+    
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("mapred"));
+
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
+
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
   }
 
   @Test
   public void testNonNullEndingSemiColonSimplePrincipalMapping() {
     String principalMapping = "lmccay,kminder=hdfs;newuser=mapred;";
     try {
-      mapper.loadMappingTable(principalMapping);
+      mapper.loadMappingTable(principalMapping, null);
     }
     catch (PrincipalMappingException pme) {
       fail();
     }
     
-    assertTrue(mapper.mapPrincipal("lmccay").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("kminder").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("hdfs"));
     
-    assertTrue(mapper.mapPrincipal("newuser").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("hdfs").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("mapred").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("stink").equals("stink"));
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
   }
 
   @Test
   public void testNullSimplePrincipalMapping() {
     String principalMapping = null;
     try {
-      mapper.loadMappingTable(principalMapping);
+      mapper.loadMappingTable(principalMapping, null);
     }
     catch (PrincipalMappingException pme) {
       fail();
     }
     
-    assertTrue(mapper.mapPrincipal("lmccay").equals("lmccay"));
-    assertTrue(mapper.mapPrincipal("kminder").equals("kminder"));
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("lmccay"));
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("kminder"));
     
-    assertTrue(mapper.mapPrincipal("newuser").equals("newuser"));
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("newuser"));
 
-    assertTrue(mapper.mapPrincipal("hdfs").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("mapred").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("stink").equals("stink"));
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
   }
 
   @Test
   public void testInvalidSimplePrincipalMapping() {
     String principalMapping = "ksdlhfjkdshf;kjdshf";
     try {
-      mapper.loadMappingTable(principalMapping);
+      mapper.loadMappingTable(principalMapping, null);
     }
     catch (PrincipalMappingException pme) {
       // expected
     }
     
-    assertTrue(mapper.mapPrincipal("lmccay").equals("lmccay"));
-    assertTrue(mapper.mapPrincipal("kminder").equals("kminder"));
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("lmccay"));
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("kminder"));
     
-    assertTrue(mapper.mapPrincipal("newuser").equals("newuser"));
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("newuser"));
 
-    assertTrue(mapper.mapPrincipal("hdfs").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("mapred").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("stink").equals("stink"));
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
   }
 
   @Test
   public void testPartiallyInvalidSimplePrincipalMapping() {
     String principalMapping = "lmccay=hdfs;kjdshf";
     try {
-      mapper.loadMappingTable(principalMapping);
+      mapper.loadMappingTable(principalMapping, null);
     }
     catch (PrincipalMappingException pme) {
       // expected
     }
     
-    assertTrue(mapper.mapPrincipal("lmccay").equals("lmccay"));
-    assertTrue(mapper.mapPrincipal("kminder").equals("kminder"));
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("lmccay"));
+    assertTrue(mapper.mapUserPrincipal("kminder").equals("kminder"));
     
-    assertTrue(mapper.mapPrincipal("newuser").equals("newuser"));
+    assertTrue(mapper.mapUserPrincipal("newuser").equals("newuser"));
 
-    assertTrue(mapper.mapPrincipal("hdfs").equals("hdfs"));
-    assertTrue(mapper.mapPrincipal("mapred").equals("mapred"));
+    assertTrue(mapper.mapUserPrincipal("hdfs").equals("hdfs"));
+    assertTrue(mapper.mapUserPrincipal("mapred").equals("mapred"));
 
-    assertTrue(mapper.mapPrincipal("stink").equals("stink"));
+    assertTrue(mapper.mapUserPrincipal("stink").equals("stink"));
   }
 }

@@ -62,7 +62,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
 
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
-      principalName = mapper.mapPrincipal(principalName);
+      principalName = mapper.mapUserPrincipal(principalName);
       JWTToken authCode = authority.issueToken(subject, "RS256");
       
       // get the url for the token service

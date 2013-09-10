@@ -43,14 +43,15 @@ public class IdentityAsserterFilter extends AbstractIdentityAssertionFilter {
     Subject subject = Subject.getSubject(AccessController.getContext());
 
     String principalName = getPrincipalName(subject);
-    principalName = mapper.mapPrincipal(principalName);
-//    System.out.println("+++++++++++++ Identity Assertion Filtering with Principal: " + principalName);
-
+    String mappedPrincipalName = mapper.mapUserPrincipal(principalName);
+    
+    // wrap the request so that the proper principal is returned
+    // from request methods
     IdentityAsserterHttpServletRequestWrapper wrapper =
         new IdentityAsserterHttpServletRequestWrapper(
         (HttpServletRequest)request, 
-        principalName);
-    chain.doFilter( wrapper, response );
-  }
+        mappedPrincipalName);
 
+    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName);
+  }
 }

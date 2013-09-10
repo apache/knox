@@ -23,7 +23,7 @@ public class GroupPrincipal implements Principal {
   private String name = null;
 
   public GroupPrincipal(String name) {
-    
+    this.name = name;
   }
   
   public String getName() {

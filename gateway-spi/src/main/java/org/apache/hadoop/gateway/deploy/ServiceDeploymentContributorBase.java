@@ -19,7 +19,9 @@ package org.apache.hadoop.gateway.deploy;
 
 import java.util.Collection;
 
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
 
 public abstract class ServiceDeploymentContributorBase extends DeploymentContributorBase implements ServiceDeploymentContributor {
 
@@ -47,5 +49,27 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
     return p;
   }
+  
+  protected void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
+    if (topologyContainsProviderType(context, "authentication")) {
+      context.contributeFilter( service, resource, "authentication", null, null );
+    }
+    if (topologyContainsProviderType(context, "federation")) {
+      context.contributeFilter( service, resource, "federation", null, null );
+    }
+  }
 
+  protected void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    context.contributeFilter( service, resource, "identity-assertion", null, null );
+  }
+
+  protected void addAuthorizationFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    if (topologyContainsProviderType(context, "authorization")) {
+      context.contributeFilter( service, resource, "authorization", null, null );
+    }
+  }
+
+  protected void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+    context.contributeFilter( service, resource, role, name, null );
+  }  
 }
