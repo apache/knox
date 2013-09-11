@@ -184,52 +184,6 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-hdfs</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-templeton</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-oozie</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-rewrite</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-secure-query</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-hostmap-static</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-security-shiro</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-security-authz-acls</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
@@ -309,21 +263,6 @@
             <artifactId>xmltool</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-security-spring</artifactId>
-            <scope>test</scope>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>gateway-provider-security-hawk</artifactId>
-            <scope>test</scope>
-        </dependency>
-        -->
 
     </dependencies>
 
