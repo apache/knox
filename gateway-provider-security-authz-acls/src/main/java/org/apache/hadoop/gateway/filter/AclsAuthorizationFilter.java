@@ -45,6 +45,9 @@ public class AclsAuthorizationFilter implements Filter {
   private ArrayList<String> users;
   private ArrayList<String> groups;
   private ArrayList<String> ipaddr;
+  private boolean anyUser = true;
+  private boolean anyGroup = true;
+  private boolean anyIP = true;
   private String aclProcessingMode = null;
   
   @Override
@@ -78,12 +81,20 @@ public class AclsAuthorizationFilter implements Filter {
       }
       users = new ArrayList<String>();
       Collections.addAll(users, parts[0].split(","));
-  
+      if (!users.contains("*")) {
+        anyUser = false;
+      }
       groups = new ArrayList<String>();
       Collections.addAll(groups, parts[1].split(","));
-  
+      if (!groups.contains("*")) {
+        anyGroup = false;
+      }
+
       ipaddr = new ArrayList<String>();
       Collections.addAll(ipaddr, parts[2].split(","));
+      if (!ipaddr.contains("*")) {
+        anyIP = false;
+      }
     }
     else {
       log.noAclsFoundForResource(resourceRole);
@@ -148,6 +159,14 @@ public class AclsAuthorizationFilter implements Filter {
     log.remoteIPAddressHasAccess(ipAddrAccess);
     
     if (aclProcessingMode.equals("OR")) {
+      // need to interpret '*' as excluded for OR semantics
+      // to make sense and not grant access to everyone by mistake.
+      // exclusion in OR is equivalent to denied
+      // so, let's set each one that contains '*' to false.
+      if (anyUser) userAccess = false;
+      if (anyGroup) groupAccess = false;
+      if (anyIP) ipAddrAccess = false;
+      
       return (userAccess || groupAccess || ipAddrAccess);
     }
     else if (aclProcessingMode.equals("AND")) {
@@ -161,7 +180,7 @@ public class AclsAuthorizationFilter implements Filter {
     if (remoteAddr == null) {
       return false;
     }
-    if (ipaddr.contains("*")) {
+    if (anyIP) {
       allowed = true;
     }
     else {
@@ -177,7 +196,7 @@ public class AclsAuthorizationFilter implements Filter {
     if (user == null) {
       return false;
     }
-    if (users.contains("*")) {
+    if (anyUser) {
       allowed = true;
     }
     else {
@@ -193,7 +212,7 @@ public class AclsAuthorizationFilter implements Filter {
     if (userGroups == null) {
       return false;
     }
-    if (groups.contains("*")) {
+    if (anyGroup) {
       allowed = true;
     }
     else {
