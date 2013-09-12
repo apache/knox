@@ -130,7 +130,7 @@ public class GatewayBasicFuncTest {
     // TaskTracker: UI:50060, 127.0.0.1:0
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
-    driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/vi", USE_MOCK_SERVICES );
+    driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "HBASE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
