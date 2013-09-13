@@ -128,8 +128,8 @@ public class HssoGatewayServices implements GatewayServices {
    * @see org.apache.hadoop.gateway.GatewayServices#getService(java.lang.String)
    */
   @Override
-  public Service getService(String serviceName) {
-    return services.get(serviceName);
+  public <T> T getService(String serviceName) {
+    return (T)services.get( serviceName );
   }
 
   @Override

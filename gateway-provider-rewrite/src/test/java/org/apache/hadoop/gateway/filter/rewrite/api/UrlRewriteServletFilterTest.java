@@ -29,7 +29,6 @@ import org.eclipse.jetty.testing.HttpTester;
 import org.eclipse.jetty.testing.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;

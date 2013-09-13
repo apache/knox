@@ -143,11 +143,15 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-secure-query</artifactId>
+            <artifactId>gateway-provider-rewrite-step-secure-query</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-hostmap-static</artifactId>
+            <artifactId>gateway-provider-rewrite-func-hostmap-static</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite-func-service-registry</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

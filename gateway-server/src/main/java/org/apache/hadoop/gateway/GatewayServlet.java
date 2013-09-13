@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;

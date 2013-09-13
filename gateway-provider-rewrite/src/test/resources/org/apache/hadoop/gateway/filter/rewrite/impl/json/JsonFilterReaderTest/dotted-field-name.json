@@ -1,0 +1,6 @@
+{
+  "testField": "testField value",
+  "test_field": "test_field value",
+  "test-field": "test-field value",
+  "test.field": "test.field value"
+}

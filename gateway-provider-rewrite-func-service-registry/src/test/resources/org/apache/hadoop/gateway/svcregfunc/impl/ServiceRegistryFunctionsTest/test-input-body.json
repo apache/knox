@@ -1,0 +1,11 @@
+{
+  "nameNode":"default",
+  "jobTracker":"default",
+  "oozie.wf.application.path":"/tmp/test",
+  "serviceUrl":"",
+  "serviceAddr":"",
+  "serviceScheme":"",
+  "serviceHost":"",
+  "servicePort":"",
+  "servicePath":""
+}

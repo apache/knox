@@ -99,7 +99,7 @@ public class GatewayServer {
         }
         Map<String,String> options = new HashMap<String,String>();
         options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
-        ((org.apache.hadoop.gateway.services.Service) services).init(config, options);
+        services.init(config, options);
         if (!cmd.hasOption(GatewayCommandLine.NOSTART_LONG)) {
           startGateway( config, services );
         }
@@ -164,38 +164,6 @@ public class GatewayServer {
     return properties;
   }
 
-//  private static void setupGateway() {
-//    try {
-//      GatewayConfig config = new GatewayConfigImpl();
-//      String home = config.getGatewayHomeDir();
-//
-//      File homeDir = new File( home ).getAbsoluteFile();
-//      if( !homeDir.exists() ) {
-//        log.creatingGatewayHomeDir( homeDir );
-//        homeDir.mkdirs();
-//      }
-//
-//      File defaultConfigFile = new File( homeDir, "conf/gateway-site.xml" );
-//      if( !defaultConfigFile.exists() ) {
-//        log.creatingDefaultConfigFile( defaultConfigFile );
-//        extractToFile( "conf/gateway-site.xml", defaultConfigFile );
-//      }
-//
-//      File topologiesDir = calculateAbsoluteTopologiesDir( config );
-//      if( !topologiesDir.exists() ) {
-//        log.creatingGatewayDeploymentDir( topologiesDir );
-//        topologiesDir.mkdirs();
-//
-//        File defaultTopologyFile = new File( topologiesDir, "cluster.xml" );
-//        log.creatingDefaultTopologyFile( defaultTopologyFile );
-//        extractToFile( "cluster-sample.xml", defaultTopologyFile );
-//      }
-//
-//    } catch( IOException e ) {
-//      e.printStackTrace();
-//    }
-//  }
-
   private static void extractToFile( String resource, File file ) throws IOException {
     InputStream input = ClassLoader.getSystemResourceAsStream( resource );
     OutputStream output = new FileOutputStream( file );
@@ -208,7 +176,7 @@ public class GatewayServer {
     try {
       log.startingGateway();
       server = new GatewayServer( config );
-      synchronized (server ) {
+      synchronized ( server ) {
         if (services == null) {
           services = svcs;
         }
@@ -282,7 +250,7 @@ public class GatewayServer {
       jetty = new Server(address);
     }
     if (config.isSSLEnabled()) {
-      SSLService ssl = (SSLService) services.getService("SSLService");
+      SSLService ssl = services.getService("SSLService");
       Connector connector = (Connector) ssl.buildSSlConnector(config.getGatewayHomeDir());
       connector.setHost(address.getHostName());
       connector.setPort(address.getPort());
@@ -342,6 +310,7 @@ public class GatewayServer {
     context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
     context.setWar( warPath );
     internalUndeploy( topology );
+    context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
     deployments.put( name, context );
     contexts.addHandler( context );
     try {
@@ -354,7 +323,7 @@ public class GatewayServer {
   private synchronized void internalUndeploy( Topology topology ) {
     WebAppContext context = deployments.remove( topology.getName() );
     if( context != null ) {
-      ServiceRegistry sr = (ServiceRegistry) this.getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+      ServiceRegistry sr = getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
       if (sr != null) {
         sr.removeClusterServices(topology.getName());
       }

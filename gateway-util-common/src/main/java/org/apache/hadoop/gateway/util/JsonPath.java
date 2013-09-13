@@ -107,6 +107,7 @@ public class JsonPath {
     }
 
     private List<Segment> parse( String expression ) {
+      boolean insideBrackets = false;
       boolean expectChild = false;
       boolean foundChild = false;
       List<Segment> list = null;
@@ -116,7 +117,11 @@ public class JsonPath {
       String prevToken = null;
       while( parser.hasMoreTokens() ) {
         prevToken = currToken;
-        currToken = parser.nextToken().trim();
+        if( insideBrackets ) {
+          currToken = parser.nextToken( "$[]()@?:," ).trim();
+        } else {
+          currToken = parser.nextToken( "$.[]()@?:," ).trim();
+        }
         char c = currToken.charAt( 0 );
         switch( c ) {
           case '$' :
@@ -146,6 +151,7 @@ public class JsonPath {
             if( expectChild ) {
               throw new IllegalArgumentException( expression );
             }
+            insideBrackets = true;
             expectChild = true;
             foundChild = false;
             break;
@@ -153,6 +159,7 @@ public class JsonPath {
             if( !foundChild ) {
               throw new IllegalArgumentException( expression );
             }
+            insideBrackets = false;
             expectChild = false;
             foundChild = false;
             break;

@@ -1,0 +1,40 @@
+<configuration>
+    <property>
+        <name>nameNode</name>
+        <value>default</value>
+    </property>
+    <property>
+        <name>jobTracker</name>
+        <value>default</value>
+    </property>
+    <property>
+        <name>oozie.wf.application.path</name>
+        <value>/tmp/test</value>
+    </property>
+
+    <property>
+        <name>serviceUrl</name>
+        <value></value>
+    </property>
+    <property>
+        <name>serviceAddr</name>
+        <value></value>
+    </property>
+    <property>
+        <name>serviceScheme</name>
+        <value></value>
+    </property>
+    <property>
+        <name>serviceHost</name>
+        <value></value>
+    </property>
+    <property>
+        <name>servicePort</name>
+        <value></value>
+    </property>
+    <property>
+        <name>servicePath</name>
+        <value></value>
+    </property>
+
+</configuration>

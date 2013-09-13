@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -194,7 +195,7 @@ public class GatewayFuncTestDriver {
     } else if( service.mock ) {
       url = "http://localhost:" + service.server.getPort();
     } else {
-      url = service.realUrl.toExternalForm();
+      url = service.realUrl.toASCIIString();
     }
     return url;
   }
@@ -216,13 +217,13 @@ public class GatewayFuncTestDriver {
 
   private static class Service {
     String role;
-    URL realUrl;
+    URI realUrl;
     String gatewayPath;
     boolean mock;
     MockServer server;
     private Service( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
       this.role = role;
-      this.realUrl = new URL( realUrl );
+      this.realUrl = new URI( realUrl );
       this.gatewayPath = gatewayPath;
       this.mock = mock;
       this.server = new MockServer( role, true );

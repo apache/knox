@@ -286,6 +286,112 @@ public class JsonPathTest {
   }
 
   @Test
+  public void testCompileQuotedExpressions() {
+    JsonPath.Expression expression;
+    JsonPath.Segment[] segments;
+
+    expression = JsonPath.compile( "$.fieldName" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "fieldName" ) );
+
+    expression = JsonPath.compile( "$[fieldName]" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "fieldName" ) );
+
+    expression = JsonPath.compile( "$['fieldName']" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "fieldName" ) );
+
+    expression = JsonPath.compile( "$.field_name" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field_name" ) );
+
+    expression = JsonPath.compile( "$['field_name']" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field_name" ) );
+
+    expression = JsonPath.compile( "$[field_name]" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field_name" ) );
+
+    expression = JsonPath.compile( "$['field-name']" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field-name" ) );
+
+    expression = JsonPath.compile( "$[field-name]" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field-name" ) );
+
+    expression = JsonPath.compile( "$.field-name" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field-name" ) );
+
+    expression = JsonPath.compile( "$['field.name']" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field.name" ) );
+
+    expression = JsonPath.compile( "$[field.name]" );
+    assertThat( expression, notNullValue() );
+    segments = expression.getSegments();
+    assertThat( segments, notNullValue() );
+    assertThat( segments.length, is( 2 ) );
+    assertThat( segments[0].getType(), is( JsonPath.Segment.Type.ROOT ) );
+    assertThat( segments[1].getType(), is( JsonPath.Segment.Type.FIELD ) );
+    assertThat( segments[1].getField(), is( "field.name" ) );
+
+  }
+
+  @Test
   public void testEvaluateObjects() throws IOException {
     String json;
     JsonPath.Segment seg;

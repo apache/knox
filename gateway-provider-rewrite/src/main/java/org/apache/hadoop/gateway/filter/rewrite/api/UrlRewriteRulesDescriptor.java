@@ -24,6 +24,8 @@ import java.util.List;
  */
 public interface UrlRewriteRulesDescriptor {
 
+  void addRules( UrlRewriteRulesDescriptor rules );
+
   List<UrlRewriteFunctionDescriptor> getFunctions();
 
   <T extends UrlRewriteFunctionDescriptor<?>> T getFunction( String name );

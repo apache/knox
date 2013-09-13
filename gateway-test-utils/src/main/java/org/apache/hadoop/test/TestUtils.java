@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.test;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +50,10 @@ public class TestUtils {
 
   public static Reader getResourceReader( Class clazz, String name, String charset ) throws IOException {
     return new InputStreamReader( getResourceStream( clazz, name ), charset );
+  }
+
+  public static String getResourceString( Class clazz, String name, String charset ) throws IOException {
+    return IOUtils.toString( getResourceReader( clazz, name, charset ) );
   }
 
 }

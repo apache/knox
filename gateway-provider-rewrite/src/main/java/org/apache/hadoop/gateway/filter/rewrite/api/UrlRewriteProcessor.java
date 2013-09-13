@@ -74,8 +74,8 @@ public class UrlRewriteProcessor implements UrlRewriter {
         processor.initialize( environment, descriptor );
         functions.put( name, processor );
       } catch( Exception e ) {
-        LOG.failedToInitializeRewriteFunctions( e );
         // Ignore it and it won't be available as a function.
+        LOG.failedToInitializeRewriteFunctions( e );
       }
     }
   }

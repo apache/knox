@@ -29,6 +29,7 @@ atlassian-ide-plugin.xml
 .DS_Store
 target
 install
+patch
 org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
 velocity.log
 *.pyc

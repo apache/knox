@@ -1,0 +1,11 @@
+{
+  "nameNode":"hdfs://test-nn-host:411",
+  "jobTracker":"test-jt-host:511",
+  "oozie.wf.application.path":"hdfs://test-nn-host:411/tmp/test",
+  "serviceUrl":"test-nn-scheme://test-nn-host:411",
+  "serviceAddr":"test-nn-host:411",
+  "serviceScheme":"test-nn-scheme",
+  "serviceHost":"test-nn-host",
+  "servicePort":"411",
+  "servicePath":"/"
+}

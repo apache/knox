@@ -20,16 +20,20 @@ package org.apache.hadoop.gateway.oozie;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.topology.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URISyntaxException;
 
 public class OozieDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String EXTERNAL_PATH = "/oozie/api";
+  private static final String RULES_RESOURCE = OozieDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
 
   @Override
   public String getRole() {
@@ -47,22 +51,50 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     contributeResources( context, service );
   }
 
-  private void contributeRewriteRules( DeploymentContext context, Service service ) throws URISyntaxException {
-    UrlRewriteRulesDescriptor rules = context.getDescriptor( "rewrite" );
-    UrlRewriteRuleDescriptor rule;
-    UrlRewriteActionRewriteDescriptorExt rewrite;
+  UrlRewriteRulesDescriptor loadRulesFromTemplate() throws IOException {
+//    VelocityEngine engine = new VelocityEngine();
+//    engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+//    engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+//    engine.init();
+//    VelocityContext context = new VelocityContext();
+//    //context.put( "name", new String( "Velocity" ) );
+//    Template template = engine.getTemplate( OozieDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml.vm");
+//    StringWriter writer = new StringWriter();
+//    template.merge( context, writer );
+//    String string = writer.toString();
+    InputStream stream = this.getClass().getClassLoader().getResourceAsStream( RULES_RESOURCE );
+    Reader reader = new InputStreamReader( stream );
+    UrlRewriteRulesDescriptor rules = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
+    reader.close();
+    stream.close();
+    return rules;
+  }
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/root/inbound" )
-        .directions( "inbound" )
-        .pattern( "*://*:*/**" + EXTERNAL_PATH + "/{**}?{**}" );
-    rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/{**}?{**}" );
-
-    rule = rules.addRule( getRole() + "/" + getName() + "/api/inbound" )
-        .directions( "inbound" )
-        .pattern( "*://*:*/**" + EXTERNAL_PATH + "/v1/{**}?{**}" );
-    rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/v1/{**}?{**}" );
+  private void contributeRewriteRules( DeploymentContext context, Service service ) throws URISyntaxException, IOException {
+    UrlRewriteRulesDescriptor oozieRules = loadRulesFromTemplate();
+    UrlRewriteRulesDescriptor clusterRules = context.getDescriptor( "rewrite" );
+    clusterRules.addRules( oozieRules );
+//    UrlRewriteRuleDescriptor rule;
+//    UrlRewriteActionRewriteDescriptorExt rewrite;
+//
+//    String prefix = getRole() + "/" + getName();
+//
+//    rule = clusterRules.addRule( prefix + "/root/inbound" )
+//        .directions( "inbound" )
+//        .pattern( "*://*:*/**" + EXTERNAL_PATH + "/{**}?{**}" );
+//    rewrite = rule.addStep( "rewrite" );
+//    rewrite.template( service.getUrl().toExternalForm() + "/{**}?{**}" );
+//
+//    rule = clusterRules.addRule( prefix + "/api/inbound" )
+//        .directions( "inbound" )
+//        .pattern( "*://*:*/**" + EXTERNAL_PATH + "/v1/{**}?{**}" );
+//    rewrite = rule.addStep( "rewrite" );
+//    rewrite.template( service.getUrl().toExternalForm() + "/v1/{**}?{**}" );
+//
+//    UrlRewriteFilterDescriptor filter;
+//    UrlRewriteFilterContentDescriptor content;
+//    UrlRewriteFilterBufferDescriptor buffer;
+//    UrlRewriteFilterDetectDescriptor detect;
   }
 
   public void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {

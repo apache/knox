@@ -17,11 +17,36 @@
 <rules>
 
     <rule name="test-rule-1" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
-        <rewrite param="{scheme}://{host}:{port}/test-output-path-1"/>
+        <rewrite template="{scheme}://{host}:{port}/test-output-path-1"/>
     </rule>
 
     <rule name="test-rule-2" url="{scheme=*}://{host=*}:{port=*}/{path=**}">
-        <rewrite param="{scheme}://{host}:{port}/test-output-path-2"/>
+        <rewrite template="{scheme}://{host}:{port}/test-output-path-2"/>
+    </rule>
+
+    <rule name="test-rule-username">
+        <match pattern="*://{host}:{port}/{path=**}?{**}"/>
+        <rewrite template="test-output-scheme://{host}:{port}/test-output-path/{path=**}?user.name={$username}?{**}?test-output-query-name=test-output-query-value"/>
+    </rule>
+
+    <rule name="test-rule-scvreg-all">
+        <match pattern="{*}://{*}:{*}/{**}?{**}"/>
+        <rewrite template="{$serviceScheme[NAMENODE]}://{$serviceHost[NAMENODE]:{$servicePort[NAMENOCE]}/{$servicePath[NAMENODE]}"/>
+    </rule>
+
+    <rule name="test-rule-scvreg-url">
+        <match pattern="{*}://{*}:{*}/{**}?{**}"/>
+        <rewrite template="{$serviceScheme[NAMENODE]}://{$serviceHost[NAMENODE]:{$servicePort[NAMENOCE]}/{$servicePath[NAMENODE]}"/>
+    </rule>
+
+    <rule name="test-rule-scvreg-addr">
+        <match pattern="{*}://{*}:{*}/{**}?{**}"/>
+        <rewrite template="{$serviceUrl[NAMENODE]}"/>
+    </rule>
+
+    <rule name="test-rule-scvreg-addr">
+        <match pattern="{*}://{*}:{*}/{**}?{**}"/>
+        <rewrite template="test-protocol://{$serviceAddr[NAMENODE]}/test-path"/>
     </rule>
 
     <filter name="test-filter-1">

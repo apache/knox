@@ -38,6 +38,16 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   private Map<String,UrlRewriteFilterDescriptor> filterMap = new HashMap<String,UrlRewriteFilterDescriptor>();
 
   @Override
+  public void addRules( UrlRewriteRulesDescriptor rules ) {
+    for( UrlRewriteRuleDescriptor rule : rules.getRules() ) {
+      addRule( rule );
+    }
+    for( UrlRewriteFilterDescriptor filter : rules.getFilters() ) {
+      addFilter( filter  );
+    }
+  }
+
+  @Override
   public UrlRewriteRuleDescriptor getRule( String name ) {
     return ruleMap.get( name );
   }

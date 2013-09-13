@@ -40,8 +40,9 @@
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
         <module>gateway-provider-rewrite</module>
-        <module>gateway-provider-hostmap-static</module>
-        <module>gateway-provider-secure-query</module>
+        <module>gateway-provider-rewrite-func-hostmap-static</module>
+        <module>gateway-provider-rewrite-func-service-registry</module>
+        <module>gateway-provider-rewrite-step-secure-query</module>
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-authz-acls</module>
@@ -159,6 +160,7 @@
                         <exclude>**/*.iml</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/install/**</exclude>
+                        <exclude>**/patch/**</exclude>
                         <exclude>**/test/resources/**</exclude>
                         <exclude>**/main/resources/**/*.json</exclude>
                         <exclude>**/home/CHANGES</exclude>
@@ -331,12 +333,17 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-provider-hostmap-static</artifactId>
+                <artifactId>gateway-provider-rewrite-func-hostmap-static</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-provider-secure-query</artifactId>
+                <artifactId>gateway-provider-rewrite-func-service-registry</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-rewrite-step-secure-query</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -816,6 +823,12 @@
                 <artifactId>json-path-assert</artifactId>
                 <version>0.8.1</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <artifactId>openaz</artifactId>
+                <groupId>org.openliberty</groupId>
+                <version>0.0.1-SNAPSHOT</version>
             </dependency>
 
         </dependencies>

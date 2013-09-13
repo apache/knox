@@ -1,0 +1,40 @@
+<configuration>
+    <property>
+        <name>nameNode</name>
+        <value>hdfs://test-nn-host:411</value>
+    </property>
+    <property>
+        <name>jobTracker</name>
+        <value>test-jt-host:511</value>
+    </property>
+    <property>
+        <name>oozie.wf.application.path</name>
+        <value>hdfs://test-nn-host:411/tmp/test</value>
+    </property>
+
+    <property>
+        <name>serviceUrl</name>
+        <value>test-nn-scheme://test-nn-host:411</value>
+    </property>
+    <property>
+        <name>serviceAddr</name>
+        <value>test-nn-host:411</value>
+    </property>
+    <property>
+        <name>serviceScheme</name>
+        <value>test-nn-scheme</value>
+    </property>
+    <property>
+        <name>serviceHost</name>
+        <value>test-nn-host</value>
+    </property>
+    <property>
+        <name>servicePort</name>
+        <value>411</value>
+    </property>
+    <property>
+        <name>servicePath</name>
+        <value>/</value>
+    </property>
+
+</configuration>

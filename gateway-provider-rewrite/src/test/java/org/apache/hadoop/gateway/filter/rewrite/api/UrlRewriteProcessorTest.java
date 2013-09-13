@@ -163,8 +163,18 @@ public class UrlRewriteProcessorTest {
         "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
     processor.initialize( environment, config );
 
-    Template inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two" );
-    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
+    Template inputUrl;
+    Template outputUrl;
+
+    inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two?test-query-name=test-query-value" );
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
+
+    assertThat(
+        "Expect rewrite to contain the correct path and query.",
+        outputUrl.toString(), is( "test-scheme-output://test-host-output:777/test-path-output/test-path-input-one/test-path-input-two?test-query-name=test-query-value" ) );
+
+    inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two" );
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
 
     assertThat(
         "Expect rewrite to contain the correct path.",

@@ -93,6 +93,33 @@ public class JsonFilterReaderTest {
     JsonAssert.with( output ).assertThat( "name<test-str>", is( "value:null<text>" ) );
   }
 
+  @Test
+  public void testNamesWithDots() throws IOException {
+    InputStream stream = TestUtils.getResourceStream( this.getClass(), "dotted-field-name.json" );
+    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+
+    //System.out.println( "INPUT=" + input );
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "test-filter" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "application/json" );
+    //NOTE: The field names are rewritten first so the values rules need to match the rewritten name.
+    contentConfig.addApply( "$.name<testField>", "test-rule" );
+    contentConfig.addApply( "$.name<test_field>", "test-rule" );
+    contentConfig.addApply( "$.name<test-field>", "test-rule" );
+    contentConfig.addApply( "$['name<test.field>']", "test-rule" );
+
+    JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+
+    //System.out.println( "OUTPUT=" + output );
+
+    JsonAssert.with( output ).assertThat( "$['name<testField>']", is( "value:test-rule<testField value>" ) );
+    JsonAssert.with( output ).assertThat( "$['name<test_field>']", is( "value:test-rule<test_field value>" ) );
+    JsonAssert.with( output ).assertThat( "$['name<test-field>']", is( "value:test-rule<test-field value>" ) );
+    JsonAssert.with( output ).assertThat( "$['name<test.field>']", is( "value:test-rule<test.field value>" ) );
+  }
+
 //  @Test
 //  public void testJsonPathObject() throws IOException {
 //    InputStream stream = TestUtils.getResourceStream( this.getClass(), "complex.json" );

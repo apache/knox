@@ -1,0 +1,69 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <rule dir="IN" name="OOZIE/oozie/root" pattern="*://*:*/**/oozie/api/{**}?{**}">
+        <rewrite template="{$serviceUrl[OOZIE]}/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="OOZIE/oozie/api" pattern="*://*:*/**/oozie/api/v1/{**}?{**}">
+        <rewrite template="{$serviceUrl[OOZIE]}/v1/{**}?{**}"/>
+    </rule>
+
+    <rule name="OOZIE/oozie/user-name">
+        <rewrite template="{$username}"/>
+    </rule>
+
+    <rule name="OOZIE/oozie/name-node-url">
+        <rewrite template="hdfs://{$serviceAddr[NAMENODE-RPC]}"/>
+    </rule>
+
+    <rule name="OOZIE/oozie/job-tracker-address">
+        <rewrite template="{$serviceAddr[JOBTRACKER]}"/>
+    </rule>
+
+    <rule name="OOZIE/oozie/hdfs-path">
+        <match pattern="{path=**}"/>
+        <rewrite template="hdfs://{$serviceHost[NAMENODE-RPC]}:{$servicePort[NAMENODE-RPC]}/{path=**}"/>
+    </rule>
+
+    <filter name="OOZIE/oozie/configuration">
+        <content type="*/xml">
+            <buffer path="/configuration/property">
+                <detect path="name" value="user.name">
+                    <apply path="value" rule="OOZIE/oozie/user-name"/>
+                </detect>
+                <detect path="name" value="nameNode">
+                    <apply path="value" rule="OOZIE/oozie/name-node-url"/>
+                </detect>
+                <detect path="name" value="jobTracker">
+                    <apply path="value" rule="OOZIE/oozie/job-tracker-address"/>
+                </detect>
+                <detect path="name" value="oozie.wf.application.path">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+            </buffer>
+        </content>
+        <content type="*/json">
+            <apply path="$[user.name]" rule="OOZIE/oozie/user-name"/>
+            <apply path="$[nameNode]" rule="OOZIE/oozie/name-node-url"/>
+            <apply path="$[jobTracker]" rule="OOZIE/oozie/job-tracker-addr"/>
+            <apply path="$[oozie.wf.application.path]" rule="OOZIE/oozie/hdfs-path"/>
+        </content>
+    </filter>
+
+</rules>
