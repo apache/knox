@@ -51,7 +51,7 @@
     </gateway>
 
     <service>
-        <role>NAMENODE</role>
+        <role>WEBHDFS</role>
         <url>http://localhost:50070/webhdfs/v1</url>
     </service>
     <service>

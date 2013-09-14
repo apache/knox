@@ -15,37 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.topology;
+package org.apache.hadoop.gateway.hdfs;
 
-public class Service {
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
+import org.apache.hadoop.gateway.topology.Service;
 
-  private String role;
-  private String name;
+public class JobTrackerDeploymentContributor extends ServiceDeploymentContributorBase {
 
+  @Override
   public String getRole() {
-    return role;
+    return "JOBTRACKER";
   }
 
-  public void setRole( String role ) {
-    this.role = role;
-  }
-
+  @Override
   public String getName() {
-    return name;
+    return "jobtracker";
   }
 
-  public void setName( String name ) {
-    this.name = name;
-  }
-
-  private String url;
-
-  public String getUrl() {
-    return url;
-  }
-
-  public void setUrl( String url ) {
-    this.url = url;
+  @Override
+  public void contributeService( DeploymentContext context, Service service ) throws Exception {
+    // NoOp
   }
 
 }

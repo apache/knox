@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.io.UTF8;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -278,7 +277,7 @@ public class GatewayFuncTestDriver {
 
   public String createFileNN( String user, String password, String file, String permsOctal, int status ) throws IOException {
     if( status == HttpStatus.SC_TEMPORARY_REDIRECT ) {
-      getMock( "NAMENODE" )
+      getMock( "WEBHDFS" )
           .expect()
           .method( "PUT" )
           .pathInfo( file )
@@ -288,7 +287,7 @@ public class GatewayFuncTestDriver {
           .status( status )
           .header( "Location", getRealUrl("DATANODE") + file + "?op=CREATE&user.name="+user );
     } else {
-      getMock( "NAMENODE" )
+      getMock( "WEBHDFS" )
           .expect()
           .method( "PUT" )
           .pathInfo( file )
@@ -306,7 +305,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl( "NAMENODE" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .when().put( getUrl( "WEBHDFS" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     log.trace( "Redirect location: " + response.getHeader( "Location" ) );
     return location;
@@ -367,7 +366,7 @@ public class GatewayFuncTestDriver {
   }
 
   public void readFile( String user, String password, String file, String contentType, String resource, int status ) throws IOException {
-    getMock( "NAMENODE" )
+    getMock( "WEBHDFS" )
         .expect()
         .method( "GET" )
         .pathInfo( file )
@@ -404,7 +403,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().get( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .when().get( getUrl("WEBHDFS") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     if( response.getStatusCode() == HttpStatus.SC_OK ) {
       String actualContent = response.asString();
       String expectedContent = getResourceString( resource, Charset.forName("UTF-8") );
@@ -414,7 +413,7 @@ public class GatewayFuncTestDriver {
   }
 
   public void chownFile( String user, String password, String file, String owner, String group, int status ) {
-    getMock( "NAMENODE" )
+    getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( file )
@@ -433,12 +432,12 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .when().put( getUrl("WEBHDFS") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
   public void chmodFile( String user, String password, String file, String permsOctal, int status ) {
-    getMock( "NAMENODE" )
+    getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( file )
@@ -455,7 +454,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .when().put( getUrl("WEBHDFS") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
@@ -471,7 +470,7 @@ public class GatewayFuncTestDriver {
 
   public String updateFileNN( String user, String password, String file, String resource, int status ) throws IOException {
     if( status == HttpStatus.SC_TEMPORARY_REDIRECT ) {
-      getMock( "NAMENODE" )
+      getMock( "WEBHDFS" )
           .expect()
           .method( "PUT" )
           .pathInfo( file )
@@ -482,7 +481,7 @@ public class GatewayFuncTestDriver {
           .status( status )
           .header( "Location", getRealUrl("DATANODE") + file + "?op=CREATE&user.name="+user );
     } else {
-      getMock( "NAMENODE" )
+      getMock( "WEBHDFS" )
           .expect()
           .method( "PUT" )
           .pathInfo( file )
@@ -500,7 +499,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().put( getUrl("NAMENODE") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .when().put( getUrl("WEBHDFS") + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     log.trace( "Redirect location: " + response.getHeader( "Location" ) );
     return location;
@@ -545,7 +544,7 @@ public class GatewayFuncTestDriver {
   }
 
   public void deleteFile( String user, String password, String file, String recursive, int... status ) {
-    getMock( "NAMENODE" )
+    getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
         .pathInfo( file )
@@ -562,12 +561,12 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .statusCode( isIn( ArrayUtils.toObject( status ) ) )
         .when()
-        .delete( getUrl( "NAMENODE" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .delete( getUrl( "WEBHDFS" ) + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
   }
 
   public String createDir( String user, String password, String dir, String permsOctal, int status ) {
-    getMock( "NAMENODE" )
+    getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( dir )
@@ -589,7 +588,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         .content( "boolean", equalTo( true ) )
         .when()
-        .put( getUrl("NAMENODE") + dir + ( isUseGateway() ? "" : "?user.name=" + user ) );
+        .put( getUrl("WEBHDFS") + dir + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
     return location;
   }
@@ -612,7 +611,7 @@ public class GatewayFuncTestDriver {
         .statusCode( status )
         .content( equalTo( "TODO" ) )
         .when()
-        .get( getUrl( "NAMENODE" ) + dir );
+        .get( getUrl( "WEBHDFS" ) + dir );
   }
 
   public String submitJava( String user, String password, String jar, String main, String input, String output, int status ) {

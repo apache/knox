@@ -17,13 +17,10 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.parsing.Parser;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.hadoop.io.UTF8;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
@@ -52,18 +49,14 @@ import java.net.ServerSocket;
 import java.nio.charset.Charset;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.responseContentType;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
-
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -97,7 +90,7 @@ public class GatewayBasicFuncTest {
 
   // Specifies if the GATEWAY_HOME created for the test should be deleted when the test suite is complete.
   // This is frequently used during debugging to keep the GATEWAY_HOME around for inspection.
-  private static final boolean CLEANUP_TEST = false;
+  private static final boolean CLEANUP_TEST = true;
 
 //  private static final boolean USE_GATEWAY = false;
 //  private static final boolean USE_MOCK_SERVICES = false;
@@ -124,12 +117,10 @@ public class GatewayBasicFuncTest {
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
-    driver.setupService( "NAMENODE", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", USE_MOCK_SERVICES ); // IPC:8020
-    driver.setupService( "NAMENODE-RPC", "thrift://" + TEST_HOST + ":777", null, USE_MOCK_SERVICES );
-    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", USE_MOCK_SERVICES ); // CLIENT:50010, IPC:50020
-    // JobTracker: UI:50030,
-    // TaskTracker: UI:50060, 127.0.0.1:0
-    driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":777", null, USE_MOCK_SERVICES );
+    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
+    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
@@ -192,11 +183,11 @@ public class GatewayBasicFuncTest {
                 .addTag( "value" ).addText( "AND" ).gotoParent().gotoParent()
           .gotoRoot()
           .addTag( "service" )
+            .addTag( "role" ).addText( "WEBHDFS" )
+            .addTag( "url" ).addText( driver.getRealUrl( "WEBHDFS" ) ).gotoParent()
+          .addTag( "service" )
             .addTag( "role" ).addText( "NAMENODE" )
             .addTag( "url" ).addText( driver.getRealUrl( "NAMENODE" ) ).gotoParent()
-          .addTag( "service" )
-            .addTag( "role" ).addText( "NAMENODE-RPC" )
-            .addTag( "url" ).addText( driver.getRealUrl( "NAMENODE-RPC" ) ).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "DATANODE" )
             .addTag( "url" ).addText( driver.getRealUrl( "DATANODE" ) ).gotoParent()
@@ -235,7 +226,7 @@ public class GatewayBasicFuncTest {
 
     {"boolean": true}
     */
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( root + "/dir" )
@@ -254,7 +245,7 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "NAMENODE" ) + root + "/dir" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + root + "/dir" );
     driver.assertComplete();
   }
 
@@ -265,7 +256,7 @@ public class GatewayBasicFuncTest {
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
 
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( root + "/dir/file" )
@@ -281,7 +272,7 @@ public class GatewayBasicFuncTest {
         .expect()
             //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
+        .when().put( driver.getUrl("WEBHDFS") + root + "/dir/file" );
     String location = response.getHeader( "Location" );
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
@@ -303,7 +294,7 @@ public class GatewayBasicFuncTest {
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
     // Cleanup anything that might have been leftover because the test failed previously.
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
         .pathInfo( root )
@@ -319,7 +310,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().all();
         .statusCode( HttpStatus.SC_OK )
-        .when().delete( driver.getUrl( "NAMENODE" ) + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
+        .when().delete( driver.getUrl( "WEBHDFS" ) + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
     driver.assertComplete();
 
     /* Create a directory.
@@ -332,7 +323,7 @@ public class GatewayBasicFuncTest {
 
     {"boolean": true}
     */
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( root + "/dir" )
@@ -351,10 +342,10 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "NAMENODE" ) + root + "/dir" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + root + "/dir" );
     driver.assertComplete();
 
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "GET" )
         .pathInfo( root )
@@ -372,7 +363,7 @@ public class GatewayBasicFuncTest {
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( "FileStatuses.FileStatus[0].pathSuffix", is( "dir" ) )
-        .when().get( driver.getUrl( "NAMENODE" ) + root );
+        .when().get( driver.getUrl( "WEBHDFS" ) + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a bad password.
@@ -383,7 +374,7 @@ public class GatewayBasicFuncTest {
     .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED )
-    .when().get( driver.getUrl( "NAMENODE" ) + root );
+    .when().get( driver.getUrl( "WEBHDFS" ) + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a bad user.
@@ -394,7 +385,7 @@ public class GatewayBasicFuncTest {
     .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED )
-    .when().get( driver.getUrl( "NAMENODE" ) + root );
+    .when().get( driver.getUrl( "WEBHDFS" ) + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a valid but unauthorized user.
@@ -405,7 +396,7 @@ public class GatewayBasicFuncTest {
    .expect()
       //.log().ifError()
       .statusCode( HttpStatus.SC_UNAUTHORIZED )
-   .when().get( driver.getUrl( "NAMENODE" ) + root );
+   .when().get( driver.getUrl( "WEBHDFS" ) + root );
 
     /* Add a file.
     curl -i -X PUT "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=CREATE
@@ -425,7 +416,7 @@ public class GatewayBasicFuncTest {
     Location: webhdfs://<HOST>:<PORT>/<PATH>
     Content-Length: 0
     */
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
         .pathInfo( root + "/dir/file" )
@@ -453,7 +444,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .when().put( driver.getUrl("NAMENODE") + root + "/dir/file" );
+        .when().put( driver.getUrl("WEBHDFS") + root + "/dir/file" );
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
@@ -495,7 +486,7 @@ public class GatewayBasicFuncTest {
 
     Hello, webhdfs user!
     */
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "GET" )
         .pathInfo( root + "/dir/file" )
@@ -522,7 +513,7 @@ public class GatewayBasicFuncTest {
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( is( "TEST" ) )
-        .when().get( driver.getUrl("NAMENODE") + root + "/dir/file" );
+        .when().get( driver.getUrl("WEBHDFS") + root + "/dir/file" );
     driver.assertComplete();
 
     /* Delete the directory.
@@ -537,7 +528,7 @@ public class GatewayBasicFuncTest {
     {"boolean": true}
     */
     // Mock the interaction with the namenode.
-    driver.getMock( "NAMENODE" )
+    driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
         .pathInfo( root )
@@ -553,7 +544,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
-        .when().delete( driver.getUrl( "NAMENODE" ) + root );
+        .when().delete( driver.getUrl( "WEBHDFS" ) + root );
     driver.assertComplete();
   }
 
@@ -647,7 +638,7 @@ public class GatewayBasicFuncTest {
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_UNAUTHORIZED )
-          .when().get( driver.getUrl("NAMENODE") + root + "/dirA700/fileA700" );
+          .when().get( driver.getUrl("WEBHDFS") + root + "/dirA700/fileA700" );
     }
     driver.assertComplete();
 
@@ -1244,7 +1235,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseGetTableList() throws IOException {
+  public void testHBaseGetTableList() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-list";
@@ -1317,7 +1308,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseCreateTableAndVerifySchema() throws IOException {
+  public void testHBaseCreateTableAndVerifySchema() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-schema";
@@ -1383,7 +1374,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseGetTableSchema() throws IOException {
+  public void testHBaseGetTableSchema() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-metadata";
@@ -1459,7 +1450,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseInsertDataIntoTable() throws IOException {
+  public void testHBaseInsertDataIntoTable() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1591,7 +1582,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseDeleteDataFromTable() {
+  public void testHBaseDeleteDataFromTable() {
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1645,7 +1636,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseQueryTableData() throws IOException {
+  public void testHBaseQueryTableData() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1750,7 +1741,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHbaseUseScanner() throws IOException {
+  public void testHBaseUseScanner() throws IOException {
     String username = "hbase";
     String password = "hbase-password";
     

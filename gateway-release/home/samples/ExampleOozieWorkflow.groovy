@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 import com.jayway.jsonpath.JsonPath
+import groovy.json.JsonSlurper
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 import org.apache.hadoop.gateway.shell.workflow.Workflow
@@ -23,11 +24,10 @@ import org.apache.hadoop.gateway.shell.workflow.Workflow
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-jobTracker = "sandbox.hortonworks.com:8050"
-nameNode = "sandbox.hortonworks.com:8020"
-username = "hue"
-password = "hue-password"
+username = "guest"
+password = username + "-password"
 inputFile = "LICENSE"
+jobDir = "/user/" + username + "/test"
 jarFile = "samples/hadoop-examples.jar"
 
 definition = """\
@@ -35,11 +35,11 @@ definition = """\
     <start to="root-node"/>
     <action name="root-node">
         <java>
-            <job-tracker>set-via-configuration-property</job-tracker>
-            <name-node>set-via-configuration-property</name-node>
+            <job-tracker>\${jobTracker}</job-tracker>
+            <name-node>\${nameNode}</name-node>
             <main-class>org.apache.hadoop.examples.WordCount</main-class>
-            <arg>/tmp/test/input</arg>
-            <arg>/tmp/test/output</arg>
+            <arg>$jobDir/input</arg>
+            <arg>$jobDir/output</arg>
         </java>
         <ok to="end"/>
         <error to="fail"/>
@@ -54,44 +54,64 @@ definition = """\
 configuration = """\
 <configuration>
     <property>
-        <name>user.name</name>
-        <value>$username</value>
+        <name>fs.default.name</name>
+        <value>default</value>
     </property>
     <property>
         <name>nameNode</name>
-        <value>hdfs://$nameNode</value>
+        <value>default</value>
+    </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>default</value>
     </property>
     <property>
         <name>jobTracker</name>
-        <value>$jobTracker</value>
+        <value>default</value>
+    </property>
+    <property>
+        <name>user.name</name>
+        <value>default</value>
+    </property>
+    <property>
+        <name>mapreduce.job.user.name</name>
+        <value>default</value>
     </property>
     <property>
         <name>oozie.wf.application.path</name>
-        <value>hdfs://$nameNode/tmp/test</value>
+        <value>$jobDir</value>
+    </property>
+    <property>
+        <name>oozie.libpath</name>
+        <value>\$jobDir/lib</value>
+    </property>
+    <property>
+        <name>oozie.proxysubmission</name>
+        <value>true</value>
     </property>
 </configuration>
 """
 
 session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
-println "Mkdir /tmp/test " + Hdfs.mkdir( session ).dir( "/tmp/test" ).now().statusCode
+println "Delete " + jobDir + " " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
+println "Mkdir " + jobDir + " " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode
 
-putWorkflow = Hdfs.put(session).text( definition ).to( "/tmp/test/workflow.xml" ).later() {
-  println "Put /tmp/test/workflow.xml " + it.statusCode }
+putData = Hdfs.put(session).file( inputFile ).to( jobDir + "/input/FILE" ).later() {
+  println "Put " + jobDir + "/input/FILE " + it.statusCode }
 
-putData = Hdfs.put(session).file( inputFile ).to( "/tmp/test/input/FILE" ).later() {
-  println "Put /tmp/test/input/FILE " + it.statusCode }
+putJar = Hdfs.put(session).file( jarFile ).to( jobDir + "/lib/hadoop-examples.jar" ).later() {
+  println "Put " + jobDir + "/lib/hadoop-examples.jar " + it.statusCode }
 
-putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/lib/hadoop-examples.jar" ).later() {
-  println "Put /tmp/test/lib/hadoop-examples.jar " + it.statusCode }
+putWorkflow = Hdfs.put(session).text( definition ).to( jobDir + "/workflow.xml" ).later() {
+  println "Put " + jobDir + "/workflow.xml " + it.statusCode }
 
 session.waitFor( putWorkflow, putData, putJar )
 
 jobId = Workflow.submit(session).text( configuration ).now().jobId
 println "Submitted job " + jobId
 
-println "Polling for completion..."
+println "Polling up to 60s for completion..."
 status = "UNKNOWN";
 count = 0;
 while( status != "SUCCEEDED" && count++ < 60 ) {
@@ -99,6 +119,10 @@ while( status != "SUCCEEDED" && count++ < 60 ) {
   json = Workflow.status(session).jobId( jobId ).now().string
   status = JsonPath.read( json, "\$.status" )
 }
-println "Job status " + status;
+println "Job status " + status
+
+text = Hdfs.ls( session ).dir( jobDir ).now().string
+json = (new JsonSlurper()).parseText( text )
+println json.FileStatuses.FileStatus.pathSuffix
 
 println "Shutdown " + session.shutdown( 10, SECONDS )

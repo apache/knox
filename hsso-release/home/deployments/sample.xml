@@ -21,17 +21,17 @@
         <provider>
             <role>federation</role>
             <enabled>true</enabled>
-			<name>AccessTokenProvider</name>
+            <name>AccessTokenProvider</name>
         </provider>
-		<provider>
-			<role>identity-assertion</role>
-			<enabled>true</enabled>
-			<name>Pseudo</name>
-		</provider>
+        <provider>
+            <role>identity-assertion</role>
+            <enabled>true</enabled>
+            <name>Pseudo</name>
+        </provider>
     </gateway>
 
     <service>
-        <role>NAMENODE</role>
+        <role>WEBHDFS</role>
         <url>http://localhost:50070/webhdfs/v1</url>
     </service>
     <service>

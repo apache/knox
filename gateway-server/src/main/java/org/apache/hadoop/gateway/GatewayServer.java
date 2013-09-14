@@ -24,10 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
-import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
-import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
@@ -226,11 +224,6 @@ public class GatewayServer {
 
   
   private synchronized void start() throws Exception {
-
-//    Map<String,String> params = new HashMap<String,String>();
-//    params.put( GatewayConfigImpl.NAMENODE_ADDRESS, config.getNameNodeAddress() );
-//    params.put( GatewayConfigImpl.TEMPLETON_ADDRESS, config.getTempletonAddress() );
-//    params.put( GatewayConfigImpl.SHIRO_CONFIG_FILE, config.getShiroConfigFile() );
 
     // Create the global context handler.
     contexts = new ContextHandlerCollection();

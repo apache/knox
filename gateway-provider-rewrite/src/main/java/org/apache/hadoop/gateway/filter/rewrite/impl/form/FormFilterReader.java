@@ -17,14 +17,14 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.form;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringWriter;
 
 public class FormFilterReader extends Reader {
 
@@ -78,14 +78,14 @@ public class FormFilterReader extends Reader {
 
   private void processPair() throws IOException {
     FormPair pair = parser.getCurrentPair();
+    String name = pair.getName();
+    String value = pair.getValue();
+    String rule = UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch( config, name );
     try {
-      String name = pair.getName();
-      String value = pair.getValue();
-      String rule = UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch( config, name );
       value = filterValue( name, pair.getValue(), rule );
       pair.setValue( value );
     } catch( Exception e ) {
-      LOG.failedToFilterValue( pair.getValue(), e );
+      LOG.failedToFilterValue( pair.getValue(), rule, e );
       // Write original value.
     }
     generator.writePair( pair );

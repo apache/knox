@@ -6,7 +6,7 @@
     <security></security>
     -->
     <service>
-        <role>NAMENODE</role>
+        <role>WEBHDFS</role>
         <url>http://host-three:80/webhdfs/v1</url>
     </service>
 </topology>

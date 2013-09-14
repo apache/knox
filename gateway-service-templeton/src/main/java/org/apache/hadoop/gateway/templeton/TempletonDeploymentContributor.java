@@ -51,7 +51,7 @@ public class TempletonDeploymentContributor extends ServiceDeploymentContributor
         .directions( "request" )
         .pattern( "*://*:*/**" + TEMPLETON_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
+    rewrite.template( service.getUrl() + "/{path=**}?{**}" );
 
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role( service.getRole() );

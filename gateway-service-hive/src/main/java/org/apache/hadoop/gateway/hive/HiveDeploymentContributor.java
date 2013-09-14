@@ -58,7 +58,7 @@ public class HiveDeploymentContributor extends ServiceDeploymentContributorBase 
         .directions( "inbound" )
         .pattern( "*://*:*/**" + EXTERNAL_PATH );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() );
+    rewrite.template( service.getUrl() );
   }
 
   public void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {

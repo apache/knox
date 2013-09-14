@@ -33,7 +33,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase {
+public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String EXTERNAL_PATH = "/hbase/api/v1";
   private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
@@ -64,13 +64,13 @@ public class HbaseDeploymentContributor extends ServiceDeploymentContributorBase
         .directions( "inbound" )
         .pattern( "*://*:*/**" + EXTERNAL_PATH + "/?{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
+    rewrite.template( service.getUrl() + "/?{**}" );
     
     rule = rules.addRule( getQualifiedName() + "/root/inbound" )
         .directions( "inbound" )
         .pattern( "*://*:*/**" + EXTERNAL_PATH + "/{**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl().toExternalForm() + "/{**}?{**}" );
+    rewrite.template( service.getUrl() + "/{**}?{**}" );
     
     rule = rules.addRule( getQualifiedName() + "/hbase/outbound" )
         .directions( "outbound" );

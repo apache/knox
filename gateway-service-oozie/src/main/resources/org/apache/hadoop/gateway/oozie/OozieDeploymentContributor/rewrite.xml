@@ -29,7 +29,7 @@
     </rule>
 
     <rule name="OOZIE/oozie/name-node-url">
-        <rewrite template="hdfs://{$serviceAddr[NAMENODE-RPC]}"/>
+        <rewrite template="hdfs://{$serviceAddr[NAMENODE]}"/>
     </rule>
 
     <rule name="OOZIE/oozie/job-tracker-address">
@@ -38,7 +38,7 @@
 
     <rule name="OOZIE/oozie/hdfs-path">
         <match pattern="{path=**}"/>
-        <rewrite template="hdfs://{$serviceHost[NAMENODE-RPC]}:{$servicePort[NAMENODE-RPC]}/{path=**}"/>
+        <rewrite template="hdfs://{$serviceHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
     </rule>
 
     <filter name="OOZIE/oozie/configuration">
@@ -53,7 +53,34 @@
                 <detect path="name" value="jobTracker">
                     <apply path="value" rule="OOZIE/oozie/job-tracker-address"/>
                 </detect>
+                <detect path="name" value="fs.default.name">
+                    <apply path="value" rule="OOZIE/oozie/name-node-url"/>
+                </detect>
+                <detect path="name" value="fs.defaultFS">
+                    <apply path="value" rule="OOZIE/oozie/name-node-url"/>
+                </detect>
                 <detect path="name" value="oozie.wf.application.path">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="oozie.coord.application.path">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="oozie.bundle.application.path">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="oozie.libpath">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="mapreduce.job.user.name">
+                    <apply path="value" rule="OOZIE/oozie/user-name"/>
+                </detect>
+                <detect path="name" value="mapred.job.tracker">
+                    <apply path="value" rule="OOZIE/oozie/job-tracker-address"/>
+                </detect>
+                <detect path="name" value="mapred.input.dir">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="mapred.output.dir">
                     <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
                 </detect>
             </buffer>
@@ -62,7 +89,16 @@
             <apply path="$[user.name]" rule="OOZIE/oozie/user-name"/>
             <apply path="$[nameNode]" rule="OOZIE/oozie/name-node-url"/>
             <apply path="$[jobTracker]" rule="OOZIE/oozie/job-tracker-addr"/>
+            <apply path="$[fs.default.name]" rule="OOZIE/oozie/name-node-url"/>
+            <apply path="$[fs.defaultFS]" rule="OOZIE/oozie/name-node-url"/>
             <apply path="$[oozie.wf.application.path]" rule="OOZIE/oozie/hdfs-path"/>
+            <apply path="$[oozie.coord.application.path]" rule="OOZIE/oozie/hdfs-path"/>
+            <apply path="$[oozie.bundle.application.path]" rule="OOZIE/oozie/hdfs-path"/>
+            <apply path="$[oozie.libpath]" rule="OOZIE/oozie/hdfs-path"/>
+            <apply path="$[mapreduce.job.user.name]" rule="OOZIE/oozie/user-name"/>
+            <apply path="$[mapred.job.tracker]" rule="OOZIE/oozie/job-tracker-address"/>
+            <apply path="$[mapred.input.dir]" rule="OOZIE/oozie/hdfs-path"/>
+            <apply path="$[mapred.output.dir]" rule="OOZIE/oozie/hdfs-path"/>
         </content>
     </filter>
 

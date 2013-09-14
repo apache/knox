@@ -17,40 +17,40 @@
 <rules>
 
     <rule name="nn-url">
-        <rewrite template="{$serviceUrl[NAMENODE.rpc]}"/>
+        <rewrite template="{$serviceUrl[NAMENODE]}"/>
     </rule>
 
     <rule name="nn-addr">
-        <rewrite template="{$serviceAddr[NAMENODE.rpc]}"/>
+        <rewrite template="{$serviceAddr[NAMENODE]}"/>
     </rule>
 
     <rule name="nn-scheme">
-        <rewrite template="{$serviceScheme[NAMENODE.rpc]}"/>
+        <rewrite template="{$serviceScheme[NAMENODE]}"/>
     </rule>
 
     <rule name="nn-host">
-        <rewrite template="{$serviceHost[NAMENODE.rpc]}"/>
+        <rewrite template="{$serviceHost[NAMENODE]}"/>
     </rule>
 
     <rule name="nn-port">
-        <rewrite template="{$servicePort[NAMENODE.rpc]}"/>
+        <rewrite template="{$servicePort[NAMENODE]}"/>
     </rule>
 
     <rule name="nn-path">
-        <rewrite template="{$servicePath[NAMENODE.rpc]}"/>
+        <rewrite template="{$servicePath[NAMENODE]}"/>
     </rule>
 
     <rule name="hdfs-addr">
-        <rewrite template="hdfs://{$serviceAddr[NAMENODE.rpc]}"/>
+        <rewrite template="hdfs://{$serviceAddr[NAMENODE]}"/>
     </rule>
 
     <rule name="hdfs-path">
         <match pattern="{path=**}"/>
-        <rewrite template="hdfs://{$serviceHost[NAMENODE.rpc]}:{$servicePort[NAMENODE.rpc]}/{path=**}"/>
+        <rewrite template="hdfs://{$serviceHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
     </rule>
 
     <rule name="jt-addr">
-        <rewrite template="{$serviceAddr[JOBTRACKER.rpc]}"/>
+        <rewrite template="{$serviceAddr[JOBTRACKER]}"/>
     </rule>
 
     <filter name="oozie-conf">

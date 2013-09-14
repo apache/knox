@@ -16,7 +16,7 @@
   limitations under the License.
 -->
 <rules>
-    <filter name="NAMENODE/request">
+    <filter name="WEBHDFS/request">
         <content type="http/header">
             <apply target="Location" rule="{rewrite-rule-name}"/>
             <apply>...</apply>

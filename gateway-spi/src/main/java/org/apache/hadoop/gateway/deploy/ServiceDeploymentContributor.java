@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.topology.Service;
 
 public interface ServiceDeploymentContributor {
 
-  // The role of this service deployment contributor.  e.g. NAMENODE
+  // The role of this service deployment contributor.  e.g. WEBHDFS
   String getRole();
 
   // The name of this service deployment contributor.  Not used yet.

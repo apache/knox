@@ -33,21 +33,21 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase {
+public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBase {
 
-  private static final String NAMENODE_EXTERNAL_PATH = "/namenode/api/v1";
+  private static final String WEBHDFS_EXTERNAL_PATH = "/namenode/api/v1";
   private static final String DATANODE_INTERNAL_PATH = "/webhdfs/v1";
   private static final String DATANODE_EXTERNAL_PATH = "/datanode/api/v1";
   private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
   @Override
   public String getRole() {
-    return "NAMENODE";
+    return "WEBHDFS";
   }
 
   @Override
   public String getName() {
-    return "hdfs";
+    return "webhdfs";
   }
 
   @Override
@@ -65,17 +65,17 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
     rule = rules.addRule( getQualifiedName() + "/namenode/root/inbound" )
         .directions( "inbound" )
-        .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/?{**}" );
+        .pattern( "*://*:*/**" + WEBHDFS_EXTERNAL_PATH + "/?{**}" );
     rewrite = rule.addStep( "rewrite" );
     //rewrite.template( service.getUrl().toExternalForm() + "/?user.name={$username}&{**}" );
-    rewrite.template( service.getUrl().toExternalForm() + "/?{**}" );
+    rewrite.template( service.getUrl() + "/?{**}" );
 
     rule = rules.addRule( getQualifiedName() + "/namenode/file/inbound" )
         .directions( "inbound" )
-        .pattern( "*://*:*/**" + NAMENODE_EXTERNAL_PATH + "/{path=**}?{**}" );
+        .pattern( "*://*:*/**" + WEBHDFS_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     //rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?user.name={$username}&{**}" );
-    rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?{**}" );
+    rewrite.template( service.getUrl() + "/{path=**}?{**}" );
 
     rule = rules.addRule( getQualifiedName() + "/datanode/inbound" )
         .directions( "inbound" )
@@ -103,7 +103,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
   public void contributeNameNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
-    rootResource.pattern( NAMENODE_EXTERNAL_PATH + "/?**" );
+    rootResource.pattern( WEBHDFS_EXTERNAL_PATH + "/?**" );
     addAuthenticationFilter( context, service, rootResource );
     addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );
@@ -112,7 +112,7 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
-    fileResource.pattern( NAMENODE_EXTERNAL_PATH + "/**?**" );
+    fileResource.pattern( WEBHDFS_EXTERNAL_PATH + "/**?**" );
     addAuthenticationFilter( context, service, fileResource );
     addRewriteFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
@@ -136,7 +136,6 @@ public class HdfsDeploymentContributor extends ServiceDeploymentContributorBase 
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
     params.add( resource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/outbound" ) );
     context.contributeFilter( service, resource, "rewrite", null, params );
-
   }
 
   private String getQualifiedName() {

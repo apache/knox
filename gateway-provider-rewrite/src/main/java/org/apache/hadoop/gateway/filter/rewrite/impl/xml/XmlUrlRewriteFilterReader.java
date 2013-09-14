@@ -54,8 +54,16 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   private String filterValueString( String name, String value, String rule ) {
     try {
       Template input = Parser.parse( value );
-      Template output = rewriter.rewrite( resolver, input, direction, rule );
-      value = output.toString();
+      if( input != null ) {
+        Template output = rewriter.rewrite( resolver, input, direction, rule );
+        if( output != null ) {
+          value = output.toString();
+        } else {
+          LOG.failedToFilterValue( value, rule );
+        }
+      } else {
+        LOG.failedToParseValueForUrlRewrite( value );
+      }
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
     }

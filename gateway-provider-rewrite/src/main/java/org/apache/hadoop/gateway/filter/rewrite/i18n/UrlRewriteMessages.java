@@ -52,8 +52,11 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}" )
   void failedToRewriteUrl( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to filter value {0}: {1}" )
-  void failedToFilterValue( String value, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  @Message( level = MessageLevel.ERROR, text = "Failed to filter value {0}, rule {1}" )
+  void failedToFilterValue( String value, String rule );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to filter value {0}, rule {1}: {2}" )
+  void failedToFilterValue( String value, String rule, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to filter field name {0}: {1}" )
   void failedToFilterFieldName( String fieldName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );

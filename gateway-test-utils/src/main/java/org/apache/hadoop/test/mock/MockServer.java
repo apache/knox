@@ -34,8 +34,8 @@ import java.util.Queue;
  * Each interaction is an expected request and a resulting response.
  * These interactions are added to a queue in a fluent API style.
  * So in most of the tests like GatewayBasicFuncTest.testBasicJsonUseCase you will see calls like
- * driver.getMock( "NAMENODE" ).expect()....respond()...;
- * This adds a single interaction to the mock server which is returned via the driver.getMock( "NAMENODE" ) above.
+ * driver.getMock( "WEBHDFS" ).expect()....respond()...;
+ * This adds a single interaction to the mock server which is returned via the driver.getMock( "WEBHDFS" ) above.
  * Any number of interactions may be added.
  * When the request comes in it will check the request against the expected request.
  * If it matches return the response otherwise it will return a 500 error.

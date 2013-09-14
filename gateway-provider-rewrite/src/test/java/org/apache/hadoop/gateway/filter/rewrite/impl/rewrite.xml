@@ -30,7 +30,7 @@
     If no filter/rule specified it should attempt to filter everything like it did before.
     -->
 
-    <filter name="NAMENODE/request">
+    <filter name="WEBHDFS/request">
         <content type="http/header">
             <apply target="Location" rule="{rewrite-rule-name}"/>
             <apply>...</apply>
@@ -77,18 +77,18 @@
     ContentPathParser
     -->
 
-    <rule dir="IN" name="NAMENODE/hdfs/namenode/root/inbound" pattern="*://*:*/**/namenode/api/v1/?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/root/inbound" pattern="*://*:*/**/namenode/api/v1/?{**}">
         <rewrite template="http://vm:50070/webhdfs/v1/?{**}"/>
     </rule>
-    <rule dir="IN" name="NAMENODE/hdfs/namenode/file/inbound" pattern="*://*:*/**/namenode/api/v1/{path=**}?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/file/inbound" pattern="*://*:*/**/namenode/api/v1/{path=**}?{**}">
         <rewrite template="http://vm:50070/webhdfs/v1/{path=**}?{**}"/>
     </rule>
-    <rule dir="IN" name="NAMENODE/hdfs/datanode/inbound" pattern="*://*:*/**/datanode/api/v1/{path=**}?**">
+    <rule dir="IN" name="WEBHDFS/webhdfs/datanode/inbound" pattern="*://*:*/**/datanode/api/v1/{path=**}?**">
         <decode-query/>
         <match pattern="*://*:*/**/datanode/api/v1/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <rewrite template="http://{host}:{port}/{path=**}?{**}"/>
     </rule>
-    <rule dir="OUT" name="NAMENODE/hdfs/datanode/outbound" pattern="*://*:*/**?**">
+    <rule dir="OUT" name="WEBHDFS/webhdfs/datanode/outbound" pattern="*://*:*/**?**">
         <match pattern="*://{host}:{port}/{path=**}?{**}"/>
         <rewrite template="{gateway.url}/datanode/api/v1/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <encode-query/>

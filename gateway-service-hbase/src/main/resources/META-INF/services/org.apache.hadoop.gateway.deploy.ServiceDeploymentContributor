@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.hbase.HbaseDeploymentContributor
+org.apache.hadoop.gateway.hbase.HBaseDeploymentContributor

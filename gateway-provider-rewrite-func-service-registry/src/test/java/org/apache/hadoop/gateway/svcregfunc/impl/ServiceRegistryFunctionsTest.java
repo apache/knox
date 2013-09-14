@@ -18,10 +18,8 @@
 package org.apache.hadoop.gateway.svcregfunc.impl;
 
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -78,8 +76,8 @@ public class ServiceRegistryFunctionsTest {
 
   public void setUp( String username, Map<String,String> initParams ) throws Exception {
     ServiceRegistry mockServiceRegistry = EasyMock.createNiceMock( ServiceRegistry.class );
-    EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "NAMENODE.rpc" ) ).andReturn( "test-nn-scheme://test-nn-host:411" ).anyTimes();
-    EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER.rpc" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
+    EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-nn-scheme://test-nn-host:411" ).anyTimes();
+    EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
 
     GatewayServices mockGatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( mockGatewayServices.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( mockServiceRegistry ).anyTimes();

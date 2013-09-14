@@ -30,7 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -55,9 +55,8 @@ public class OozieDeploymentContributorTest {
     fail( "Failed to find " + OozieDeploymentContributor.class.getName() + " via service loader." );
   }
 
-
   @Test
-  public void testLoadRulesFromTemplate() throws IOException {
+  public void testLoadRulesFromTemplate() throws IOException, URISyntaxException {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-archive" );
 
     UrlRewriteRulesDescriptorImpl clusterRules = new UrlRewriteRulesDescriptorImpl();
@@ -69,7 +68,7 @@ public class OozieDeploymentContributorTest {
     Service service = EasyMock.createNiceMock( Service.class );
     EasyMock.expect( service.getRole() ).andReturn( "OOZIE" ).anyTimes();
     EasyMock.expect( service.getName() ).andReturn( null ).anyTimes();
-    EasyMock.expect( service.getUrl() ).andReturn( new URL( "http://test-host:777" ) ).anyTimes();
+    EasyMock.expect( service.getUrl() ).andReturn( "http://test-host:777" ).anyTimes();
 
     EasyMock.replay( context, service );
 
@@ -95,7 +94,7 @@ public class OozieDeploymentContributorTest {
     Service service = EasyMock.createNiceMock( Service.class );
     EasyMock.expect( service.getRole() ).andReturn( "OOZIE" ).anyTimes();
     EasyMock.expect( service.getName() ).andReturn( null ).anyTimes();
-    EasyMock.expect( service.getUrl() ).andReturn( new URL( "http://test-host:777" ) ).anyTimes();
+    EasyMock.expect( service.getUrl() ).andReturn( "http://test-host:777" ).anyTimes();
 
     EasyMock.replay( context, service );
 

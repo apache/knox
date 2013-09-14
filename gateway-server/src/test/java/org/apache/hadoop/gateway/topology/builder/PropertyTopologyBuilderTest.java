@@ -126,21 +126,21 @@ public class PropertyTopologyBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testBuildFailedForWrongServiceToken2() {
         PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();
-        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.NAMENODE", "value"));
+        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS", "value"));
         propertyTopologyBuilder.build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuildFailedForWrongServiceToken3() {
         PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();
-        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.NAMENODE.", "value"));
+        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS.", "value"));
         propertyTopologyBuilder.build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuildSuccessfulForServiceProperty() {
         PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();
-        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.NAMENODE..url", "http://host:50070/webhdfs/v1"));
+        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS..url", "http://host:50070/webhdfs/v1"));
         Topology topology = propertyTopologyBuilder.build();
 
         assertThat(topology, notNullValue());
@@ -149,7 +149,7 @@ public class PropertyTopologyBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testBuildFailedForWrongServiceProperty() {
         PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();
-        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.NAMENODE..miss_prop", "value"));
+        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS..miss_prop", "value"));
         propertyTopologyBuilder.build();
     }
 }

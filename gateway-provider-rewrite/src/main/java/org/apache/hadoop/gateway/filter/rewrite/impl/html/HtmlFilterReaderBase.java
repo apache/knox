@@ -185,7 +185,7 @@ public abstract class HtmlFilterReaderBase extends Reader {
         outputValue = inputValue;
       }
     } catch ( Exception e ) {
-      LOG.failedToFilterValue( inputValue, e );
+      LOG.failedToFilterValue( inputValue, null, e );
     }
     writer.write( outputValue );
   }

@@ -16,9 +16,6 @@
  */
 package org.apache.hadoop.gateway.topology.builder.property.interpreter;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.topology.Service;
@@ -69,11 +66,7 @@ public class ServicePropertyInterpreter extends AbstractInterpreter {
         }
 
         if (SERVICE_URL.equalsIgnoreCase(nextToken)) {
-            try {
-                service.setUrl(new URL(value));
-            } catch (MalformedURLException mue) {
-                throw new InterpretException(mue);
-            }
+            service.setUrl( value );
         } else {
             throw new InterpretException(gatewayResources.unsupportedPropertyTokenError(token));
         }

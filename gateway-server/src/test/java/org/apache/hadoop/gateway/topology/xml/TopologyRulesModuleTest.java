@@ -30,12 +30,13 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class TopologyRulesModuleTest {
@@ -52,7 +53,7 @@ public class TopologyRulesModuleTest {
   }
 
   @Test
-  public void testParseSimpleTopologyXmlInKnoxFormat() throws IOException, SAXException {
+  public void testParseSimpleTopologyXmlInKnoxFormat() throws IOException, SAXException, URISyntaxException {
     Digester digester = loader.newDigester();
     String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-knox-format.xml";
     URL url = ClassLoader.getSystemResource( name );
@@ -69,8 +70,8 @@ public class TopologyRulesModuleTest {
 
     Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
-    assertThat( comp.getRole(), is( "NAMENODE" ) );
-    assertThat( comp.getUrl(), is( new URL( "http://host:80/webhdfs/v1" ) ) );
+    assertThat( comp.getRole(), is( "WEBHDFS" ) );
+    assertThat( comp.getUrl(), is( "http://host:80/webhdfs/v1" ) );
 
     Provider provider = topology.getProviders().iterator().next();
     assertThat( provider, notNullValue() );
@@ -80,7 +81,7 @@ public class TopologyRulesModuleTest {
   }
 
   @Test
-  public void testParseSimpleTopologyXmlInHadoopFormat() throws IOException, SAXException {
+  public void testParseSimpleTopologyXmlInHadoopFormat() throws IOException, SAXException, URISyntaxException {
     Digester digester = loader.newDigester();
     String name = "org/apache/hadoop/gateway/topology/xml/simple-topology-ambari-format.conf";
     URL url = ClassLoader.getSystemResource( name );
@@ -96,29 +97,29 @@ public class TopologyRulesModuleTest {
     assertThat( topology.getServices().size(), is( 4 ) );
     assertThat( topology.getProviders().size(), is( 2 ) );
 
-    Service namenodeService = topology.getService( "NAMENODE", null );
+    Service namenodeService = topology.getService( "WEBHDFS", null );
     assertThat( namenodeService, notNullValue() );
-    assertThat( namenodeService.getRole(), is( "NAMENODE" ) );
+    assertThat( namenodeService.getRole(), is( "WEBHDFS" ) );
     assertThat( namenodeService.getName(), nullValue() );
-    assertThat( namenodeService.getUrl(), is( new URL( "http://host:50070/webhdfs/v1" ) ) );
+    assertThat( namenodeService.getUrl(), is( "http://host:50070/webhdfs/v1" ) );
 
     Service templetonService = topology.getService( "TEMPLETON", null );
     assertThat( templetonService, notNullValue() );
     assertThat( templetonService.getRole(), is( "TEMPLETON" ) );
     assertThat( templetonService.getName(), nullValue() );
-    assertThat( templetonService.getUrl(), is( new URL( "http://host:50111/templeton/v1" ) ) );
+    assertThat( templetonService.getUrl(), is( "http://host:50111/templeton/v1" ) );
 
     Service oozieService = topology.getService( "OOZIE", null );
     assertThat( oozieService, notNullValue() );
     assertThat( oozieService.getRole(), is( "OOZIE" ) );
     assertThat( oozieService.getName(), nullValue() );
-    assertThat( oozieService.getUrl(), is( new URL( "http://host:11000/oozie" ) ) );
+    assertThat( oozieService.getUrl(), is( "http://host:11000/oozie" ) );
 
     Service hiveService = topology.getService( "HIVE", null );
     assertThat( hiveService, notNullValue() );
     assertThat( hiveService.getRole(), is( "HIVE" ) );
     assertThat( hiveService.getName(), nullValue() );
-    assertThat( hiveService.getUrl(), is( new URL( "http://host:10000" ) ) );
+    assertThat( hiveService.getUrl(), is( "http://host:10000" ) );
 
     Provider authenticationProvider = topology.getProvider( "authentication", "ShiroProvider" );
     assertThat( authenticationProvider, notNullValue() );

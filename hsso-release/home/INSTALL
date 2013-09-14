@@ -71,7 +71,7 @@ Installation and Deployment Instructions
 5. Configure the Gateway with the topology of your Hadoop cluster
    a. Edit the file {GATEWAY_HOME}/deployments/sample.xml
    b. Change the host and port in the urls of the <service> elements for
-      NAMENODE, TEMPLETON and OOZIE services to match your Hadoop cluster
+      WEBHDFS, TEMPLETON and OOZIE services to match your Hadoop cluster
       deployment.
    c. The default configuration contains the LDAP URL for a LDAP server.  By
       default that file is configured to access the demo ApacheDS based LDAP
@@ -91,7 +91,7 @@ Installation and Deployment Instructions
 
 6. Test the installation and configuration of your Gateway
    Invoke the LISTSATUS operation on HDFS represented by your configured
-   NAMENODE by using your web browser or curl:
+   WEBHDFS by using your web browser or curl:
 
    curl -i -k -u hdfs:hdfs-password -X GET \
      'https://localhost:8443/gateway/sample/namenode/api/v1/?op=LISTSTATUS'

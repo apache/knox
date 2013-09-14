@@ -58,6 +58,14 @@
 
     <service>
         <role>NAMENODE</role>
+        <url>hdfs://sandbox.hortonworks.com:8020</url>
+    </service>
+    <service>
+        <role>JOBTRACKER</role>
+        <url>rpc://sandbox.hortonworks.com:8050</url>
+    </service>
+    <service>
+        <role>WEBHDFS</role>
         <url>http://localhost:50070/webhdfs/v1</url>
     </service>
     <service>

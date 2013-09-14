@@ -235,18 +235,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get( DEPLOYMENT_DIR, DEFAULT_DEPLOYMENT_DIR );
   }
 
-//  public String getShiroConfigFile() {
-//    return get( SHIRO_CONFIG_FILE, DEFAULT_SHIRO_CONFIG_FILE );
-//  }
-
-//  public String getNameNodeAddress() {
-//    return get( NAMENODE_ADDRESS, DEFAULT_NAMENODE_ADDRESS );
-//  }
-
-//  public String getTempletonAddress() {
-//    return get( TEMPLETON_ADDRESS, DEFAULT_TEMPLETON_ADDRESS );
-//  }
-
   public InetSocketAddress getGatewayAddress() throws UnknownHostException {
     String host = getGatewayHost();
     int port = getGatewayPort();

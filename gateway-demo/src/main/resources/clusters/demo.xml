@@ -19,7 +19,7 @@
 
 <topology>
     <service>
-        <role>NAMENODE</role>
+        <role>WEBHDFS</role>
         <url>http://vm.home:50070/webhdfs/v1</url>
     </service>
 </topology>

@@ -17,7 +17,7 @@
 -->
 <gateway>
     <resource>
-        <role>NAMENODE</role>
+        <role>WEBHDFS</role>
         <pattern>/namenode/api/v1/?**</pattern>
         ...
         <filter>

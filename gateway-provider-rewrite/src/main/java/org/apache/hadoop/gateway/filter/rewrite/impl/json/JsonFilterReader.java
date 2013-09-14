@@ -464,7 +464,7 @@ class JsonFilterReader extends Reader {
       value = filterValueString( field, value, rule );
       ((ObjectNode)node.node ).put( field, value );
     } catch( Exception e ) {
-      LOG.failedToFilterValue( value, e );
+      LOG.failedToFilterValue( value, rule, e );
     }
     return value;
   }
@@ -517,7 +517,7 @@ class JsonFilterReader extends Reader {
       value = filterValueString( field, value, apply.rule() );
       ((ObjectNode)match.getParent().getNode()).put( field, value );
     } catch( Exception e ) {
-      LOG.failedToFilterValue( value, e );
+      LOG.failedToFilterValue( value, apply.rule(), e );
     }
   }
 
