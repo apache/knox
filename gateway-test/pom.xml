@@ -26,6 +26,8 @@
     </parent>
 
     <artifactId>gateway-test</artifactId>
+    <name>gateway-test</name>
+    <description>Gateway functional tests.</description>
 
     <dependencies>
         <dependency>

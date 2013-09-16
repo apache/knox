@@ -27,6 +27,8 @@
     </parent>
 
     <artifactId>gateway-shell-launcher</artifactId>
+    <name>gateway-shell-launcher</name>
+    <description>Launcher for the client DSL shell.</description>
 
     <dependencies>
         <dependency>

@@ -27,6 +27,8 @@
     </parent>
 
     <artifactId>gateway-server-launcher</artifactId>
+    <name>gateway-server-launcher</name>
+    <description>Launcher for the gateway server.</description>
 
     <dependencies>
         <dependency>

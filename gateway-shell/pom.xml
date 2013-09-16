@@ -27,6 +27,8 @@
     </parent>
 
     <artifactId>gateway-shell</artifactId>
+    <name>gateway-shell</name>
+    <description>Client DSL shell.</description>
 
     <dependencies>
         <dependency>
