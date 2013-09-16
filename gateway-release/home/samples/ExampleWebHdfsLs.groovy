@@ -21,8 +21,8 @@ import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "hue"
-password = "hue-password"
+username = "guest"
+password = username + "-password"
 
 session = Hadoop.login( gateway, username, password )
 text = Hdfs.ls( session ).dir( "/" ).now().string

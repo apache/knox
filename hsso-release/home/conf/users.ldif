@@ -25,12 +25,12 @@ ou: people
 
 # entry for a sample end user
 # please replace with site specific values
-dn: uid=bob,ou=people,dc=hadoop,dc=apache,dc=org
+dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: Bob
-sn: Smith
-uid: bob
-userPassword:bob-password
+cn: Guest
+sn: User
+uid: gest
+userPassword:guest-password

@@ -15,21 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import groovy.json.JsonSlurper
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "hue"
-password = "hue-password"
+username = "guest"
+password = username + "-password"
 dataDir = "/user/" + username + "/example"
 dataFile = "README"
 
 session = Hadoop.login( gateway, username, password )
 Hdfs.rm( session ).file( dataDir ).recursive().now()
+
 Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).now()
-text = Hdfs.ls( session ).dir( dataDir ).now().string
-json = (new JsonSlurper()).parseText( text )
-println json.FileStatuses.FileStatus.pathSuffix
+
+println Hdfs.get( session ).from( dataDir + "/" + dataFile ).now().string
+
 session.shutdown()

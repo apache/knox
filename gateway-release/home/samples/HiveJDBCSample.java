@@ -33,30 +33,28 @@ public class HiveJDBCSample {
     ResultSet resultSet = null;
 
     try {
-      String user = "bob";
-      String password = "bob-password";
+      String user = "guest";
+      String password = user + "-password";
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
       String contextPath = "gateway/sample/hive/api/v1";
       String connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.servermode=https;hive.server2.http.path=%s", gatewayHost, gatewayPort, contextPath );
 
-      // load Hive JDBC Driver
+      // Load Hive JDBC Driver
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );
-      //Class.forName("java.lang.Object");
 
-      // configure JDBC connection
+      // Configure JDBC connection
       connection = DriverManager.getConnection( connectionString, user, password );
 
       statement = connection.createStatement();
 
-      // disable Hive authorization - it could be ommited if Hive authorization
-      // was configured properly
+      // Disable Hive authorization - This can be ommited if Hive authorization is configured properly
       statement.execute( "set hive.security.authorization.enabled=false" );
 
-      // create sample table
+      // Create sample table
       statement.execute( "CREATE TABLE logs(column1 string, column2 string, column3 string, column4 string, column5 string, column6 string, column7 string) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '" );
 
-      // load data into Hive from file /tmp/log.txt which is placed on the local file system 
+      // Load data into Hive from file /tmp/log.txt which is placed on the local file system
       statement.execute( "LOAD DATA LOCAL INPATH '/tmp/sample.log' OVERWRITE INTO TABLE logs" );
 
       resultSet = statement.executeQuery( "SELECT * FROM logs" );

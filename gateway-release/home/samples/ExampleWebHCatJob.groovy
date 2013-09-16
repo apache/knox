@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 import com.jayway.jsonpath.JsonPath
+import groovy.json.JsonSlurper
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 import org.apache.hadoop.gateway.shell.job.Job
@@ -23,33 +24,34 @@ import org.apache.hadoop.gateway.shell.job.Job
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "hue"
-password = "hue-password"
+username = "guest"
+password = username + "-password"
+jobDir = "/user/" + username + "/test"
 dataFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 
 session = Hadoop.login( gateway, username, password )
 
-println "Delete /tmp/test " + Hdfs.rm( session ).file( "/tmp/test" ).recursive().now().statusCode
-println "Create /tmp/test " + Hdfs.mkdir( session ).dir( "/tmp/test").now().statusCode
+println "Delete " + jobDir + ": " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
+println "Create " + jobDir + ": " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode
 
-putData = Hdfs.put(session).file( dataFile ).to( "/tmp/test/input/FILE" ).later() {
-  println "Put /tmp/test/input/FILE " + it.statusCode }
+putData = Hdfs.put( session ).file( dataFile ).to( jobDir + "/input/" + dataFile ).later() {
+  println "Put " + jobDir + "/input/" + dataFile + ": " + it.statusCode }
 
-putJar = Hdfs.put(session).file( jarFile ).to( "/tmp/test/hadoop-examples.jar" ).later() {
-  println "Put /tmp/test/hadoop-examples.jar " + it.statusCode }
+putJar = Hdfs.put( session ).file( jarFile ).to( jobDir + "/lib/hadoop-examples.jar" ).later() {
+  println "Put " + jobDir + "/lib/hadoop-examples.jar: " + it.statusCode }
 
 session.waitFor( putData, putJar )
 
 jobId = Job.submitJava(session) \
-  .jar( "/tmp/test/hadoop-examples.jar" ) \
+  .jar( jobDir + "/lib/hadoop-examples.jar" ) \
   .app( "wordcount" ) \
-  .input( "/tmp/test/input" ) \
-  .output( "/tmp/test/output" ) \
+  .input( jobDir + "/input" ) \
+  .output( jobDir + "/output" ) \
   .now().jobId
-println "Submitted job " + jobId
+println "Submitted job: " + jobId
 
-println "Polling for completion..."
+println "Polling up to 60s for job completion..."
 done = false
 count = 0
 while( !done && count++ < 60 ) {
@@ -57,6 +59,10 @@ while( !done && count++ < 60 ) {
   json = Job.queryStatus(session).jobId(jobId).now().string
   done = JsonPath.read( json, "\$.status.jobComplete" )
 }
-println "Done " + done
+println "Job status: " + done
 
-println "Shutdown " + session.shutdown( 10, SECONDS )
+text = Hdfs.ls( session ).dir( jobDir + "/output" ).now().string
+json = (new JsonSlurper()).parseText( text )
+println json.FileStatuses.FileStatus.pathSuffix
+
+println "Session closed: " + session.shutdown( 10, SECONDS )

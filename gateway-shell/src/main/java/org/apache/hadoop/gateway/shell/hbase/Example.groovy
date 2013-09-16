@@ -22,8 +22,8 @@ import org.apache.hadoop.gateway.shell.Hadoop
 import static java.util.concurrent.TimeUnit.SECONDS
 
 gateway = "https://localhost:8443/gateway/sample"
-username = "bob"
-password = "bob-password"
+username = "guest"
+password = "guest-password"
 tableName = "test_table"
 
 session = Hadoop.login(gateway, username, password)

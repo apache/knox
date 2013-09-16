@@ -94,24 +94,24 @@ configuration = """\
 
 session = Hadoop.login( gateway, username, password )
 
-println "Delete " + jobDir + " " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
-println "Mkdir " + jobDir + " " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode
+println "Delete " + jobDir + ": " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
+println "Mkdir " + jobDir + ": " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode
 
 putData = Hdfs.put(session).file( inputFile ).to( jobDir + "/input/FILE" ).later() {
-  println "Put " + jobDir + "/input/FILE " + it.statusCode }
+  println "Put " + jobDir + "/input/FILE: " + it.statusCode }
 
 putJar = Hdfs.put(session).file( jarFile ).to( jobDir + "/lib/hadoop-examples.jar" ).later() {
-  println "Put " + jobDir + "/lib/hadoop-examples.jar " + it.statusCode }
+  println "Put " + jobDir + "/lib/hadoop-examples.jar: " + it.statusCode }
 
 putWorkflow = Hdfs.put(session).text( definition ).to( jobDir + "/workflow.xml" ).later() {
-  println "Put " + jobDir + "/workflow.xml " + it.statusCode }
+  println "Put " + jobDir + "/workflow.xml: " + it.statusCode }
 
 session.waitFor( putWorkflow, putData, putJar )
 
 jobId = Workflow.submit(session).text( configuration ).now().jobId
-println "Submitted job " + jobId
+println "Submitted job: " + jobId
 
-println "Polling up to 60s for completion..."
+println "Polling up to 60s for job completion..."
 status = "UNKNOWN";
 count = 0;
 while( status != "SUCCEEDED" && count++ < 60 ) {
@@ -119,10 +119,10 @@ while( status != "SUCCEEDED" && count++ < 60 ) {
   json = Workflow.status(session).jobId( jobId ).now().string
   status = JsonPath.read( json, "\$.status" )
 }
-println "Job status " + status
+println "Job status: " + status
 
-text = Hdfs.ls( session ).dir( jobDir ).now().string
+text = Hdfs.ls( session ).dir( jobDir + "/output" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix
 
-println "Shutdown " + session.shutdown( 10, SECONDS )
+println "Session closed: " + session.shutdown( 10, SECONDS )
