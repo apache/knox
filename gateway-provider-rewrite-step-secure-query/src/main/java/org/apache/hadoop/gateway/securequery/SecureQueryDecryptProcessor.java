@@ -22,6 +22,9 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.util.urltemplate.Builder;
 import org.apache.hadoop.gateway.util.urltemplate.Query;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -36,6 +39,7 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
   private static final String ENCRYPTED_PARAMETER_NAME = "_";
 
   private String clusterName;
+  private CryptoService cryptoService;
 
   @Override
   public String getType() {
@@ -48,6 +52,8 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
     if( values != null && values.size() > 0 ) {
       this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
     }
+    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
   }
 
   @Override
@@ -87,8 +93,18 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
   public void destroy() {
   }
 
-  private static String decode( String string ) throws UnsupportedEncodingException {
-    return new String( Base64.decodeBase64( string ), "UTF-8" );
+  private String decode( String string ) throws UnsupportedEncodingException {
+    byte[] bytes = Base64.decodeBase64( string );
+    EncryptionResult result = EncryptionResult.fromByteArray(bytes);
+    byte[] clear = cryptoService.decryptForCluster(clusterName, 
+        "encryptQueryString", 
+        result.cipher, 
+        result.iv, 
+        result.salt);
+    if (clear != null) {
+      System.out.println(new String(clear));
+      return new String(clear);
+    }
+    return null;
   }
-
 }

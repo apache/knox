@@ -17,8 +17,16 @@
  */
 package org.apache.hadoop.gateway.securequery;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.easymock.EasyMock;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -46,12 +54,27 @@ public class SecureQueryDeploymentContributorTest {
     provider.setName( "secure-query" );
     provider.setParams(  providerParams );
 
+    Topology topology = new Topology();
+    topology.setName("Sample");
+    
     DeploymentContext context = EasyMock.createNiceMock( DeploymentContext.class );
 //    EasyMock.expect( context.getDescriptor( "rewrite" ) ).andReturn( rewriteRules ).anyTimes();
     EasyMock.expect( context.getWebArchive() ).andReturn( webArchive ).anyTimes();
+    EasyMock.expect( context.getTopology() ).andReturn( topology ).anyTimes();
     EasyMock.replay( context );
 
+    AliasService as = EasyMock.createNiceMock( AliasService.class );
+    CryptoService cryptoService = new DefaultCryptoService();
+    ((DefaultCryptoService)cryptoService).setAliasService(as);
+
+    GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
+    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();
+
+    UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    
     SecureQueryDeploymentContributor contributor = new SecureQueryDeploymentContributor();
+    contributor.setAliasService(as);
 
     assertThat( contributor.getRole(), is( "secure-query" ) );
     assertThat( contributor.getName(), is( "default" ) );

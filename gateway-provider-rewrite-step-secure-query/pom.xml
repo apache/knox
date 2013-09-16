@@ -78,6 +78,12 @@
         </dependency>
 
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-server</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <scope>test</scope>

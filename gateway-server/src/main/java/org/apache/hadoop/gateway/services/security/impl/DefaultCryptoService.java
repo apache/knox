@@ -109,13 +109,16 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
   char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
-  if (password != null) {
+    if (password != null) {
       AESEncryptor aes = new AESEncryptor(new String(password));
       try {
         return aes.decrypt(salt, iv, cipherText);
       } catch (Exception e) {
         LOG.failedToDecryptPasswordForCluster( clusterName, e );
       }
+    }
+    else {
+      LOG.failedToDecryptCipherForClusterNullPassword( clusterName );
     }
     return null;
   }

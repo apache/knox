@@ -22,6 +22,9 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
@@ -34,6 +37,7 @@ public class SecureQueryEncryptProcessor
   private static final String ENCRYPTED_PARAMETER_NAME = "_";
 
   private String clusterName;
+  private CryptoService cryptoService = null;
 
   @Override
   public String getType() {
@@ -46,6 +50,8 @@ public class SecureQueryEncryptProcessor
     if( values != null && values.size() > 0 ) {
       this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
     }
+    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
   }
 
   @Override
@@ -75,17 +81,8 @@ public class SecureQueryEncryptProcessor
   }
 
   private String encode( String string ) throws UnsupportedEncodingException {
-    string = Base64.encodeBase64String( string.getBytes( "UTF-8" ) );
-    string = removeTrailingEquals( string );
+    EncryptionResult result = cryptoService.encryptForCluster(clusterName, "encryptQueryString", string.getBytes("UTF-8"));
+    string = Base64.encodeBase64String(result.toByteAray());
     return string;
   }
-
-  private static String removeTrailingEquals( String s ) {
-    int i = s.length()-1;
-    while( i > 0 && s.charAt( i ) == '=' ) {
-      i--;
-    }
-    return s.substring( 0, i+1 );
-  }
-
 }

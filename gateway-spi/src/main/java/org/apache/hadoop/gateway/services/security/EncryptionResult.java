@@ -17,13 +17,55 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+
 public class EncryptionResult {
   public byte[] salt;
   public byte[] iv;
   public byte[] cipher;
+  
+  public EncryptionResult() {
+    
+  }
+  
   public EncryptionResult(byte[] salt, byte[] iv, byte[] cipher) {
     this.salt = salt;
     this.iv = iv;
     this.cipher = cipher;
+  }
+  
+  public byte[] toByteAray() {
+    int headerLength = 12;
+    ByteBuffer bb = ByteBuffer.allocate(salt.length + iv.length + cipher.length + headerLength);
+    bb.putInt(salt.length)
+      .putInt(iv.length)
+      .putInt(cipher.length)
+      .put(salt)
+      .put(iv)
+      .put(cipher);
+    bb.flip();
+    
+    return bb.array();
+  }
+  
+  public static EncryptionResult fromByteArray(byte[] array) {
+    EncryptionResult result = new EncryptionResult();
+    
+    ByteBuffer bb = ByteBuffer.wrap(array);
+    
+    int saltSize = bb.getInt();
+    int ivSize = bb.getInt();
+    int cipherSize = bb.getInt();
+
+    result.salt = new byte[saltSize];
+    result.iv = new byte[ivSize];
+    result.cipher = new byte[cipherSize];
+    
+    bb.get(result.salt);
+    bb.get(result.iv);
+    bb.get(result.cipher);
+    
+    return result;
   }
 }

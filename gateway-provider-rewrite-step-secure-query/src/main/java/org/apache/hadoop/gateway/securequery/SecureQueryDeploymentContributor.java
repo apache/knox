@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
@@ -33,6 +34,7 @@ public class SecureQueryDeploymentContributor
 
   public static final String PROVIDER_ROLE_NAME = "secure-query";
   public static final String PROVIDER_IMPL_NAME = "default";
+  private AliasService as;
 
   @Override
   public String getRole() {
@@ -43,11 +45,16 @@ public class SecureQueryDeploymentContributor
   public String getName() {
     return PROVIDER_IMPL_NAME;
   }
+  
+  public void setAliasService(AliasService as) {
+    this.as = as;
+  }
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
     if( provider.isEnabled() ) {
-      //TODO: Do something with the keystore service.
+      String clusterName = context.getTopology().getName();
+      this.as.generateAliasForCluster(clusterName, "encryptQueryString");
 //      UrlRewriteRulesDescriptor rules = context.getDescriptor( REWRITE_ROLE_NAME );
 //      if( rules != null ) {
 //        HostmapFunctionDescriptor func = rules.addFunction( HostmapFunctionDescriptor.FUNCTION_NAME );
@@ -84,8 +91,6 @@ public class SecureQueryDeploymentContributor
       Service service,
       ResourceDescriptor resource,
       List<FilterParamDescriptor> params ) {
-    //TODO: Might need to add a filter as a way to propigate a keystore service to the processor.
-    // NoOp.
   }
 
 }
