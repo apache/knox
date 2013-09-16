@@ -77,7 +77,7 @@
         <url>http://localhost:11000/oozie</url>
     </service>
     <service>
-        <role>HBASE</role>
+        <role>STARGATE</role>
         <url>http://localhost:60000/</url>
     </service>
     <service>

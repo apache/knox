@@ -40,12 +40,12 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
 
   @Override
   public String getRole() {
-    return "HBASE";
+    return "STARGATE";
   }
 
   @Override
   public String getName() {
-    return "hbase";
+    return "stargate";
   }
 
   @Override
@@ -72,16 +72,16 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl() + "/{**}?{**}" );
     
-    rule = rules.addRule( getQualifiedName() + "/hbase/outbound" )
+    rule = rules.addRule( getQualifiedName() + "/api/outbound" )
         .directions( "outbound" );
     match = rule.addStep( "match" );
     match.pattern( "*://*:*/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( CLUSTER_URL_FUNCTION + EXTERNAL_PATH + "/{path}?{**}" );
 
-    UrlRewriteFilterDescriptor filter = rules.addFilter( getQualifiedName() + "/hbase/outbound" );
+    UrlRewriteFilterDescriptor filter = rules.addFilter( getQualifiedName() + "/api/outbound" );
     UrlRewriteFilterContentDescriptor content = filter.addContent( "application/x-http-headers" );
-    content.addApply( "Location", getQualifiedName() + "/hbase/outbound" );
+    content.addApply( "Location", getQualifiedName() + "/api/outbound" );
   }
 
   private void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {
@@ -106,7 +106,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
   private void addRewriteFilter(
       DeploymentContext context, Service service, ResourceDescriptor resource ) throws URISyntaxException {
     List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
-    params.add( resource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/hbase/outbound" ) );
+    params.add( resource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/api/outbound" ) );
     context.contributeFilter( service, resource, "rewrite", null, params );
   }
 

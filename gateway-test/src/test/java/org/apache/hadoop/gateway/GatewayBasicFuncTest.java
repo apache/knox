@@ -124,7 +124,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
-    driver.setupService( "HBASE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "STARGATE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -204,8 +204,8 @@ public class GatewayBasicFuncTest {
             .addTag( "role" ).addText( "HIVE" )
             .addTag( "url" ).addText( driver.getRealUrl( "HIVE" ) ).gotoParent()
           .addTag( "service" )
-            .addTag( "role" ).addText( "HBASE" )
-            .addTag( "url" ).addText( driver.getRealUrl( "HBASE" ) )
+            .addTag( "role" ).addText( "STARGATE" )
+            .addTag( "url" ).addText( driver.getRealUrl( "STARGATE" ) )
         .gotoRoot();
     // System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -1240,7 +1240,7 @@ public class GatewayBasicFuncTest {
     String password = "hbase-password";
     String resourceName = "hbase/table-list";
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( "/" )
@@ -1256,7 +1256,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.XML )
-    .when().get( driver.getUrl( "HBASE" ) );
+    .when().get( driver.getUrl( "STARGATE" ) );
     
     MatcherAssert
         .assertThat(
@@ -1264,7 +1264,7 @@ public class GatewayBasicFuncTest {
             isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( "/" )
@@ -1280,13 +1280,13 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.JSON )
-    .when().get( driver.getUrl( "HBASE" ) );
+    .when().get( driver.getUrl( "STARGATE" ) );
     
     MatcherAssert
     .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( "/" )
@@ -1303,7 +1303,7 @@ public class GatewayBasicFuncTest {
     .statusCode( HttpStatus.SC_OK )
     .contentType( "application/x-protobuf" )
     .content( is( driver.getResourceString( resourceName + ".protobuf", UTF8 ) ) )
-    .when().get( driver.getUrl( "HBASE" ) );
+    .when().get( driver.getUrl( "STARGATE" ) );
     driver.assertComplete();
   }
 
@@ -1314,7 +1314,7 @@ public class GatewayBasicFuncTest {
     String resourceName = "hbase/table-schema";
     String path = "/table/schema";
 
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( path )
@@ -1322,18 +1322,18 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
     .contentType( ContentType.XML.toString() )
-    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
+    .header( "Location", driver.getRealUrl( "STARGATE" ) + path  );
 
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.XML )
-    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
-    .when().put( driver.getUrl( "HBASE" ) + path );
+    .header( "Location", startsWith( driver.getUrl( "STARGATE" ) + path ) )
+    .when().put( driver.getUrl( "STARGATE" ) + path );
     driver.assertComplete();
 
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( path )
@@ -1341,18 +1341,18 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
     .contentType( ContentType.JSON.toString() )
-    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
+    .header( "Location", driver.getRealUrl( "STARGATE" ) + path  );
     
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.JSON )
-    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
-    .when().put( driver.getUrl( "HBASE" ) + path );
+    .header( "Location", startsWith( driver.getUrl( "STARGATE" ) + path ) )
+    .when().put( driver.getUrl( "STARGATE" ) + path );
     driver.assertComplete();
 
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( path )
@@ -1360,15 +1360,15 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .contentType( "application/x-protobuf" )
-    .header( "Location", driver.getRealUrl( "HBASE" ) + path  );
+    .header( "Location", driver.getRealUrl( "STARGATE" ) + path  );
 
     given()
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( "application/x-protobuf" )
-    .header( "Location", startsWith( driver.getUrl( "HBASE" ) + path ) )
-    .when().put( driver.getUrl( "HBASE" ) + path );
+    .header( "Location", startsWith( driver.getUrl( "STARGATE" ) + path ) )
+    .when().put( driver.getUrl( "STARGATE" ) + path );
     driver.assertComplete();
 
   }
@@ -1380,7 +1380,7 @@ public class GatewayBasicFuncTest {
     String resourceName = "hbase/table-metadata";
     String path = "/table/schema";
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( path )
@@ -1396,7 +1396,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.XML )
-    .when().get( driver.getUrl( "HBASE" ) + path );
+    .when().get( driver.getUrl( "STARGATE" ) + path );
 
     MatcherAssert
         .assertThat(
@@ -1404,7 +1404,7 @@ public class GatewayBasicFuncTest {
             isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( path )
@@ -1420,13 +1420,13 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.JSON )
-    .when().get( driver.getUrl( "HBASE" ) + path );
+    .when().get( driver.getUrl( "STARGATE" ) + path );
     
     MatcherAssert
     .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( path )
@@ -1443,7 +1443,7 @@ public class GatewayBasicFuncTest {
     .statusCode( HttpStatus.SC_OK )
     //.content( is( driver.getResourceBytes( resourceName + ".protobuf" ) ) )
     .contentType( "application/x-protobuf" )
-    .when().get( driver.getUrl( "HBASE" ) + path );
+    .when().get( driver.getUrl( "STARGATE" ) + path );
     // RestAssured seems to be screwing up the binary comparison so do it explicitly.
     assertThat( driver.getResourceBytes( resourceName + ".protobuf" ), is( response.body().asByteArray() ) );
     driver.assertComplete();
@@ -1460,7 +1460,7 @@ public class GatewayBasicFuncTest {
     
     //PUT request
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( multipleRowPath )
@@ -1477,10 +1477,10 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
+    .when().put( driver.getUrl( "STARGATE" ) + multipleRowPath );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( singleRowPath )
@@ -1496,10 +1496,10 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().put( driver.getUrl( "HBASE" ) + singleRowPath );
+    .when().put( driver.getUrl( "STARGATE" ) + singleRowPath );
     driver.assertComplete();
  
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( multipleRowPath )
@@ -1516,12 +1516,12 @@ public class GatewayBasicFuncTest {
     .contentType( "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().put( driver.getUrl( "HBASE" ) + multipleRowPath );
+    .when().put( driver.getUrl( "STARGATE" ) + multipleRowPath );
     driver.assertComplete();
     
     //POST request
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "POST" )
     .pathInfo( multipleRowPath )
@@ -1538,10 +1538,10 @@ public class GatewayBasicFuncTest {
       .contentType( ContentType.XML.toString() )
       .expect()
       .statusCode( HttpStatus.SC_OK )
-      .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
+      .when().post( driver.getUrl( "STARGATE" ) + multipleRowPath );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "POST" )
     .pathInfo( singleRowPath )
@@ -1557,10 +1557,10 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().post( driver.getUrl( "HBASE" ) + singleRowPath );
+    .when().post( driver.getUrl( "STARGATE" ) + singleRowPath );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "POST" )
     .pathInfo( multipleRowPath )
@@ -1577,7 +1577,7 @@ public class GatewayBasicFuncTest {
     .contentType( "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().post( driver.getUrl( "HBASE" ) + multipleRowPath );
+    .when().post( driver.getUrl( "STARGATE" ) + multipleRowPath );
     driver.assertComplete();
   }
 
@@ -1591,7 +1591,7 @@ public class GatewayBasicFuncTest {
     String familyId = "family";
     String columnId = "column";
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId )
@@ -1602,10 +1602,10 @@ public class GatewayBasicFuncTest {
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId );
+    .when().delete( driver.getUrl( "STARGATE" ) + "/" + tableId + "/" + rowId );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId )
@@ -1616,10 +1616,10 @@ public class GatewayBasicFuncTest {
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
+    .when().delete( driver.getUrl( "STARGATE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
     driver.assertComplete();
 
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId )
@@ -1630,7 +1630,7 @@ public class GatewayBasicFuncTest {
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "HBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
+    .when().delete( driver.getUrl( "STARGATE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
     driver.assertComplete();
 
   }
@@ -1647,7 +1647,7 @@ public class GatewayBasicFuncTest {
     String rowsWithKeyPath = "/table/row";
     String rowsWithKeyAndColumnPath = "/table/row/family:col";
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( allRowsPath )
@@ -1663,7 +1663,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.XML )
-    .when().get( driver.getUrl( "HBASE" ) + allRowsPath );
+    .when().get( driver.getUrl( "STARGATE" ) + allRowsPath );
     
     MatcherAssert
     .assertThat(
@@ -1671,7 +1671,7 @@ public class GatewayBasicFuncTest {
         isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( rowsStartsWithPath )
@@ -1687,7 +1687,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.XML )
-    .when().get( driver.getUrl( "HBASE" ) + rowsStartsWithPath );
+    .when().get( driver.getUrl( "STARGATE" ) + rowsStartsWithPath );
     
     MatcherAssert
     .assertThat(
@@ -1695,7 +1695,7 @@ public class GatewayBasicFuncTest {
         isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( rowsWithKeyPath )
@@ -1711,13 +1711,13 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.JSON )
-    .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyPath );
+    .when().get( driver.getUrl( "STARGATE" ) + rowsWithKeyPath );
     
     MatcherAssert
     .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
     
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( rowsWithKeyAndColumnPath )
@@ -1733,7 +1733,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.JSON )
-    .when().get( driver.getUrl( "HBASE" ) + rowsWithKeyAndColumnPath );
+    .when().get( driver.getUrl( "STARGATE" ) + rowsWithKeyAndColumnPath );
     
     MatcherAssert
     .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
@@ -1751,7 +1751,7 @@ public class GatewayBasicFuncTest {
     String scannerId = "13705290446328cff5ed";
     
     //Create scanner for table using PUT and POST requests
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "PUT" )
     .pathInfo( scannerPath )
@@ -1765,13 +1765,13 @@ public class GatewayBasicFuncTest {
     .content( driver.getResourceBytes( scannerDefinitionResourceName + ".xml" ) )
     .expect()
     //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
-    //.header( "Location", startsWith( driver.getUrl( "HBASE" ) + createScannerPath ) )
+    //.header( "Location", startsWith( driver.getUrl( "STARGATE" ) + createScannerPath ) )
     .statusCode( HttpStatus.SC_CREATED )
-    .when().put( driver.getUrl( "HBASE" ) + scannerPath );
+    .when().put( driver.getUrl( "STARGATE" ) + scannerPath );
     driver.assertComplete();
     
     //Get the values of the next cells found by the scanner 
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "GET" )
     .pathInfo( scannerPath + "/" + scannerId )
@@ -1787,7 +1787,7 @@ public class GatewayBasicFuncTest {
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .contentType( ContentType.XML )
-    .when().get( driver.getUrl( "HBASE" ) + scannerPath + "/" + scannerId );
+    .when().get( driver.getUrl( "STARGATE" ) + scannerPath + "/" + scannerId );
     
     MatcherAssert
     .assertThat(
@@ -1796,7 +1796,7 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
     
     //Delete scanner
-    driver.getMock( "HBASE" )
+    driver.getMock( "STARGATE" )
     .expect()
     .method( "DELETE" )
     .pathInfo( scannerPath + "/" + scannerId )
@@ -1807,7 +1807,7 @@ public class GatewayBasicFuncTest {
     .auth().preemptive().basic( username, password )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "HBASE" ) + scannerPath + "/" + scannerId );
+    .when().delete( driver.getUrl( "STARGATE" ) + scannerPath + "/" + scannerId );
     driver.assertComplete();
   }
 
