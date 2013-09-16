@@ -39,7 +39,7 @@ public class ClusterVersion {
         public Response call() throws Exception {
           URIBuilder uri = uri( HBase.SERVICE_PATH, "/version/cluster" );
           HttpGet get = new HttpGet( uri.build() );
-          get.setHeader( "Accept", "application/json" );
+          get.setHeader( "Accept", "text/plain" );
           return new Response( execute( get ) );
         }
       };

@@ -78,7 +78,7 @@
     </service>
     <service>
         <role>STARGATE</role>
-        <url>http://localhost:60000/</url>
+        <url>http://localhost:60080/</url>
     </service>
     <service>
         <role>HIVE</role>
