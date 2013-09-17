@@ -23,11 +23,11 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescr
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -51,14 +51,6 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
-  private static final String REQUEST_URL_RULE_PARAM = "request.url";
-  private static final String REQUEST_BODY_FILTER_PARAM = "request.body";
-  private static final String REQUEST_HEADERS_FILTER_PARAM = "request.headers";
-  private static final String REQUEST_COOKIES_FILTER_PARAM = "request.cookies";
-
-  private static final MimeType HEADERS_MIME_TYPE = MimeTypes.create( "application/x-http-headers", null );
-  private static final MimeType COOKIES_MIME_TYPE = MimeTypes.create( "application/x-http-cookies", null );
-
   private UrlRewriter rewriter;
   private String urlRuleName;
   private String bodyFilterName;
@@ -75,12 +67,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   public UrlRewriteRequest( FilterConfig config, HttpServletRequest request ) throws IOException {
     super( request );
     this.rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );
-    this.urlRuleName = config.getInitParameter( REQUEST_URL_RULE_PARAM );
-    this.bodyFilterName = config.getInitParameter( REQUEST_BODY_FILTER_PARAM );
-    this.headersFilterName = config.getInitParameter( REQUEST_HEADERS_FILTER_PARAM );
-    this.headersFilterConfig = getRewriteFilterConfig( headersFilterName, HEADERS_MIME_TYPE );
-    this.cookiesFilterName = config.getInitParameter( REQUEST_COOKIES_FILTER_PARAM );
-    this.cookiesFilterConfig = getRewriteFilterConfig( cookiesFilterName, COOKIES_MIME_TYPE );
+    this.urlRuleName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_URL_RULE_PARAM );
+    this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM );
+    this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_HEADERS_FILTER_PARAM );
+    this.headersFilterConfig = getRewriteFilterConfig( headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
+    this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_COOKIES_FILTER_PARAM );
+    this.cookiesFilterConfig = getRewriteFilterConfig( cookiesFilterName, UrlRewriteServletFilter.COOKIES_MIME_TYPE );
   }
 
   private Template getSourceUrl() {

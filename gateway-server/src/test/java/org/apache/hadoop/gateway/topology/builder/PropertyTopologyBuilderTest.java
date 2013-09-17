@@ -140,7 +140,7 @@ public class PropertyTopologyBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testBuildSuccessfulForServiceProperty() {
         PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();
-        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS..url", "http://host:50070/webhdfs/v1"));
+        propertyTopologyBuilder.addProperty(new Property("topology.gateway.service.WEBHDFS..url", "http://host:50070/webhdfs"));
         Topology topology = propertyTopologyBuilder.build();
 
         assertThat(topology, notNullValue());

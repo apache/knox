@@ -117,9 +117,9 @@ public class GatewayBasicFuncTest {
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
-    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs/v1", "/cluster/namenode/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/namenode/api", USE_MOCK_SERVICES );
     driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
-    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs/v1", "/cluster/datanode/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/datanode/api", USE_MOCK_SERVICES );
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
@@ -229,7 +229,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
-        .pathInfo( root + "/dir" )
+        .pathInfo( "/v1" + root + "/dir" )
         .queryParam( "op", "MKDIRS" )
         .queryParam( "user.name", username )
         .respond()
@@ -245,7 +245,7 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "WEBHDFS" ) + root + "/dir" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
     driver.assertComplete();
   }
 
@@ -259,12 +259,12 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
-        .pathInfo( root + "/dir/file" )
+        .pathInfo( "/v1" + root + "/dir/file" )
         .queryParam( "op", "CREATE" )
         .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=CREATE&user.name=hdfs" );
+        .header( "Location", driver.getRealUrl( "DATANODE" ) + "/v1" + root + "/dir/file?op=CREATE&user.name=hdfs" );
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -272,7 +272,7 @@ public class GatewayBasicFuncTest {
         .expect()
             //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .when().put( driver.getUrl("WEBHDFS") + root + "/dir/file" );
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     String location = response.getHeader( "Location" );
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
@@ -297,7 +297,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
-        .pathInfo( root )
+        .pathInfo( "/v1" + root )
         .queryParam( "op", "DELETE" )
         .queryParam( "user.name", username )
         .queryParam( "recursive", "true" )
@@ -310,7 +310,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().all();
         .statusCode( HttpStatus.SC_OK )
-        .when().delete( driver.getUrl( "WEBHDFS" ) + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
+        .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
     driver.assertComplete();
 
     /* Create a directory.
@@ -326,7 +326,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
-        .pathInfo( root + "/dir" )
+        .pathInfo( "/v1" + root + "/dir" )
         .queryParam( "op", "MKDIRS" )
         .queryParam( "user.name", username )
         .respond()
@@ -342,13 +342,13 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "WEBHDFS" ) + root + "/dir" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
     driver.assertComplete();
 
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "GET" )
-        .pathInfo( root )
+        .pathInfo( "/v1" + root )
         .queryParam( "op", "LISTSTATUS" )
         .queryParam( "user.name", username )
         .respond()
@@ -363,7 +363,7 @@ public class GatewayBasicFuncTest {
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( "FileStatuses.FileStatus[0].pathSuffix", is( "dir" ) )
-        .when().get( driver.getUrl( "WEBHDFS" ) + root );
+        .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a bad password.
@@ -371,10 +371,10 @@ public class GatewayBasicFuncTest {
         //.log().all()
         .auth().preemptive().basic( username, "invalid-password" )
         .queryParam( "op", "LISTSTATUS" )
-    .expect()
+        .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED )
-    .when().get( driver.getUrl( "WEBHDFS" ) + root );
+        .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a bad user.
@@ -382,10 +382,10 @@ public class GatewayBasicFuncTest {
         //.log().all()
         .auth().preemptive().basic( "hdfs-user", "hdfs-password" )
         .queryParam( "op", "LISTSTATUS" )
-    .expect()
+        .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_UNAUTHORIZED )
-    .when().get( driver.getUrl( "WEBHDFS" ) + root );
+        .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
     driver.assertComplete();
 
     //NEGATIVE: Test a valid but unauthorized user.
@@ -393,10 +393,10 @@ public class GatewayBasicFuncTest {
       //.log().all()
       .auth().preemptive().basic( "mapred-user", "mapred-password" )
       .queryParam( "op", "LISTSTATUS" )
-   .expect()
+      .expect()
       //.log().ifError()
       .statusCode( HttpStatus.SC_UNAUTHORIZED )
-   .when().get( driver.getUrl( "WEBHDFS" ) + root );
+      .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
 
     /* Add a file.
     curl -i -X PUT "http://<HOST>:<PORT>/webhdfs/v1/<PATH>?op=CREATE
@@ -419,16 +419,16 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "PUT" )
-        .pathInfo( root + "/dir/file" )
+        .pathInfo( "/v1" + root + "/dir/file" )
         .queryParam( "op", "CREATE" )
         .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=CREATE&user.name=hdfs" );
+        .header( "Location", driver.getRealUrl( "DATANODE" ) + "/v1" + root + "/dir/file?op=CREATE&user.name=hdfs" );
     driver.getMock( "DATANODE" )
         .expect()
         .method( "PUT" )
-        .pathInfo( root + "/dir/file" )
+        .pathInfo( "/v1" + root + "/dir/file" )
         .queryParam( "op", "CREATE" )
         .queryParam( "user.name", username )
         .contentType( "text/plain" )
@@ -436,7 +436,7 @@ public class GatewayBasicFuncTest {
             //.content( driver.gerResourceBytes( "hadoop-examples.jar" ) )
         .respond()
         .status( HttpStatus.SC_CREATED )
-        .header( "Location", "webhdfs://" + driver.getRealAddr( "DATANODE" ) + root + "/dir/file" );
+        .header( "Location", "webhdfs://" + driver.getRealAddr( "DATANODE" ) + "/v1" + root + "/dir/file" );
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -444,7 +444,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .when().put( driver.getUrl("WEBHDFS") + root + "/dir/file" );
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
@@ -489,16 +489,16 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "GET" )
-        .pathInfo( root + "/dir/file" )
+        .pathInfo( "/v1" + root + "/dir/file" )
         .queryParam( "op", "OPEN" )
         .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .header( "Location", driver.getRealUrl( "DATANODE" ) + root + "/dir/file?op=OPEN&user.name=hdfs" );
+        .header( "Location", driver.getRealUrl( "DATANODE" ) + "/v1" + root + "/dir/file?op=OPEN&user.name=hdfs" );
     driver.getMock( "DATANODE" )
         .expect()
         .method( "GET" )
-        .pathInfo( root + "/dir/file" )
+        .pathInfo( "/v1" + root + "/dir/file" )
         .queryParam( "op", "OPEN" )
         .queryParam( "user.name", username )
         .respond()
@@ -513,7 +513,7 @@ public class GatewayBasicFuncTest {
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
         .content( is( "TEST" ) )
-        .when().get( driver.getUrl("WEBHDFS") + root + "/dir/file" );
+        .when().get( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     driver.assertComplete();
 
     /* Delete the directory.
@@ -531,7 +531,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
-        .pathInfo( root )
+        .pathInfo( "/v1" + root )
         .queryParam( "op", "DELETE" )
         .queryParam( "user.name", username )
         .queryParam( "recursive", "true" )
@@ -544,7 +544,7 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_OK )
-        .when().delete( driver.getUrl( "WEBHDFS" ) + root );
+        .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
     driver.assertComplete();
   }
 
@@ -638,7 +638,7 @@ public class GatewayBasicFuncTest {
           .expect()
           //.log().all()
           .statusCode( HttpStatus.SC_UNAUTHORIZED )
-          .when().get( driver.getUrl("WEBHDFS") + root + "/dirA700/fileA700" );
+          .when().get( driver.getUrl("WEBHDFS") + "/v1" + root + "/dirA700/fileA700" );
     }
     driver.assertComplete();
 

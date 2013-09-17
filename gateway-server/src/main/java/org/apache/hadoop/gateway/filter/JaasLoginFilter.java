@@ -83,7 +83,4 @@ public class JaasLoginFilter extends AbstractGatewayFilter {
 //    AuthenticatedURL.Token token = new AuthenticatedURL.Token();
 //    Authenticator authenticator = null; // url, token
 //    HttpURLConnection conn = new AuthenticatedURL( authenticator ).openConnection();
-
-    // ﻿http://org.apache.hadoop-secure.home:50070/webhdfs/v1/horton/readme?op=OPEN
-
 }

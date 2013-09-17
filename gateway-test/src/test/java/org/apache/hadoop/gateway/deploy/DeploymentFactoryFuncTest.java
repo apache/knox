@@ -49,7 +49,7 @@ public class DeploymentFactoryFuncTest {
     topology.setName( "test-cluster" );
     Service service = new Service();
     service.setRole( "WEBHDFS" );
-    service.setUrl( "http://localhost:50070/webhdfs/v1" );
+    service.setUrl( "http://localhost:50070/webhdfs" );
     topology.addService( service );
     Provider provider = new Provider();
     provider.setRole( "authentication" );

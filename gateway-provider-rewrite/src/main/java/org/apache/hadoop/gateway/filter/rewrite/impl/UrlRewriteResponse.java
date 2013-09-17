@@ -21,11 +21,11 @@ import org.apache.hadoop.gateway.filter.GatewayResponseWrapper;
 import org.apache.hadoop.gateway.filter.ResponseStreamer;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -64,15 +64,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     IGNORE_HEADER_NAMES.add( "Content-Length" );
   }
 
-  private static final MimeType HEADERS_MIME_TYPE = MimeTypes.create( "application/x-http-headers", null );
-  private static final MimeType COOKIES_MIME_TYPE = MimeTypes.create( "application/x-http-cookies", null );
-
   private static final String REQUEST_PARAM_PREFIX = "request.";
   private static final String CLUSTER_PARAM_PREFIX = "cluster.";
   private static final String GATEWAY_PARAM_PREFIX = "gateway.";
-  private static final String RESPONSE_BODY_FILTER_PARAM = "response.body";
-  private static final String RESPONSE_HEADERS_FILTER_PARAM = "response.headers";
-  private static final String RESPONSE_COOKIES_FILTER_PARAM = "response.cookies";
 
   private UrlRewriter rewriter;
   private FilterConfig config;
@@ -93,11 +87,11 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     this.request = request;
     this.response = response;
     this.output = null;
-    this.bodyFilterName = config.getInitParameter( RESPONSE_BODY_FILTER_PARAM );
-    this.headersFilterName = config.getInitParameter( RESPONSE_HEADERS_FILTER_PARAM );
-    this.headersFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), headersFilterName, HEADERS_MIME_TYPE );
-    this.cookiesFilterName = config.getInitParameter( RESPONSE_COOKIES_FILTER_PARAM );
-    this.cookiesFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), cookiesFilterName, COOKIES_MIME_TYPE );
+    this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_BODY_FILTER_PARAM );
+    this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_HEADERS_FILTER_PARAM );
+    this.headersFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
+    this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_COOKIES_FILTER_PARAM );
+    this.cookiesFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), cookiesFilterName, UrlRewriteServletFilter.COOKIES_MIME_TYPE );
   }
 
   protected boolean ignoreHeader( String name ) {

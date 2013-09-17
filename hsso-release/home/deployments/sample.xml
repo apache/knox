@@ -32,7 +32,7 @@
 
     <service>
         <role>WEBHDFS</role>
-        <url>http://localhost:50070/webhdfs/v1</url>
+        <url>http://localhost:50070/webhdfs</url>
     </service>
     <service>
         <role>TEMPLETON</role>

@@ -20,7 +20,9 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteResponse;
+import org.apache.hadoop.gateway.util.MimeTypes;
 
+import javax.activation.MimeType;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
@@ -32,6 +34,17 @@ import java.io.IOException;
  *
  */
 public class UrlRewriteServletFilter extends AbstractGatewayFilter {
+
+  public static final String REQUEST_URL_RULE_PARAM = "request.url";
+  public static final String REQUEST_HEADERS_FILTER_PARAM = "request.headers";
+  public static final String REQUEST_COOKIES_FILTER_PARAM = "request.cookies";
+  public static final String REQUEST_BODY_FILTER_PARAM = "request.body";
+  public static final String RESPONSE_HEADERS_FILTER_PARAM = "response.headers";
+  public static final String RESPONSE_COOKIES_FILTER_PARAM = "response.cookies";
+  public static final String RESPONSE_BODY_FILTER_PARAM = "response.body";
+
+  public static final MimeType HEADERS_MIME_TYPE = MimeTypes.create( "application/x-http-headers", null );
+  public static final MimeType COOKIES_MIME_TYPE = MimeTypes.create( "application/x-http-cookies", null );
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {

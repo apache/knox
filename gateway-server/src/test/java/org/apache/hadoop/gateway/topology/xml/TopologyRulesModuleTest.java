@@ -71,7 +71,7 @@ public class TopologyRulesModuleTest {
     Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is( "WEBHDFS" ) );
-    assertThat( comp.getUrl(), is( "http://host:80/webhdfs/v1" ) );
+    assertThat( comp.getUrl(), is( "http://host:80/webhdfs" ) );
 
     Provider provider = topology.getProviders().iterator().next();
     assertThat( provider, notNullValue() );
@@ -101,7 +101,7 @@ public class TopologyRulesModuleTest {
     assertThat( namenodeService, notNullValue() );
     assertThat( namenodeService.getRole(), is( "WEBHDFS" ) );
     assertThat( namenodeService.getName(), nullValue() );
-    assertThat( namenodeService.getUrl(), is( "http://host:50070/webhdfs/v1" ) );
+    assertThat( namenodeService.getUrl(), is( "http://host:50070/webhdfs" ) );
 
     Service templetonService = topology.getService( "TEMPLETON", null );
     assertThat( templetonService, notNullValue() );

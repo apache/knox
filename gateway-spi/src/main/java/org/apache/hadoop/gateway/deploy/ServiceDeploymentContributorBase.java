@@ -17,11 +17,14 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import java.util.Collection;
-
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
+
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class ServiceDeploymentContributorBase extends DeploymentContributorBase implements ServiceDeploymentContributor {
 
@@ -69,7 +72,16 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
   }
 
+  protected void addRewriteFilter(
+      DeploymentContext context,
+      Service service,
+      ResourceDescriptor resource,
+      List<FilterParamDescriptor> params ) throws URISyntaxException {
+    context.contributeFilter( service, resource, "rewrite", null, params );
+  }
+
   protected void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
     context.contributeFilter( service, resource, role, name, null );
-  }  
+  }
+
 }

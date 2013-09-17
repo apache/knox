@@ -20,6 +20,6 @@
 <topology>
     <service>
         <role>WEBHDFS</role>
-        <url>http://vm.home:50070/webhdfs/v1</url>
+        <url>http://vm.home:50070/webhdfs</url>
     </service>
 </topology>

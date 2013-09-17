@@ -7,6 +7,6 @@
     -->
     <service>
         <role>WEBHDFS</role>
-        <url>http://host-three:80/webhdfs/v1</url>
+        <url>http://host-three:80/webhdfs</url>
     </service>
 </topology>

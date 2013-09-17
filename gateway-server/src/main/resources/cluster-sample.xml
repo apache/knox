@@ -21,7 +21,7 @@ limitations under the License.
     <!--
     <service>
         <role>NAMENODE</role>
-        <url>http://localhost:50070/webhdfs/v1</url>
+        <url>http://localhost:50070/webhdfs</url>
     </service>
     -->
 </topology>
