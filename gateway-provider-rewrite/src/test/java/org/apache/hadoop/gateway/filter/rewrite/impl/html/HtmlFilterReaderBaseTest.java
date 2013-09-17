@@ -17,15 +17,16 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.html;
 
-import net.htmlparser.jericho.Attribute;
-import net.htmlparser.jericho.Segment;
-import net.htmlparser.jericho.StartTag;
-import net.htmlparser.jericho.StreamedSource;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.filter.rewrite.api.*;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepFlow;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
@@ -35,14 +36,11 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBa
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.xmlmatchers.namespace.SimpleNamespaceContext;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -54,14 +52,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -609,7 +604,7 @@ public class HtmlFilterReaderBaseTest {
   
   @Test
   public void testXmlWithHtmlTagNames() throws Exception {
-    String inputXml = "<root><br><table name=\"table1\"/><table name=\"table2\"/></br></root>";
+    String inputXml = "<root><br><table name=\"table1\"></table><table name=\"table2\"></table></br></root>";
     StringReader inputReader = new StringReader( inputXml );
     
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
