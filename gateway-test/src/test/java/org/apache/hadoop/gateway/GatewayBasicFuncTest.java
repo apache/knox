@@ -808,7 +808,8 @@ public class GatewayBasicFuncTest {
     context.put( "userName", user );
     context.put( "nameNode", "hdfs://sandbox:8020" );
     context.put( "jobTracker", "sandbox:50300" );
-    context.put( "appPath", "hdfs://sandbox:8020" + root );
+    //context.put( "appPath", "hdfs://sandbox:8020" + root );
+    context.put( "appPath", root );
     context.put( "inputDir", root + "/input" );
     context.put( "outputDir", root + "/output" );
 
