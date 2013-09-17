@@ -61,7 +61,7 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to filter field name {0}: {1}" )
   void failedToFilterFieldName( String fieldName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to function {0}: {1}" )
+  @Message( level = MessageLevel.ERROR, text = "Rewrite function {0} failed: {1}" )
   void failedToInvokeRewriteFunction( String functionName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to find values by parameter name {0}: {1}" )

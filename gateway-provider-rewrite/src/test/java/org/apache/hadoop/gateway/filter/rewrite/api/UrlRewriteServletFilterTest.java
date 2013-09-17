@@ -20,9 +20,11 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import com.jayway.jsonassert.JsonAssert;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.hadoop.test.mock.MockInteraction;
 import org.apache.hadoop.test.mock.MockServlet;
+import org.apache.log4j.Appender;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.testing.HttpTester;
@@ -46,6 +48,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -523,35 +526,41 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestXmlBodyRewriteWithFilterInitParamForInvalidFilterConfig() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
-    initParams.put( "request.body", "test-filter-3" );
-    setUp( initParams );
+    Enumeration<Appender> realAppenders = NoOpAppender.setUp();
+    try {
 
-    String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
-    String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
+      Map<String,String> initParams = new HashMap<String,String>();
+      initParams.put( "request.body", "test-filter-3" );
+      setUp( initParams );
 
-    // Setup the server side request/response interaction.
-    interaction.expect()
-        .method( "PUT" )
-        .requestUrl( "http://mock-host:42/test-output-path-1" )
-        .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) );
-    interaction.respond()
-        .status( 200 );
-    interactions.add( interaction );
-    request.setMethod( "PUT" );
-    request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
-    request.setHeader( "Host", "mock-host:42" );
-    request.setContentType( "text/xml; charset=UTF-8" );
-    request.setContent( input );
+      String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
+      String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
 
-    // Execute the request.
-    response.parse( server.getResponses( request.generate() ) );
+      // Setup the server side request/response interaction.
+      interaction.expect()
+          .method( "PUT" )
+          .requestUrl( "http://mock-host:42/test-output-path-1" )
+          .contentType( "text/xml" )
+          .characterEncoding( "UTF-8" )
+          .content( expect, Charset.forName( "UTF-8" ) );
+      interaction.respond()
+          .status( 200 );
+      interactions.add( interaction );
+      request.setMethod( "PUT" );
+      request.setURI( "/test-input-path" );
+      request.setVersion( "HTTP/1.1" );
+      request.setHeader( "Host", "mock-host:42" );
+      request.setContentType( "text/xml; charset=UTF-8" );
+      request.setContent( input );
 
-    // Test the results.
-    assertThat( response.getStatus(), is( 500 ) );
+      // Execute the request.
+      response.parse( server.getResponses( request.generate() ) );
+
+      // Test the results.
+      assertThat( response.getStatus(), is( 500 ) );
+    } finally {
+      NoOpAppender.tearDown( realAppenders );
+    }
   }
 
   @Test
