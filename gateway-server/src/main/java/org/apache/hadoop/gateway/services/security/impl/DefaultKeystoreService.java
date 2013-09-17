@@ -17,6 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.Service;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -30,14 +38,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
-
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.security.KeystoreService;
-import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
-import org.apache.hadoop.gateway.services.Service;
-import org.apache.hadoop.gateway.GatewayMessages;
 
 
 public class DefaultKeystoreService extends BaseKeystoreService implements KeystoreService, Service {
@@ -181,7 +181,11 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
       try {
-        credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded()).toCharArray();
+        char[] masterSecret = masterService.getMasterSecret();
+        Key credentialKey = ks.getKey( alias, masterSecret );
+        byte[] credentialBytes = credentialKey.getEncoded();
+        String credentialString = new String( credentialBytes );
+        credential = credentialString.toCharArray();
       } catch (UnrecoverableKeyException e) {
         LOG.failedToGetCredentialForCluster( clusterName, e );
       } catch (KeyStoreException e) {
