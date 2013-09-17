@@ -27,7 +27,8 @@ import org.apache.hadoop.gateway.topology.Service;
 
 import java.net.URISyntaxException;
 
-public class TempletonDeploymentContributor extends ServiceDeploymentContributorBase {
+public class
+    TempletonDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String TEMPLETON_EXTERNAL_PATH = "/templeton/api/v1";
 
@@ -51,7 +52,7 @@ public class TempletonDeploymentContributor extends ServiceDeploymentContributor
         .directions( "request" )
         .pattern( "*://*:*/**" + TEMPLETON_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl() + "/{path=**}?{**}" );
+    rewrite.template( service.getUrl() + "/v1/{path=**}?{**}" );
 
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role( service.getRole() );

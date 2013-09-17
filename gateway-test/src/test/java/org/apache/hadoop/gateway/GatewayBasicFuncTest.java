@@ -121,7 +121,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/datanode/api", USE_MOCK_SERVICES );
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
-    driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton/v1", "/cluster/templeton/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton", "/cluster/templeton/api", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "STARGATE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );

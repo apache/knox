@@ -55,7 +55,7 @@
     <resource>
         <!--<name>templeton</name>-->
         <source>/templeton/api/v1/{path=**}?{**}</source>
-        <target>http://{templeton.address}/templeton/v1/{path=**}?{**}</target>
+        <target>http://{templeton.address}/templeton/{path=**}?{**}</target>
         <filter>
             <role>authentication</role>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>

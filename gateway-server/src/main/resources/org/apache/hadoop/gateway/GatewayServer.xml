@@ -53,8 +53,8 @@
 
     <service>
         <name>templeton</name>
-        <source>/templeton/api/v1/{path=**}?{**}</source>
-        <target>http://{templeton.address}/templeton/v1/{path=**}?{**}</target>
+        <source>/templeton/api/{path=**}?{**}</source>
+        <target>http://{templeton.address}/templeton/{path=**}?{**}</target>
         <filter>
             <name>shiro</name>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>

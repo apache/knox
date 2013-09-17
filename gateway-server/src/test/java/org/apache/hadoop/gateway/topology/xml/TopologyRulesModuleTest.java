@@ -107,7 +107,7 @@ public class TopologyRulesModuleTest {
     assertThat( templetonService, notNullValue() );
     assertThat( templetonService.getRole(), is( "TEMPLETON" ) );
     assertThat( templetonService.getName(), nullValue() );
-    assertThat( templetonService.getUrl(), is( "http://host:50111/templeton/v1" ) );
+    assertThat( templetonService.getUrl(), is( "http://host:50111/templeton" ) );
 
     Service oozieService = topology.getService( "OOZIE", null );
     assertThat( oozieService, notNullValue() );

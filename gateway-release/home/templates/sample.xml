@@ -56,7 +56,7 @@
     </service>
     <service>
         <role>TEMPLETON</role>
-        <url>http://localhost:50111/templeton/v1</url>
+        <url>http://localhost:50111/templeton</url>
     </service>
     <service>
         <role>OOZIE</role>

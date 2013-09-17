@@ -211,15 +211,15 @@ of the Gateway configuration file (i.e. {GATEWAY_HOME}/gateway-site.xml)
 and the cluster topology descriptors
 (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 
-  HDFS (NameNode)
+  WebHDFS
     Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/namenode/api
     Cluster: http://<namenode-host>:50070/webhdfs
   WebHCat (Templeton)
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api/v1
-    Cluster: http://<templeton-host>:50111/templeton/v1
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api
+    Cluster: http://<templeton-host>:50111/templeton
   Oozie
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/oozie/api/v1
-    Cluster: http://<templeton-host>:11000/oozie/v1
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/oozie/api
+    Cluster: http://<templeton-host>:11000/oozie
 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via
 the Gateway configuration file (i.e. {GATEWAY_HOME}/gateway-site.xml).

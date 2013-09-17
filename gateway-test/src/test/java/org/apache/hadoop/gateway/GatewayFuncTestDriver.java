@@ -618,7 +618,7 @@ public class GatewayFuncTestDriver {
     getMock( "TEMPLETON" )
         .expect()
         .method( "POST" )
-        .pathInfo( "/mapreduce/jar" )
+        .pathInfo( "/v1/mapreduce/jar" )
         .formParam( "user.name", user )
         .formParam( "jar", jar )
         .formParam( "class", main )
@@ -637,7 +637,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().post( getUrl( "TEMPLETON" ) + "/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+        .when().post( getUrl( "TEMPLETON" ) + "/v1/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
     log.debug( "JOB=" + job );
@@ -649,7 +649,7 @@ public class GatewayFuncTestDriver {
     getMock( "TEMPLETON" )
         .expect()
         .method( "POST" )
-        .pathInfo( "/pig" )
+        .pathInfo( "/v1/pig" )
         .respond()
         .status( status[0] )
         .contentType( "application/json" )
@@ -669,7 +669,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
+        .post( getUrl( "TEMPLETON" ) + "/v1/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -682,7 +682,7 @@ public class GatewayFuncTestDriver {
     getMock( "TEMPLETON" )
         .expect()
         .method( "POST" )
-        .pathInfo( "/hive" )
+        .pathInfo( "/v1/hive" )
         .respond()
         .status( status[ 0 ] )
         .contentType( "application/json" )
@@ -701,7 +701,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
+        .post( getUrl( "TEMPLETON" ) + "/v1/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -714,7 +714,7 @@ public class GatewayFuncTestDriver {
     getMock( "TEMPLETON" )
           .expect()
           .method( "GET" )
-          .pathInfo( "/queue/" + job )
+          .pathInfo( "/v1/queue/" + job )
           .respond()
           .status( HttpStatus.SC_OK )
           .content( getResourceBytes( "templeton-job-status.json" ) )
@@ -727,7 +727,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .content( "status.jobId", equalTo( job ) )
         .statusCode( HttpStatus.SC_OK )
-        .when().get( getUrl( "TEMPLETON" ) + "/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+        .when().get( getUrl( "TEMPLETON" ) + "/v1/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
     assertComplete();
   }
