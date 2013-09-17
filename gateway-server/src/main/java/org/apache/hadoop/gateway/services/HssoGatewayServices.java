@@ -31,6 +31,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMappingService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.SSLService;
@@ -90,6 +91,10 @@ public class HssoGatewayServices implements GatewayServices {
     ssl.setMasterService(ms);
     ssl.init(config, options);
     services.put(SSL_SERVICE, ssl);
+    
+    DefaultHostMappingService hm = new DefaultHostMappingService();
+    hm.init( config, options );
+    services.put( HOST_MAPPING_SERVICE, hm );
   }
   
   public void start() throws ServiceLifecycleException {

@@ -21,12 +21,17 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.hostmap.api.HostmapFunctionDescriptor;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.hostmap.FileBasedHostMapper;
+import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
+import org.apache.hadoop.gateway.services.security.CryptoService;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HostmapFunctionProcessor
@@ -34,9 +39,10 @@ public class HostmapFunctionProcessor
 
   public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "hostmap.txt";
   public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
-
-  private Map<String, String> inbound = new HashMap<String, String>();
-  private Map<String, String> outbound = new HashMap<String, String>();
+  
+  private FileBasedHostMapper hostMapper = null;
+  private String clusterName;
+  private HostMappingService hostMappingService;
 
   @Override
   public String name() {
@@ -46,32 +52,28 @@ public class HostmapFunctionProcessor
   @Override
   public void initialize( UrlRewriteEnvironment environment, HostmapFunctionDescriptor descriptor ) throws Exception {
     URL url = environment.getResource( DESCRIPTOR_DEFAULT_LOCATION );
-    if( url != null ) {
-      InputStream stream = url.openStream();
-      BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
-      String line = reader.readLine();
-      while( line != null ) {
-        String[] lineSplit = line.split( "=" );
-        if( lineSplit.length >= 2 ) {
-          String[] externalSplit = lineSplit[ 0 ].split( "," );
-          String[] internalSplit = lineSplit[ 1 ].split( "," );
-          if( externalSplit.length >= 1 && internalSplit.length >= 1 ) {
-            for( String external : externalSplit ) {
-              inbound.put( external, internalSplit[ 0 ] );
-            }
-            for( String internal : internalSplit ) {
-              outbound.put( internal, externalSplit[ 0 ] );
-            }
-          }
-        }
-        line = reader.readLine();
+    List<String> names = environment.resolve( "cluster.name" );
+    if (names != null && names.size() > 0) {
+      clusterName = names.get( 0 );
+    }
+    hostMapper = new FileBasedHostMapper(clusterName, url);
+
+    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (clusterName != null && services != null) {
+      hostMappingService = (HostMappingService) services.getService(GatewayServices.HOST_MAPPING_SERVICE);
+      if (hostMappingService != null) {
+        hostMappingService.registerHostMapperForCluster(clusterName, hostMapper);
       }
-      reader.close();
     }
   }
 
   @Override
   public void destroy() throws Exception {
+    // need to remove the host mapper for the cluster on undeploy
+    if (clusterName != null && hostMappingService != null) {
+      hostMappingService.removeHostMapperForCluster(clusterName);
+    }
+    
   }
 
   @Override
@@ -79,10 +81,10 @@ public class HostmapFunctionProcessor
     String value;
     switch( context.getDirection() ) {
       case IN:
-        value = inbound.get( parameter );
+        value = hostMapper.resolveInboundHostName(parameter);
         break;
       case OUT:
-        value = outbound.get( parameter );
+        value = hostMapper.resolveOutboundHostName(parameter);
         break;
       default:
         value = null;

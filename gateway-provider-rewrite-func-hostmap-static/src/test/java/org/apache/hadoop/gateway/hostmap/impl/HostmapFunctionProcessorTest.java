@@ -25,6 +25,9 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFac
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.hostmap.HostMapper;
+import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -62,11 +65,22 @@ public class HostmapFunctionProcessorTest {
   public void testBasicUseCase() throws Exception {
     URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hostmap.txt" );
 
+    HostMapper hm = EasyMock.createNiceMock(HostMapper.class);
+    EasyMock.expect( hm.resolveInboundHostName("test-inbound-host")).andReturn( "test-inbound-rewritten-host" ).anyTimes();
+    
+    HostMappingService hms = EasyMock.createNiceMock( HostMappingService.class );
+
+    GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
+    EasyMock.expect( gatewayServices.getService( GatewayServices.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
+
+
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    EasyMock.expect( environment.resolve( "cluster.name" ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
     EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
     Resolver resolver = EasyMock.createNiceMock( Resolver.class );
     EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-inbound-host" ) ).anyTimes();
-    EasyMock.replay( environment, resolver );
+    EasyMock.replay( gatewayServices, hm, hms, environment, resolver );
 
     UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
