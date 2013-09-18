@@ -54,9 +54,11 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     File ksd = new File(this.keyStoreDir);
     if (!ksd.exists()) {
       if( !ksd.mkdirs() ) {
-        throw new ServiceLifecycleException( "FAILED TO CREATE DIR " + ksd ); //DEBUG
+System.out.println( "FAILED TO CREATE KEYSTORE DIRECTORY " + ksd.getAbsolutePath() ); //DEBUG
+        throw new ServiceLifecycleException( "FAILED TO CREATE KEYSTORE DIRECTORY " + ksd ); //DEBUG
       }
     }
+System.out.println( "USING KEYSTORE DIRECTORY " + ksd.getAbsolutePath() ); //DEBUG
   }
 
   @Override
