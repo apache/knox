@@ -116,19 +116,19 @@ public class BaseKeystoreService {
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
-      e.printStackTrace();
+      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
+      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (CertificateException e) {
-      e.printStackTrace();
+      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (IOException e) {
-      e.printStackTrace();
+      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     }
   }

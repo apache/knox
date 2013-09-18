@@ -53,7 +53,9 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     this.keyStoreDir = config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security" + File.separator + "keystores" + File.separator;
     File ksd = new File(this.keyStoreDir);
     if (!ksd.exists()) {
-      ksd.mkdirs();
+      if( !ksd.mkdirs() ) {
+        throw new ServiceLifecycleException( "FAILED TO CREATE DIR " + ksd ); //DEBUG
+      }
     }
   }
 
