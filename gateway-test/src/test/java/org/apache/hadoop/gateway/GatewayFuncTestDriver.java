@@ -122,7 +122,7 @@ public class GatewayFuncTestDriver {
   }
 
   /**
-   * Creates a GATEWAY_HOME, starts a gateway intance and deploys a test topology.
+   * Creates a GATEWAY_HOME, starts a gateway instance and deploys a test topology.
    */
   public void setupGateway( GatewayTestConfig config, String cluster, XMLTag topology, boolean use ) throws IOException {
     this.useGateway = use;

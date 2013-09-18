@@ -72,6 +72,7 @@
         <gateway-artifact>knox-incubating</gateway-artifact>
         <gateway-version>0.3.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.hadoop</gateway-group>
+        <jetty-version>8.1.12.v20130726</jetty-version>
     </properties>
 
     <licenses>
@@ -428,17 +429,17 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>8.1.7.v20120910</version>
+                <version>${jetty-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>8.1.7.v20120910</version>
+                <version>${jetty-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
-                <version>8.1.7.v20120910</version>
+                <version>${jetty-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.orbit</groupId>
@@ -449,13 +450,13 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jaspi</artifactId>
-                <version>8.1.7.v20120910</version>
+                <version>${jetty-version}</version>
             </dependency>
             -->
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>test-jetty-servlet</artifactId>
-                <version>8.1.7.v20120910</version>
+                <version>${jetty-version}</version>
             </dependency>
 
             <dependency>

@@ -270,6 +270,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Status Code Returned from Request Dispatch: {0}" )
   void dispatchResponseStatusCode(int statusCode);
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to decrypt cipher text for cluster {0}: due to inability to retrieve the password" )
+  @Message( level = MessageLevel.ERROR, text = "Failed to decrypt cipher text for cluster {0}: due to inability to retrieve the password." )
   void failedToDecryptCipherForClusterNullPassword(String clusterName);
+
+  @Message( level = MessageLevel.DEBUG, text = "Gateway services have not been initialized." )
+  void gatewayServicesNotInitialized();
 }

@@ -175,10 +175,9 @@ public abstract class DeploymentFactory {
     wad.createServlet().servletName( servletName ).servletClass( servletClass );
     wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
     if (gatewayServices != null) {
-System.out.println( "SERVICES ARE AVAILABLE TO DEPLOYMENT FACTORY" ); //DEBUG
       gatewayServices.initializeContribution(context);
     } else {
-System.out.println( "NO SERVICES AVAILABLE TO DEPLOYMENT FACTORY" ); //DEBUG
+      log.gatewayServicesNotInitialized();
     }
     for( String role : providers.keySet() ) {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {

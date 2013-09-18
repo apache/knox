@@ -109,19 +109,19 @@ public class BaseKeystoreService {
         return cert;
       }
 
-  protected FileOutputStream createKeyStoreFile( String fileName ) throws IOException { //DEBUG
+  private static FileOutputStream createKeyStoreFile( String fileName ) throws IOException {
     File file = new File( fileName );
     if( file.exists() ) {
       if( file.isDirectory() ) {
-        throw new IOException( "EXISTING FILE IS DIRECTORY " + file.getAbsolutePath() );
+        throw new IOException( file.getAbsolutePath() );
       } else if( !file.canWrite() ) {
-        throw new IOException( "EXISTING FILE IS UNWRITEABLE " + file.getAbsolutePath() );
+        throw new IOException( file.getAbsolutePath() );
       }
     } else {
       File dir = file.getParentFile();
       if( !dir.exists() ) {
         if( !dir.mkdirs() ) {
-          throw new IOException( "FAILED TO CREATE PARENT DIRECTORIES " + file.getAbsolutePath() );
+          throw new IOException( file.getAbsolutePath() );
         }
       }
     }
@@ -130,26 +130,20 @@ public class BaseKeystoreService {
   }
 
   protected void createKeystore(String filename, String keystoreType) {
-System.out.println( "CREATING KEYSTORE " + filename + ", TYPE=" + keystoreType ); //DEBUG
     try {
       FileOutputStream out = createKeyStoreFile( filename );
       KeyStore ks = KeyStore.getInstance(keystoreType);  
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
-      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (CertificateException e) {
-      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (FileNotFoundException e) {
-      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     } catch (IOException e) {
-      e.printStackTrace(); //DEBUG
       LOG.failedToCreateKeystore( filename, keystoreType, e );
     }
   }

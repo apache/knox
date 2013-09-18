@@ -70,6 +70,7 @@ public class DeploymentFactoryFuncTest {
     authorizer.setEnabled( true );
     topology.addProvider( authorizer );
 
+    DeploymentFactory.setGatewayServices( null );
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );

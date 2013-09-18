@@ -18,8 +18,10 @@
 package org.apache.hadoop.gateway.services.security.impl;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
@@ -46,7 +48,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
   private static final String GATEWAY_KEYSTORE = "gateway.jks";
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  
+  private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
@@ -54,23 +57,17 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     File ksd = new File(this.keyStoreDir);
     if (!ksd.exists()) {
       if( !ksd.mkdirs() ) {
-System.out.println( "FAILED TO CREATE KEYSTORE DIRECTORY " + ksd.getAbsolutePath() ); //DEBUG
-        throw new ServiceLifecycleException( "FAILED TO CREATE KEYSTORE DIRECTORY " + ksd ); //DEBUG
+        throw new ServiceLifecycleException( RES.failedToCreateKeyStoreDirectory( ksd.getAbsolutePath() ) );
       }
     }
-System.out.println( "USING KEYSTORE DIRECTORY " + ksd.getAbsolutePath() ); //DEBUG
   }
 
   @Override
   public void start() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-
   }
 
   @Override
