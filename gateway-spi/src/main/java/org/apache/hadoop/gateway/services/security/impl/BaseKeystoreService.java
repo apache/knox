@@ -109,9 +109,30 @@ public class BaseKeystoreService {
         return cert;
       }
 
+  protected FileOutputStream createKeyStoreFile( String fileName ) throws IOException { //DEBUG
+    File file = new File( fileName );
+    if( file.exists() ) {
+      if( file.isDirectory() ) {
+        throw new IOException( "EXISTING FILE IS DIRECTORY " + file.getAbsolutePath() );
+      } else if( !file.canWrite() ) {
+        throw new IOException( "EXISTING FILE IS UNWRITEABLE " + file.getAbsolutePath() );
+      }
+    } else {
+      File dir = file.getParentFile();
+      if( !dir.exists() ) {
+        if( !dir.mkdirs() ) {
+          throw new IOException( "FAILED TO CREATE PARENT DIRECTORIES " + file.getAbsolutePath() );
+        }
+      }
+    }
+    FileOutputStream stream = new FileOutputStream( file );
+    return stream;
+  }
+
   protected void createKeystore(String filename, String keystoreType) {
+System.out.println( "CREATING KEYSTORE " + filename + ", TYPE=" + keystoreType ); //DEBUG
     try {
-      FileOutputStream out = new FileOutputStream( filename );
+      FileOutputStream out = createKeyStoreFile( filename );
       KeyStore ks = KeyStore.getInstance(keystoreType);  
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );

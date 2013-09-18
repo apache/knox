@@ -90,7 +90,7 @@ public class GatewayBasicFuncTest {
 
   // Specifies if the GATEWAY_HOME created for the test should be deleted when the test suite is complete.
   // This is frequently used during debugging to keep the GATEWAY_HOME around for inspection.
-  private static final boolean CLEANUP_TEST = true;
+  private static final boolean CLEANUP_TEST = false;
 
 //  private static final boolean USE_GATEWAY = false;
 //  private static final boolean USE_MOCK_SERVICES = false;
