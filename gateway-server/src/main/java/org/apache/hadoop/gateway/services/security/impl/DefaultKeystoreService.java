@@ -29,6 +29,7 @@ import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -39,14 +40,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.MessageFormat;
 import java.util.Map;
 
 
 public class DefaultKeystoreService extends BaseKeystoreService implements KeystoreService, Service {
 
+  private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String TEST_CERT_DN = "CN=hadoop.gateway,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
   private static final String GATEWAY_KEYSTORE = "gateway.jks";
+  private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
+  private static final String CERT_GEN_MODE_HADOOP_GATEWAY = "hadoop.gateway";
+  private static final String CERT_GEN_MODE_LOCALHOST = "localhost";
+  private static final String CERT_GEN_MODE_HOSTNAME = "hostname";
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
 
@@ -89,7 +96,24 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
       keyPairGenerator.initialize(1024);  
       KeyPair KPair = keyPairGenerator.generateKeyPair();
-      X509Certificate cert = generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
+      String certGenMode = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);
+      X509Certificate cert = null;
+      if (certGenMode.equals(CERT_GEN_MODE_HADOOP_GATEWAY)) {
+        String dn = buildDistinguishedName("hadoop.gateway");
+        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      }
+      else if(certGenMode.equals(CERT_GEN_MODE_LOCALHOST)) {
+        String dn = buildDistinguishedName("localhost");
+        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      }
+      else if(certGenMode.equals(CERT_GEN_MODE_HOSTNAME)) {
+        String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
+        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      }
+      else {
+        String dn = buildDistinguishedName("localhost");
+        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      }
 
       KeyStore privateKS = getKeystoreForGateway();
       privateKS.setKeyEntry(alias, KPair.getPrivate(),  
@@ -104,6 +128,14 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     } catch (IOException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
     }  
+  }
+
+  private String buildDistinguishedName(String hostname) {
+    MessageFormat headerFormatter = new MessageFormat(dnTemplate);
+    String[] paramArray = new String[1];
+    paramArray[0] = hostname;
+    String dn = headerFormatter.format(paramArray);
+    return dn;
   }
   
   @Override
