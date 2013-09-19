@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class EncryptionResult {

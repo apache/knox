@@ -51,10 +51,16 @@ public class SecureQueryDeploymentContributor
   }
 
   @Override
+  public void initializeContribution(DeploymentContext context) {
+    super.initializeContribution(context);
+
+    String clusterName = context.getTopology().getName();
+    this.as.generateAliasForCluster(clusterName, "encryptQueryString");
+  }
+
+  @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
     if( provider.isEnabled() ) {
-      String clusterName = context.getTopology().getName();
-      this.as.generateAliasForCluster(clusterName, "encryptQueryString");
 //      UrlRewriteRulesDescriptor rules = context.getDescriptor( REWRITE_ROLE_NAME );
 //      if( rules != null ) {
 //        HostmapFunctionDescriptor func = rules.addFunction( HostmapFunctionDescriptor.FUNCTION_NAME );

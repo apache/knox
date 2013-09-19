@@ -17,8 +17,11 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import org.apache.hadoop.gateway.GatewayTestConfig;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
@@ -32,9 +35,14 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -44,7 +52,28 @@ public class DeploymentFactoryFuncTest {
 
   @Test
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
-    GatewayConfig config = new GatewayConfigImpl();
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+//    File deployDir = new File( gatewayDir, config.getDeploymentDir() );
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
+
+    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+    
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String,String> options = new HashMap<String,String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
     Topology topology = new Topology();
     topology.setName( "test-cluster" );
     Service service = new Service();
@@ -70,7 +99,6 @@ public class DeploymentFactoryFuncTest {
     authorizer.setEnabled( true );
     topology.addProvider( authorizer );
 
-    DeploymentFactory.setGatewayServices( null );
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );

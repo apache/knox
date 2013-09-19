@@ -48,10 +48,7 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryDecryptDescriptor descriptor ) throws Exception {
-    List<String> values = environment.resolve( "cluster.name" );
-    if( values != null && values.size() > 0 ) {
-      this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
-    }
+    clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
   }
@@ -102,7 +99,6 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
         result.iv, 
         result.salt);
     if (clear != null) {
-      System.out.println(new String(clear));
       return new String(clear);
     }
     return null;

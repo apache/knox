@@ -29,7 +29,6 @@ import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 public class SecureQueryEncryptProcessor
     implements UrlRewriteStepProcessor<SecureQueryEncryptDescriptor> {
@@ -46,10 +45,7 @@ public class SecureQueryEncryptProcessor
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryEncryptDescriptor descriptor ) throws Exception {
-    List<String> values = environment.resolve( "cluster.name" );
-    if( values != null && values.size() > 0 ) {
-      this.clusterName = environment.resolve( "cluster.name" ).get( 0 );
-    }
+    clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
   }
@@ -82,7 +78,7 @@ public class SecureQueryEncryptProcessor
 
   private String encode( String string ) throws UnsupportedEncodingException {
     EncryptionResult result = cryptoService.encryptForCluster(clusterName, "encryptQueryString", string.getBytes("UTF-8"));
-    string = Base64.encodeBase64String(result.toByteAray());
+    string = Base64.encodeBase64URLSafeString(result.toByteAray());
     return string;
   }
 }

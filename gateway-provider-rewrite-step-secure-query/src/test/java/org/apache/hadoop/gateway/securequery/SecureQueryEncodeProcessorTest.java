@@ -17,8 +17,14 @@
  */
 package org.apache.hadoop.gateway.securequery;
 
+import java.util.Arrays;
+
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.easymock.Capture;
@@ -33,7 +39,17 @@ public class SecureQueryEncodeProcessorTest {
 
   @Test
   public void testSimpleQueryEncoding() throws Exception {
+    AliasService as = EasyMock.createNiceMock( AliasService.class );
+    String secret = "sdkjfhsdkjfhsdfs";
+    EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
+    CryptoService cryptoService = new DefaultCryptoService();
+    ((DefaultCryptoService)cryptoService).setAliasService(as);
+    GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
+    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
 
     Template inTemplate = Parser.parse( "http://host:0/root/path?query" );
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
