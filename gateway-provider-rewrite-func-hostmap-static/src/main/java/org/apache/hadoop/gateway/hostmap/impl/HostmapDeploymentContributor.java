@@ -24,7 +24,6 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.hostmap.api.HostmapFunctionDescriptor;
-import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.asset.Asset;
@@ -41,14 +40,8 @@ public class HostmapDeploymentContributor
 
   public static final String PROVIDER_ROLE_NAME = HostmapFunctionDescriptor.FUNCTION_NAME;
   public static final String PROVIDER_IMPL_NAME = "static";
-
   private static final String REWRITE_ROLE_NAME = "rewrite";
-  private HostMappingService hostMapping;
-  
-  private void setHostMappingService(HostMappingService hostMapping) {
-    this.hostMapping = hostMapping;
-  }
-  
+
   @Override
   public String getRole() {
     return PROVIDER_ROLE_NAME;
@@ -80,12 +73,12 @@ public class HostmapDeploymentContributor
   private Asset createAsset( Provider provider ) {
     StringWriter buffer = new StringWriter();
     PrintWriter writer = new PrintWriter( buffer );
-    for( Map.Entry<String,String> entry : provider.getParams().entrySet() ) {
+    for( Map.Entry<String, String> entry : provider.getParams().entrySet() ) {
       String externalHosts = entry.getKey();
       String internalHosts = entry.getValue();
       writer.print( externalHosts );
       writer.print( "=" );
-      writer.println( internalHosts ) ;
+      writer.println( internalHosts );
     }
     writer.close();
     String string = buffer.toString();

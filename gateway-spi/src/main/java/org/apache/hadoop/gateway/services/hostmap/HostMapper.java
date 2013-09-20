@@ -22,8 +22,16 @@ package org.apache.hadoop.gateway.services.hostmap;
  */
 public interface HostMapper {
 
-  public abstract String resolveInboundHostName(String inboundHost);
+  /**
+   * @param inboundHost
+   * @return
+   */
+  public abstract String resolveInboundHostName( String inboundHost );
 
-  public abstract String resolveOutboundHostName(String outboundHost);
+  /**
+   * @param outboundHost
+   * @return
+   */
+  public abstract String resolveOutboundHostName( String outboundHost );
 
 }

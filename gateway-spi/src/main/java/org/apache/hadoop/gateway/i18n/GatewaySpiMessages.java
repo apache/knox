@@ -64,4 +64,13 @@ public interface GatewaySpiMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to get key {0}: {1}" )
   void failedToGetKey(String alias, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
+  @Message( level = MessageLevel.DEBUG, text = "Loading from persistent master: {0}" )
+  void loadingFromPersistentMaster( String tag );
+
+  @Message( level = MessageLevel.DEBUG, text = "ALIAS: {0}" )
+  void printClusterAlias( String alias );
+
+  @Message( level = MessageLevel.DEBUG, text = "MASTER SERVICE == NULL: {0}" )
+  void printMasterServiceIsNull( boolean masterServiceIsNull );
+
 }

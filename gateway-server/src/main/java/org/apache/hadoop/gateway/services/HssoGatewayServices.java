@@ -17,21 +17,13 @@
  */
 package org.apache.hadoop.gateway.services;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.Service;
-import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMappingService;
+import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.SSLService;
@@ -42,6 +34,11 @@ import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
 import org.apache.hadoop.gateway.services.security.impl.JettySSLService;
 import org.apache.hadoop.gateway.services.token.impl.DefaultTokenAuthorityService;
 import org.apache.hadoop.gateway.topology.Provider;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HssoGatewayServices implements GatewayServices {
 
@@ -92,7 +89,7 @@ public class HssoGatewayServices implements GatewayServices {
     ssl.init(config, options);
     services.put(SSL_SERVICE, ssl);
     
-    DefaultHostMappingService hm = new DefaultHostMappingService();
+    DefaultHostMapperService hm = new DefaultHostMapperService();
     hm.init( config, options );
     services.put( HOST_MAPPING_SERVICE, hm );
   }

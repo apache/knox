@@ -44,7 +44,7 @@ public class UrlRewriteActionRewriteProcessorExt
 
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
-    Template rewritten = expander.expandToTemplate( template, context.getParameters() );
+    Template rewritten = expander.expandToTemplate( template, context.getParameters(), context.getEvaluator() );
     context.setCurrentUrl( rewritten );
     return UrlRewriteStepStatus.SUCCESS;
   }

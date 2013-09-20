@@ -58,7 +58,7 @@ public class RewriterTest {
     outputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     // Copies the values extracted from the input URI via the inputTemplate and inserts them into the outputTemplate.
     // The resolver isn't used in this case.
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "http://some-host:80" ) );
 
     // Need a syntax for the URL rewriter to tell it to take the value extracted from the inputUri
@@ -71,7 +71,7 @@ public class RewriterTest {
     inputUri = new URI( "http://some-known-host:80" );
     inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "http://some-other-host:80" ) );
 
     // What should happen if the param value cannot be resolved to something else?
@@ -80,7 +80,7 @@ public class RewriterTest {
     inputUri = new URI( "http://some-unknown-host:80" );
     inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     outputTemplate = Parser.parse( "{scheme}://{$host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "http://:80" ) );
 
     // Should there be another syntax that uses the original value if it cannot resolve the extracted value?
@@ -89,8 +89,27 @@ public class RewriterTest {
     inputUri = new URI( "http://some-unknown-host:80" );
     inputTemplate = Parser.parse( "{scheme}://{host}:{port}" );
     outputTemplate = Parser.parse( "{scheme}://{?host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "http://some-unknown-host:80" ) );
+  }
+
+  @Test
+  public void testServiceRegistryHostmapUserCase() throws Exception {
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "internal-host" ) ).andReturn( Arrays.asList( "internal-host" ) ).anyTimes();
+
+    Evaluator evaluator = EasyMock.createNiceMock( Evaluator.class );
+    EasyMock.expect( evaluator.evaluate( "hostmap", Arrays.asList( "internal-host" ) ) ).andReturn( Arrays.asList( "external-host" ) ).anyTimes();
+
+    EasyMock.replay( resolver, evaluator );
+
+    URI inputUri = new URI( "scheme://internal-host:777/path" );
+    Template inputMatch = Parser.parse( "{scheme}://{host}:{port}/{path=**}?{**}" );
+    Template outputTemplate = Parser.parse( "{scheme}://{$hostmap(host)}:{port}/{path=**}?&{**}" );
+
+    URI outputUri = Rewriter.rewrite( inputUri, inputMatch, outputTemplate, resolver, evaluator );
+
+    assertThat( outputUri.toString(), is( "scheme://external-host:777/path" ) );
   }
 
   @Test
@@ -102,19 +121,19 @@ public class RewriterTest {
     inputUri = new URI( "path-1/path-2" );
     inputTemplate = Parser.parse( "{path-1-name}/{path-2-name}" );
     outputTemplate = Parser.parse( "{path-2-name}/{path-1-name}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "path-2/path-1" ) );
 
     inputUri = new URI( "path-1/path-2/path-3/path-4" );
     inputTemplate = Parser.parse( "path-1/{path=**}/path-4" ); // Need the ** to allow the expansion to include all path values.
     outputTemplate = Parser.parse( "new-path-1/{path=**}/new-path-4" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "new-path-1/path-2/path-3/new-path-4" ) );
 
     inputUri = new URI( "some-path?query-name=some-queryParam-value" );
     inputTemplate = Parser.parse( "{path-name}?query-name={queryParam-value}" );
     outputTemplate = Parser.parse( "{queryParam-value}/{path-name}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
     assertThat( outputUri.toString(), equalTo( "some-queryParam-value/some-path" ) );
   }
 
@@ -128,13 +147,13 @@ public class RewriterTest {
     inputTemplate = Parser.parse( "path?{**}" );
     outputTemplate = Parser.parse( "path?{**}" );
 
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params, null );
     assertThat( outputUri.toString(), equalTo( "path?query=value" ) );
 
     inputUri = new URI( "path?query=value" );
     inputTemplate = Parser.parse( "path?{*}" );
     outputTemplate = Parser.parse( "path?{*}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params );
+    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, params, null );
     assertThat( outputUri.toString(), equalTo( "path?query=value" ) );
   }
 
@@ -156,63 +175,63 @@ public class RewriterTest {
 //    sourcePattern = Parser.parse( "**" );
     sourcePattern = Parser.parse( "*://*:*/**" );
     targetPattern = Parser.parse( "should-not-change" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "should-not-change" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/{0=**}" );
     targetPattern = Parser.parse( "{0}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "some-path" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/pathA/pathB/pathC" );
     sourcePattern = Parser.parse( "*://*:*/pathA/{1=*}/{2=*}" );
     targetPattern = Parser.parse( "http://some-other-host/{2}/{1}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://some-other-host/pathC/pathB" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
     targetPattern = Parser.parse( "{filter-queryParam-name}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "filter-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
     targetPattern = Parser.parse( "{expect-queryParam-name}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/some-path" );
     sourcePattern = Parser.parse( "*://*:*/**" );
     targetPattern = Parser.parse( "http://some-other-host/{filter-queryParam-name}/{expect-queryParam-name}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://some-other-host/filter-queryParam-value/expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://some-host:0/pathA/pathB/pathC" );
     sourcePattern = Parser.parse( "*://*:*/pathA/{1=*}/{2=*}" );
     targetPattern = Parser.parse( "http://some-other-host/{2}/{1}/{filter-queryParam-name}/{expect-queryParam-name}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://some-other-host/pathC/pathB/filter-queryParam-value/expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/namenode/api/v1/test" );
     sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
     targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/namenode/api/v1/test" );
     sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
     targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
@@ -220,14 +239,14 @@ public class RewriterTest {
     expectOutput = new URI( "http://filter-queryParam-value/gatewaycluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
     sourcePattern = Parser.parse( "*://*:*/webhdfs/v1/{path=**}?op={op=*}&user.name={username=*}&overwrite={overwrite=*}" );
     targetPattern = Parser.parse( "http://{filter-queryParam-name}/gatewaycluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/datanode/api/v1/test?user.name=hdfs&op=CREATE&overwrite=false&host=vm.home&port=50075" );
     expectOutput = new URI( "http://vm.home:50075/webhdfs/v1/test?op=CREATE&user.name=hdfs&overwrite=false" );
     sourcePattern = Parser.parse( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
     targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     // Note: Had to change the order of the expected query params to match.
     // This is probably dependent upon iterator ordering and therefore might be a test issue.
     // Unfortunately URI.equals() doesn't ignore query queryParam order.
@@ -267,7 +286,7 @@ public class RewriterTest {
 
     actualInput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     expectOutput = new URI( "http://gw:8888/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
   }
 
@@ -288,7 +307,7 @@ public class RewriterTest {
 
     actualInput = new URI( "/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     expectOutput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
-    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ) );
+    actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
   }
 
@@ -303,7 +322,7 @@ public class RewriterTest {
     actualInput = new URI( "http://host:42/pathA/pathB" );
     expectOutput = new URI( "http://host:777/test-output/pathA/pathB" );
 
-    actualOutput = Rewriter.rewrite( actualInput, inputTemplate, outputTemplate, null );
+    actualOutput = Rewriter.rewrite( actualInput, inputTemplate, outputTemplate, null, null );
 
     assertThat( actualOutput, is( expectOutput ) );
   }
@@ -347,6 +366,7 @@ public class RewriterTest {
 
       return values;
     }
+
   }
 
 }

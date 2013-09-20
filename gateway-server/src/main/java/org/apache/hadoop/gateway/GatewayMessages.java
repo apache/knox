@@ -153,15 +153,6 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Apache Knox Gateway {0} ({1})" )
   void gatewayVersionMessage( String version, String hash );
 
-  @Message( level = MessageLevel.DEBUG, text = "Loading from persistent master: {0}" )
-  void loadingFromPersistentMaster( String tag );
-
-  @Message( level = MessageLevel.DEBUG, text = "ALIAS: {0}" )
-  void printClusterAlias( String alias );
-
-  @Message( level = MessageLevel.DEBUG, text = "MASTER SERVICE == NULL: {0}" )
-  void printMasterServiceIsNull( boolean masterServiceIsNull );
-
   @Message( level = MessageLevel.ERROR, text = "Failed to inject service {0}: {1}" )
   void failedToInjectService( String serviceName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 

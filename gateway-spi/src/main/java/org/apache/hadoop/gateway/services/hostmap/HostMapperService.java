@@ -19,17 +19,23 @@ package org.apache.hadoop.gateway.services.hostmap;
 
 import org.apache.hadoop.gateway.services.Service;
 
-public interface HostMappingService extends Service {
-  HostMapper getHostMapper(String clusterName);
+public interface HostMapperService extends Service {
+
+  /**
+   * @param clusterName
+   * @return
+   */
+  HostMapper getHostMapper( String clusterName );
 
   /**
    * @param clusterName
    * @param hostMapper
    */
-  void registerHostMapperForCluster(String clusterName, FileBasedHostMapper hostMapper);
+  void registerHostMapperForCluster( String clusterName, HostMapper hostMapper );
 
   /**
    * @param clusterName
    */
-  void removeHostMapperForCluster(String clusterName);
+  void removeHostMapperForCluster( String clusterName );
+
 }

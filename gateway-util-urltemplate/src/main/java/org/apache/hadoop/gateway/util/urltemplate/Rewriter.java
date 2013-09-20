@@ -37,12 +37,12 @@ public class Rewriter {
 
   private Matcher<Template> rules;
 
-  public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver )
+  public static URI rewrite( URI inputUri, Template inputTemplate, Template outputTemplate, Resolver resolver, Evaluator evaluator )
       throws URISyntaxException {
     Rewriter rewriter = new Rewriter();
     rewriter.addRule( inputTemplate, outputTemplate );
     Template inputUriTemplate = Parser.parse( inputUri.toString() );
-    return rewriter.rewrite( inputUriTemplate, resolver );
+    return rewriter.rewrite( inputUriTemplate, resolver, evaluator );
   }
 
   public Rewriter() {
@@ -53,7 +53,7 @@ public class Rewriter {
     rules.add( inputTemplate, outputTemplate );
   }
 
-  public URI rewrite( Template input, Resolver resolver )
+  public URI rewrite( Template input, Resolver resolver, Evaluator evaluator )
       throws URISyntaxException {
     URI outputUri = null;
     Matcher<Template>.Match match = rules.match( input );
@@ -64,7 +64,7 @@ public class Rewriter {
       } else {
         params = new RewriteParams( match.getParams(), resolver );
       }
-      outputUri = Expander.expand( match.getValue(), params );
+      outputUri = Expander.expand( match.getValue(), params, evaluator );
     }
     return outputUri;
   }
@@ -96,6 +96,7 @@ public class Rewriter {
       }
       return values;
     }
+
   }
 
 }

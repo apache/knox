@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.util.urltemplate.Evaluator;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
@@ -34,5 +35,7 @@ public interface UrlRewriteContext {
   void addParameters( Params parameters );
 
   Params getParameters();
+
+  Evaluator getEvaluator();
 
 }

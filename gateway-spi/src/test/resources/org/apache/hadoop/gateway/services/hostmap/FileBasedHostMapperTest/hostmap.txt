@@ -1,0 +1,6 @@
+external=internal
+external-space = internal-space
+external-list = external-list-1, external-list-2
+internal-list-1, internal-list-2 = internal-list
+external-both-list-1, external-both-list-2 = internal-both-list-1, internal-both-list-2
+

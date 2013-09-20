@@ -21,12 +21,13 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.urltemplate.Evaluator;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,9 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private UrlRewriteEnvironment environment;
-  private UrlRewriteResolver resolver;
+  private Resolver resolver;
+  private Evaluator evaluator;
+  private Map<String,UrlRewriteFunctionProcessor> functions;
   private ContextParameters params;
   private UrlRewriter.Direction direction;
   private Template originalUrl;
@@ -45,12 +48,15 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
 
   public UrlRewriteContextImpl(
       UrlRewriteEnvironment environment,
-      UrlRewriteResolver resolver,
+      Resolver resolver,
+      Map<String,UrlRewriteFunctionProcessor> functions,
       UrlRewriter.Direction direction,
       Template url ) {
     this.environment = environment;
     this.resolver = resolver;
+    this.functions = functions;
     this.params = new ContextParameters();
+    this.evaluator = new ContextEvaluator();
     this.direction = direction;
     this.originalUrl = url;
     this.currentUrl = url;
@@ -86,6 +92,11 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
     return params;
   }
 
+  @Override
+  public Evaluator getEvaluator() {
+    return evaluator;
+  }
+
   private class ContextParameters implements Params {
 
     Map<String,List<String>> map = new HashMap<String,List<String>>();
@@ -97,14 +108,12 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
 
     @Override
     public List<String> resolve( String name ) {
-      List<String> values = map.get( name ); // Try to fine the name in the context map.
+      List<String> values = map.get( name ); // Try to find the name in the context map.
       if( values == null ) {
         try {
-          String value = resolver.resolve( UrlRewriteContextImpl.this, name );
-          if( value != null ) {
-            values = Arrays.asList( value ); // Try to fine the name in the resolver chain.
-          } else {
-            values = environment.resolve( name ); // Try to fine the name in the environment.
+          values = resolver.resolve( name );
+          if( values == null ) {
+            values = environment.resolve( name ); // Try to find the name in the environment.
           }
         } catch( Exception e ) {
           LOG.failedToFindValuesByParameter( name, e );
@@ -120,6 +129,24 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
       }
     }
 
+  }
+
+  private class ContextEvaluator implements Evaluator {
+
+    @Override
+    public List<String> evaluate( String function, List<String> parameters ) {
+      List<String> results = null;
+      UrlRewriteFunctionProcessor processor = functions.get( function );
+      if( processor != null ) {
+        try {
+          results = processor.resolve( UrlRewriteContextImpl.this, parameters );
+        } catch( Exception e ) {
+          LOG.failedToInvokeRewriteFunction( function, e );
+          results = null;
+        }
+      }
+      return results;
+    }
   }
 
 }

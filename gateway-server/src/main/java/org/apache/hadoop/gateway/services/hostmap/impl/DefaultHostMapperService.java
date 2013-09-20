@@ -17,28 +17,27 @@
  */
 package org.apache.hadoop.gateway.services.hostmap.impl;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.hostmap.HostMapper;
+import org.apache.hadoop.gateway.services.hostmap.HostMapperService;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.hostmap.FileBasedHostMapper;
-import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
-import org.apache.hadoop.gateway.services.hostmap.HostMapper;
-
 /**
- * 
+ *
  *
  */
-public class DefaultHostMappingService implements HostMappingService {
-  ConcurrentHashMap<String, FileBasedHostMapper> map = new ConcurrentHashMap<String, FileBasedHostMapper>();
-  
+public class DefaultHostMapperService implements HostMapperService {
+
+  private ConcurrentHashMap<String, HostMapper> map = new ConcurrentHashMap<String, HostMapper>();
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.Service#init(org.apache.hadoop.gateway.config.GatewayConfig, java.util.Map)
    */
   @Override
-  public void init(GatewayConfig config, Map<String, String> options)
-      throws ServiceLifecycleException {
+  public void init( GatewayConfig config, Map<String, String> options ) throws ServiceLifecycleException {
   }
 
   /* (non-Javadoc)
@@ -59,25 +58,24 @@ public class DefaultHostMappingService implements HostMappingService {
    * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#getHostMapper(java.lang.String)
    */
   @Override
-  public HostMapper getHostMapper(String clusterName) {
-    return null;
+  public HostMapper getHostMapper( String clusterName ) {
+    return map.get( clusterName );
   }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#registerHostMapperForCluster(java.lang.String, org.apache.hadoop.gateway.services.hostmap.HostMapper)
    */
   @Override
-  public void registerHostMapperForCluster(String clusterName,
-      FileBasedHostMapper hostMapper) {
-    map.put(clusterName, hostMapper);
+  public void registerHostMapperForCluster( String clusterName, HostMapper hostMapper ) {
+    map.put( clusterName, hostMapper );
   }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#removeHostMapperForCluster(java.lang.String)
    */
   @Override
-  public void removeHostMapperForCluster(String clusterName) {
-    map.remove(clusterName);
+  public void removeHostMapperForCluster( String clusterName ) {
+    map.remove( clusterName );
   }
 
 }

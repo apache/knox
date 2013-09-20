@@ -60,7 +60,7 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
 
     Resolver resolver = new DispatchParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );
-    URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver );
+    URI targetUri = Rewriter.rewrite( sourceUri, sourceTemplate, targetTemplate, resolver, null );
 
 //    //TODO: This should be more at filter init.
 //    Pattern sourceRegex = UrlRewriter.compileUrlRegex( sourcePattern );

@@ -24,6 +24,9 @@ import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Scheme;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ServiceSchemeFunctionProcessor
     extends ServiceRegistryFunctionProcessorBase<ServiceSchemeFunctionDescriptor>
     implements UrlRewriteFunctionProcessor<ServiceSchemeFunctionDescriptor> {
@@ -33,17 +36,24 @@ public class ServiceSchemeFunctionProcessor
     return ServiceSchemeFunctionDescriptor.FUNCTION_NAME;
   }
 
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    String value = parameter;
-    String url = super.resolve( context, parameter );
-    if( url != null && !url.equals( parameter ) ) {
-      Template template = Parser.parse( url );
-      Scheme scheme = template.getScheme();
-      if( scheme != null ) {
-        value = scheme.getFirstValue().getPattern();
+  @Override
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> results = null;
+    if( parameters != null ) {
+      results = new ArrayList<String>( parameters.size() );
+      for( String parameter : parameters ) {
+        String url = lookupServiceUrl( parameter );
+        if( url != null && !url.equals( parameter ) ) {
+          Template template = Parser.parse( url );
+          Scheme scheme = template.getScheme();
+          if( scheme != null ) {
+            parameter = scheme.getFirstValue().getPattern();
+          }
+        }
+        results.add( parameter );
       }
     }
-    return value;
+    return results;
   }
 
 }

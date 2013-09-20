@@ -52,15 +52,16 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.fail;
 
 public class UsernameFunctionProcessorTest {
@@ -135,15 +136,15 @@ public class UsernameFunctionProcessorTest {
   public void testResolve() throws Exception {
     final UsernameFunctionProcessor processor = new UsernameFunctionProcessor();
     assertThat( processor.resolve( null, null ), nullValue() );
-    assertThat( processor.resolve( null, "test-input" ), is( "test-input" ) );
+    assertThat( processor.resolve( null, Arrays.asList( "test-input" ) ), contains( "test-input" ) );
     Subject subject = new Subject();
     subject.getPrincipals().add( new PrimaryPrincipal( "test-username" ) );
     subject.setReadOnly();
     Subject.doAs( subject, new PrivilegedExceptionAction<Object>() {
       @Override
       public Object run() throws Exception {
-        assertThat( processor.resolve( null, null ), is( "test-username" ) );
-        assertThat( processor.resolve( null, "test-ignored" ), is( "test-username" ) );
+        assertThat( processor.resolve( null, null ), contains( "test-username" ) );
+        assertThat( processor.resolve( null, Arrays.asList( "test-ignored" ) ), contains( "test-username" ) );
         return null;
       }
     } );

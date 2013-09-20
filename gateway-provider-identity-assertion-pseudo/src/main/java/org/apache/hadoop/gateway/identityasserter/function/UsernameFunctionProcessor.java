@@ -26,6 +26,8 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import javax.security.auth.Subject;
 import java.security.AccessController;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsernameFunctionProcessor
     extends AbstractIdentityAssertionBase
@@ -54,16 +56,18 @@ public class UsernameFunctionProcessor
   }
 
   @Override
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    String value = parameter;
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> results = null;
     Subject subject = Subject.getSubject( AccessController.getContext() );
     if( subject != null ) {
-      value = getPrincipalName( subject );
-//      if( mapper != null ) {
-//        value = mapper.mapPrincipal( value );
-//      }
+      results = new ArrayList<String>( 1 );
+      String username = getPrincipalName( subject );
+      results.add( username );
+    } else if( parameters != null && parameters.size() > 0 ) {
+      results = new ArrayList<String>( 1 );
+      results.add( parameters.get( 0 ) );
     }
-    return value;
+    return results;
   }
 
 }

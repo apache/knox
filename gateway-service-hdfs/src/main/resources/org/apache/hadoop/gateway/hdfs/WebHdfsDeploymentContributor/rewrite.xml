@@ -32,7 +32,7 @@
     </rule>
 
     <rule dir="IN" name="WEBHDFS/webhdfs/inbound/hdfs" pattern="hdfs:/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[NAMENODE]}/{path=**}?{**}"/>
+        <rewrite template="{$serviceMappedUrl[NAMENODE]}/{path=**}?{**}"/>
     </rule>
 
     <rule dir="IN" name="WEBHDFS/webhdfs/inbound/webhdfs" pattern="webhdfs:/{path=**}?{**}">

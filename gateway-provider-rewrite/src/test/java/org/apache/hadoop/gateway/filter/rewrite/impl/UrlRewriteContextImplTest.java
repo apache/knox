@@ -19,16 +19,18 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -42,15 +44,17 @@ public class UrlRewriteContextImplTest {
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( environment.resolve( "test-env-param-name" ) ).andReturn( Arrays.asList( "test-env-param-value" ) ).anyTimes();
 
-    UrlRewriteResolver resolver = EasyMock.createNiceMock( UrlRewriteResolver.class );
-    EasyMock.expect( resolver.resolve( EasyMock.anyObject(UrlRewriteContext.class), EasyMock.eq( "test-ctx-param-name" ) ) ).andReturn( "test-ctx-param-value" );
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "test-ctx-param-name" ) ).andReturn( Arrays.asList( "test-ctx-param-value" ) );
 
     EasyMock.replay( environment, resolver );
+
+    Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
 
     UrlRewriter.Direction direction = UrlRewriter.Direction.OUT;
     Template template = Parser.parse( "scheme://host:port/dir/file" );
 
-    UrlRewriteContextImpl context = new UrlRewriteContextImpl( environment, resolver, direction, template );
+    UrlRewriteContextImpl context = new UrlRewriteContextImpl( environment, resolver, functions, direction, template );
 
     Params params = context.getParameters();
     List<String> values = params.resolve( "test-env-param-name" );

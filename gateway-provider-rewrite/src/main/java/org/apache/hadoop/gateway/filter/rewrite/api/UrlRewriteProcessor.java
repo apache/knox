@@ -20,7 +20,6 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFactory;
-import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionResolver;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteStepProcessorHolder;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
@@ -30,10 +29,8 @@ import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction.IN;
@@ -124,8 +121,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
   }
 
   @Override
-  public Template rewrite(
-      Resolver resolver, Template inputUri, Direction direction, String ruleName ) {
+  public Template rewrite( Resolver resolver, Template inputUri, Direction direction, String ruleName ) {
     Template outputUri = inputUri;
     UrlRewriteStepProcessorHolder stepHolder = null;
     if( ruleName == null || "*".equals( ruleName ) ) {
@@ -145,8 +141,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
       stepHolder = rules.get( ruleName );
     }
     if( stepHolder != null ) {
-      UrlRewriteFunctionResolver function = new UrlRewriteFunctionResolver( functions, resolver );
-      UrlRewriteContext context = new UrlRewriteContextImpl( environment, function, direction, inputUri );
+      UrlRewriteContext context = new UrlRewriteContextImpl( environment, resolver, functions, direction, inputUri );
       try {
         UrlRewriteStepStatus stepStatus = stepHolder.process( context );
         if( UrlRewriteStepStatus.SUCCESS == stepStatus ) {

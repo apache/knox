@@ -18,29 +18,34 @@
 package org.apache.hadoop.gateway.svcregfunc.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.hostmap.HostMapper;
+import org.apache.hadoop.gateway.services.hostmap.HostMapperService;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
-import org.apache.hadoop.gateway.svcregfunc.api.ServiceAddressFunctionDescriptor;
-import org.apache.hadoop.gateway.svcregfunc.api.ServiceSchemeFunctionDescriptor;
 import org.apache.hadoop.gateway.svcregfunc.api.ServiceUrlFunctionDescriptor;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.fail;
 
 public class ServiceUrlFunctionProcessorTest {
 
+  HostMapperService hms;
+  HostMapper hm;
   ServiceRegistry reg;
   GatewayServices svc;
   UrlRewriteEnvironment env;
@@ -49,21 +54,29 @@ public class ServiceUrlFunctionProcessorTest {
 
   @Before
   public void setUp() {
+    hm = EasyMock.createNiceMock( HostMapper.class );
+    EasyMock.expect( hm.resolveInboundHostName( "test-host" ) ).andReturn( "test-internal-host" ).anyTimes();
+
+    hms = EasyMock.createNiceMock( HostMapperService.class );
+    EasyMock.expect( hms.getHostMapper( "test-cluster" ) ).andReturn( hm ).anyTimes();
+
     reg = EasyMock.createNiceMock( ServiceRegistry.class );
     EasyMock.expect( reg.lookupServiceURL( "test-cluster", "test-service" ) ).andReturn( "test-scheme://test-host:777/test-path" ).anyTimes();
 
     svc = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( svc.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( reg ).anyTimes();
+    EasyMock.expect( svc.getService( GatewayServices.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
 
     env = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( env.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( svc ).anyTimes();
     EasyMock.expect( env.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
 
     ctx = EasyMock.createNiceMock( UrlRewriteContext.class );
+    EasyMock.expect( ctx.getDirection() ).andReturn( UrlRewriter.Direction.IN ).anyTimes();
 
     desc = EasyMock.createNiceMock( ServiceUrlFunctionDescriptor.class );
 
-    EasyMock.replay( reg, svc, env, desc, ctx );
+    EasyMock.replay( hm, hms, reg, svc, env, desc, ctx );
   }
 
   @Test
@@ -125,8 +138,8 @@ public class ServiceUrlFunctionProcessorTest {
     ServiceUrlFunctionProcessor func = new ServiceUrlFunctionProcessor();
     func.initialize( env, desc );
 
-    assertThat( func.resolve( ctx, "test-service" ), is( "test-scheme://test-host:777/test-path" ) );
-    assertThat( func.resolve( ctx, "invalid-test-service" ), is( "invalid-test-service" ) );
+    assertThat( func.resolve( ctx, Arrays.asList( "test-service" ) ), contains( "test-scheme://test-host:777/test-path" ) );
+    assertThat( func.resolve( ctx, Arrays.asList( "invalid-test-service" ) ), contains( "invalid-test-service" ) );
     assertThat( func.resolve( ctx, null ), nullValue() );
 
     func.destroy();

@@ -22,3 +22,6 @@ org.apache.hadoop.gateway.svcregfunc.impl.ServiceSchemeFunctionProcessor
 org.apache.hadoop.gateway.svcregfunc.impl.ServiceHostFunctionProcessor
 org.apache.hadoop.gateway.svcregfunc.impl.ServicePortFunctionProcessor
 org.apache.hadoop.gateway.svcregfunc.impl.ServicePathFunctionProcessor
+org.apache.hadoop.gateway.svcregfunc.impl.ServiceMappedUrlFunctionProcessor
+org.apache.hadoop.gateway.svcregfunc.impl.ServiceMappedAddressFunctionProcessor
+org.apache.hadoop.gateway.svcregfunc.impl.ServiceMappedHostFunctionProcessor

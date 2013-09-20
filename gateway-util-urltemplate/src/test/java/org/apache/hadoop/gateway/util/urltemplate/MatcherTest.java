@@ -53,6 +53,105 @@ public class MatcherTest {
   }
 
   @Test
+  public void testRootPathMatching() throws Exception {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*/" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*/*" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*/**" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+//KM: I'm not sure what the correct behavior is here.
+//    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, ? );
+//    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, ? );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*/{path=*}" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+
+    ///////
+    patternTemplate = Parser.parse( "*://*:*/{path=**}" );
+    matcher = new Matcher<String>();
+    matcher.add( patternTemplate, "test-match" );
+
+//KM: I'm not sure what the correct behavior is here.
+//    inputTemplate = Parser.parse( "test-scheme://test-host:42" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, ? );
+//    inputTemplate = Parser.parse( "test-scheme://test-host:42/" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, ? );
+    inputTemplate = Parser.parse( "test-scheme://test-host:42/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+  }
+
+  @Test
   public void testTopLevelPathGlobMatch() throws Exception {
     Matcher<String> matcher;
     Template patternTemplate, inputTemplate;

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.svcregfunc.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.svcregfunc.api.ServiceAddressFunctionDescriptor;
@@ -24,6 +25,9 @@ import org.apache.hadoop.gateway.util.urltemplate.Host;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Port;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServiceAddressFunctionProcessor
     extends ServiceRegistryFunctionProcessorBase<ServiceAddressFunctionDescriptor>
@@ -34,19 +38,43 @@ public class ServiceAddressFunctionProcessor
     return ServiceAddressFunctionDescriptor.FUNCTION_NAME;
   }
 
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
+  @Override
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> results = null;
+    if( parameters != null ) {
+      UrlRewriter.Direction direction = context.getDirection();
+      results = new ArrayList<String>( parameters.size() );
+      for( String parameter : parameters ) {
+        parameter = resolve( parameter );
+        results.add( parameter );
+      }
+    }
+    return results;
+  }
+
+  public String resolve( String parameter ) throws Exception {
     String addr = parameter;
-    String url = super.resolve( context, parameter );
+    String url = lookupServiceUrl( parameter );
     if( url != null ) {
       Template template = Parser.parse( url );
       Host host = template.getHost();
+      String hostStr = null;
+      if( host != null ) {
+        hostStr = host.getFirstValue().getPattern();
+      }
+
       Port port = template.getPort();
-      if( host != null && port != null ) {
-        addr = host.getFirstValue().getPattern() + ":" + port.getFirstValue().getPattern();
+      String portStr = null;
+      if( port != null ) {
+        portStr = port.getFirstValue().getPattern();
+      }
+
+      if( hostStr != null && portStr != null ) {
+        addr = hostStr + ":" + portStr;
       } else if( host != null && port == null ) {
-        addr = host.getFirstValue().getPattern();
+        addr = hostStr;
       } else if( host == null && port != null ) {
-        addr = ":" + port.getFirstValue().getPattern();
+        addr = ":" + portStr;
       }
     }
     return addr;

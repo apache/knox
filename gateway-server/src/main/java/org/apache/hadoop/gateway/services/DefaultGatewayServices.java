@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMappingService;
+import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.SSLService;
@@ -89,7 +89,7 @@ public class DefaultGatewayServices implements GatewayServices {
     sr.init( config, options );
     services.put( SERVICE_REGISTRY_SERVICE, sr );
 
-    DefaultHostMappingService hm = new DefaultHostMappingService();
+    DefaultHostMapperService hm = new DefaultHostMapperService();
     hm.init( config, options );
     services.put( HOST_MAPPING_SERVICE, hm );
   }

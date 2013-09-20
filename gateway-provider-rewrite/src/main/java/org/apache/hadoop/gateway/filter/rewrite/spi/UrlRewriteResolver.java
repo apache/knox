@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.spi;
 
+import java.util.List;
+
 public interface UrlRewriteResolver {
 
-  String resolve( UrlRewriteContext context, String parameter ) throws Exception;
+  List<String> resolve( UrlRewriteContext context, List<String> parameter ) throws Exception;
 
 }

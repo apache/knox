@@ -17,13 +17,6 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
-import java.io.Console;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
@@ -31,6 +24,13 @@ import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
+
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CMFMasterService {
   private static GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
@@ -151,8 +151,7 @@ public class CMFMasterService {
       try {
         List<String> lines = FileUtils.readLines(masterFile, "UTF8");
         String tag = lines.get(0);
-        // TODO: log - if appropriate - at least at finest level
-        System.out.println("Loading from persistent master: " + tag); //TODO: I18N
+        LOG.loadingFromPersistentMaster( tag );
         String line = new String(Base64.decodeBase64(lines.get(1)));
         String[] parts = line.split("::");
         this.master = new String(aes.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();

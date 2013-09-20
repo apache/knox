@@ -26,53 +26,56 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FileBasedHostMapper implements HostMapper {
+
   private Map<String, String> inbound = new HashMap<String, String>();
   private Map<String, String> outbound = new HashMap<String, String>();
-  
-  public FileBasedHostMapper(String clusterName, URL url) {
+
+  public FileBasedHostMapper( URL url ) throws IOException {
     if( url != null ) {
-      InputStream stream;
-      try {
-        stream = url.openStream();
-        BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
-        String line = reader.readLine();
-        while( line != null ) {
-          String[] lineSplit = line.split( "=" );
-          if( lineSplit.length >= 2 ) {
-            String[] externalSplit = lineSplit[ 0 ].split( "," );
-            String[] internalSplit = lineSplit[ 1 ].split( "," );
-            if( externalSplit.length >= 1 && internalSplit.length >= 1 ) {
-              for( String external : externalSplit ) {
-                inbound.put( external, internalSplit[ 0 ] );
-              }
-              for( String internal : internalSplit ) {
-                outbound.put( internal, externalSplit[ 0 ] );
-              }
+      InputStream stream = url.openStream();
+      BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
+      String line = reader.readLine();
+      while( line != null ) {
+        String[] lineSplit = line.split( "=" );
+        if( lineSplit.length >= 2 ) {
+          String[] externalSplit = lineSplit[ 0 ].split( "," );
+          String[] internalSplit = lineSplit[ 1 ].split( "," );
+          if( externalSplit.length >= 1 && internalSplit.length >= 1 ) {
+            for( String external : externalSplit ) {
+              inbound.put( external.trim(), internalSplit[ 0 ].trim() );
+            }
+            for( String internal : internalSplit ) {
+              outbound.put( internal.trim(), externalSplit[ 0 ].trim() );
             }
           }
-          line = reader.readLine();
         }
-        reader.close();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        line = reader.readLine();
       }
+      reader.close();
     }
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.hostmap.HostMapper#resolveInboundHostName(java.lang.String)
    */
   @Override
-  public String resolveInboundHostName(String inboundHost) {
-    return inbound.get(inboundHost);
+  public String resolveInboundHostName( String hostName ) {
+    String resolvedHostName = inbound.get( hostName );
+    if( resolvedHostName == null ) {
+      resolvedHostName = hostName;
+    }
+    return resolvedHostName;
   }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.hostmap.HostMapper#resolveOutboundHostName(java.lang.String)
    */
   @Override
-  public String resolveOutboundHostName(String outboundHost) {
-    return outbound.get(outboundHost);
+  public String resolveOutboundHostName( String hostName ) {
+    String resolvedHostName = outbound.get( hostName );
+    if( resolvedHostName == null ) {
+      resolvedHostName = hostName;
+    }
+    return resolvedHostName;
   }
 }

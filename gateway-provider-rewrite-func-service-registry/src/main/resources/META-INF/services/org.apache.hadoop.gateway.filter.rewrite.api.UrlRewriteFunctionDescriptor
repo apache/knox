@@ -22,3 +22,6 @@ org.apache.hadoop.gateway.svcregfunc.api.ServiceSchemeFunctionDescriptor
 org.apache.hadoop.gateway.svcregfunc.api.ServiceHostFunctionDescriptor
 org.apache.hadoop.gateway.svcregfunc.api.ServicePortFunctionDescriptor
 org.apache.hadoop.gateway.svcregfunc.api.ServicePathFunctionDescriptor
+org.apache.hadoop.gateway.svcregfunc.api.ServiceMappedUrlFunctionDescriptor
+org.apache.hadoop.gateway.svcregfunc.api.ServiceMappedAddressFunctionDescriptor
+org.apache.hadoop.gateway.svcregfunc.api.ServiceMappedHostFunctionDescriptor

@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway.svcregfunc.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
@@ -27,6 +26,7 @@ import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunctionDescriptor> implements UrlRewriteFunctionProcessor<T> {
 
   private String cluster;
+  private GatewayServices services;
   private ServiceRegistry registry;
 
   @Override
@@ -38,7 +38,7 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
     if( cluster == null ) {
       throw new IllegalArgumentException( "cluster==null" );
     }
-    GatewayServices services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
+    services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
     if( services == null ) {
       throw new IllegalArgumentException( "services==null" );
     }
@@ -54,18 +54,17 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
     cluster = null;
   }
 
-
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    String value = parameter;
-    String url = registry.lookupServiceURL( cluster, parameter );
-    if( url != null ) {
-      value = url;
-    }
-    return value;
+  public String lookupServiceUrl( String role ) throws Exception {
+    String url = registry.lookupServiceURL( cluster, role );
+    return url;
   }
 
   String cluster() {
     return cluster;
+  }
+
+  GatewayServices services() {
+    return services;
   }
 
   ServiceRegistry registry() {

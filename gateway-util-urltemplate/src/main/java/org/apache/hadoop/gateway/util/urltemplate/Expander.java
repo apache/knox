@@ -31,67 +31,67 @@ public class Expander {
 
   private static Params EMPTY_PARAMS = new EmptyParams();
 
-  public static URI expand( Template template, Params params ) throws URISyntaxException {
-    return new Expander().expandToUri( template, params );
+  public static URI expand( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
+    return new Expander().expandToUri( template, params, evaluator );
   }
 
-  public URI expandToUri( Template template, Params params ) throws URISyntaxException {
-    return new URI( expandToString( template, params ) );
+  public URI expandToUri( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
+    return new URI( expandToString( template, params, evaluator ) );
   }
 
-  public Template expandToTemplate( Template template, Params params ) throws URISyntaxException {
+  public Template expandToTemplate( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
     //TODO: This could be much more efficient if it didn't create and then parse a string.
-    return Parser.parse( expandToString( template, params ) );
+    return Parser.parse( expandToString( template, params, evaluator ) );
   }
 
-  public String expandToString( Template template, Params params ) {
+  public String expandToString( Template template, Params params, Evaluator evaluator ) {
     StringBuilder builder = new StringBuilder();
     if( params == null ) {
       params = EMPTY_PARAMS;
     }
     Set<String> names = new HashSet<String>( params.getNames() );
-    expandScheme( template, names, params, builder );
-    expandAuthority( template, names, params, builder );
-    expandPath( template, names, params, builder );
-    expandQuery( template, names, params, builder );
-    expandFragment( template, names, params, builder );
+    expandScheme( template, names, params, evaluator, builder );
+    expandAuthority( template, names, params, evaluator, builder );
+    expandPath( template, names, params, evaluator, builder );
+    expandQuery( template, names, params, evaluator, builder );
+    expandFragment( template, names, params, evaluator, builder );
     return builder.toString();
   }
 
-  private static void expandScheme( Template template, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandScheme( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     Segment segment = template.getScheme();
     if( segment != null ) {
-      expandSingleValue( template.getScheme(), names, params, builder );
+      expandSingleValue( template.getScheme(), names, params, evaluator, builder );
       builder.append( ":" );
     }
   }
 
-  private static void expandAuthority( Template template, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandAuthority( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.hasAuthority() ) {
       builder.append( "//" );
       Segment username = template.getUsername();
       Segment password = template.getPassword();
       Segment host = template.getHost();
       Segment port = template.getPort();
-      expandSingleValue( username, names, params, builder );
+      expandSingleValue( username, names, params, evaluator, builder );
       if( password != null ) {
         builder.append( ":" );
-        expandSingleValue( password, names, params, builder );
+        expandSingleValue( password, names, params, evaluator, builder );
       }
       if( username != null || password != null ) {
         builder.append( "@" );
       }
       if( host != null ) {
-        expandSingleValue( host, names, params, builder );
+        expandSingleValue( host, names, params, evaluator, builder );
       }
       if( port != null ) {
         builder.append( ":" );
-        expandSingleValue( port, names, params, builder );
+        expandSingleValue( port, names, params, evaluator, builder );
       }
     }
   }
 
-  private static void expandPath( Template template, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandPath( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.isAbsolute() ) {
       builder.append( "/" );
     }
@@ -102,7 +102,8 @@ public class Expander {
       }
       Path segment = path.get( i );
       String name = segment.getParamName();
-      names.remove( name );
+      Function function = new Function( name );
+      names.remove( function.getParameterName() );
       Segment.Value value = segment.getFirstValue();
       switch( value.getType() ) {
         case( Segment.STATIC ):
@@ -113,7 +114,7 @@ public class Expander {
         case( Segment.STAR ):
         case( Segment.GLOB ):
         case( Segment.REGEX ):
-          List<String> values = params.resolve( name );
+          List<String> values = function.evaluate( params, evaluator );
           expandPathValues( segment, values, builder );
           break;
       }
@@ -142,9 +143,9 @@ public class Expander {
     }
   }
 
-  private static void expandQuery( Template template, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandQuery( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     AtomicInteger index = new AtomicInteger( 0 );
-    expandExplicitQuery( template, names, params, builder, index );
+    expandExplicitQuery( template, names, params, evaluator, builder, index );
     expandExtraQuery( template, names, params, builder, index );
     //Kevin: I took this out because it causes '?' to be added to expanded templates when there are not query params.
 //    if( template.hasQuery() && index.get() == 0 ) {
@@ -152,7 +153,7 @@ public class Expander {
 //    }
   }
 
-  private static void expandExplicitQuery( Template template, Set<String> names, Params params, StringBuilder builder, AtomicInteger index ) {
+  private static void expandExplicitQuery( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder, AtomicInteger index ) {
     Collection<Query> query = template.getQuery().values();
     if( !query.isEmpty() ) {
       Iterator<Query> iterator = query.iterator();
@@ -165,9 +166,9 @@ public class Expander {
         }
         Query segment = iterator.next();
         String queryName = segment.getQueryName();
-        String funcName = segment.getParamName();
-        String paramName = extractParamNameFromFunction( funcName );
-        names.remove( paramName );
+        String paramName = segment.getParamName();
+        Function function = new Function( paramName );
+        names.remove( function.getParameterName() );
         for( Segment.Value value: segment.getValues() ) {
           switch( value.getType() ) {
             case( Segment.STATIC ):
@@ -182,7 +183,7 @@ public class Expander {
             case( Segment.GLOB ):
             case( Segment.STAR ):
             case( Segment.REGEX ):
-              List<String> values = params.resolve( funcName );
+              List<String> values = function.evaluate( params, evaluator );
               expandQueryValues( segment, queryName, values, builder );
               break;
             default:
@@ -240,50 +241,40 @@ public class Expander {
     }
   }
 
-  private static void expandFragment( Template template, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandFragment( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.hasFragment() ) {
       builder.append( "#" );
     }
-    expandSingleValue( template.getFragment(), names, params, builder );
+    expandSingleValue( template.getFragment(), names, params, evaluator, builder );
   }
 
-  private static void expandSingleValue( Segment segment, Set<String> names, Params params, StringBuilder builder ) {
+  private static void expandSingleValue( Segment segment, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( segment != null ) {
-      String name = segment.getParamName();
-      names.remove( name );
+      String paramName = segment.getParamName();
+      Function function = new Function( paramName );
+      names.remove( function.getParameterName() );
       Segment.Value value = segment.getFirstValue();
+      String str;
       switch( value.getType() ) {
-        case( Segment.STATIC ):
-          String pattern = value.getPattern();
-          builder.append( pattern );
-          break;
-        case( Segment.DEFAULT ):
-        case( Segment.STAR ):
-        case( Segment.GLOB ):
-        case( Segment.REGEX ):
-          List<String> values = params.resolve( name );
+        case Segment.DEFAULT:
+        case Segment.STAR:
+        case Segment.GLOB:
+        case Segment.REGEX:
+          List<String> values = function.evaluate( params, evaluator );
           if( values != null && !values.isEmpty() ) {
-            builder.append( values.get( 0 ) );
+            str = values.get( 0 );
+          } else if( function.getFunctionName() != null ) {
+            str = paramName;
           } else {
-            builder.append( segment.getFirstValue().getPattern() );
+            str = value.getPattern();
           }
           break;
+        default:
+          str = value.getPattern();
+          break;
       }
+      builder.append( str );
     }
-  }
-
-  private static String extractParamNameFromFunction( String function ) {
-    String param = function;
-    if( param != null && param.startsWith( "$" ) ) {
-      int stop = param.lastIndexOf( ')' );
-      if( stop > 1 ) {
-        int start = param.indexOf( '(' );
-        if( start > -1 ) {
-          param = param.substring( start+1, stop );
-        }
-      }
-    }
-    return param;
   }
 
   private static class EmptyParams implements Params {
@@ -296,6 +287,7 @@ public class Expander {
     public List<String> resolve( String name ) {
       return Collections.EMPTY_LIST;
     }
+
   }
 
 }

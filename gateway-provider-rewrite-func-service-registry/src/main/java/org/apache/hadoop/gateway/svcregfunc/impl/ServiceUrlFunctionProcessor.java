@@ -17,9 +17,14 @@
  */
 package org.apache.hadoop.gateway.svcregfunc.impl;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.svcregfunc.api.ServiceUrlFunctionDescriptor;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServiceUrlFunctionProcessor
     extends ServiceRegistryFunctionProcessorBase<ServiceUrlFunctionDescriptor>
@@ -30,8 +35,30 @@ public class ServiceUrlFunctionProcessor
     return ServiceUrlFunctionDescriptor.FUNCTION_NAME;
   }
 
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    return super.resolve( context, parameter );
+  @Override
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> results = null;
+    if( parameters != null ) {
+      UrlRewriter.Direction direction = context.getDirection();
+      results = new ArrayList<String>( parameters.size() );
+      for( String parameter : parameters ) {
+        parameter = resolve( parameter );
+        results.add( parameter );
+      }
+    }
+    return results;
+  }
+
+  public String resolve( String parameter ) throws Exception {
+    String url = lookupServiceUrl( parameter );
+    if( url != null ) {
+      URI outputUri;
+      URI inputUri = new URI( url );
+      String host = inputUri.getHost();
+      outputUri = new URI( inputUri.getScheme(), inputUri.getUserInfo(), host, inputUri.getPort(), inputUri.getPath(), inputUri.getQuery(), inputUri.getFragment() );
+      parameter = outputUri.toString();
+    }
+    return parameter;
   }
 
 }

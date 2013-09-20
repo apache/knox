@@ -901,25 +901,25 @@ public class ParserTest {
 
     assertThat( template, notNullValue() );
     assertThat( template.getQuery().get( "X" ), notNullValue() );
-    string = expander.expandToString( template, null );
+    string = expander.expandToString( template, null, null );
     assertThat( string, is( "*://*:*/**?X" ) );
 
     template = Parser.parse( "*://*:*/**?X=" );
     assertThat( template, notNullValue() );
     assertThat( template.getQuery().get( "X" ), notNullValue() );
-    string = expander.expandToString( template, null );
+    string = expander.expandToString( template, null, null );
     assertThat( string, is( "*://*:*/**?X" ) );
 
     template = Parser.parse( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" );
     assertThat( template, notNullValue() );
     assertThat( template.getQuery().get( "aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ), notNullValue() );
-    string = expander.expandToString( template, null );
+    string = expander.expandToString( template, null, null );
     assertThat( string, is( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ) );
 
     template = Parser.parse( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM=" );
     assertThat( template, notNullValue() );
     assertThat( template.getQuery().get( "aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ), notNullValue() );
-    string = expander.expandToString( template, null );
+    string = expander.expandToString( template, null, null );
     assertThat( string, is( "http://localhost:62142/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir/file?aG9zdD1sb2NhbGhvc3QmcG9ydD02MjEzOSZvcD1DUkVBVEUmdXNlci5uYW1lPWhkZnM" ) );
   }
 

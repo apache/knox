@@ -21,10 +21,11 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor
 
 public class ServiceSchemeFunctionDescriptor implements UrlRewriteFunctionDescriptor<ServiceUrlFunctionDescriptor> {
 
-    public static final String FUNCTION_NAME = "serviceScheme";
-      @Override
-      public String name() {
-      return FUNCTION_NAME;
-    }
+  public static final String FUNCTION_NAME = "serviceScheme";
+
+  @Override
+  public String name() {
+    return FUNCTION_NAME;
+  }
 
 }

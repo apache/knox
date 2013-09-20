@@ -23,26 +23,22 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.hostmap.api.HostmapFunctionDescriptor;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.hostmap.FileBasedHostMapper;
-import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.hostmap.HostMapper;
+import org.apache.hadoop.gateway.services.hostmap.HostMapperService;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class HostmapFunctionProcessor
     implements UrlRewriteFunctionProcessor<HostmapFunctionDescriptor> {
 
   public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "hostmap.txt";
   public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
-  
-  private FileBasedHostMapper hostMapper = null;
+
+  private HostMapperService hostMapperService;
+  private HostMapper hostMapper = null;
   private String clusterName;
-  private HostMappingService hostMappingService;
 
   @Override
   public String name() {
@@ -52,48 +48,43 @@ public class HostmapFunctionProcessor
   @Override
   public void initialize( UrlRewriteEnvironment environment, HostmapFunctionDescriptor descriptor ) throws Exception {
     URL url = environment.getResource( DESCRIPTOR_DEFAULT_LOCATION );
-    List<String> names = environment.resolve( "cluster.name" );
-    if (names != null && names.size() > 0) {
-      clusterName = names.get( 0 );
-    }
-    hostMapper = new FileBasedHostMapper(clusterName, url);
-
-    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    if (clusterName != null && services != null) {
-      hostMappingService = (HostMappingService) services.getService(GatewayServices.HOST_MAPPING_SERVICE);
-      if (hostMappingService != null) {
-        hostMappingService.registerHostMapperForCluster(clusterName, hostMapper);
+    hostMapper = new FileBasedHostMapper( url );
+    clusterName = environment.getAttribute(  GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
+    GatewayServices services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
+    if( clusterName != null && services != null ) {
+      hostMapperService = services.getService( GatewayServices.HOST_MAPPING_SERVICE );
+      if( hostMapperService != null ) {
+        hostMapperService.registerHostMapperForCluster( clusterName, hostMapper );
       }
     }
   }
 
   @Override
   public void destroy() throws Exception {
-    // need to remove the host mapper for the cluster on undeploy
-    if (clusterName != null && hostMappingService != null) {
-      hostMappingService.removeHostMapperForCluster(clusterName);
+    if( hostMapperService != null && clusterName != null ) {
+      hostMapperService.removeHostMapperForCluster( clusterName );
     }
-    
   }
 
   @Override
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    String value;
-    switch( context.getDirection() ) {
-      case IN:
-        value = hostMapper.resolveInboundHostName(parameter);
-        break;
-      case OUT:
-        value = hostMapper.resolveOutboundHostName(parameter);
-        break;
-      default:
-        value = null;
-    }
-    if( value == null ) {
-      value = parameter;
-    }
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> result = null;
+    if( parameters != null ) {
+      result = new ArrayList<String>( parameters.size() );
+      for( String parameter : parameters ) {
+        switch( context.getDirection() ) {
+          case IN:
+            parameter = hostMapper.resolveInboundHostName( parameter );
+            break;
+          case OUT:
+            parameter = hostMapper.resolveOutboundHostName( parameter );
+            break;
+        }
+        result.add( parameter );
+      }
 //    System.out.println( "HOSTMAP: " + parameter + "->" + value );
-    return value;
+    }
+    return result;
   }
 
 }

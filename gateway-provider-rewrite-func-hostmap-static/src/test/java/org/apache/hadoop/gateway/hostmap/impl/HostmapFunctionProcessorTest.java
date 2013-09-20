@@ -27,7 +27,7 @@ import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescr
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.hostmap.HostMapper;
-import org.apache.hadoop.gateway.services.hostmap.HostMappingService;
+import org.apache.hadoop.gateway.services.hostmap.HostMapperService;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -68,7 +68,7 @@ public class HostmapFunctionProcessorTest {
     HostMapper hm = EasyMock.createNiceMock(HostMapper.class);
     EasyMock.expect( hm.resolveInboundHostName("test-inbound-host")).andReturn( "test-inbound-rewritten-host" ).anyTimes();
     
-    HostMappingService hms = EasyMock.createNiceMock( HostMappingService.class );
+    HostMapperService hms = EasyMock.createNiceMock( HostMapperService.class );
 
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
@@ -194,7 +194,7 @@ public class HostmapFunctionProcessorTest {
   }
 
   @Test
-  public void testMissingFunctionUseCase() throws Exception {
+  public void testInvalidFunctionNameUseCase() throws Exception {
     URL configUrl = TestUtils.getResourceUrl( this.getClass(), "hostmap.txt" );
 
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
@@ -216,7 +216,33 @@ public class HostmapFunctionProcessorTest {
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
     assertThat( output, notNullValue() );
-    assertThat( output.getHost().getFirstValue().getPattern(), is( "test-inbound-host" ) );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "$invalid-function(host)" ) );
+  }
+
+  @Test
+  public void testInvalidFunctionNameAndEmptyHostmapUseCase() throws Exception {
+    URL configUrl = TestUtils.getResourceUrl( this.getClass(), "empty-hostmap.txt" );
+
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
+    Resolver resolver = EasyMock.createNiceMock( Resolver.class );
+    EasyMock.expect( resolver.resolve( "host" ) ).andReturn( Arrays.asList( "test-inbound-host" ) ).anyTimes();
+    EasyMock.replay( environment, resolver );
+
+    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
+    rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
+    UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
+    rewrite.template( "{*}://{$invalid-function(host)}:{*}/{**}?{**}" );
+
+    UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
+    rewriter.initialize( environment, descriptor );
+
+    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
+    //System.out.println( output );
+    assertThat( output, notNullValue() );
+    assertThat( output.getHost().getFirstValue().getPattern(), is( "$invalid-function(host)" ) );
   }
 
   @Test
@@ -233,7 +259,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteRuleDescriptor rule = descriptor.addRule( "test-rule" );
     rule.pattern( "{*}://{host}:{*}/{**}?{**}" );
     UrlRewriteActionRewriteDescriptorExt rewrite = rule.addStep( "rewrite" );
-    rewrite.template( "{*}://{$invalid-function(host)}:{*}/{**}?{**}" );
+    rewrite.template( "{*}://{$hostmap(host)}:{*}/{**}?{**}" );
 
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );

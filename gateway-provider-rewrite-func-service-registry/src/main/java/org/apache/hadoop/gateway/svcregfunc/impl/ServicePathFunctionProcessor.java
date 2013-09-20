@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Path;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ServicePathFunctionProcessor
@@ -35,19 +36,24 @@ public class ServicePathFunctionProcessor
     return ServicePathFunctionDescriptor.FUNCTION_NAME;
   }
 
-  public String resolve( UrlRewriteContext context, String parameter ) throws Exception {
-    String value = parameter;
-    String url = super.resolve( context, parameter );
-    if( url != null && !url.equals(  parameter ) ) {
-      Template template = Parser.parse( url );
-      List<Path> path = template.getPath();
-      if( path != null ) {
-        value = toString( path );
-      } else {
-        value = parameter;
+  @Override
+  public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
+    List<String> results = null;
+    if( parameters != null ) {
+      results = new ArrayList<String>( parameters.size() );
+      for( String parameter : parameters ) {
+        String url = lookupServiceUrl( parameter );
+        if( url != null ) {
+          Template template = Parser.parse( url );
+          List<Path> path = template.getPath();
+          if( path != null ) {
+            parameter = toString( path );
+          }
+        }
+        results.add( parameter );
       }
     }
-    return value;
+    return results;
   }
 
   private String toString( List<Path> paths ) {

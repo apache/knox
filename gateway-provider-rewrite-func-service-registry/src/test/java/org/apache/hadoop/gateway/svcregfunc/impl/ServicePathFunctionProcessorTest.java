@@ -22,13 +22,12 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
-import org.apache.hadoop.gateway.svcregfunc.api.ServiceAddressFunctionDescriptor;
 import org.apache.hadoop.gateway.svcregfunc.api.ServicePathFunctionDescriptor;
-import org.apache.hadoop.gateway.svcregfunc.api.ServiceSchemeFunctionDescriptor;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -37,6 +36,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.fail;
 
 public class ServicePathFunctionProcessorTest {
@@ -126,7 +126,7 @@ public class ServicePathFunctionProcessorTest {
     func.initialize( env, desc );
 
 //    assertThat( func.resolve( ctx, "test-service" ), is( "/test-path" ) );
-    assertThat( func.resolve( ctx, "invalid-test-service" ), is( "invalid-test-service" ) );
+    assertThat( func.resolve( ctx, Arrays.asList( "invalid-test-service" ) ), contains( "invalid-test-service" ) );
 //    assertThat( func.resolve( ctx, null ), nullValue() );
 
     func.destroy();
