@@ -93,7 +93,7 @@ Installation and Deployment Instructions
    Invoke the LISTSATUS operation on HDFS represented by your configured
    WEBHDFS by using your web browser or curl:
 
-   curl -i -k -u hdfs:hdfs-password -X GET \
+   curl -i -k -u guest:guest-password -X GET \
      'https://localhost:8443/gateway/sandbox/webhdfs/api/v1/?op=LISTSTATUS'
 
    The results of the above command should result in something to along the
