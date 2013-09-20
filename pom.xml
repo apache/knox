@@ -50,9 +50,9 @@
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
-        <module>gateway-service-hdfs</module>
+        <module>gateway-service-webhdfs</module>
         <module>gateway-service-oozie</module>
-        <module>gateway-service-templeton</module>
+        <module>gateway-service-webhcat</module>
         <module>gateway-service-tgs</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
@@ -374,12 +374,12 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-service-hdfs</artifactId>
+                <artifactId>gateway-service-webhdfs</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-service-templeton</artifactId>
+                <artifactId>gateway-service-webhcat</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

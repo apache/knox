@@ -32,15 +32,15 @@ limitations under the License.
     </property>
 
     <property>
-        <name>gateway.namenode.address</name>
-        <value>vm.home:50070</value>
-        <description>The default address of the NameNode.</description>
+        <name>gateway.webhdfs.address</name>
+        <value>localhost:50070</value>
+        <description>The default address of WebHDFS.</description>
     </property>
 
     <property>
-        <name>gateway.templeton.address</name>
-        <value>vm.home:50111</value>
-        <description>The default address of Templeton.</description>
+        <name>gateway.webhcat.address</name>
+        <value>localhost:50111</value>
+        <description>The default address of WebHCat.</description>
     </property>
 
     <property>

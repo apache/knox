@@ -121,7 +121,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/datanode/api", USE_MOCK_SERVICES );
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
-    driver.setupService( "TEMPLETON", "http://" + TEST_HOST + ":50111/templeton", "/cluster/templeton/api", USE_MOCK_SERVICES );
+    driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/webhcat", "/cluster/webhcat/api", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "STARGATE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
@@ -195,8 +195,8 @@ public class GatewayBasicFuncTest {
             .addTag( "role" ).addText( "JOBTRACKER" )
             .addTag( "url" ).addText( driver.getRealUrl( "JOBTRACKER" ) ).gotoParent()
           .addTag( "service" )
-            .addTag( "role" ).addText( "TEMPLETON" )
-            .addTag( "url" ).addText( driver.getRealUrl( "TEMPLETON" ) ).gotoParent()
+            .addTag( "role" ).addText( "WEBHCAT" )
+            .addTag( "url" ).addText( driver.getRealUrl( "WEBHCAT" ) ).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "OOZIE" )
             .addTag( "url" ).addText( driver.getRealUrl( "OOZIE" ) ).gotoParent()
@@ -660,8 +660,8 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testJavaMapReduceViaTempleton() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testJavaMapReduceViaTempleton";
+  public void testJavaMapReduceViaWebHCat() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testJavaMapReduceViaWebHCat";
     String user = "mapred";
     String pass = "mapred-password";
     String group = "mapred";
@@ -688,7 +688,7 @@ public class GatewayBasicFuncTest {
     driver.createDir( user, pass, null, root+"/output", "777", 200, 200 );
 
     /* Submit the job
-    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/templeton/api/v1/mapreduce/jar'
+    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/webhcat/api/v1/mapreduce/jar'
     {"id":"job_201210301335_0059"}
     */
     String job = driver.submitJava(
@@ -714,8 +714,8 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testPigViaTempleton() throws IOException {
-    String root = "/tmp/GatewayTempletonFuncTest/testPigViaTempleton";
+  public void testPigViaWebHCat() throws IOException {
+    String root = "/tmp/GatewayWebHCatFuncTest/testPigViaWebHCat";
     String user = "mapred";
     String pass = "mapred-password";
     String group = "mapred";
@@ -743,11 +743,11 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
-  public void testHiveViaTempleton() throws IOException {
+  public void testHiveViaWebHCat() throws IOException {
     String user = "hive";
     String pass = "hive-password";
     String group = "hive";
-    String root = "/tmp/GatewayTempletonFuncTest/testHiveViaTempleton";
+    String root = "/tmp/GatewayWebHCatFuncTest/testHiveViaWebHCat";
 
     // Cleanup if previous run failed.
     driver.deleteFile( user, pass, root, "true", 200, 404 );

@@ -83,7 +83,7 @@ configuration = """\
     </property>
     <property>
         <name>oozie.libpath</name>
-        <value>\$jobDir/lib</value>
+        <value>$jobDir/lib</value>
     </property>
     <property>
         <name>oozie.proxysubmission</name>

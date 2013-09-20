@@ -115,7 +115,7 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-hdfs</artifactId>
+            <artifactId>gateway-service-webhdfs</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
@@ -123,7 +123,7 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-templeton</artifactId>
+            <artifactId>gateway-service-webhcat</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

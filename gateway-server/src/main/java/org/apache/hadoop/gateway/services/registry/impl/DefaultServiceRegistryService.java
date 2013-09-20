@@ -17,12 +17,12 @@
  */
 package org.apache.hadoop.gateway.services.registry.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.gateway.GatewayMessages;
@@ -33,12 +33,11 @@ import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -133,12 +132,16 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   }
   
   public String lookupServiceURL(String clusterName, String serviceName) {
+    String url = null;
     RegEntry entry = null;
     HashMap clusterServices = registry.get(clusterName);
     if (clusterServices != null) {
       entry = (RegEntry) clusterServices.get(serviceName);
+      if( entry != null ) {
+        url = entry.url;
+      }
     }
-    return entry.url;
+    return url;
   }
   
   private HashMap<String, HashMap<String,RegEntry>> getMapFromJsonString(String json) {

@@ -52,8 +52,8 @@
     </service>
 
     <service>
-        <name>templeton</name>
-        <source>/templeton/api/v1/{path=**}?{**}</source>
+        <name>webhcat</name>
+        <source>/webhcat/api/v1/{path=**}?{**}</source>
         <filter>
             <name>shiro</name>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>

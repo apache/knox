@@ -45,7 +45,8 @@ In addition to Pseudo identity assertion Knox now provides trusted proxy user
 identity assertion for providing access to Kerberos secured Hadoop clusters.
 
 For API aggregation, the Gateway provides a central endpoint for access to
- HDFS, Templeton, Hive, HBase, Ambari and Oozie APIs for each cluster.
+WebHDFS, WebHCat/Templeton, Hive, Starbase/HBase, Ambari and Oozie APIs for
+each cluster.
 
 Future releases will extend these capabilities with additional
 authentication, identity assertion, API aggregation and eventually management

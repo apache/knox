@@ -18,7 +18,6 @@
 package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.identityasserter.filter.IdentityAsserterHttpServletRequestWrapper;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.apache.hadoop.test.mock.MockHttpServletRequest;
@@ -40,7 +39,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
   public void testInsertUserNameInFormParam() throws IOException {
-    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
@@ -58,7 +57,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
   public void testInsertUserNameInFormParamWithoutEncoding() throws IOException {
-    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
@@ -75,7 +74,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
   public void testInsertUserNameInFormParamWithIso88591Encoding() throws IOException {
-    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+    String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
@@ -93,7 +92,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
   public void testOverwriteUserNameInFormParam() throws IOException {
-    String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+    String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
@@ -112,7 +111,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
   public void testIngoreNonFormBody() throws IOException {
-    String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
+    String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );

@@ -93,14 +93,14 @@
         <rewrite template="{gateway.url}/datanode/api/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <encode-query/>
     </rule>
-    <rule dir="IN" name="TEMPLETON/templeton/templeton/request" pattern="*://*:*/**/templeton/api/v1/{path=**}?{**}">
-        <rewrite template="http://vm:50111/templeton/v1/{path=**}?{**}"/>
+    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/webhdfs/api/{path=**}?{**}">
+        <rewrite template="http://vm:50111/templeton/{path=**}?{**}"/>
     </rule>
     <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">
         <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
     </rule>
-    <rule dir="IN" name="OOZIE/oozie/api/inbound" pattern="*://*:*/**/oozie/api/v1/{**}?{**}">
-        <rewrite template="http://vm:11000/oozie/v1/{**}?{**}"/>
+    <rule dir="IN" name="OOZIE/oozie/api/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">
+        <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
     </rule>
 
 </rules>

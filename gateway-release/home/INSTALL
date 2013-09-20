@@ -71,7 +71,7 @@ Installation and Deployment Instructions
 5. Configure the Gateway with the topology of your Hadoop cluster
    a. Edit the file {GATEWAY_HOME}/deployments/sample.xml
    b. Change the host and port in the urls of the <service> elements for
-      WEBHDFS, TEMPLETON and OOZIE services to match your Hadoop cluster
+      WEBHDFS, WEBHCAT, OOZIE, etc. services to match your Hadoop cluster
       deployment.
    c. The default configuration contains the LDAP URL for a LDAP server.  By
       default that file is configured to access the demo ApacheDS based LDAP
@@ -116,8 +116,8 @@ Installation and Deployment Instructions
    REST APIs, see the following URLs respectively:
 
    http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html
-   http://people.apache.org/~thejas/templeton_doc_v1/
-   http://oozie.apache.org/docs/3.3.1/WebServicesAPI.html
+   http://hive.apache.org/docs/hcat_r0.5.0/rest.html
+   http://oozie.apache.org/docs/4.0.0/WebServicesAPI.html
 
 ------------------------------------------------------------------------------
 Persisting the Master
@@ -205,20 +205,20 @@ Mapping Gateway URLs to Hadoop cluster URLs
 ------------------------------------------------------------------------------
 The Gateway functions much like a reverse proxy.  As such it maintains a
 mapping of URLs that are exposed externally by the Gateway to URLs that are
-provided by the Hadoop cluster.  Examples of mappings for the NameNode and
-Templeton are shown below.  These mapping are generated from the combination
+provided by the Hadoop cluster.  Examples of mappings for the WebHDFS and
+WebHCat are shown below.  These mapping are generated from the combination
 of the Gateway configuration file (i.e. {GATEWAY_HOME}/gateway-site.xml)
 and the cluster topology descriptors
 (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 
   WebHDFS
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/namenode/api
-    Cluster: http://<namenode-host>:50070/webhdfs
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/webhdfs
+    Cluster: http://<webhdfs-host>:50070/webhdfs
   WebHCat (Templeton)
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/templeton/api
-    Cluster: http://<templeton-host>:50111/templeton
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/webhcat
+    Cluster: http://<webhcat-host>:50111/templeton
   Oozie
-    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/oozie/api
+    Gateway: http://<gateway-host>:<gateway-port>/<gateway-path>/<cluster-name>/oozie
     Cluster: http://<templeton-host>:11000/oozie
 
 The values for <gateway-host>, <gateway-port>, <gateway-path> are provided via
@@ -227,11 +227,11 @@ the Gateway configuration file (i.e. {GATEWAY_HOME}/gateway-site.xml).
 The value for <cluster-name> is derived from the name of the cluster topology
 descriptor (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 
-The value for <namenode-host> and <templeton-host> is provided via the cluster
+The value for <webhdfs-host> and <webhcat-host> is provided via the cluster
 topology descriptor (e.g. {GATEWAY_HOME}/deployments/<cluster-name>.xml).
 
-Note: The ports 50070, 50111 and 11000 are the defaults for NameNode,
-      Templeton and Oozie respectively. Their values can also be provided via
+Note: The ports 50070, 50111 and 11000 are the defaults for WebHDFS,
+      WebHCat and Oozie respectively. Their values can also be provided via
       the cluster topology descriptor if your Hadoop cluster uses different
       ports.
 

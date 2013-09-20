@@ -97,17 +97,17 @@ public class TopologyRulesModuleTest {
     assertThat( topology.getServices().size(), is( 4 ) );
     assertThat( topology.getProviders().size(), is( 2 ) );
 
-    Service namenodeService = topology.getService( "WEBHDFS", null );
-    assertThat( namenodeService, notNullValue() );
-    assertThat( namenodeService.getRole(), is( "WEBHDFS" ) );
-    assertThat( namenodeService.getName(), nullValue() );
-    assertThat( namenodeService.getUrl(), is( "http://host:50070/webhdfs" ) );
+    Service webhdfsService = topology.getService( "WEBHDFS", null );
+    assertThat( webhdfsService, notNullValue() );
+    assertThat( webhdfsService.getRole(), is( "WEBHDFS" ) );
+    assertThat( webhdfsService.getName(), nullValue() );
+    assertThat( webhdfsService.getUrl(), is( "http://host:50070/webhdfs" ) );
 
-    Service templetonService = topology.getService( "TEMPLETON", null );
-    assertThat( templetonService, notNullValue() );
-    assertThat( templetonService.getRole(), is( "TEMPLETON" ) );
-    assertThat( templetonService.getName(), nullValue() );
-    assertThat( templetonService.getUrl(), is( "http://host:50111/templeton" ) );
+    Service webhcatService = topology.getService( "WEBHCAT", null );
+    assertThat( webhcatService, notNullValue() );
+    assertThat( webhcatService.getRole(), is( "WEBHCAT" ) );
+    assertThat( webhcatService.getName(), nullValue() );
+    assertThat( webhcatService.getUrl(), is( "http://host:50111/templeton" ) );
 
     Service oozieService = topology.getService( "OOZIE", null );
     assertThat( oozieService, notNullValue() );

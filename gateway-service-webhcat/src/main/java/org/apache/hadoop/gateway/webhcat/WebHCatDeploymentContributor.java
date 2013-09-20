@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.templeton;
+package org.apache.hadoop.gateway.webhcat;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
@@ -27,19 +27,18 @@ import org.apache.hadoop.gateway.topology.Service;
 
 import java.net.URISyntaxException;
 
-public class
-    TempletonDeploymentContributor extends ServiceDeploymentContributorBase {
+public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBase {
 
-  private static final String TEMPLETON_EXTERNAL_PATH = "/templeton/api/v1";
+  private static final String WEBHCAT_EXTERNAL_PATH = "/webhcat/api/v1";
 
   @Override
   public String getRole() {
-    return "TEMPLETON";
+    return "WEBHCAT";
   }
 
   @Override
   public String getName() {
-    return "templeton";
+    return "webhcat";
   }
 
   @Override
@@ -48,15 +47,15 @@ public class
     UrlRewriteRuleDescriptor rule;
     UrlRewriteActionRewriteDescriptorExt rewrite;
 
-    rule = rules.addRule( getRole() + "/" + getName() + "/templeton/request" )
+    rule = rules.addRule( getRole() + "/" + getName() + "/request" )
         .directions( "request" )
-        .pattern( "*://*:*/**" + TEMPLETON_EXTERNAL_PATH + "/{path=**}?{**}" );
+        .pattern( "*://*:*/**" + WEBHCAT_EXTERNAL_PATH + "/{path=**}?{**}" );
     rewrite = rule.addStep( "rewrite" );
     rewrite.template( service.getUrl() + "/v1/{path=**}?{**}" );
 
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role( service.getRole() );
-    resource.pattern( TEMPLETON_EXTERNAL_PATH + "/**?**" );
+    resource.pattern( WEBHCAT_EXTERNAL_PATH + "/**?**" );
     if (topologyContainsProviderType(context, "authentication")) {
       context.contributeFilter( service, resource, "authentication", null, null );
     }

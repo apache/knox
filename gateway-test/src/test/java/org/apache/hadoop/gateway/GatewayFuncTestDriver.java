@@ -615,7 +615,7 @@ public class GatewayFuncTestDriver {
   }
 
   public String submitJava( String user, String password, String jar, String main, String input, String output, int status ) {
-    getMock( "TEMPLETON" )
+    getMock( "WEBHCAT" )
         .expect()
         .method( "POST" )
         .pathInfo( "/v1/mapreduce/jar" )
@@ -637,7 +637,7 @@ public class GatewayFuncTestDriver {
         .expect()
         //.log().all()
         .statusCode( status )
-        .when().post( getUrl( "TEMPLETON" ) + "/v1/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+        .when().post( getUrl( "WEBHCAT" ) + "/v1/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
     log.debug( "JOB=" + job );
@@ -646,7 +646,7 @@ public class GatewayFuncTestDriver {
   }
 
   public String submitPig( String user, String password, String group, String file, String arg, String statusDir, int... status ) {
-    getMock( "TEMPLETON" )
+    getMock( "WEBHCAT" )
         .expect()
         .method( "POST" )
         .pathInfo( "/v1/pig" )
@@ -669,7 +669,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/v1/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
+        .post( getUrl( "WEBHCAT" ) + "/v1/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -679,7 +679,7 @@ public class GatewayFuncTestDriver {
   }
 
   public String submitHive( String user, String password, String group, String file, String statusDir, int... status ) {
-    getMock( "TEMPLETON" )
+    getMock( "WEBHCAT" )
         .expect()
         .method( "POST" )
         .pathInfo( "/v1/hive" )
@@ -701,7 +701,7 @@ public class GatewayFuncTestDriver {
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
-        .post( getUrl( "TEMPLETON" ) + "/v1/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
+        .post( getUrl( "WEBHCAT" ) + "/v1/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
     String job = from( json ).getString( "id" );
@@ -711,13 +711,13 @@ public class GatewayFuncTestDriver {
   }
 
   public void queryQueue( String user, String password, String job ) throws IOException {
-    getMock( "TEMPLETON" )
+    getMock( "WEBHCAT" )
           .expect()
           .method( "GET" )
           .pathInfo( "/v1/queue/" + job )
           .respond()
           .status( HttpStatus.SC_OK )
-          .content( getResourceBytes( "templeton-job-status.json" ) )
+          .content( getResourceBytes( "webhcat-job-status.json" ) )
           .contentType( "application/json" );
     String status = given()
         //.log().all()
@@ -727,7 +727,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .content( "status.jobId", equalTo( job ) )
         .statusCode( HttpStatus.SC_OK )
-        .when().get( getUrl( "TEMPLETON" ) + "/v1/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+        .when().get( getUrl( "WEBHCAT" ) + "/v1/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
     assertComplete();
   }

@@ -41,8 +41,9 @@ specific needs for authentication.
 HTTP BASIC authentication with identity being asserted to the rest of the
 cluster via Pseudo/Simple authentication will be demonstrated for security.
 
-For API aggregation, the Gateway will provide a central endpoint for HDFS,
-Templeton and Oozie APIs for each cluster.
+For API aggregation, the Gateway provides a central endpoint for access to
+WebHDFS, WebHCat/Templeton, Hive, Starbase/HBase, Ambari and Oozie APIs for
+each cluster.
 
 Future Milestone releases will extend these capabilities with additional
 authentication, identity assertion, API aggregation and eventually management

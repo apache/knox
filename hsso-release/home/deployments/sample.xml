@@ -35,7 +35,7 @@
         <url>http://localhost:50070/webhdfs</url>
     </service>
     <service>
-        <role>TEMPLETON</role>
+        <role>WEBHCAT</role>
         <url>http://localhost:50111/templeton</url>
     </service>
     <service>
