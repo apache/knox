@@ -17,7 +17,7 @@
 */
 import org.apache.hadoop.gateway.shell.Hadoop
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 username = "guest"
 password = username + "-password"
 

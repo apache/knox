@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 username = "mapred"
 password = "mapred-password"
 jarFile = "samples/hadoop-examples.jar"

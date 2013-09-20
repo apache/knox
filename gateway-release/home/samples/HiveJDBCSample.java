@@ -37,7 +37,7 @@ public class HiveJDBCSample {
       String password = user + "-password";
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
-      String contextPath = "gateway/sample/hive/api/v1";
+      String contextPath = "gateway/sandbox/hive/api/v1";
       String connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.servermode=https;hive.server2.http.path=%s", gatewayHost, gatewayPort, contextPath );
 
       // Load Hive JDBC Driver

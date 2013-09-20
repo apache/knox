@@ -19,7 +19,7 @@ import org.apache.hadoop.gateway.shell.Hadoop
 
 class SampleService {
 
-  static String PATH = "/namenode/api/v1"
+  static String PATH = "/webhdfs/api/v1"
 
   static SampleSimpleCommand simple( Hadoop hadoop ) {
     return new SampleSimpleCommand( hadoop )

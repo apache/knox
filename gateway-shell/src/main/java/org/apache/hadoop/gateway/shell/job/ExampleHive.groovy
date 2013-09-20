@@ -17,13 +17,12 @@
  */
 package org.apache.hadoop.gateway.shell.job
 
-import org.apache.hadoop.gateway.shell.job.Job as job
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
-
 import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.Hadoop
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
+import org.apache.hadoop.gateway.shell.job.Job as job
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 username = "mapred"
 password = "mapred-password"
 inputFile = "LICENSE"

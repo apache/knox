@@ -87,14 +87,14 @@ Installation and Deployment Instructions
       topology file.  Note that the name of the file excluding the extension
       is also used as the path for that cluster in the URL.  So for example
       the sample.xml file will result in Gateway URLs of the form
-        http://{gateway-host}:{gateway-port}/gateway/sample/namenode/api/v1
+        http://{gateway-host}:{gateway-port}/gateway/sandbox/webhdfs/api/v1
 
 6. Test the installation and configuration of your Gateway
    Invoke the LISTSATUS operation on HDFS represented by your configured
    WEBHDFS by using your web browser or curl:
 
    curl -i -k -u hdfs:hdfs-password -X GET \
-     'https://localhost:8443/gateway/sample/namenode/api/v1/?op=LISTSTATUS'
+     'https://localhost:8443/gateway/sandbox/webhdfs/api/v1/?op=LISTSTATUS'
 
    The results of the above command should result in something to along the
    lines of the output below.  The exact information returned is subject to

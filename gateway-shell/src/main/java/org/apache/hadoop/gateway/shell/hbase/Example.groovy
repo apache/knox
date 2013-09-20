@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 username = "guest"
 password = "guest-password"
 tableName = "test_table"

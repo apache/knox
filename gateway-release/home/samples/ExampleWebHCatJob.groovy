@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.shell.job.Job
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 username = "guest"
 password = username + "-password"
 jobDir = "/user/" + username + "/test"

@@ -17,13 +17,12 @@
  */
 package org.apache.hadoop.gateway.shell.workflow
 
-import org.apache.hadoop.gateway.shell.workflow.Workflow as workflow;
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
-
 import com.jayway.jsonpath.JsonPath
 import org.apache.hadoop.gateway.shell.Hadoop
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs as hdfs
+import org.apache.hadoop.gateway.shell.workflow.Workflow as workflow
 
-gateway = "https://localhost:8443/gateway/sample"
+gateway = "https://localhost:8443/gateway/sandbox"
 jobTracker = "localhost:50300";
 nameNode = "localhost:8020";
 username = "mapred"
