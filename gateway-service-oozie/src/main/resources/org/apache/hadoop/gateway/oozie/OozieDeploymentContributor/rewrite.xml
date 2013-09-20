@@ -29,16 +29,16 @@
     </rule>
 
     <rule name="OOZIE/oozie/name-node-url">
-        <rewrite template="hdfs://{$serviceAddr[NAMENODE]}"/>
+        <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}"/>
     </rule>
 
     <rule name="OOZIE/oozie/job-tracker-address">
-        <rewrite template="{$serviceAddr[JOBTRACKER]}"/>
+        <rewrite template="{$serviceMappedAddr[JOBTRACKER]}"/>
     </rule>
 
     <rule name="OOZIE/oozie/hdfs-path">
         <match pattern="{path=**}"/>
-        <rewrite template="hdfs://{$serviceHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
+        <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
     </rule>
 
     <filter name="OOZIE/oozie/configuration">
