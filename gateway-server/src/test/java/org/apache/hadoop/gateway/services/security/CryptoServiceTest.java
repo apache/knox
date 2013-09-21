@@ -27,6 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.security.cert.Certificate;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -84,6 +85,12 @@ public class CryptoServiceTest {
       public void generateAliasForGateway(String alias) {
         // TODO Auto-generated method stub
         
+      }
+
+      @Override
+      public Certificate getCertificateForGateway(String alias) {
+        // TODO Auto-generated method stub
+        return null;
       }
     };
     cs = new DefaultCryptoService().setAliasService(as);

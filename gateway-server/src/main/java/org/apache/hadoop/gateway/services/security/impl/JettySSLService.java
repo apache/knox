@@ -18,7 +18,12 @@
 package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.File;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -29,6 +34,7 @@ import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.security.SSLService;
+import org.apache.hadoop.gateway.util.X500PrincipalParser;
 import org.eclipse.jetty.server.ssl.SslConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -80,6 +86,19 @@ public class JettySSLService implements SSLService {
       }
       else {
         log.keyStoreForGatewayFoundNotCreating();
+      }
+      // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
+      Certificate cert = as.getCertificateForGateway("gateway-identity");
+      if (cert instanceof X509Certificate) {
+        X500Principal x500Principal = ((X509Certificate)cert).getSubjectX500Principal();
+        X500PrincipalParser parser = new X500PrincipalParser(x500Principal);
+        log.certificateHostNameForGateway(parser.getCN());
+        Date notBefore = ((X509Certificate) cert).getNotBefore();
+        Date notAfter = ((X509Certificate) cert).getNotAfter();
+        log.certificateValidityPeriod(notBefore, notAfter);
+      }
+      else {
+        throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of X509Certificate. Something is wrong with the gateway keystore.");
       }
     } catch (KeystoreServiceException e) {
       throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);

@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
-import java.security.Key;
-import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.Certificate;
 import java.util.Map;
 import java.util.Random;
 
@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
-import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 
 public class DefaultAliasService implements AliasService {
 
@@ -111,4 +110,18 @@ public class DefaultAliasService implements AliasService {
     generateAliasForCluster("__gateway", alias);
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.AliasService#getCertificateForGateway(java.lang.String)
+   */
+  @Override
+  public Certificate getCertificateForGateway(String alias) {
+    Certificate cert = null;
+    try {
+      cert = this.keystoreService.getKeystoreForGateway().getCertificate(alias);
+    } catch (KeyStoreException e) {
+      // TODO: log appropriately
+      // should we throw an exception?
+    }
+    return cert;
+  }
 }

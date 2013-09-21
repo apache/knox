@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
-import java.security.Key;
+import java.security.cert.Certificate;
 
 import org.apache.hadoop.gateway.services.Service;
 
@@ -34,4 +34,6 @@ public interface AliasService extends Service {
   public abstract char[] getPasswordFromAliasForGateway(String alias);
 
   void generateAliasForGateway(String alias);
+  
+  Certificate getCertificateForGateway(String alias);
 }
