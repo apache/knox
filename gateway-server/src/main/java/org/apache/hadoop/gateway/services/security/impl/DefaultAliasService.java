@@ -22,12 +22,15 @@ import java.security.cert.Certificate;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 
 public class DefaultAliasService implements AliasService {
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class ); 
 
   protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
@@ -119,7 +122,7 @@ public class DefaultAliasService implements AliasService {
     try {
       cert = this.keystoreService.getKeystoreForGateway().getCertificate(alias);
     } catch (KeyStoreException e) {
-      // TODO: log appropriately
+      LOG.unableToRetrieveCertificateForGateway(e);
       // should we throw an exception?
     }
     return cert;

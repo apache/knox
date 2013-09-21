@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
 import java.io.File;
 import java.net.URI;
+import java.security.KeyStoreException;
 import java.util.Date;
 import java.util.Map;
 
@@ -273,4 +274,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "The Gateway SSL certificate is valid between: {0} and {1}." )
   void certificateValidityPeriod(Date notBefore, Date notAfter);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to retrieve certificate for Gateway: {0}." )
+  void unableToRetrieveCertificateForGateway(KeyStoreException e);
 }

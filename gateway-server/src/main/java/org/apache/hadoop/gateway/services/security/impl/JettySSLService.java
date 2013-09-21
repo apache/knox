@@ -89,7 +89,7 @@ public class JettySSLService implements SSLService {
       }
       // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
       Certificate cert = as.getCertificateForGateway("gateway-identity");
-      if (cert instanceof X509Certificate) {
+      if (cert != null && cert instanceof X509Certificate) {
         X500Principal x500Principal = ((X509Certificate)cert).getSubjectX500Principal();
         X500PrincipalParser parser = new X500PrincipalParser(x500Principal);
         log.certificateHostNameForGateway(parser.getCN());
