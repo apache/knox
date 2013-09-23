@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 
 import java.io.File;
 import java.net.URI;
-import java.security.KeyStoreException;
 import java.util.Date;
 import java.util.Map;
 
