@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.services.security.impl;
 
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import sun.security.x509.*;
 
@@ -129,7 +130,7 @@ public class BaseKeystoreService {
     return stream;
   }
 
-  protected void createKeystore(String filename, String keystoreType) {
+  protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
     try {
       FileOutputStream out = createKeyStoreFile( filename );
       KeyStore ks = KeyStore.getInstance(keystoreType);  
@@ -137,14 +138,19 @@ public class BaseKeystoreService {
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
+      throw new KeystoreServiceException(e);
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
+      throw new KeystoreServiceException(e);
     } catch (CertificateException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
+      throw new KeystoreServiceException(e);
     } catch (FileNotFoundException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
+      throw new KeystoreServiceException(e);
     } catch (IOException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
+      throw new KeystoreServiceException(e);
     }
   }
 

@@ -22,24 +22,24 @@ import java.security.KeyStore;
 
 public interface KeystoreService {
 
-  public void createKeystoreForGateway();
+  public void createKeystoreForGateway() throws KeystoreServiceException;
 
-  public void addSelfSignedCertForGateway(String alias, char[] passphrase);
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
   
-  public KeyStore getKeystoreForGateway();
+  public KeyStore getKeystoreForGateway() throws KeystoreServiceException;
   
   public Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
 
-  public void createCredentialStoreForCluster(String clusterName);
+  public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
   
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException;
 
   public boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException;
   
-  public KeyStore getCredentialStoreForCluster(String clusterName);
+  public KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
 
-  public void addCredentialForCluster(String clusterName, String alias, String key);
+  public void addCredentialForCluster(String clusterName, String alias, String key) throws KeystoreServiceException;
 
-  public char[] getCredentialForCluster(String clusterName, String alias);
+  public char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
 
 }

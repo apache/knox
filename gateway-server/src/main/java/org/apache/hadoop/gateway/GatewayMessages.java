@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 
 import java.io.File;
 import java.net.URI;
@@ -276,5 +277,8 @@ public interface GatewayMessages {
   void certificateValidityPeriod(Date notBefore, Date notAfter);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to retrieve certificate for Gateway: {0}." )
-  void unableToRetrieveCertificateForGateway(KeyStoreException e);
+  void unableToRetrieveCertificateForGateway(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to generate alias for cluster: {0} {1}." )
+  void failedToGenerateAliasForCluster(String clusterName, KeystoreServiceException e);
 }

@@ -141,6 +141,8 @@ public class DefaultCryptoService implements CryptoService {
       LOG.failedToVerifySignature( e );
     } catch (UnsupportedEncodingException e) {
       LOG.failedToVerifySignature( e );
+    } catch (KeystoreServiceException e) {
+      LOG.failedToVerifySignature( e );
     }
     LOG.signatureVerified( verified );
     return verified;

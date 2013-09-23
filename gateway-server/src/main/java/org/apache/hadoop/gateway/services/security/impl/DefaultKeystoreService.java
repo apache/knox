@@ -78,7 +78,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   }
 
   @Override
-  public void createKeystoreForGateway() {
+  public void createKeystoreForGateway() throws KeystoreServiceException {
     String filename = keyStoreDir + GATEWAY_KEYSTORE;
     createKeystore(filename, "JKS");
   }
@@ -139,7 +139,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   }
   
   @Override
-  public void createCredentialStoreForCluster(String clusterName) {
+  public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
     String filename = keyStoreDir + clusterName + CREDENTIALS_SUFFIX;
     createKeystore(filename, "JCEKS");
   }

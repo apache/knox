@@ -54,7 +54,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     }
   }
 
-  public void createKeystore() {
+  public void createKeystore() throws KeystoreServiceException {
     String filename = keyStoreDir + serviceName + ".jks";
     createKeystore(filename, "JKS");
   }
@@ -87,7 +87,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     }  
   }
   
-  public void createCredentialStore() {
+  public void createCredentialStore() throws KeystoreServiceException {
     String filename = keyStoreDir + serviceName + CREDENTIALS_SUFFIX;
     createKeystore(filename, "JCEKS");
   }
