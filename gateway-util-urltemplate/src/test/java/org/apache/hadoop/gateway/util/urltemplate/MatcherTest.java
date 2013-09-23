@@ -613,14 +613,14 @@ public class MatcherTest {
     Matcher<String> stringMatcher;
     Matcher<?>.Match match;
 
-//    template = Parser.parse( "*://*:*/**/namenode/api/v1/**?**" );
-//    input = Parser.parse( "http://localhost:53221/gateway/cluster/namenode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
+//    template = Parser.parse( "*://*:*/**/webhdfs/v1/**?**" );
+//    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
 //    matcher = new Matcher<String>( template, "test-value" );
 //    match = matcher.match( input );
 //    assertThat( (String)match.getValue(), is( "test-value" ) );
 //
-//    template = Parser.parse( "*://*:*/**/namenode/api/v1/{path=**}?{**=*}" );
-//    input = Parser.parse( "http://localhost:53221/gateway/cluster/namenode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
+//    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
+//    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
 //    matcher = new Matcher<String>( template, "test-value-2" );
 //    match = matcher.match( input );
 //    assertThat( (String)match.getValue(), is( "test-value-2" ) );
@@ -628,20 +628,20 @@ public class MatcherTest {
 //    stringMatcher = new Matcher<String>();
 //    template = Parser.parse( "*://*:*/**/datanode/api/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
 //    stringMatcher.add( template, "test-value-C" );
-//    template = Parser.parse( "*://*:*/**/namenode/api/v1/{path=**}?{**=*}" );
+//    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
 //    stringMatcher.add( template, "test-value-B" );
-//    input = Parser.parse( "http://localhost:53221/gateway/cluster/namenode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
+//    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
 //    match = stringMatcher.match( input );
 //    assertThat( match.getValue(), notNullValue() );
 //    assertThat( (String)match.getValue(), is( "test-value-B" ) );
 
     // This is just a reverse of the above.  The order caused a bug.
     stringMatcher = new Matcher<String>();
-    template = Parser.parse( "*://*:*/**/namenode/api/v1/{path=**}?{**=*}" );
+    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
     stringMatcher.add( template, "test-value-B" );
     template = Parser.parse( "*://*:*/**/webhdfs/data/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
     stringMatcher.add( template, "test-value-C" );
-    input = Parser.parse( "http://localhost:53221/gateway/cluster/namenode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
+    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
     match = stringMatcher.match( input );
     assertThat( match.getValue(), notNullValue() );
     assertThat( (String)match.getValue(), is( "test-value-B" ) );

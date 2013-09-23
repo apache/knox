@@ -19,7 +19,7 @@
 
     <service>
         <name>namenode-root</name>
-        <source>/namenode/api/v1?{**}</source>
+        <source>/webhdfs/v1?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
         <filter>
             <name>shiro</name>
@@ -33,7 +33,7 @@
 
     <service>
         <name>namenode-children</name>
-        <source>/namenode/api/v1/{path=**}?{**}</source>
+        <source>/webhdfs/v1/{path=**}?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
         <filter>
             <name>shiro</name>
@@ -43,7 +43,7 @@
             <name>rewrite</name>
             <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>webhdfs://*:*/{path=**}
-                http://{gateway.address}/gateway/gateway/namenode/api/v1/{path=**}</rewrite>
+                http://{gateway.address}/webhdfs/v1/{path=**}</rewrite>
         </filter>
         <filter>
             <name>dispatch</name>

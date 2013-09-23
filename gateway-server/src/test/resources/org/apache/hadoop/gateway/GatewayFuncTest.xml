@@ -18,7 +18,7 @@
 
     <resource>
         <!--<name>namenode-root</name>-->
-        <source>/namenode/api/v1?{**}</source>
+        <source>/webhdfs/v1?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/?{**}</target>
         <filter>
             <role>authentication</role>
@@ -32,7 +32,7 @@
 
     <resource>
         <!--<name>namenode-children</name>-->
-        <source>/namenode/api/v1/{path=**}?{**}</source>
+        <source>/webhdfs/v1/{path=**}?{**}</source>
         <target>http://{namenode.address}/webhdfs/v1/{path=**}?{**}</target>
         <filter>
             <role>authentication</role>
@@ -43,7 +43,7 @@
             <class>org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <param>
                 <name>rewrite</name>
-                <value>webhdfs://*:*/{path=**} {gateway.url}/namenode/api/v1/{path=**}</value>
+                <value>webhdfs://*:*/{path=**} {gateway.url}/webhdfs/v1/{path=**}</value>
             </param>
         </filter>
         <filter>

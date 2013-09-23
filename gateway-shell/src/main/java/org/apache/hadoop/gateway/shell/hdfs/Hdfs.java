@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Hdfs {
 
-  static String SERVICE_PATH = "/namenode/api/v1";
+  static String SERVICE_PATH = "/webhdfs/v1";
 
   public static Ls.Request ls( Hadoop session ) {
     return new Ls.Request( session );

@@ -117,7 +117,7 @@ public class GatewayBasicFuncTest {
     config.setGatewayPath( "gateway" );
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
-    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/namenode/api", USE_MOCK_SERVICES );
+    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES );
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/webhdfs/data", USE_MOCK_SERVICES );
     driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/webhcat", "/cluster/webhcat/api", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
@@ -673,17 +673,17 @@ public class GatewayBasicFuncTest {
     driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
-    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
     driver.createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", "hadoop-examples.jar", 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
-    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
     driver.createFile( user, pass, null, root+"/input/changes.txt", "777", "text/plain", "changes.txt", 307, 201, 200 );
 
     /* Create the output directory
-    curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
+    curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
     */
     driver.createDir( user, pass, null, root+"/output", "777", 200, 200 );
 
@@ -704,7 +704,7 @@ public class GatewayBasicFuncTest {
 
     // Can't really check for the output here because the job won't be done.
     /* Retrieve results
-    curl 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
+    curl 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
     */
 
     if( CLEANUP_TEST ) {
@@ -789,12 +789,12 @@ public class GatewayBasicFuncTest {
     driver.createFile( user, pass, group, root+"/workflow.xml", "666", "application/octet-stream", "oozie-workflow.xml", 307, 201, 200 );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
-    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
     driver.createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", "hadoop-examples.jar", 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
-    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/namenode/api/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
     driver.createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
 

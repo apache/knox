@@ -18,11 +18,11 @@
 <rules>
 
     <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
-        <rewrite template="{gateway.url}/namenode/api/v1/{path=**}?{**}"/>
+        <rewrite template="{gateway.url}/webhdfs/v1/{path=**}?{**}"/>
     </rule>
 
     <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="webhdfs://*:*/{path=**}?{**}">
-        <rewrite template="{gateway.url}/namenode/api/v1/{path=**}?{**}"/>
+        <rewrite template="{gateway.url}/webhdfs/v1/{path=**}?{**}"/>
     </rule>
 
     <rule dir="OUT" name="WEBHDFS/webhdfs/outbound/namenode/headers/location">
@@ -39,11 +39,11 @@
         <rewrite template="{$serviceUrl[WEBHDFS]}/{path=**}?{**}"/>
     </rule>
 
-    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/root" pattern="*://*:*/**/namenode/api/{version}/?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/root" pattern="*://*:*/**/webhdfs/{version}/?{**}">
         <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/?{**}"/>
     </rule>
 
-    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/file" pattern="*://*:*/**/namenode/api/{version}/{path=**}?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/file" pattern="*://*:*/**/webhdfs/{version}/{path=**}?{**}">
         <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/{path=**}?{**}"/>
     </rule>
 

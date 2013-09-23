@@ -221,24 +221,24 @@ public class RewriterTest {
     expectOutput = new URI( "http://some-other-host/pathC/pathB/filter-queryParam-value/expect-queryParam-value" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
-    actualInput = new URI( "/namenode/api/v1/test" );
-    sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
+    actualInput = new URI( "/webhdfs/v1/test" );
+    sourcePattern = Parser.parse( "/webhdfs/v1/{0=**}" );
     targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
-    actualInput = new URI( "/namenode/api/v1/test" );
-    sourcePattern = Parser.parse( "/namenode/api/v1/{0=**}" );
+    actualInput = new URI( "/webhdfs/v1/test" );
+    sourcePattern = Parser.parse( "/webhdfs/v1/{0=**}" );
     targetPattern = Parser.parse( "http://{filter-queryParam-name}/webhdfs/v1/{0}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     expectOutput = new URI( "http://filter-queryParam-value/webhdfs/v1/test" );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "http://vm.home:50075/webhdfs/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
-    expectOutput = new URI( "http://filter-queryParam-value/gatewaycluster/namenode/api/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
+    expectOutput = new URI( "http://filter-queryParam-value/gatewaycluster/webhdfs/v1/test/file?op=CREATE&user.name=hdfs&overwrite=false" );
     sourcePattern = Parser.parse( "*://*:*/webhdfs/v1/{path=**}?op={op=*}&user.name={username=*}&overwrite={overwrite=*}" );
-    targetPattern = Parser.parse( "http://{filter-queryParam-name}/gatewaycluster/namenode/api/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
+    targetPattern = Parser.parse( "http://{filter-queryParam-name}/gatewaycluster/webhdfs/v1/{path=**}?op={op}&user.name={username}&overwrite={overwrite}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
@@ -254,7 +254,7 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     // *://**/webhdfs/v1/{path=**}?**={**}
-    // http://{org.apache.org.apache.hadoop.gateway.address}/gatewaycluster/namenode/api/v1/{path}?**={**}
+    // http://{org.apache.org.apache.hadoop.gateway.address}/gatewaycluster/webhdfs/v1/{path}?**={**}
     // 1) Should not add query if none in source.
     // 2) Should only add unmatch query parameters
     // Consider chaning = within {} to : and wrapping query fully within {} (e.g. {query=pattern:alias}

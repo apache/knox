@@ -77,10 +77,10 @@
     ContentPathParser
     -->
 
-    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/root/inbound" pattern="*://*:*/**/namenode/api/{version}/?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/root/inbound" pattern="*://*:*/**/webhdfs/{version}/?{**}">
         <rewrite template="http://vm:50070/webhdfs/{version}/?{**}"/>
     </rule>
-    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/file/inbound" pattern="*://*:*/**/namenode/api/{version}/{path=**}?{**}">
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/file/inbound" pattern="*://*:*/**/webhdfs/{version}/{path=**}?{**}">
         <rewrite template="http://vm:50070/webhdfs/{version}/{path=**}?{**}"/>
     </rule>
     <rule dir="IN" name="WEBHDFS/webhdfs/datanode/inbound" pattern="*://*:*/**/webhdfs/data/{version}/{path=**}?**">

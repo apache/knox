@@ -37,7 +37,7 @@ import java.util.List;
 public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String RULES_RESOURCE = WebHdfsDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
-  private static final String WEBHDFS_EXTERNAL_PATH = "/namenode/api/v1";
+  private static final String WEBHDFS_EXTERNAL_PATH = "/webhdfs/v1";
   private static final String DATANODE_EXTERNAL_PATH = "/webhdfs/data/v1";
 //  private static final String WEBHDFS_INTERNAL_PATH = "/webhdfs";
 //  private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";

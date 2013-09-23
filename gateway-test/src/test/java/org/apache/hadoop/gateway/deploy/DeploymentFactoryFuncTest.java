@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.GatewayTestConfig;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.topology.Provider;
@@ -35,7 +34,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,7 +111,7 @@ public class DeploymentFactoryFuncTest {
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/namenode/api/v1/?**" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/webhdfs/v1/?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
@@ -139,7 +137,7 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/name", equalTo( "http-client" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.dispatch.HttpClientDispatch" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/namenode/api/v1/**?**" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/webhdfs/v1/**?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );

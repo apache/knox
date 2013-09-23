@@ -18,7 +18,7 @@
 <gateway>
     <resource>
         <role>WEBHDFS</role>
-        <pattern>/namenode/api/v1/?**</pattern>
+        <pattern>/webhdfs/v1/?**</pattern>
         ...
         <filter>
             <role>rewrite</role>

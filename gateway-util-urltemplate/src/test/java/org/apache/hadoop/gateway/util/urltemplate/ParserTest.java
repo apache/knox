@@ -874,7 +874,7 @@ public class ParserTest {
     template = Parser.parse( "*://*:*/**/path?{**}" );
     assertThat( template, notNullValue() );
 
-    template = Parser.parse( "*://*:*/**/namenode/api/v1/?{**}" );
+    template = Parser.parse( "*://*:*/**/webhdfs/v1/?{**}" );
     assertThat( template, notNullValue() );
 
   }
