@@ -42,11 +42,17 @@
         <content type="*/json">
             <apply path="$[LiveNodes][*][name]" rule="STARGATE/stargate/address/outbound"/>
         </content>
+        <content type="*/xml">
+            <apply path="/ClusterStatus/LiveNodes/Node/@name" rule="STARGATE/stargate/address/outbound"/>
+        </content>
     </filter>
 
     <filter name="STARGATE/stargate/regions/outbound">
         <content type="*/json">
             <apply path="$[Region][*][location]" rule="STARGATE/stargate/address/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/TableInfo/Region/@location" rule="STARGATE/stargate/address/outbound"/>
         </content>
     </filter>
 
