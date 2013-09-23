@@ -53,7 +53,7 @@ public interface GatewayResources {
   @Resource( text="Provider is required." )
   String providerIsRequiredError();
 
-  @Resource( text="Unsupported property's token: {0}" )
+  @Resource( text="Unsupported property''s token: {0}" )
   String unsupportedPropertyTokenError(String token);
 
   @Resource( text="Failed to build topology: wrong data format." )
