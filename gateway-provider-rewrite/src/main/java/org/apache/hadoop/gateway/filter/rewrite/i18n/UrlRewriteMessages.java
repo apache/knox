@@ -17,10 +17,13 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.i18n;
 
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 @Messages(logger="org.apache.hadoop.gateway")
 public interface UrlRewriteMessages {
@@ -44,13 +47,10 @@ public interface UrlRewriteMessages {
   void failedToInitializeRewriteFunctions( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to destroy rewrite rule processor: {0}" )
-  void failedToDestroyRewriteRuleProcessor( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  void failedToDestroyRewriteStepProcessor( @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to destroy rewrite function processor: {0}" )
   void failedToDestroyRewriteFunctionProcessor( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-
-  @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}" )
-  void failedToRewriteUrl( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to filter value {0}, rule {1}" )
   void failedToFilterValue( String value, String rule );
@@ -66,5 +66,20 @@ public interface UrlRewriteMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to find values by parameter name {0}: {1}" )
   void failedToFindValuesByParameter( String parameterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.DEBUG, text = "Rewrote URL: {0}, direction: {1} via implicit rule: {2} to URL: {3}" )
+  void rewroteUrlViaImplicitRule( Template inputUri, UrlRewriter.Direction direction, String ruleName, Template outputUri );
+
+  @Message( level = MessageLevel.DEBUG, text = "Rewrote URL: {0}, direction: {1} via explicit rule: {2} to URL: {3}" )
+  void rewroteUrlViaExplicitRule( Template inputUri, UrlRewriter.Direction direction, String ruleName, Template outputUri );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}, direction: {1} via rule: {2}, status: {3}" )
+  void failedToRewriteUrl( Template inputUri, UrlRewriter.Direction direction, String ruleName, UrlRewriteStepStatus stepStatus );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}, direction: {1}, rule: {2}" )
+  void failedToRewriteUrlDueToException( Template inputUri, UrlRewriter.Direction direction, String ruleName, @StackTrace(level = MessageLevel.DEBUG) Exception exception );
+
+  @Message( level = MessageLevel.DEBUG, text = "No rule matching URL: {0}, direction: {1}" )
+  void noRuleMatchingUrl( Template inputUri, UrlRewriter.Direction direction );
 
 }

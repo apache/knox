@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFactory;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRuleProcessorHolder;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteStepProcessorHolder;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
@@ -42,9 +43,9 @@ public class UrlRewriteProcessor implements UrlRewriter {
 
   UrlRewriteEnvironment environment;
   UrlRewriteRulesDescriptor descriptor;
-  Map<String,UrlRewriteStepProcessorHolder> rules = new HashMap<String,UrlRewriteStepProcessorHolder>();
-  Matcher<UrlRewriteStepProcessorHolder> inbound = new Matcher<UrlRewriteStepProcessorHolder>();
-  Matcher<UrlRewriteStepProcessorHolder> outbound = new Matcher<UrlRewriteStepProcessorHolder>();
+  Map<String,UrlRewriteRuleProcessorHolder> rules = new HashMap<String,UrlRewriteRuleProcessorHolder>();
+  Matcher<UrlRewriteRuleProcessorHolder> inbound = new Matcher<UrlRewriteRuleProcessorHolder>();
+  Matcher<UrlRewriteRuleProcessorHolder> outbound = new Matcher<UrlRewriteRuleProcessorHolder>();
   Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
 
   public UrlRewriteProcessor() {
@@ -80,7 +81,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
   private void initializeRules( UrlRewriteRulesDescriptor descriptor ) {
     for( UrlRewriteRuleDescriptor ruleDescriptor : descriptor.getRules() ) {
       try {
-        UrlRewriteStepProcessorHolder ruleProcessor = new UrlRewriteStepProcessorHolder();
+        UrlRewriteRuleProcessorHolder ruleProcessor = new UrlRewriteRuleProcessorHolder();
         ruleProcessor.initialize( environment, ruleDescriptor );
         if( !rules.containsKey( ruleDescriptor.name() ) ) {
           rules.put( ruleDescriptor.name(), ruleProcessor );
@@ -108,7 +109,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
       try {
         rule.destroy();
       } catch ( Exception e ) {
-        LOG.failedToDestroyRewriteRuleProcessor( e );
+        LOG.failedToDestroyRewriteStepProcessor( e );
       }
     }
     for( UrlRewriteFunctionProcessor function : functions.values() ) {
@@ -124,8 +125,10 @@ public class UrlRewriteProcessor implements UrlRewriter {
   public Template rewrite( Resolver resolver, Template inputUri, Direction direction, String ruleName ) {
     Template outputUri = inputUri;
     UrlRewriteStepProcessorHolder stepHolder = null;
+    String effectiveRuleName = null;
     if( ruleName == null || "*".equals( ruleName ) ) {
-      Matcher<UrlRewriteStepProcessorHolder>.Match match = null;
+      ruleName = null; // Used for logging later.
+      Matcher<UrlRewriteRuleProcessorHolder>.Match match = null;
       switch( direction ) {
         case IN:
           match = inbound.match( outputUri );
@@ -136,9 +139,11 @@ public class UrlRewriteProcessor implements UrlRewriter {
       }
       if( match != null ) {
         stepHolder = match.getValue();
+        effectiveRuleName = match.getValue().getRuleName();
       }
     } else if( !ruleName.isEmpty() ) {
       stepHolder = rules.get( ruleName );
+      effectiveRuleName = ruleName;
     }
     if( stepHolder != null ) {
       UrlRewriteContext context = new UrlRewriteContextImpl( environment, resolver, functions, direction, inputUri );
@@ -146,16 +151,22 @@ public class UrlRewriteProcessor implements UrlRewriter {
         UrlRewriteStepStatus stepStatus = stepHolder.process( context );
         if( UrlRewriteStepStatus.SUCCESS == stepStatus ) {
           outputUri = context.getCurrentUrl();
+          if( ruleName == null ) {
+            LOG.rewroteUrlViaImplicitRule( inputUri, direction, effectiveRuleName, outputUri );
+          } else {
+            LOG.rewroteUrlViaExplicitRule( inputUri, direction, effectiveRuleName, outputUri );
+          }
         } else {
+          LOG.failedToRewriteUrl( inputUri, direction, effectiveRuleName, stepStatus );
           outputUri = null;
         }
       } catch( Exception e ) {
-        LOG.failedToRewriteUrl( e );
+        LOG.failedToRewriteUrlDueToException( inputUri, direction, effectiveRuleName, e );
         outputUri = null;
       }
+    } else {
+      LOG.noRuleMatchingUrl( inputUri, direction );
     }
-//    System.out.println( "REWRITE: " + inputUri );
-//    System.out.println( "       : " + outputUri );
     return outputUri;
   }
 

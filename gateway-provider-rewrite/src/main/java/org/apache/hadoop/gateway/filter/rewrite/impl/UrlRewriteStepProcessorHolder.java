@@ -225,7 +225,7 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
         processor.destroy();
       } catch( Exception e ) {
         // Maybe it makes sense to throw exception
-        LOG.failedToDestroyRewriteRuleProcessor( e );
+        LOG.failedToDestroyRewriteStepProcessor( e );
       }
     }
   }

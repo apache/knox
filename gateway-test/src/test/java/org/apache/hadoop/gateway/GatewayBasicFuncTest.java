@@ -90,7 +90,7 @@ public class GatewayBasicFuncTest {
 
   // Specifies if the GATEWAY_HOME created for the test should be deleted when the test suite is complete.
   // This is frequently used during debugging to keep the GATEWAY_HOME around for inspection.
-  private static final boolean CLEANUP_TEST = false;
+  private static final boolean CLEANUP_TEST = true;
 
 //  private static final boolean USE_GATEWAY = false;
 //  private static final boolean USE_MOCK_SERVICES = false;
@@ -118,13 +118,13 @@ public class GatewayBasicFuncTest {
     driver.setResourceBase( GatewayBasicFuncTest.class );
     driver.setupLdap( findFreePort() );
     driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/namenode/api", USE_MOCK_SERVICES );
-    driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/datanode/api", USE_MOCK_SERVICES );
-    driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/webhcat", "/cluster/webhcat/api", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
-    driver.setupService( "STARGATE", "http://" + TEST_HOST + ":2707", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "STARGATE", "http://" + TEST_HOST + ":60080", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
+    driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
+    driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
