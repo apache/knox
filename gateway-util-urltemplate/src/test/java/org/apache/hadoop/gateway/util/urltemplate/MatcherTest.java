@@ -639,7 +639,7 @@ public class MatcherTest {
     stringMatcher = new Matcher<String>();
     template = Parser.parse( "*://*:*/**/namenode/api/v1/{path=**}?{**=*}" );
     stringMatcher.add( template, "test-value-B" );
-    template = Parser.parse( "*://*:*/**/datanode/api/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
+    template = Parser.parse( "*://*:*/**/webhdfs/data/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
     stringMatcher.add( template, "test-value-C" );
     input = Parser.parse( "http://localhost:53221/gateway/cluster/namenode/api/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
     match = stringMatcher.match( input );

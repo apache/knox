@@ -83,17 +83,17 @@
     <rule dir="IN" name="WEBHDFS/webhdfs/namenode/file/inbound" pattern="*://*:*/**/namenode/api/{version}/{path=**}?{**}">
         <rewrite template="http://vm:50070/webhdfs/{version}/{path=**}?{**}"/>
     </rule>
-    <rule dir="IN" name="WEBHDFS/webhdfs/datanode/inbound" pattern="*://*:*/**/datanode/api/{version}/{path=**}?**">
+    <rule dir="IN" name="WEBHDFS/webhdfs/datanode/inbound" pattern="*://*:*/**/webhdfs/data/{version}/{path=**}?**">
         <decode-query/>
-        <match pattern="*://*:*/**/datanode/api/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
+        <match pattern="*://*:*/**/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <rewrite template="http://{host}:{port}/{path=**}?{**}"/>
     </rule>
     <rule dir="OUT" name="WEBHDFS/webhdfs/datanode/outbound" pattern="*://*:*/**?**">
         <match pattern="*://{host}:{port}/{path=**}?{**}"/>
-        <rewrite template="{gateway.url}/datanode/api/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
+        <rewrite template="{gateway.url}/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <encode-query/>
     </rule>
-    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/webhdfs/api/{path=**}?{**}">
+    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/webhcat/api/{path=**}?{**}">
         <rewrite template="http://vm:50111/templeton/{path=**}?{**}"/>
     </rule>
     <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">

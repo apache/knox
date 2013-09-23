@@ -242,9 +242,9 @@ public class RewriterTest {
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
 
-    actualInput = new URI( "/datanode/api/v1/test?user.name=hdfs&op=CREATE&overwrite=false&host=vm.home&port=50075" );
+    actualInput = new URI( "/webhdfs/data/v1/test?user.name=hdfs&op=CREATE&overwrite=false&host=vm.home&port=50075" );
     expectOutput = new URI( "http://vm.home:50075/webhdfs/v1/test?op=CREATE&user.name=hdfs&overwrite=false" );
-    sourcePattern = Parser.parse( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    sourcePattern = Parser.parse( "/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
     targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     // Note: Had to change the order of the expected query params to match.
@@ -282,10 +282,10 @@ public class RewriterTest {
     URI actualInput, actualOutput, expectOutput;
 
     sourcePattern = Parser.parse( "*://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
-    targetPattern = Parser.parse( "{gateway.url}/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    targetPattern = Parser.parse( "{gateway.url}/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
 
     actualInput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
-    expectOutput = new URI( "http://gw:8888/gateway/cluster/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    expectOutput = new URI( "http://gw:8888/gateway/cluster/webhdfs/data/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );
   }
@@ -302,10 +302,10 @@ public class RewriterTest {
     Template sourcePattern, targetPattern;
     URI actualInput, actualOutput, expectOutput;
 
-    sourcePattern = Parser.parse( "/datanode/api/v1/{path=**}?{host}&{port}&{**}" );
+    sourcePattern = Parser.parse( "/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
     targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
 
-    actualInput = new URI( "/datanode/api/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
+    actualInput = new URI( "/webhdfs/data/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     expectOutput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
     assertThat( actualOutput, equalTo( expectOutput ) );

@@ -58,7 +58,8 @@
     </target>
 
     <target name="clean" depends="init" description="Clean up any build artifacts.">
-        <delete file="target/${gateway-version}"/>
+        <delete file="target"/>
+        <delete file="install"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">

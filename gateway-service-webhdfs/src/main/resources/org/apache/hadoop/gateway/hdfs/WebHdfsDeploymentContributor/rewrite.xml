@@ -27,7 +27,7 @@
 
     <rule dir="OUT" name="WEBHDFS/webhdfs/outbound/namenode/headers/location">
         <match pattern="{scheme}://{host}:{port}/{path=**}?{**}"/>
-        <rewrite template="{gateway.url}/datanode/api/v1/{path=**}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+        <rewrite template="{gateway.url}/webhdfs/data/v1/{path=**}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
         <encrypt-query/>
     </rule>
 
@@ -49,7 +49,7 @@
 
     <rule dir="IN" name="WEBHDFS/webhdfs/inbound/datanode">
         <decrypt-query/>
-        <match pattern="*://*:*/**/datanode/api/*/{path=**}?{scheme}?{host}?{port}?{**}"/>
+        <match pattern="*://*:*/**/webhdfs/data/*/{path=**}?{scheme}?{host}?{port}?{**}"/>
         <rewrite template="{scheme}://{host}:{port}/{path=**}?{**}"/>
     </rule>
 

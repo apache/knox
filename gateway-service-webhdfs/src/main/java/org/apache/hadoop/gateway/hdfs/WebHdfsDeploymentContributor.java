@@ -38,7 +38,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
 
   private static final String RULES_RESOURCE = WebHdfsDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
   private static final String WEBHDFS_EXTERNAL_PATH = "/namenode/api/v1";
-  private static final String DATANODE_EXTERNAL_PATH = "/datanode/api/v1";
+  private static final String DATANODE_EXTERNAL_PATH = "/webhdfs/data/v1";
 //  private static final String WEBHDFS_INTERNAL_PATH = "/webhdfs";
 //  private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
@@ -63,47 +63,6 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     UrlRewriteRulesDescriptor serviceRules = loadRulesFromClassPath();
     UrlRewriteRulesDescriptor clusterRules = context.getDescriptor( "rewrite" );
     clusterRules.addRules( serviceRules );
-
-//    UrlRewriteRulesDescriptor rules = context.getDescriptor( "rewrite" );
-//    UrlRewriteRuleDescriptor rule;
-//    UrlRewriteActionRewriteDescriptorExt rewrite;
-//    UrlRewriteMatchDescriptor match;
-//
-//    rule = rules.addRule( getQualifiedName() + "/namenode/root/inbound" )
-//        .directions( "inbound" )
-//        .pattern( "*://*:*/**" + WEBHDFS_EXTERNAL_PATH + "/?{**}" );
-//    rewrite = rule.addStep( "rewrite" );
-//    //rewrite.template( service.getUrl().toExternalForm() + "/?user.name={$username}&{**}" );
-//    rewrite.template( service.getUrl() + "/?{**}" );
-//
-//    rule = rules.addRule( getQualifiedName() + "/namenode/file/inbound" )
-//        .directions( "inbound" )
-//        .pattern( "*://*:*/**" + WEBHDFS_EXTERNAL_PATH + "/{path=**}?{**}" );
-//    rewrite = rule.addStep( "rewrite" );
-//    //rewrite.template( service.getUrl().toExternalForm() + "/{path=**}?user.name={$username}&{**}" );
-//    rewrite.template( service.getUrl() + "/{path=**}?{**}" );
-//
-//    rule = rules.addRule( getQualifiedName() + "/datanode/inbound" )
-//        .directions( "inbound" )
-//        .pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?**" );
-//    //TODO: If the input type is wrong it throws a NPE.
-//    rule.addStep( "decode-query" );
-//    match = rule.addStep( "match" );
-//    match.pattern( "*://*:*/**" + DATANODE_EXTERNAL_PATH + "/{path=**}?{host}&{port}&{**}" );
-//    rewrite = rule.addStep( "rewrite" );
-//    rewrite.template( "http://{host}:{port}/{path=**}?{**}" );
-//
-//    rule = rules.addRule( getQualifiedName() + "/datanode/outbound" )
-//        .directions( "outbound" );
-//    match = rule.addStep( "match" );
-//    match.pattern( "*://{host}:{port}/{path=**}?{**}" );
-//    rewrite = rule.addStep( "rewrite" );
-//    rewrite.template( CLUSTER_URL_FUNCTION + DATANODE_EXTERNAL_PATH + "/{path=**}?host={$hostmap(host)}&{port}&{**}" );
-//    rule.addStep( "encode-query" );
-//
-//    UrlRewriteFilterDescriptor filter = rules.addFilter( getQualifiedName() + "/outbound" );
-//    UrlRewriteFilterContentDescriptor content = filter.addContent( "application/x-http-headers" );
-//    content.addApply( "Location", getQualifiedName() + "/datanode/outbound" );
   }
 
   public void contributeNameNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
