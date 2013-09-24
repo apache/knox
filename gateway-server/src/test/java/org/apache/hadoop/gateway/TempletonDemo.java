@@ -49,7 +49,7 @@ public class TempletonDemo {
   public void demoGateway() throws IOException {
     URL url = Loader.getResource( "log4j.properties" );
     System.out.println( url );
-    demo( "http://localhost:8888/gateway/cluster/webhcat/api/v1/mapreduce/jar" );
+    demo( "http://localhost:8888/gateway/cluster/templeton/v1/mapreduce/jar" );
   }
 
   private void demo( String url ) throws IOException {

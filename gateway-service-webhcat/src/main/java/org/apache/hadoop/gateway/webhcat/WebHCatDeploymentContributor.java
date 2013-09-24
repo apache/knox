@@ -29,7 +29,7 @@ import java.net.URISyntaxException;
 
 public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBase {
 
-  private static final String WEBHCAT_EXTERNAL_PATH = "/webhcat/api/v1";
+  private static final String WEBHCAT_EXTERNAL_PATH = "/templeton/v1";
 
   @Override
   public String getRole() {

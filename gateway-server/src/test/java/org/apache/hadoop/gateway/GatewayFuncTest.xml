@@ -53,7 +53,7 @@
 
     <service>
         <name>webhcat</name>
-        <source>/webhcat/api/v1/{path=**}?{**}</source>
+        <source>/templeton/v1/{path=**}?{**}</source>
         <filter>
             <name>shiro</name>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>

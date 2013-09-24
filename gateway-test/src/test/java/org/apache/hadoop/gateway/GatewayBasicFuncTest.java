@@ -119,7 +119,7 @@ public class GatewayBasicFuncTest {
     driver.setupLdap( findFreePort() );
     driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES );
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/webhdfs/data", USE_MOCK_SERVICES );
-    driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/webhcat", "/cluster/webhcat/api", USE_MOCK_SERVICES );
+    driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/templeton", "/cluster/templeton", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie/api", USE_MOCK_SERVICES );
     driver.setupService( "HIVE", "http://" + TEST_HOST + ":10000", "/cluster/hive/api/v1", USE_MOCK_SERVICES );
     driver.setupService( "STARGATE", "http://" + TEST_HOST + ":60080", "/cluster/hbase/api/v1", USE_MOCK_SERVICES );
@@ -688,7 +688,7 @@ public class GatewayBasicFuncTest {
     driver.createDir( user, pass, null, root+"/output", "777", 200, 200 );
 
     /* Submit the job
-    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/webhcat/api/v1/mapreduce/jar'
+    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/templeton/v1/mapreduce/jar'
     {"id":"job_201210301335_0059"}
     */
     String job = driver.submitJava(

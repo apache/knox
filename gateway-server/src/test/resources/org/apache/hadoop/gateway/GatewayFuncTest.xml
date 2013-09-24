@@ -54,8 +54,8 @@
 
     <resource>
         <!--<name>webhdfs</name>-->
-        <source>/webhcat/api/v1/{path=**}?{**}</source>
-        <target>http://{webhcat.address}/templeton/{path=**}?{**}</target>
+        <source>/templeton/v1/{path=**}?{**}</source>
+        <target>http://{webhcat.address}/templeton/v1/{path=**}?{**}</target>
         <filter>
             <role>authentication</role>
             <class>org.apache.shiro.web.servlet.ShiroFilter</class>

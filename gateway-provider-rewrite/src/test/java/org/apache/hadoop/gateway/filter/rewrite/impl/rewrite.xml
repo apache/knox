@@ -93,8 +93,8 @@
         <rewrite template="{gateway.url}/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <encode-query/>
     </rule>
-    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/webhcat/api/{path=**}?{**}">
-        <rewrite template="http://vm:50111/templeton/{path=**}?{**}"/>
+    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/templeton/{version}/{path=**}?{**}">
+        <rewrite template="http://vm:50111/templeton/{version}/{path=**}?{**}"/>
     </rule>
     <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">
         <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
