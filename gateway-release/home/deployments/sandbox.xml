@@ -23,6 +23,15 @@
             <name>ShiroProvider</name>
             <enabled>true</enabled>
             <param>
+                <!-- 
+                session timeout in minutes, 
+                defaults to 30mins, if the property value is not defined,, 
+                client authentication would expire after this time 
+                -->
+                <name>sessionTimeout</name>
+                <value>30</value>
+            </param>
+            <param>
                 <name>main.ldapRealm</name>
                 <value>org.apache.shiro.realm.ldap.JndiLdapRealm</value>
             </param>

@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
@@ -24,8 +27,8 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
-
-import java.util.List;
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.SessionConfigType;
 
 public class ShiroDeploymentContributor extends ProviderDeploymentContributorBase {
 
@@ -33,6 +36,8 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   private static final String SHIRO_FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
   private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
   private static final String COOKIE_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
+  private static final String SESSION_TIMEOUT = "sessionTimeout";
+  private static final int DEFAULT_SESSION_TIMEOUT = 30; // 30min
 
   @Override
   public String getRole() {
@@ -52,6 +57,20 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 	
     // add servletContextListener
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
+    
+    // add session timeout
+    int st = DEFAULT_SESSION_TIMEOUT;
+    SessionConfigType<WebAppDescriptor> sessionConfig = context.getWebAppDescriptor().createSessionConfig();
+    Map<String, String> params = provider.getParams();
+    String sts = params.get(SESSION_TIMEOUT);
+    if (sts != null && sts.trim().length() != 0) {
+      st = Integer.valueOf(sts.trim());
+    }
+    if (st <= 0) {
+      // user default session timeout
+      st = DEFAULT_SESSION_TIMEOUT;
+    }
+    sessionConfig.sessionTimeout(st);
 
     // Writing provider specific config out to the war for cluster specific config can be
 	// accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
