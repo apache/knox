@@ -302,7 +302,7 @@ public class GatewayServer {
     context.setDefaultsDescriptor( null );
     context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
     context.setWar( warPath );
-    internalUndeploy( topology );
+    // internalUndeploy( topology ); KNOX-152
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
     deployments.put( name, context );
     contexts.addHandler( context );
@@ -352,6 +352,7 @@ public class GatewayServer {
             try {
               if( !warDir.exists() ) {
                 log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
+                internalUndeploy( topology ); // KNOX-152
                 WebArchive war = null;
                 war = DeploymentFactory.createDeployment( config, topology );
                 File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
