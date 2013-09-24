@@ -165,11 +165,11 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to finalize contribution: {0}" )
   void failedToFinalizeContribution( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to contribute service [name={0}, role={1}]: {2}" )
-  void failedToContributeService( String name, String role, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  @Message( level = MessageLevel.ERROR, text = "Failed to contribute service [role={1}, name={0}]: {2}" )
+  void failedToContributeService( String name, String role, @StackTrace( level = MessageLevel.ERROR ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to contribute provider [name={0}, role={1}]: {2}" )
-  void failedToContributeProvider( String name, String role, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  @Message( level = MessageLevel.ERROR, text = "Failed to contribute provider [role={1}, name={0}]: {2}" )
+  void failedToContributeProvider( String name, String role, @StackTrace( level = MessageLevel.ERROR ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to initialize contribution: {0}" )
   void failedToInitializeContribution( @StackTrace( level = MessageLevel.DEBUG ) Exception e );

@@ -261,7 +261,7 @@ public abstract class DeploymentFactory {
         } catch( Exception e ) {
           // Maybe it makes sense to throw exception
           log.failedToContributeService( service.getName(), service.getRole(), e );
-          throw new DeploymentException("Failed to contribute provider.", e);
+          throw new DeploymentException("Failed to contribute service.", e);
         }
       }
     }

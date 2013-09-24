@@ -96,11 +96,11 @@
     <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/templeton/{version}/{path=**}?{**}">
         <rewrite template="http://vm:50111/templeton/{version}/{path=**}?{**}"/>
     </rule>
-    <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">
+    <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/{**}?{**}">
         <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
     </rule>
-    <rule dir="IN" name="OOZIE/oozie/api/inbound" pattern="*://*:*/**/oozie/api/{**}?{**}">
-        <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
+    <rule dir="IN" name="OOZIE/oozie/v1/inbound" pattern="*://*:*/**/oozie/v1/{**}?{**}">
+        <rewrite template="http://vm:11000/oozie/v1/{**}?{**}"/>
     </rule>
 
 </rules>

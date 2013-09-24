@@ -36,7 +36,7 @@ import java.util.List;
 public class OozieDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String RULES_RESOURCE = OozieDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
-  private static final String EXTERNAL_PATH = "/oozie/api";
+  private static final String EXTERNAL_PATH = "/oozie";
 
   @Override
   public String getRole() {
