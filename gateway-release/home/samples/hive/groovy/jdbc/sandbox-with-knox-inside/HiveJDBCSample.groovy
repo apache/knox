@@ -21,7 +21,7 @@ user = "guest";
 password = user + "-password";
 gatewayHost = "localhost";
 gatewayPort = 8443;
-contextPath = "gateway/sandbox-with-knox-inside/hive/api/v1";
+contextPath = "gateway/sandbox-with-knox-inside/hive";
 connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.servermode=https;hive.server2.http.path=%s", gatewayHost, gatewayPort, contextPath );
 
 // Load Hive JDBC Driver

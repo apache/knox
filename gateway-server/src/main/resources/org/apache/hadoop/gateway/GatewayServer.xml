@@ -53,7 +53,7 @@
 
     <service>
         <name>WEBHCAT</name>
-        <source>/templeton/api/{path=**}?{**}</source>
+        <source>/templeton/{path=**}?{**}</source>
         <target>http://{templeton.address}/templeton/{path=**}?{**}</target>
         <filter>
             <name>shiro</name>

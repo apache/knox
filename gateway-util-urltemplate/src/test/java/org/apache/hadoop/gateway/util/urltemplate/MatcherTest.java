@@ -659,7 +659,7 @@ public class MatcherTest {
 //    assertThat( (String)match.getValue(), is( "test-value-2" ) );
 //
 //    stringMatcher = new Matcher<String>();
-//    template = Parser.parse( "*://*:*/**/datanode/api/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
+//    template = Parser.parse( "*://*:*/**/webhdfs/data/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
 //    stringMatcher.add( template, "test-value-C" );
 //    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
 //    stringMatcher.add( template, "test-value-B" );
