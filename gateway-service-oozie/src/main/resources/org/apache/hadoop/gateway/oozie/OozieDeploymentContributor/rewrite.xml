@@ -24,6 +24,10 @@
         <rewrite template="{$serviceUrl[OOZIE]}/v1/{**}?{**}"/>
     </rule>
 
+    <rule dir="IN" name="OOZIE/oozie/v2" pattern="*://*:*/**/oozie/v2/{**}?{**}">
+        <rewrite template="{$serviceUrl[OOZIE]}/v2/{**}?{**}"/>
+    </rule>
+
     <rule name="OOZIE/oozie/user-name">
         <rewrite template="{$username}"/>
     </rule>

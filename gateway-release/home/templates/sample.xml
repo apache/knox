@@ -63,7 +63,7 @@
         <url>http://localhost:11000/oozie</url>
     </service>
     <service>
-        <role>STARGATE</role>
+        <role>WEBHBASE</role>
         <url>http://localhost:60080/</url>
     </service>
     <service>

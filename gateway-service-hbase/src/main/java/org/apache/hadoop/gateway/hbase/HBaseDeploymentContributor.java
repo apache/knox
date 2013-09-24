@@ -41,12 +41,12 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
 
   @Override
   public String getRole() {
-    return "STARGATE";
+    return "WEBHBASE";
   }
 
   @Override
   public String getName() {
-    return "stargate";
+    return "webhbase";
   }
 
   @Override
@@ -56,9 +56,9 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
   }
 
   private void contributeRewriteRules( DeploymentContext context, Service service ) throws URISyntaxException, IOException {
-    UrlRewriteRulesDescriptor stargateRules = loadRulesFromTemplate();
+    UrlRewriteRulesDescriptor hbaseRules = loadRulesFromTemplate();
     UrlRewriteRulesDescriptor clusterRules = context.getDescriptor( "rewrite" );
-    clusterRules.addRules( stargateRules );
+    clusterRules.addRules( hbaseRules );
   }
 
   private void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {

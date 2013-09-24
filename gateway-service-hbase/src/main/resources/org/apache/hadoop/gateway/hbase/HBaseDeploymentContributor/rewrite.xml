@@ -16,46 +16,46 @@
 -->
 <rules>
 
-    <rule dir="IN" name="STARGATE/stargate/root/inbound" pattern="*://*:*/**/hbase/?{**}">
-        <rewrite template="{$serviceUrl[STARGATE]}/?{**}"/>
+    <rule dir="IN" name="WEBHBASE/webhbase/root/inbound" pattern="*://*:*/**/hbase/?{**}">
+        <rewrite template="{$serviceUrl[WEBHBASE]}/?{**}"/>
     </rule>
 
-    <rule dir="IN" name="STARGATE/stargate/path/inbound" pattern="*://*:*/**/hbase/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[STARGATE]}/{path=**}?{**}"/>
+    <rule dir="IN" name="WEBHBASE/webhbase/path/inbound" pattern="*://*:*/**/hbase/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHBASE]}/{path=**}?{**}"/>
     </rule>
 
-    <rule name="STARGATE/stargate/location/outbound">
+    <rule name="WEBHBASE/webhbase/location/outbound">
         <match pattern="*://*:*/{path=**}?{**}"/>
         <rewrite template="{gateway.url}/hbase/{path=**}?{**}"/>
     </rule>
 
-    <rule name="STARGATE/stargate/address/outbound">
+    <rule name="WEBHBASE/webhbase/address/outbound">
         <match pattern="{host}:{port}"/>
         <rewrite template="{gateway.url}/hbase-region?host={host}?port={port}"/>
         <encrypt-query/>
     </rule>
 
-    <filter name="STARGATE/stargate/headers/outbound">
+    <filter name="WEBHBASE/webhbase/headers/outbound">
         <content type="application/x-http-headers">
-            <apply path="Location" rule="STARGATE/stargate/location/outbound"/>
+            <apply path="Location" rule="WEBHBASE/webhbase/location/outbound"/>
         </content>
     </filter>
 
-    <filter name="STARGATE/stargate/status/outbound">
+    <filter name="WEBHBASE/webhbase/status/outbound">
         <content type="*/json">
-            <apply path="$[LiveNodes][*][name]" rule="STARGATE/stargate/address/outbound"/>
+            <apply path="$[LiveNodes][*][name]" rule="WEBHBASE/webhbase/address/outbound"/>
         </content>
         <content type="*/xml">
-            <apply path="/ClusterStatus/LiveNodes/Node/@name" rule="STARGATE/stargate/address/outbound"/>
+            <apply path="/ClusterStatus/LiveNodes/Node/@name" rule="WEBHBASE/webhbase/address/outbound"/>
         </content>
     </filter>
 
-    <filter name="STARGATE/stargate/regions/outbound">
+    <filter name="WEBHBASE/webhbase/regions/outbound">
         <content type="*/json">
-            <apply path="$[Region][*][location]" rule="STARGATE/stargate/address/outbound"/>
+            <apply path="$[Region][*][location]" rule="WEBHBASE/webhbase/address/outbound"/>
         </content>
         <content type="*/xml">
-            <apply path="/TableInfo/Region/@location" rule="STARGATE/stargate/address/outbound"/>
+            <apply path="/TableInfo/Region/@location" rule="WEBHBASE/webhbase/address/outbound"/>
         </content>
     </filter>
 
