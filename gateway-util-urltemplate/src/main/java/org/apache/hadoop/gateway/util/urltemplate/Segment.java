@@ -158,15 +158,18 @@ abstract class Segment {
       if( matches ) {
         switch( this.getType() ) {
           case( STATIC ):
-            matches = matchThisStatic( that );
+            matches = this.pattern.equals( that.pattern );
+            //matches = matchThisStatic( that ); // See: MatcherTest.testWildcardCharacterInInputTemplate
             break;
           case( DEFAULT ):
           case( STAR ):
           case( GLOB ):
-            matches = matchThisWildcard( that );
+            matches = true;
+            //matches = matchThisWildcard( that ); // See: MatcherTest.testWildcardCharacterInInputTemplate
             break;
           case( REGEX ):
-            matches = matchThisRegex( that );
+            matches = this.regex.matcher( that.pattern ).matches();
+            //matches = matchThisRegex( that ); // See: MatcherTest.testWildcardCharacterInInputTemplate
             break;
           default:
             matches = false;
@@ -175,59 +178,62 @@ abstract class Segment {
       return matches;
     }
 
-    private boolean matchThisStatic( Value that ) {
-      boolean matches = false;
-      switch( that.getType() ) {
-        case( STATIC ):
-          matches = this.pattern.equals( that.pattern );
-          break;
-        case( DEFAULT ):
-        case( STAR ):
-        case( GLOB ):
-          matches = true;
-          break;
-        case( REGEX ):
-          matches = that.regex.matcher( this.pattern ).matches();
-          break;
-      }
-      return matches;
-    }
+// See: MatcherTest.testWildcardCharacterInInputTemplate
+//    private boolean matchThisStatic( Value that ) {
+//      boolean matches = false;
+//      switch( that.getType() ) {
+//        case( STATIC ):
+//          matches = this.pattern.equals( that.pattern );
+//          break;
+//        case( DEFAULT ):
+//        case( STAR ):
+//        case( GLOB ):
+//          matches = true;
+//          break;
+//        case( REGEX ):
+//          matches = that.regex.matcher( this.pattern ).matches();
+//          break;
+//      }
+//      return matches;
+//    }
 
-    private boolean matchThisWildcard( Value that ) {
-      boolean matches = false;
-      switch( that.getType() ) {
-        case( STATIC ):
-          matches = true;
-          break;
-        case( DEFAULT ):
-        case( STAR ):
-        case( GLOB ):
-          matches = true;
-          break;
-        case( REGEX ):
-          matches = true;
-          break;
-      }
-      return matches;
-    }
+// See: MatcherTest.testWildcardCharacterInInputTemplate
+//    private boolean matchThisWildcard( Value that ) {
+//      boolean matches = false;
+//      switch( that.getType() ) {
+//        case( STATIC ):
+//          matches = true;
+//          break;
+//        case( DEFAULT ):
+//        case( STAR ):
+//        case( GLOB ):
+//          matches = true;
+//          break;
+//        case( REGEX ):
+//          matches = true;
+//          break;
+//      }
+//      return matches;
+//    }
 
-    private boolean matchThisRegex( Value that ) {
-      boolean matches = false;
-      switch( that.getType() ) {
-        case( STATIC ):
-          matches = this.regex.matcher( that.pattern ).matches();
-          break;
-        case( DEFAULT ):
-        case( STAR ):
-        case( GLOB ):
-          matches = true;
-          break;
-        case( REGEX ):
-          matches =  this.pattern.equals( that.pattern );
-          break;
-      }
-      return matches;
-    }
+// See: MatcherTest.testWildcardCharacterInInputTemplate
+//    private boolean matchThisRegex( Value that ) {
+//      boolean matches = false;
+//      switch( that.getType() ) {
+//        case( STATIC ):
+//          matches = this.regex.matcher( that.pattern ).matches();
+//          break;
+//        case( DEFAULT ):
+//        case( STAR ):
+//        case( GLOB ):
+//          matches = true;
+//          break;
+//        case( REGEX ):
+//          matches =  this.pattern.equals( that.pattern );
+//          break;
+//      }
+//      return matches;
+//    }
 
   }
 

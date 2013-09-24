@@ -17,15 +17,6 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.Principal;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -35,7 +26,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.Credentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -48,6 +38,13 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -98,7 +95,16 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     } finally {
       if (inboundResponse != null) {
         int statusCode = inboundResponse.getStatusLine().getStatusCode();
-        LOG.dispatchResponseStatusCode( statusCode );
+        if( statusCode != 201 ) {
+          LOG.dispatchResponseStatusCode( statusCode );
+        } else {
+          Header location = inboundResponse.getFirstHeader( "Location" );
+          if( location == null ) {
+            LOG.dispatchResponseStatusCode( statusCode );
+          } else {
+            LOG.dispatchResponseCreatedStatusCode( statusCode, location.getValue() );
+          }
+        }
       }
     }
 

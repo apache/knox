@@ -59,24 +59,24 @@ public class SegmentTest {
 
     TestSegment s3 = new TestSegment( "p", "*" );
     assertThat( s3.matches( s1 ), equalTo( true ) );
-    assertThat( s1.matches( s3 ), equalTo( true ) );
+    assertThat( s1.matches( s3 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
     TestSegment s4 = new TestSegment( "p", "**" );
     assertThat( s4.matches( s1 ), equalTo( true ) );
-    assertThat( s1.matches( s4 ), equalTo( true ) );
+    assertThat( s1.matches( s4 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
     TestSegment s5 = new TestSegment( "p", "*.ext" );
     TestSegment s6 = new TestSegment( "p", "file.ext" );
     assertThat( s5.matches( s5 ), equalTo( true ) );
     assertThat( s5.matches( s6 ), equalTo( true ) );
-    assertThat( s6.matches( s5 ), equalTo( true ) );
+    assertThat( s6.matches( s5 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
     assertThat( s3.matches( s4 ), equalTo( true ) );
     assertThat( s4.matches( s3 ), equalTo( true ) );
     assertThat( s3.matches( s5 ), equalTo( true ) );
-    assertThat( s5.matches( s3 ), equalTo( true ) );
+    assertThat( s5.matches( s3 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
     assertThat( s4.matches( s5 ), equalTo( true ) );
-    assertThat( s5.matches( s4 ), equalTo( true ) );
+    assertThat( s5.matches( s4 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
 //    InvalidSegment s7 = new InvalidSegment( "p", "v", Integer.MAX_VALUE );
 //    InvalidSegment s8 = new InvalidSegment( "p", "v", Integer.MAX_VALUE-1 );

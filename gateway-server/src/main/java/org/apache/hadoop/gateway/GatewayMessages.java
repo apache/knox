@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.File;
 import java.net.URI;
@@ -143,7 +144,10 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
 
-  @Message( level = MessageLevel.DEBUG, text = "Dispatching request: {0} {1}" )
+  @Message( level = MessageLevel.INFO, text = "Received request: {0} {1}" )
+  void receivedRequest( String method, Template uri );
+
+  @Message( level = MessageLevel.INFO, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
   
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
@@ -260,8 +264,11 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
 
-  @Message( level = MessageLevel.DEBUG, text = "Dispatch response status: {0}" )
+  @Message( level = MessageLevel.INFO, text = "Dispatch response status: {0}" )
   void dispatchResponseStatusCode(int statusCode);
+
+  @Message( level = MessageLevel.INFO, text = "Dispatch response status: {0}, Location: {1}" )
+  void dispatchResponseCreatedStatusCode( int statusCode, String location );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to decrypt cipher text for cluster {0}: due to inability to retrieve the password." )
   void failedToDecryptCipherForClusterNullPassword(String clusterName);
@@ -280,4 +287,5 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to generate alias for cluster: {0} {1}." )
   void failedToGenerateAliasForCluster(String clusterName, KeystoreServiceException e);
+
 }

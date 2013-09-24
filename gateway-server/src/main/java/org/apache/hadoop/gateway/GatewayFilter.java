@@ -89,6 +89,8 @@ public class GatewayFilter implements Filter {
       throw new ServletException( e );
     }
 
+    LOG.receivedRequest( httpRequest.getMethod(), pathTemplate );
+
     servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME, pathTemplate );
 
     Matcher<Chain>.Match match = chains.match( pathTemplate );

@@ -36,7 +36,7 @@ import java.util.List;
 public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String RULES_RESOURCE = HBaseDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
-  private static final String EXTERNAL_PATH = "/hbase/api/v1";
+  private static final String EXTERNAL_PATH = "/hbase";
   private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
   @Override

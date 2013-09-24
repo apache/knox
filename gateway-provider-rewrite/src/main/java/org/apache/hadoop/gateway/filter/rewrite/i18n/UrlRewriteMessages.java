@@ -79,7 +79,7 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}, direction: {1}, rule: {2}" )
   void failedToRewriteUrlDueToException( Template inputUri, UrlRewriter.Direction direction, String ruleName, @StackTrace(level = MessageLevel.DEBUG) Exception exception );
 
-  @Message( level = MessageLevel.DEBUG, text = "No rule matching URL: {0}, direction: {1}" )
+  @Message( level = MessageLevel.TRACE, text = "No rule matching URL: {0}, direction: {1}" )
   void noRuleMatchingUrl( Template inputUri, UrlRewriter.Direction direction );
 
 }

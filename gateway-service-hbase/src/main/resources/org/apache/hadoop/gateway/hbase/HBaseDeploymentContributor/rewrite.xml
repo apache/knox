@@ -16,19 +16,22 @@
 -->
 <rules>
 
-    <rule dir="IN" name="STARGATE/stargate/root/inbound" pattern="*://*:*/**/hbase/api/v1/?{**}">
+    <rule dir="IN" name="STARGATE/stargate/root/inbound" pattern="*://*:*/**/hbase/?{**}">
         <rewrite template="{$serviceUrl[STARGATE]}/?{**}"/>
     </rule>
-    <rule dir="IN" name="STARGATE/stargate/path/inbound" pattern="*://*:*/**/hbase/api/v1/{**}?{**}">
-        <rewrite template="{$serviceUrl[STARGATE]}/{**}?{**}"/>
+
+    <rule dir="IN" name="STARGATE/stargate/path/inbound" pattern="*://*:*/**/hbase/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[STARGATE]}/{path=**}?{**}"/>
     </rule>
+
     <rule name="STARGATE/stargate/location/outbound">
         <match pattern="*://*:*/{path=**}?{**}"/>
-        <rewrite template="{gateway.url}/hbase/api/v1/{path}?{**}"/>
+        <rewrite template="{gateway.url}/hbase/{path=**}?{**}"/>
     </rule>
+
     <rule name="STARGATE/stargate/address/outbound">
         <match pattern="{host}:{port}"/>
-        <rewrite template="{gateway.url}/hbase/region?host={host}?port={port}"/>
+        <rewrite template="{gateway.url}/hbase-region?host={host}?port={port}"/>
         <encrypt-query/>
     </rule>
 

@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.hbase.table.Table;
 
 public class HBase {
 
-  public static final String SERVICE_PATH = "/hbase/api/v1";
+  public static final String SERVICE_PATH = "/hbase";
 
   private Hadoop session;
 

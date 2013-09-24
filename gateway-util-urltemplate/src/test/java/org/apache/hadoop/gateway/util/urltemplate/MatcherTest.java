@@ -53,6 +53,39 @@ public class MatcherTest {
   }
 
   @Test
+  public void testWildcardCharacterInInputTemplate() throws URISyntaxException {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    // First verify that if .../test_table/test_row/family1... works.
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://localhost:8443/gateway/sandbox/hbase/test_table/test_row/family1:row2_col1,family2/0,9223372036854775807?v=1" );
+    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+
+    // Then reproduce the issue with .../test_table/*/family1..
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://localhost:8443/gateway/sandbox/hbase/test_table/*/family1:row2_col1,family2/0,9223372036854775807?v=1" );
+    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+
+    // Reproduce the issue where the wrong match was picked when there was a "*" in the input URL template.
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://localhost:8443/gateway/sandbox/hbase/test_table/*/family1:row2_col1,family2/0,9223372036854775807?v=1" );
+    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
+    matcher.add( patternTemplate, "webhdfs" );
+    patternTemplate = Parser.parse( "*://*:*/**/hbase/{path=**}?{**}" );
+    matcher.add( patternTemplate, "hbase" );
+    match = matcher.match( inputTemplate );
+    assertThat( match.getValue(), is( "hbase" ) );
+  }
+
+  @Test
   public void testRootPathMatching() throws Exception {
     Matcher<String> matcher;
     Template patternTemplate, inputTemplate;
