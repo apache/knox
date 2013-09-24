@@ -60,7 +60,6 @@
         <module>gateway-shell-launcher</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
-        <module>gateway-demo</module>
         <module>hsso-release</module>
     </modules>
 
