@@ -24,9 +24,9 @@
             <enabled>true</enabled>
             <param>
                 <!-- 
-                session timeout in minutes, 
+                session timeout in minutes,  this is really idle timeout,
                 defaults to 30mins, if the property value is not defined,, 
-                client authentication would expire after this time 
+                current client authentication would expire if client idles contiuosly for more than this value
                 -->
                 <name>sessionTimeout</name>
                 <value>30</value>
