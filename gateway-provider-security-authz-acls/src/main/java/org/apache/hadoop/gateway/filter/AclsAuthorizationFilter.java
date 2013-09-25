@@ -54,12 +54,15 @@ public class AclsAuthorizationFilter implements Filter {
   public void init(FilterConfig filterConfig) throws ServletException {
     resourceRole = getInitParameter(filterConfig, "resource.role");
     log.initializingForResourceRole(resourceRole);
-    aclProcessingMode = getInitParameter(filterConfig, resourceRole + ".acl.processing.mode");
+    aclProcessingMode = getInitParameter(filterConfig, resourceRole + ".acl.mode");
     if (aclProcessingMode == null) {
-      aclProcessingMode = "OR";
+      aclProcessingMode = getInitParameter(filterConfig, "acl.mode");
+      if (aclProcessingMode == null) {
+        aclProcessingMode = "AND";
+      }
     }
     log.aclProcessingMode(aclProcessingMode);
-    String acls = getInitParameter(filterConfig, resourceRole + ".acls");
+    String acls = getInitParameter(filterConfig, resourceRole + ".acl");
     parseAcls(acls);
   }
 
