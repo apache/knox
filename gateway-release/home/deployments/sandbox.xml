@@ -58,6 +58,22 @@
             <enabled>true</enabled>
         </provider>
         <provider>
+            <!--
+              Defines mapping rule for mapping host names in hadoop service response to call back host names.
+              For example,  a hadoop service running in AWS may carry AWS internal host names in the response.
+              But,  if we have to make a call back to AWS host, we have to use the external host name.
+
+              If the external hostname and internal host names are same,  turn of this provider by setting the value of
+              enabled parameter as false.
+
+              The name parameter specifies the external hostname.
+              The value parameter specifies corresponding internal host names.
+              If Knox sees a request coming from client for internal host name, 
+              Knox would do the mapping and make downstream call to the external host name.
+
+              Wierdly enough when you are using sandbox, external hostname happens to be localhost,
+              as seen in out of box sandbox.xml. In real clusters, external hostnames would almost never be localhost.
+            -->
             <role>hostmap</role>
             <name>static</name>
             <enabled>true</enabled>
