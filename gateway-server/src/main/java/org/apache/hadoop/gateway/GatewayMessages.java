@@ -288,4 +288,7 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to generate alias for cluster: {0} {1}." )
   void failedToGenerateAliasForCluster(String clusterName, KeystoreServiceException e);
 
+  @Message( level = MessageLevel.DEBUG, text = "Key passphrase not found in credential store - using master secret." )
+  void assumingKeyPassphraseIsMaster();
+
 }

@@ -172,6 +172,10 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   public Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException {
     Key key = null;
     KeyStore ks = getKeystoreForGateway();
+    if (passphrase == null) {
+      passphrase = masterService.getMasterSecret();
+      LOG.assumingKeyPassphraseIsMaster();
+    }
     if (ks != null) {
       try {
         key = ks.getKey(alias, passphrase);
@@ -216,9 +220,11 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
       try {
         char[] masterSecret = masterService.getMasterSecret();
         Key credentialKey = ks.getKey( alias, masterSecret );
-        byte[] credentialBytes = credentialKey.getEncoded();
-        String credentialString = new String( credentialBytes );
-        credential = credentialString.toCharArray();
+        if (credentialKey != null) {
+          byte[] credentialBytes = credentialKey.getEncoded();
+          String credentialString = new String( credentialBytes );
+          credential = credentialString.toCharArray();
+        }
       } catch (UnrecoverableKeyException e) {
         LOG.failedToGetCredentialForCluster( clusterName, e );
       } catch (KeyStoreException e) {

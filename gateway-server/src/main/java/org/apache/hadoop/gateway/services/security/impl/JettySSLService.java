@@ -98,21 +98,26 @@ public class JettySSLService implements SSLService {
   private void logAndValidateCertificate() throws ServiceLifecycleException {
     // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
     Certificate cert = as.getCertificateForGateway("gateway-identity");
-    if (cert != null && cert instanceof X509Certificate) {
-      X500Principal x500Principal = ((X509Certificate)cert).getSubjectX500Principal();
-      X500PrincipalParser parser = new X500PrincipalParser(x500Principal);
-      log.certificateHostNameForGateway(parser.getCN());
-      Date notBefore = ((X509Certificate) cert).getNotBefore();
-      Date notAfter = ((X509Certificate) cert).getNotAfter();
-      log.certificateValidityPeriod(notBefore, notAfter);
-      
-      // let's not even start if the current date is not within the validity period for the SSL cert
-      try {
-        ((X509Certificate)cert).checkValidity();
-      } catch (CertificateExpiredException e) {
-        throw new ServiceLifecycleException("Gateway SSL Certificate is Expired. Server will not start.", e);
-      } catch (CertificateNotYetValidException e) {
-        throw new ServiceLifecycleException("Gateway SSL Certificate is not yet valid. Server will not start.", e);
+    if (cert != null) {
+      if (cert instanceof X509Certificate) {
+        X500Principal x500Principal = ((X509Certificate)cert).getSubjectX500Principal();
+        X500PrincipalParser parser = new X500PrincipalParser(x500Principal);
+        log.certificateHostNameForGateway(parser.getCN());
+        Date notBefore = ((X509Certificate) cert).getNotBefore();
+        Date notAfter = ((X509Certificate) cert).getNotAfter();
+        log.certificateValidityPeriod(notBefore, notAfter);
+        
+        // let's not even start if the current date is not within the validity period for the SSL cert
+        try {
+          ((X509Certificate)cert).checkValidity();
+        } catch (CertificateExpiredException e) {
+          throw new ServiceLifecycleException("Gateway SSL Certificate is Expired. Server will not start.", e);
+        } catch (CertificateNotYetValidException e) {
+          throw new ServiceLifecycleException("Gateway SSL Certificate is not yet valid. Server will not start.", e);
+        }
+      }
+      else {
+        throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias gateway-identity. Plase check the identity certificate alias.");
       }
     }
     else {
@@ -129,6 +134,10 @@ public class JettySSLService implements SSLService {
     char[] master = ms.getMasterSecret();
     sslContextFactory.setKeyStorePassword(new String(master));
     char[] keypass = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+    if (keypass == null) {
+      // there has been no alias created for the key - let's assume it is the same as the keystore password
+      keypass = master;
+    }
     sslContextFactory.setKeyManagerPassword(new String(keypass));
 
     // TODO: make specific truststore too?
