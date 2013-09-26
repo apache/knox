@@ -229,7 +229,7 @@ class JsonFilterReader extends Reader {
     Level child;
     Level parent;
     if( stack.isEmpty() ) {
-      node = mapper.createObjectNode();
+      node = mapper.createArrayNode();
       child = pushLevel( null, node, node, config );
     } else {
       child = stack.peek();
@@ -325,7 +325,11 @@ class JsonFilterReader extends Reader {
       }
     }
     if( bufferingLevel == null ) {
-      ((ObjectNode)parent.node ).removeAll();// child.field );
+      if( parent.node.isArray() ) {
+        ((ArrayNode)parent.node).removeAll();
+      } else {
+        ((ObjectNode)parent.node).removeAll();
+      }
       generator.writeString( value );
     }
   }
@@ -439,9 +443,13 @@ class JsonFilterReader extends Reader {
   }
 
   protected String filterStreamValue( Level node ) {
+    String value;
+    if( node.isArray() ) {
+      value = node.node.get( 0 ).asText();
+    } else {
+      value = node.node.get( node.field ).asText();
+    }
     String rule = null;
-    String field = node.field;
-    String value = node.node.get( node.field ).asText();
     UrlRewriteFilterGroupDescriptor scope = node.scopeConfig;
     //TODO: Scan the top level apply rules for the first match.
     if( scope != null ) {
@@ -461,8 +469,12 @@ class JsonFilterReader extends Reader {
       }
     }
     try {
-      value = filterValueString( field, value, rule );
-      ((ObjectNode)node.node ).put( field, value );
+      value = filterValueString( node.field, value, rule );
+      if( node.isArray() ) {
+        ((ArrayNode)node.node).set( 0, new TextNode( value ) );
+      } else {
+        ((ObjectNode)node.node).put( node.field, value );
+      }
     } catch( Exception e ) {
       LOG.failedToFilterValue( value, rule, e );
     }
