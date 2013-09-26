@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDetectDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
-import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlFilterReader;
 import org.apache.hadoop.test.TestUtils;
 import org.junit.Test;
 
@@ -51,6 +50,26 @@ public class JsonFilterReaderTest {
     //System.out.println( "JSON=" + outputJson );
 
     JsonAssert.with( outputJson ).assertThat( "name<test-name>", is( "value:null<test-value>" ) );
+  }
+
+  @Test
+  public void testRootArray() throws Exception {
+    String inputJson = "[\"test-value-1\",\"test-value-2\",\"test-value-3\"]";
+    StringReader inputReader = new StringReader( inputJson );
+    JsonFilterReader filterReader = new TestJsonFilterReader( inputReader, null );
+    String outputJson = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( "JSON=" + outputJson );
+    JsonAssert.with( outputJson ).assertThat( "$.[0]", is( "value:null<test-value-1>" ) );
+    JsonAssert.with( outputJson ).assertThat( "$.[1]", is( "value:null<test-value-2>" ) );
+    JsonAssert.with( outputJson ).assertThat( "$.[2]", is( "value:null<test-value-3>" ) );
+
+    inputJson = "[777,42]";
+    inputReader = new StringReader( inputJson );
+    filterReader = new TestJsonFilterReader( inputReader, null );
+    outputJson = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( "JSON=" + outputJson );
+    JsonAssert.with( outputJson ).assertThat( "$.[0]", is( 777 ) );
+    JsonAssert.with( outputJson ).assertThat( "$.[1]", is( 42 ) );
   }
 
   @Test
