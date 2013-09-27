@@ -260,6 +260,7 @@ public class GatewayBasicFuncTest {
         .expect()
         .method( "PUT" )
         .pathInfo( "/v1" + root + "/dir/file" )
+        .header( "Host", driver.getRealAddr( "WEBHDFS" ) )
         .queryParam( "op", "CREATE" )
         .queryParam( "user.name", username )
         .respond()
