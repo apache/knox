@@ -99,16 +99,7 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
       else {
         params = parseQueryString(qString);
       }
-    }
-    ArrayList<String> al = new ArrayList<String>();
-    al.add(username);
-    String[] a = {""};
-    
-    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-      params.put(DOAS_PRINCIPAL_PARAM, al.toArray(a));
-    } else {
-      params.put(PRINCIPAL_PARAM, al.toArray(a));
-    }
+    }  
     return params;
   }
 
@@ -120,13 +111,26 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   public String getQueryString() {
     String q = null;
     Map<String, String[]> params = getParams();
-    if (params != null) {
-      String encoding = getCharacterEncoding();
-      if( encoding == null ) {
-        encoding = Charset.defaultCharset().name();
-      }
-      q = urlEncode( params, encoding );
+
+    if (params == null) {
+      params = new HashMap<String, String[]>();
     }
+    
+    ArrayList<String> al = new ArrayList<String>();
+    al.add(username);
+    String[] a = { "" };
+
+    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
+      params.put(DOAS_PRINCIPAL_PARAM, al.toArray(a));
+    } else {
+      params.put(PRINCIPAL_PARAM, al.toArray(a));
+    }
+    
+    String encoding = getCharacterEncoding();
+    if (encoding == null) {
+      encoding = Charset.defaultCharset().name();
+    }
+    q = urlEncode(params, encoding);
     return q;
   }
 
