@@ -162,6 +162,7 @@
                         <exclude>**/target/**</exclude>
                         <exclude>**/install/**</exclude>
                         <exclude>**/patch/**</exclude>
+                        <exclude>**/patchprocess/**</exclude>
                         <exclude>**/test/resources/**</exclude>
                         <exclude>**/main/resources/**/*.json</exclude>
                         <exclude>**/home/CHANGES</exclude>
