@@ -193,7 +193,7 @@ checkout () {
   echo ""
   echo "======================================================================"
   echo "======================================================================"
-  echo "    Testing patch for ${defect}. "
+  echo "    Testing patch for ${defect}."
   echo "======================================================================"
   echo "======================================================================"
   echo ""
@@ -677,30 +677,39 @@ runTests () {
   echo ""
   echo "======================================================================"
   echo "======================================================================"
-  echo "    Running tests."
+  echo "    Running ALL tests."
   echo "======================================================================"
   echo "======================================================================"
   echo ""
   echo ""
 
   failed_tests=""
-  modules=$(findModules)
-  for module in $modules;
-  do
-    cd $module
-    echo "  Running tests in $module"
-    echo "  $MVN test -fn"
-    $MVN test -fn
-    module_failed_tests=`find . -name 'TEST*.xml' | xargs $GREP  -l -E "<failure|<error" | sed -e "s|.*target/munged/surefire-reports/TEST-|                  |g" | sed -e "s|\.xml||g"`
-    # With -fn mvn always exits with a 0 exit code.  Because of this we need to
-    # find the errors instead of using the exit code.  We assume that if the build
-    # failed a -1 is already given for that case
-    if [[ -n "$module_failed_tests" ]] ; then
-      failed_tests="${failed_tests}
+
+  # Run tests for all of the modules.
+  $MVN test -fn
+  module_failed_tests=`find . -name 'TEST*.xml' | xargs $GREP  -l -E "<failure|<error" | sed -e "s|.*target/munged/surefire-reports/TEST-|                  |g" | sed -e "s|\.xml||g"`
+  if [[ -n "$module_failed_tests" ]] ; then
+    failed_tests="${failed_tests}
 ${module_failed_tests}"
-    fi
-    cd -
-  done
+  fi
+
+#  modules=$(findModules)
+#  for module in $modules;
+#  do
+#    cd $module
+#    echo "  Running tests in $module"
+#    echo "  $MVN test -fn"
+#    $MVN test -fn
+#    module_failed_tests=`find . -name 'TEST*.xml' | xargs $GREP  -l -E "<failure|<error" | sed -e "s|.*target/munged/surefire-reports/TEST-|                  |g" | sed -e "s|\.xml||g"`
+#    # With -fn mvn always exits with a 0 exit code.  Because of this we need to
+#    # find the errors instead of using the exit code.  We assume that if the build
+#    # failed a -1 is already given for that case
+#    if [[ -n "$module_failed_tests" ]] ; then
+#      failed_tests="${failed_tests}
+#${module_failed_tests}"
+#    fi
+#    cd -
+#  done
   if [[ -n "$failed_tests" ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
