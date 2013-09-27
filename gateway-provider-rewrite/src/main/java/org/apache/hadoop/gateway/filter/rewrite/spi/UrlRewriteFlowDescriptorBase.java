@@ -39,16 +39,18 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
     return flow;
   }
 
+  @SuppressWarnings( "unchecked" )
   @Override
-  public T flow( String flow ) {
+  public <F extends UrlRewriteFlowDescriptor<?>> F flow( String flow ) {
     setFlow( flow );
-    return (T)this;
+    return (F)this;
   }
 
+  @SuppressWarnings( "unchecked" )
   @Override
-  public T flow( UrlRewriteStepFlow flow ) {
+  public <F extends UrlRewriteFlowDescriptor<?>> F flow( UrlRewriteStepFlow flow ) {
     setFlow( flow );
-    return (T)this;
+    return (F)this;
   }
 
   public void setFlow( UrlRewriteStepFlow flow ) {
@@ -101,11 +103,12 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
 //    return step;
 //  }
 
+  @SuppressWarnings( "unchecked" )
   @Override
   public <T extends UrlRewriteStepDescriptor<?>> T addStep( String type ) {
-    T step = UrlRewriteStepDescriptorFactory.create( type );
+    T step = (T)UrlRewriteStepDescriptorFactory.create( type );
     steps.add( step );
-    return step;
+    return (T)step;
   }
 
 }

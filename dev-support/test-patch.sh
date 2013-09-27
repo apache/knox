@@ -27,7 +27,7 @@ else
   MVN=$MAVEN_HOME/bin/mvn
 fi
 
-PROJECT_NAME=Giraph
+PROJECT_NAME=Knox
 JENKINS=false
 PATCH_DIR=/tmp
 SUPPORT_DIR=/tmp

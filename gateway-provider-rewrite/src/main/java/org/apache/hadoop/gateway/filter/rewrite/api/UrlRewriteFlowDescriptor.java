@@ -23,9 +23,9 @@ public interface UrlRewriteFlowDescriptor<T> extends UrlRewriteStepDescriptor<T>
 
   UrlRewriteStepFlow flow();
 
-  T flow( String flow );
+  <F extends UrlRewriteFlowDescriptor<?>> F flow( String flow );
 
-  T flow( UrlRewriteStepFlow flow );
+  <F extends UrlRewriteFlowDescriptor<?>> F flow( UrlRewriteStepFlow flow );
 
   List<UrlRewriteStepDescriptor> steps();
 
