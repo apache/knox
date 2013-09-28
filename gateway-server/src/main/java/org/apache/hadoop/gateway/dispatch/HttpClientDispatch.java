@@ -173,7 +173,6 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       throws IOException {
 
     String contentType = request.getContentType();
-//    String contentEncoding = request.getCharacterEncoding();
     int contentLength = request.getContentLength();
     InputStream contentStream = request.getInputStream();
 
@@ -183,45 +182,11 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     } else {
       entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse( contentType ) );
     }
-    //TODO: Need a better solution than this for replaying bodies when required.
-    // Perhaps we should pessimistically buffer the first REPLAY_BUFFER_MAX_SIZE bytes and then
-    // switch to the remaining stream once that is consumed.  The buffer size would probably need
-    // to match the underlying socket buffer size for this to be meaningful.
-    // This would require writing a special version of HttpEntity/BufferedHttpEntity.
-    // Might also look into mark()/reset() as a solution.
-    if( contentLength <= REPLAY_BUFFER_MAX_SIZE ) {
+
+    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
       entity = new BufferedHttpEntity( entity );
     }
 
-//    HttpEntity entity = null;
-//    if ((contentType != null)
-//        && (contentType.startsWith(CT_APP_WWW_FORM_URL_ENCODED) ||
-//            contentType.equalsIgnoreCase(CT_APP_XML))) {
-//      if (contentLength <= REPLAY_BUFFER_MAX_SIZE) {
-//        if (contentEncoding == null) {
-//          contentEncoding = Charset.defaultCharset().name();
-//        }
-//        String body = IOUtils.toString(contentStream, contentEncoding);
-//        // ASCII is OK here because the urlEncode about should have already
-//        // escaped
-//        byte[] bodyBytes = body.getBytes("US-ASCII");
-//        ContentType ct = contentType.equalsIgnoreCase(CT_APP_XML) ? ContentType.APPLICATION_XML
-//            : ContentType.APPLICATION_FORM_URLENCODED;
-//        entity = new ByteArrayEntity(bodyBytes, ct);
-//      } else {
-//        entity = new InputStreamEntity(contentStream, contentLength);
-//      }
-//    } else {
-//      InputStreamEntity streamEntity = new RepeatableInputStreamEntity(
-//          contentStream, contentLength);
-//      if (contentType != null) {
-//        streamEntity.setContentType(contentType);
-//      }
-//      if (contentEncoding != null) {
-//        streamEntity.setContentEncoding(contentEncoding);
-//      }
-//      entity = streamEntity;
-//    }
     return entity;
   }
 
@@ -269,24 +234,5 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     copyRequestHeaderFields( method, request );
     executeRequest( method, request, response );
   }
-  
-//  private static class RepeatableInputStreamEntity extends InputStreamEntity {
-//
-//    public RepeatableInputStreamEntity(InputStream contentStream,
-//        int contentLength) {
-//      super(contentStream, contentLength);
-//    }
-//
-//    @Override
-//    public boolean isRepeatable() {
-//      return true;
-//    }
-//
-//    @Override
-//    public InputStream getContent() throws IOException {
-//      return super.getContent();
-//    }
-//
-//  }
 
 }
