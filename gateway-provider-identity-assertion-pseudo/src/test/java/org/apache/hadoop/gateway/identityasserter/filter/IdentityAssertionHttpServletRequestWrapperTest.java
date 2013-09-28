@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.not;
 public class IdentityAssertionHttpServletRequestWrapperTest {
 
   @Test
-  public void testInsertUserNameInFormParam() throws IOException {
+  public void testInsertUserNameInPostMethod() throws IOException {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
@@ -51,12 +51,12 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
-
-    assertThat( outputBody, containsString( "user.name=output-user" ) );
+    String output = wrapper.getQueryString();
+    assertThat( output, containsString( "user.name=output-user" ) );
   }
 
   @Test
-  public void testInsertUserNameInFormParamWithoutEncoding() throws IOException {
+  public void testInsertUserNameInPostMethodWithoutEncoding() throws IOException {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
@@ -68,12 +68,12 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
-
-    assertThat( outputBody, containsString( "user.name=output-user" ) );
+    String output = wrapper.getQueryString();
+    assertThat( output, containsString( "user.name=output-user" ) );
   }
 
   @Test
-  public void testInsertUserNameInFormParamWithIso88591Encoding() throws IOException {
+  public void testInsertUserNameInPostMethodWithIso88591Encoding() throws IOException {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
@@ -86,12 +86,12 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
-
-    assertThat( outputBody, containsString( "user.name=output-user" ) );
+    String output = wrapper.getQueryString();
+    assertThat( output, containsString( "user.name=output-user" ) );
   }
 
   @Test
-  public void testOverwriteUserNameInFormParam() throws IOException {
+  public void testOverwriteUserNameInPostMethod() throws IOException {
     String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
@@ -104,9 +104,9 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
     String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
-
-    assertThat( outputBody, containsString( "user.name=output-user" ) );
-    assertThat( outputBody, not( containsString( "input-user" ) ) );
+    String output = wrapper.getQueryString();
+    assertThat( output, containsString( "user.name=output-user" ) );
+    assertThat( output, not( containsString( "input-user" ) ) );
   }
 
   @Test
@@ -173,7 +173,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
   }
 
   @Test
-  public void testNoInsertUserNameInNullQueryStringForPOST() {
+  public void testInsertUserNameInQueryStringForPOST() {
     String input = null;
 
     MockHttpServletRequest request = new MockHttpServletRequest();
@@ -185,7 +185,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
     String output = wrapper.getQueryString();
 
-    assertThat( output, not(containsString( "user.name=output-user" ) ) );
+    assertThat( output, containsString( "user.name=output-user" ) );
   }
 
   @Test
