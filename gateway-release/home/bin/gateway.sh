@@ -20,20 +20,20 @@
 #Knox PID
 PID=0
 
-#start, stop, status, clean or setup
+# Start, stop, status, clean or setup
 KNOX_LAUNCH_COMMAND=$1
 
-#User Name for setup parameter
+# User Name for setup parameter
 KNOX_LAUNCH_USER=$2
 
-#start/stop script location
+# start/stop script location
 KNOX_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 #App name
 KNOX_NAME=knox
 
 #The Knox's jar name
-KNOX_JAR="$KNOX_SCRIPT_DIR/server.jar"
+KNOX_JAR="$KNOX_SCRIPT_DIR/gateway.jar"
 
 #Name of PID file
 PID_DIR="/var/run/$KNOX_NAME"
@@ -79,23 +79,23 @@ function knoxStart {
    getPID
    if [ $? -eq 0 ]; then
      printf "Knox is already running with PID=$PID.\n"
-     return 0
+     exit 0
    fi
   
    printf "Starting Knox "
    
    rm -f $PID_FILE
 
-   nohup java -jar $KNOX_JAR >>$OUT_FILE 2>>$ERR_FILE & printf $!>$PID_FILE || return 1
+   nohup java -jar $KNOX_JAR >>$OUT_FILE 2>>$ERR_FILE & printf $!>$PID_FILE || exit 1
    
    getPID
    knoxIsRunning $PID
    if [ $? -ne 1 ]; then
       printf "failed.\n"
-      return 1
+      exit 1
    fi
 
-   printf "succeed with PID=$PID.\n"
+   printf "succeeded with PID=$PID.\n"
    return 0
 }
 
@@ -112,10 +112,10 @@ function knoxStop {
 
    if [ $? -ne 0 ]; then 
      printf "failed. \n"
-     return 1
+     exit 1
    else
      rm -f $PID_FILE
-     printf "succeed.\n"
+     printf "succeeded.\n"
      return 0
    fi
 }
@@ -131,7 +131,7 @@ function knoxStatus {
    knoxIsRunning $PID
    if [ $? -eq 1 ]; then
      printf "is running with PID=$PID.\n"
-     return 1
+     exit 1
    else
      printf "is not running.\n"
      return 0
@@ -146,8 +146,8 @@ function knoxClean {
      deleteLogFiles
      return 0
    else
-     printf "Can't clean files the Knox is run with PID=$PID.\n" 
-     return 1    
+     printf "Can't clean files.  Knox is running with PID=$PID.\n"
+     exit 1
    fi
 }
 
@@ -215,20 +215,20 @@ function setDirPermission {
 
    if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
    if [ $? -ne 0 ]; then
-      printf "Can't access or create \"$dirName\" folder.\n"
-      return 1
+      printf "Can't access or create \"$dirName\" folder.  Run command with sudo.\n"
+      exit 1
    fi
 
    chown -f $userName $dirName
    if [ $? -ne 0 ]; then
-      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.\n" 
-      return 1
+      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.  Run command with sudo.\n"
+      exit 1
    fi
 
    chmod o=rwx $dirName 
    if [ $? -ne 0 ]; then
-      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\"\n" 
-      return 1
+      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\".  Run command with sudo.\n"
+      exit 1
    fi
 
    return 0
@@ -237,21 +237,20 @@ function setDirPermission {
 function setupEnv {
    local userName=$1
    
-   if [ -z $userName ]; then 
-      printf "Empty user name is not allowed. Parameters: setup [USER_NAME]\n"
-      return 1
+   if [ -z $userName ]; then
+      userName=`logname`
    fi
 
    id -u $1 >/dev/null 2>&1
    if [ $? -eq 1 ]; then
       printf "\"$userName\" is not valid user name. Parameters: setup [USER_NAME]\n"
-      return 1
+      exit 1
    fi
 
    setDirPermission $PID_DIR $userName
    setDirPermission $LOG_DIR $userName
 
-   java -jar $KNOX_JAR -persist-master -nostart
+   sudo -u $userName java -jar $KNOX_JAR -persist-master -nostart
 
    return 0
 }
