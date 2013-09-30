@@ -153,6 +153,10 @@ function knoxClean {
 
 # Returns 0 if the Knox is running and sets the $PID variable.
 function getPID {
+   if [ ! -d $PID_DIR ]; then
+      printf "Can't find pid dir.  Run sudo $0 setup.\n"
+      exit 1
+   fi
    if [ ! -f $PID_FILE ]; then
      PID=0
      return 1
@@ -194,6 +198,10 @@ function knoxKill {
 }
 
 function createLogFiles {
+   if [ ! -d "$LOG_DIR" ]; then
+      printf "Can't find log dir.  Run sudo $0 setup.\n"
+      exit 1
+   fi
    if [ ! -f "$OUT_FILE" ]; then touch $OUT_FILE; fi
    if [ ! -f "$ERR_FILE" ]; then touch $ERR_FILE; fi   
 }
@@ -215,7 +223,7 @@ function setDirPermission {
 
    if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
    if [ $? -ne 0 ]; then
-      printf "Can't access or create \"$dirName\" folder.  Run command with sudo.\n"
+      printf "Can't access or create \"$dirName\" folder.  Run sudo $0 setup.\n"
       exit 1
    fi
 
