@@ -18,6 +18,7 @@
 <topology>
 
     <gateway>
+
         <provider>
             <role>authentication</role>
             <enabled>true</enabled>
@@ -48,27 +49,68 @@
             <enabled>true</enabled>
             <name>Pseudo</name>
         </provider>
+
+        <!--
+        Defines rules for mapping host names internal to a Hadoop cluster to externally accessible host names.
+        For example, a hadoop service running in AWS may return a response that includes URLs containing the
+        some AWS internal host name.  If the client needs to make a subsequent request to the host identified
+        in those URLs they need to be mapped to external host names that the client Knox can use to connect.
+
+        If the external hostname and internal host names are same turn of this provider by setting the value of
+        enabled parameter as false.
+
+        The name parameter specifies the external host names in a comma separated list.
+        The value parameter specifies corresponding internal host names in a comma separated list.
+
+        Note that when you are using Sandbox, the external hostname needs to be localhost, as seen in out
+        of box sandbox.xml.  This is because Sandbox uses port mapping to allow clients to connect to the
+        Hadoop services using localhost.  In real clusters, external host names would almost never be localhost.
+        -->
+        <provider>
+            <role>hostmap</role>
+            <name>static</name>
+            <enabled>true</enabled>
+            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>
+        </provider>
+
     </gateway>
+
+    <service>
+        <role>NAMENODE</role>
+        <url>hdfs://localhost:8020</url>
+    </service>
+
+    <!--
+    In Hadoop 2 the Job Tracker RPC APIs are implemented by the Resource Manager.
+    -->
+    <service>
+        <role>JOBTRACKER</role>
+        <url>rpc://localhost:8050</url>
+    </service>
 
     <service>
         <role>WEBHDFS</role>
         <url>http://localhost:50070/webhdfs</url>
     </service>
+
     <service>
         <role>WEBHCAT</role>
         <url>http://localhost:50111/templeton</url>
     </service>
+
     <service>
         <role>OOZIE</role>
         <url>http://localhost:11000/oozie</url>
     </service>
+
     <service>
         <role>WEBHBASE</role>
-        <url>http://localhost:60080/</url>
+        <url>http://localhost:60080</url>
     </service>
+
     <service>
         <role>HIVE</role>
-        <url>http://localhost:10000/</url>
+        <url>http://localhost:10000</url>
     </service>
 
 </topology>
