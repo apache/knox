@@ -47,6 +47,14 @@
         <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/{path=**}?{**}"/>
     </rule>
 
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/home" pattern="*://*:*/**/webhdfs/{version}/~?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/user/{$username}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/home/file" pattern="*://*:*/**/webhdfs/{version}/~/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/user/{$username}/{path=**}?{**}"/>
+    </rule>
+
     <rule dir="IN" name="WEBHDFS/webhdfs/inbound/datanode">
         <decrypt-query/>
         <match pattern="*://*:*/**/webhdfs/data/*/{path=**}?{scheme}?{host}?{port}?{**}"/>

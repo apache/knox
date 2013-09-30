@@ -92,6 +92,32 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addIdentityAssertionFilter( context, service, fileResource );
     addAuthorizationFilter( context, service, fileResource );
     addDispatchFilter( context, service, fileResource, "dispatch", null );
+
+    ResourceDescriptor homeResource = context.getGatewayDescriptor().addResource();
+    homeResource.role( service.getRole() );
+    homeResource.pattern( WEBHDFS_EXTERNAL_PATH + "/~?**" );
+    addAuthenticationFilter( context, service, homeResource );
+    params = new ArrayList<FilterParamDescriptor>();
+    params.add( homeResource.createFilterParam().
+        name( UrlRewriteServletFilter.REQUEST_URL_RULE_PARAM ).value( getQualifiedName() + "/inbound/namenode/home" ) );
+    addRewriteFilter( context, service, homeResource, params );
+    addIdentityAssertionFilter( context, service, homeResource );
+    addAuthorizationFilter( context, service, homeResource );
+    addDispatchFilter( context, service, homeResource, "dispatch", null );
+
+    ResourceDescriptor homeFileResource = context.getGatewayDescriptor().addResource();
+    homeFileResource.role( service.getRole() );
+    homeFileResource.pattern( WEBHDFS_EXTERNAL_PATH + "/~/**?**" );
+    addAuthenticationFilter( context, service, homeFileResource );
+    params = new ArrayList<FilterParamDescriptor>();
+    params.add( homeFileResource.createFilterParam().
+        name( UrlRewriteServletFilter.REQUEST_URL_RULE_PARAM ).value( getQualifiedName() + "/inbound/namenode/home/file" ) );
+    params.add( homeFileResource.createFilterParam().
+        name( UrlRewriteServletFilter.RESPONSE_HEADERS_FILTER_PARAM ).value( getQualifiedName() + "/outbound/namenode/headers" ) );
+    addRewriteFilter( context, service, homeFileResource, params );
+    addIdentityAssertionFilter( context, service, homeFileResource );
+    addAuthorizationFilter( context, service, homeFileResource );
+    addDispatchFilter( context, service, homeFileResource, "dispatch", null );
   }
 
   public void contributeDataNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {

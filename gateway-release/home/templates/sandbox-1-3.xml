@@ -44,10 +44,18 @@
                 <value>authcBasic</value>
             </param>
         </provider>
+
+        <!--
+        Maps the username from the samples that is valid within our LDAP server to the
+        username expected in sandbox 1.3. This username changes in snadbox 2.0. In order for
+        the samples to just work with either sandbox version without modification, we map the
+        principal to the expected value. This also illustrates the use of principal mapping.
+        -->
         <provider>
             <role>identity-assertion</role>
             <enabled>true</enabled>
             <name>Pseudo</name>
+            <param><name>principal.mapping</name><value>guest=hue</value></param>
         </provider>
 
         <!--

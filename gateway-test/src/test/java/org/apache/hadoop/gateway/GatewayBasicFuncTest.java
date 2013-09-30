@@ -286,6 +286,59 @@ public class GatewayBasicFuncTest {
   }
 
   @Test
+  public void testHdfsTildeUseCase() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String username = "hdfs";
+    String password = "hdfs-password";
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    // Attempt to delete the test directory in case a previous run failed.
+    // Ignore any result.
+    // Cleanup anything that might have been leftover because the test failed previously.
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "DELETE" )
+        .pathInfo( "/v1/user/hdfs" + root )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "user.name", username )
+        .queryParam( "recursive", "true" )
+        .respond()
+        .status( HttpStatus.SC_OK );
+    given()
+        .auth().preemptive().basic( username, password )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", "true" )
+        .expect()
+            //.log().all();
+        .statusCode( HttpStatus.SC_OK )
+        .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1/~" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
+    driver.assertComplete();
+
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/v1/user/hdfs/dir" )
+        .queryParam( "op", "MKDIRS" )
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "webhdfs-success.json" ) )
+        .contentType( "application/json" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( username, password )
+        .queryParam( "op", "MKDIRS" )
+        .expect()
+            //.log().all();
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "application/json" )
+        .content( "boolean", is( true ) )
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1/~/dir" );
+    driver.assertComplete();
+
+  }
+
+  @Test
   public void testBasicHdfsUseCase() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
     String username = "hdfs";
