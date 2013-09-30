@@ -1,19 +1,56 @@
 ------------------------------------------------------------------------------
-Changes v0.2.0 - v0.3.0
+Release Notes - Apache Knox - Version 0.3.0
 ------------------------------------------------------------------------------
 
-Release Notes - Apache Knox - Version 0.3.0
+** New Feature
+    * [KNOX-8] - Support HBase via HBase/Stargate
+    * [KNOX-9] - Support Hive via JDBC+ODBC/Thrift/HTTP
+    * [KNOX-11] - Access Token Federation Provider
+    * [KNOX-27] - Access Kerberos secured Hadoop cluster via gateway using basic auth credentials
+    * [KNOX-31] - Create lifecycle scripts for gateway server
+    * [KNOX-50] - Ensure that all cluster topology details are rewritten for Oozie REST APIs
+    * [KNOX-61] - Create RPM packaging of Knox
+    * [KNOX-68] - Create start/stop scripts for gateway
+    * [KNOX-70] - Add unit and functional testing for HBase
+    * [KNOX-71] - Add unit and functional tests for Hive
+    * [KNOX-72] - Update site docs for HBase integration
+    * [KNOX-73] - Update site docs for Hive integration
+    * [KNOX-82] - Support properties file format for topology files
+    * [KNOX-85] - Provide Knox client DSL for HBase REST API
+    * [KNOX-98] - Cover HBase in samples
+    * [KNOX-99] - Cover Hive in samples
+    * [KNOX-116] - Add rewrite function so that authenticated username can be used in rewrite rules
+    * [KNOX-120] - Service Level Authorization Provider with ACLs
+    * [KNOX-131] - Cleanup noisy test PropertyTopologyBuilderTest
+    * [KNOX-169] - Test issue for patch test automation via PreCommit-Knox-Build job
+
+** Improvement
+    * [KNOX-40] - Verify LDAP over SSL
+    * [KNOX-42] - Change gateway URLs to match service URLs as closely as possible
+    * [KNOX-45] - Clean up usage and help output from server command line
+    * [KNOX-49] - Prevent Shiro rememberMe cookie from being returned
+    * [KNOX-55] - Support finer grain control over what is included in the URL rewrite
+    * [KNOX-56] - Populate RC directory with CHANGES on people.a.o
+    * [KNOX-75] - make Knox work with Secure Oozie
+    * [KNOX-97] - Populate staging and release directories with KEYS
+    * [KNOX-100] - document steps to make Knox work with secure hadoodp cluster
+    * [KNOX-101] - Use session instead of hadoop in client DSL samples
+    * [KNOX-117] - Provide ServletContext attribute access to RewriteFunctionProcessor via UrlRewriteEnvironment
+    * [KNOX-118] - Provide rewrite functions that resolve service location information
+    * [KNOX-129] - Document topology file
+    * [KNOX-141] - Diagnostic debug output when generated SSL keystore info doesn't match environment
+    * [KNOX-143] - Change "out of the box" setup to use sandbox instead of sample
+    * [KNOX-153] - Document RPM based install process
+    * [KNOX-155] - Remove obsolete module gateway-demo
+    * [KNOX-164] - document hostmap provider properties
+    * [KNOX-168] - Complete User's Guide for 0.3.0 release
 
 ** Bug
-    * [KNOX-21] - Utilize hadoop.auth cookie to prevent re-authentication for every request
     * [KNOX-47] - Clean up i18n logging and any System.out or printStackTrace usages
     * [KNOX-57] - NPE when GATEWAY_HOME deleted out from underneath a running gateway instance
     * [KNOX-58] - NameNode endpoint exposed to gateway clients in runtime exception
     * [KNOX-60] - getting started - incorrect path to gateway-site.xml
     * [KNOX-69] - Branch expansion for specdir breaks on jenkins
-    * [KNOX-70] - Add unit and functional testing for HBase
-    * [KNOX-71] - Add unit and functional tests for Hive
-    * [KNOX-75] - make Knox work with Secure Oozie
     * [KNOX-76] - users.ldif file bundled with knox should not have hadoop service principals
     * [KNOX-77] - Need per-service outbound URL rewriting rules
     * [KNOX-78] - spnego authorization to cluster is failing
@@ -21,30 +58,40 @@ Release Notes - Apache Knox - Version 0.3.0
     * [KNOX-81] - Fix naming of release artifacts to include the word incubating
     * [KNOX-83] - do not use mapred as end user prinicpal in examples
     * [KNOX-84] - use EXAMPLE.COM instead of sample.com in template files for kerberos relam
-    * [KNOX-94] - Document How to Add a Service to Knox
-
-** Improvement
-    * [KNOX-9] - Support Hive via JDBC+ODBC/Thrift/HTTP
-    * [KNOX-45] - Clean up usage and help output from server command line
-    * [KNOX-49] - Prevent Shiro rememberMe cookie from being returned
-    * [KNOX-55] - Support finer grain control over what is included in the URL rewrite
-    * [KNOX-56] - Populate RC directory with CHANGES on people.a.o
-    * [KNOX-63] - Integate Knox with Apache BigTop
-    * [KNOX-68] - Create start/stop scripts for gateway
-    * [KNOX-82] - Support properties file format for topology files
-
-** New Feature
-    * [KNOX-8] - Support HBase via HBase/Stargate
-    * [KNOX-11] - Access Token Federation Provider
-    * [KNOX-27] - Access Kerberos secured Hadoop cluster via gateway using basic auth credentials
-    * [KNOX-31] - Create lifecycle scripts for gateway server
-    * [KNOX-61] - Create RPM packaging of Knox
-
-** Test
-    * [KNOX-40] - Verify LDAP over SSL
+    * [KNOX-89] - Knox doing SPNego with Hadoop for every client request is not scalable
+    * [KNOX-102] - Update README File
+    * [KNOX-106] - The Host request header should be rewritten or removed
+    * [KNOX-107] - Service URLs not rewritten for WebHDFS GET redirects
+    * [KNOX-108] - Authentication failure submitting job via WebHCAT on Sandbox
+    * [KNOX-109] - Failed to submit workflow via Oozie against Sandbox HDP2Beta
+    * [KNOX-111] - Ensure that user identity details are rewritten for Oozie REST APIs
+    * [KNOX-124] - Fix the OR semantics in AclAuthz
+    * [KNOX-126] - HiveDeploymentContributor uses wrong external path /hive/api/vi
+    * [KNOX-127] - Sample topology file (sample.xml) uses inconsistent internal vs external addresses
+    * [KNOX-128] - Switch all samples to use guest user and home directory
+    * [KNOX-130] - Throw exception on credential store creation failure
+    * [KNOX-132] - Cleanup noisy test GatewayBasicFuncTest.testOozieJobSubmission()
+    * [KNOX-136] - Knox should support configurable session timeout
+    * [KNOX-137] - Log SSL Certificate Info
+    * [KNOX-142] - Remove Templeton from user facing config and samples and use WebHCat instead
+    * [KNOX-144] - Ensure cluster topology details are rewritten for HBase/Stargate REST APIs
+    * [KNOX-146] - Oozie rewrite rules for NN and JT need to be updated to use hostmap
+    * [KNOX-147] - Halt Startup when Gateway SSL Cert is Expired
+    * [KNOX-148] - Add cluster topology details rewrite for XML responses from HBase/Stargate REST APIs
+    * [KNOX-149] - Changes to AclsAuthz Config and Default Mode
+    * [KNOX-150] - correct comment on session timeout  in sandbox topology file
+    * [KNOX-151] - add documentation for session timeout configuration
+    * [KNOX-152] - Dynamic redeploy of topo causes subsequent requests to fail
+    * [KNOX-154] - INSTALL file is out of date
+    * [KNOX-156] - file upload through Knox broken
+    * [KNOX-157] - Knox is not able to process PUT/POST requests with large payload
+    * [KNOX-158] - EmptyStackException while getting webhcat job queue in secure cluster
+    * [KNOX-159] - oozie job submission thorugh knox fails for secure cluster
+    * [KNOX-162] - Support Providing Your own SSL Certificate
+    * [KNOX-163] - job submission through knox-webchat results in NullPointerException
 
 ------------------------------------------------------------------------------
-Changes v0.1.0 - v0.2.0
+Release Notes - Apache Knox - Version 0.2.0
 ------------------------------------------------------------------------------
 HTTPS Support (Client side)
 Oozie Support

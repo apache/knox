@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-README file for Apache Knox Gateway
+README file for the Apache Knox Gateway
 ------------------------------------------------------------------------------
 This distribution includes cryptographic software.  The country in 
 which you currently reside may have restrictions on the import, 
@@ -40,12 +40,11 @@ specific needs for authentication.
 
 HTTP BASIC authentication with identity being asserted to the rest of the
 cluster via Pseudo/Simple authentication will be demonstrated for security.
-
 In addition to Pseudo identity assertion Knox now provides trusted proxy user
 identity assertion for providing access to Kerberos secured Hadoop clusters.
 
 For API aggregation, the Gateway provides a central endpoint for access to
-WebHDFS, WebHCat/Templeton, Hive, Starbase/HBase, Ambari and Oozie APIs for
+WebHDFS, WebHCat/Templeton, Hive, Starbase/HBase and Oozie APIs for
 each cluster.
 
 Future releases will extend these capabilities with additional
@@ -65,28 +64,18 @@ Please see the ISSUES file.
 ------------------------------------------------------------------------------
 Installation
 ------------------------------------------------------------------------------
-Please see the INSTALL file or the Apache Knox Gateway website.
-https://cwiki.apache.org/confluence/display/KNOX/Getting+Started
+Please see the Apache Knox Gateway User's Guide for details.
+http://knox.incubator.apache.org/books/knox-incubating-0-3-0/knox-incubating-0-3-0.html#Getting+Started
 
 ------------------------------------------------------------------------------
 Examples
 ------------------------------------------------------------------------------
-Please see the Apache Knox Gateway website for detailed examples.
-https://cwiki.apache.org/confluence/display/KNOX/Examples
+Please see the Apache Knox Gateway User's Guide for detailed examples.
+http://knox.incubator.apache.org/books/knox-incubating-0-3-0/knox-incubating-0-3-0.html#Basic+Usage
+http://knox.incubator.apache.org/books/knox-incubating-0-3-0/knox-incubating-0-3-0.html#Service+Details
 
 ------------------------------------------------------------------------------
-Filing bugs
+Troubleshooting & Filing bugs
 ------------------------------------------------------------------------------
-We now have Jira setup for Knox. The following link will provide you with
-the information for accessing the Jira setup for Knox:
-http://knox.incubator.apache.org/issue-tracking.html
-
-Please provide the output from the following command in your filed Jira issue:
-
-    java -jar bin/gateway-${gateway-version}.jar -version
-
-in the Environment section.  Also include the version of Hadoop being used.
-
-Please feel free to email the Knox user list as well (user AT knox.incubator.apache.org)
-with a subject prefix of [BUG] describing the issue.
-
+Please see the Apache Knox Gateway User's Guide for detailed information.
+http://knox.incubator.apache.org/books/knox-incubating-0-3-0/knox-incubating-0-3-0.html#Troubleshooting

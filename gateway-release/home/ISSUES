@@ -1,10 +1,9 @@
 ------------------------------------------------------------------------------
 Know Issues
 ------------------------------------------------------------------------------
-The Gateway cannot be be used against either EC2 cluster unless the gateway
-is deployed within the EC2.
 
-If the cluster deployment descriptors in {GATEWAY_HOME}/deployments are
-incorrect, the errors logged by the gateway are overly detailed and not
-diagnostic enough.
+Support for accessing Hive using JDBC via the Apache Knox Gateway will not
+be supported until Hive 0.12.0 is released.
 
+Support for accessing Kerberos secured Stargate/HBase will not be supported
+until a future release of Stargate/HBase
