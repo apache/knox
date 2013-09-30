@@ -184,7 +184,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     }
 
     if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-      entity = new BufferedHttpEntity( entity );
+      entity = new PartiallyRepeatableHttpEntity( entity );
     }
 
     return entity;
