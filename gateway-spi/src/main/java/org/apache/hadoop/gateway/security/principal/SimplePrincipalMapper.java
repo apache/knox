@@ -47,19 +47,21 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     HashMap<String, String[]> table = new HashMap<String, String[]>();
     try {
       StringTokenizer t = new StringTokenizer(mappings, ";");
-      do {
-        String mapping = t.nextToken();
- //        System.out.println("+++++++++++++ Mapping: " + mapping);
-        String principals = mapping.substring(0, mapping.indexOf('='));
- //        System.out.println("+++++++++++++ Principals: " + principals);
-        String value = mapping.substring(mapping.indexOf('=')+1);
-        String[] v = value.split(",");
-        String[] p = principals.split(",");
-        for(int i = 0; i < p.length; i++) {
-          table.put(p[i], v);
- //          System.out.println("+++++++++++++ Mapping into Table: " + p[i] + "->" + value);
-        }
-      } while(t.hasMoreTokens());
+      if (t.hasMoreTokens()) {
+        do {
+          String mapping = t.nextToken();
+   //        System.out.println("+++++++++++++ Mapping: " + mapping);
+          String principals = mapping.substring(0, mapping.indexOf('='));
+   //        System.out.println("+++++++++++++ Principals: " + principals);
+          String value = mapping.substring(mapping.indexOf('=')+1);
+          String[] v = value.split(",");
+          String[] p = principals.split(",");
+          for(int i = 0; i < p.length; i++) {
+            table.put(p[i], v);
+   //          System.out.println("+++++++++++++ Mapping into Table: " + p[i] + "->" + value);
+          }
+        } while(t.hasMoreTokens());
+      }
       return table;
     }
     catch (Exception e) {

@@ -45,10 +45,12 @@ public class AclsAuthorizationFilter implements Filter {
   private ArrayList<String> users;
   private ArrayList<String> groups;
   private ArrayList<String> ipaddr;
+  private ArrayList<String> wildCardIPs;
   private boolean anyUser = true;
   private boolean anyGroup = true;
   private boolean anyIP = true;
   private String aclProcessingMode = null;
+
   
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -94,9 +96,17 @@ public class AclsAuthorizationFilter implements Filter {
       }
 
       ipaddr = new ArrayList<String>();
+      wildCardIPs = new ArrayList<String>();
       Collections.addAll(ipaddr, parts[2].split(","));
       if (!ipaddr.contains("*")) {
         anyIP = false;
+        // check whether there are any wildcarded ip's - example: 192.* or 192.168.* or 192.168.1.*
+        for (String addr : ipaddr) {
+          if (addr.contains("*")) {
+            wildCardIPs.add(addr);
+            break;
+          }
+        }
       }
     }
     else {
@@ -157,6 +167,15 @@ public class AclsAuthorizationFilter implements Filter {
       groupAccess = checkGroupAcls(groups);
       log.groupPrincipalHasAccess(groupAccess);
     }
+    else {
+      // if we have no groups in the subject then make
+      // it true if there is an anyGroup acl
+      // for AND mode and acls like *;*;127.0.0.* we need to
+      // make it pass
+      if (anyGroup && aclProcessingMode.equals("AND")) {
+        groupAccess = true;
+      }
+    }
     log.remoteIPAddress(req.getRemoteAddr());
     ipAddrAccess = checkRemoteIpAcls(req.getRemoteAddr());
     log.remoteIPAddressHasAccess(ipAddrAccess);
@@ -189,6 +208,17 @@ public class AclsAuthorizationFilter implements Filter {
     else {
       if (ipaddr.contains(remoteAddr)) {
         allowed = true;
+      }
+      else {
+        // check for wildcards if there are wildcardIP acls configured
+        if (wildCardIPs.size() > 0) {
+          for (String ipacl : wildCardIPs) {
+            if (remoteAddr.startsWith(ipacl.substring(0, ipacl.lastIndexOf('*')))) {
+              allowed = true;
+              break;
+            }
+          }
+        }
       }
     }
     return allowed;
