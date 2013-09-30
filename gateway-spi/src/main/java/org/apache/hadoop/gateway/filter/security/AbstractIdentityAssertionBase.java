@@ -17,11 +17,9 @@
  */
 package org.apache.hadoop.gateway.filter.security;
 
-import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.apache.hadoop.gateway.security.SubjectUtils;
 
 import javax.security.auth.Subject;
-import java.security.Principal;
-import java.util.Set;
 
 public class AbstractIdentityAssertionBase {
 
@@ -32,23 +30,7 @@ public class AbstractIdentityAssertionBase {
    * @return principalName
    */
   protected String getPrincipalName(Subject subject) {
-    // look first for the knox specific PrimaryPrincipal to use as the asserted identity
-    // if not found fallback to the first principal found
-    String name = null;
-    Set<PrimaryPrincipal> primaryPrincipals = subject.getPrincipals(PrimaryPrincipal.class);
-    if (primaryPrincipals.size() > 0) {
-      return ((PrimaryPrincipal)primaryPrincipals.toArray()[0]).getName();
-    }
-
-    // LJM TODO: this implementation assumes the first one found
-    // should configure through context param based on knowledge
-    // of the authentication provider in use
-    Set<Principal> principals = subject.getPrincipals();
-    for (Principal p : principals) {
-      name = p.getName();
-      break;
-    }
-    return name;
+    return SubjectUtils.getPrimaryPrincipalName(subject);
   }
 
 }

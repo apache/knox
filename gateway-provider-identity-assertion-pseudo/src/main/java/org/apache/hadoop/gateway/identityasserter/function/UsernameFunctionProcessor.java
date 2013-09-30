@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.security.SubjectUtils;
 
 import javax.security.auth.Subject;
 import java.security.AccessController;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UsernameFunctionProcessor
-    extends AbstractIdentityAssertionBase
     implements UrlRewriteFunctionProcessor<UsernameFunctionDescriptor> {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
@@ -58,10 +58,10 @@ public class UsernameFunctionProcessor
   @Override
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
     List<String> results = null;
-    Subject subject = Subject.getSubject( AccessController.getContext() );
+    Subject subject = SubjectUtils.getCurrentSubject( );
     if( subject != null ) {
       results = new ArrayList<String>( 1 );
-      String username = getPrincipalName( subject );
+      String username = SubjectUtils.getEffectivePrincipalName(subject);
       results.add( username );
     } else if( parameters != null && parameters.size() > 0 ) {
       results = new ArrayList<String>( 1 );
