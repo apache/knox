@@ -90,7 +90,7 @@
 
     <service>
         <role>JOBTRACKER</role>
-        <url>rpc://localhost:50030</url>
+        <url>rpc://localhost:50300</url>
     </service>
 
     <service>
