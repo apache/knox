@@ -30,6 +30,7 @@
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
 
     <property name="build-url" value="https://builds.apache.org/job/Knox-${gateway-version}/ws/target/${gateway-version}"/>
+    <property name="candidate.path" value="candidate"/>
 
     <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/incubator/${gateway-project}" />
     <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/incubator/${gateway-project}" />
@@ -62,7 +63,7 @@
     <target name="clean" depends="init" description="Clean up any build artifacts.">
         <delete file="target"/>
         <delete file="install"/>
-        <delete file="release"/>
+        <delete file="${candidate.path}"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">
@@ -117,8 +118,8 @@
     </target>
 
     <target name="download-build">
-        <mkdir dir="release"/>
-        <get dest="release">
+        <mkdir dir="${candidate.path}"/>
+        <get dest="${candidate.path}">
             <url url="${build-url}/knox-incubating-${gateway-version}.zip"/>
             <url url="${build-url}/knox-incubating-${gateway-version}.zip.md5"/>
             <url url="${build-url}/knox-incubating-${gateway-version}.zip.sha"/>
@@ -135,18 +136,18 @@
         </get>
     </target>
 
-    <target name="sign-release" depends="init" description="Sign a previously created release.">
-        <exec executable="gpg" dir="release">
+    <target name="sign-candidate" depends="init" description="Sign a previously created release.">
+        <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.rpm"/>
         </exec>
-        <exec executable="gpg" dir="release">
+        <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
-        <exec executable="gpg" dir="release">
+        <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
@@ -154,12 +155,12 @@
         <!--
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum"/>
         -->
-        <exec executable="gpg" dir="release">
+        <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="release">
+        <exec executable="gpg" dir="${candidate.path}">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
@@ -180,17 +181,17 @@
 
     <target name="release" depends="package,rpm" description="Build release artifacts including RPM and sign."/>
 
-    <target name="stage-release" description="Stage release artifacts.">
+    <target name="stage-candidate" depends="unstage-candidate" description="Stage release artifacts.">
         <exec executable="svn">
             <arg value="import" />
-            <arg value="release"/>
+            <arg value="${candidate.path}"/>
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
             <arg value="-m"/>
             <arg value="Staging Apache Knox Gateway version ${gateway-version}."/>
         </exec>
     </target>
 
-    <target name="unstage-release" description="Delete staged release artifacts.">
+    <target name="unstage-candidate" description="Delete staged release artifacts.">
         <exec executable="svn">
             <arg value="delete" />
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
