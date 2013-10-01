@@ -860,12 +860,6 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <artifactId>openaz</artifactId>
-                <groupId>org.openliberty</groupId>
-                <version>0.0.1-SNAPSHOT</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
