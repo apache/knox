@@ -17,6 +17,16 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -33,23 +43,17 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-
 /**
  *
  */
 public class HttpClientDispatch extends AbstractGatewayDispatch {
+  
+  private static final String REPLAY_BUFFER_SIZE = "replayBufferSize";
   
   // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
   // private static final String CT_APP_XML = "application/xml";
@@ -62,9 +66,22 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
 
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
-  private static final int REPLAY_BUFFER_MAX_SIZE = 1024 * 1024; // limit to 1MB
+  private static final int DEFAULT_REPLAY_BUFFER_SIZE =  4 * 1024; // 4K
 
-  private AppCookieManager appCookieManager = new AppCookieManager();;
+  private AppCookieManager appCookieManager = new AppCookieManager();
+  
+  private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
+  
+  private int replayBufferSize = 0;
+  
+  @Override
+  public void init( FilterConfig filterConfig ) throws ServletException {
+    super.init(filterConfig);
+    String replayBufferSizeString = filterConfig.getInitParameter( REPLAY_BUFFER_SIZE_PARAM );
+    if ( replayBufferSizeString != null ) {
+      setReplayBufferSize(Integer.valueOf(replayBufferSizeString));
+    }
+  }
   
   protected void executeRequest(
       HttpUriRequest outboundRequest,
@@ -193,8 +210,8 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
         delegationTokenPresent = queryString.startsWith("delegation=") || 
             queryString.contains("&delegation=");
       }     
-      if (!delegationTokenPresent) {
-        entity = new PartiallyRepeatableHttpEntity( entity );
+      if (!delegationTokenPresent && getReplayBufferSize() > 0 ) {
+          entity = new CappedBufferHttpEntity( entity, getReplayBufferSize() * 1024 );
       }
     }
 
@@ -246,4 +263,12 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     executeRequest( method, request, response );
   }
 
+  int getReplayBufferSize() {
+    return replayBufferSize;
+  }
+  
+  void setReplayBufferSize(int size) {
+    replayBufferSize = size;
+  }
+  
 }

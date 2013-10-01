@@ -26,9 +26,15 @@ import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DispatchDeploymentContributor extends ProviderDeploymentContributorBase {
+  
+  private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
+  
+  // Default global replay buffer size in KB
+  public static final String DEFAULT_REPLAY_BUFFER_SIZE = "4";
 
   @Override
   public String getRole() {
@@ -42,7 +48,17 @@ public class DispatchDeploymentContributor extends ProviderDeploymentContributor
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
+    String replayBufferSize = DEFAULT_REPLAY_BUFFER_SIZE;
+    if (params != null) {
+      for (FilterParamDescriptor paramDescriptor : params) {
+        if (REPLAY_BUFFER_SIZE_PARAM.equals( paramDescriptor.name() )) {
+          replayBufferSize = paramDescriptor.value();
+          break;
+        }
+      }
+    }
     FilterDescriptor filter = resource.addFilter().name( getName() ).role( getRole() ).impl( HttpClientDispatch.class );
+    filter.param().name("replayBufferSize").value(replayBufferSize);
     if( context.getGatewayConfig().isHadoopKerberosSecured() ) {
       filter.param().name("kerberos").value("true");
     }

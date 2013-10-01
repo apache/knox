@@ -17,14 +17,6 @@
  */
 package org.apache.hadoop.gateway.oozie;
 
-import org.apache.hadoop.gateway.deploy.DeploymentContext;
-import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
-import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
-import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
-import org.apache.hadoop.gateway.topology.Service;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,10 +25,23 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.gateway.deploy.DeploymentContext;
+import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
+import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
+import org.apache.hadoop.gateway.topology.Service;
+
 public class OozieDeploymentContributor extends ServiceDeploymentContributorBase {
 
   private static final String RULES_RESOURCE = OozieDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
   private static final String EXTERNAL_PATH = "/oozie";
+  
+  private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
+  
+  // Oozie replay buffer size in KB
+  private static final String OOZIW_REPLAY_BUFFER_SIZE = "8";
 
   @Override
   public String getRole() {
@@ -96,8 +101,14 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     context.contributeFilter( service, resource, "rewrite", null, params );
   }
 
-  private void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "dispatch", null, null );
+  private void addDispatchFilter(DeploymentContext context, Service service,
+      ResourceDescriptor resource) {
+    List<FilterParamDescriptor> filterParams = new ArrayList<FilterParamDescriptor>();
+    FilterParamDescriptor filterParamDescriptor = resource.createFilterParam();
+    filterParamDescriptor.name(REPLAY_BUFFER_SIZE_PARAM);
+    filterParamDescriptor.value(OOZIW_REPLAY_BUFFER_SIZE);
+    filterParams.add(filterParamDescriptor);
+    context.contributeFilter(service, resource, "dispatch", null, filterParams);
   }
 
   UrlRewriteRulesDescriptor loadRulesFromTemplate() throws IOException {

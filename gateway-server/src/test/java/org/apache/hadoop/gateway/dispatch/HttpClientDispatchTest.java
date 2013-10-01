@@ -99,13 +99,14 @@ public class HttpClientDispatchTest {
     HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
     assertFalse("buffering in the presence of delegation token", 
-        (httpEntity instanceof PartiallyRepeatableHttpEntity));
+        (httpEntity instanceof CappedBufferHttpEntity));
   }
   
   @Test
   public void testCallToSecureClusterWithoutDelegationTpken() throws URISyntaxException, IOException {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
     HttpClientDispatch httpClientDispatch = new HttpClientDispatch();
+    httpClientDispatch.setReplayBufferSize(10);
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect(inboundRequest.getQueryString()).andReturn( "a=123").anyTimes();
@@ -114,7 +115,7 @@ public class HttpClientDispatchTest {
     HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
     assertTrue("not buffering in the absence of delegation token", 
-        (httpEntity instanceof PartiallyRepeatableHttpEntity));
+        (httpEntity instanceof CappedBufferHttpEntity));
   }
   
   
