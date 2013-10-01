@@ -95,8 +95,8 @@
         <chmod file="${rpm-builder}" perm="700"/>	     
     </target>
 
-    <target name="rpm" depends="package,set-rpm-builder-privs,_rpm" description="Package and build RPM of the product."/>
-    <target name="_rpm" depends="init" description="Build RPM of the product from existing package.">
+    <target name="rpm" depends="package,_rpm" description="Package and build RPM of the product."/>
+    <target name="_rpm" depends="init,set-rpm-builder-privs" description="Build RPM of the product from existing package.">
         <exec executable="${rpm-builder}">
             <arg value="target"/>
             <arg value="${gateway-artifact}"/>
