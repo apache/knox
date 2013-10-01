@@ -26,7 +26,7 @@ KNOX_VER=$3
 # target/RPM base directory
 KNOX_TOPDIR="$(pwd)"/$KNOX_PACKAGE_TARGET/RPM
 # Hardware platform
-KNOX_BUILD_ARCH="$(arch)"
+KNOX_BUILD_ARCH="noarch"
 #RPM name
 KNOX_RPMFILENAME="$KNOX_NAME-$KNOX_VER.rpm"
 

@@ -30,7 +30,7 @@ atlassian-ide-plugin.xml
 target
 install
 patch
-release
+candidate
 org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
 velocity.log
 *.pyc

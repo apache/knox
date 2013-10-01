@@ -161,7 +161,7 @@
                         <exclude>**/*.iml</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/install/**</exclude>
-                        <exclude>**/release/**</exclude>
+                        <exclude>**/candidate/**</exclude>
                         <exclude>**/patch/**</exclude>
                         <exclude>**/patchprocess/**</exclude>
                         <exclude>**/test/resources/**</exclude>
