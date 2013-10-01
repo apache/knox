@@ -29,7 +29,7 @@ Vendor: Hortonworks.
 Packager: Hortonworks <packager@hortonworks.com>
 BuildArch: %_build_arch
 
-#knox-0.3.0-SNAPSHOT.tar.gz
+#knox-0.4.0-SNAPSHOT.tar.gz
 Source: %{name}-%{_knox_ver}.tar.gz
 
 %description
