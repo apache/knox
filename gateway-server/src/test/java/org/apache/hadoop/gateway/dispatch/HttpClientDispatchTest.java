@@ -17,27 +17,33 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.params.BasicHttpParams;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.eclipse.jetty.server.HttpOutput;
-import org.junit.Test;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.params.BasicHttpParams;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.junit.Test;
 
 public class HttpClientDispatchTest {
 
@@ -81,4 +87,35 @@ public class HttpClientDispatchTest {
     }
   }
 
+  @Test
+  public void testCallToSecureClusterWithDelegationTpken() throws URISyntaxException, IOException {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    HttpClientDispatch httpClientDispatch = new HttpClientDispatch();
+    ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect(inboundRequest.getQueryString()).andReturn( "delegation=123").anyTimes();
+    EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
+    EasyMock.replay( inboundRequest );
+    HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
+    assertFalse("buffering in the presence of delegation token", 
+        (httpEntity instanceof PartiallyRepeatableHttpEntity));
+  }
+  
+  @Test
+  public void testCallToSecureClusterWithoutDelegationTpken() throws URISyntaxException, IOException {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    HttpClientDispatch httpClientDispatch = new HttpClientDispatch();
+    ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect(inboundRequest.getQueryString()).andReturn( "a=123").anyTimes();
+    EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
+    EasyMock.replay( inboundRequest );
+    HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
+    assertTrue("not buffering in the absence of delegation token", 
+        (httpEntity instanceof PartiallyRepeatableHttpEntity));
+  }
+  
+  
 }

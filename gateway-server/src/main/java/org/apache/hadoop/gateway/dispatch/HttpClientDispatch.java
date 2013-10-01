@@ -183,8 +183,19 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse( contentType ) );
     }
 
-    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-      entity = new PartiallyRepeatableHttpEntity( entity );
+ 
+    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {  
+   
+      //Check if delegation token is supplied in the request
+      boolean delegationTokenPresent = false;
+      String queryString = request.getQueryString();
+      if (queryString != null) {
+        delegationTokenPresent = queryString.startsWith("delegation=") || 
+            queryString.contains("&delegation=");
+      }     
+      if (!delegationTokenPresent) {
+        entity = new PartiallyRepeatableHttpEntity( entity );
+      }
     }
 
     return entity;
