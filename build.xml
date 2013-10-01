@@ -53,6 +53,13 @@
         <os family="windows" />
     </condition>
 
+    <condition property="curl.cmd" value="curl">
+        <os family="unix" />
+    </condition>
+    <condition property="curl.cmd" value="curl">
+        <os family="windows" />
+    </condition>
+
     <condition property="rpm-builder" value="./gateway-rpm/build_knox_rpm.sh">
         <os family="unix" />
     </condition>
@@ -115,6 +122,15 @@
         </exec>
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="MD5" fileext=".md5" forceOverwrite="yes"/>
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA1" fileext=".sha" forceOverwrite="yes"/>
+    </target>
+
+    <target name="remote-build">
+        <exec executable="${curl.cmd}">
+            <arg value="--silent"/>
+            <arg value="--request"/>
+            <arg value="POST"/>
+            <arg value="https://builds.apache.org/job/Knox-${gateway-version}/build?token=knox-remote-build-token"/>
+        </exec>
     </target>
 
     <target name="download-build">
