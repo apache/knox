@@ -20,7 +20,6 @@ package org.apache.hadoop.gateway.filter.rewrite.api;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.easymock.EasyMock;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
@@ -147,6 +146,36 @@ public class UrlRewriteProcessorTest {
     assertThat(
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "output-mock-scheme-1://output-mock-host-1:42/test-input-path" ) );
+
+    processor.destroy();
+  }
+
+  @Test
+  public void testRewriteViaRuleWithComplexFlow() throws Exception {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl;
+    Template outputUrl;
+
+    inputUrl = Parser.parse( "test-scheme://test-host:777/test-path" );
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, "test-rule-with-complex-flow" );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "test-scheme-output://test-host-output:42/test-path-output/test-path" ) );
+
+    inputUrl = Parser.parse( "test-scheme://test-host:42/~/test-path" );
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, "test-rule-with-complex-flow" );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "test-scheme-output://test-host-output:777/test-path-output/test-home/test-path" ) );
 
     processor.destroy();
   }

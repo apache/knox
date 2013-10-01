@@ -40,9 +40,16 @@
         <rewrite template="{$serviceMappedAddr[JOBTRACKER]}"/>
     </rule>
 
-    <rule name="OOZIE/oozie/hdfs-path">
-        <match pattern="{path=**}"/>
-        <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
+    <rule name="OOZIE/oozie/hdfs-path" flow="OR">
+        <match pattern="/~">
+            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/user/{$username}"/>
+        </match>
+        <match pattern="/~/{path=**}">
+            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/user/{$username}/{path=**}"/>
+        </match>
+        <match pattern="{path=**}">
+            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
+        </match>
     </rule>
 
     <filter name="OOZIE/oozie/configuration">
@@ -84,7 +91,13 @@
                 <detect path="name" value="mapred.input.dir">
                     <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
                 </detect>
+                <detect path="name" value="inputDir">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
                 <detect path="name" value="mapred.output.dir">
+                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
+                </detect>
+                <detect path="name" value="outputDir">
                     <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
                 </detect>
             </buffer>

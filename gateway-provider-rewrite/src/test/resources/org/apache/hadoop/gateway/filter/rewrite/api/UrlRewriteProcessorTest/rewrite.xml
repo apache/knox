@@ -24,4 +24,13 @@
         <rewrite template="test-scheme-output://test-host-output:777/test-path-output/{path}?{**}"/>
     </rule>
 
+    <rule name="test-rule-with-complex-flow" flow="OR">
+        <match pattern="*://*:*/~/{path=**}?{**}">
+            <rewrite template="test-scheme-output://test-host-output:777/test-path-output/test-home/{path}?{**}"/>
+        </match>
+        <match pattern="*://*:*/{path=**}?{**}">
+            <rewrite template="test-scheme-output://test-host-output:42/test-path-output/{path}?{**}"/>
+        </match>
+    </rule>
+
 </rules>

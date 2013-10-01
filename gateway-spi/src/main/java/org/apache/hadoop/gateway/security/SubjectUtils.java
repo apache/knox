@@ -17,11 +17,10 @@
  */
 package org.apache.hadoop.gateway.security;
 
+import javax.security.auth.Subject;
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.Set;
-
-import javax.security.auth.Subject;
 
 /**
  * General utility methods for interrogating the standard java Subject
@@ -65,7 +64,7 @@ public class SubjectUtils {
 
     Set<ImpersonatedPrincipal> impPrincipals = subject.getPrincipals(ImpersonatedPrincipal.class);
     if (impPrincipals.size() > 0) {
-      return ((PrimaryPrincipal)impPrincipals.toArray()[0]).getName();
+      return ((Principal)impPrincipals.toArray()[0]).getName();
     }
     
     return name;

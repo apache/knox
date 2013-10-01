@@ -58,7 +58,9 @@ while( !done && count++ < 60 ) {
   sleep( 1000 )
   json = Job.queryStatus(session).jobId(jobId).now().string
   done = JsonPath.read( json, "\$.status.jobComplete" )
+  print "."; System.out.flush();
 }
+println ""
 println "Job status: " + done
 
 text = Hdfs.ls( session ).dir( jobDir + "/output" ).now().string

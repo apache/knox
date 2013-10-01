@@ -113,9 +113,4 @@
         <url>http://localhost:60080</url>
     </service>
 
-    <service>
-        <role>HIVE</role>
-        <url>http://localhost:10000</url>
-    </service>
-
 </topology>

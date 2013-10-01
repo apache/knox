@@ -38,8 +38,8 @@ definition = """\
             <job-tracker>\${jobTracker}</job-tracker>
             <name-node>\${nameNode}</name-node>
             <main-class>org.apache.hadoop.examples.WordCount</main-class>
-            <arg>$jobDir/input</arg>
-            <arg>$jobDir/output</arg>
+            <arg>\${inputDir}</arg>
+            <arg>\${outputDir}</arg>
         </java>
         <ok to="end"/>
         <error to="fail"/>
@@ -54,7 +54,7 @@ definition = """\
 configuration = """\
 <configuration>
     <property>
-        <name>fs.default.name</name>
+        <name>user.name</name>
         <value>default</value>
     </property>
     <property>
@@ -62,32 +62,20 @@ configuration = """\
         <value>default</value>
     </property>
     <property>
-        <name>mapred.job.tracker</name>
-        <value>default</value>
-    </property>
-    <property>
         <name>jobTracker</name>
         <value>default</value>
     </property>
     <property>
-        <name>user.name</name>
-        <value>default</value>
+        <name>inputDir</name>
+        <value>$jobDir/input</value>
     </property>
     <property>
-        <name>mapreduce.job.user.name</name>
-        <value>default</value>
+        <name>outputDir</name>
+        <value>$jobDir/output</value>
     </property>
     <property>
         <name>oozie.wf.application.path</name>
         <value>$jobDir</value>
-    </property>
-    <property>
-        <name>oozie.libpath</name>
-        <value>$jobDir/lib</value>
-    </property>
-    <property>
-        <name>oozie.proxysubmission</name>
-        <value>true</value>
     </property>
 </configuration>
 """
@@ -112,17 +100,21 @@ jobId = Workflow.submit(session).text( configuration ).now().jobId
 println "Submitted job: " + jobId
 
 println "Polling up to 60s for job completion..."
-status = "UNKNOWN";
+status = "RUNNING";
 count = 0;
-while( status != "SUCCEEDED" && count++ < 60 ) {
+while( status == "RUNNING" && count++ < 60 ) {
   sleep( 1000 )
   json = Workflow.status(session).jobId( jobId ).now().string
   status = JsonPath.read( json, "\$.status" )
+  print "."; System.out.flush();
 }
+println ""
 println "Job status: " + status
 
-text = Hdfs.ls( session ).dir( jobDir + "/output" ).now().string
-json = (new JsonSlurper()).parseText( text )
-println json.FileStatuses.FileStatus.pathSuffix
+if( status == "SUCCEEDED" ) {
+  text = Hdfs.ls( session ).dir( jobDir + "/output" ).now().string
+  json = (new JsonSlurper()).parseText( text )
+  println json.FileStatuses.FileStatus.pathSuffix
+}
 
 println "Session closed: " + session.shutdown( 10, SECONDS )
