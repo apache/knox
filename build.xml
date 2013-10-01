@@ -29,6 +29,8 @@
 
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
 
+    <property name="build-url" value="https://builds.apache.org/job/Knox-${gateway-version}/ws/target/${gateway-version}"/>
+
     <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/incubator/${gateway-project}" />
     <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/incubator/${gateway-project}" />
 
@@ -60,6 +62,7 @@
     <target name="clean" depends="init" description="Clean up any build artifacts.">
         <delete file="target"/>
         <delete file="install"/>
+        <delete file="release"/>
     </target>
 
     <target name="build" depends="init" description="Build the product.">
@@ -91,6 +94,12 @@
         </exec>
     </target>
 
+    <target name="post-build" depends="init,_rpm,_changes"/>
+
+    <target name="_changes" depends="init">
+        <copy file="gateway-release/home/CHANGES" todir="target/${gateway-version}"/>
+    </target>
+
     <target name="set-rpm-builder-privs" if="isUnix">
         <chmod file="${rpm-builder}" perm="700"/>	     
     </target>
@@ -107,24 +116,50 @@
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA1" fileext=".sha" forceOverwrite="yes"/>
     </target>
 
-    <target name="sign" depends="init" description="Sign a previously created release.">
-        <exec executable="gpg" dir="target/${gateway-version}">
+    <target name="download-build">
+        <mkdir dir="release"/>
+        <get dest="release">
+            <url url="${build-url}/knox-incubating-${gateway-version}.zip"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.zip.md5"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.zip.sha"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip.md5"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip.sha"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz.md5"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz.sha"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.rpm"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.rpm.md5"/>
+            <url url="${build-url}/knox-incubating-${gateway-version}.rpm.sha"/>
+            <url url="${build-url}/CHANGES"/>
+        </get>
+    </target>
+
+    <target name="sign-release" depends="init" description="Sign a previously created release.">
+        <exec executable="gpg" dir="release">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.rpm"/>
         </exec>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        <exec executable="gpg" dir="release">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
+        <exec executable="gpg" dir="release">
+            <arg value="--armor"/>
+            <arg value="--detach-sig"/>
+            <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
+        </exec>
+        <!--
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum"/>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        -->
+        <exec executable="gpg" dir="release">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
-        <exec executable="gpg" dir="target/${gateway-version}">
+        <exec executable="gpg" dir="release">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
@@ -143,12 +178,12 @@
         <echo message="${stage-message}"/>
     </target>
 
-    <target name="release" depends="package,rpm,sign" description="Build release artifacts including RPM and sign."/>
+    <target name="release" depends="package,rpm" description="Build release artifacts including RPM and sign."/>
 
     <target name="stage-release" description="Stage release artifacts.">
         <exec executable="svn">
             <arg value="import" />
-            <arg value="target/${gateway-version}"/>
+            <arg value="release"/>
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
             <arg value="-m"/>
             <arg value="Staging Apache Knox Gateway version ${gateway-version}."/>
