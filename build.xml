@@ -64,16 +64,16 @@
         <os family="unix" />
     </condition>
 
-    <target name="init" description="Initialize the build.">
+    <target name="_init" description="Initialize the build.">
     </target>
 
-    <target name="clean" depends="init" description="Clean up any build artifacts.">
+    <target name="clean" depends="_init" description="Clean up any build artifacts.">
         <delete file="target"/>
         <delete file="install"/>
         <delete file="${candidate.path}"/>
     </target>
 
-    <target name="build" depends="init" description="Build the product.">
+    <target name="build" depends="_init" description="Build the product.">
         <exec executable="${mvn.cmd}">
             <arg value="clean"/>
             <arg value="install"/>
@@ -81,7 +81,7 @@
     </target>
 
     <target name="verify" depends="package" description="Perform the verification build."/>
-    <target name="package" depends="init" description="Build and package the product (aka verify).">
+    <target name="package" depends="_init" description="Build and package the product (aka verify).">
         <exec executable="${mvn.cmd}">
             <arg value="-Prelease"/>
             <arg value="clean"/>
@@ -94,7 +94,7 @@
     </target>
 
     <target name="daily" depends="full" description="Perform the daily build."/>
-    <target name="full" depends="init" description="Perform a full build (aka daily).">
+    <target name="full" depends="_init" description="Perform a full build (aka daily).">
         <exec executable="${mvn.cmd}">
             <arg value="-Panalyze"/>
             <arg value="-Prelease"/>
@@ -102,9 +102,9 @@
         </exec>
     </target>
 
-    <target name="post-build" depends="init,_rpm,_changes"/>
+    <target name="post-build" depends="_init,_rpm,_changes"/>
 
-    <target name="_changes" depends="init">
+    <target name="_changes" depends="_init">
         <copy file="gateway-release/home/CHANGES" todir="target/${gateway-version}"/>
     </target>
 
@@ -113,7 +113,7 @@
     </target>
 
     <target name="rpm" depends="package,_rpm" description="Package and build RPM of the product."/>
-    <target name="_rpm" depends="init,set-rpm-builder-privs" description="Build RPM of the product from existing package.">
+    <target name="_rpm" depends="_init,set-rpm-builder-privs" description="Build RPM of the product from existing package.">
         <exec executable="${rpm-builder}">
             <arg value="target"/>
             <arg value="${gateway-artifact}"/>
@@ -124,7 +124,7 @@
         <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA1" fileext=".sha" forceOverwrite="yes"/>
     </target>
 
-    <target name="remote-build">
+    <target name="build-candidate">
         <exec executable="${curl.cmd}">
             <arg value="--silent"/>
             <arg value="--request"/>
@@ -133,7 +133,7 @@
         </exec>
     </target>
 
-    <target name="download-build">
+    <target name="download-candidate">
         <mkdir dir="${candidate.path}"/>
         <get dest="${candidate.path}">
             <url url="${build-url}/knox-incubating-${gateway-version}.zip"/>
@@ -152,7 +152,10 @@
         </get>
     </target>
 
-    <target name="sign-candidate" depends="init" description="Sign a previously created release.">
+    <target name="sign-candidate" depends="_init" description="Sign a downloaded created release.">
+        <delete>
+            <fileset dir="${candidate.path}" includes="**/*.asc"/>
+        </delete>
         <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
@@ -168,9 +171,6 @@
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
         </exec>
-        <!--
-        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" property="checksum"/>
-        -->
         <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
             <arg value="--detach-sig"/>

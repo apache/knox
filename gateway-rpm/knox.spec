@@ -21,7 +21,7 @@
 
 Summary: Knox
 Name: %_knox_name
-Version: 0.0.0
+Version: %_knox_ver
 Release: 1
 License: Apache License, Version 2.0
 Group: Applications/Server
