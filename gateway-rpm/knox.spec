@@ -46,6 +46,7 @@ echo "Knox installation build"
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/lib/knox/
 cp -R ./ $RPM_BUILD_ROOT/usr/lib/knox/
+chown -R `logname` $RPM_BUILD_ROOT/usr/lib/knox/
 
 %clean
 rm -rf $RPM_BUILD_ROOT $RPM_BUILD_DIR
