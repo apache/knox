@@ -154,7 +154,7 @@
 
     <target name="sign-candidate" depends="_init" description="Sign a downloaded created release.">
         <delete>
-            <fileset dir="${candidate.path}" includes="**/*.asc"/>
+            <fileset dir="${candidate.path}" includes="*.asc,KEYS"/>
         </delete>
         <exec executable="gpg" dir="${candidate.path}">
             <arg value="--armor"/>
