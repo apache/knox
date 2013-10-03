@@ -144,10 +144,10 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
 
-  @Message( level = MessageLevel.INFO, text = "Received request: {0} {1}" )
+  @Message( level = MessageLevel.DEBUG, text = "Received request: {0} {1}" )
   void receivedRequest( String method, Template uri );
 
-  @Message( level = MessageLevel.INFO, text = "Dispatch request: {0} {1}" )
+  @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
   
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
@@ -258,16 +258,16 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to get map from Json string {0}: {1}" )
   void failedToGetMapFromJsonString( String json, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
   
-  @Message( level = MessageLevel.INFO, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
+  @Message( level = MessageLevel.DEBUG, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void successfulSPNegoAuthn(String uri);
   
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
 
-  @Message( level = MessageLevel.INFO, text = "Dispatch response status: {0}" )
+  @Message( level = MessageLevel.DEBUG, text = "Dispatch response status: {0}" )
   void dispatchResponseStatusCode(int statusCode);
 
-  @Message( level = MessageLevel.INFO, text = "Dispatch response status: {0}, Location: {1}" )
+  @Message( level = MessageLevel.DEBUG, text = "Dispatch response status: {0}, Location: {1}" )
   void dispatchResponseCreatedStatusCode( int statusCode, String location );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to decrypt cipher text for cluster {0}: due to inability to retrieve the password." )
