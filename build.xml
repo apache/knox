@@ -288,7 +288,7 @@
         <exec executable="svn">
             <arg value="move"/>
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}"/>
-            <arg value="${svn.release.path}"/>
+            <arg value="${svn.release.path}/${gateway-version}-incubating"/>
             <arg value="-m"/>
             <arg value="Releasing Apache Knox Gateway version ${gateway-version}." />
         </exec>
