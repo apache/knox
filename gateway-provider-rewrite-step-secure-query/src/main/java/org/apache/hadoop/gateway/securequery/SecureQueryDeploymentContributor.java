@@ -55,7 +55,11 @@ public class SecureQueryDeploymentContributor
     super.initializeContribution(context);
 
     String clusterName = context.getTopology().getName();
-    this.as.generateAliasForCluster(clusterName, "encryptQueryString");
+    
+    // we don't want to overwrite an existing alias from a previous topology deployment
+    // so we can't just blindly generateAlias here.
+    // this version of getPassword will generate a value for it only if missing
+    this.as.getPasswordFromAliasForCluster(clusterName, "encryptQueryString", true);
   }
 
   @Override
