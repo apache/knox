@@ -11402,7 +11402,7 @@ Release 0.3.1 - 2006-06-05
     always found.  (omalley via cutting)
 
 
-Release 0.3.0 - 2006-06-02
+Release 0.3.1 - 2006-06-02
 
  1. HADOOP-208.  Enhance MapReduce web interface, adding new pages
     for failed tasks, and tasktrackers.  (omalley via cutting)

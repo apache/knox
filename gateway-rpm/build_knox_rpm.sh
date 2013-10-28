@@ -21,7 +21,7 @@
 KNOX_PACKAGE_TARGET=$1
 # knox
 KNOX_NAME=$2
-# 0.3.0
+# 0.3.1
 KNOX_VER=$3
 # target/RPM base directory
 KNOX_TOPDIR="$(pwd)"/$KNOX_PACKAGE_TARGET/RPM
