@@ -1,6 +1,11 @@
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.1
 ------------------------------------------------------------------------------
+    * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.3.0
+------------------------------------------------------------------------------
 
 ** New Feature
     * [KNOX-8] - Support HBase via HBase/Stargate
@@ -43,7 +48,7 @@ Release Notes - Apache Knox - Version 0.3.1
     * [KNOX-153] - Document RPM based install process
     * [KNOX-155] - Remove obsolete module gateway-demo
     * [KNOX-164] - document hostmap provider properties
-    * [KNOX-168] - Complete User's Guide for 0.3.1 release
+    * [KNOX-168] - Complete User's Guide for 0.3.0 release
 
 ** Bug
     * [KNOX-47] - Clean up i18n logging and any System.out or printStackTrace usages
