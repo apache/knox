@@ -1,6 +1,11 @@
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.0
 ------------------------------------------------------------------------------
+    * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.3.0
+------------------------------------------------------------------------------
 
 ** New Feature
     * [KNOX-8] - Support HBase via HBase/Stargate
