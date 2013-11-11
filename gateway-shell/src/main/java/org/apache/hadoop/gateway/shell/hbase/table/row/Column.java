@@ -39,9 +39,9 @@ public class Column {
   }
 
   public String toURIPart() {
-    StringBuilder sb = new StringBuilder( family );
-    if( qualifier != null && !qualifier.isEmpty() ) {
-      sb.append( ":" ).append( qualifier );
+    StringBuilder sb = new StringBuilder( family ).append( ":" );
+    if( qualifier != null ) {
+      sb.append( qualifier );
     }
     return sb.toString();
   }
