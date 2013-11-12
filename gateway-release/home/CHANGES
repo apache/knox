@@ -2,6 +2,7 @@
 Release Notes - Apache Knox - Version 0.3.1
 ------------------------------------------------------------------------------
     * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed
+    * [KNOX-199] - ExampleHBase.groovy fails with Sandbox 2 GA (HBase 0.96)
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.0
