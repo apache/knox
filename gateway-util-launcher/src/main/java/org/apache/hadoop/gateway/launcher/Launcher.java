@@ -121,13 +121,17 @@ public class Launcher {
   }
 
   private static void createExternalConfig( File file, Properties config, URL src ) throws IOException {
-    if( file.createNewFile() ){
-      OutputStream output = new FileOutputStream( file );
-      try {
-        config.store( output, "Created from " + src );
-      } finally {
-        output.close();
+    try {
+      if( file.createNewFile() ){
+        OutputStream output = new FileOutputStream( file );
+        try {
+          config.store( output, "Created from " + src );
+        } finally {
+          output.close();
+        }
       }
+    } catch ( IOException e ) {
+      // Ignore it and use the embedded config.
     }
   }
 
