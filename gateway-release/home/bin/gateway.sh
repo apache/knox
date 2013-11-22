@@ -29,6 +29,9 @@ KNOX_LAUNCH_USER=$2
 # start/stop script location
 KNOX_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# GATEWAY_HOME
+KNOX_HOME=`dirname $KNOX_SCRIPT_DIR`
+
 #App name
 KNOX_NAME=knox
 
@@ -86,8 +89,8 @@ function knoxStart {
    
    rm -f $PID_FILE
 
-   nohup java -jar $KNOX_JAR >>$OUT_FILE 2>>$ERR_FILE & printf $!>$PID_FILE || exit 1
-   
+   nohup java -DGATEWAY_HOME=$KNOX_HOME -jar $KNOX_JAR >>$OUT_FILE 2>>$ERR_FILE & printf $!>$PID_FILE || exit 1
+
    getPID
    knoxIsRunning $PID
    if [ $? -ne 1 ]; then
@@ -255,10 +258,7 @@ function setupEnv {
       exit 1
    fi
 
-   setDirPermission $PID_DIR $userName
-   setDirPermission $LOG_DIR $userName
-
-   sudo -u $userName java -jar $KNOX_JAR -persist-master -nostart
+   java -DGATEWAY_HOME=$KNOX_HOME -jar $KNOX_JAR -persist-master -nostart
 
    return 0
 }
