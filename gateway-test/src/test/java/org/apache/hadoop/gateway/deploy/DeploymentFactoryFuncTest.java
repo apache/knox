@@ -25,6 +25,8 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.test.log.NoOpAppender;
+import org.apache.log4j.Appender;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -34,10 +36,18 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,8 +55,121 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.xml.HasXPath.hasXPath;
+import static org.junit.Assert.fail;
 
 public class DeploymentFactoryFuncTest {
+
+  @Test
+  public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
+
+    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String,String> options = new HashMap<String,String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Topology topology = new Topology();
+    topology.setName( "test-cluster" );
+    Service service = new Service();
+    service.setRole( "WEBHDFS" );
+    service.setUrl( "http://localhost:50070/test-service-url" );
+    topology.addService( service );
+
+    Provider provider = new Provider();
+    provider.setRole( "authentication" );
+    provider.setName( "generic" );
+    provider.setEnabled( true );
+    ProviderParam param = new ProviderParam();
+    param.setName( "filter" );
+    param.setValue( "org.opensource.ExistingFilter" );
+    provider.addParam( param );
+    param = new ProviderParam();
+    param.setName( "test-param-name" );
+    param.setValue( "test-param-value" );
+    provider.addParam( param );
+    topology.addProvider( provider );
+
+    WebArchive war = DeploymentFactory.createDeployment( config, topology );
+
+    Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    //dump( gateway );
+
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/name", equalTo( "generic" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.opensource.ExistingFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/name", equalTo( "test-param-name" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/value", equalTo( "test-param-value" ) ) );
+  }
+
+  @Test
+  public void testInvalidGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    File deployDir = new File( gatewayDir, "clusters" );
+    deployDir.mkdirs();
+
+    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String,String> options = new HashMap<String,String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Topology topology = new Topology();
+    topology.setName( "test-cluster" );
+    Service service = new Service();
+    service.setRole( "WEBHDFS" );
+    service.setUrl( "http://localhost:50070/test-service-url" );
+    topology.addService( service );
+
+    Provider provider = new Provider();
+    provider.setRole( "authentication" );
+    provider.setName( "generic" );
+    provider.setEnabled( true );
+    ProviderParam param; // = new ProviderParam();
+    // Missing filter param.
+    //param.setName( "filter" );
+    //param.setValue( "org.opensource.ExistingFilter" );
+    //provider.addParam( param );
+    param = new ProviderParam();
+    param.setName( "test-param-name" );
+    param.setValue( "test-param-value" );
+    provider.addParam( param );
+    topology.addProvider( provider );
+
+    Enumeration<Appender> appenders = NoOpAppender.setUp();
+    try {
+      DeploymentFactory.createDeployment( config, topology );
+      fail( "Should have throws IllegalArgumentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    } finally {
+      NoOpAppender.tearDown( appenders );
+    }
+  }
 
   @Test
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
@@ -101,13 +224,13 @@ public class DeploymentFactoryFuncTest {
     //File dir = new File( System.getProperty( "user.dir" ) );
     //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-    Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
-    assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
+    Document web = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
+    assertThat( web, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
 
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
 
@@ -170,5 +293,15 @@ public class DeploymentFactoryFuncTest {
     InputSource source = new InputSource( stream );
     return builder.parse( source );
   }
+
+//  private void dump( Document document ) throws TransformerException {
+//    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+//    StreamResult result = new StreamResult( new StringWriter() );
+//    DOMSource source = new DOMSource( document );
+//    transformer.transform( source, result );
+//    String xmlString = result.getWriter().toString();
+//    System.out.println( xmlString );
+//  }
 
 }

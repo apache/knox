@@ -98,8 +98,7 @@ public abstract class DeploymentFactory {
   // Scan through all of the loaded providers.  For each that doesn't have an existing provider in the role
   // list add it.
   private static Map<String,List<ProviderDeploymentContributor>> selectContextProviders( Topology topology ) {
-    Map<String,List<ProviderDeploymentContributor>> providers
-        = new HashMap<String,List<ProviderDeploymentContributor>>();
+    Map<String,List<ProviderDeploymentContributor>> providers = new HashMap<String,List<ProviderDeploymentContributor>>();
     collectTopologyProviders( topology, providers );
     collectDefaultProviders( providers );
     return providers;
@@ -114,6 +113,13 @@ public abstract class DeploymentFactory {
         Map<String,ProviderDeploymentContributor> nameMap = PROVIDER_CONTRIBUTOR_MAP.get( role );
         if( nameMap != null ) {
           ProviderDeploymentContributor contributor = nameMap.get( name );
+          // If there isn't a contributor with this role/name try to find a "*" contributor.
+          if( contributor == null ) {
+            nameMap = PROVIDER_CONTRIBUTOR_MAP.get( "*" );
+            if( nameMap != null ) {
+              contributor = nameMap.get( name );
+            }
+          }
           if( contributor != null ) {
             List list = defaults.get( role );
             if( list == null ) {

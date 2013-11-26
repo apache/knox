@@ -16,5 +16,6 @@
 # limitations under the License.
 ##########################################################################
 
+org.apache.hadoop.gateway.deploy.impl.GenericProviderDeploymentContributor
 org.apache.hadoop.gateway.deploy.impl.DispatchDeploymentContributor
 org.apache.hadoop.gateway.deploy.impl.WebHdfsDispatchDeploymentContributor
