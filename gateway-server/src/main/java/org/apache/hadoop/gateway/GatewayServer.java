@@ -175,9 +175,13 @@ public class GatewayServer {
       log.startingGateway();
       server = new GatewayServer( config );
       synchronized ( server ) {
-        if (services == null) {
-          services = svcs;
-        }
+        //KM[ Commented this out because is causes problems with
+        // multiple services instance used in a single test process.
+        // I'm not sure what drive including this check though.
+        //if (services == null) {
+        services = svcs;
+        //}
+        //KM]
         services.start();
         DeploymentFactory.setGatewayServices(services);
         server.start();
