@@ -35,6 +35,11 @@
             <artifactId>gateway-release</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-jersey</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>${gateway-group}</groupId>
@@ -127,14 +132,13 @@
         </dependency>
 
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-servlet</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-servlet</artifactId>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-server</artifactId>
             <scope>test</scope>
         </dependency>
 

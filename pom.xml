@@ -39,6 +39,8 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-server</module>
+        <module>gateway-server-launcher</module>
         <module>gateway-provider-rewrite</module>
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
@@ -48,6 +50,7 @@
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
+        <module>gateway-provider-jersey</module>
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
@@ -55,8 +58,6 @@
         <module>gateway-service-oozie</module>
         <module>gateway-service-webhcat</module>
         <module>gateway-service-tgs</module>
-        <module>gateway-server</module>
-        <module>gateway-server-launcher</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>gateway-release</module>
@@ -390,6 +391,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-jersey</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-tgs</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -461,6 +467,16 @@
                 <version>3.0.1</version>
             </dependency>
             -->
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>2.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>2.4</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
@@ -827,6 +843,7 @@
                 <scope>test</scope>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-server</artifactId>
@@ -840,6 +857,7 @@
                 <version>1.14</version>
                 <scope>test</scope>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>com.mycila.xmltool</groupId>

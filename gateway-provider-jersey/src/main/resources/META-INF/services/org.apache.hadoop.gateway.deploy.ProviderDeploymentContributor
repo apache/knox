@@ -16,5 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.TestJerseyServiceDeploymentContributor
-org.apache.hadoop.gateway.TestServiceDeploymentContributor
+org.apache.hadoop.gateway.jersey.JerseyDispatchDeploymentContributor

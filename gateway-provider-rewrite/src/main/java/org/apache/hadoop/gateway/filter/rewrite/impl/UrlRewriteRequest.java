@@ -121,6 +121,8 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     return new StringBuffer( getRequestURI() );
   }
 
+  //TODO: I think this method is implemented wrong based on the HttpServletRequest.getRequestURI docs.
+  // It should not include the scheme or authority parts.
   @Override
   public String getRequestURI() {
     String[] split = splitTargetUrl( getTargetUrl() );
