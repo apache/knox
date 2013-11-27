@@ -53,6 +53,12 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     return p;
   }
   
+  protected void addWebAppSecFilters( DeploymentContext context, Service service, ResourceDescriptor resource ) {
+    if (topologyContainsProviderType(context, "webappsec")) {
+      context.contributeFilter( service, resource, "webappsec", null, null );
+    }
+  }
+
   protected void addAuthenticationFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
     if (topologyContainsProviderType(context, "authentication")) {
       context.contributeFilter( service, resource, "authentication", null, null );

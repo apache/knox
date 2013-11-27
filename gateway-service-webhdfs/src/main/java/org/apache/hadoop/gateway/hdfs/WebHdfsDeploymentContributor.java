@@ -70,6 +70,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
     rootResource.pattern( WEBHDFS_EXTERNAL_PATH + "/?**" );
+    addWebAppSecFilters(context, service, rootResource);
     addAuthenticationFilter( context, service, rootResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( rootResource.createFilterParam().
@@ -82,6 +83,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
     fileResource.pattern( WEBHDFS_EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters(context, service, fileResource);
     addAuthenticationFilter( context, service, fileResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( fileResource.createFilterParam().
@@ -96,6 +98,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor homeResource = context.getGatewayDescriptor().addResource();
     homeResource.role( service.getRole() );
     homeResource.pattern( WEBHDFS_EXTERNAL_PATH + "/~?**" );
+    addWebAppSecFilters(context, service, homeResource);
     addAuthenticationFilter( context, service, homeResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( homeResource.createFilterParam().
@@ -108,6 +111,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor homeFileResource = context.getGatewayDescriptor().addResource();
     homeFileResource.role( service.getRole() );
     homeFileResource.pattern( WEBHDFS_EXTERNAL_PATH + "/~/**?**" );
+    addWebAppSecFilters(context, service, homeFileResource);
     addAuthenticationFilter( context, service, homeFileResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( homeFileResource.createFilterParam().
@@ -125,6 +129,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
     fileResource.pattern( DATANODE_EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters(context, service, fileResource);
     addAuthenticationFilter( context, service, fileResource );
     addIdentityAssertionFilter( context, service, fileResource );
     addAuthorizationFilter( context, service, fileResource );

@@ -56,6 +56,7 @@ public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBa
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role( service.getRole() );
     resource.pattern( WEBHCAT_EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters(context, service, resource);
     if (topologyContainsProviderType(context, "authentication")) {
       context.contributeFilter( service, resource, "authentication", null, null );
     }

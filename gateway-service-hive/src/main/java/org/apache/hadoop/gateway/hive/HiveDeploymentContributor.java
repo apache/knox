@@ -65,6 +65,7 @@ public class HiveDeploymentContributor extends ServiceDeploymentContributorBase 
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
     rootResource.pattern( EXTERNAL_PATH );
+    addWebAppSecFilters(context, service, rootResource);
     addAuthenticationFilter( context, service, rootResource );
     addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );

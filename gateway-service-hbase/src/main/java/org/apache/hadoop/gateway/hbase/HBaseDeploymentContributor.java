@@ -39,7 +39,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
   private static final String EXTERNAL_PATH = "/hbase";
   private static final String CLUSTER_URL_FUNCTION = "{gateway.url}";
 
-  @Override
+  @Override 
   public String getRole() {
     return "WEBHBASE";
   }
@@ -67,6 +67,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
     rootResource.pattern( EXTERNAL_PATH + "/?**" );
+    addWebAppSecFilters(context, service, rootResource);
     addAuthenticationFilter( context, service, rootResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( rootResource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/headers/outbound" ) );
@@ -77,6 +78,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor pathResource = context.getGatewayDescriptor().addResource();
     pathResource.role( service.getRole() );
     pathResource.pattern( EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters(context, service, pathResource);
     addAuthenticationFilter( context, service, pathResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( rootResource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/headers/outbound" ) );
@@ -88,6 +90,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor statusResource = context.getGatewayDescriptor().addResource();
     statusResource.role( service.getRole() );
     statusResource.pattern( EXTERNAL_PATH + "/status/cluster?**" );
+    addWebAppSecFilters(context, service, statusResource);
     addAuthenticationFilter( context, service, statusResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( statusResource.createFilterParam().name( "response.body" ).value( getQualifiedName() + "/status/outbound" ) );
@@ -99,6 +102,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor regionResource = context.getGatewayDescriptor().addResource();
     regionResource.role( service.getRole() );
     regionResource.pattern( EXTERNAL_PATH + "/*/regions?**" );
+    addWebAppSecFilters(context, service, regionResource);
     addAuthenticationFilter( context, service, regionResource );
     params = new ArrayList<FilterParamDescriptor>();
     params.add( regionResource.createFilterParam().name( "response.body" ).value( getQualifiedName() + "/regions/outbound" ) );

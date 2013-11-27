@@ -69,6 +69,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
     rootResource.role( service.getRole() );
     rootResource.pattern( EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters(context, service, rootResource);
     addAuthenticationFilter( context, service, rootResource );
     addRewriteFilter( context, service, rootResource );
     addIdentityAssertionFilter( context, service, rootResource );
@@ -78,6 +79,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor v1Resource = context.getGatewayDescriptor().addResource();
     v1Resource.role( service.getRole() );
     v1Resource.pattern( EXTERNAL_PATH + "/v1/**?**" );
+    addWebAppSecFilters(context, service, v1Resource);
     addAuthenticationFilter( context, service, v1Resource );
     addRewriteFilter( context, service, v1Resource );
     addIdentityAssertionFilter( context, service, v1Resource );
@@ -87,6 +89,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     ResourceDescriptor v2Resource = context.getGatewayDescriptor().addResource();
     v2Resource.role( service.getRole() );
     v2Resource.pattern( EXTERNAL_PATH + "/v2/**?**" );
+    addWebAppSecFilters(context, service, v2Resource);
     addAuthenticationFilter( context, service, v2Resource );
     addRewriteFilter( context, service, v2Resource );
     addIdentityAssertionFilter( context, service, v2Resource );
