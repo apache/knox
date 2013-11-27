@@ -1934,31 +1934,48 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  @Ignore
-  public void testCrossSiteRequestForgeryPrevention() throws IOException {
+  @Test
+  public void testCrossSiteRequestForgeryPreventionPUT() throws IOException {
     String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
     String username = "hdfs";
     String password = "hdfs-password";
 
-//    driver.getMock( "WEBHDFS" )
-//        .expect()
-//        .method( "PUT" )
-//        .pathInfo( "/v1" + root + "/dir" )
-//        .queryParam( "op", "MKDIRS" )
-//        .queryParam( "user.name", username )
-//        .respond()
-//        .status( HttpStatus.SC_BAD_REQUEST );
     given()
-        .log().all()
+//        .log().all()
         .auth().preemptive().basic( username, password )
 //        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
-            .log().all()
+//            .log().all()
         .statusCode( HttpStatus.SC_BAD_REQUEST )
         .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
-//    driver.reset();
-//    driver.assertComplete();
+    driver.assertComplete();
   }
 
+  @Test
+  public void testCrossSiteRequestForgeryPreventionGET() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/v1" + root + "/dir" )
+        .queryParam( "op", "LISTSTATUS" )
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_OK );
+    given()
+//        .log().all()
+        .auth().preemptive().basic( username, password )
+//        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .queryParam( "op", "LISTSTATUS" )
+        .expect()
+//            .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
+//    driver.reset();
+    driver.assertComplete();
+  }
 }

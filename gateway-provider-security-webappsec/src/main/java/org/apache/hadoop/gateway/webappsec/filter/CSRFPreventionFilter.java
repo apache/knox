@@ -48,16 +48,23 @@ public class CSRFPreventionFilter implements Filter {
     if (customMTI != null) {
       mti = customMTI;
     }
-    methodsToIgnore = new HashSet<String>(Arrays.asList(mti));
+    String[] methods = mti.split(",");
+    methodsToIgnore = new HashSet<String>();
+    for (int i = 0; i < methods.length; i++) {
+      methodsToIgnore.add(methods[i]);
+    }
+    
   }
   
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
-    if (!methodsToIgnore.contains(((HttpServletRequest) request).getMethod()) && !(((HttpServletRequest) request).getHeader(headerName) != null)) {
+    HttpServletRequest httpRequest = (HttpServletRequest)request;
+    if ( methodsToIgnore.contains( httpRequest.getMethod() ) || httpRequest.getHeader(headerName) != null ) {
+      chain.doFilter(request, response);
+    } else {
       ((HttpServletResponse)response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing Required Header for Vulnerability Protection");
     }
-    chain.doFilter(request, response);
   }
 
   /* (non-Javadoc)
