@@ -19,7 +19,6 @@ package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.xmlmatchers.transform.StringSource;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -47,6 +46,7 @@ public class MockRequestMatcher {
 
   private static final Charset UTF8 = Charset.forName( "UTF-8" );
 
+  private String from;
   private MockResponseProvider response;
   private Set<String> methods = null;
   private String pathInfo = null;
@@ -67,6 +67,11 @@ public class MockRequestMatcher {
 
   public MockResponseProvider respond() {
     return response;
+  }
+
+  public MockRequestMatcher from( String from ) {
+    this.from = from;
+    return this;
   }
 
   public MockRequestMatcher method( String... methods ) {
@@ -182,26 +187,26 @@ public class MockRequestMatcher {
     if( methods != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " is not using one of the required HTTP methods",
+              " is not using one of the expected HTTP methods",
           methods, hasItem( request.getMethod() ) );
     }
     if( pathInfo != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " does not have the required pathInfo",
+              " does not have the expected pathInfo",
           request.getPathInfo(), is( pathInfo ) );
     }
     if( requestURL != null ) {
       assertThat( 
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " does not have the required requestURL",
+              " does not have the expected requestURL",
           request.getRequestURL().toString(), is( requestURL ) );
     }
     if( headers != null ) {
       for( String name: headers.keySet() ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " does not have the required value for header " + name,
+                " does not have the expected value for header " + name,
             request.getHeader( name ), is( headers.get( name ) ) );
       }
     }
@@ -210,7 +215,7 @@ public class MockRequestMatcher {
       for( Cookie cookie: cookies ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " does not have the required cookie " + cookie,
+                " does not have the expected cookie " + cookie,
             requestCookies, hasItem( cookie ) );
       }
     }
@@ -218,19 +223,19 @@ public class MockRequestMatcher {
       String[] requestContentType = request.getContentType().split(";",2);
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " does not have the required content type",
+              " does not have the expected content type",
           requestContentType[ 0 ], is( contentType ) );
     }
     if( characterEncoding != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " does not have the required character encoding",
+              " does not have the expected character encoding",
           request.getCharacterEncoding(), equalToIgnoringCase( characterEncoding ) );
     }
     if( contentLength != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
-              " does not have the required content length",
+              " does not have the expected content length",
           request.getContentLength(), is( contentLength ) );
     }
     if( attributes != null ) {
@@ -299,17 +304,21 @@ public class MockRequestMatcher {
         byte[] bytes = IOUtils.toByteArray( request.getInputStream() );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " content does not match the required content",
+                " content does not match the expected content",
             bytes, is( entity ) );
       } else {
         String expect = new String( entity, characterEncoding );
         String actual = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " content does not match the required content",
+                " content does not match the expected content",
             actual, is( expect ) );
       }
     }
+  }
+
+  public String toString() {
+    return "from=" + from + ", pathInfo=" + pathInfo;
   }
 
   // Separate method to minimally scope the depreciation suppression.

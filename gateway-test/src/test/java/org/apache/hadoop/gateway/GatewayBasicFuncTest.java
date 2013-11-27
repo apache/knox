@@ -217,7 +217,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testBasicJsonUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicJsonUseCase";
+    String root = "/tmp/GatewayBasicFuncTest/testBasicJsonUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
     /* Create a directory.
@@ -256,7 +256,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testBasicOutboundHeaderUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicOutboundHeaderUseCase";
+    String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
@@ -293,7 +293,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testHdfsTildeUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String root = "/tmp/GatewayBasicFuncTest/testHdfsTildeUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
@@ -304,6 +304,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
+        .from( "testHdfsTildeUseCase" )
         .pathInfo( "/v1/user/hdfs" + root )
         .queryParam( "op", "DELETE" )
         .queryParam( "user.name", username )
@@ -348,7 +349,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testBasicHdfsUseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase";
+    String root = "/tmp/GatewayBasicFuncTest/testBasicHdfsUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
@@ -359,6 +360,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "WEBHDFS" )
         .expect()
         .method( "DELETE" )
+        .from( "testBasicHdfsUseCase-1" )
         .pathInfo( "/v1" + root )
         .queryParam( "op", "DELETE" )
         .queryParam( "user.name", username )
@@ -366,12 +368,13 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( HttpStatus.SC_OK );
     given()
+        //.log().all()
         .auth().preemptive().basic( username, password )
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
-        //.log().all();
+        .log().all()
         .statusCode( HttpStatus.SC_OK )
         .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
     driver.assertComplete();
@@ -601,6 +604,7 @@ public class GatewayBasicFuncTest {
     // Mock the interaction with the namenode.
     driver.getMock( "WEBHDFS" )
         .expect()
+        .from( "testBasicHdfsUseCase-1" )
         .method( "DELETE" )
         .pathInfo( "/v1" + root )
         .queryParam( "op", "DELETE" )
@@ -625,7 +629,7 @@ public class GatewayBasicFuncTest {
   // User hcat in group hcat
   @Test
   public void testPmHdfsM1UseCase() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testPmHdfdM1UseCase";
+    String root = "/tmp/GatewayBasicFuncTest/testPmHdfdM1UseCase";
     String userA = "hdfs";
     String passA = "hdfs-password";
     String userB = "mapred";
@@ -734,7 +738,7 @@ public class GatewayBasicFuncTest {
 
   @Test
   public void testJavaMapReduceViaWebHCat() throws IOException {
-    String root = "/tmp/GatewayWebHdfsFuncTest/testJavaMapReduceViaWebHCat";
+    String root = "/tmp/GatewayBasicFuncTest/testJavaMapReduceViaWebHCat";
     String user = "mapred";
     String pass = "mapred-password";
     String group = "mapred";
@@ -831,7 +835,7 @@ public class GatewayBasicFuncTest {
     driver.createFile( user, pass, null, root + "/script.hive", "777", "text/plain", "script.hive", 307, 201, 200 );
 
     // Submit the job
-    driver.submitHive( user, pass, group, root+"/script.hive", root+"/output", 200 );
+    driver.submitHive( user, pass, group, root + "/script.hive", root + "/output", 200 );
 
     // Check job status (if possible)
     // Check output (if possible)
@@ -1435,7 +1439,7 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
     .contentType( ContentType.JSON.toString() )
-    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path  );
+    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path );
     
     given()
     .auth().preemptive().basic( username, password )
@@ -1455,11 +1459,11 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .contentType( "application/x-protobuf" )
-    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path  );
+    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path );
 
     given()
     .auth().preemptive().basic( username, password )
-    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( "application/x-protobuf" )
@@ -1698,6 +1702,7 @@ public class GatewayBasicFuncTest {
     
     driver.getMock( "WEBHBASE" )
     .expect()
+    .from( "testHBaseDeleteDataFromTable-1" )
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId )
     .respond()
@@ -1705,7 +1710,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
-    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId );
@@ -1713,6 +1718,7 @@ public class GatewayBasicFuncTest {
     
     driver.getMock( "WEBHBASE" )
     .expect()
+    .from( "testHBaseDeleteDataFromTable-2" )
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId )
     .respond()
@@ -1720,7 +1726,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
-    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
@@ -1728,6 +1734,7 @@ public class GatewayBasicFuncTest {
 
     driver.getMock( "WEBHBASE" )
     .expect()
+    .from( "testHBaseDeleteDataFromTable-3" )
     .method( "DELETE" )
     .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId )
     .respond()
@@ -1735,7 +1742,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
-    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
@@ -1912,6 +1919,7 @@ public class GatewayBasicFuncTest {
     //Delete scanner
     driver.getMock( "WEBHBASE" )
     .expect()
+    .from( "testHBaseUseScanner" )
     .method( "DELETE" )
     .pathInfo( scannerPath + "/" + scannerId )
     .respond()

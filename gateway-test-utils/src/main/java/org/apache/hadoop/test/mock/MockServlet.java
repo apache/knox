@@ -24,8 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Queue;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 
 public class MockServlet extends HttpServlet {
 
@@ -40,7 +39,9 @@ public class MockServlet extends HttpServlet {
   @Override
   protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
     try {
-      assertThat( "Mock servlet " + name + " has no available interactions.", interactions.isEmpty(), is( false ) );
+      if( interactions.isEmpty() ) {
+        fail( "Mock servlet " + name + " received a request but the expected interaction queue is empty." );
+      }
       MockInteraction interaction = interactions.remove();
       interaction.expect().match( request );
       interaction.respond().apply( response );
