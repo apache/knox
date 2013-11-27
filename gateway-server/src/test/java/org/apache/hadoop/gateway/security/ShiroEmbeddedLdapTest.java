@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.security;
 
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.shiro.SecurityUtils;
@@ -35,6 +37,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.EnumSet;
@@ -49,21 +52,24 @@ public class ShiroEmbeddedLdapTest {
 
   private static Logger log = LoggerFactory.getLogger( ShiroEmbeddedLdapTest.class );
 
-  private static EmbeddedApacheDirectoryServer ldap;
+  private static SimpleLdapDirectoryServer ldap;
 
   private Server jetty;
 
   @BeforeClass
   public static void setupSuite() throws Exception{
-    findFreePort();
-    ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, 33389 );
+    int port = findFreePort();
+    TcpTransport transport = new TcpTransport( port );
+    ldap = new SimpleLdapDirectoryServer(
+        "dc=hadoop,dc=apache,dc=org",
+        new File( ClassLoader.getSystemResource( "users.ldif" ).toURI() ),
+        transport );
     ldap.start();
-    ldap.loadLdif( ClassLoader.getSystemResource( "users.ldif" ) );
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    ldap.stop();
+    ldap.stop( true );
   }
 
   @Before

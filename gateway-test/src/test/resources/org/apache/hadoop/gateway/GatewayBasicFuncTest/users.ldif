@@ -18,15 +18,21 @@
 
 version: 1
 
-dn: ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:organizationalUnit
-ou: groups
+dn: dc=hadoop,dc=apache,dc=org
+objectclass: organization
+objectclass: dcObject
+o: Hadoop
+dc: hadoop
 
 dn: ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
 ou: people
+
+dn: ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: groups
 
 dn: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top

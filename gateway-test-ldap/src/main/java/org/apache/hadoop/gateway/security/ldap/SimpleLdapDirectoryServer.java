@@ -1,0 +1,76 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.hadoop.gateway.security.ldap;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.directory.server.core.api.CoreSession;
+import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.partition.Partition;
+import org.apache.directory.server.core.factory.DirectoryServiceFactory;
+import org.apache.directory.server.ldap.LdapServer;
+import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
+import org.apache.directory.server.protocol.shared.transport.Transport;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.UUID;
+
+public class SimpleLdapDirectoryServer {
+
+  private DirectoryServiceFactory factory;
+
+  private DirectoryService service;
+
+  private LdapServer server;
+
+  public SimpleLdapDirectoryServer( String rootDn, File usersLdif, Transport... transports ) throws Exception {
+    if( !usersLdif.exists() ) {
+      throw new FileNotFoundException( usersLdif.getAbsolutePath() );
+    }
+
+    factory = new SimpleDirectoryServiceFactory();
+    factory.init( UUID.randomUUID().toString() );
+    service = factory.getDirectoryService();
+
+    Partition partition = factory.getPartitionFactory().createPartition(
+        service.getSchemaManager(), "users", rootDn, 500, service.getInstanceLayout().getInstanceDirectory() );
+    service.addPartition( partition );
+
+    CoreSession session = service.getAdminSession();
+    LdifFileLoader lfl = new LdifFileLoader( session, usersLdif, null );
+    lfl.execute();
+
+    server = new LdapServer();
+    server.setTransports( transports );
+    server.setDirectoryService( service );
+  }
+
+  public void start() throws Exception {
+    service.startup();
+    server.start();
+  }
+
+  public void stop( boolean clean ) throws Exception {
+    server.stop();
+    service.shutdown();
+    if( clean ) {
+      FileUtils.deleteDirectory( service.getInstanceLayout().getInstanceDirectory() );
+    }
+  }
+
+}

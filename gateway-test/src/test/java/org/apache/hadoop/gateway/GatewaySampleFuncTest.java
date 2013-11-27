@@ -19,12 +19,11 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.commons.io.FileUtils;
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -62,7 +61,8 @@ public class GatewaySampleFuncTest {
   public static GatewayServer gateway;
   public static String gatewayUrl;
   public static String clusterUrl;
-  public static EmbeddedApacheDirectoryServer ldap;
+  public static SimpleLdapDirectoryServer ldap;
+  public static TcpTransport ldapTransport;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -74,7 +74,7 @@ public class GatewaySampleFuncTest {
   @AfterClass
   public static void cleanupSuite() throws Exception {
     gateway.stop();
-    ldap.stop();
+    ldap.stop( true );
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
   }
@@ -82,10 +82,10 @@ public class GatewaySampleFuncTest {
   public static void setupLdap() throws Exception {
     URL usersUrl = getResourceUrl( "users.ldif" );
     int port = findFreePort();
-    ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, port );
+    ldapTransport = new TcpTransport( port );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    ldap.loadLdif( usersUrl );
-    LOG.info( "LDAP port = " + ldap.getTransport().getPort() );
+    LOG.info( "LDAP port = " + ldapTransport.getPort() );
   }
 
   public static void setupGateway() throws IOException {
@@ -140,7 +140,7 @@ public class GatewaySampleFuncTest {
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldap.getTransport().getPort() ).gotoParent()
+        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getPort() ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
         .addTag( "value" ).addText( "simple" ).gotoParent()

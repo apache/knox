@@ -1,4 +1,3 @@
-##########################################################################
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -14,42 +13,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-##########################################################################
 
 version: 1
 
-dn: ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:organizationalUnit
-ou: groups
+dn: dc=hadoop,dc=apache,dc=org
+objectclass: organization
+objectclass: dcObject
+o: Hadoop at Apache.org
+dc: hadoop
+description: Makers of Hadoop
 
+# entry for a sample people container
+# please replace with site specific values
 dn: ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
 ou: people
 
-dn: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
+# entry for a sample end user
+# please replace with site specific values
+dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: CraigWalls
-sn: Walls
-uid: allowedUser
-userPassword:password
+cn: Guest
+sn: User
+uid: guest
+userPassword:guest-password
 
-dn: uid=deniedUser,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: JohnSmith
-sn: Smith
-uid: deniedUser
-userPassword:password
-
-dn: cn=admin,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:groupOfNames
-cn: admin
-member: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org

@@ -16,6 +16,13 @@
 
 version: 1
 
+# Please replace with site specific values
+dn: dc=hadoop,dc=apache,dc=org
+objectclass: organization
+objectclass: dcObject
+o: Hadoop
+dc: hadoop
+
 # entry for a sample people container
 # please replace with site specific values
 dn: ou=people,dc=hadoop,dc=apache,dc=org

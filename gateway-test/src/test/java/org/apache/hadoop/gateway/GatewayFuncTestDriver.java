@@ -22,8 +22,9 @@ import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer;
+import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.test.mock.MockServer;
@@ -83,7 +84,8 @@ public class GatewayFuncTestDriver {
 
   public Class<?> resourceBaseClass;
   public Map<String,Service> services = new HashMap<String,Service>();
-  public EmbeddedApacheDirectoryServer ldap;
+  public SimpleLdapDirectoryServer ldap;
+  public TcpTransport ldapTransport;
   public boolean useGateway;
   public GatewayServer gateway;
   public GatewayConfig config;
@@ -104,9 +106,9 @@ public class GatewayFuncTestDriver {
    */
   public int setupLdap( int port ) throws Exception {
     URL usersUrl = getResourceUrl( "users.ldif" );
-    ldap = new EmbeddedApacheDirectoryServer( "dc=hadoop,dc=apache,dc=org", null, port );
+    ldapTransport = new TcpTransport( port );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    ldap.loadLdif( usersUrl );
     log.info( "LDAP port = " + port );
     return port;
   }
@@ -165,7 +167,7 @@ public class GatewayFuncTestDriver {
     }
     services.clear();
 
-    ldap.stop();
+    ldap.stop( true );
   }
 
   public boolean isUseGateway() {
@@ -210,7 +212,7 @@ public class GatewayFuncTestDriver {
   }
 
   public String getLdapUrl() {
-    return "ldap://localhost:" + ldap.getTransport().getPort();
+    return "ldap://localhost:" + ldapTransport.getPort();
   }
 
   private static class Service {

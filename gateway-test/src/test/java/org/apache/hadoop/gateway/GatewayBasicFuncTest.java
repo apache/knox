@@ -246,7 +246,7 @@ public class GatewayBasicFuncTest {
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
-            //.log().all();
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
@@ -277,7 +277,7 @@ public class GatewayBasicFuncTest {
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .expect()
-            //.log().ifError()
+        //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     String location = response.getHeader( "Location" );
