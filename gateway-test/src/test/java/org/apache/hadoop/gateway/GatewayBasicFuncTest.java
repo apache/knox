@@ -150,6 +150,13 @@ public class GatewayBasicFuncTest {
         .addRoot( "topology" )
           .addTag( "gateway" )
             .addTag( "provider" )
+              .addTag( "role" ).addText( "webappsec" )
+              .addTag( "name" ).addText( "WebAppSec" )
+              .addTag( "enabled" ).addText( "true" )
+              .addTag( "param" )
+                .addTag( "name" ).addText( "csrf.enabled" )
+                .addTag( "value" ).addText( "true" ).gotoParent().gotoParent()
+            .addTag( "provider" )
               .addTag( "role" ).addText( "authentication" )
               .addTag( "enabled" ).addText( "true" )
               .addTag( "param" )
@@ -204,7 +211,7 @@ public class GatewayBasicFuncTest {
             .addTag( "role" ).addText( "WEBHBASE" )
             .addTag( "url" ).addText( driver.getRealUrl( "WEBHBASE" ) )
         .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
+//     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
   }
 
@@ -236,6 +243,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
             //.log().all();
@@ -266,6 +274,7 @@ public class GatewayBasicFuncTest {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .expect()
             //.log().ifError()
@@ -303,6 +312,7 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK );
     given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
@@ -324,6 +334,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
             //.log().all();
@@ -356,6 +367,7 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK );
     given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
@@ -387,6 +399,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
         //.log().all();
@@ -409,6 +422,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().ifError()
@@ -421,6 +435,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, "invalid-password" )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().ifError()
@@ -432,6 +447,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( "hdfs-user", "hdfs-password" )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().ifError()
@@ -443,6 +459,7 @@ public class GatewayBasicFuncTest {
     given()
       //.log().all()
       .auth().preemptive().basic( "mapred-user", "mapred-password" )
+      .header("X-XSRF-Header", "jksdhfkhdsf")
       .queryParam( "op", "LISTSTATUS" )
       .expect()
       //.log().ifError()
@@ -491,6 +508,7 @@ public class GatewayBasicFuncTest {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .expect()
         //.log().ifError()
@@ -508,6 +526,7 @@ public class GatewayBasicFuncTest {
     response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "test.txt" ) )
         .contentType( "text/plain" )
         .expect()
@@ -559,6 +578,7 @@ public class GatewayBasicFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "OPEN" )
         .expect()
         //.log().ifError()
@@ -590,6 +610,7 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK );
     given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
@@ -685,6 +706,7 @@ public class GatewayBasicFuncTest {
       Response response = given()
           //.log().all()
           .auth().preemptive().basic( userA, "invalid-password" )
+          .header("X-XSRF-Header", "jksdhfkhdsf")
           .queryParam( "op", "OPEN" )
           .expect()
           //.log().all()
@@ -929,6 +951,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     Response response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/open-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -953,6 +976,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -976,6 +1000,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-1-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -999,6 +1024,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1022,6 +1048,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-2-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1045,6 +1072,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1068,6 +1096,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-3-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1091,6 +1120,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1114,6 +1144,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-4-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1137,6 +1168,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-create-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1160,6 +1192,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-5-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1183,6 +1216,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/execute-select-from-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1206,6 +1240,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/get-result-set-metadata-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1229,6 +1264,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/fetch-results-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1252,6 +1288,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-operation-6-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1275,6 +1312,7 @@ public class GatewayBasicFuncTest {
         .contentType( "application/x-thrift" );
     response = given()
         .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .content( driver.getResourceBytes( "hive/close-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .expect()
@@ -1304,6 +1342,7 @@ public class GatewayBasicFuncTest {
     
     Response response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1328,6 +1367,7 @@ public class GatewayBasicFuncTest {
     
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1350,6 +1390,7 @@ public class GatewayBasicFuncTest {
     
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1378,6 +1419,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.XML )
@@ -1397,6 +1439,7 @@ public class GatewayBasicFuncTest {
     
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.JSON )
@@ -1416,6 +1459,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( "application/x-protobuf" )
@@ -1444,6 +1488,7 @@ public class GatewayBasicFuncTest {
 
     Response response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1468,6 +1513,7 @@ public class GatewayBasicFuncTest {
 
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1490,6 +1536,7 @@ public class GatewayBasicFuncTest {
 
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1524,6 +1571,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     //.header( "Content-Type", ContentType.XML.toString() )
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
     .contentType( ContentType.XML.toString() )
@@ -1543,6 +1591,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     //.header( "Content-Type", ContentType.JSON.toString() )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
     .contentType( ContentType.JSON.toString() )
@@ -1563,6 +1612,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     //.header( "Content-Type", "application/x-protobuf" )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .contentType( "application/x-protobuf" )
@@ -1585,6 +1635,7 @@ public class GatewayBasicFuncTest {
 
     given()
       .auth().preemptive().basic( username, password )
+      .header("X-XSRF-Header", "jksdhfkhdsf")
       //.header( "Content-Type", ContentType.XML.toString() )
       .content( driver.getResourceBytes( resourceName + ".xml" ) )
       .contentType( ContentType.XML.toString() )
@@ -1604,6 +1655,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     //.header( "Content-Type", ContentType.JSON.toString() )
     .content( driver.getResourceBytes( resourceName + ".json" ) )
     .contentType( ContentType.JSON.toString() )
@@ -1624,6 +1676,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     //.header( "Content-Type", "application/x-protobuf" )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .contentType( "application/x-protobuf" )
@@ -1652,6 +1705,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId );
@@ -1666,6 +1720,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
@@ -1680,6 +1735,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
@@ -1711,6 +1767,7 @@ public class GatewayBasicFuncTest {
 
     Response response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1735,6 +1792,7 @@ public class GatewayBasicFuncTest {
 
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1759,6 +1817,7 @@ public class GatewayBasicFuncTest {
 
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1781,6 +1840,7 @@ public class GatewayBasicFuncTest {
 
     response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1813,6 +1873,7 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Content-Type", ContentType.XML.toString() )
     .content( driver.getResourceBytes( scannerDefinitionResourceName + ".xml" ) )
     .expect()
@@ -1835,6 +1896,7 @@ public class GatewayBasicFuncTest {
 
     Response response = given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Accept", ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
@@ -1857,10 +1919,38 @@ public class GatewayBasicFuncTest {
 
     given()
     .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
     .when().delete( driver.getUrl( "WEBHBASE" ) + scannerPath + "/" + scannerId );
     driver.assertComplete();
+  }
+
+  @Ignore
+  public void testCrossSiteRequestForgeryPrevention() throws IOException {
+    String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+//    driver.getMock( "WEBHDFS" )
+//        .expect()
+//        .method( "PUT" )
+//        .pathInfo( "/v1" + root + "/dir" )
+//        .queryParam( "op", "MKDIRS" )
+//        .queryParam( "user.name", username )
+//        .respond()
+//        .status( HttpStatus.SC_BAD_REQUEST );
+    given()
+        .log().all()
+        .auth().preemptive().basic( username, password )
+//        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .queryParam( "op", "MKDIRS" )
+        .expect()
+            .log().all()
+        .statusCode( HttpStatus.SC_BAD_REQUEST )
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
+//    driver.reset();
+//    driver.assertComplete();
   }
 
 }

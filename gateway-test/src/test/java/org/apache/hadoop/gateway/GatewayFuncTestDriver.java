@@ -300,6 +300,7 @@ public class GatewayFuncTestDriver {
         //.log().headers()
         //.log().parameters()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .queryParam( "permission", permsOctal )
         .expect()
@@ -339,6 +340,7 @@ public class GatewayFuncTestDriver {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .contentType( contentType )
         .content( getResourceBytes( resource ) )
         .expect()
@@ -399,6 +401,7 @@ public class GatewayFuncTestDriver {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "OPEN" )
         .expect()
         //.log().all()
@@ -426,6 +429,7 @@ public class GatewayFuncTestDriver {
     given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "SETOWNER" )
         .queryParam( "owner", owner )
         .queryParam( "group", group )
@@ -449,6 +453,7 @@ public class GatewayFuncTestDriver {
     given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "SETPERMISSION" )
         .queryParam( "permission", permsOctal )
         .expect()
@@ -493,6 +498,7 @@ public class GatewayFuncTestDriver {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .queryParam( "overwrite", "true" )
         .content( getResourceBytes( resource ) )
@@ -533,6 +539,7 @@ public class GatewayFuncTestDriver {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "CREATE" )
         .queryParam( "overwrite", "true" )
         .contentType( contentType )
@@ -555,6 +562,7 @@ public class GatewayFuncTestDriver {
     given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", recursive )
         .expect()
@@ -580,6 +588,7 @@ public class GatewayFuncTestDriver {
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .queryParam( "permission", permsOctal )
         .expect()
@@ -630,6 +639,7 @@ public class GatewayFuncTestDriver {
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .formParam( "user.name", user )
         .formParam( "jar", jar )    //"/user/hdfs/test/hadoop-examples.jar" )
         .formParam( "class", main ) //"org.apache.org.apache.hadoop.examples.WordCount" )
@@ -657,6 +667,7 @@ public class GatewayFuncTestDriver {
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
 //BUG: The identity asserter needs to check for this too.
         .formParam( "user.name", user )
         .formParam( "group", group )
@@ -690,6 +701,7 @@ public class GatewayFuncTestDriver {
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .formParam( "user.name", user )
         .formParam( "group", group )
         .formParam( "group", group )
@@ -722,6 +734,7 @@ public class GatewayFuncTestDriver {
     String status = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .pathParam( "job", job )
         .expect()
         //.log().all()
@@ -743,6 +756,7 @@ public class GatewayFuncTestDriver {
   public void oozieGetVersions( String user, String password ) throws IOException {
     given()
         .auth().preemptive().basic( user, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
         .expect()
         .statusCode( 200 )
         .body( "", hasItems( 0, 1 ) )
@@ -844,6 +858,7 @@ TODO
 //    post.getParams().setParameter( "action", "start" );
     StringEntity entity = new StringEntity( request, ContentType.create( "application/xml", "UTF-8" ) );
     post.setEntity( entity );
+    post.setHeader("X-XSRF-Header", "ksdjfhdsjkfhds");
     HttpResponse response = client.execute( targetHost, post, localContext );
     assertThat( response.getStatusLine().getStatusCode(), is( status ) );
     String json = EntityUtils.toString( response.getEntity() );
@@ -930,6 +945,7 @@ TODO
     localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
 
     HttpGet request = new HttpGet( url.toURI() );
+    request.setHeader("X-XSRF-Header", "ksdhfjkhdsjkf");
     HttpResponse response = client.execute( targetHost, request, localContext );
     assertThat( response.getStatusLine().getStatusCode(), is( status ) );
     String json = EntityUtils.toString( response.getEntity() );
