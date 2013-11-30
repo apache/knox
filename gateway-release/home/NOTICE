@@ -1,9 +1,3 @@
-=========================================================================
-==  NOTICE file corresponding to the section 4 d of                    ==
-==  the Apache License, Version 2.0,                                   ==
-==  in this case for the Apache Knox distribution.                     ==
-=========================================================================
-
 Apache Knox
 Copyright 2012-2013 The Apache Software Foundation
 
@@ -11,32 +5,32 @@ This product includes software developed by
 The Apache Software Foundation (http://www.apache.org/).
 
 Language Recognition and parsing support support is provided by the
-ANTLRv2 library package, which is open source software developed at
+ANTLRv2 library package, which is open source software developed by
 GitHub (https://github.com/antlr/antlr).  The original software is
 available from http://www.antlr2.org/
 
 Bytecode manipulation and analysis support is provided by the
-ASM library package, which is open source software developed at
+ASM library package, which is open source software developed by
 the OW2 Forge (http://forge.ow2.org/projects/asm).  The original
 software is available from http://asm.ow2.org/
 
 Cryptographic support is provided the Bouncy Castle library package,
-which is open source software developed at BouncyCastle.org
+which is open source software developed by BouncyCastle.org
 :pserver:anonymous@cvs.bouncycastle.org:/home/users/bouncy/cvsroot
 The original software is available from http://www.bouncycastle.org/
 
 HTML parsing support is provided by the Jerico library package,
-which is open source software developed at
+which is open source software developed by
 SourceForge (http://sourceforge.net/projects/jerichohtml/)
 The original software is available from http://jericho.htmlparser.net/
 
 Console input support is provided by the JLine library package,
-which is open source software developed at
+which is open source software developed by
 GitHub (https://github.com/jline).  The original software is
 available from http://jline.sourceforge.net/
 
 Logging Facade API support is provided by the Simple Logging Facade for
-Java (SL4J) library package, which is open source software developed at
+Java (SL4J) library package, which is open source software developed by
 GitHub (https://github.com/qos-ch/slf4j/).  The original software is
 available from http://www.slf4j.org/
 
@@ -44,7 +38,7 @@ available from http://www.slf4j.org/
 Jetty
 ------------------------------------------------------------------------------
 Web server and javax.servlet container support is provided by the
-Jetty library package, which is open source software developed at
+Jetty library package, which is open source software developed by
 Eclipse http://git.eclipse.org/c/jetty/org.eclipse.jetty.project.git
 The original software is available from http://www.eclipse.org/jetty/
 
@@ -70,13 +64,13 @@ ApacheDS
 Safehaus JUG
 Copyright 2005 Safehaus
 
-This product includes software developed at
+This product includes software developed by
 Safehaus (http://docs.safehaus.org/display/HAUS/Home).
 
 OpenSymphony Quartz
 Copyright 2004-2005 OpenSymphony
 
-This product includes software developed at
+This product includes software developed by
 OpenSymphony (http://www.opensymphony.com/).
 
 This product also includes software developed by
