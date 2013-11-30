@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
@@ -64,31 +65,40 @@ public class AccessTokenFederationFilter implements Filter {
       JWTToken token = JWTToken.parseToken(wireToken);
       boolean verified = authority.verifyToken(token);
       if (verified) {
-        // TODO: validate expiration
-        // TODO: confirm that audience matches intended target
-        if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase()) != -1) {
-          // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
-          Subject subject = createSubjectFromToken(token);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        long expires = Long.parseLong(token.getExpires());
+        if (expires > System.currentTimeMillis()) {
+          if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase()) != -1) {
+            Subject subject = createSubjectFromToken(token);
+            continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+          }
+          else {
+            log.failedToValidateAudience();
+            sendUnauthorized(response);
+            return; // break the chain
+          }
         }
         else {
-          log.failedToValidateAudience();
-          ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-          return; //break filter chain
+          log.tokenHasExpired();
+          sendUnauthorized(response);
+          return; // break the chain
         }
       }
       else {
         log.failedToVerifyTokenSignature();
-        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-        return; //break filter chain
+        sendUnauthorized(response);
+        return; // break the chain
       }
     }
     else {
-      // no token provided in header
-      // TODO: may have to check cookie and url as well before sending error
-      ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-      return; //break filter chain
+      log.missingBearerToken();
+      sendUnauthorized(response);
+      return; // break the chain
     }
+  }
+
+  private void sendUnauthorized(ServletResponse response) throws IOException {
+    ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    return;
   }
   
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
@@ -123,18 +133,13 @@ public class AccessTokenFederationFilter implements Filter {
 
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<Principal>();
-    Principal p = new Principal() {
-      @Override
-      public String getName() {
-        return principal;
-      }
-    };
+    Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
     
 //        The newly constructed Sets check whether this Subject has been set read-only 
 //        before permitting subsequent modifications. The newly created Sets also prevent 
 //        illegal modifications by ensuring that callers have sufficient permissions.
- //
+//
 //        To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
 //        To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
 //        To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").

@@ -132,7 +132,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
         return principalName;
       }
     };
-    JWTToken token = authority.issueToken(p, serviceName, "RS256");
+    JWTToken token = authority.issueToken(p, serviceName, "RS256", expires);
     accessToken = token.toString();
     
     return accessToken;

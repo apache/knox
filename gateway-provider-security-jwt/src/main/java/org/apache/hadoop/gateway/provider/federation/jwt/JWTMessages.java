@@ -28,4 +28,10 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Failed to verify the token signature." )
   void failedToVerifyTokenSignature();
+
+  @Message( level = MessageLevel.INFO, text = "Access token has expired; a new one must be acquired." )
+  void tokenHasExpired();
+
+  @Message( level = MessageLevel.INFO, text = "Expected Bearer token is missing." )
+  void missingBearerToken();
 }

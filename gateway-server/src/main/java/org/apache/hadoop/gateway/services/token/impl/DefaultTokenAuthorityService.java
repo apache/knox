@@ -50,11 +50,15 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return issueToken(p, null, algorithm);
   }
   
+  public JWTToken issueToken(Principal p, String audience, String algorithm) {
+    return issueToken(p, audience, algorithm, -1);
+  }
+  
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Principal p, String audience, String algorithm) {
+  public JWTToken issueToken(Principal p, String audience, String algorithm, long expires) {
     String[] claimArray = new String[4];
     claimArray[0] = "HSSO";
     claimArray[1] = p.getName();
@@ -63,7 +67,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     }
     claimArray[2] = audience;
     // TODO: make the validity period configurable
-    claimArray[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    if (expires == -1) {
+      claimArray[3] = Long.toString( ( System.currentTimeMillis() ) + 30000);
+    }
+    else {
+      claimArray[3] = String.valueOf(expires);
+    }
 
     JWTToken token = null;
     if ("RS256".equals(algorithm)) {

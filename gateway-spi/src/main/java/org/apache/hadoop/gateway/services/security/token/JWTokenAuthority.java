@@ -25,12 +25,15 @@ import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 public interface JWTokenAuthority {
 
-  public abstract JWTToken issueToken(Subject subject, String algorithm);
+  JWTToken issueToken(Subject subject, String algorithm);
 
-  public abstract JWTToken issueToken(Principal p, String algorithm);
+  JWTToken issueToken(Principal p, String algorithm);
 
-  public abstract JWTToken issueToken(Principal p, String audience,
+  JWTToken issueToken(Principal p, String audience,
       String algorithm);
 
-  public abstract boolean verifyToken(JWTToken token);
+  boolean verifyToken(JWTToken token);
+
+  JWTToken issueToken(Principal p, String audience, String algorithm,
+      long expires);
 }
