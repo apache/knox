@@ -24,6 +24,7 @@ import org.apache.directory.server.core.api.partition.Partition;
 import org.apache.directory.server.core.factory.DirectoryServiceFactory;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
 
 import java.io.File;
@@ -71,6 +72,26 @@ public class SimpleLdapDirectoryServer {
     if( clean ) {
       FileUtils.deleteDirectory( service.getInstanceLayout().getInstanceDirectory() );
     }
+  }
+
+  public static void main( String[] args ) throws Exception {
+    SimpleLdapDirectoryServer ldap;
+
+    File file;
+    if ( args.length < 1 ) {
+      file = new File( "conf/users.ldif" );
+    } else {
+      File dir = new File( args[0] );
+      if( !dir.exists() || !dir.isDirectory() ) {
+        throw new FileNotFoundException( dir.getAbsolutePath() );
+      }
+      file = new File( dir, "users.ldif" );
+    }
+    if( !file.exists() || !file.canRead() ) {
+      throw new FileNotFoundException( file.getAbsolutePath() );
+    }
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", file, new TcpTransport( 33389 ) );
+    ldap.start();
   }
 
 }
