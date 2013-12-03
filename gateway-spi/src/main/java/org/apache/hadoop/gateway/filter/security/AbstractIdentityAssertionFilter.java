@@ -42,6 +42,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.ServletException;
 
+import java.util.Set;
+
 public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
@@ -92,7 +94,11 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
     // an impersonatedPrincipal and/or mapped group principals
     boolean impersonationNeeded = false;
     boolean groupsMapped = false;
+    
+    // look up the current Java Subject and assosciated group principals
     Subject currentSubject = Subject.getSubject(AccessController.getContext());
+    Set<?> currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
+    
     primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
     if (primaryPrincipal != null) {
       if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
@@ -106,12 +112,20 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
       // TODO: log as appropriate
       primaryPrincipal = new PrimaryPrincipal(((HttpServletRequest) request).getUserPrincipal().getName());
     }
-    groupsMapped = areGroupsMappedForPrincipal(mappedPrincipalName);
+    
+    groupsMapped = areGroupsMappedForPrincipal(mappedPrincipalName) || !currentGroups.isEmpty();
     
     if (impersonationNeeded || groupsMapped) {
       // gonna need a new subject and doAs
       subject = new Subject();
-      subject.getPrincipals().add(primaryPrincipal);
+      Set<Principal> principals = subject.getPrincipals();
+      principals.add(primaryPrincipal);
+      
+      // map group principals from current Subject into newly created Subject
+      for (Object obj : currentGroups) {
+        principals.add((Principal)obj);
+      }
+      
       if (impersonationNeeded) {
         impersonationPrincipal = new ImpersonatedPrincipal(mappedPrincipalName);
         subject.getPrincipals().add(impersonationPrincipal);
