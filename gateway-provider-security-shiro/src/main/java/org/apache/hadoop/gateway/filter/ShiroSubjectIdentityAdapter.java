@@ -17,15 +17,6 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
@@ -33,9 +24,21 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
+import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 
 public class ShiroSubjectIdentityAdapter implements Filter {
+  
+  private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -46,7 +49,14 @@ public class ShiroSubjectIdentityAdapter implements Filter {
 
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
       throws IOException, ServletException {
-    final String principalName = (String) SecurityUtils.getSubject().getPrincipal();
+    
+    Subject subject = SecurityUtils.getSubject();
+    
+    // trigger call to shiro authorization realm
+    // we use shiro authorization realm to look up groups
+    subject.hasRole("authenticatedUser");
+    
+    final String principalName = (String) subject.getPrincipal();
 
     CallableChain callableChain = new CallableChain(request, response, chain);
     SecurityUtils.getSubject().execute(callableChain);
@@ -78,6 +88,15 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       Set<Principal> principals = new HashSet<Principal>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
+      
+      // map ldap groups saved in session to Java Subject GroupPrincipal(s)
+      if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
+        Set<String> userRoles = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
+        for (String userRole : userRoles) {
+          Principal gp = new GroupPrincipal(userRole);
+          principals.add(gp);
+        }
+      }
       
       // TODO: add groups through extended JndiLdapRealm implementation once Jira KNOX-4 is resolved
       
