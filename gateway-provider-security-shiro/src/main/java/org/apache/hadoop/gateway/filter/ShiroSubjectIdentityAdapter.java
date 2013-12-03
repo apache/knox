@@ -35,7 +35,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 
-public class PostAuthenticationFilter implements Filter {
+public class ShiroSubjectIdentityAdapter implements Filter {
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {

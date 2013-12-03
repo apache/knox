@@ -244,7 +244,7 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.PostAuthenticationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.ShiroSubjectIdentityAdapter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
@@ -270,7 +270,7 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.PostAuthenticationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.hadoop.gateway.filter.ShiroSubjectIdentityAdapter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );

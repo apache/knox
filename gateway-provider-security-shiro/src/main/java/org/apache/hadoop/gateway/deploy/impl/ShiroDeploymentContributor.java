@@ -34,7 +34,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
   private static final String SHIRO_FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
-  private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.PostAuthenticationFilter";
+  private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ShiroSubjectIdentityAdapter";
   private static final String COOKIE_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
   private static final String SESSION_TIMEOUT = "sessionTimeout";
   private static final int DEFAULT_SESSION_TIMEOUT = 30; // 30min
