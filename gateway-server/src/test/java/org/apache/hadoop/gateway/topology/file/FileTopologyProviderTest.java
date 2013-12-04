@@ -17,20 +17,11 @@
  */
 package org.apache.hadoop.gateway.topology.file;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.vfs2.FileChangeEvent;
-import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.impl.DefaultFileMonitor;
-import org.apache.hadoop.gateway.topology.Topology;
-import org.apache.hadoop.gateway.topology.TopologyEvent;
-import org.apache.hadoop.gateway.topology.TopologyListener;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,13 +32,25 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.vfs2.FileChangeEvent;
+import org.apache.commons.vfs2.FileListener;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.impl.DefaultFileMonitor;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.ProviderParam;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.TopologyEvent;
+import org.apache.hadoop.gateway.topology.TopologyListener;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FileTopologyProviderTest {
 
@@ -217,6 +220,36 @@ public class FileTopologyProviderTest {
     assertThat( topology.getTimestamp(), is( 1L ) );
   }
 
+  @Test
+  public void testProviderParamsOrderIsPreserved() {
+    
+    Provider provider = new Provider();
+    String names[] = {"ldapRealm=", 
+        "ldapContextFactory", 
+        "ldapRealm.contextFactory", 
+        "ldapGroupRealm", 
+        "ldapGroupRealm.contextFactory",
+        "ldapGroupRealm.contextFactory.systemAuthenticationMechanism"
+    };
+    
+    ProviderParam param = null;
+    for (String name : names) {
+      param = new ProviderParam();
+      param.setName(name);
+      param.setValue(name);
+      provider.addParam(param);
+      
+    }
+    Map<String, String> params = provider.getParams();
+    Set<String> keySet = params.keySet();
+    Iterator<String> iter = keySet.iterator();
+    int i = 0;
+    while (iter.hasNext()) {
+      assertTrue(iter.next().equals(names[i++]));
+    }
+
+  }
+  
   private class FileListenerDelegator implements FileListener {
     private FileListener delegate;
 

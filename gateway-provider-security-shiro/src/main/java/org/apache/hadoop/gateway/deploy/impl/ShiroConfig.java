@@ -19,12 +19,12 @@ package org.apache.hadoop.gateway.deploy.impl;
 
 import org.apache.hadoop.gateway.topology.Provider;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class ShiroConfig {
-  private Map<String, Map<String, String>> sections = new HashMap<String, Map<String, String>>();
+  private Map<String, Map<String, String>> sections = new LinkedHashMap<String, Map<String, String>>();
   
   public ShiroConfig(Provider provider) {
     Map<String, String> params = provider.getParams();
@@ -43,7 +43,7 @@ public class ShiroConfig {
   private void addNameValueToSection(String name, String value, String sectionName) {
     Map<String, String> section = sections.get(sectionName);
     if (section == null) {
-      section = new HashMap<String, String>();
+      section = new LinkedHashMap<String, String>();
       sections.put(sectionName, section);
     }
     section.put(name, value);
