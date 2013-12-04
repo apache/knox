@@ -117,7 +117,7 @@
 
     <service>
         <role>HIVE</role>
-        <url>http://localhost:10000</url>
+        <url>http://localhost:10001/cliservice</url>
     </service>
 
 </topology>

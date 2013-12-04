@@ -38,7 +38,7 @@ public class HiveJDBCSample {
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
       String contextPath = "gateway/sandbox/hive";
-      String connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.servermode=https;hive.server2.http.path=%s", gatewayHost, gatewayPort, contextPath );
+      String connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.transport.mode=https;hive.server2.thrift.http.path=%s", gatewayHost, gatewayPort, contextPath );
 
       // Load Hive JDBC Driver
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );
@@ -50,6 +50,9 @@ public class HiveJDBCSample {
 
       // Disable Hive authorization - This can be ommited if Hive authorization is configured properly
       statement.execute( "set hive.security.authorization.enabled=false" );
+
+      // Drop sample table to ensure repeatability
+      statement.execute( "DROP TABLE logs" );
 
       // Create sample table
       statement.execute( "CREATE TABLE logs(column1 string, column2 string, column3 string, column4 string, column5 string, column6 string, column7 string) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '" );

@@ -82,7 +82,7 @@
     </service>
     <service>
         <role>HIVE</role>
-        <url>http://sandbox:10000</url>
+        <url>http://sandbox:10001/cliservice</url>
     </service>
 
 </topology>
