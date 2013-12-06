@@ -6,6 +6,7 @@ Release Notes - Apache Knox - Version 0.3.1
     * [KNOX-203] - Gateway fails to start when bin dir not writable
     * [KNOX-205] - Launcher script gateway sh not working when gateway installed via RPM
     * [KNOX-224] - Update samples to match Hive config
+
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.0
 ------------------------------------------------------------------------------

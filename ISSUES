@@ -1,0 +1,6 @@
+------------------------------------------------------------------------------
+Known Issues
+------------------------------------------------------------------------------
+
+Support for accessing Kerberos secured Stargate/HBase will not be supported
+until a future release of Stargate/HBase

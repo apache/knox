@@ -165,11 +165,11 @@
                         <exclude>**/install/**</exclude>
                         <exclude>**/candidate/**</exclude>
                         <exclude>**/patch/**</exclude>
+                        <exclude>**/CHANGES</exclude>
+                        <exclude>**/ISSUES</exclude>
                         <exclude>**/patchprocess/**</exclude>
                         <exclude>**/test/resources/**</exclude>
                         <exclude>**/main/resources/**/*.json</exclude>
-                        <exclude>**/home/CHANGES</exclude>
-                        <exclude>**/home/ISSUES</exclude>
                         <exclude>**/home/samples/*.jar</exclude>
                         <exclude>**/.externalToolBuilders/*</exclude>
                         <exclude>*.patch</exclude>
