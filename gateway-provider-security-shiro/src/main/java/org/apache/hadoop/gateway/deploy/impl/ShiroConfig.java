@@ -24,18 +24,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ShiroConfig {
-  private Map<String, Map<String, String>> sections = new LinkedHashMap<String, Map<String, String>>();
   
-  public ShiroConfig(Provider provider) {
+  private Map<String, Map<String, String>> sections = new LinkedHashMap<String, Map<String, String>>();
+ 
+  public ShiroConfig(Provider provider, String clusterName) {
     Map<String, String> params = provider.getParams();
     String name = null;
     String sectionName = null;
+    String value = null;
     for(Entry<String, String> entry : params.entrySet()) {
       int sectionDot = entry.getKey().indexOf('.');
       if (sectionDot > 0) {
         sectionName = entry.getKey().substring(0, sectionDot);
         name = entry.getKey().substring(sectionDot + 1);
-        addNameValueToSection(name, entry.getValue(), sectionName);
+        value = entry.getValue().trim();
+        if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
+          String baseName = name.substring(0, name.lastIndexOf("."));
+          addNameValueToSection(baseName + ".clusterName", clusterName, sectionName);
+          addNameValueToSection(name, "S" + value.substring(1), sectionName);
+        } else {
+          addNameValueToSection(name, value, sectionName);
+        }
       }
     }
   }

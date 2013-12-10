@@ -119,7 +119,7 @@
             </param>
             <param>
               <name>main.ldapGroupRealm.contextFactory.systemPassword</name>
-              <value>guest-password</value>
+              <value>${ALIAS=ldcSystemPassword}</value>
             </param>
 
             <param>

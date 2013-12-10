@@ -96,6 +96,8 @@ public class GatewayLdapGroupFuncTest {
 
   public static void setupGateway(int ldapPort) throws IOException {
 
+    System.setProperty("test-cluster.ldcSystemPassword", "guest-password");
+    
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -181,7 +183,7 @@ public class GatewayLdapGroupFuncTest {
         .addTag( "value" ).addText( "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.systemPassword" )
-        .addTag( "value" ).addText( "guest-password" )
+        .addTag( "value" ).addText( "${ALIAS=ldcSystemPassword}" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "urls./**" )
         .addTag( "value" ).addText( "authcBasic" )

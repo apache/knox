@@ -73,9 +73,10 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     sessionConfig.sessionTimeout(st);
 
     // Writing provider specific config out to the war for cluster specific config can be
-	// accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
-	// used to write the asset to the war.
-    String config = new ShiroConfig( provider ).toString();
+	  // accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
+	  // used to write the asset to the war.
+    String clusterName = context.getTopology().getName();
+    String config = new ShiroConfig( provider, clusterName ).toString();
     if( config != null ) {
       context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
     }

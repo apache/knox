@@ -24,6 +24,9 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.ldap.LdapContext;
 
+import org.apache.hadoop.gateway.GatewayServer;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
 
 /**
@@ -37,6 +40,7 @@ import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
 public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 
     private String systemAuthenticationMechanism;
+    private String clusterName = "";
 
     /**
      * HACK
@@ -53,9 +57,56 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
     public String getSystemAuthenticationMechanism() {
         return systemAuthenticationMechanism != null? systemAuthenticationMechanism: getAuthenticationMechanism();
     }
+    
     public void setSystemAuthenticationMechanism(String systemAuthenticationMechanism) {
         this.systemAuthenticationMechanism = systemAuthenticationMechanism;
     }
     
+    @Override
+    public void setSystemPassword(String systemPass) {
+      
+      if ( systemPass == null ) {
+        return;
+      }
+      
+      systemPass = systemPass.trim();
+      if (systemPass.length() == 0) {
+        return;
+      }
+      
+      if (!systemPass.startsWith("S{ALIAS=")) {
+        super.setSystemPassword( systemPass );
+        return;
+      }
+      
+      systemPass= systemPass.substring( "S{ALIAS=".length(), systemPass.length() - 1 );
+      String aliasName = systemPass;
+      
+      GatewayServices services = GatewayServer.getGatewayServices();
+      AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
+      
+      String clusterName = getClusterName();
+      String systemPassword = System.getProperty(clusterName + "." + aliasName);
+      if (systemPassword != null) {
+        super.setSystemPassword( systemPassword );
+        aliasService.addAliasForCluster(clusterName, aliasName, systemPassword);
+      } else {
+        char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
+        if ( password != null ) {
+          super.setSystemPassword( new String(password) );
+        }
+      }
+      
+    }
+    
+    public String getClusterName() {
+      return clusterName;
+    }
+
+    public void setClusterName(String clusterName) {
+      if (clusterName != null) {
+        this.clusterName = clusterName.trim();
+      }
+    }
     
 }
