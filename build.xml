@@ -91,7 +91,7 @@
         </exec>
         <copy file="KEYS" todir="target/${gateway-version}">
             <fileset file="KEYS"/>
-            <fileset file="gateway-release/home/CHANGES"/>
+            <fileset file="CHANGES"/>
         </copy>
     </target>
 
@@ -107,7 +107,7 @@
     <target name="post-build" depends="_init,_rpm,_changes"/>
 
     <target name="_changes" depends="_init">
-        <copy file="gateway-release/home/CHANGES" todir="target/${gateway-version}"/>
+        <copy file="CHANGES" todir="target/${gateway-version}"/>
     </target>
 
     <target name="set-rpm-builder-privs" if="isUnix">
