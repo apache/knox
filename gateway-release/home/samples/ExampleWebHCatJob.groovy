@@ -45,7 +45,7 @@ session.waitFor( putData, putJar )
 
 jobId = Job.submitJava(session) \
   .jar( jobDir + "/lib/hadoop-examples.jar" ) \
-  .app( "wordcount" ) \
+  .app( "org.apache.hadoop.examples.WordCount" ) \
   .input( jobDir + "/input" ) \
   .output( jobDir + "/output" ) \
   .now().jobId

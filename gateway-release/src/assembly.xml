@@ -35,18 +35,18 @@
                 <exclude>**/.settings/**</exclude>
             </excludes>
         </fileSet>
-		<fileSet>
-		    <directory>..</directory>
-		    <outputDirectory></outputDirectory>
-		    <includes>
-		        <include>CHANGES</include>
-		        <include>DISCLAIMER</include>
-		        <include>ISSUES</include>
-		        <include>LICENSE</include>
-		        <include>NOTICE</include>
-		        <include>README</include>
-		    </includes>
-		</fileSet>
+        <fileSet>
+            <directory>..</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>CHANGES</include>
+                <include>DISCLAIMER</include>
+                <include>ISSUES</include>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+                <include>README</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>
@@ -93,6 +93,13 @@
             <outputFileNameMapping>ldap.jar</outputFileNameMapping>
             <includes>
                 <include>${gateway-group}:gateway-test-ldap-launcher</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>samples</outputDirectory>
+            <outputFileNameMapping>hadoop-examples.jar</outputFileNameMapping>
+            <includes>
+                <include>${gateway-group}:hadoop-examples</include>
             </includes>
         </dependencySet>
     </dependencySets>
