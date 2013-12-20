@@ -1,10 +1,13 @@
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.1
 ------------------------------------------------------------------------------
+
+** Bug
     * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed
     * [KNOX-199] - ExampleHBase.groovy fails with Sandbox 2 GA (HBase 0.96)
     * [KNOX-203] - Gateway fails to start when bin dir not writable
-    * [KNOX-205] - Launcher script gateway sh not working when gateway installed via RPM
+    * [KNOX-205] - Launcher script gateway.sh not working when gateway installed via RPM
+    * [KNOX-222] - Remove hadoop-examples.jar from source tree
     * [KNOX-224] - Update samples to match Hive config
 
 ------------------------------------------------------------------------------
