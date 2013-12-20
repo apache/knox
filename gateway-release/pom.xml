@@ -180,6 +180,11 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>hadoop-examples</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-shell</artifactId>
         </dependency>
         <dependency>

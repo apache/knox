@@ -244,8 +244,17 @@ public class GatewayFuncTestDriver {
     return url;
   }
 
-  public InputStream getResourceStream( String resource ) {
-    InputStream stream = ClassLoader.getSystemResourceAsStream( getResourceName( resource ) );
+  public InputStream getResourceStream( String resource ) throws IOException {
+    InputStream stream = null;
+    if( resource.startsWith( "file:/" ) ) {
+      try {
+        stream = FileUtils.openInputStream( new File( new URI( resource ) ) );
+      } catch( URISyntaxException e ) {
+        throw new IOException( e  );
+      }
+    } else {
+      stream = ClassLoader.getSystemResourceAsStream( getResourceName( resource ) );
+    }
     assertThat( "Failed to find test resource " + resource, stream, Matchers.notNullValue() );
     return stream;
   }

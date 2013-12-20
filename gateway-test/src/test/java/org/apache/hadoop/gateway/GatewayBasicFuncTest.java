@@ -21,6 +21,7 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
@@ -42,6 +43,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
@@ -752,7 +756,7 @@ public class GatewayBasicFuncTest {
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
     curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", "hadoop-examples.jar", 307, 201, 200 );
+    driver.createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
     curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
@@ -868,7 +872,7 @@ public class GatewayBasicFuncTest {
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
     curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", "hadoop-examples.jar", 307, 201, 200 );
+    driver.createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
     curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
@@ -1978,4 +1982,29 @@ public class GatewayBasicFuncTest {
 //    driver.reset();
     driver.assertComplete();
   }
+
+  private File findFile( File dir, String pattern ) {
+    File file = null;
+    FileFilter filter = new WildcardFileFilter( pattern );
+    File[] files = dir.listFiles(filter);
+    if( files != null && files.length > 0 ) {
+      file = files[0];
+    }
+    return file;
+  }
+
+  private String findHadoopExamplesJar() throws IOException {
+    String pattern = "hadoop-examples-*.jar";
+    File dir = new File( System.getProperty( "user.dir" ), "hadoop-examples/target" );
+    File file = findFile( dir, pattern );
+    if( file == null || !file.exists() ) {
+      file = findFile( new File( System.getProperty( "user.dir" ), "../hadoop-examples/target" ), pattern );
+    }
+    if( file == null ) {
+      throw new FileNotFoundException( pattern );
+    }
+    return file.toURI().toString();
+  }
+
+
 }

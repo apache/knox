@@ -60,6 +60,7 @@
         <module>gateway-service-tgs</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
+        <module>hadoop-examples</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
         <module>hsso-release</module>
@@ -225,6 +226,9 @@
                     <excludedGroups>
                         org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.IntegrationTests
                     </excludedGroups>
+                    <systemPropertyVariables>
+                        <gateway-version>${gateway-version}</gateway-version>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
@@ -451,6 +455,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>hadoop-examples</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -548,6 +557,12 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
+                <version>0.23.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>0.23.3</version>
             </dependency>
 
