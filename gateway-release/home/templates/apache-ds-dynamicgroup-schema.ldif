@@ -1,0 +1,113 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# this ldif file is provided as a template to illustrate
+# use of ldapgroup(s)
+
+version: 1
+
+# schema to support dynamicgroup in Apache DS
+# primarily objectclass groupOfUrls and attribute memberUrl
+#
+# you could use the following ldapadd command to update the schema
+# assuming apache ds is listening on port 33389 and system password is secret
+# ldapadd -D uid=admin,ou=system -w secret -h localhost -p 33389 -f ldapadd -D uid=admin,ou=system -w secret -h localhost -p 33389 -f directors.ldif
+
+# SCHEMA "DYNAMICGROUP"
+dn: cn=dynamicgroup, ou=schema
+objectclass: metaSchema
+objectclass: top
+cn: dynamicgroup
+m-dependencies: system
+
+dn: ou=attributetypes, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: attributetypes
+
+dn: m-oid=2.16.840.1.113730.3.1.198, ou=attributetypes, cn=dynamicgroup, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 2.16.840.1.113730.3.1.198
+m-name: memberURL
+m-description: Identifies an URL associated with each member of a group. Any typ
+ e of labeled URL can be used
+m-supAttributeType: labeledURI
+m-equality: caseIgnoreMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.44
+
+dn: ou=comparators, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: comparators
+
+dn: ou=ditcontentrules, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: ditcontentrules
+
+dn: ou=ditstructurerules, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: ditstructurerules
+
+dn: ou=matchingrules, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: matchingrules
+
+dn: ou=matchingruleuse, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: matchingruleuse
+
+dn: ou=nameforms, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: nameforms
+
+dn: ou=normalizers, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: normalizers
+
+dn: ou=objectclasses, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: objectClasses
+
+dn: m-oid=2.16.840.1.113730.3.1.2.33, ou=objectclasses, cn=dynamicgroup, ou=schema
+objectclass: metaObjectClass
+objectclass: metaTop
+objectclass: top
+m-oid: 2.16.840.1.113730.3.1.2.33
+m-name: groupOfURLs
+m-supObjectClass: top
+m-must: cn
+m-may: memberURL
+
+dn: ou=syntaxcheckers, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: syntaxcheckers
+
+dn: ou=syntaxes, cn=dynamicgroup, ou=schema
+objectclass: organizationalUnit
+objectclass: top
+ou: syntaxes
+
+# end of schema added to support dynamic group
