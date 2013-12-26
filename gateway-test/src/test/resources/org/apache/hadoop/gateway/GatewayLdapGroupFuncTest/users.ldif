@@ -80,8 +80,8 @@ objectclass:top
 objectclass: groupofnames
 cn: analyst
 description:analyst  group
-member: cn=sam,ou=people,dc=hadoop,dc=apache,dc=org
-member: cn=tom,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
 
 
 # create the scientist group under groups
@@ -90,5 +90,5 @@ objectclass:top
 objectclass: groupofnames
 cn: scientist
 description: scientist group
-member: cn=sam,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
 

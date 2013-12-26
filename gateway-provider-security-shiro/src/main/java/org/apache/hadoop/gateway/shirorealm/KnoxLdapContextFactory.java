@@ -94,6 +94,8 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
         char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
         if ( password != null ) {
           super.setSystemPassword( new String(password) );
+        } else {
+          super.setSystemPassword( new String(systemPassword) );
         }
       }
       

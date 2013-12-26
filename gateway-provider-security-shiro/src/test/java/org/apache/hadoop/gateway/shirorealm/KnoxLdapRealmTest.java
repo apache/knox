@@ -41,8 +41,8 @@ public class KnoxLdapRealmTest {
   @Test
   public void setGetUniqueMemberAttribute() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
-    realm.setUniqueMemberAttribute("member");
-    assertEquals(realm.getUniqueMemberAttribute(), "member");
+    realm.setMemberAttribute("member");
+    assertEquals(realm.getMemberAttribute(), "member");
   }
   
   
