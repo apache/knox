@@ -167,11 +167,11 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-security-authz-acls</artifactId>
+            <artifactId>gateway-provider-security-preauth</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-security-webappsec</artifactId>
+            <artifactId>gateway-provider-security-authz-acls</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

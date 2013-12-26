@@ -31,6 +31,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.ImpersonatedPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.apache.hadoop.gateway.util.IpAddressValidator;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -44,11 +45,10 @@ public class AclsAuthorizationFilter implements Filter {
   private String resourceRole = null;
   private ArrayList<String> users;
   private ArrayList<String> groups;
-  private ArrayList<String> ipaddr;
-  private ArrayList<String> wildCardIPs;
   private boolean anyUser = true;
   private boolean anyGroup = true;
-  private boolean anyIP = true;
+  private IpAddressValidator ipv = null;
+
   private String aclProcessingMode = null;
 
   
@@ -84,37 +84,38 @@ public class AclsAuthorizationFilter implements Filter {
       else {
         log.aclsFoundForResource(resourceRole);
       }
-      users = new ArrayList<String>();
-      Collections.addAll(users, parts[0].split(","));
-      if (!users.contains("*")) {
-        anyUser = false;
-      }
-      groups = new ArrayList<String>();
-      Collections.addAll(groups, parts[1].split(","));
-      if (!groups.contains("*")) {
-        anyGroup = false;
-      }
+      parseUserAcls(parts);
+      
+      parseGroupAcls(parts);
 
-      ipaddr = new ArrayList<String>();
-      wildCardIPs = new ArrayList<String>();
-      Collections.addAll(ipaddr, parts[2].split(","));
-      if (!ipaddr.contains("*")) {
-        anyIP = false;
-        // check whether there are any wildcarded ip's - example: 192.* or 192.168.* or 192.168.1.*
-        for (String addr : ipaddr) {
-          if (addr.contains("*")) {
-            wildCardIPs.add(addr);
-            break;
-          }
-        }
-      }
+      parseIpAddressAcls(parts);
     }
     else {
       log.noAclsFoundForResource(resourceRole);
       users = new ArrayList<String>();
       groups = new ArrayList<String>();
-      ipaddr = new ArrayList<String>();
+      ipv = new IpAddressValidator(null);
     }
+  }
+
+  private void parseUserAcls(String[] parts) {
+    users = new ArrayList<String>();
+    Collections.addAll(users, parts[0].split(","));
+    if (!users.contains("*")) {
+      anyUser = false;
+    }
+  }
+
+  private void parseGroupAcls(String[] parts) {
+    groups = new ArrayList<String>();
+    Collections.addAll(groups, parts[1].split(","));
+    if (!groups.contains("*")) {
+      anyGroup = false;
+    }
+  }
+
+  private void parseIpAddressAcls(String[] parts) {
+    ipv = new IpAddressValidator(parts[2]);
   }
 
   public void destroy() {
@@ -140,7 +141,7 @@ public class AclsAuthorizationFilter implements Filter {
     
     // before enforcing acls check whether there are no acls defined 
     // which would mean that there are no restrictions
-    if (users.size() == 0 && groups.size() == 0 && ipaddr.size() == 0) {
+    if (users.size() == 0 && groups.size() == 0 && ipv.getIPAddresses().size() == 0) {
       return true;
     }
 
@@ -187,7 +188,7 @@ public class AclsAuthorizationFilter implements Filter {
       // so, let's set each one that contains '*' to false.
       if (anyUser) userAccess = false;
       if (anyGroup) groupAccess = false;
-      if (anyIP) ipAddrAccess = false;
+      if (ipv.allowsAnyIP()) ipAddrAccess = false;
       
       return (userAccess || groupAccess || ipAddrAccess);
     }
@@ -202,25 +203,7 @@ public class AclsAuthorizationFilter implements Filter {
     if (remoteAddr == null) {
       return false;
     }
-    if (anyIP) {
-      allowed = true;
-    }
-    else {
-      if (ipaddr.contains(remoteAddr)) {
-        allowed = true;
-      }
-      else {
-        // check for wildcards if there are wildcardIP acls configured
-        if (wildCardIPs.size() > 0) {
-          for (String ipacl : wildCardIPs) {
-            if (remoteAddr.startsWith(ipacl.substring(0, ipacl.lastIndexOf('*')))) {
-              allowed = true;
-              break;
-            }
-          }
-        }
-      }
-    }
+    allowed = ipv.validateIpAddress(remoteAddr);
     return allowed;
   }
 
