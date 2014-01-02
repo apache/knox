@@ -23,15 +23,17 @@
             <role>authentication</role>
             <name>ShiroProvider</name>
             <enabled>true</enabled>
+            <!-- 
+            session timeout in minutes,  this is really idle timeout,
+            defaults to 30mins, if the property value is not defined,, 
+            current client authentication would expire if client idles contiuosly for more than this value
+            -->
+            <!-- defaults to: 30 minutes
             <param>
-                <!-- 
-                session timeout in minutes,  this is really idle timeout,
-                defaults to 30mins, if the property value is not defined,, 
-                current client authentication would expire if client idles contiuosly for more than this value
-                -->
                 <name>sessionTimeout</name>
                 <value>30</value>
             </param>
+            -->
 
             <!--
               Use one KnoxLdapRealm for authentication and another KnoxLdapRealm for ldap group look up
@@ -48,10 +50,12 @@
               <name>main.ldapRealm.contextFactory</name>
               <value>$ldapContextFactory</value>
             </param>
+            <!-- defaults to: simple
             <param>
               <name>main.ldapRealm.contextFactory.authenticationMechanism</name>
               <value>simple</value>
             </param>
+            -->
             <param>
               <name>main.ldapRealm.contextFactory.url</name>
               <value>ldap://localhost:33389</value>
@@ -77,10 +81,12 @@
               <name>main.ldapGroupRealm.contextFactory</name>
               <value>$ldapGroupContextFactory</value>
             </param>
+            <!-- defaults to: simple
             <param>
               <name>main.ldapGroupRealm.contextFactory.authenticationMechanism</name>
               <value>simple</value>
             </param>
+            -->
             <param>
               <name>main.ldapGroupRealm.contextFactory.url</name>
               <value>ldap://localhost:33389</value>
@@ -91,26 +97,33 @@
             </param>
             <param>
               <name>main.ldapGroupRealm.authorizationEnabled</name>
+              <!-- defaults to: false -->
               <value>true</value>
             </param>
+            <!-- defaults to: simple 
             <param>
               <name>main.ldapGroupRealm.contextFactory.systemAuthenticationMechanism</name>
               <value>simple</value>
             </param>
+            -->
             <param>
               <name>main.ldapGroupRealm.searchBase</name>
               <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
             </param>
+            <!-- defaults to: groupOfNames
             <param>
               <name>main.ldapGroupRealm.groupObjectClass</name>
-              <value>groupofnames</value>
+              <value>groupOfNames</value>
             </param>
+            -->
+            <!-- defaults to: member
             <param>
-              <name>main.ldapGroupRealm.uniqueMemberAttribute</name>
+              <name>main.ldapGroupRealm.memberAttribute</name>
               <value>member</value>
             </param>
+            -->
             <param>
-              <name>main.ldapGroupRealm.uniqueMemberAttributeValueTemplate</name>
+              <name>main.ldapGroupRealm.memberAttributeValueTemplate</name>
               <value>cn={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
             </param>
             <param>

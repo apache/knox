@@ -28,7 +28,7 @@
             defaults to 30mins, if the property value is not defined,, 
             current client authentication would expire if client idles contiuosly for more than this value
             -->
-            <!--
+            <!-- defaults to: 30 minutes
             <param>
                 <name>sessionTimeout</name>
                 <value>30</value>
