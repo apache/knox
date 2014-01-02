@@ -39,12 +39,13 @@ import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
  */
 public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 
-    private String systemAuthenticationMechanism;
+    private String systemAuthenticationMechanism = "simple";
     private String clusterName = "";
 
-    /**
-     * HACK
-     */
+    public KnoxLdapContextFactory() {
+      setAuthenticationMechanism("simple");
+    }
+    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     protected LdapContext createLdapContext(Hashtable env) throws NamingException {
@@ -95,7 +96,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
         if ( password != null ) {
           super.setSystemPassword( new String(password) );
         } else {
-          super.setSystemPassword( new String(systemPassword) );
+          super.setSystemPassword( new String(systemPass) );
         }
       }
       
