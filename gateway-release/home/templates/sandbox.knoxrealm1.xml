@@ -94,7 +94,7 @@
             -->
             <param>
               <name>main.ldapRealm.memberAttributeValueTemplate</name>
-              <value>cn={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
+              <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
             </param>
             <param>
               <name>main.ldapRealm.contextFactory.systemUsername</name>
