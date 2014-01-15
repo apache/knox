@@ -106,7 +106,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     init();
   }
 
-  public String getGatewayHomeDir() {
+  private String getVar( String variableName, String defaultValue ) {
+    String value = get( variableName );
+    if( value == null ) {
+      value = System.getProperty( variableName );
+    }
+    if( value == null ) {
+      value = System.getenv( variableName );
+    }
+    if( value == null ) {
+      value = defaultValue;
+    }
+    return value;
+  }
+
+  private String getGatewayHomeDir() {
     String home = get(
         GATEWAY_HOME_VAR,
         System.getProperty(
@@ -119,6 +133,19 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     set( GATEWAY_HOME_VAR, dir );
   }
 
+  @Override
+  public String getGatewayConfDir() {
+    String value = getVar( GATEWAY_CONF_HOME_VAR, getGatewayHomeDir() + File.separator + "conf"  );
+    return value;
+  }
+
+  @Override
+  public String getGatewayDataDir() {
+    String value = getVar( GATEWAY_DATA_HOME_VAR, getGatewayHomeDir() + File.separator + "data" );
+    return value;
+  }
+
+  @Override
   public String getHadoopConfDir() {
     return get( HADOOP_CONF_DIR );
   }
@@ -218,23 +245,38 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return url;
   }
 
+  @Override
   public String getGatewayHost() {
     String host = get( HTTP_HOST, "0.0.0.0" );
     return host;
   }
 
+  @Override
   public int getGatewayPort() {
     return Integer.parseInt( get( HTTP_PORT, DEFAULT_HTTP_PORT ) );
   }
 
+  @Override
   public String getGatewayPath() {
     return get( HTTP_PATH, DEFAULT_HTTP_PATH );
   }
 
-  public String getDeploymentDir() {
-    return get( DEPLOYMENT_DIR, DEFAULT_DEPLOYMENT_DIR );
+  @Override
+  public String getGatewayTopologyDir() {
+    return getGatewayConfDir() + File.separator + "topologies";
   }
 
+  @Override
+  public String getGatewayDeploymentDir() {
+    return getGatewayDataDir() + File.separator + "deployments";
+  }
+
+  @Override
+  public String getGatewaySecurityDir() {
+    return getGatewayDataDir() + File.separator + "security";
+  }
+
+  @Override
   public InetSocketAddress getGatewayAddress() throws UnknownHostException {
     String host = getGatewayHost();
     int port = getGatewayPort();

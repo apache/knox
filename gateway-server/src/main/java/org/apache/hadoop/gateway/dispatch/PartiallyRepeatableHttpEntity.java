@@ -98,6 +98,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
   }
 
   @Override
+  @SuppressWarnings( "deprecation" )
   public void consumeContent() throws IOException {
     throw new UnsupportedOperationException();
   }

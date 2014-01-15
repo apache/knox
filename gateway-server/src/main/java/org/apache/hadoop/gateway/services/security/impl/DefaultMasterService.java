@@ -42,7 +42,7 @@ public class DefaultMasterService extends CMFMasterService implements MasterServ
     }
     else {
       boolean persisting = options.get( "persist-master").equals("true");
-      String securityDir = config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security";
+      String securityDir = config.getGatewaySecurityDir();
       String filename = "master";
       setupMasterSecret(securityDir, filename, persisting);
     }

@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway.jersey;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;

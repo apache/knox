@@ -76,7 +76,8 @@ public class GatewayLocalServiceFuncTest {
   public static void cleanupSuite() throws Exception {
     gateway.stop();
     ldap.stop( true );
-    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
     NoOpAppender.tearDown( appenders );
   }
 
@@ -98,9 +99,8 @@ public class GatewayLocalServiceFuncTest {
     GatewayTestConfig testConfig = new GatewayTestConfig();
     config = testConfig;
     testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    testConfig.setDeploymentDir( "clusters" );
 
-    File deployDir = new File( gatewayDir, testConfig.getDeploymentDir() );
+    File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
     File descriptor = new File( deployDir, "cluster.xml" );

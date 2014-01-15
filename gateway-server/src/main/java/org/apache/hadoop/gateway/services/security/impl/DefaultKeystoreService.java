@@ -60,7 +60,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    this.keyStoreDir = config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security" + File.separator + "keystores" + File.separator;
+    this.keyStoreDir = config.getGatewaySecurityDir() + File.separator + "keystores" + File.separator;
     File ksd = new File(this.keyStoreDir);
     if (!ksd.exists()) {
       if( !ksd.mkdirs() ) {

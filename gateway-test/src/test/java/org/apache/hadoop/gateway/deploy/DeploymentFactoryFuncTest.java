@@ -65,11 +65,13 @@ public class DeploymentFactoryFuncTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    File deployDir = new File( gatewayDir, "clusters" );
-    deployDir.mkdirs();
 
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+
+    File deployDir = new File( config.getGatewayDeploymentDir() );
+    deployDir.mkdirs();
+
+//    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -121,11 +123,9 @@ public class DeploymentFactoryFuncTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    File deployDir = new File( gatewayDir, "clusters" );
-    deployDir.mkdirs();
-
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+    File deployDir = new File( config.getGatewayDeploymentDir() );
+    deployDir.mkdirs();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -177,13 +177,10 @@ public class DeploymentFactoryFuncTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-//    File deployDir = new File( gatewayDir, config.getDeploymentDir() );
-    File deployDir = new File( gatewayDir, "clusters" );
+    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
-    
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
     options.put("persist-master", "false");

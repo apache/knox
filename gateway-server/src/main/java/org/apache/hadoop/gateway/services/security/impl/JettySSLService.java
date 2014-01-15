@@ -125,12 +125,12 @@ public class JettySSLService implements SSLService {
     }
   }
   
-  public Object buildSSlConnector(String gatewayHomeDir) {
+  public Object buildSSlConnector( String keystoreFileName ) {
     SslContextFactory sslContextFactory = new SslContextFactory( true );
     sslContextFactory.setCertAlias( "gateway-identity" );
-    String keystorePath = gatewayHomeDir + File.separatorChar +  "conf" + File.separatorChar +  "security" + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
+//    String keystorePath = gatewayHomeDir + File.separatorChar +  "conf" + File.separatorChar +  "security" + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
     sslContextFactory.setKeyStoreType("JKS");
-    sslContextFactory.setKeyStorePath(keystorePath);
+    sslContextFactory.setKeyStorePath(keystoreFileName);
     char[] master = ms.getMasterSecret();
     sslContextFactory.setKeyStorePassword(new String(master));
     char[] keypass = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);

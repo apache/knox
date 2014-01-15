@@ -24,52 +24,81 @@ import java.net.UnknownHostException;
 
 public class GatewayTestConfig implements GatewayConfig {
 
-  private String gatewayHomeDir = "gateway";
+  private String gatewayHomeDir = "gateway-home";
   private String hadoopConfDir = "hadoop";
   private String gatewayHost = "localhost";
   private int gatewayPort = 0;
   private String gatewayPath = "gateway";
-  private String deployDir = "clusters";
+//  private String deployDir = "clusters";
   private boolean hadoopKerberosSecured = false;
   private String kerberosConfig = "/etc/knox/conf/krb5.conf";
   private boolean kerberosDebugEnabled = false;
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
 
-  @Override
-  public String getGatewayHomeDir() {
-    return gatewayHomeDir;
-  }
+//  @Override
+//  public String getGatewayHomeDir() {
+//    return gatewayHomeDir;
+//  }
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
   }
 
   @Override
+  public String getGatewayConfDir() {
+    return gatewayHomeDir;
+  }
+
+  @Override
+  public String getGatewayDataDir() {
+    return gatewayHomeDir;
+  }
+
+  @Override
+  public String getGatewaySecurityDir() {
+    return gatewayHomeDir + "/security";
+  }
+
+  @Override
+  public String getGatewayTopologyDir() {
+    return gatewayHomeDir + "/clusters";
+  }
+
+  @Override
+  public String getGatewayDeploymentDir() {
+    return gatewayHomeDir + "/clusters";
+  }
+
+//  public void setDeploymentDir( String clusterConfDir ) {
+//    this.deployDir = clusterConfDir;
+//  }
+
+  @Override
   public String getHadoopConfDir() {
     return hadoopConfDir;
   }
 
-  public void setHadoopConfDir( String hadoopConfDir ) {
-    this.hadoopConfDir = hadoopConfDir;
-  }
+//  public void setHadoopConfDir( String hadoopConfDir ) {
+//    this.hadoopConfDir = hadoopConfDir;
+//  }
 
   @Override
   public String getGatewayHost() {
     return gatewayHost;
   }
 
-  public void setGatewayHost( String gatewayHost ) {
-    this.gatewayHost = gatewayHost;
-  }
+//  public void setGatewayHost( String gatewayHost ) {
+//    this.gatewayHost = gatewayHost;
+//  }
 
   @Override
   public int getGatewayPort() {
     return gatewayPort;
   }
 
-  public void setGatewayPort( int gatewayPort ) {
-    this.gatewayPort = gatewayPort;
-  }
+//  public void setGatewayPort( int gatewayPort ) {
+//    this.gatewayPort = gatewayPort;
+//  }
 
   @Override
   public String getGatewayPath() {
@@ -78,15 +107,6 @@ public class GatewayTestConfig implements GatewayConfig {
 
   public void setGatewayPath( String gatewayPath ) {
     this.gatewayPath = gatewayPath;
-  }
-
-  @Override
-  public String getDeploymentDir() {
-    return deployDir;
-  }
-
-  public void setDeploymentDir( String clusterConfDir ) {
-    this.deployDir = clusterConfDir;
   }
 
   @Override
@@ -105,35 +125,35 @@ public class GatewayTestConfig implements GatewayConfig {
     return hadoopKerberosSecured;
   }
 
-  public void setHadoopKerberosSecured(boolean hadoopKerberosSecured) {
-    this.hadoopKerberosSecured = hadoopKerberosSecured;
-  }
+//  public void setHadoopKerberosSecured(boolean hadoopKerberosSecured) {
+//    this.hadoopKerberosSecured = hadoopKerberosSecured;
+//  }
   
   @Override
   public String getKerberosConfig() {
     return kerberosConfig;
   }
   
-  public void setKerberosConfig(String kerberosConfig) {
-    this.kerberosConfig = kerberosConfig;
-  }
+//  public void setKerberosConfig(String kerberosConfig) {
+//    this.kerberosConfig = kerberosConfig;
+//  }
 
   @Override
   public boolean isKerberosDebugEnabled() {
     return kerberosDebugEnabled;
   }
   
-  public void setKerberosDebugEnabled(boolean kerberosConfigEnabled) {
-    this.kerberosDebugEnabled = kerberosDebugEnabled;
-  }
+//  public void setKerberosDebugEnabled(boolean kerberosConfigEnabled) {
+//    this.kerberosDebugEnabled = kerberosDebugEnabled;
+//  }
   
   @Override
   public String getKerberosLoginConfig() {
     return kerberosLoginConfig;
   }
   
-  public void setKerberosLoginConfig(String kerberosLoginConfig) {
-   this.kerberosLoginConfig = kerberosLoginConfig;
-  }
+//  public void setKerberosLoginConfig(String kerberosLoginConfig) {
+//   this.kerberosLoginConfig = kerberosLoginConfig;
+//  }
   
 }

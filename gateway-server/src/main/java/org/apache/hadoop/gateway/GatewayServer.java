@@ -123,7 +123,7 @@ public class GatewayServer {
   }
 
   private static void configureLogging( GatewayConfig config ) {
-    String fileName = config.getGatewayHomeDir() + "/conf/log4j.properties";
+    String fileName = config.getGatewayConfDir() + File.separator + "log4j.properties";
     File file = new File( fileName );
     if( file.isFile() && file.canRead() ) {
       FileInputStream stream;
@@ -248,7 +248,8 @@ public class GatewayServer {
     }
     if (config.isSSLEnabled()) {
       SSLService ssl = services.getService("SSLService");
-      Connector connector = (Connector) ssl.buildSSlConnector(config.getGatewayHomeDir());
+      String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
+      Connector connector = (Connector) ssl.buildSSlConnector( keystoreFileName );
       connector.setHost(address.getHostName());
       connector.setPort(address.getPort());
       jetty.addConnector(connector);
@@ -268,7 +269,7 @@ public class GatewayServer {
     monitor.addTopologyChangeListener( listener );
 
     // Load the current topologies.
-    log.loadingTopologiesFromDirecotry( topologiesDir.getAbsolutePath() );
+    log.loadingTopologiesFromDirectory( topologiesDir.getAbsolutePath() );
     monitor.reloadTopologies();
 
     // Start the topology monitor.
@@ -342,6 +343,7 @@ public class GatewayServer {
         for( TopologyEvent event : events ) {
           Topology topology = event.getTopology();
           File topoDir = calculateAbsoluteTopologiesDir();
+          File deployDir = calculateAbsoluteDeploymentsDir();
           File warDir = calculateDeploymentDir( topology );
           if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
             File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
@@ -359,7 +361,10 @@ public class GatewayServer {
                 internalUndeploy( topology ); // KNOX-152
                 WebArchive war = null;
                 war = DeploymentFactory.createDeployment( config, topology );
-                File tmp = war.as( ExplodedExporter.class ).exportExploded( topoDir, warDir.getName() + ".tmp" );
+                if( !deployDir.exists() ) {
+                  deployDir.mkdirs();
+                }
+                File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
                 tmp.renameTo( warDir );
                 internalDeploy( topology, warDir );
                 //log.deployedTopology( topology.getName());
@@ -379,17 +384,27 @@ public class GatewayServer {
   }
 
   private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {
-    File topoDir = new File( config.getGatewayHomeDir(), config.getDeploymentDir() );
+    File topoDir = new File( config.getGatewayTopologyDir() );
     topoDir = topoDir.getAbsoluteFile();
     return topoDir;
+  }
+
+  private static File calculateAbsoluteDeploymentsDir( GatewayConfig config ) {
+    File deployDir = new File( config.getGatewayDeploymentDir() );
+    deployDir = deployDir.getAbsoluteFile();
+    return deployDir;
   }
 
   private File calculateAbsoluteTopologiesDir() {
     return calculateAbsoluteTopologiesDir( config );
   }
 
+  private File calculateAbsoluteDeploymentsDir() {
+    return calculateAbsoluteDeploymentsDir( config );
+  }
+
   private File calculateDeploymentDir( Topology topology ) {
-    File warDir = new File( calculateAbsoluteTopologiesDir(), calculateDeploymentName( topology ) );
+    File warDir = new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
     return warDir;
   }
 

@@ -127,16 +127,16 @@ public class GatewayFuncTestDriver {
    */
   public void setupGateway( GatewayTestConfig config, String cluster, XMLTag topology, boolean use ) throws IOException {
     this.useGateway = use;
+    this.config = config;
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    File deployDir = new File( gatewayDir, config.getDeploymentDir() );
-    deployDir.mkdirs();
 
-    this.config = config;
     config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    config.setDeploymentDir( "clusters" );
+
+    File deployDir = new File( config.getGatewayDeploymentDir() );
+    deployDir.mkdirs();
 
     File descriptor = new File( deployDir, cluster + ".xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
@@ -160,7 +160,11 @@ public class GatewayFuncTestDriver {
 
   public void cleanup() throws Exception {
     gateway.stop();
-    FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
 
     for( Service service : services.values() ) {
       service.server.stop();

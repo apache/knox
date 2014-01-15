@@ -67,7 +67,7 @@ public interface GatewayMessages {
   void settingGatewayHomeDir( String location, String home );
 
   @Message( level = MessageLevel.INFO, text = "Loading topologies from directory: {0}" )
-  void loadingTopologiesFromDirecotry( String topologiesDir );
+  void loadingTopologiesFromDirectory( String topologiesDir );
 
   @Message( level = MessageLevel.DEBUG, text = "Loading topology file: {0}" )
   void loadingTopologyFile( String fileName );

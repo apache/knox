@@ -105,9 +105,8 @@ public class GatewayLdapDynamicGroupFuncTest {
     GatewayTestConfig testConfig = new GatewayTestConfig();
     config = testConfig;
     testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-    testConfig.setDeploymentDir( "clusters" );
 
-    File deployDir = new File( gatewayDir, testConfig.getDeploymentDir() );
+    File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
     File descriptor = new File( deployDir, "test-cluster.xml" );

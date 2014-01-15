@@ -165,7 +165,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    String securityDir = config.getGatewayHomeDir() + File.separator + "conf" + File.separator + "security";
+    String securityDir = config.getGatewaySecurityDir();
     String filename = "registry";
     setupRegistryFile(securityDir, filename);
   }

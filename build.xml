@@ -297,9 +297,9 @@
     <target name="install-test-home" description="Install binary release into install directory.">
         <delete dir="${install.dir}" quiet="true"/>
         <unzip src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip/" dest="${install.dir}"/>
-        <echo file="${install.dir}/${gateway-artifact}-${gateway-version}/conf/security/master">#1.0# Mon, Aug 26 2013 14:25:31.483
+        <echo file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master">#1.0# Mon, Aug 26 2013 14:25:31.483
 cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2N3c9PQ==</echo>
-        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/conf/security/master" perm="600"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master" perm="600"/>
     </target>
 
     <target name="spawn-test-ldap" description="Spawn test LDAP server.">
