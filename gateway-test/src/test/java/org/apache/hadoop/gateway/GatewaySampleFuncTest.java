@@ -98,10 +98,13 @@ public class GatewaySampleFuncTest {
     config = testConfig;
     testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
 
+    File topoDir = new File( testConfig.getGatewayTopologyDir() );
+    topoDir.mkdirs();
+
     File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    File descriptor = new File( deployDir, "test-cluster.xml" );
+    File descriptor = new File( topoDir, "test-cluster.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
     createTopology().toStream( stream );
     stream.close();

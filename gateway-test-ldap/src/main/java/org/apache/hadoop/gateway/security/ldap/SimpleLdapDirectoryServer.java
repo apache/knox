@@ -26,9 +26,11 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
+import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.ServerSocket;
 import java.util.UUID;
 
 public class SimpleLdapDirectoryServer {
@@ -75,6 +77,8 @@ public class SimpleLdapDirectoryServer {
   }
 
   public static void main( String[] args ) throws Exception {
+    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
+
     SimpleLdapDirectoryServer ldap;
 
     File file;
@@ -87,10 +91,19 @@ public class SimpleLdapDirectoryServer {
       }
       file = new File( dir, "users.ldif" );
     }
+
     if( !file.exists() || !file.canRead() ) {
       throw new FileNotFoundException( file.getAbsolutePath() );
     }
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", file, new TcpTransport( 33389 ) );
+
+    int port = 33389;
+
+    // Make sure the port is free.
+    ServerSocket socket = new ServerSocket( port );
+    socket.close();
+
+    TcpTransport transport = new TcpTransport( port );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", file, transport );
     ldap.start();
   }
 

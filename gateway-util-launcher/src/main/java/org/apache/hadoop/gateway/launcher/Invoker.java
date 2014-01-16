@@ -23,6 +23,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class Invoker {
 
@@ -39,7 +41,11 @@ class Invoker {
 
   private static void setSysProps( Properties properties ) {
     for( String name : properties.stringPropertyNames() ) {
-      System.setProperty( name, properties.getProperty( name ) );
+      String value = System.getProperty( name, null );
+      if( value == null ) {
+        value = resolveValue( properties, name );
+        System.setProperty( name, value );
+      }
     }
   }
 
@@ -62,6 +68,25 @@ class Invoker {
   private static void invokeMainMethod( ClassLoader loader, Method method, String[] args ) throws InvocationTargetException, IllegalAccessException {
     Thread.currentThread().setContextClassLoader( loader );
     method.invoke( method.getClass(), (Object)args );
+  }
+
+  private static String resolveValue( Properties properties, String name ) {
+    String value = properties.getProperty( name );
+    Pattern pattern = Pattern.compile( ".*?(\\$\\{)(.*?)(\\}).*" );
+    Matcher matcher = pattern.matcher( value );
+    while( matcher.matches() ) {
+      StringBuilder resolvedValue = new StringBuilder( value.length() );
+      resolvedValue.append( value.substring( 0, matcher.start( 1 ) ) );
+      String varName = matcher.group( 2 );
+      String varVal = properties.getProperty( varName );
+      if( varVal != null ) {
+        resolvedValue.append( varVal );
+      }
+      resolvedValue.append( value.substring( matcher.end( 3 ) ) );
+      value = resolvedValue.toString();
+      matcher = pattern.matcher( value );
+    }
+    return value;
   }
 
 }

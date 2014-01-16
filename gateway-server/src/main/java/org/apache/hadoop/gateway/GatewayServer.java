@@ -77,6 +77,7 @@ public class GatewayServer {
 
   public static void main( String[] args ) {
     try {
+      configureLogging();
       CommandLine cmd = GatewayCommandLine.parse( args );
       if( cmd.hasOption( GatewayCommandLine.HELP_LONG ) ) {
         GatewayCommandLine.printHelp();
@@ -91,7 +92,6 @@ public class GatewayServer {
           log.failedToInstantiateGatewayServices();
         }
         GatewayConfig config = new GatewayConfigImpl();
-        configureLogging( config );
         if (config.isHadoopKerberosSecured()) {
           configureKerberosSecurity( config );
         }
@@ -122,21 +122,22 @@ public class GatewayServer {
     return services;
   }
 
-  private static void configureLogging( GatewayConfig config ) {
-    String fileName = config.getGatewayConfDir() + File.separator + "log4j.properties";
-    File file = new File( fileName );
-    if( file.isFile() && file.canRead() ) {
-      FileInputStream stream;
-      try {
-        stream = new FileInputStream( file );
-        Properties properties = new Properties();
-        properties.load( stream );
-        PropertyConfigurator.configure( properties );
-        log.loadedLoggingConfig( fileName );
-      } catch( IOException e ) {
-        log.failedToLoadLoggingConfig( fileName );
-      }
-    }
+  private static void configureLogging() {
+    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
+//    String fileName = config.getGatewayConfDir() + File.separator + "log4j.properties";
+//    File file = new File( fileName );
+//    if( file.isFile() && file.canRead() ) {
+//      FileInputStream stream;
+//      try {
+//        stream = new FileInputStream( file );
+//        Properties properties = new Properties();
+//        properties.load( stream );
+//        PropertyConfigurator.configure( properties );
+//        log.loadedLoggingConfig( fileName );
+//      } catch( IOException e ) {
+//        log.failedToLoadLoggingConfig( fileName );
+//      }
+//    }
   }
 
   private static void configureKerberosSecurity( GatewayConfig config ) {

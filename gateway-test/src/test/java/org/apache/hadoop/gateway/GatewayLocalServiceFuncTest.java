@@ -100,10 +100,13 @@ public class GatewayLocalServiceFuncTest {
     config = testConfig;
     testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
 
-    File deployDir = new File( config.getGatewayDeploymentDir() );
+    File topoDir = new File( testConfig.getGatewayTopologyDir() );
+    topoDir.mkdirs();
+
+    File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    File descriptor = new File( deployDir, "cluster.xml" );
+    File descriptor = new File( topoDir, "cluster.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
     createTopology().toStream( stream );
     stream.close();

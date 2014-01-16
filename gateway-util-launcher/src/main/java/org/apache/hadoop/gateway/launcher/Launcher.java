@@ -63,6 +63,8 @@ public class Launcher {
         loadProperties( properties, externalConfigUrl );
       }
     }
+    properties.setProperty( LAUNCHER_PREFIX + "dir", launcherJarDir.getAbsolutePath() );
+    properties.setProperty( LAUNCHER_PREFIX + "name", launcherName );
     command = new Command( launcherJarDir, properties, args );
   }
 

@@ -41,6 +41,10 @@
         <os family="unix"/>
     </condition>
 
+    <condition property="isWindows">
+        <os family="windows"/>
+    </condition>
+
     <condition property="mvn.cmd" value="mvn">
         <os family="unix" />
     </condition>
@@ -294,38 +298,60 @@
         </exec>
     </target>
 
-    <target name="install-test-home" description="Install binary release into install directory.">
+    <target name="delete-test-home" depends="_init">
         <delete dir="${install.dir}" quiet="true"/>
-        <unzip src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip/" dest="${install.dir}"/>
+    </target>
+
+    <target name="_install-test-home-windows" depends="delete-test-home" if="isWindows">
+        <unzip src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip" dest="${install.dir}"/>
+    </target>
+
+    <target name="_install-test-home-unix" depends="delete-test-home" if="isUnix">
+        <untar src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.tar.gz" dest="${install.dir}" compression="gzip"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/gateway.sh" perm="544"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/ldap.sh" perm="544"/>
+    </target>
+
+    <target name="install-test-home" depends="_install-test-home-unix,_install-test-home-windows" description="Install binary release into install directory.">
         <echo file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master">#1.0# Mon, Aug 26 2013 14:25:31.483
-cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2N3c9PQ==</echo>
+            cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2N3c9PQ==</echo>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master" perm="600"/>
     </target>
 
-    <target name="spawn-test-ldap" description="Spawn test LDAP server.">
-        <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}" spawn="true">
-            <arg value="-jar"/>
-            <arg value="bin/ldap.jar"/>
-            <arg value="conf"/>
-        </exec>
-    </target>
-
     <target name="start-test-ldap" description="Spawn test LDAP server.">
-        <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="-jar"/>
-            <arg value="bin/ldap.jar"/>
-            <arg value="conf"/>
+        <exec executable="bin/ldap.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="start"/>
         </exec>
     </target>
 
     <target name="start-test-gateway" description="Start test gateway server.">
+        <exec executable="bin/gateway.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="start"/>
+        </exec>
+    </target>
+
+    <target name="start-debug-gateway" description="Start test gateway server.">
         <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"/>
+            <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
             <arg value="-jar"/>
             <arg value="bin/gateway.jar"/>
         </exec>
     </target>
 
-    <target name="start-test-servers" depends="spawn-test-ldap,start-test-gateway" description="Spawn test LDAP server and start test gateway server."/>
+    <target name="stop-test-ldap" description="Spawn test LDAP server.">
+        <exec executable="bin/ldap.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="stop"/>
+        </exec>
+    </target>
+
+    <target name="stop-test-gateway" description="Start test gateway server.">
+        <exec executable="bin/gateway.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="stop"/>
+        </exec>
+    </target>
+
+    <target name="start-test-servers" depends="start-test-ldap,start-test-gateway" description="Start test LDAP and test gateway servers."/>
+    <target name="stop-test-servers" depends="stop-test-gateway,stop-test-ldap" description="Stop test LDAP server and gateway servers."/>
+    <target name="restart-test-servers" depends="stop-test-servers,start-test-servers" description="Restart test LDAP and gateway servers."/>
 
 </project>

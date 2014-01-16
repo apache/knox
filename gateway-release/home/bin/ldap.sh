@@ -17,19 +17,22 @@
 #  limitations under the License.
 #
 
-# The app's label
-APP_LABEL=Gateway
+# App name
+APP_LABEL=LDAP
 
-# The app's name
-APP_NAME=gateway
+# App name
+APP_NAME=ldap
 
-# Start/stop script location
+# App name
+APP_JAR_NAME=ldap.jar
+
+# start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # The app's jar name
-APP_JAR="$APP_BIN_DIR/gateway.jar"
+APP_JAR="$APP_BIN_DIR/$APP_JAR_NAME"
 
-# The apps home dir
+# The app's home dir
 APP_HOME_DIR=`dirname $APP_BIN_DIR`
 
 # The apps home dir
@@ -38,7 +41,7 @@ APP_CONF_DIR="$APP_HOME_DIR/conf"
 # The app's log dir
 APP_LOG_DIR="$APP_HOME_DIR/logs"
 
-# The app's logging options
+# The app's Log4j options
 APP_LOG_OPTS=""
 
 # The app's memory options
@@ -47,20 +50,20 @@ APP_MEM_OPTS=""
 # The app's debugging options
 APP_DBG_OPTS=""
 
-# The app's PID
-APP_PID=0
-
 # Start, stop, status, clean or setup
-APP_LAUNCH_CMD=$1
+APP_LAUNCH_COMMAND=$1
 
 # User Name for setup parameter
 APP_LAUNCH_USER=$2
 
-# Name of PID file
+# The app's PID
+APP_PID=0
+
+# The name of the PID file
 APP_PID_DIR="$APP_HOME_DIR/pids"
 APP_PID_FILE="$APP_PID_DIR/$APP_NAME.pid"
 
-# Name of LOG/OUT/ERR file
+#Name of LOG/OUT/ERR file
 APP_OUT_FILE="$APP_LOG_DIR/$APP_NAME.out"
 APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
 
@@ -90,11 +93,8 @@ function main {
       setup) 
          setupEnv $APP_LAUNCH_USER
          ;;
-      help)
-         printHelp
-         ;;
       *)
-         printf "Usage: $0 {start|stop|status|clean|setup [USER_NAME]}\n"
+         printHelp
          ;;
    esac
 }
@@ -112,7 +112,7 @@ function appStart {
    
    rm -f $APP_PID_FILE
 
-   nohup $JAVA_CMD $APP_MEM_OPTS $APP_DBC_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
+   nohup $JAVA_CMD $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $APP_CONF_DIR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
 
    getPID
    for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
@@ -139,7 +139,7 @@ function appStop {
      return 0
    fi
   
-   printf "Stopping $APP_LABEL with $APP_PID "
+   printf "Stopping $APP_LABEL with PID $APP_PID "
    appKill $APP_PID >>$APP_OUT_FILE 2>>$APP_ERR_FILE
 
    if [ $? -ne 0 ]; then 
@@ -170,7 +170,7 @@ function appStatus {
    fi
 }
 
-# Removed the app PID file if app is not run
+# Removed the PID file if app is not run
 function appClean {
    getPID
    appIsRunning $APP_PID
@@ -202,10 +202,10 @@ function appKill {
    return 1
 }
 
-# Returns 0 if the app is running and sets the $PID variable.
+# Returns 0 if the app is running and sets the $APP_PID variable.
 function getPID {
    if [ ! -d $APP_PID_DIR ]; then
-      printf "Can't find PID dir.  Run sudo $0 setup.\n"
+      printf "Can't find pid dir.  Run sudo $0 setup.\n"
       exit 1
    fi
    if [ ! -f $APP_PID_FILE ]; then
@@ -274,28 +274,10 @@ function setDirPermission {
    return 0
 }
 
-function setupEnv {
-   local userName=$1
-   
-   if [ -z $userName ]; then
-      userName=`logname`
-   fi
-
-   id -u $1 >/dev/null 2>&1
-   if [ $? -eq 1 ]; then
-      printf "\"$userName\" is not valid user name. Parameters: setup [USER_NAME]\n"
-      exit 1
-   fi
-
-   $JAVA_CMD -jar $APP_JAR -persist-master -nostart
-
-   return 0
-}
-
 function printHelp {
-   $JAVA_CMD -jar $APP_JAR -help
+   printf "Usage: $0 {start|stop|status|clean}\n"
    return 0
 }
 
-#Starting main
-main $APP_LAUNCH_CMD
+# Starting main
+main $APP_LAUNCH_COMMAND

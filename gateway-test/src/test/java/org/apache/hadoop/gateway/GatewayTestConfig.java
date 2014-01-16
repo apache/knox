@@ -29,16 +29,10 @@ public class GatewayTestConfig implements GatewayConfig {
   private String gatewayHost = "localhost";
   private int gatewayPort = 0;
   private String gatewayPath = "gateway";
-//  private String deployDir = "clusters";
   private boolean hadoopKerberosSecured = false;
   private String kerberosConfig = "/etc/knox/conf/krb5.conf";
   private boolean kerberosDebugEnabled = false;
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
-
-//  @Override
-//  public String getGatewayHomeDir() {
-//    return gatewayHomeDir;
-//  }
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -61,12 +55,12 @@ public class GatewayTestConfig implements GatewayConfig {
 
   @Override
   public String getGatewayTopologyDir() {
-    return gatewayHomeDir + "/clusters";
+    return gatewayHomeDir + "/topologies";
   }
 
   @Override
   public String getGatewayDeploymentDir() {
-    return gatewayHomeDir + "/clusters";
+    return gatewayHomeDir + "/deployments";
   }
 
 //  public void setDeploymentDir( String clusterConfDir ) {

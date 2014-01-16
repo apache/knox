@@ -736,13 +736,6 @@
                 <version>2.0.0-alpha-4</version>
             </dependency>
 
-            <!--
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-jdbm</artifactId>
-                <version>2.0.0-M5</version>
-            </dependency>
-            -->
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-all</artifactId>
@@ -754,6 +747,13 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!--
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-jdbm</artifactId>
+                <version>2.0.0-M5</version>
+            </dependency>
+            -->
             <!--
             <dependency>
                 <groupId>org.apache.directory.server</groupId>

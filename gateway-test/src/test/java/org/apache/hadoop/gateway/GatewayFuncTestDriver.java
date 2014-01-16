@@ -135,10 +135,13 @@ public class GatewayFuncTestDriver {
 
     config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
 
+    File topoDir = new File( config.getGatewayTopologyDir() );
+    topoDir.mkdirs();
+
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    File descriptor = new File( deployDir, cluster + ".xml" );
+    File descriptor = new File( topoDir, cluster + ".xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
     topology.toStream( stream );
     stream.close();
