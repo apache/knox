@@ -33,6 +33,15 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>

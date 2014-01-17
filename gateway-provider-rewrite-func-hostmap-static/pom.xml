@@ -46,15 +46,28 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-i18n-logging-log4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-impl-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
         </dependency>
 
         <!-- ********** ********** ********** ********** ********** ********** -->
