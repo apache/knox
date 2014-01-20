@@ -176,13 +176,6 @@ objectclass:organizationalUnit
 ou: groups
 description: generic groups branch
 
-# create dynamic group directors under groups
-dn: cn=directors,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass: groupofnames
-cn: directors
-description: directors group
-
 # create the analyst group under groups
 dn: cn=analyst,ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
