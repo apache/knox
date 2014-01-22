@@ -218,6 +218,18 @@ public class BaseKeystoreService {
     }
   }
 
+  public void removeCredential(String alias, KeyStore ks) {
+    if (ks != null) {
+      try {
+        if (ks.containsAlias(alias)) {
+          ks.deleteEntry(alias);
+        }
+      } catch (KeyStoreException e) {
+        LOG.failedToAddCredential(e);
+      }
+    }
+  }
+
   protected char[] getCredential(String alias, char[] credential, KeyStore ks) {
     if (ks != null) {
       try {

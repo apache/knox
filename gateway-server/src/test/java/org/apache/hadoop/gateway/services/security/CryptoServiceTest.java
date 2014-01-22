@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.security.cert.Certificate;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -89,6 +90,16 @@ public class CryptoServiceTest {
 
       @Override
       public Certificate getCertificateForGateway(String alias) {
+        // TODO Auto-generated method stub
+        return null;
+      }
+
+      @Override
+      public void removeAliasForCluster(String clusterName, String alias) {
+      }
+
+      @Override
+      public List<String> getAliasesForCluster(String clusterName) {
         // TODO Auto-generated method stub
         return null;
       }

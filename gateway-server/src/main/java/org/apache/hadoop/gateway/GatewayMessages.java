@@ -291,4 +291,7 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Key passphrase not found in credential store - using master secret." )
   void assumingKeyPassphraseIsMaster();
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to remove alias for cluster: {0} {1}." )
+  void failedToRemoveCredentialForCluster(String clusterName,
+      KeystoreServiceException e);
 }

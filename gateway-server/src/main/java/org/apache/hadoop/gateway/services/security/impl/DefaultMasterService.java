@@ -24,7 +24,6 @@ import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.GatewayMessages;
 
-import java.io.File;
 import java.util.Map;
 
 public class DefaultMasterService extends CMFMasterService implements MasterService, Service {
@@ -47,7 +46,6 @@ public class DefaultMasterService extends CMFMasterService implements MasterServ
       setupMasterSecret(securityDir, filename, persisting);
     }
   }
-  
 
   @Override
   public void start() throws ServiceLifecycleException {

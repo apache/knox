@@ -61,6 +61,7 @@
         <module>gateway-service-tgs</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
+        <module>knox-cli-launcher</module>
         <module>hadoop-examples</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
@@ -448,6 +449,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-server-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>knox-cli-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

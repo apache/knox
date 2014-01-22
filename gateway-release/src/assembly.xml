@@ -89,6 +89,13 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
+            <outputFileNameMapping>knoxcli.jar</outputFileNameMapping>
+            <includes>
+                <include>${gateway-group}:knox-cli-launcher</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>gateway.jar</outputFileNameMapping>
             <includes>
                 <include>${gateway-group}:gateway-server-launcher</include>

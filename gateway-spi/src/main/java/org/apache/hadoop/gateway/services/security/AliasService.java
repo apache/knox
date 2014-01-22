@@ -18,12 +18,17 @@
 package org.apache.hadoop.gateway.services.security;
 
 import java.security.cert.Certificate;
+import java.util.List;
 
 import org.apache.hadoop.gateway.services.Service;
 
 public interface AliasService extends Service {
 
+  public abstract List<String> getAliasesForCluster(String clusterName);
+
   public abstract void addAliasForCluster(String clusterName, String alias, String value);
+
+  public abstract void removeAliasForCluster(String clusterName, String alias);
 
   public abstract char[] getPasswordFromAliasForCluster(String clusterName, String alias);
 

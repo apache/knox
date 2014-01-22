@@ -17,8 +17,12 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -119,6 +123,11 @@ public class DefaultAliasService implements AliasService {
   }
 
   @Override
+  public void removeAliasForCluster(String clusterName, String alias) {
+    keystoreService.removeCredentialForCluster(clusterName, alias);
+  }
+
+  @Override
   public char[] getPasswordFromAliasForGateway(String alias) {
     return getPasswordFromAliasForCluster("__gateway", alias);
   }
@@ -143,5 +152,35 @@ public class DefaultAliasService implements AliasService {
       LOG.unableToRetrieveCertificateForGateway(e);
     }
     return cert;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.AliasService#getAliasesForCluster(java.lang.String)
+   */
+  @Override
+  public List<String> getAliasesForCluster(String clusterName) {
+    ArrayList<String> list = new ArrayList<String>();
+    KeyStore keyStore;
+    try {
+      keyStore = keystoreService.getCredentialStoreForCluster(clusterName);
+      if (keyStore != null) {
+        String alias = null;
+        try {
+          Enumeration<String> e = keyStore.aliases();
+          while (e.hasMoreElements()) {
+             alias = e.nextElement();
+             // only include the metadata key names in the list of names
+             if (!alias.contains("@")) {
+                 list.add(alias);
+             }
+          }
+        } catch (KeyStoreException e) {
+          LOG.failedToGetCredentialForCluster(clusterName, e);
+        }
+      }
+    } catch (KeystoreServiceException kse) {
+      LOG.failedToGetCredentialForCluster(clusterName, kse);
+    }
+    return list;
   }
 }

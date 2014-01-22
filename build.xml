@@ -310,6 +310,7 @@
         <untar src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.tar.gz" dest="${install.dir}" compression="gzip"/>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/gateway.sh" perm="544"/>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/ldap.sh" perm="544"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/knoxcli.sh" perm="544"/>
     </target>
 
     <target name="install-test-home" depends="_install-test-home-unix,_install-test-home-windows" description="Install binary release into install directory.">

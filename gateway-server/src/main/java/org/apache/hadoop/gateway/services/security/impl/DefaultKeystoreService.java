@@ -43,15 +43,12 @@ import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 import java.util.Map;
 
-
 public class DefaultKeystoreService extends BaseKeystoreService implements KeystoreService, Service {
 
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
-  private static final String TEST_CERT_DN = "CN=hadoop.gateway,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
   private static final String GATEWAY_KEYSTORE = "gateway.jks";
   private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
-  private static final String CERT_GEN_MODE_HADOOP_GATEWAY = "hadoop.gateway";
   private static final String CERT_GEN_MODE_LOCALHOST = "localhost";
   private static final String CERT_GEN_MODE_HOSTNAME = "hostname";
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -91,27 +88,27 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   
   @Override
   public void addSelfSignedCertForGateway(String alias, char[] passphrase) {
+    addSelfSignedCertForGateway(alias, passphrase, null);
+  }
+
+  @Override
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) {
+
     KeyPairGenerator keyPairGenerator;
     try {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
       keyPairGenerator.initialize(1024);  
       KeyPair KPair = keyPairGenerator.generateKeyPair();
-      String certGenMode = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);
+      if (hostname == null) {
+        hostname = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);
+      }
       X509Certificate cert = null;
-      if (certGenMode.equals(CERT_GEN_MODE_HADOOP_GATEWAY)) {
-        String dn = buildDistinguishedName("hadoop.gateway");
-        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
-      }
-      else if(certGenMode.equals(CERT_GEN_MODE_LOCALHOST)) {
-        String dn = buildDistinguishedName("localhost");
-        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
-      }
-      else if(certGenMode.equals(CERT_GEN_MODE_HOSTNAME)) {
+      if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
         String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
         cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
       }
       else {
-        String dn = buildDistinguishedName("localhost");
+        String dn = buildDistinguishedName(hostname);
         cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
       }
 
@@ -234,5 +231,26 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
       }
     }
     return credential;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.KeystoreService#removeCredentialForCluster(java.lang.String, java.lang.String, java.security.KeyStore)
+   */
+  @Override
+  public void removeCredentialForCluster(String clusterName, String alias) {
+    KeyStore ks = getCredentialStoreForCluster(clusterName);
+    removeCredential(alias, ks);
+    final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
+    try {
+      writeKeystoreToFile(ks, keyStoreFile);
+    } catch (KeyStoreException e) {
+      LOG.failedToAddCredentialForCluster( clusterName, e );
+    } catch (NoSuchAlgorithmException e) {
+      LOG.failedToAddCredentialForCluster( clusterName, e );
+    } catch (CertificateException e) {
+      LOG.failedToAddCredentialForCluster( clusterName, e );
+    } catch (IOException e) {
+      LOG.failedToAddCredentialForCluster( clusterName, e );
+    }
   }
 }
