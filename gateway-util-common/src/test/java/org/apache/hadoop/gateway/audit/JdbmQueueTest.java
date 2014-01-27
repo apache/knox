@@ -151,9 +151,9 @@ public class JdbmQueueTest {
         humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
   }
 
-  @Test( timeout = 80000 )
+  @Test( timeout = 120000 )
   public void testConcurrentConsumer() throws InterruptedException {
-    int iterations = 1000;
+    int iterations = 100;
     HashSet<String> consumed = new HashSet<String>();
     Consumer consumer = new Consumer( consumed );
     consumer.start();
@@ -171,9 +171,9 @@ public class JdbmQueueTest {
     assertThat( consumed.size(), is( iterations * 2 ) );
   }
 
-  @Test( timeout=80000 )
+  @Test( timeout=120000 )
   public void testConcurrentProcessor() throws InterruptedException {
-    int iterations = 1000;
+    int iterations = 100;
     HashSet<String> consumed = new HashSet<String>();
     Processor consumer = new Processor( consumed );
     consumer.start();
