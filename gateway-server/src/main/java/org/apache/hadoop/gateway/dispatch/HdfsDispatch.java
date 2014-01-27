@@ -17,6 +17,12 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -29,11 +35,15 @@ import org.eclipse.jetty.http.HttpStatus;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 public class HdfsDispatch extends HttpClientDispatch {
+
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   public HdfsDispatch() throws ServletException {
     super();
@@ -44,6 +54,8 @@ public class HdfsDispatch extends HttpClientDispatch {
       throws IOException, URISyntaxException {
     HttpEntity entity = createRequestEntity( request );
     URI requestUri = getDispatchUrl( request );
+    
+    auditor.audit( Action.DISPATCH, request.getRequestURI(), ResourceType.URI, ActionOutcome.UNAVAILABLE );
     if( "CREATE".equals( request.getParameter( "op" ) ) ) {
       HttpPut clientRequest = new HttpPut( requestUri );
       HttpClient client = new DefaultHttpClient();

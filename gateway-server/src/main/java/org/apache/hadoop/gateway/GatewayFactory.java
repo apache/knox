@@ -74,7 +74,7 @@ public class GatewayFactory {
     if( name == null ) {
       name = filter.role();
     }
-    gateway.addFilter( filter.up().pattern(), name, filter.impl(), createParams( filter ) );
+    gateway.addFilter( filter.up().pattern(), name, filter.impl(), createParams( filter ), filter.up().role() );
   }
 
   private static Map<String, String> createParams( FilterDescriptor filter ) {

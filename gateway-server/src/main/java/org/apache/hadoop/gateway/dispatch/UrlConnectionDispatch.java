@@ -19,7 +19,15 @@ package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayResources;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
@@ -30,6 +38,7 @@ import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +56,9 @@ import java.util.Enumeration;
 public class UrlConnectionDispatch extends AbstractGatewayDispatch {
 
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   @Override
   public void doGet( URI url, HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
@@ -95,6 +107,7 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
       //System.out.println( "Resolved query: " + clientUrl );
       AuthenticatedURL.Token token = new AuthenticatedURL.Token();
       KerberosAuthenticator authenticator = new KerberosAuthenticator();
+      auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.UNAVAILABLE );
       HttpURLConnection conn = new AuthenticatedURL( authenticator ).openConnection( clientUrl, token );
       //System.out.println( "STATUS=" + conn.getResponseCode() );
       InputStream input = conn.getInputStream();
@@ -107,12 +120,15 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
           input.close();
         }
       }
+      auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.SUCCESS );
     } catch( AuthenticationException e ) {
       response.sendError( HttpServletResponse.SC_UNAUTHORIZED );
       LOG.failedToEstablishConnectionToUrl( urlStr, e );
+      auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.FAILURE, RES.responseStatus( HttpServletResponse.SC_UNAUTHORIZED ) );
     } catch( FileNotFoundException e ) {
       response.sendError( HttpServletResponse.SC_NOT_FOUND );
       LOG.failedToEstablishConnectionToUrl( urlStr, e );
+      auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.FAILURE, RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
     }
 
   }

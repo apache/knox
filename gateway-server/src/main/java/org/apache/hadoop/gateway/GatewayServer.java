@@ -21,6 +21,12 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
@@ -63,6 +69,8 @@ import java.util.regex.Pattern;
 public class GatewayServer {
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static GatewayServer server;
   private static GatewayServices services;
   
@@ -350,6 +358,7 @@ public class GatewayServer {
             File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
             if( files != null ) {
               for( File file : files ) {
+                auditor.audit( Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
                 log.deletingDeployment( file.getAbsolutePath() );
                 internalUndeploy( topology );
                 FileUtils.deleteQuietly( file );
@@ -358,6 +367,7 @@ public class GatewayServer {
           } else {
             try {
               if( !warDir.exists() ) {
+                auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
                 log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
                 internalUndeploy( topology ); // KNOX-152
                 WebArchive war = null;
@@ -370,11 +380,13 @@ public class GatewayServer {
                 internalDeploy( topology, warDir );
                 //log.deployedTopology( topology.getName());
               } else {
+                auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
                 log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
                 internalDeploy( topology, warDir );
                 //log.redeployedTopology( topology.getName() );
               }
             } catch( Throwable e ) {
+              auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
               log.failedToDeployTopology( topology.getName(), e );
             }
           }

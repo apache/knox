@@ -31,6 +31,13 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.shiro.SecurityUtils;
@@ -39,6 +46,11 @@ import org.apache.shiro.subject.Subject;
 public class ShiroSubjectIdentityAdapter implements Filter {
   
   private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
+  
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -88,6 +100,9 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       Set<Principal> principals = new HashSet<Principal>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
+      auditService.createContext().setUsername( principal );
+      String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+      auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
       
       // map ldap groups saved in session to Java Subject GroupPrincipal(s)
       if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
@@ -96,6 +111,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
           Principal gp = new GroupPrincipal(userRole);
           principals.add(gp);
         }
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "Groups: " + userRoles );
       }
       
       // TODO: add groups through extended JndiLdapRealm implementation once Jira KNOX-4 is resolved

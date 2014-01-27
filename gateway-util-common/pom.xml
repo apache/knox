@@ -66,6 +66,10 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-i18n</artifactId>
         </dependency>
+		<dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-jdbm</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -88,6 +92,14 @@
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+            <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
     </dependencies>

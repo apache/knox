@@ -67,4 +67,8 @@ public interface GatewayResources {
 
   @Resource( text="Failed to create keystore directory: {0}" )
   String failedToCreateKeyStoreDirectory( String name );
+
+  @Resource( text="Response status: {0}" )
+  String responseStatus( int status );
+
 }

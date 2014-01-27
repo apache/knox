@@ -22,6 +22,12 @@ import java.net.URI;
 import java.security.Principal;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
@@ -52,7 +58,8 @@ public class AppCookieManager {
   private static final String SET_COOKIE = "Set-Cookie";
 
   private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
 
   String appCookie;
@@ -115,6 +122,7 @@ public class AppCookieManager {
       hadoopAuthCookie = getHadoopAuthCookieValue(headers);
       if (hadoopAuthCookie == null) {
         LOG.failedSPNegoAuthn(uri.toString());
+        auditor.audit( Action.AUTHENTICATION, uri.toString(), ResourceType.URI, ActionOutcome.FAILURE );
         throw new IOException(
             "SPNego authn failed, can not get hadoop.auth cookie");
       }
@@ -128,6 +136,7 @@ public class AppCookieManager {
 
     }
     LOG.successfulSPNegoAuthn(uri.toString());
+    auditor.audit( Action.AUTHENTICATION, uri.toString(), ResourceType.URI, ActionOutcome.SUCCESS);
     hadoopAuthCookie = HADOOP_AUTH_EQ + quote(hadoopAuthCookie);
     setAppCookie(hadoopAuthCookie);
     return appCookie;

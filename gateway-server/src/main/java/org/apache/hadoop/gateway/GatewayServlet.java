@@ -17,8 +17,15 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
@@ -32,6 +39,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,6 +53,10 @@ public class GatewayServlet implements Servlet {
 
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  
+  private static Auditor auditor = AuditServiceFactory.getAuditService()
+      .getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   private FilterConfigAdapter filterConfig;
   private volatile GatewayFilter filter;
@@ -113,6 +125,9 @@ public class GatewayServlet implements Servlet {
     } else {
       ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
     }
+    String requestUri = (String)servletRequest.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+    int status = ((HttpServletResponse)servletResponse).getStatus();
+    auditor.audit( Action.ACCESS, requestUri, ResourceType.URI, ActionOutcome.SUCCESS, res.responseStatus( status ) );
   }
 
   @Override

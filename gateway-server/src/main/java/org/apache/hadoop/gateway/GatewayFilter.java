@@ -17,8 +17,19 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditContext;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.CorrelationContext;
+import org.apache.hadoop.gateway.audit.api.CorrelationServiceFactory;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -32,6 +43,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -41,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -53,6 +66,11 @@ public class GatewayFilter implements Filter {
   };
   
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
 
   private Set<Holder> holders;
   private Matcher<Chain> chains;
@@ -88,34 +106,50 @@ public class GatewayFilter implements Filter {
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
-
+    String pathWithContext = httpRequest.getContextPath() + path;
     LOG.receivedRequest( httpRequest.getMethod(), pathTemplate );
 
     servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME, pathTemplate );
+    servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME, pathWithContext );
 
     Matcher<Chain>.Match match = chains.match( pathTemplate );
+    
+    assignCorrelationRequestId();
+    // Populate Audit/correlation parameters
+    AuditContext auditContext = auditService.createContext();
+    auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
+    auditContext.setRemoteIp( servletRequest.getRemoteAddr() );
+    auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
+    auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.UNAVAILABLE );
+    
     if( match != null ) {
       Chain chain = match.getValue();
       try {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
         LOG.failedToExecuteFilter( e );
+        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( ServletException e ) {
         LOG.failedToExecuteFilter( e );
+        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( RuntimeException e ) {
         LOG.failedToExecuteFilter( e );
+        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( ThreadDeath e ) {
         LOG.failedToExecuteFilter( e );
+        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( Throwable e ) {
         LOG.failedToExecuteFilter( e );
+        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
         throw new ServletException( e );
       }
     } else {
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
+      auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
     }
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
@@ -134,13 +168,14 @@ public class GatewayFilter implements Filter {
     Chain chain = chains.get( holder.template );
     if( chain == null ) {
       chain = new Chain();
+      chain.setResourceRole( holder.getResourceRole() );
       chains.add( holder.template, chain );
     }
     chain.chain.add( holder );
   }
 
-  public void addFilter( String path, String name, Filter filter, Map<String,String> params ) throws URISyntaxException {
-    Holder holder = new Holder( path, name, filter, params );
+  public void addFilter( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
+    Holder holder = new Holder( path, name, filter, params, resourceRole );
     addHolder( holder );
   }
 
@@ -149,14 +184,20 @@ public class GatewayFilter implements Filter {
 //    addHolder( holder );
 //  }
 
-  public void addFilter( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
-    Holder holder = new Holder( path, name, clazz, params );
+  public void addFilter( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
+    Holder holder = new Holder( path, name, clazz, params, resourceRole );
     addHolder( holder );
+  }
+  
+  private void assignCorrelationRequestId() {
+    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
+    correlationContext.setRequestId( UUID.randomUUID().toString() );
   }
 
   private class Chain implements FilterChain {
 
     private List<Holder> chain;
+    private String resourceRole; 
 
     private Chain() {
       this.chain = new ArrayList<Holder>();
@@ -180,6 +221,14 @@ public class GatewayFilter implements Filter {
       }
     }
 
+    private String getResourceRole() {
+      return resourceRole;
+    }
+
+    private void setResourceRole( String resourceRole ) {
+      this.resourceRole = resourceRole;
+    }
+
   }
 
   private class Holder implements Filter, FilterConfig {
@@ -190,8 +239,9 @@ public class GatewayFilter implements Filter {
     private Filter instance;
     private Class<? extends Filter> clazz;
     private String type;
+    private String resourceRole;
 
-    private Holder( String path, String name, Filter filter, Map<String,String> params ) throws URISyntaxException {
+    private Holder( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
 //      this.path = path;
       this.template = Parser.parse( path );
       this.name = name;
@@ -199,6 +249,7 @@ public class GatewayFilter implements Filter {
       this.instance = filter;
       this.clazz = filter.getClass();
       this.type = clazz.getCanonicalName();
+      this.resourceRole = resourceRole;
     }
 
 //    private Holder( String path, String name, Class<WarDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
@@ -211,7 +262,7 @@ public class GatewayFilter implements Filter {
 //      this.type = clazz.getCanonicalName();
 //    }
 
-    private Holder( String path, String name, String clazz, Map<String,String> params ) throws URISyntaxException {
+    private Holder( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
 //      this.path = path;
       this.template = Parser.parse( path );
       this.name = name;
@@ -219,6 +270,7 @@ public class GatewayFilter implements Filter {
       this.instance = null;
       this.clazz = null;
       this.type = clazz;
+      this.resourceRole = resourceRole;
     }
 
     @Override
@@ -292,6 +344,10 @@ public class GatewayFilter implements Filter {
         }
       }
       return instance;
+    }
+    
+    private String getResourceRole() {
+      return resourceRole;
     }
 
   }

@@ -29,6 +29,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayResources;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -66,6 +72,8 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
 
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final int DEFAULT_REPLAY_BUFFER_SIZE =  4 * 1024; // 4K
 
   private AppCookieManager appCookieManager = new AppCookieManager();
@@ -108,6 +116,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     } catch (IOException e) {
       // we do not want to expose back end host. port end points to clients, see JIRA KNOX-58
       LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
+      auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE );
       throw new IOException( RES.dispatchConnectionError() );
     } finally {
       if (inboundResponse != null) {
@@ -122,7 +131,11 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
             LOG.dispatchResponseCreatedStatusCode( statusCode, location.getValue() );
           }
         }
+        auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( statusCode ) );
+      } else {
+        auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE );
       }
+      
     }
 
     // Copy the client respond header to the server respond.

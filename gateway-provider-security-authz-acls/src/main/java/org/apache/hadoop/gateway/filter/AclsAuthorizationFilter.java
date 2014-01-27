@@ -27,11 +27,18 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.ImpersonatedPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.util.IpAddressValidator;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -41,6 +48,8 @@ import java.util.Collections;
 
 public class AclsAuthorizationFilter implements Filter {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   private String resourceRole = null;
   private ArrayList<String> users;
@@ -126,11 +135,13 @@ public class AclsAuthorizationFilter implements Filter {
       FilterChain chain) throws IOException, ServletException {
     boolean accessGranted = enforceAclAuthorizationPolicy(request, response, chain);
     log.accessGranted(accessGranted);
-
+    String sourceUrl = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
     if (accessGranted) {
+      auditor.audit( Action.AUTHORIZATION, sourceUrl, ResourceType.URI, ActionOutcome.SUCCESS );
       chain.doFilter(request, response);
     }
     else {
+      auditor.audit( Action.AUTHORIZATION, sourceUrl, ResourceType.URI, ActionOutcome.FAILURE );
       sendUnauthorized((HttpServletResponse) response);
     }
   }

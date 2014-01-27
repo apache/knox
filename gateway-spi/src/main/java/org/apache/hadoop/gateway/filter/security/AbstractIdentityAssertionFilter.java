@@ -17,8 +17,17 @@
  */
 package org.apache.hadoop.gateway.filter.security;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
+import org.apache.hadoop.gateway.i18n.GatewaySpiResources;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.ImpersonatedPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
@@ -42,11 +51,17 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.ServletException;
 
+import java.util.Arrays;
 import java.util.Set;
 
 public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
+  private static final GatewaySpiResources RES = ResourcesFactory.get( GatewaySpiResources.class );
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
   protected PrincipalMapper mapper = new SimplePrincipalMapper();
 
   public AbstractIdentityAssertionFilter() {
@@ -103,6 +118,8 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
     if (primaryPrincipal != null) {
       if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
         impersonationNeeded = true;
+        auditService.getContext().setProxyUsername( mappedPrincipalName );
+        auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(), ResourceType.PRINCIPAL, ActionOutcome.SUCCESS );
       }
     }
     else {
@@ -172,6 +189,7 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
   private void addMappedGroupsToSubject(String mappedPrincipalName, Subject subject) {
     String[] groups = mapper.mapGroupPrincipal(mappedPrincipalName);
     if (groups != null) {
+      auditor.audit( Action.IDENTITY_MAPPING, mappedPrincipalName, ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, RES.groupsList( Arrays.toString( groups ) ) );
       for (int i = 0; i < groups.length; i++) {
         subject.getPrincipals().add(new GroupPrincipal(groups[i]));
       }

@@ -77,7 +77,7 @@ public class GatewayFilterTest {
     EasyMock.replay( filter );
 
     GatewayFilter gateway = new GatewayFilter();
-    gateway.addFilter( "path", "filter", filter, null );
+    gateway.addFilter( "path", "filter", filter, null, null );
     gateway.init( config );
     gateway.doFilter( request, response, chain );
     gateway.destroy();
