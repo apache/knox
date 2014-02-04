@@ -71,6 +71,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <internal.maven.repo>file:///tmp/knoxtemprepo</internal.maven.repo>
         <gateway-name>Apache Knox (Incubator)</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox-incubating</gateway-artifact>
@@ -96,6 +97,14 @@
     <scm>
         <connection>scm:git:git://git-wip-us.apache.org/repos/asf/incubator-knox.git</connection>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>internal.repo</id>
+            <name>Internal Repository</name>
+            <url>${internal.maven.repo}</url>
+        </repository>
+    </distributionManagement>
 
     <profiles>
         <profile>
