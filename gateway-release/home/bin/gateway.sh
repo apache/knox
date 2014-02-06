@@ -139,7 +139,7 @@ function appStop {
      return 0
    fi
   
-   printf "Stopping $APP_LABEL with $APP_PID "
+   printf "Stopping $APP_LABEL with PID $APP_PID "
    appKill $APP_PID >>$APP_OUT_FILE 2>>$APP_ERR_FILE
 
    if [ $? -ne 0 ]; then 

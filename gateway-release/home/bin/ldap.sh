@@ -50,11 +50,8 @@ APP_MEM_OPTS=""
 # The app's debugging options
 APP_DBG_OPTS=""
 
-# Start, stop, status, clean or setup
+# Start, stop, status, clean
 APP_LAUNCH_COMMAND=$1
-
-# User Name for setup parameter
-APP_LAUNCH_USER=$2
 
 # The app's PID
 APP_PID=0
@@ -89,9 +86,6 @@ function main {
          ;;
       clean) 
          appClean
-         ;;
-      setup) 
-         setupEnv $APP_LAUNCH_USER
          ;;
       *)
          printHelp
@@ -205,7 +199,7 @@ function appKill {
 # Returns 0 if the app is running and sets the $APP_PID variable.
 function getPID {
    if [ ! -d $APP_PID_DIR ]; then
-      printf "Can't find pid dir.  Run sudo $0 setup.\n"
+      printf "Can't find pid dir.\n"
       exit 1
    fi
    if [ ! -f $APP_PID_FILE ]; then
@@ -231,7 +225,7 @@ function appIsRunning {
 
 function createLogFiles {
    if [ ! -d "$APP_LOG_DIR" ]; then
-      printf "Can't find log dir.  Run sudo $0 setup.\n"
+      printf "Can't find log dir.\n"
       exit 1
    fi
    if [ ! -f "$APP_OUT_FILE" ]; then touch $APP_OUT_FILE; fi
@@ -255,19 +249,19 @@ function setDirPermission {
 
    if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
    if [ $? -ne 0 ]; then
-      printf "Can't access or create \"$dirName\" folder.  Run sudo $0 setup.\n"
+      printf "Can't access or create \"$dirName\" folder.\n"
       exit 1
    fi
 
    chown -f $userName $dirName
    if [ $? -ne 0 ]; then
-      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.  Run command with sudo.\n"
+      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.\n"
       exit 1
    fi
 
    chmod o=rwx $dirName 
    if [ $? -ne 0 ]; then
-      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\".  Run command with sudo.\n"
+      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\".\n"
       exit 1
    fi
 
