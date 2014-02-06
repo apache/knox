@@ -1,0 +1,7 @@
+<service>
+  <id>knox</id>
+  <name>knox</name>
+  <description>This service runs the Knox Gateway</description>
+  <executable>"cmd"</executable>
+  <arguments> /c gateway.cmd start </arguments>
+</service>
