@@ -73,6 +73,7 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
     params.add( rootResource.createFilterParam().name( "response.headers" ).value( getQualifiedName() + "/headers/outbound" ) );
     addRewriteFilter( context, service, rootResource, params );
     addIdentityAssertionFilter( context, service, rootResource );
+    addAuthorizationFilter(context, service, rootResource);
     addDispatchFilter( context, service, rootResource );
     
     ResourceDescriptor pathResource = context.getGatewayDescriptor().addResource();
