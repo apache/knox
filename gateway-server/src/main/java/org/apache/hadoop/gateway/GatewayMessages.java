@@ -294,4 +294,7 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to remove alias for cluster: {0} {1}." )
   void failedToRemoveCredentialForCluster(String clusterName,
       KeystoreServiceException e);
+
+  @Message( level = MessageLevel.WARN, text = "Failed to match path {0}" )
+  void failedToMatchPath( String path );
 }

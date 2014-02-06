@@ -148,6 +148,7 @@ public class GatewayFilter implements Filter {
         throw new ServletException( e );
       }
     } else {
+      LOG.failedToMatchPath( path );
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
       auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
     }

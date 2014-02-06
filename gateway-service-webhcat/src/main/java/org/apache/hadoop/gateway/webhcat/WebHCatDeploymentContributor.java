@@ -17,18 +17,22 @@
  */
 package org.apache.hadoop.gateway.webhcat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URISyntaxException;
+
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.topology.Service;
-
-import java.net.URISyntaxException;
 
 public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBase {
 
+  private static final String RULES_RESOURCE = WebHCatDeploymentContributor.class.getName().replace( '.', '/' ) + "/rewrite.xml";
   private static final String WEBHCAT_EXTERNAL_PATH = "/templeton/v1";
 
   @Override
@@ -42,31 +46,50 @@ public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBa
   }
 
   @Override
-  public void contributeService( DeploymentContext context, Service service ) throws URISyntaxException {
-    UrlRewriteRulesDescriptor rules = context.getDescriptor( "rewrite" );
-    UrlRewriteRuleDescriptor rule;
-    UrlRewriteActionRewriteDescriptorExt rewrite;
-
-    rule = rules.addRule( getRole() + "/" + getName() + "/request" )
-        .directions( "request" )
-        .pattern( "*://*:*/**" + WEBHCAT_EXTERNAL_PATH + "/{path=**}?{**}" );
-    rewrite = rule.addStep( "rewrite" );
-    rewrite.template( service.getUrl() + "/v1/{path=**}?{**}" );
-
-    ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
-    resource.role( service.getRole() );
-    resource.pattern( WEBHCAT_EXTERNAL_PATH + "/**?**" );
-    addWebAppSecFilters(context, service, resource);
-    if (topologyContainsProviderType(context, "authentication")) {
-      context.contributeFilter( service, resource, "authentication", null, null );
-    }
-    if (topologyContainsProviderType(context, "federation")) {
-      context.contributeFilter( service, resource, "federation", null, null );
-    }
-    context.contributeFilter( service, resource, "rewrite", null, null );
-    context.contributeFilter( service, resource, "identity-assertion", null, null );
-    addAuthorizationFilter(context, service, resource);
-    context.contributeFilter( service, resource, "dispatch", null, null );
+  public void contributeService( DeploymentContext context, Service service ) throws Exception {
+    contributeRewriteRules( context, service );
+    contributeResources( context, service );
   }
 
+  private void contributeRewriteRules( DeploymentContext context, Service service ) throws IOException {
+    UrlRewriteRulesDescriptor hbaseRules = loadRulesFromTemplate();
+    UrlRewriteRulesDescriptor clusterRules = context.getDescriptor( "rewrite" );
+    clusterRules.addRules( hbaseRules );
+  }
+
+  private UrlRewriteRulesDescriptor loadRulesFromTemplate() throws IOException {
+    InputStream stream = this.getClass().getClassLoader().getResourceAsStream( RULES_RESOURCE );
+    Reader reader = new InputStreamReader( stream );
+    UrlRewriteRulesDescriptor rules = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
+    reader.close();
+    stream.close();
+    return rules;
+  }
+
+  private void contributeResources( DeploymentContext context, Service service ) throws URISyntaxException {
+    ResourceDescriptor rootResource = context.getGatewayDescriptor().addResource();
+    rootResource.role( service.getRole() );
+    rootResource.pattern( WEBHCAT_EXTERNAL_PATH + "/?**" );
+    addWebAppSecFilters( context, service, rootResource );
+    addAuthenticationFilter( context, service, rootResource );
+    addRewriteFilter( context, service, rootResource, null );
+    addIdentityAssertionFilter( context, service, rootResource );
+    addAuthorizationFilter( context, service, rootResource );
+    addDispatchFilter( context, service, rootResource );
+
+    ResourceDescriptor pathResource = context.getGatewayDescriptor().addResource();
+    pathResource.role( service.getRole() );
+    pathResource.pattern( WEBHCAT_EXTERNAL_PATH + "/**?**" );
+    addWebAppSecFilters( context, service, pathResource );
+    addAuthenticationFilter( context, service, pathResource );
+    addRewriteFilter( context, service, pathResource, null );
+    addIdentityAssertionFilter( context, service, pathResource );
+    addAuthorizationFilter( context, service, pathResource );
+    addDispatchFilter( context, service, pathResource );
+  }
+
+  private void addDispatchFilter(
+      DeploymentContext context, Service service, ResourceDescriptor resource ) {
+    context.contributeFilter( service, resource, "dispatch", null, null );
+  }
 }
