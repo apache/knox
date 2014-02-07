@@ -383,7 +383,12 @@ public abstract class XmlFilterReader extends Reader {
     if( localName == null ) {
       qname = new QName( node.getNodeName() );
     } else {
-      qname = new QName( node.getNamespaceURI(), localName, node.getPrefix() );
+      if ( node.getPrefix() == null ) { 
+        qname = new QName( node.getNamespaceURI(), localName );
+      } else {
+        qname = new QName( node.getNamespaceURI(), localName, node.getPrefix() );
+      }
+      
     }
     return qname;
   }
@@ -419,14 +424,13 @@ public abstract class XmlFilterReader extends Reader {
     Iterator i = event.getNamespaces();
     while( i.hasNext() ) {
       Namespace ns = (Namespace)i.next();
-      if( ns.isDefaultNamespaceDeclaration() ) {
-        writer.write( " xmlns=\"" );
-      } else {
-        writer.write( " xmlns:" );
+      writer.write( " xmlns" );
+      if( !ns.isDefaultNamespaceDeclaration() ) {
+        writer.write( ":" );
         writer.write( ns.getPrefix() );
-        writer.write( "=\"" );
-        writer.write( ns.getNamespaceURI() );
       }
+      writer.write( "=\"" );
+      writer.write( ns.getNamespaceURI() );
       writer.write( "\"" );
     }
   }

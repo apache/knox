@@ -890,6 +890,18 @@ public class XmlFilterReaderTest {
     }
   }
 
+  @Test
+  public void testDefaultNamespace() throws IOException, ParserConfigurationException, XMLStreamException {
+    String input = "<root xmlns=\"ns\"><node attribute=\"attr\">nodevalue</node></root>";
+    StringReader inputReader = new StringReader( input );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
+    String output = IOUtils.toString( filterReader );
+    //check default namespace URI
+    assertThat( the( output ), hasXPath( "/*/namespace::*[name()='']", equalTo( "ns" ) ) );
+    assertThat( the( output ), hasXPath( "/*[namespace-uri()='ns' and name()='root']/*[namespace-uri()='ns' and name()='node']", equalTo( "nodevalue" ) ) );
+    assertThat( the( output ), hasXPath( "/*[namespace-uri()='ns' and name()='root']/*[namespace-uri()='ns' and name()='node']/@attribute", equalTo( "attr" ) ) );
+  }
+
   private class TestXmlFilterReader extends XmlFilterReader {
 
     protected TestXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor contentConfig ) throws IOException, ParserConfigurationException, XMLStreamException {
