@@ -116,6 +116,10 @@ public class KnoxCLI extends Configured implements Tool {
    * @throws IOException
    */
   private int init(String[] args) throws IOException {
+    if (args.length == 0) {
+      printKnoxShellUsage();
+      return -1;
+    }
     for (int i = 0; i < args.length; i++) { // parse command line
       if (args[i].equals("create-master")) {
         command = new MasterCreateCommand();
