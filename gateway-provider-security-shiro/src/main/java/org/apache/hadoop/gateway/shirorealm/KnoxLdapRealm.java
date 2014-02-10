@@ -40,6 +40,8 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
@@ -99,6 +101,8 @@ import org.apache.shiro.util.StringUtils;
  */
 public class KnoxLdapRealm extends JndiLdapRealm {
 
+    private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  
     private static final String MEMBER_SUBSTITUTION_TOKEN = "{0}";
     private final static SearchControls SUBTREE_SCOPE = new SearchControls();
     private final static SearchControls ONELEVEL_SCOPE = new SearchControls();
@@ -167,9 +171,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         try {
             systemLdapCtx = ldapContextFactory.getSystemLdapContext();
             return rolesFor(username, systemLdapCtx, ldapContextFactory);
-        } catch (AuthenticationException ex) {
-            // principal was not authenticated on LDAP
-            return Collections.emptySet();
+        } catch (AuthenticationException e) {
+          LOG.failedToGetSystemLdapConnection(e);
+          return Collections.emptySet();
         } finally {
             LdapUtils.closeContext(systemLdapCtx);
         }

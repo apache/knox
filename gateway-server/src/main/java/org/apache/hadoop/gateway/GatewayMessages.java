@@ -297,4 +297,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Failed to match path {0}" )
   void failedToMatchPath( String path );
+  
+  @Message( level = MessageLevel.ERROR, text = "Failed to get system ldap connection: {0}" )
+  void failedToGetSystemLdapConnection( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 }
