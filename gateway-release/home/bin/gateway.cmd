@@ -154,16 +154,15 @@ SET ERR_FILE=%LOG_DIR%\.err
 :setDirPermission 
 	SET dirName=%1
 	SET uName=%2
-	dir "%dirName%" >NUL 2>NUL
+	dir %dirName% >NUL 2>NUL
 	IF NOT %ERRORLEVEL% ==0 ( 
-		ECHO "making dir"
-		mkdir  "%dirName%" 
+		ECHO "making dir" %dirName%
+		mkdir  %dirName% 
 	)
 	IF NOT %ERRORLEVEL% ==0 (
-		ECHO "Can't access or create \"$dirName\" folder. Run sudo $0 setup."
+		ECHO "Can't access or create %dirName%
 		Exit /B %1
 	)	
-	echo %dirName%
 	GOTO :EOF
 
 :knoxStop {
@@ -212,14 +211,13 @@ SET ERR_FILE=%LOG_DIR%\.err
 	IF [%uName%]==[""] (
 		uName="%USERNAME%" 
 	)  	
-	echo %uName%
-	CALL  :setDirPermission "%PID_DIR%\" %uName%
-	CALL  :setDirPermission "%LOG_DIR%\" %uName%
+	CALL  :setDirPermission "%PID_DIR%" %uName%
+	CALL  :setDirPermission "%LOG_DIR%" %uName%
 	java -DGATEWAY_HOME="%KNOX_HOME%" -jar "%KNOX_JAR%" -persist-master -nostart
 	GOTO :EOF
 
 :printHelp 
-	java -jar %KNOX_JAR% -help
+	java -jar "%KNOX_JAR%" -help
 	GOTO :EOF
 	
 

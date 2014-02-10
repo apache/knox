@@ -17,13 +17,10 @@
  */
 package org.apache.hadoop.gateway.launcher;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Properties;
 
 public class Launcher {
@@ -105,8 +102,8 @@ public class Launcher {
     properties.remove( OVERRIDE );
   }
 
-  private static File calcLauncherDir( URL libUrl ) {
-    String libPath = libUrl.getFile();
+  private static File calcLauncherDir( URL libUrl ) throws UnsupportedEncodingException {
+    String libPath = URLDecoder.decode(libUrl.getFile(), "UTF-8");
     File libFile = new File( libPath );
     File dir;
     if( libFile.isDirectory() ) {
