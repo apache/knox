@@ -105,17 +105,20 @@ public class KnoxCLI extends Configured implements Tool {
    * Parse the command line arguments and initialize the data
    * <pre>
    * % knox master-create keyName [--size size] [--generate]
-   *    [--provider providerPath]
-   * % knox create-alias alias [--value v]
-   * % knox list-alias [-provider providerPath]
-   * % knox delete=alias keyName [--provider providerPath] [-i]
-   * % knox create-cert keyName [--provider providerPath] [-i]
+   * % knox create-alias alias [--cluster] [--generate] [--value v]
+   * % knox list-alias [--cluster]
+   * % knox delete=alias alias [--cluster]
+   * % knox create-cert alias [--hostname]
    * </pre>
    * @param args
    * @return
    * @throws IOException
    */
   private int init(String[] args) throws IOException {
+    if (args.length == 0) {
+      printKnoxShellUsage();
+      return -1;
+    }
     for (int i = 0; i < args.length; i++) { // parse command line
       if (args[i].equals("create-master")) {
         command = new MasterCreateCommand();
