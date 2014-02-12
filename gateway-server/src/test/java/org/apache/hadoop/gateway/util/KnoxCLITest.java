@@ -22,6 +22,9 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.MasterService;
+import org.apache.hadoop.gateway.services.security.impl.CLIMasterService;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -139,5 +142,20 @@ public class KnoxCLITest {
     assertEquals(0, rc);
     assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity has been successfully " +
         "created."));
+  }
+
+  @Test
+  public void testCreateMaster() throws Exception {
+    outContent.reset();
+    String[] args = {"create-master", "--master", "master"};
+    int rc = 0;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args);
+	MasterService ms = cli.getGatewayServices().getService("MasterService");
+	// assertTrue(ms.getClass().getName(), ms.getClass().getName().equals("kjdfhgjkhfdgjkh"));
+	assertTrue(new String(ms.getMasterSecret()), "master".equals(new String(ms.getMasterSecret())));
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("Master secret has been persisted to disk."));
   }
 }

@@ -26,7 +26,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.hadoop.gateway.services.security.impl.DefaultMasterService;
+import org.apache.hadoop.gateway.services.security.impl.CLIMasterService;
 import org.apache.hadoop.gateway.topology.Provider;
 
 import java.util.Collection;
@@ -39,7 +39,7 @@ public class CLIGatewayServices implements GatewayServices {
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private Map<String,Service> services = new HashMap<String, Service>();
-  private DefaultMasterService ms = null;
+  private CLIMasterService ms = null;
   private DefaultKeystoreService ks = null;
 
   public CLIGatewayServices() {
@@ -47,8 +47,9 @@ public class CLIGatewayServices implements GatewayServices {
   }
 
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-    ms = new DefaultMasterService();
+    ms = new CLIMasterService();
     ms.init(config, options);
+    services.put("MasterService", ms);
 
     ks = new DefaultKeystoreService();
     ks.setMasterService(ms);

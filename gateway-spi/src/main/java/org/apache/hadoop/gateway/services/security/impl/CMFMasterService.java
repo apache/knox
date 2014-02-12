@@ -65,8 +65,10 @@ public class CMFMasterService {
       }
     }
     else {
-      displayWarning(persisting);
-      promptUser();
+	  if (master == null) {
+        displayWarning(persisting);
+        promptUser();
+      }
       if(persisting) {
         persistMaster(master, masterFile);
       }

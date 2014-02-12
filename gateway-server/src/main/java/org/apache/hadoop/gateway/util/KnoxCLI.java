@@ -91,6 +91,10 @@ public class KnoxCLI extends Configured implements Tool {
     return exitCode;
   }
 
+  GatewayServices getGatewayServices() {
+    return services;
+  }
+
   private void initializeServices(boolean persisting) throws ServiceLifecycleException {
     GatewayConfig config = new GatewayConfigImpl();
     Map<String,String> options = new HashMap<String,String>();
