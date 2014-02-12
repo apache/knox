@@ -300,4 +300,7 @@ public interface GatewayMessages {
   
   @Message( level = MessageLevel.ERROR, text = "Failed to get system ldap connection: {0}" )
   void failedToGetSystemLdapConnection( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  
+  @Message( level = MessageLevel.WARN, text = "Value not found for cluster:{0}, alias: {1}" )
+  void aliasValueNotFound( String cluster, String alias );
 }

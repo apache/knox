@@ -24,7 +24,9 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.ldap.LdapContext;
 
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayServer;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
@@ -39,6 +41,8 @@ import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
  */
 public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 
+    private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  
     private String systemAuthenticationMechanism = "simple";
     private String clusterName = "";
 
@@ -87,19 +91,12 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
       
       String clusterName = getClusterName();
-      String systemPassword = System.getProperty(clusterName + "." + aliasName);
-      if (systemPassword != null) {
-        super.setSystemPassword( systemPassword );
-        aliasService.addAliasForCluster(clusterName, aliasName, systemPassword);
+      char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
+      if ( password != null ) {
+        super.setSystemPassword( new String(password) );
       } else {
-        char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
-        if ( password != null ) {
-          super.setSystemPassword( new String(password) );
-        } else {
-          super.setSystemPassword( new String(systemPass) );
-        }
+        LOG.aliasValueNotFound(clusterName, aliasName);
       }
-      
     }
     
     public String getClusterName() {

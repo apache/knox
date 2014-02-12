@@ -17,23 +17,10 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.mycila.xmltool.XMLDoc;
-import com.mycila.xmltool.XMLTag;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
-import org.apache.hadoop.gateway.services.DefaultGatewayServices;
-import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,10 +33,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.util.KnoxCLI;
+import org.apache.http.HttpStatus;
+import org.apache.log4j.Appender;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 
 /**
  * Functional test to verify : looking up ldap groups from directory 
@@ -94,9 +98,7 @@ public class GatewayLdapGroupFuncTest {
     return port;
   }
 
-  public static void setupGateway(int ldapPort) throws IOException {
-
-    System.setProperty("test-cluster.ldcSystemPassword", "guest-password");
+  public static void setupGateway(int ldapPort) throws Exception {
     
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -126,6 +128,11 @@ public class GatewayLdapGroupFuncTest {
     } catch ( ServiceLifecycleException e ) {
       e.printStackTrace(); // I18N not required.
     }
+    
+    //String[] argvals = {"create-alias",  "aliasname", "--value",  "hadoop", 
+    //    "--cluster", "test-cluster"};
+    //KnoxCLI.runCommand(argvals);
+    
     gateway = GatewayServer.startGateway( testConfig, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
@@ -133,6 +140,21 @@ public class GatewayLdapGroupFuncTest {
 
     gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
     clusterUrl = gatewayUrl + "/test-cluster";
+    
+    GatewayServices services = GatewayServer.getGatewayServices();
+    AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
+    aliasService.addAliasForCluster("test-cluster", "ldcSystemPassword", "guest-password");
+  
+    descriptor = new File( topoDir, "test-cluster.xml" );
+    stream = new FileOutputStream( descriptor );
+    createTopology(ldapPort).toStream( stream );
+    stream.close();
+    
+    try {
+      Thread.sleep(3000);
+    } catch (Exception e) {
+      
+    }
   }
 
   private static XMLTag createTopology(int ldapPort) {
@@ -185,7 +207,8 @@ public class GatewayLdapGroupFuncTest {
         .addTag( "value" ).addText( "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.systemPassword" )
-        .addTag( "value" ).addText( "${ALIAS=ldcSystemPassword}" )
+        //.addTag( "value" ).addText( "${ALIAS=ldcSystemPassword}" )
+         .addTag( "value" ).addText( "guest-password" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "urls./**" )
         .addTag( "value" ).addText( "authcBasic" )
@@ -272,6 +295,10 @@ public class GatewayLdapGroupFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_UNAUTHORIZED )
         .when().get( serviceUrl );
+  }
+  
+  @Test
+  public void dummyTest() {
   }
 
 }
