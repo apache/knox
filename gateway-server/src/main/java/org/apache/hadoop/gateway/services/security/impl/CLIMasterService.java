@@ -35,7 +35,6 @@ public class CLIMasterService extends CMFMasterService implements MasterService,
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-	System.out.println("skdjhfjkdhsfkjhkjdshfkjhds: initializing CLIMasterService!!!");
     if (options.containsKey("master")) {
       this.master = options.get("master").toCharArray();
     }
