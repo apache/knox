@@ -158,9 +158,6 @@
                 <configuration>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
-                    <excludedGroups>
-                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.IntegrationTests
-                    </excludedGroups>
                     <systemPropertyVariables>
                         <gateway-version>${gateway-version}</gateway-version>
                     </systemPropertyVariables>

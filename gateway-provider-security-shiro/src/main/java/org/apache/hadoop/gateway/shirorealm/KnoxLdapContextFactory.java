@@ -26,9 +26,12 @@ import javax.naming.ldap.LdapContext;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayServer;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
 
 /**
@@ -69,7 +72,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
     
     @Override
     public void setSystemPassword(String systemPass) {
-      
+     
       if ( systemPass == null ) {
         return;
       }
@@ -91,10 +94,17 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
       
       String clusterName = getClusterName();
+      //System.err.println("FACTORY systempass 30: " + systemPass);
+      //System.err.println("FACTORY clustername 40: " + clusterName);
+      //System.err.println("FACTORY SystemProperty GatewayHome 50: " + System.getProperty(GatewayConfig.GATEWAY_HOME_VAR));
       char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
+      //System.err.println("FACTORY password: " + ((password == null) ? "NULL" : new String(password)));
       if ( password != null ) {
+        //System.err.println("FACTORY SUCCESS 20 system password :" + new String(password));
         super.setSystemPassword( new String(password) );
       } else {
+        //System.err.println("FACTORY FORCING system password to blank");
+        super.setSystemPassword("" );
         LOG.aliasValueNotFound(clusterName, aliasName);
       }
     }
