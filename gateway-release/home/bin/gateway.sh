@@ -35,6 +35,9 @@ APP_HOME_DIR=`dirname $APP_BIN_DIR`
 # The apps home dir
 APP_CONF_DIR="$APP_HOME_DIR/conf"
 
+# The apps data dir
+APP_DATA_DIR="$APP_HOME_DIR/data"
+
 # The app's log dir
 APP_LOG_DIR="$APP_HOME_DIR/logs"
 
@@ -52,9 +55,6 @@ APP_PID=0
 
 # Start, stop, status, clean or setup
 APP_LAUNCH_CMD=$1
-
-# User Name for setup parameter
-APP_LAUNCH_USER=$2
 
 # Name of PID file
 APP_PID_DIR="$APP_HOME_DIR/pids"
@@ -75,7 +75,10 @@ APP_KILL_WAIT_TIME=10
 
 function main {
    case "$1" in
-      start)  
+      setup)
+         setupEnv
+         ;;
+      start)
          appStart
          ;;
       stop)   
@@ -87,23 +90,26 @@ function main {
       clean) 
          appClean
          ;;
-      setup) 
-         setupEnv $APP_LAUNCH_USER
-         ;;
       help)
          printHelp
          ;;
       *)
-         printf "Usage: $0 {start|stop|status|clean|setup [USER_NAME]}\n"
+         printf "Usage: $0 {start|stop|status|clean|setup}\n"
          ;;
    esac
 }
 
+function setupEnv {
+   checkEnv
+   $JAVA_CMD -jar $APP_JAR -persist-master -nostart
+   return 0
+}
+
 function appStart {
-   createLogFiles
+   checkEnv
 
    getPID
-   if [ $? -eq 0 ]; then
+   if [ "$?" -eq "0" ]; then
      printf "$APP_LABEL is already running with PID $APP_PID.\n"
      exit 0
    fi
@@ -117,11 +123,11 @@ function appStart {
    getPID
    for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
       appIsRunning $APP_PID
-      if [ $? -eq 0 ]; then break; fi
+      if [ "$?" -eq "0" ]; then break; fi
       sleep 0.1
    done
    appIsRunning $APP_PID
-   if [ $? -ne 1 ]; then
+   if [ "$?" -ne "1" ]; then
       printf "failed.\n"
       rm -f $APP_PID_FILE
       exit 1
@@ -133,7 +139,7 @@ function appStart {
 function appStop {
    getPID
    appIsRunning $APP_PID
-   if [ $? -eq 0 ]; then
+   if [ "$?" -eq "0" ]; then
      printf "$APP_LABEL is not running.\n"
      rm -f $APP_PID_FILE
      return 0
@@ -142,7 +148,7 @@ function appStop {
    printf "Stopping $APP_LABEL with PID $APP_PID "
    appKill $APP_PID >>$APP_OUT_FILE 2>>$APP_ERR_FILE
 
-   if [ $? -ne 0 ]; then 
+   if [ "$?" -ne "0" ]; then
      printf "failed. \n"
      exit 1
    else
@@ -155,13 +161,13 @@ function appStop {
 function appStatus {
    printf "$APP_LABEL "
    getPID
-   if [ $? -eq 1 ]; then
+   if [ "$?" -eq "1" ]; then
      printf "is not running. No PID file found.\n"
      return 0
    fi
 
    appIsRunning $APP_PID
-   if [ $? -eq 1 ]; then
+   if [ "$?" -eq "1" ]; then
      printf "is running with PID $APP_PID.\n"
      exit 1
    else
@@ -174,7 +180,7 @@ function appStatus {
 function appClean {
    getPID
    appIsRunning $APP_PID
-   if [ $? -eq 0 ]; then 
+   if [ "$?" -eq "0" ]; then
      deleteLogFiles
      return 0
    else
@@ -188,14 +194,14 @@ function appKill {
    kill $localPID || return 1
    for ((i=0; i<APP_KILL_WAIT_TIME*10; i++)); do
       appIsRunning $localPID
-      if [ $? -eq 0 ]; then return 0; fi
+      if [ "$?" -eq "0" ]; then return 0; fi
       sleep 0.1
    done
 
    kill -s KILL $localPID || return 1
    for ((i=0; i<APP_KILL_WAIT_TIME*10; i++)); do
       appIsRunning $localPID
-      if [ $? -eq 0 ]; then return 0; fi
+      if [ "$?" -eq "0" ]; then return 0; fi
       sleep 0.1
    done
 
@@ -205,7 +211,7 @@ function appKill {
 # Returns 0 if the app is running and sets the $PID variable.
 function getPID {
    if [ ! -d $APP_PID_DIR ]; then
-      printf "Can't find PID dir.  Run sudo $0 setup.\n"
+      printf "Can't find PID dir.\n"
       exit 1
    fi
    if [ ! -f $APP_PID_FILE ]; then
@@ -218,24 +224,54 @@ function getPID {
 }
 
 function appIsRunning {
-   if [ $1 -eq 0 ]; then return 0; fi
+   if [ "$1" -eq "0" ]; then return 0; fi
 
    ps -p $1 > /dev/null
 
-   if [ $? -eq 1 ]; then
+   if [ "$?" -eq "1" ]; then
      return 0
    else
      return 1
    fi
 }
 
-function createLogFiles {
-   if [ ! -d "$APP_LOG_DIR" ]; then
-      printf "Can't find log dir.  Run sudo $0 setup.\n"
-      exit 1
-   fi
-   if [ ! -f "$APP_OUT_FILE" ]; then touch $APP_OUT_FILE; fi
-   if [ ! -f "$APP_ERR_FILE" ]; then touch $APP_ERR_FILE; fi   
+function checkReadDir {
+    if [ ! -e "$1" ]; then
+        printf "Directory $1 does not exist.\n"
+        exit 1
+    fi
+    if [ ! -d "$1" ]; then
+        printf "File $1 is not a directory.\n"
+        exit 1
+    fi
+    if [ ! -r "$1" ]; then
+        printf "Directory $1 is not readable by current user $USER.\n"
+        exit 1
+    fi
+    if [ ! -x "$1" ]; then
+        printf "Directory $1 is not executable by current user $USER.\n"
+        exit 1
+    fi
+}
+
+function checkWriteDir {
+    checkReadDir $1
+    if [ ! -w "$1" ]; then
+        printf "Directory $1 is not writable by current user $USER.\n"
+        exit 1
+    fi
+}
+
+function checkEnv {
+    # Make sure not running as root
+    if [ "`id -u`" -eq "0" ]; then
+        echo "This command $0 must not be run as root."
+        exit 1
+    fi
+    checkReadDir $APP_CONF_DIR
+    checkWriteDir $APP_DATA_DIR
+    checkWriteDir $APP_LOG_DIR
+    checkWriteDir $APP_PID_DIR
 }
 
 function deleteLogFiles {
@@ -247,49 +283,6 @@ function deleteLogFiles {
      
      rm -f $APP_ERR_FILE
      printf "Removed the $APP_LABEL ERR file: $APP_ERR_FILE.\n"
-}
-
-function setDirPermission {
-   local dirName=$1
-   local userName=$2
-
-   if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
-   if [ $? -ne 0 ]; then
-      printf "Can't access or create \"$dirName\" folder.  Run sudo $0 setup.\n"
-      exit 1
-   fi
-
-   chown -f $userName $dirName
-   if [ $? -ne 0 ]; then
-      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.  Run command with sudo.\n"
-      exit 1
-   fi
-
-   chmod o=rwx $dirName 
-   if [ $? -ne 0 ]; then
-      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\".  Run command with sudo.\n"
-      exit 1
-   fi
-
-   return 0
-}
-
-function setupEnv {
-   local userName=$1
-   
-   if [ -z $userName ]; then
-      userName=`logname`
-   fi
-
-   id -u $1 >/dev/null 2>&1
-   if [ $? -eq 1 ]; then
-      printf "\"$userName\" is not valid user name. Parameters: setup [USER_NAME]\n"
-      exit 1
-   fi
-
-   $JAVA_CMD -jar $APP_JAR -persist-master -nostart
-
-   return 0
 }
 
 function printHelp {
