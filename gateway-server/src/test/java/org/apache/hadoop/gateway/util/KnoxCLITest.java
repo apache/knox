@@ -22,6 +22,8 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import org.apache.hadoop.gateway.services.security.AliasService;
+
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.security.impl.CLIMasterService;
@@ -88,6 +90,8 @@ public class KnoxCLITest {
     assertTrue(outContent.toString(), outContent.toString().contains("alias1 has been successfully " +
         "created."));
 
+	AliasService as = cli.getGatewayServices().getService(GatewayServices.ALIAS_SERVICE);
+
     outContent.reset();
     String[] clusterCreateArgs = {"create-alias", "alias2", "--value", "testvalue1", "--cluster", "test", 
         "--master", "master"};
@@ -105,6 +109,10 @@ public class KnoxCLITest {
     assertEquals(0, rc);
     assertFalse(outContent.toString(), outContent.toString().contains("alias2"));
     assertTrue(outContent.toString(), outContent.toString().contains("alias1"));
+
+	char[] passwordChars = as.getPasswordFromAliasForCluster("test", "alias2");
+	assertNotNull(passwordChars);
+	assertTrue(new String(passwordChars), "testvalue1".equals(new String(passwordChars)));
 
     outContent.reset();
     String[] args1 = {"list-alias", "--cluster", "test", "--master", "master"};
