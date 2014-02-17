@@ -64,14 +64,14 @@ APP_PID_FILE="$APP_PID_DIR/$APP_NAME.pid"
 APP_OUT_FILE="$APP_LOG_DIR/$APP_NAME.out"
 APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
 
-# Java command
-JAVA_CMD=java
-
 # The start wait time
 APP_START_WAIT_TIME=2
 
 # The kill wait time limit
 APP_KILL_WAIT_TIME=10
+
+# Setup the common environment
+. $APP_BIN_DIR/knox-env.sh
 
 function main {
    case "$1" in
@@ -101,7 +101,7 @@ function main {
 
 function setupEnv {
    checkEnv
-   $JAVA_CMD -jar $APP_JAR -persist-master -nostart
+   $JAVA -jar $APP_JAR -persist-master -nostart
    return 0
 }
 
@@ -118,7 +118,7 @@ function appStart {
    
    rm -f $APP_PID_FILE
 
-   nohup $JAVA_CMD $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
+   nohup $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
 
    getPID
    for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
@@ -286,7 +286,7 @@ function deleteLogFiles {
 }
 
 function printHelp {
-   $JAVA_CMD -jar $APP_JAR -help
+   $JAVA -jar $APP_JAR -help
    return 0
 }
 

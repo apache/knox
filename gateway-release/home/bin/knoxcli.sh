@@ -51,20 +51,20 @@ APP_DBG_OPTS=""
 APP_OUT_FILE="$APP_LOG_DIR/$APP_NAME.out"
 APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
 
-# Java command
-JAVA_CMD=java
+# Setup the common environment
+. $APP_BIN_DIR/knox-env.sh
 
 function main {
    printf "Starting $APP_LABEL \n"
    #printf "$@"
    
-   exec $JAVA_CMD $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR "$@" || exit 1
+   exec $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR "$@" || exit 1
 
    return 0
 }
 
 function printHelp {
-   $JAVA_CMD -jar $APP_JAR -help
+   $JAVA -jar $APP_JAR -help
    return 0
 }
 
