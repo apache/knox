@@ -311,12 +311,22 @@
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/gateway.sh" perm="544"/>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/ldap.sh" perm="544"/>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/knoxcli.sh" perm="544"/>
+        <exec executable="bin/knoxcli.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="create-master"/>
+            <arg value="--master"/>
+            <arg value="knox"/>
+        </exec>
+        <exec executable="bin/knoxcli.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+            <arg value="create-cert"/>
+        </exec>
     </target>
 
     <target name="install-test-home" depends="_install-test-home-unix,_install-test-home-windows" description="Install binary release into install directory.">
+        <!--
         <echo file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master">#1.0# Mon, Aug 26 2013 14:25:31.483
             cGkvajhUZHBNSTQ9OjpPMk5PQktYaHRyUmJoTW1zWGo0bytRPT06OkxtVjlvSDdIOWdvSEZqNTRlWVJ2N3c9PQ==</echo>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/data/security/master" perm="600"/>
+        -->
     </target>
 
     <target name="start-test-ldap" description="Spawn test LDAP server.">

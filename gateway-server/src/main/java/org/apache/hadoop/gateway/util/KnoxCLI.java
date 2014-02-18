@@ -22,6 +22,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.gateway.GatewayCommandLine;
@@ -157,7 +158,11 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equals("--cluster")) {
         this.cluster = args[++i];
       } else if (args[i].equals("--generate")) {
-        this.generate = "true";
+        if ( command != null && command instanceof MasterCreateCommand ) {
+          this.master = UUID.randomUUID().toString();
+        } else {
+          this.generate = "true";
+        }
       } else if (args[i].equals("--hostname")) {
         this.hostname = args[++i];
       } else if (args[i].equals("--master")) {
