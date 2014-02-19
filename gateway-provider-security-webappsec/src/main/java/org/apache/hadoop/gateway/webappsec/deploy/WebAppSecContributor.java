@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.gateway.webappsec.deploy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
@@ -58,6 +60,14 @@ public class WebAppSecContributor extends
     if (webappsec != null && webappsec.isEnabled()) {
       Map<String,String> map = provider.getParams();
       String csrfEnabled = map.get(CSRF_ENABLED);
+      if (params == null) {
+        params = new ArrayList<FilterParamDescriptor>();
+      }
+      // blindly add all the provider params as filter init params
+      Map<String, String> providerParams = provider.getParams();
+      for(Entry<String, String> entry : providerParams.entrySet()) {
+        params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+      }
       if ( csrfEnabled != null && csrfEnabled.equals("true")) {
         resource.addFilter().name( getName() + CSRF_SUFFIX ).role( getRole() ).impl( CSRF_FILTER_CLASSNAME ).params( params );
       }

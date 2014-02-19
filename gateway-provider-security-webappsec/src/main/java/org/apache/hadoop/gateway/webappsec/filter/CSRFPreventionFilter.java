@@ -18,7 +18,6 @@
 package org.apache.hadoop.gateway.webappsec.filter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class CSRFPreventionFilter implements Filter {
-  private static final String CUSTOM_HEADER_PARAM = "csrf.customHeader";
-  private static final String CUSTOM_METHODS_TO_IGNORE_PARAM = "csrf.methodsToIgnore";
+  private static final String CUSTOM_HEADER_PARAM = "csrf.customheader";
+  private static final String CUSTOM_METHODS_TO_IGNORE_PARAM = "csrf.methodstoignore";
   private String  headerName = "X-XSRF-Header";
   private String  mti = "GET,OPTIONS,HEAD";
   private Set<String> methodsToIgnore = null;
@@ -53,7 +52,6 @@ public class CSRFPreventionFilter implements Filter {
     for (int i = 0; i < methods.length; i++) {
       methodsToIgnore.add(methods[i]);
     }
-    
   }
   
   @Override
