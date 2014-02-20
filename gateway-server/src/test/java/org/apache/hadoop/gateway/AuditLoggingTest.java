@@ -96,15 +96,10 @@ public class AuditLoggingTest {
     gateway.doFilter( request, response, chain );
     gateway.destroy();
 
-    assertThat( CollectAppender.queue.size(), is( 2 ) );
+    assertThat( CollectAppender.queue.size(), is( 1 ) );
     Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
     LoggingEvent accessEvent = iterator.next();
     verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, null );
-
-    LoggingEvent responseEvent = iterator.next();
-    verifyAuditEvent( responseEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.SUCCESS, null,
-        RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
-    assertThat( getRequestId( accessEvent ), is( getRequestId( responseEvent ) ) );
   }
 
   @Test

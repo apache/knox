@@ -150,7 +150,6 @@ public class GatewayFilter implements Filter {
     } else {
       LOG.failedToMatchPath( path );
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
-      auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
     }
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
