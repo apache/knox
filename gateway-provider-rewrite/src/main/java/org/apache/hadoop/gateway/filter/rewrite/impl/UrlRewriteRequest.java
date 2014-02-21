@@ -111,8 +111,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   }
 
   private String[] splitTargetUrl( Template url ) {
-    Template targetUrl = getTargetUrl();
-    String s = targetUrl.toString();
+    String s = url.toString();
     return s.split( "\\?" );
   }
 
