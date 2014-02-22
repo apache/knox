@@ -65,7 +65,7 @@ public class IpAddressValidator {
       // check whether there are any wildcarded ip's - example: 192.* or 192.168.* or 192.168.1.*
       for (String addr : ipaddr) {
         if (addr.contains("*")) {
-          wildCardIPs.add(addr);
+          wildCardIPs.add(addr.substring(0, addr.lastIndexOf('*')));
         }
       }
     }
@@ -89,7 +89,7 @@ public class IpAddressValidator {
         // check for wildcards if there are wildcardIP acls configured
         if (wildCardIPs.size() > 0) {
           for (String ip : wildCardIPs) {
-            if (addr.startsWith(ip.substring(0, ip.lastIndexOf('*')))) {
+            if (addr.startsWith(ip)) {
               valid = true;
               break;
             }
