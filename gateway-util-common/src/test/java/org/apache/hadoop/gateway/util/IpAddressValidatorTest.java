@@ -22,7 +22,7 @@ import org.junit.Test;
 import junit.framework.TestCase;
 
 public class IpAddressValidatorTest extends TestCase {
-  String test = "127.0.0.1,193.*,192.168.1.*";
+  String test = "127.0.0.1,193.*,192.168.1.*,0:0:0:0:0:0:0:1,0:0:0:0:0:0:*";
   String testWeirdConfig = ",127.0.0.1,,193.*,192.168.1.*,29*";
   String testNullConfig = null;
   
@@ -32,6 +32,9 @@ public class IpAddressValidatorTest extends TestCase {
     
     assertTrue("Should have validated 127.0.0.1", ipv.validateIpAddress("127.0.0.1"));
     assertFalse("Should not have validated 127.0.0.2", ipv.validateIpAddress("127.0.0.2"));
+
+    assertTrue("Should have validated 0:0:0:0:0:0:0:1", ipv.validateIpAddress("0:0:0:0:0:0:0:1"));
+    assertFalse("Should not have validated 1:0:0:0:0:0:0:1", ipv.validateIpAddress("1:0:0:0:0:0:0:1"));
 
     ipv = new IpAddressValidator(testWeirdConfig);
     
@@ -60,6 +63,9 @@ public class IpAddressValidatorTest extends TestCase {
     
     assertTrue("Should have validated 192.168.1.1", ipv.validateIpAddress("192.168.1.1"));
     assertFalse("Should not have validated 192.168.2.1", ipv.validateIpAddress("192.168.2.1"));
+
+    assertTrue("Should have validated 0:0:0:0:0:0:0:2", ipv.validateIpAddress("0:0:0:0:0:0:0:2"));
+    assertFalse("Should not have validated 0:0:0:0:0:0:2:2", ipv.validateIpAddress("0:0:0:0:0:2:2:2"));
 
     assertTrue("Should have validated 193.168.1.1", ipv.validateIpAddress("193.168.1.1"));
     assertFalse("Should not have validated 194.168.2.1", ipv.validateIpAddress("194.168.2.1"));
