@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<topology>
+
+    <gateway>
+
+        <provider>
+            <role>authentication</role>
+            <name>ShiroProvider</name>
+            <enabled>true</enabled>
+            <!-- 
+            session timeout in minutes,  this is really idle timeout,
+            defaults to 30mins, if the property value is not defined,, 
+            current client authentication would expire if client idles contiuosly for more than this value
+            -->
+            <!-- defaults to: 30 minutes
+            <param>
+                <name>sessionTimeout</name>
+                <value>30</value>
+            </param>
+            -->
+
+           <param>
+                <name>http-only</name>
+                <value>true</value>
+            </param>
+
+            <!--
+              Use single KnoxLdapRealm to do authentication and ldap group look up
+            -->
+            <param>
+              <name>main.ldapRealm</name>
+              <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
+            </param>
+            <param>
+              <name>main.ldapGroupContextFactory</name>
+              <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.contextFactory</name>
+              <value>$ldapGroupContextFactory</value>
+            </param>
+            <!-- defaults to: simple
+            <param>
+              <name>main.ldapRealm.contextFactory.authenticationMechanism</name>
+              <value>simple</value>
+            </param>
+            -->
+            <param>
+              <name>main.ldapRealm.contextFactory.url</name>
+              <value>ldap://hdp.example.com:33389</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.userDnTemplate</name>
+              <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+
+            <param>
+              <name>main.ldapRealm.authorizationEnabled</name>
+              <!-- defaults to: false -->
+              <value>true</value>
+            </param>
+            <!-- defaults to: simple 
+            <param>
+              <name>main.ldapRealm.contextFactory.systemAuthenticationMechanism</name>
+              <value>simple</value>
+            </param>
+            -->
+            <param>
+              <name>main.ldapRealm.searchBase</name>
+              <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.groupObjectClass</name>
+              <!-- defaults to: groupOfNames -->
+              <value>groupofnames</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.memberAttribute</name>
+              <!-- defaults to: member -->
+              <value>member</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.memberAttributeValueTemplate</name>
+              <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+            <param>
+              <name>main.ldapRealm.contextFactory.systemUsername</name>
+              <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+            <!--
+            ldapsearch -h hdp.example.com -p 33389 -D "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" \
+                -w guest-password -b "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" "objectclass=*"
+
+            bin/knoxcli.sh  create-alias ldcSystemPassword -d-cluster staticgroup -d-value guest-password
+
+            curl -i  -k -u sam:sam-password https://localhost:8443/gateway/staticgroup/webhdfs/v1?op=GETHOMEDIRECTORY
+            -->
+            <param>
+              <name>main.ldapRealm.contextFactory.systemPassword</name>
+              <value>${ALIAS=ldcSystemPassword}</value>
+            </param>
+
+            <param>
+              <name>urls./**</name> 
+              <value>authcBasic</value>
+            </param>
+
+        </provider>
+
+        <provider>
+            <role>identity-assertion</role>
+            <name>Pseudo</name>
+            <enabled>true</enabled>
+            <param>
+                <name>group.principal.mapping</name>
+                <value>*=users</value>
+            </param>
+        </provider>
+
+        <provider>
+          <role>authorization</role>
+          <name>AclsAuthz</name>
+          <enabled>true</enabled>
+          <param>
+            <name>webhdfs.acl</name>
+            <value>*;analyst;*</value>
+          </param>
+        </provider>
+
+        <!--
+        Defines rules for mapping host names internal to a Hadoop cluster to externally accessible host names.
+        For example, a hadoop service running in AWS may return a response that includes URLs containing the
+        some AWS internal host name.  If the client needs to make a subsequent request to the host identified
+        in those URLs they need to be mapped to external host names that the client Knox can use to connect.
+
+        If the external hostname and internal host names are same turn of this provider by setting the value of
+        enabled parameter as false.
+
+        The name parameter specifies the external host names in a comma separated list.
+        The value parameter specifies corresponding internal host names in a comma separated list.
+
+        Note that when you are using Sandbox, the external hostname needs to be localhost, as seen in out
+        of box sandbox.xml.  This is because Sandbox uses port mapping to allow clients to connect to the
+        Hadoop services using localhost.  In real clusters, external host names would almost never be localhost.
+        -->
+        <provider>
+            <role>hostmap</role>
+            <name>static</name>
+            <enabled>false</enabled>
+            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>
+        </provider>
+
+    </gateway>
+
+    <service>
+        <role>NAMENODE</role>
+        <url>hdfs://hdp.example.com:8020</url>
+    </service>
+
+    <service>
+        <role>JOBTRACKER</role>
+        <url>rpc://hdp.example.com:8050</url>
+    </service>
+
+    <service>
+        <role>WEBHDFS</role>
+        <url>http://hdp.example.com:50070/webhdfs</url>
+    </service>
+
+    <service>
+        <role>WEBHCAT</role>
+        <url>http://hdp.example.com:50111/templeton</url>
+    </service>
+
+    <service>
+        <role>OOZIE</role>
+        <url>http://hdp.example.com:11000/oozie</url>
+    </service>
+
+    <service>
+        <role>WEBHBASE</role>
+        <url>http://hdp.example.com:60080</url>
+    </service>
+
+    <service>
+        <role>HIVE</role>
+        <url>http://hdp.example.com:10000</url>
+    </service>
+
+</topology>
