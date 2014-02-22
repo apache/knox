@@ -320,7 +320,7 @@ public class GatewayLdapGroupFuncTest {
         .auth().preemptive().basic( username, password )
         .expect()
         //.log().all()
-        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .statusCode( HttpStatus.SC_FORBIDDEN )
         .when().get( serviceUrl );
   }
 

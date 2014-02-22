@@ -142,7 +142,7 @@ public class AclsAuthorizationFilter implements Filter {
     }
     else {
       auditor.audit( Action.AUTHORIZATION, sourceUrl, ResourceType.URI, ActionOutcome.FAILURE );
-      sendUnauthorized((HttpServletResponse) response);
+      sendForbidden((HttpServletResponse) response);
     }
   }
 
@@ -253,8 +253,8 @@ public class AclsAuthorizationFilter implements Filter {
     return allowed;
   }
 
-  private void sendUnauthorized(HttpServletResponse res) {
-    sendErrorCode(res, 401);
+  private void sendForbidden(HttpServletResponse res) {
+    sendErrorCode(res, 403);
   }
 
   private void sendErrorCode(HttpServletResponse res, int code) {
