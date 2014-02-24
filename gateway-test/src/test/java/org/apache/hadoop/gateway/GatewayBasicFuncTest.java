@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.response.Cookie;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -58,6 +59,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -244,7 +246,7 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "webhdfs-success.json" ) )
         .contentType( "application/json" );
-    given()
+    Cookie cookie = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
         .header("X-XSRF-Header", "jksdhfkhdsf")
@@ -252,9 +254,14 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
+        .header( "Set-Cookie", containsString( "JSESSIONID" ) )
+        .header( "Set-Cookie", containsString( "HttpOnly" ) )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" ).getDetailedCookie( "JSESSIONID" );
+    assertThat( cookie.isSecured(), is( true ) );
+    assertThat( cookie.getPath(), is( "/gateway/cluster" ) );
+    assertThat( cookie.getValue().length(), greaterThan( 16 ) );
     driver.assertComplete();
   }
 

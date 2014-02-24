@@ -17,9 +17,6 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
@@ -30,6 +27,9 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.SessionConfigType;
 
+import java.util.List;
+import java.util.Map;
+
 public class ShiroDeploymentContributor extends ProviderDeploymentContributorBase {
 
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
@@ -37,6 +37,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ShiroSubjectIdentityAdapter";
   private static final String COOKIE_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
   private static final String SESSION_TIMEOUT = "sessionTimeout";
+  private static final String SHRIO_CONFIG_FILE_NAME = "shiro.ini";
   private static final int DEFAULT_SESSION_TIMEOUT = 30; // 30min
 
   @Override
@@ -51,47 +52,51 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
-	// Many filter based authentication mechanisms require a ServletContextListener
-	// to be added and the Knox deployment machinery provides the ability to add this
-	// through the DeploymentContext.
-	
+    // Many filter based authentication mechanisms require a ServletContextListener
+    // to be added and the Knox deployment machinery provides the ability to add this
+    // through the DeploymentContext.
+
+    // Writing provider specific config out to the war for cluster specific config can be
+    // accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
+    // used to write the asset to the war.
+
     // add servletContextListener
     context.getWebAppDescriptor().createListener().listenerClass( LISTENER_CLASSNAME );
-    
+
     // add session timeout
     int st = DEFAULT_SESSION_TIMEOUT;
     SessionConfigType<WebAppDescriptor> sessionConfig = context.getWebAppDescriptor().createSessionConfig();
     Map<String, String> params = provider.getParams();
-    String sts = params.get(SESSION_TIMEOUT);
-    if (sts != null && sts.trim().length() != 0) {
-      st = Integer.valueOf(sts.trim());
+    String sts = params.get( SESSION_TIMEOUT );
+    if( sts != null && sts.trim().length() != 0 ) {
+      st = Integer.valueOf( sts.trim() );
     }
-    if (st <= 0) {
+    if( st <= 0 ) {
       // user default session timeout
       st = DEFAULT_SESSION_TIMEOUT;
     }
-    sessionConfig.sessionTimeout(st);
+    sessionConfig.sessionTimeout( st );
+    sessionConfig.getOrCreateCookieConfig().httpOnly( true );
+    sessionConfig.getOrCreateCookieConfig().secure( true );
 
-    // Writing provider specific config out to the war for cluster specific config can be
-	  // accomplished through the DeploymentContext as well. The JBoss shrinkwrap API can be
-	  // used to write the asset to the war.
     String clusterName = context.getTopology().getName();
-    String config = new ShiroConfig( provider, clusterName ).toString();
+    ShiroConfig config = new ShiroConfig( provider, clusterName );
+    String configStr = config.toString();
     if( config != null ) {
-      context.getWebArchive().addAsWebInfResource( new StringAsset( config ), "shiro.ini" );
+      context.getWebArchive().addAsWebInfResource( new StringAsset( configStr ), SHRIO_CONFIG_FILE_NAME );
     }
   }
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-	// Leveraging a third party filter is a primary usecase for Knox
-	// in order to do so, we need to make sure that the end result of the third party integration
-	// puts a standard javax.security.auth.Subject on the current thread through a doAs.
-	// As many filters do not use the standard java Subject, often times a post processing filter will
-	// need to be added in order to canonicalize the result into an expected security context.
-	
-	// You may also need to do some additional processing of the response in order to not return cookies or other
-	// filter specifics that are not needed for integration with Knox. Below we do that in the pre-processing filter.
+    // Leveraging a third party filter is a primary usecase for Knox
+    // in order to do so, we need to make sure that the end result of the third party integration
+    // puts a standard javax.security.auth.Subject on the current thread through a doAs.
+    // As many filters do not use the standard java Subject, often times a post processing filter will
+    // need to be added in order to canonicalize the result into an expected security context.
+
+    // You may also need to do some additional processing of the response in order to not return cookies or other
+    // filter specifics that are not needed for integration with Knox. Below we do that in the pre-processing filter.
     resource.addFilter().name( "Pre" + getName() ).role( getRole() ).impl( COOKIE_FILTER_CLASSNAME ).params( params );
     resource.addFilter().name( getName() ).role( getRole() ).impl( SHIRO_FILTER_CLASSNAME ).params( params );
     resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( POST_FILTER_CLASSNAME ).params( params );
