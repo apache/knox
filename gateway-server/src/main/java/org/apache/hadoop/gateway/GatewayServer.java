@@ -351,11 +351,9 @@ public class GatewayServer {
       synchronized ( GatewayServer.this ) {
         for( TopologyEvent event : events ) {
           Topology topology = event.getTopology();
-          File topoDir = calculateAbsoluteTopologiesDir();
           File deployDir = calculateAbsoluteDeploymentsDir();
-          File warDir = calculateDeploymentDir( topology );
           if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
-            File[] files = topoDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
+            File[] files = deployDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
             if( files != null ) {
               for( File file : files ) {
                 auditor.audit( Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
@@ -366,6 +364,7 @@ public class GatewayServer {
             }
           } else {
             try {
+              File warDir = calculateDeploymentDir( topology );
               if( !warDir.exists() ) {
                 auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
                 log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
