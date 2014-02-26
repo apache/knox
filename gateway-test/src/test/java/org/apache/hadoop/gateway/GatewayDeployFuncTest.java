@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.google.common.io.Files;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
@@ -202,7 +203,7 @@ public class GatewayDeployFuncTest {
 
   @Test
   public void testDeployUndeploy() throws Exception {
-    long timeout = 4 * 1000;
+    long timeout = 5 * 1000;
     long sleep = 200;
     String username = "guest";
     String password = "guest-password";
@@ -210,6 +211,7 @@ public class GatewayDeployFuncTest {
 
     File topoDir = new File( config.getGatewayTopologyDir() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
+    File warDir = null;
 
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
@@ -224,11 +226,26 @@ public class GatewayDeployFuncTest {
     // Make sure deployment directory has one WAR with the correct name.
     long before = System.currentTimeMillis();
     while( true ) {
-      assertThat( "Waited too long for topo deployment.", System.currentTimeMillis() - before, lessThan( timeout ) );
-      Thread.sleep( sleep );
-      if( deployDir.listFiles( new RegexDirFilter( "test-cluster.war\\.[0-9A-Fa-f]+" ) ).length == 1 ) {
+      assertThat( "Waited too long for topology deployment dir creation.", System.currentTimeMillis() - before, lessThan( timeout ) );
+      File[] files = deployDir.listFiles( new RegexDirFilter( "test-cluster.war\\.[0-9A-Fa-f]+" ) );
+      if( files.length == 1 ) {
+        warDir = files[0];
         break;
       }
+      Thread.sleep( sleep );
+    }
+    while( true ) {
+      assertThat( "Waited too long for topology deployment file creation.", System.currentTimeMillis() - before, lessThan( timeout ) );
+      File webInfDir = new File( warDir, "WEB-INF" );
+      File[] files = webInfDir.listFiles();
+      //System.out.println( "DEPLOYMENT FILES: " + files.length );
+      //for( File file : files ) {
+      //  System.out.println( "  " + file.getAbsolutePath() );
+      //}
+      if( files.length >= 4 ) {
+        break;
+      }
+      Thread.sleep( sleep );
     }
 
     // Make sure the test topology is accessible.
@@ -261,7 +278,7 @@ public class GatewayDeployFuncTest {
         for( File file : deploymentFiles ) {
           System.out.println( "  " + file.getAbsolutePath() );
         }
-        fail( "Waited too long for topo undeployment: " + ( System.currentTimeMillis() - before ) + "ms" );
+        fail( "Waited too long for topology undeployment: " + ( System.currentTimeMillis() - before ) + "ms" );
       } else {
         Thread.sleep( sleep );
       }
