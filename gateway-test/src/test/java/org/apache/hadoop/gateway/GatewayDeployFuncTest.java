@@ -218,10 +218,12 @@ public class GatewayDeployFuncTest {
     assertThat( deployDir.listFiles().length, is( 0 ) );
 
     // Create the test topology.
-    File descriptor = new File( config.getGatewayTopologyDir(), "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
+    File tempFile = new File( config.getGatewayTopologyDir(), "test-cluster.xml." + UUID.randomUUID() );
+    FileOutputStream stream = new FileOutputStream( tempFile );
     createTopology().toStream( stream );
     stream.close();
+    File descriptor = new File( config.getGatewayTopologyDir(), "test-cluster.xml" );
+    tempFile.renameTo( descriptor );
 
     // Make sure deployment directory has one WAR with the correct name.
     long before = System.currentTimeMillis();
@@ -247,6 +249,9 @@ public class GatewayDeployFuncTest {
       }
       Thread.sleep( sleep );
     }
+
+    // Wait a bit more to make sure deployment finished.
+    Thread.sleep( sleep );
 
     // Make sure the test topology is accessible.
     given()
@@ -283,6 +288,9 @@ public class GatewayDeployFuncTest {
         Thread.sleep( sleep );
       }
     }
+
+    // Wait a bit more to make sure undeployment finished.
+    Thread.sleep( sleep );
 
     // Make sure the test topology is not accessible.
     given()
