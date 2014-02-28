@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.google.common.io.Files;
+import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
@@ -52,6 +52,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.lessThan;
@@ -203,7 +204,7 @@ public class GatewayDeployFuncTest {
 
   @Test
   public void testDeployUndeploy() throws Exception {
-    long timeout = 5 * 1000;
+    long timeout = 5 * 1000; // Five seconds.
     long sleep = 200;
     String username = "guest";
     String password = "guest-password";
@@ -227,8 +228,10 @@ public class GatewayDeployFuncTest {
 
     // Make sure deployment directory has one WAR with the correct name.
     long before = System.currentTimeMillis();
+    long elapsed = 0;
     while( true ) {
-      assertThat( "Waited too long for topology deployment dir creation.", System.currentTimeMillis() - before, lessThan( timeout ) );
+      elapsed = System.currentTimeMillis() - before;
+      assertThat( "Waited too long for topology deployment dir creation.", elapsed, lessThan( timeout ) );
       File[] files = deployDir.listFiles( new RegexDirFilter( "test-cluster.war\\.[0-9A-Fa-f]+" ) );
       if( files.length == 1 ) {
         warDir = files[0];
@@ -237,7 +240,8 @@ public class GatewayDeployFuncTest {
       Thread.sleep( sleep );
     }
     while( true ) {
-      assertThat( "Waited too long for topology deployment file creation.", System.currentTimeMillis() - before, lessThan( timeout ) );
+      elapsed = System.currentTimeMillis() - before;
+      assertThat( "Waited too long for topology deployment file creation.", elapsed, lessThan( timeout ) );
       File webInfDir = new File( warDir, "WEB-INF" );
       File[] files = webInfDir.listFiles();
       //System.out.println( "DEPLOYMENT FILES: " + files.length );
@@ -250,19 +254,21 @@ public class GatewayDeployFuncTest {
       Thread.sleep( sleep );
     }
 
-    // Wait a bit more to make sure deployment finished.
-    Thread.sleep( sleep );
-
     // Make sure the test topology is accessible.
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .contentType( "text/plain" )
-        .body( is( "test-service-response" ) )
-        .when().get( serviceUrl );
+    while( true ) {
+      elapsed = System.currentTimeMillis() - before;
+      assertThat( "Waited too long for topology to be accessible.", elapsed, lessThan( timeout ) );
+      Response response = given()
+          .auth().preemptive().basic( username, password )
+          .when().get( serviceUrl ).andReturn();
+      if( response.getStatusCode() == HttpStatus.SC_NOT_FOUND ) {
+        Thread.sleep( sleep );
+        continue;
+      }
+      assertThat( response.getContentType(), containsString( "text/plain" ) );
+      assertThat( response.getBody().asString(), is( "test-service-response" ) );
+      break;
+    }
 
     // Delete the test topology.
     assertThat( "Failed to delete the topology file.", descriptor.delete(), is( true ) );
