@@ -293,7 +293,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       return groupIdAttribute;
     }
     
-    public void setGroupIdAttribute(String memberAttribute) {
+    public void setGroupIdAttribute(String groupIdAttribute) {
         this.groupIdAttribute = groupIdAttribute;
     }
     
