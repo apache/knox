@@ -21,9 +21,9 @@
         Release build file for the Apache Knox Gateway
     </description>
 
-    <property name="gateway-name" value="Apache Knox (Incubator)"/>
+    <property name="gateway-name" value="Apache Knox"/>
     <property name="gateway-project" value="knox"/>
-    <property name="gateway-artifact" value="knox-incubating"/>
+    <property name="gateway-artifact" value="knox"/>
     <property name="gateway-version" value="0.4.0-SNAPSHOT"/>
     <property name="release-manager" value="kminder"/>
 
@@ -34,8 +34,8 @@
     <property name="install.dir" value="install"/>
     <property name="candidate.dir" value="candidate"/>
 
-    <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/incubator/${gateway-project}" />
-    <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/incubator/${gateway-project}" />
+    <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/${gateway-project}" />
+    <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/${gateway-project}" />
 
     <condition property="isUnix">
         <os family="unix"/>
@@ -142,18 +142,18 @@
     <target name="download-candidate">
         <mkdir dir="${candidate.dir}"/>
         <get dest="${candidate.dir}">
-            <url url="${build-url}/knox-incubating-${gateway-version}.zip"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.zip.md5"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.zip.sha"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip.md5"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}-src.zip.sha"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz.md5"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.tar.gz.sha"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.rpm"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.rpm.md5"/>
-            <url url="${build-url}/knox-incubating-${gateway-version}.rpm.sha"/>
+            <url url="${build-url}/knox-${gateway-version}.zip"/>
+            <url url="${build-url}/knox-${gateway-version}.zip.md5"/>
+            <url url="${build-url}/knox-${gateway-version}.zip.sha"/>
+            <url url="${build-url}/knox-${gateway-version}-src.zip"/>
+            <url url="${build-url}/knox-${gateway-version}-src.zip.md5"/>
+            <url url="${build-url}/knox-${gateway-version}-src.zip.sha"/>
+            <url url="${build-url}/knox-${gateway-version}.tar.gz"/>
+            <url url="${build-url}/knox-${gateway-version}.tar.gz.md5"/>
+            <url url="${build-url}/knox-${gateway-version}.tar.gz.sha"/>
+            <url url="${build-url}/knox-${gateway-version}.rpm"/>
+            <url url="${build-url}/knox-${gateway-version}.rpm.md5"/>
+            <url url="${build-url}/knox-${gateway-version}.rpm.sha"/>
             <url url="${build-url}/CHANGES"/>
         </get>
     </target>
@@ -161,24 +161,24 @@
     <target name="download-stage">
         <mkdir dir="${install.dir}"/>
         <get dest="${install.dir}">
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.zip"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.zip.md5"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.zip.sha"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.zip.asc"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}-src.zip"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}-src.zip.md5"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}-src.zip.sha"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}-src.zip.asc"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.tar.gz"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.tar.gz.md5"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.tar.gz.sha"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.tar.gz.asc"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.rpm"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.rpm.md5"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.rpm.sha"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/knox-incubating-${gateway-version}.rpm.asc"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/CHANGES"/>
-            <url url="${svn.staging.path}/knox-incubating-${gateway-version}/KEYS"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/CHANGES"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/KEYS"/>
         </get>
     </target>
 
@@ -292,7 +292,7 @@
         <exec executable="svn">
             <arg value="move"/>
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}"/>
-            <arg value="${svn.release.path}/${gateway-version}-incubating"/>
+            <arg value="${svn.release.path}/${gateway-version}"/>
             <arg value="-m"/>
             <arg value="Releasing Apache Knox Gateway version ${gateway-version}." />
         </exec>

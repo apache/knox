@@ -51,7 +51,6 @@
             <outputDirectory></outputDirectory>
             <includes>
                 <include>CHANGES</include>
-                <include>DISCLAIMER</include>
                 <include>ISSUES</include>
                 <include>LICENSE</include>
                 <include>NOTICE</include>

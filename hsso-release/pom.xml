@@ -52,7 +52,7 @@
                                 <phase>package</phase>
                                 <goals><goal>single</goal></goals>
                                 <configuration>
-                                    <finalName>hsso-incubating-${gateway-version}</finalName>
+                                    <finalName>hsso-${gateway-version}</finalName>
                                     <outputDirectory>../target/${gateway-version}</outputDirectory>
                                     <appendAssemblyId>false</appendAssemblyId>
                                     <descriptors>

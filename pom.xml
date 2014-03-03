@@ -26,7 +26,7 @@
 
     <name>gateway</name>
     <description>The Apache Knox Project</description>
-    <url>http://knox.incubator.apache.org/</url>
+    <url>http://knox.apache.org/</url>
 
     <modules>
         <module>gateway-test-utils</module>
@@ -72,9 +72,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <internal.maven.repo>file:///tmp/knoxtemprepo</internal.maven.repo>
-        <gateway-name>Apache Knox (Incubator)</gateway-name>
+        <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
-        <gateway-artifact>knox-incubating</gateway-artifact>
+        <gateway-artifact>knox</gateway-artifact>
         <gateway-version>0.4.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.hadoop</gateway-group>
         <hadoop-version>2.2.0</hadoop-version>
@@ -95,7 +95,7 @@
     </organization>
 
     <scm>
-        <connection>scm:git:git://git-wip-us.apache.org/repos/asf/incubator-knox.git</connection>
+        <connection>scm:git:git://git-wip-us.apache.org/repos/asf/knox.git</connection>
     </scm>
 
     <distributionManagement>
