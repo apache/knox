@@ -204,7 +204,7 @@ public class GatewayDeployFuncTest {
 
   @Test
   public void testDeployUndeploy() throws Exception {
-    long timeout = 5 * 1000; // Five seconds.
+    long timeout = 10 * 1000; // Ten seconds.
     long sleep = 200;
     String username = "guest";
     String password = "guest-password";
