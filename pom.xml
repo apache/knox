@@ -72,6 +72,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <internal.maven.repo>file:///tmp/knoxtemprepo</internal.maven.repo>
+        <repo.id>internal.repo</repo.id>
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
@@ -100,7 +101,7 @@
 
     <distributionManagement>
         <repository>
-            <id>internal.repo</id>
+            <id>${repo.id}</id>
             <name>Internal Repository</name>
             <url>${internal.maven.repo}</url>
         </repository>
