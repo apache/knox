@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
@@ -64,13 +65,19 @@ public class GatewayCommandLine {
   public static final String PERSIST_SHORT = "pm";
 
   public static final String NOSTART_LONG = "nostart";
-  public static final String NOSTART_SHORT = "n";
+  public static final String NOSTART_SHORT = "ns";
+
+  public static final String REDEPLOY_LONG = "redeploy";
+  public static final String REDEPLOY_SHORT = "rd";
 
   private static Options createCommandLine() {
     Options options = new Options();
     options.addOption( HELP_SHORT, HELP_LONG, false, res.helpMessage() );
     options.addOption( VERSION_SHORT, VERSION_LONG, false, res.versionHelpMessage() );
-    options.addOption( PERSIST_SHORT, PERSIST_LONG, false, res.persistmasterHelpMessage() );
+    Option redeploy = new Option( REDEPLOY_SHORT, REDEPLOY_LONG, true, res.redeployHelpMessage() );
+    redeploy.setOptionalArg( true );
+    options.addOption( redeploy );
+    options.addOption( PERSIST_SHORT, PERSIST_LONG, false, res.persistMasterHelpMessage() );
     options.addOption( NOSTART_SHORT, NOSTART_LONG, false, res.nostartHelpMessage() );
     return options;
   }

@@ -42,7 +42,10 @@ public interface GatewayResources {
   String nostartHelpMessage();
 
   @Resource( text="This parameter causes the provider master secret to be persisted. This prevents the server from prompting for a master secret on subsequent starts." )
-  String persistmasterHelpMessage();
+  String persistMasterHelpMessage();
+
+  @Resource( text="This parameter causes the existing topologies to be redeployed. A single topology may be specified via an optional parameter.  The server will not be started." )
+  String redeployHelpMessage();
 
   @Resource( text="Display server version information." )
   String versionHelpMessage();

@@ -90,6 +90,15 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
   void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Throwable e );
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to redeploy topology {0}" )
+  void failedToRedeployTopology( String name );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to redeploy topology {0}: {1}" )
+  void failedToRedeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Throwable e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to redeploy topologies: {0}" )
+  void failedToRedeployTopologies( @StackTrace(level=MessageLevel.DEBUG) Throwable e );
+
   @Message( level = MessageLevel.ERROR, text = "Failed to undeploy topology {0}: {1}" )
   void failedToUndeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
 
@@ -303,4 +312,5 @@ public interface GatewayMessages {
   
   @Message( level = MessageLevel.WARN, text = "Value not found for cluster:{0}, alias: {1}" )
   void aliasValueNotFound( String cluster, String alias );
+
 }

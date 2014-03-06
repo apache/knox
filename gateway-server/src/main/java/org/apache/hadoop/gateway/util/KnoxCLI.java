@@ -17,15 +17,9 @@
  */
 package org.apache.hadoop.gateway.util;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.gateway.GatewayCommandLine;
+import org.apache.hadoop.gateway.GatewayServer;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.CLIGatewayServices;
@@ -39,6 +33,16 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+
 /**
  *
  */
@@ -47,11 +51,13 @@ public class KnoxCLI extends Configured implements Tool {
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
   final static private String COMMANDS =
       "   [--help]\n" +
-      "   [" + CertCreateCommand.USAGE + "]\n" +
+      "   [" + VersionCommand.USAGE + "]\n" +
       "   [" + MasterCreateCommand.USAGE + "]\n" +
+      "   [" + CertCreateCommand.USAGE + "]\n" +
       "   [" + AliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
-      "   [" + AliasListCommand.USAGE + "]\n";
+      "   [" + AliasListCommand.USAGE + "]\n" +
+      "   [" + RedeployCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -109,11 +115,13 @@ public class KnoxCLI extends Configured implements Tool {
   /**
    * Parse the command line arguments and initialize the data
    * <pre>
-   * % knox master-create keyName [--size size] [--generate]
-   * % knox create-alias alias [--cluster] [--generate] [--value v]
-   * % knox list-alias [--cluster]
-   * % knox delete=alias alias [--cluster]
-   * % knox create-cert alias [--hostname]
+   * % knoxcli version
+   * % knoxcli master-create keyName [--size size] [--generate]
+   * % knoxcli create-alias alias [--cluster c] [--generate] [--value v]
+   * % knoxcli list-alias [--cluster c]
+   * % knoxcli delete=alias alias [--cluster c]
+   * % knoxcli create-cert alias [--hostname h]
+   * % knoxcli redeploy [--cluster c]
    * </pre>
    * @param args
    * @return
@@ -154,8 +162,23 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
       } else if (args[i].equals("--value")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
         this.value = args[++i];
-      } else if (args[i].equals("--cluster")) {
+        if ( command != null && command instanceof MasterCreateCommand ) {
+          this.master = this.value;
+        }
+      } else if ( args[i].equals("version") ) {
+        command = new VersionCommand();
+      } else if ( args[i].equals("redeploy") ) {
+        command = new RedeployCommand();
+      } else if ( args[i].equals("--cluster") || args[i].equals("--topology") ) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
         this.cluster = args[++i];
       } else if (args[i].equals("--generate")) {
         if ( command != null && command instanceof MasterCreateCommand ) {
@@ -164,16 +187,24 @@ public class KnoxCLI extends Configured implements Tool {
           this.generate = "true";
         }
       } else if (args[i].equals("--hostname")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
         this.hostname = args[++i];
       } else if (args[i].equals("--master")) {
-        // testing only
+        // For testing only
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
         this.master = args[++i];
       } else if (args[i].equals("--help")) {
         printKnoxShellUsage();
         return -1;
       } else {
         printKnoxShellUsage();
-        ToolRunner.printGenericCommandUsage(System.err);
+        //ToolRunner.printGenericCommandUsage(System.err);
         return -1;
       }
     }
@@ -181,26 +212,34 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   private void printKnoxShellUsage() {
-    out.println(USAGE_PREFIX + COMMANDS);
-    if (command != null) {
+    out.println( USAGE_PREFIX + "\n" + COMMANDS );
+    if ( command != null ) {
       out.println(command.getUsage());
-    }
-    else {
-      out.println("=========================================================" +
-          "======");
-      out.println(MasterCreateCommand.USAGE + ":\n\n" + MasterCreateCommand.DESC);
-      out.println("=========================================================" +
-          "======");
-      out.println(CertCreateCommand.USAGE + ":\n\n" + CertCreateCommand.DESC);
-      out.println("=========================================================" +
-          "======");
-      out.println(AliasCreateCommand.USAGE + ":\n\n" + AliasCreateCommand.DESC);
-      out.println("=========================================================" +
-          "======");
-      out.println(AliasDeleteCommand.USAGE + ":\n\n" + AliasDeleteCommand.DESC);
-      out.println("=========================================================" +
-          "======");
-      out.println(AliasListCommand.USAGE + ":\n\n" + AliasListCommand.DESC);
+    } else {
+      char[] chars = new char[79];
+      Arrays.fill( chars, '=' );
+      String div = new String( chars );
+
+      out.println( div );
+      out.println( VersionCommand.USAGE + "\n\n" + VersionCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( MasterCreateCommand.USAGE + "\n\n" + MasterCreateCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( CertCreateCommand.USAGE + "\n\n" + CertCreateCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( AliasCreateCommand.USAGE + "\n\n" + AliasCreateCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( AliasDeleteCommand.USAGE + "\n\n" + AliasDeleteCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( AliasListCommand.USAGE + "\n\n" + AliasListCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( RedeployCommand.USAGE + "\n\n" + RedeployCommand.DESC );
     }
   }
 
@@ -222,29 +261,24 @@ public class KnoxCLI extends Configured implements Tool {
     public abstract String getUsage();
 
     protected AliasService getAliasService() {
-      AliasService as = (AliasService) 
-           services.getService(GatewayServices.ALIAS_SERVICE);
+      AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
       return as;
     }
 
     protected KeystoreService getKeystoreService() {
-      KeystoreService ks = (KeystoreService) 
-           services.getService(GatewayServices.KEYSTORE_SERVICE);
+      KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
       return ks;
     }
   }
   
-  /**
-  *
-  */
  private class AliasListCommand extends Command {
 
   public static final String USAGE = "list-alias [--cluster c]";
   public static final String DESC = "The list-alias command lists all of the aliases\n" +
-  		                               "for the given hadoop --cluster. The default\n" +
-  		                               "--cluster being the gateway itself.";
+                                    "for the given hadoop --cluster. The default\n" +
+                                    "--cluster being the gateway itself.";
 
-  /* (non-Javadoc)
+   /* (non-Javadoc)
     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
     */
    @Override
@@ -271,25 +305,18 @@ public class KnoxCLI extends Configured implements Tool {
    }
  }
 
- /**
-  *
-  */
  public class CertCreateCommand extends Command {
 
   public static final String USAGE = "create-cert [--hostname h]";
   public static final String DESC = "The create-cert command creates and populates\n" +
-  		                               "a gateway.jks keystore with a self-signed certificate\n" +
-  		                               "to be used as the gateway identity. It also adds an alias\n" +
-  		                               "to the __gateway-credentials.jceks credential store for the\n" +
-  		                               "key passphrase.";
+                                    "a gateway.jks keystore with a self-signed certificate\n" +
+                                    "to be used as the gateway identity. It also adds an alias\n" +
+                                    "to the __gateway-credentials.jceks credential store for the\n" +
+                                    "key passphrase.";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
-  /**
-    * 
-    */
    public CertCreateCommand() {
-     // TODO Auto-generated constructor stub
    }
 
    /* (non-Javadoc)
@@ -326,14 +353,14 @@ public class KnoxCLI extends Configured implements Tool {
          char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
          ks.addSelfSignedCertForGateway("gateway-identity", passphrase, hostname);
 //         logAndValidateCertificate();
-         out.println("gateway-identity has been successfully created.");
+         out.println("Certificate gateway-identity has been successfully created.");
        } catch (KeystoreServiceException e) {
          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
        }
      }
    }
 
-  /* (non-Javadoc)
+   /* (non-Javadoc)
     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
     */
    @Override
@@ -343,19 +370,16 @@ public class KnoxCLI extends Configured implements Tool {
 
  }
 
- /**
-  *
-  */
  public class AliasCreateCommand extends Command {
 
-  public static final String USAGE = "create-alias aliasname [--value value]" +
-  		                              " [--cluster c] [--generate]";
+  public static final String USAGE = "create-alias aliasname [--cluster c] " +
+                                     "[ (--value v) | (--generate) ]";
   public static final String DESC = "The create-alias command will create an alias\n" +
-  		                               "and secret pair within the credential store for the\n" +
-  		                               "indicated --cluster otherwise within the gateway\n" +
-  		                               "credential store. The actual secret may be specified via\n" +
-  		                               "the --value option or --generate will create a random secret\n" +
-  		                               "for you.";
+                                    "and secret pair within the credential store for the\n" +
+                                    "indicated --cluster otherwise within the gateway\n" +
+                                    "credential store. The actual secret may be specified via\n" +
+                                    "the --value option or --generate will create a random secret\n" +
+                                    "for you.";
   
   private String name = null; 
 
@@ -407,8 +431,8 @@ public class KnoxCLI extends Configured implements Tool {
  public class AliasDeleteCommand extends Command {
   public static final String USAGE = "delete-alias aliasname [--cluster c]";
   public static final String DESC = "The delete-alias command removes the\n" +
-  		                               "indicated alias from the --cluster specific\n" +
-  		                               "credential store or the gateway credential store.";
+                                    "indicated alias from the --cluster specific\n" +
+                                    "credential store or the gateway credential store.";
   
   private String name = null;
 
@@ -450,13 +474,10 @@ public class KnoxCLI extends Configured implements Tool {
  public class MasterCreateCommand extends Command {
   public static final String USAGE = "create-master";
   public static final String DESC = "The create-master command persists the\n" +
-  		                               "master secret in a file located at:\n" +
-  		                               "{GATEWAY_HOME}/data/security/master. It\n" +
-  		                               "will prompt the user for the secret to persist.";
+                                    "master secret in a file located at:\n" +
+                                    "{GATEWAY_HOME}/data/security/master. It\n" +
+                                    "will prompt the user for the secret to persist.";
 
-  /**
-    * @param keyName
-    */
    public MasterCreateCommand() {
    }
 
@@ -477,7 +498,62 @@ public class KnoxCLI extends Configured implements Tool {
    }
  }
 
- /**
+  private class VersionCommand extends Command {
+
+    public static final String USAGE = "version";
+    public static final String DESC = "Displays Knox version information.";
+
+    @Override
+    public void execute() throws Exception {
+      Properties buildProperties = loadBuildProperties();
+      System.out.println(
+          String.format(
+              "Apache Knox: %s (%s)",
+              buildProperties.getProperty( "build.version", "unknown" ),
+              buildProperties.getProperty( "build.hash", "unknown" ) ) );
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+  }
+
+  private class RedeployCommand extends Command {
+
+    public static final String USAGE = "redeploy [--cluster c]";
+    public static final String DESC =
+        "Redeploys one or all of the gateway's clusters (a.k.a topologies).";
+
+    @Override
+    public void execute() throws Exception {
+      GatewayConfig config = new GatewayConfigImpl();
+      GatewayServer.redeployTopologies( config, cluster );
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+  }
+
+  private static Properties loadBuildProperties() {
+    Properties properties = new Properties();
+    InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( "build.properties" );
+    if( inputStream != null ) {
+      try {
+        properties.load( inputStream );
+        inputStream.close();
+      } catch( IOException e ) {
+        // Ignore.
+      }
+    }
+    return properties;
+  }
+
+  /**
   * @param args
   * @throws Exception 
   */

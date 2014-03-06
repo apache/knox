@@ -42,6 +42,7 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -84,12 +85,13 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     this( null, VFS.getManager().toFileObject( directory ) );
   }
 
-  private static Topology loadTopology( FileObject file ) throws IOException, SAXException {
+  private static Topology loadTopology( FileObject file ) throws IOException, SAXException, URISyntaxException {
     log.loadingTopologyFile( file.getName().getFriendlyURI() );
     Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
     TopologyBuilder topologyBuilder = digester.parse( content.getInputStream() );
     Topology topology = topologyBuilder.build();
+    topology.setUri( file.getURL().toURI() );
     topology.setName( FilenameUtils.removeExtension( file.getName().getBaseName() ) );
     topology.setTimestamp( content.getLastModifiedTime() );
     return topology;

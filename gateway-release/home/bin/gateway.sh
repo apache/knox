@@ -84,7 +84,7 @@ function main {
       stop)   
          appStop
          ;;
-      status) 
+      status)
          appStatus
          ;;
       clean) 
@@ -94,7 +94,7 @@ function main {
          printHelp
          ;;
       *)
-         printf "Usage: $0 {start|stop|status|clean|setup}\n"
+         printf "Usage: $0 {start|stop|status|clean}\n"
          ;;
    esac
 }

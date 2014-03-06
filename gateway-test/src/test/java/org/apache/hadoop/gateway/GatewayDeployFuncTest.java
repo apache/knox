@@ -55,9 +55,8 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 public class GatewayDeployFuncTest {
 
@@ -202,13 +201,13 @@ public class GatewayDeployFuncTest {
     System.in.read();
   }
 
-  @Test
-  public void testDeployUndeploy() throws Exception {
-    long timeout = 10 * 1000; // Ten seconds.
+  @Test( timeout = 20*1000 )
+  public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     long sleep = 200;
     String username = "guest";
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    long topoTimestampBefore, topoTimestampAfter;
 
     File topoDir = new File( config.getGatewayTopologyDir() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
@@ -218,49 +217,85 @@ public class GatewayDeployFuncTest {
     assertThat( topoDir.listFiles().length, is( 0 ) );
     assertThat( deployDir.listFiles().length, is( 0 ) );
 
+    File descriptor = writeTestTopology( "test-cluster", createTopology() );
+
+    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 1, 0, sleep );
+    for( File webInfDir : warDir.listFiles() ) {
+      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+    }
+    waitForAccess( serviceUrl, username, password, sleep );
+
+    // Redeploy and make sure the timestamp is updated.
+    topoTimestampBefore = descriptor.lastModified();
+    GatewayServer.redeployTopologies( config, null );
+    topoTimestampAfter = descriptor.lastModified();
+    assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
+
+    // Check to make sure there are two war directories with the same root.
+    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 2, 1, sleep );
+    for( File webInfDir : warDir.listFiles() ) {
+      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+    }
+    waitForAccess( serviceUrl, username, password, sleep );
+
+    // Redeploy and make sure the timestamp is updated.
+    topoTimestampBefore = descriptor.lastModified();
+    GatewayServer.redeployTopologies( config, "test-cluster" );
+    topoTimestampAfter = descriptor.lastModified();
+    assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
+
+    // Check to make sure there are two war directories with the same root.
+    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 3, 2, sleep );
+    for( File webInfDir : warDir.listFiles() ) {
+      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+    }
+    waitForAccess( serviceUrl, username, password, sleep );
+
+    // Delete the test topology.
+    assertThat( "Failed to delete the topology file.", descriptor.delete(), is( true ) );
+
+    waitForFiles( deployDir, ".*", 0, -1, sleep );
+
+    // Wait a bit more to make sure undeployment finished.
+    Thread.sleep( sleep );
+
+    // Make sure the test topology is not accessible.
+    given().auth().preemptive().basic( username, password )
+        .expect().statusCode( HttpStatus.SC_NOT_FOUND )
+        .when().get( serviceUrl );
+
+    // Make sure deployment directory is empty.
+    assertThat( topoDir.listFiles().length, is( 0 ) );
+    assertThat( deployDir.listFiles().length, is( 0 ) );
+  }
+
+  private File writeTestTopology( String name, XMLTag xml ) throws IOException {
     // Create the test topology.
-    File tempFile = new File( config.getGatewayTopologyDir(), "test-cluster.xml." + UUID.randomUUID() );
+    File tempFile = new File( config.getGatewayTopologyDir(), name + ".xml." + UUID.randomUUID() );
     FileOutputStream stream = new FileOutputStream( tempFile );
-    createTopology().toStream( stream );
+    xml.toStream( stream );
     stream.close();
-    File descriptor = new File( config.getGatewayTopologyDir(), "test-cluster.xml" );
+    File descriptor = new File( config.getGatewayTopologyDir(), name + ".xml" );
     tempFile.renameTo( descriptor );
+    return descriptor;
+  }
 
-    // Make sure deployment directory has one WAR with the correct name.
-    long before = System.currentTimeMillis();
-    long elapsed = 0;
+  private File waitForFiles( File dir, String pattern, int count, int index, long sleep ) throws InterruptedException {
+    RegexDirFilter filter = new RegexDirFilter( pattern );
     while( true ) {
-      elapsed = System.currentTimeMillis() - before;
-      assertThat( "Waited too long for topology deployment dir creation.", elapsed, lessThan( timeout ) );
-      File[] files = deployDir.listFiles( new RegexDirFilter( "test-cluster.war\\.[0-9A-Fa-f]+" ) );
-      if( files.length == 1 ) {
-        warDir = files[0];
-        break;
+      File[] files = dir.listFiles( filter );
+      if( files.length == count ) {
+        return ( index < 0 ) ? null : files[ index ];
       }
       Thread.sleep( sleep );
     }
-    while( true ) {
-      elapsed = System.currentTimeMillis() - before;
-      assertThat( "Waited too long for topology deployment file creation.", elapsed, lessThan( timeout ) );
-      File webInfDir = new File( warDir, "WEB-INF" );
-      File[] files = webInfDir.listFiles();
-      //System.out.println( "DEPLOYMENT FILES: " + files.length );
-      //for( File file : files ) {
-      //  System.out.println( "  " + file.getAbsolutePath() );
-      //}
-      if( files.length >= 4 ) {
-        break;
-      }
-      Thread.sleep( sleep );
-    }
+  }
 
-    // Make sure the test topology is accessible.
+  private void waitForAccess( String url, String username, String password, long sleep ) throws InterruptedException {
     while( true ) {
-      elapsed = System.currentTimeMillis() - before;
-      assertThat( "Waited too long for topology to be accessible.", elapsed, lessThan( timeout ) );
       Response response = given()
           .auth().preemptive().basic( username, password )
-          .when().get( serviceUrl ).andReturn();
+          .when().get( url ).andReturn();
       if( response.getStatusCode() == HttpStatus.SC_NOT_FOUND ) {
         Thread.sleep( sleep );
         continue;
@@ -269,49 +304,7 @@ public class GatewayDeployFuncTest {
       assertThat( response.getBody().asString(), is( "test-service-response" ) );
       break;
     }
-
-    // Delete the test topology.
-    assertThat( "Failed to delete the topology file.", descriptor.delete(), is( true ) );
-
-    // Make sure the deployment directory is empty.
-    before = System.currentTimeMillis();
-    while( true ) {
-      File[] deploymentFiles = deployDir.listFiles( new RegexDirFilter( "test-cluster.war\\.[0-9A-Fa-f]+" ) );
-      if( deploymentFiles.length == 0 ) {
-        break;
-      } else if( ( System.currentTimeMillis() - before ) > timeout ) {
-        System.out.println( "TOPOLOGY FILES   " + topoDir );
-        File[] topologyFiles = topoDir.listFiles( new RegexDirFilter( "test-cluster.*" ) );
-        for( File file : topologyFiles ) {
-          System.out.println( "  " + file.getAbsolutePath() );
-        }
-        System.out.println( "DEPLOYMENT FILES " + deployDir );
-        for( File file : deploymentFiles ) {
-          System.out.println( "  " + file.getAbsolutePath() );
-        }
-        fail( "Waited too long for topology undeployment: " + ( System.currentTimeMillis() - before ) + "ms" );
-      } else {
-        Thread.sleep( sleep );
-      }
-    }
-
-    // Wait a bit more to make sure undeployment finished.
-    Thread.sleep( sleep );
-
-    // Make sure the test topology is not accessible.
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .expect()
-            //.log().all()
-        .statusCode( HttpStatus.SC_NOT_FOUND )
-        .when().get( serviceUrl );
-
-    // Make sure deployment directory is empty.
-    assertThat( topoDir.listFiles().length, is( 0 ) );
-    assertThat( deployDir.listFiles().length, is( 0 ) );
   }
-
 
   private class RegexDirFilter implements FilenameFilter {
 
