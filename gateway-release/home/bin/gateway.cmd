@@ -86,10 +86,11 @@ SET ERR_FILE=%LOG_DIR%\.err
 	) 
 	ECHO "Starting Knox "
 	DEL "%PID_FILE%"
-	start "KnoxGateway"  java  -jar "%KNOX_JAR%">> "%OUT_FILE%" 2>>"%ERR_FILE%"
+	start   javaw  -jar "%KNOX_JAR%">> "%OUT_FILE%" 2>>"%ERR_FILE%"
 	echo "getting pid"
-	for /f "tokens=2 delims=," %%A in ('tasklist -v /fo csv /nh /fi "WINDOWTITLE  eq KnoxGateway"') do (
-	echo %%A>"%PID_FILE%"
+	rem for /f "tokens=2 delims=," %%A in ('tasklist -v /fo csv /nh /fi "WINDOWTITLE  eq KnoxGateway"') do (
+	for /f "tokens=2 delims=," %%A in ('tasklist -v /fo csv /nh /fi "Imagename  eq javaw.exe"') do (
+	  echo %%A>"%PID_FILE%"
 	)
 	CALL :getPID
 	CALL :knoxIsRunning %PID%
@@ -174,7 +175,7 @@ SET ERR_FILE=%LOG_DIR%\.err
 		GOTO :EOF
 	)
 	ECHO "Stopping Knox %PID% "
-	taskkill /PID %PID%
+	taskkill /F /PID  %PID%
 	IF NOT %ERRORLEVEL% ==0 (
 		ECHO  "failed. \n"
 		Exit /B 1
