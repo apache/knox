@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.gateway.GatewayCommandLine;
 import org.apache.hadoop.gateway.GatewayServer;
@@ -33,6 +34,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -70,8 +72,9 @@ public class KnoxCLI extends Configured implements Tool {
   private String cluster = null;
   private String generate = "false";
   private String hostname = null;
+  private boolean force = false;
   
-  // for testing only
+  // For testing only
   private String master = null;
 
   /* (non-Javadoc)
@@ -86,7 +89,7 @@ public class KnoxCLI extends Configured implements Tool {
         return exitCode;
       }
       if (command.validate()) {
-          initializeServices(command instanceof MasterCreateCommand);
+          initializeServices( command instanceof MasterCreateCommand );
           command.execute();
       } else {
         exitCode = -1;
@@ -199,6 +202,8 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.master = args[++i];
+      } else if (args[i].equals("--force")) {
+        this.force = true;
       } else if (args[i].equals("--help")) {
         printKnoxShellUsage();
         return -1;
@@ -472,13 +477,66 @@ public class KnoxCLI extends Configured implements Tool {
   *
   */
  public class MasterCreateCommand extends Command {
-  public static final String USAGE = "create-master";
+  public static final String USAGE = "create-master [--force]";
   public static final String DESC = "The create-master command persists the\n" +
                                     "master secret in a file located at:\n" +
                                     "{GATEWAY_HOME}/data/security/master. It\n" +
-                                    "will prompt the user for the secret to persist.";
+                                    "will prompt the user for the secret to persist.\n" +
+                                    "Use --force to overwrite the master secret.";
 
    public MasterCreateCommand() {
+   }
+
+   private GatewayConfig getGatewayConfig() {
+     GatewayConfig result;
+     Configuration conf = getConf();
+     if( conf != null && conf instanceof GatewayConfig ) {
+       result = (GatewayConfig)conf;
+     } else {
+       result = new GatewayConfigImpl();
+     }
+     return result;
+   }
+
+   public boolean validate() {
+     boolean valid = true;
+     GatewayConfig config = getGatewayConfig();
+     File dir = new File( config.getGatewaySecurityDir() );
+     File file = new File( dir, "master" );
+     if( file.exists() ) {
+       if( force ) {
+         if( !file.canWrite() ) {
+           out.println(
+               "This command requires write permissions on the master secret file: " +
+                   file.getAbsolutePath() );
+           valid = false;
+         } else if( !file.canWrite() ) {
+           out.println(
+               "This command requires write permissions on the master secret file: " +
+                   file.getAbsolutePath() );
+           valid = false;
+         } else {
+           valid = file.delete();
+           if( !valid ) {
+             out.println(
+                 "Unable to delete the master secret file: " +
+                     file.getAbsolutePath() );
+           }
+         }
+       } else {
+         out.println(
+             "Master secret is already present on disk. " +
+                 "Please be aware that overwriting it will require updating other security artifacts. " +
+                 " Use --force to overwrite the existing master secret." );
+         valid = false;
+       }
+     } else if( dir.exists() && !dir.canWrite() ) {
+       out.println(
+           "This command requires write permissions on the security directory: " +
+               dir.getAbsolutePath() );
+       valid = false;
+     }
+     return valid;
    }
 
    /* (non-Javadoc)
