@@ -52,13 +52,8 @@ public class AclsAuthorizationFilter implements Filter {
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   private String resourceRole = null;
-  private ArrayList<String> users;
-  private ArrayList<String> groups;
-  private boolean anyUser = true;
-  private boolean anyGroup = true;
-  private IpAddressValidator ipv = null;
-
   private String aclProcessingMode = null;
+  private AclParser parser = new AclParser();
 
   
   @Override
@@ -74,61 +69,14 @@ public class AclsAuthorizationFilter implements Filter {
     }
     log.aclProcessingMode(aclProcessingMode);
     String acls = getInitParameter(filterConfig, resourceRole + ".acl");
-    parseAcls(acls);
+    parser.parseAcls(acls);
   }
 
   private String getInitParameter(FilterConfig filterConfig, String paramName) {
     return filterConfig.getInitParameter(paramName.toLowerCase());
   }
 
-  private void parseAcls(String acls) {
-    if (acls != null) {
-      String[] parts = acls.split(";");
-      if (parts.length != 3 && parts.length > 0) {
-        log.invalidAclsFoundForResource(resourceRole);
-        // TODO: should probably throw an exception since this can leave
-        // us in an insecure state - either that or lock it down so that
-        // it isn't unprotected
-      }
-      else {
-        log.aclsFoundForResource(resourceRole);
-      }
-      parseUserAcls(parts);
-      
-      parseGroupAcls(parts);
-
-      parseIpAddressAcls(parts);
-    }
-    else {
-      log.noAclsFoundForResource(resourceRole);
-      users = new ArrayList<String>();
-      groups = new ArrayList<String>();
-      ipv = new IpAddressValidator(null);
-    }
-  }
-
-  private void parseUserAcls(String[] parts) {
-    users = new ArrayList<String>();
-    Collections.addAll(users, parts[0].split(","));
-    if (!users.contains("*")) {
-      anyUser = false;
-    }
-  }
-
-  private void parseGroupAcls(String[] parts) {
-    groups = new ArrayList<String>();
-    Collections.addAll(groups, parts[1].split(","));
-    if (!groups.contains("*")) {
-      anyGroup = false;
-    }
-  }
-
-  private void parseIpAddressAcls(String[] parts) {
-    ipv = new IpAddressValidator(parts[2]);
-  }
-
   public void destroy() {
-
   }
 
   public void doFilter(ServletRequest request, ServletResponse response,
@@ -152,7 +100,7 @@ public class AclsAuthorizationFilter implements Filter {
     
     // before enforcing acls check whether there are no acls defined 
     // which would mean that there are no restrictions
-    if (users.size() == 0 && groups.size() == 0 && ipv.getIPAddresses().size() == 0) {
+    if (parser.users.size() == 0 && parser.groups.size() == 0 && parser.ipv.getIPAddresses().size() == 0) {
       return true;
     }
 
@@ -184,7 +132,7 @@ public class AclsAuthorizationFilter implements Filter {
       // it true if there is an anyGroup acl
       // for AND mode and acls like *;*;127.0.0.* we need to
       // make it pass
-      if (anyGroup && aclProcessingMode.equals("AND")) {
+      if (parser.anyGroup && aclProcessingMode.equals("AND")) {
         groupAccess = true;
       }
     }
@@ -197,9 +145,9 @@ public class AclsAuthorizationFilter implements Filter {
       // to make sense and not grant access to everyone by mistake.
       // exclusion in OR is equivalent to denied
       // so, let's set each one that contains '*' to false.
-      if (anyUser) userAccess = false;
-      if (anyGroup) groupAccess = false;
-      if (ipv.allowsAnyIP()) ipAddrAccess = false;
+      if (parser.anyUser) userAccess = false;
+      if (parser.anyGroup) groupAccess = false;
+      if (parser.ipv.allowsAnyIP()) ipAddrAccess = false;
       
       return (userAccess || groupAccess || ipAddrAccess);
     }
@@ -214,7 +162,7 @@ public class AclsAuthorizationFilter implements Filter {
     if (remoteAddr == null) {
       return false;
     }
-    allowed = ipv.validateIpAddress(remoteAddr);
+    allowed = parser.ipv.validateIpAddress(remoteAddr);
     return allowed;
   }
 
@@ -223,11 +171,11 @@ public class AclsAuthorizationFilter implements Filter {
     if (user == null) {
       return false;
     }
-    if (anyUser) {
+    if (parser.anyUser) {
       allowed = true;
     }
     else {
-      if (users.contains(user.getName())) {
+      if (parser.users.contains(user.getName())) {
         allowed = true;
       }
     }
@@ -239,12 +187,12 @@ public class AclsAuthorizationFilter implements Filter {
     if (userGroups == null) {
       return false;
     }
-    if (anyGroup) {
+    if (parser.anyGroup) {
       allowed = true;
     }
     else {
       for (int i = 0; i < userGroups.length; i++) {
-        if (groups.contains(((Principal)userGroups[i]).getName())) {
+        if (parser.groups.contains(((Principal)userGroups[i]).getName())) {
           allowed = true;
           break;
         }
