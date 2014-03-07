@@ -201,7 +201,7 @@ public class GatewayDeployFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = 20*1000 )
+  @Test( timeout = 30*1000 )
   public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     long sleep = 200;
     String username = "guest";
