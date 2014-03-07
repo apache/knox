@@ -118,6 +118,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
           new java.security.cert.Certificate[]{cert});  
       
       writeKeystoreToFile(privateKS, new File( keyStoreDir + GATEWAY_KEYSTORE  ));
+      //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
     } catch (GeneralSecurityException e) {

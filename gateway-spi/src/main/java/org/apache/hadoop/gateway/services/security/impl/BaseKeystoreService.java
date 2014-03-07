@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
@@ -39,6 +40,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -243,6 +246,19 @@ public class BaseKeystoreService {
       }
     }
     return credential;
+  }
+
+  protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
+    byte[] bytes = cert.getEncoded();
+    final FileOutputStream out = new FileOutputStream( file );
+    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+    try {
+      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
+      out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
+      out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
+    } finally {
+      out.close();
+    }
   }
 
   protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
