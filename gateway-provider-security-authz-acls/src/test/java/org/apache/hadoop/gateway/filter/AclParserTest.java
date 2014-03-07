@@ -29,13 +29,13 @@ public class AclParserTest {
   @Test
   public void testValidAcls() throws Exception {
     AclParser p = new AclParser();
-    p.parseAcls("guest;*;*");
+    p.parseAcls("test", "guest;*;*");
     assertTrue(p.users.contains("guest"));
     assertTrue(p.anyGroup);
     assertTrue(p.ipv.allowsAnyIP());
 
     p = new AclParser();
-    p.parseAcls("*;admins;*");
+    p.parseAcls("test", "*;admins;*");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertFalse(p.anyGroup);
@@ -43,7 +43,7 @@ public class AclParserTest {
     assertTrue(p.ipv.allowsAnyIP());
 
     p = new AclParser();
-    p.parseAcls("*;*;127.0.0.1");
+    p.parseAcls("test", "*;*;127.0.0.1");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertTrue(p.anyGroup);
@@ -52,7 +52,7 @@ public class AclParserTest {
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
 
     p = new AclParser();
-    p.parseAcls("*;admins;127.0.0.1");
+    p.parseAcls("test", "*;admins;127.0.0.1");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertFalse(p.anyGroup);
@@ -61,7 +61,7 @@ public class AclParserTest {
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
 
     p = new AclParser();
-    p.parseAcls("guest;admins;127.0.0.1");
+    p.parseAcls("test", "guest;admins;127.0.0.1");
     assertTrue(p.users.contains("guest"));
     assertFalse(p.anyUser);
     assertFalse(p.anyGroup);
@@ -70,7 +70,7 @@ public class AclParserTest {
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
 
     p = new AclParser();
-    p.parseAcls("guest;*;127.0.0.1");
+    p.parseAcls("test", "guest;*;127.0.0.1");
     assertTrue(p.users.contains("guest"));
     assertFalse(p.anyUser);
     assertTrue(p.anyGroup);
@@ -79,7 +79,7 @@ public class AclParserTest {
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
 
     p = new AclParser();
-    p.parseAcls("*;admins;127.0.0.1");
+    p.parseAcls("test", "*;admins;127.0.0.1");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertFalse(p.anyGroup);
@@ -92,7 +92,7 @@ public class AclParserTest {
   @Test
   public void testValidMultiValuedAcls() throws Exception {
     AclParser p = new AclParser();
-    p.parseAcls("*;admins;127.0.0.1,127.0.0.2");
+    p.parseAcls("test", "*;admins;127.0.0.1,127.0.0.2");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertFalse(p.anyGroup);
@@ -103,7 +103,7 @@ public class AclParserTest {
     assertFalse(p.ipv.getIPAddresses().contains("127.0.0.3"));
 
     p = new AclParser();
-    p.parseAcls("*;admins,users;127.0.0.1,127.0.0.2");
+    p.parseAcls("test", "*;admins,users;127.0.0.1,127.0.0.2");
     assertFalse(p.users.contains("guest"));
     assertTrue(p.anyUser);
     assertFalse(p.anyGroup);
@@ -116,7 +116,7 @@ public class AclParserTest {
     assertFalse(p.ipv.getIPAddresses().contains("127.0.0.3"));
 
     p = new AclParser();
-    p.parseAcls("guest,visitor;admins,users;127.0.0.1,127.0.0.2");
+    p.parseAcls("test", "guest,visitor;admins,users;127.0.0.1,127.0.0.2");
     assertTrue(p.users.contains("guest"));
     assertTrue(p.users.contains("visitor"));
     assertFalse(p.users.contains("missing-guy"));
@@ -135,7 +135,7 @@ public class AclParserTest {
   public void testNullACL() throws Exception {
     AclParser p = new AclParser();
     try {
-      p.parseAcls(null);
+      p.parseAcls("test", null);
     }
     catch (InvalidACLException sle) {
       // expected
@@ -147,7 +147,7 @@ public class AclParserTest {
   public void testInvalidAcls() throws Exception {
     AclParser p = new AclParser();
     try {
-      p.parseAcls("guest");
+      p.parseAcls("test", "guest");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -156,7 +156,7 @@ public class AclParserTest {
 
     p = new AclParser();
     try {
-      p.parseAcls("guest;;");
+      p.parseAcls("test", "guest;;");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -165,7 +165,7 @@ public class AclParserTest {
   
     p = new AclParser();
     try {
-      p.parseAcls(";;");
+      p.parseAcls("test", ";;");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -174,7 +174,7 @@ public class AclParserTest {
 
     p = new AclParser();
     try {
-      p.parseAcls(";");
+      p.parseAcls("test", ";");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -183,7 +183,7 @@ public class AclParserTest {
 
     p = new AclParser();
     try {
-      p.parseAcls("guest;");
+      p.parseAcls("test", "guest;");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -192,7 +192,7 @@ public class AclParserTest {
 
     p = new AclParser();
     try {
-      p.parseAcls(";admins");
+      p.parseAcls("test", ";admins");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {
@@ -201,7 +201,7 @@ public class AclParserTest {
 
     p = new AclParser();
     try {
-      p.parseAcls("");
+      p.parseAcls("test", "");
       fail("Invalid acl should have thrown InvalidACLException.");
     }
     catch (InvalidACLException sle) {

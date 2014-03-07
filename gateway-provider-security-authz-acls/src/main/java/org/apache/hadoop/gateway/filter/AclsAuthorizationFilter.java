@@ -69,7 +69,7 @@ public class AclsAuthorizationFilter implements Filter {
     }
     log.aclProcessingMode(aclProcessingMode);
     String acls = getInitParameter(filterConfig, resourceRole + ".acl");
-    parser.parseAcls(acls);
+    parser.parseAcls(resourceRole, acls);
   }
 
   private String getInitParameter(FilterConfig filterConfig, String paramName) {

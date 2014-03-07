@@ -20,53 +20,34 @@ package org.apache.hadoop.gateway.filter;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.util.IpAddressValidator;
 
 /**
- * @author  larry
  */
 public class AclParser {
+  private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
 
-  /**
-   * 
-   */
+  public String resourceRole;
   public ArrayList<String> users;
-  /**
-   * 
-   */
   public ArrayList<String> groups;
-  /**
-   * 
-   */
   public boolean anyUser = true;
-  /**
-   * 
-   */
   public boolean anyGroup = true;
-  /**
-   * 
-   */
   public IpAddressValidator ipv;
 
 
-  /**
-   * 
-   */
   public AclParser() {
   }
   
-  public void parseAcls(String acls) throws InvalidACLException {
+  public void parseAcls(String resourceRole, String acls) throws InvalidACLException {
     if (acls != null) {
       String[] parts = acls.split(";");
       if (parts.length != 3) {
-        //log.invalidAclsFoundForResource(resourceRole);
-        // TODO: should probably throw an exception since this can leave
-        // us in an insecure state - either that or lock it down so that
-        // it isn't unprotected
-        throw new InvalidACLException("Invalid ACLs specified: " + acls);
+        log.invalidAclsFoundForResource(resourceRole);
+        throw new InvalidACLException("Invalid ACLs specified for requested resource: " + resourceRole);
       }
       else {
-        //log.aclsFoundForResource(resourceRole);
+        log.aclsFoundForResource(resourceRole);
       }
       parseUserAcls(parts);
       
@@ -75,7 +56,7 @@ public class AclParser {
       parseIpAddressAcls(parts);
     }
     else {
-      //log.noAclsFoundForResource(resourceRole);
+      log.noAclsFoundForResource(resourceRole);
       users = new ArrayList<String>();
       groups = new ArrayList<String>();
       ipv = new IpAddressValidator(null);
