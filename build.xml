@@ -66,10 +66,6 @@
         <os family="windows" />
     </condition>
 
-    <condition property="rpm-builder" value="./gateway-rpm/build_knox_rpm.sh">
-        <os family="unix" />
-    </condition>
-
     <target name="_init" description="Initialize the build.">
     </target>
 
@@ -108,27 +104,14 @@
         </exec>
     </target>
 
-    <target name="post-build" depends="_init,_rpm,_changes"/>
+    <target name="post-build" depends="_init,_changes"/>
 
     <target name="_changes" depends="_init">
         <copy file="CHANGES" todir="target/${gateway-version}"/>
     </target>
 
-    <target name="set-rpm-builder-privs" if="isUnix">
-        <chmod file="${rpm-builder}" perm="700"/>	     
-    </target>
 
-    <target name="rpm" depends="package,_rpm" description="Package and build RPM of the product."/>
-    <target name="_rpm" depends="_init,set-rpm-builder-privs" description="Build RPM of the product from existing package.">
-        <exec executable="${rpm-builder}">
-            <arg value="target"/>
-            <arg value="${gateway-artifact}"/>
-            <arg value="${gateway-version}"/>
-            <arg value="${release-manager}"/>
-        </exec>
-        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="MD5" fileext=".md5" forceOverwrite="yes"/>
-        <checksum file="target/${gateway-version}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA1" fileext=".sha" forceOverwrite="yes"/>
-    </target>
+
 
     <target name="build-candidate">
         <exec executable="${curl.cmd}">
@@ -151,9 +134,6 @@
             <url url="${build-url}/knox-${gateway-version}.tar.gz"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz.md5"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz.sha"/>
-            <url url="${build-url}/knox-${gateway-version}.rpm"/>
-            <url url="${build-url}/knox-${gateway-version}.rpm.md5"/>
-            <url url="${build-url}/knox-${gateway-version}.rpm.sha"/>
             <url url="${build-url}/CHANGES"/>
         </get>
     </target>
@@ -173,10 +153,6 @@
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.md5"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.asc"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.sha"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.rpm.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/CHANGES"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/KEYS"/>
         </get>
@@ -213,15 +189,6 @@
         <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA" verifyproperty="tar.sha.ok"/>
         <fail message="SHA Invalid"><condition><isfalse value="${tar.sha.ok}"/></condition></fail>
 
-        <echo>Verify ${gateway-artifact}-${gateway-version}.rpm</echo>
-        <exec executable="gpg" dir="${install.dir}" failonerror="true">
-            <arg value="--verify"/>
-            <arg value="${gateway-artifact}-${gateway-version}.rpm.asc"/>
-        </exec>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.rpm" verifyproperty="rpm.md5.ok"/>
-        <fail message="MD5 Invalid"><condition><isfalse value="${rpm.md5.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.rpm" algorithm="SHA" verifyproperty="rpm.sha.ok"/>
-        <fail message="SHA Invalid"><condition><isfalse value="${rpm.sha.ok}"/></condition></fail>
     </target>
 
     <target name="sign-candidate" depends="_init" description="Sign a downloaded created release.">
@@ -244,11 +211,6 @@
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
         </exec>
         <exec executable="gpg" dir="${candidate.dir}">
-            <arg value="--armor"/>
-            <arg value="--detach-sig"/>
-            <arg value="${gateway-artifact}-${gateway-version}.rpm"/>
-        </exec>
-        <exec executable="gpg" dir="${candidate.dir}">
             <arg value="--export"/>
             <arg value="--armor"/>
             <arg value="--output"/>
@@ -267,7 +229,7 @@
         <echo message="${stage-message}"/>
     </target>
 
-    <target name="release" depends="package,rpm" description="Build release artifacts including RPM and sign."/>
+    <target name="release" depends="package" description="Build release artifacts and sign."/>
 
     <target name="stage-candidate" depends="unstage-candidate" description="Stage release artifacts.">
         <exec executable="svn">
