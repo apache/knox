@@ -44,6 +44,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -77,6 +78,7 @@ public class GatewayServer {
   private static Properties buildProperties;
 
   private Server jetty;
+  private ErrorHandler errorHandler;
   private GatewayConfig config;
   private ContextHandlerCollection contexts;
   private FileTopologyProvider monitor;
@@ -294,8 +296,7 @@ public class GatewayServer {
 
     // Create the global context handler.
     contexts = new ContextHandlerCollection();
-
-    // A map to keep track of current deployments by cluster name.
+     // A map to keep track of current deployments by cluster name.
     deployments = new ConcurrentHashMap<String, WebAppContext>();
 
     // Determine the socket address and check availability.
@@ -366,10 +367,13 @@ public class GatewayServer {
   private synchronized void internalDeploy( Topology topology, File warFile ) {
     String name = topology.getName();
     String warPath = warFile.getAbsolutePath();
+    errorHandler = new ErrorHandler();
+    errorHandler.setShowStacks(false);
     WebAppContext context = new WebAppContext();
     context.setDefaultsDescriptor( null );
     context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
     context.setWar( warPath );
+    context.setErrorHandler(errorHandler);
     // internalUndeploy( topology ); KNOX-152
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
     deployments.put( name, context );
