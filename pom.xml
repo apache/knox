@@ -164,6 +164,8 @@
                     <excludeSubProjects>false</excludeSubProjects>
                     <excludes>
                         <exclude>.git/**</exclude>
+                        <exclude>.pc/**</exclude>
+                        <exclude>debian/**</exclude>
                         <exclude>.gitignore/**</exclude>
                         <exclude>.svn/**</exclude>
                         <exclude>.idea/**</exclude>
