@@ -218,6 +218,7 @@ public class GatewayDeployFuncTest {
     assertThat( deployDir.listFiles().length, is( 0 ) );
 
     File descriptor = writeTestTopology( "test-cluster", createTopology() );
+    long writeTime = System.currentTimeMillis();
 
     warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 1, 0, sleep );
     for( File webInfDir : warDir.listFiles() ) {
@@ -225,9 +226,13 @@ public class GatewayDeployFuncTest {
     }
     waitForAccess( serviceUrl, username, password, sleep );
 
+    // Wait to make sure a second has passed to ensure the the file timestamps are different.
+    waitForElapsed( writeTime, 1000, 100 );
+
     // Redeploy and make sure the timestamp is updated.
     topoTimestampBefore = descriptor.lastModified();
     GatewayServer.redeployTopologies( config, null );
+    writeTime = System.currentTimeMillis();
     topoTimestampAfter = descriptor.lastModified();
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
 
@@ -238,9 +243,13 @@ public class GatewayDeployFuncTest {
     }
     waitForAccess( serviceUrl, username, password, sleep );
 
+    // Wait to make sure a second has passed to ensure the the file timestamps are different.
+    waitForElapsed( writeTime, 1000, 100 );
+
     // Redeploy and make sure the timestamp is updated.
     topoTimestampBefore = descriptor.lastModified();
     GatewayServer.redeployTopologies( config, "test-cluster" );
+    writeTime = System.currentTimeMillis();
     topoTimestampAfter = descriptor.lastModified();
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
 
@@ -253,6 +262,9 @@ public class GatewayDeployFuncTest {
 
     // Delete the test topology.
     assertThat( "Failed to delete the topology file.", descriptor.delete(), is( true ) );
+
+    // Wait to make sure a second has passed to ensure the the file timestamps are different.
+    waitForElapsed( writeTime, 1000, 100 );
 
     waitForFiles( deployDir, ".*", 0, -1, sleep );
 
@@ -267,6 +279,12 @@ public class GatewayDeployFuncTest {
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
     assertThat( deployDir.listFiles().length, is( 0 ) );
+  }
+
+  private void waitForElapsed( long from, long total, long sleep ) throws InterruptedException {
+    while( System.currentTimeMillis() - from < total ) {
+      Thread.sleep( sleep );
+    }
   }
 
   private File writeTestTopology( String name, XMLTag xml ) throws IOException {
