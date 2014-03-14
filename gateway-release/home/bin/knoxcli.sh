@@ -58,7 +58,7 @@ function main {
    #printf "Starting $APP_LABEL \n"
    #printf "$@"
    
-   exec $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR "$@" || exit 1
+   $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $@ || exit 1
 
    return 0
 }
