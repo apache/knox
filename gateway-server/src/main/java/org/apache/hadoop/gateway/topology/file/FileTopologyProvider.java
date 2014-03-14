@@ -85,12 +85,40 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     this( null, VFS.getManager().toFileObject( directory ) );
   }
 
-  private static Topology loadTopology( FileObject file ) throws IOException, SAXException, URISyntaxException {
+  private static Topology loadTopology( FileObject file ) throws IOException, SAXException, URISyntaxException, InterruptedException {
+    final long TIMEOUT = 250; //ms
+    final long DELAY = 50; //ms
     log.loadingTopologyFile( file.getName().getFriendlyURI() );
-    Digester digester = digesterLoader.newDigester();
+    Topology topology;
+    long start = System.currentTimeMillis();
+    while( true ) {
+      try {
+        topology = loadTopologyAttempt( file );
+        break;
+      } catch ( IOException e ) {
+        if( System.currentTimeMillis() - start < TIMEOUT ) {
+          log.failedToLoadTopologyRetrying( file.getName().getFriendlyURI(), Long.toString( DELAY ), e );
+          Thread.sleep( DELAY );
+        } else {
+          throw e;
+        }
+      } catch ( SAXException e ) {
+        if( System.currentTimeMillis() - start < TIMEOUT ) {
+          log.failedToLoadTopologyRetrying( file.getName().getFriendlyURI(), Long.toString( DELAY ), e );
+          Thread.sleep( DELAY );
+        } else {
+          throw e;
+        }
+      }
+    }
+    return topology;
+  }
+
+  private static Topology loadTopologyAttempt( FileObject file ) throws IOException, SAXException, URISyntaxException {
+    Topology topology;Digester digester = digesterLoader.newDigester();
     FileContent content = file.getContent();
     TopologyBuilder topologyBuilder = digester.parse( content.getInputStream() );
-    Topology topology = topologyBuilder.build();
+    topology = topologyBuilder.build();
     topology.setUri( file.getURL().toURI() );
     topology.setName( FilenameUtils.removeExtension( file.getName().getBaseName() ) );
     topology.setTimestamp( content.getLastModifiedTime() );

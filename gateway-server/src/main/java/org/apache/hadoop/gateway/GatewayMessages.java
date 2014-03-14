@@ -192,6 +192,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to load topology {0}: {1}")
   void failedToLoadTopology( String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to load topology {0}, retrying after {1}ms: {2}")
+  void failedToLoadTopologyRetrying( String friendlyURI, String delay, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
   @Message( level = MessageLevel.ERROR, text = "Failed to handle topology events: {0}" )
   void failedToHandleTopologyEvents( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
