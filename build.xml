@@ -110,9 +110,6 @@
         <copy file="CHANGES" todir="target/${gateway-version}"/>
     </target>
 
-
-
-
     <target name="build-candidate">
         <exec executable="${curl.cmd}">
             <arg value="--silent"/>
