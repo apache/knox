@@ -19,15 +19,12 @@ package org.apache.hadoop.gateway.topology.file;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.vfs2.FileChangeEvent;
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.FileName;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.impl.DefaultFileMonitor;
+import org.apache.commons.io.monitor.FileAlterationListener;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -41,6 +38,7 @@ import org.apache.hadoop.gateway.topology.xml.KnoxFormatXmlTopologyRules;
 import org.xml.sax.SAXException;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -56,7 +54,9 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 //import org.codehaus.plexus.util.FileUtils;
 
-public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, FileListener {
+public class FileTopologyProvider
+    extends FileAlterationListenerAdaptor
+    implements TopologyProvider, TopologyMonitor, FileFilter, FileAlterationListener {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static DigesterLoader digesterLoader = newLoader( new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules() );
@@ -66,29 +66,31 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
       SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("conf");
   }
 
-  private DefaultFileMonitor monitor;
-  private FileObject directory;
+  private FileAlterationMonitor monitor;
+  private File directory;
   private Set<TopologyListener> listeners;
-  private volatile Map<FileName, Topology> topologies;
+  private volatile Map<File,Topology> topologies;
 
-  // For unit testing.
-  FileTopologyProvider( DefaultFileMonitor monitor, FileObject directory ) throws IOException, SAXException {
+  FileTopologyProvider( FileAlterationMonitor monitor, File directory ) {
     this.directory = directory;
-    this.monitor = ( monitor != null ) ? monitor : new DefaultFileMonitor( this );
-    this.monitor.setRecursive( false );
-    this.monitor.addFile( this.directory );
+    this.monitor = monitor;
+
+    FileAlterationObserver observer = new FileAlterationObserver( this.directory, this );
+    observer.addListener( this );
+    monitor.addObserver( observer );
+
     this.listeners = new HashSet<TopologyListener>();
-    this.topologies = new HashMap<FileName, Topology>(); //loadTopologies( this.directory );
+    this.topologies = new HashMap<File,Topology>(); //loadTopologies( this.directory );
   }
 
   public FileTopologyProvider( File directory ) throws IOException, SAXException {
-    this( null, VFS.getManager().toFileObject( directory ) );
+      this( new FileAlterationMonitor( 1000L ), directory );
   }
 
-  private static Topology loadTopology( FileObject file ) throws IOException, SAXException, URISyntaxException, InterruptedException {
+  private static Topology loadTopology( File file ) throws IOException, SAXException, URISyntaxException, InterruptedException {
     final long TIMEOUT = 250; //ms
     final long DELAY = 50; //ms
-    log.loadingTopologyFile( file.getName().getFriendlyURI() );
+    log.loadingTopologyFile( file.getAbsolutePath() );
     Topology topology;
     long start = System.currentTimeMillis();
     while( true ) {
@@ -97,14 +99,14 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
         break;
       } catch ( IOException e ) {
         if( System.currentTimeMillis() - start < TIMEOUT ) {
-          log.failedToLoadTopologyRetrying( file.getName().getFriendlyURI(), Long.toString( DELAY ), e );
+          log.failedToLoadTopologyRetrying( file.getAbsolutePath(), Long.toString( DELAY ), e );
           Thread.sleep( DELAY );
         } else {
           throw e;
         }
       } catch ( SAXException e ) {
         if( System.currentTimeMillis() - start < TIMEOUT ) {
-          log.failedToLoadTopologyRetrying( file.getName().getFriendlyURI(), Long.toString( DELAY ), e );
+          log.failedToLoadTopologyRetrying( file.getAbsolutePath(), Long.toString( DELAY ), e );
           Thread.sleep( DELAY );
         } else {
           throw e;
@@ -114,34 +116,31 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
     return topology;
   }
 
-  private static Topology loadTopologyAttempt( FileObject file ) throws IOException, SAXException, URISyntaxException {
+  private static Topology loadTopologyAttempt( File file ) throws IOException, SAXException, URISyntaxException {
     Topology topology;Digester digester = digesterLoader.newDigester();
-    FileContent content = file.getContent();
-    TopologyBuilder topologyBuilder = digester.parse( content.getInputStream() );
+    TopologyBuilder topologyBuilder = digester.parse( FileUtils.openInputStream( file ) );
     topology = topologyBuilder.build();
-    topology.setUri( file.getURL().toURI() );
-    topology.setName( FilenameUtils.removeExtension( file.getName().getBaseName() ) );
-    topology.setTimestamp( content.getLastModifiedTime() );
+    topology.setUri( file.toURI() );
+    topology.setName( FilenameUtils.removeExtension( file.getName() ) );
+    topology.setTimestamp( file.lastModified() );
     return topology;
   }
 
-  private Map<FileName, Topology> loadTopologies( FileObject directory ) throws FileSystemException {
-    Map<FileName, Topology> map = new HashMap<FileName, Topology>();
-    if( directory.exists() && directory.getType().hasChildren() ) {
-      for( FileObject file : directory.getChildren() ) {
-        if( file.exists() && !file.getType().hasChildren() && SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.contains( file.getName().getExtension() )) {
-          try {
-            map.put( file.getName(), loadTopology( file ) );
-          } catch( IOException e ) {
-            // Maybe it makes sense to throw exception
-            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
-          } catch( SAXException e ) {
-            // Maybe it makes sense to throw exception
-            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
-          } catch ( Exception e ) {
-            // Maybe it makes sense to throw exception
-            log.failedToLoadTopology( file.getName().getFriendlyURI(), e );
-          }
+  private Map<File, Topology> loadTopologies( File directory ) {
+    Map<File, Topology> map = new HashMap<File, Topology>();
+    if( directory.exists() && directory.canRead() ) {
+      for( File file : directory.listFiles( this ) ) {
+        try {
+          map.put( file, loadTopology( file ) );
+        } catch( IOException e ) {
+          // Maybe it makes sense to throw exception
+          log.failedToLoadTopology( file.getAbsolutePath(), e );
+        } catch( SAXException e ) {
+          // Maybe it makes sense to throw exception
+          log.failedToLoadTopology( file.getAbsolutePath(), e );
+        } catch ( Exception e ) {
+          // Maybe it makes sense to throw exception
+          log.failedToLoadTopology( file.getAbsolutePath(), e );
         }
       }
     }
@@ -151,38 +150,39 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
   public void reloadTopologies() {
     try {
       synchronized ( this ) {
-        Map<FileName, Topology> oldTopologies = topologies;
-        Map<FileName, Topology> newTopologies = loadTopologies( directory );
+        Map<File,Topology> oldTopologies = topologies;
+        Map<File,Topology> newTopologies = loadTopologies( directory );
         List<TopologyEvent> events = createChangeEvents( oldTopologies, newTopologies );
         topologies = newTopologies;
         notifyChangeListeners( events );
       }
-    } catch( FileSystemException e ) {
+    }
+    catch( Exception e ) {
       // Maybe it makes sense to throw exception
       log.failedToReloadTopologies( e );
     }
   }
 
   private static List<TopologyEvent> createChangeEvents(
-    Map<FileName, Topology> oldTopologies,
-    Map<FileName, Topology> newTopologies ) {
+    Map<File,Topology> oldTopologies,
+    Map<File,Topology> newTopologies ) {
     ArrayList<TopologyEvent> events = new ArrayList<TopologyEvent>();
     // Go through the old topologies and find anything that was deleted.
-    for( FileName fileName : oldTopologies.keySet() ) {
-      if( !newTopologies.containsKey( fileName ) ) {
-        events.add( new TopologyEvent( TopologyEvent.Type.DELETED, oldTopologies.get( fileName ) ) );
+    for( File file : oldTopologies.keySet() ) {
+      if( !newTopologies.containsKey( file ) ) {
+        events.add( new TopologyEvent( TopologyEvent.Type.DELETED, oldTopologies.get( file ) ) );
       }
     }
     // Go through the new topologies and figure out what was updated vs added.
-    for( FileName fileName : newTopologies.keySet() ) {
-      if( oldTopologies.containsKey( fileName ) ) {
-        Topology oldTopology = oldTopologies.get( fileName );
-        Topology newTopology = newTopologies.get( fileName );
+    for( File file : newTopologies.keySet() ) {
+      if( oldTopologies.containsKey( file ) ) {
+        Topology oldTopology = oldTopologies.get( file );
+        Topology newTopology = newTopologies.get( file );
         if( newTopology.getTimestamp() > oldTopology.getTimestamp() ) {
-          events.add( new TopologyEvent( TopologyEvent.Type.UPDATED, newTopologies.get( fileName ) ) );
+          events.add( new TopologyEvent( TopologyEvent.Type.UPDATED, newTopologies.get( file ) ) );
         }
       } else {
-        events.add( new TopologyEvent( TopologyEvent.Type.CREATED, newTopologies.get( fileName ) ) );
+        events.add( new TopologyEvent( TopologyEvent.Type.CREATED, newTopologies.get( file ) ) );
       }
     }
     return events ;
@@ -200,7 +200,7 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
 
   @Override
   public Collection<Topology> getTopologies() {
-    Map<FileName, Topology> map = topologies;
+    Map<File,Topology> map = topologies;
     return Collections.unmodifiableCollection( map.values() );
   }
 
@@ -210,35 +210,40 @@ public class FileTopologyProvider implements TopologyProvider, TopologyMonitor, 
   }
 
   @Override
-  public void startMonitor() {
+  public void startMonitor() throws Exception {
     monitor.start();
   }
 
   @Override
-  public void stopMonitor() {
+  public void stopMonitor() throws Exception {
     monitor.stop();
   }
 
-  private void handleFileEvent( FileChangeEvent fileChangeEvent ) throws FileSystemException {
-    FileObject file = fileChangeEvent.getFile();
-    if( file != null && ( !file.getType().hasChildren() || file.equals( directory ) ) ) {
-      reloadTopologies();
+  @Override
+  public boolean accept( File file ) {
+    boolean accept = false;
+    if( !file.isDirectory() && file.canRead() ) {
+      String extension = FilenameUtils.getExtension( file.getName() );
+      if( SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.contains(  extension  ) ) {
+        accept = true;
+      }
     }
+    return accept;
   }
 
   @Override
-  public void fileCreated( FileChangeEvent fileChangeEvent ) throws FileSystemException {
-    handleFileEvent( fileChangeEvent );
+  public void onFileCreate( File file ) {
+    onFileChange( file );
   }
 
   @Override
-  public void fileDeleted( FileChangeEvent fileChangeEvent ) throws FileSystemException {
-    handleFileEvent( fileChangeEvent );
+  public void onFileDelete(java.io.File file) {
+    onFileChange( file );
   }
 
   @Override
-  public void fileChanged( FileChangeEvent fileChangeEvent ) throws FileSystemException {
-    handleFileEvent( fileChangeEvent );
+  public void onFileChange( File file ) {
+    reloadTopologies();
   }
 
 }

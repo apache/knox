@@ -23,6 +23,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,19 +36,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.vfs2.FileChangeEvent;
-import org.apache.commons.vfs2.FileListener;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.impl.DefaultFileMonitor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
+import org.apache.hadoop.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,88 +60,24 @@ public class FileTopologyProviderTest {
   public void tearDown() throws Exception {
   }
 
-//  @Test
-//  public void testFileMonitor() throws IOException {
-//    FileSystemManager manager = VFS.getManager();
-//    FileObject dir = manager.resolveFile( "/Users/kevin.minder/tmp" );
-//    DefaultFileMonitor monitor = new DefaultFileMonitor( new FileListener() {
-//      @Override
-//      public void fileCreated( FileChangeEvent event ) throws Exception {
-//        System.out.println( "File created " + event.getFile().getName().getFriendlyURI() );
-//      }
-//      @Override
-//      public void fileDeleted( FileChangeEvent event ) throws Exception {
-//        System.out.println( "File deleted " + event.getFile().getName().getFriendlyURI() );
-//      }
-//      @Override
-//      public void fileChanged( FileChangeEvent event ) throws Exception {
-//        System.out.println( "File modified " + event.getFile().getName().getFriendlyURI() );
-//      }
-//    } );
-//    monitor.setRecursive( false );
-//    monitor.addFile( dir );
-//    monitor.start();
-//    System.out.println( "Waiting" );
-//    System.in.read();
-//  }
-
-//  @Test
-//  public void testRamFileSystemMonitor() throws IOException, InterruptedException {
-//    FileSystemManager manager = VFS.getManager();
-//    FileObject dir = manager.resolveFile( "ram:///dir" );
-//    dir.createFolder();
-//    DefaultFileMonitor monitor = new DefaultFileMonitor( new FileListener() {
-//      @Override
-//      public void fileCreated( FileChangeEvent event ) throws Exception {
-//        System.out.println( "Created " + event.getFile().getName().getFriendlyURI() );
-//      }
-//      @Override
-//      public void fileDeleted( FileChangeEvent event ) throws Exception {
-//        System.out.println( "Deleted " + event.getFile().getName().getFriendlyURI() );
-//      }
-//      @Override
-//      public void fileChanged( FileChangeEvent event ) throws Exception {
-//        System.out.println( "Modified " + event.getFile().getName().getFriendlyURI() );
-//      }
-//    } );
-//    monitor.addFile( dir );
-//    monitor.start();
-//    FileObject file = createFileNN( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
-//    file = createFileNN( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
-//    Thread.sleep( 4000 );
-//    file = createFileNN( dir, "two", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 3L );
-//    file = createFileNN( dir, "one", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 2L );
-//
-//    System.out.println( "Waiting" );
-//    System.in.read();
-//  }
-
-  private FileObject createDir( String name ) throws FileSystemException {
-    FileSystemManager fsm = VFS.getManager();
-    FileObject dir = fsm.resolveFile( name );
-    dir.createFolder();
-    assertTrue( "Failed to create test dir " + dir.getName().getFriendlyURI(), dir.exists() );
-    return dir;
+  private File createDir() throws IOException {
+    return TestUtils.createTempDir( this.getClass().getSimpleName() + "-" );
   }
 
-  private FileObject createFile( FileObject parent, String name, String resource, long timestamp ) throws IOException {
-    FileObject file = parent.resolveFile( name );
+  private File createFile( File parent, String name, String resource, long timestamp ) throws IOException {
+    File file = new File( parent, name );
     if( !file.exists() ) {
-      file.createFile();
+      FileUtils.touch( file );
     }
     InputStream input = ClassLoader.getSystemResourceAsStream( resource );
-    OutputStream output = file.getContent().getOutputStream();
+    OutputStream output = FileUtils.openOutputStream( file );
     IOUtils.copy( input, output );
     output.flush();
     input.close();
     output.close();
-    file.getContent().setLastModifiedTime( timestamp );
-    assertTrue( "Failed to create test file " + file.getName().getFriendlyURI(), file.exists() );
-    assertTrue( "Failed to populate test file " + file.getName().getFriendlyURI(), file.getContent().getSize() > 0 );
-
-//    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-//    IOUtils.copy( file.getContent().getInputStream(), buffer );
-//    System.out.println( new String( buffer.toString( "UTF-8" ) ) );
+    file.setLastModified( timestamp );
+    assertTrue( "Failed to create test file " + file.getAbsolutePath(), file.exists() );
+    assertTrue( "Failed to populate test file " + file.getAbsolutePath(), file.length() > 0 );
 
     return file;
   }
@@ -151,73 +85,80 @@ public class FileTopologyProviderTest {
   @Test
   public void testGetTopologies() throws Exception {
 
-    FileObject dir = createDir( "ram:///test/dir" );
-    createFile( dir, "one.xml", "org/apache/hadoop/gateway/topology/file/topology-one.xml", 1L );
+    File dir = createDir();
+    long time = dir.lastModified();
+    try {
+      createFile( dir, "one.xml", "org/apache/hadoop/gateway/topology/file/topology-one.xml", time );
 
-    TestTopologyListener topoListener = new TestTopologyListener();
-    FileListenerDelegator fileListener = new FileListenerDelegator();
-    NoOpFileMonitor monitor = new NoOpFileMonitor( fileListener );
+      TestTopologyListener topoListener = new TestTopologyListener();
+      FileAlterationMonitor monitor = new FileAlterationMonitor( Long.MAX_VALUE );
+      FileTopologyProvider provider = new FileTopologyProvider( monitor, dir );
+      provider.addTopologyChangeListener( topoListener );
 
-    FileTopologyProvider provider = new FileTopologyProvider( monitor, dir );
-    provider.addTopologyChangeListener( topoListener );
-    fileListener.delegate = provider;
+      kickMonitor( monitor );
 
-    // Unit test "hack" to force monitor to execute.
-    provider.reloadTopologies();
+      Collection<Topology> topologies = provider.getTopologies();
+      assertThat( topologies, notNullValue() );
+      assertThat( topologies.size(), is( 1 ) );
+      Topology topology = topologies.iterator().next();
+      assertThat( topology.getName(), is( "one" ) );
+      assertThat( topology.getTimestamp(), is( time ) );
+      assertThat( topoListener.events.size(), is( 1 ) );
+      topoListener.events.clear();
 
-    Collection<Topology> topologies = provider.getTopologies();
-    assertThat( topologies, notNullValue() );
-    assertThat( topologies.size(), is( 1 ) );
-    Topology topology = topologies.iterator().next();
-    assertThat( topology.getName(), is( "one" ) );
-    assertThat( topology.getTimestamp(), is( 1L ) );
-    assertThat( topoListener.events.size(), is( 1 ) );
-    topoListener.events.clear();
+      // Add a file to the directory.
+      File two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
+      kickMonitor( monitor );
+      topologies = provider.getTopologies();
+      assertThat( topologies.size(), is( 2 ) );
+      Set<String> names = new HashSet<String>( Arrays.asList( "one", "two" ) );
+      Iterator<Topology> iterator = topologies.iterator();
+      topology = iterator.next();
+      assertThat( names, hasItem( topology.getName() ) );
+      names.remove( topology.getName() );
+      topology = iterator.next();
+      assertThat( names, hasItem( topology.getName() ) );
+      names.remove( topology.getName() );
+      assertThat( names.size(), is( 0 ) );
+      assertThat( topoListener.events.size(), is( 1 ) );
+      List<TopologyEvent> events = topoListener.events.get( 0 );
+      assertThat( events.size(), is( 1 ) );
+      TopologyEvent event = events.get( 0 );
+      assertThat( event.getType(), is( TopologyEvent.Type.CREATED ) );
+      assertThat( event.getTopology(), notNullValue() );
 
-    // Add a file to the directory.
-    FileObject two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-two.xml", 1L );
-    fileListener.fileCreated( new FileChangeEvent( two ) );
-    topologies = provider.getTopologies();
-    assertThat( topologies.size(), is( 2 ) );
-    Set<String> names = new HashSet<String>( Arrays.asList( "one", "two" ) );
-    Iterator<Topology> iterator = topologies.iterator();
-    topology = iterator.next();
-    assertThat( names, hasItem( topology.getName() ) );
-    names.remove( topology.getName() );
-    topology = iterator.next();
-    assertThat( names, hasItem( topology.getName() ) );
-    names.remove( topology.getName() );
-    assertThat( names.size(), is( 0 ) );
-    assertThat( topoListener.events.size(), is( 1 ) );
-    List<TopologyEvent> events = topoListener.events.get( 0 );
-    assertThat( events.size(), is( 1 ) );
-    TopologyEvent event = events.get( 0 );
-    assertThat( event.getType(), is( TopologyEvent.Type.CREATED ) );
-    assertThat( event.getTopology(), notNullValue() );
+      // Update a file in the directory.
+      two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-three.xml", 2L );
+      kickMonitor( monitor );
+      topologies = provider.getTopologies();
+      assertThat( topologies.size(), is( 2 ) );
+      names = new HashSet<String>( Arrays.asList( "one", "two" ) );
+      iterator = topologies.iterator();
+      topology = iterator.next();
+      assertThat( names, hasItem( topology.getName() ) );
+      names.remove( topology.getName() );
+      topology = iterator.next();
+      assertThat( names, hasItem( topology.getName() ) );
+      names.remove( topology.getName() );
+      assertThat( names.size(), is( 0 ) );
 
-    // Update a file in the directory.
-    two = createFile( dir, "two.xml", "org/apache/hadoop/gateway/topology/file/topology-three.xml", 2L );
-    fileListener.fileChanged( new FileChangeEvent( two ) );
-    topologies = provider.getTopologies();
-    assertThat( topologies.size(), is( 2 ) );
-    names = new HashSet<String>( Arrays.asList( "one", "two" ) );
-    iterator = topologies.iterator();
-    topology = iterator.next();
-    assertThat( names, hasItem( topology.getName() ) );
-    names.remove( topology.getName() );
-    topology = iterator.next();
-    assertThat( names, hasItem( topology.getName() ) );
-    names.remove( topology.getName() );
-    assertThat( names.size(), is( 0 ) );
+      // Remove a file from the directory.
+      two.delete();
+      kickMonitor( monitor );
+      topologies = provider.getTopologies();
+      assertThat( topologies.size(), is( 1 ) );
+      topology = topologies.iterator().next();
+      assertThat( topology.getName(), is( "one" ) );
+      assertThat( topology.getTimestamp(), is( time ) );
+    } finally {
+      FileUtils.deleteQuietly( dir );
+    }
+  }
 
-    // Remove a file from the directory.
-    two.delete();
-    fileListener.fileDeleted( new FileChangeEvent( two ) );
-    topologies = provider.getTopologies();
-    assertThat( topologies.size(), is( 1 ) );
-    topology = topologies.iterator().next();
-    assertThat( topology.getName(), is( "one" ) );
-    assertThat( topology.getTimestamp(), is( 1L ) );
+  private void kickMonitor( FileAlterationMonitor monitor ) {
+    for( FileAlterationObserver observer : monitor.getObservers() ) {
+      observer.checkAndNotify();
+    }
   }
 
   @Test
@@ -250,43 +191,6 @@ public class FileTopologyProviderTest {
 
   }
   
-  private class FileListenerDelegator implements FileListener {
-    private FileListener delegate;
-
-    @Override
-    public void fileCreated( FileChangeEvent event ) throws Exception {
-      delegate.fileCreated( event );
-    }
-
-    @Override
-    public void fileDeleted( FileChangeEvent event ) throws Exception {
-      delegate.fileDeleted( event );
-    }
-
-    @Override
-    public void fileChanged( FileChangeEvent event ) throws Exception {
-      delegate.fileChanged( event );
-    }
-  }
-
-  private class NoOpFileMonitor extends DefaultFileMonitor {
-
-    public NoOpFileMonitor( FileListener listener ) {
-      super( listener );
-    }
-
-    @Override
-    public void start() {
-      // NOOP
-    }
-
-    @Override
-    public void stop() {
-      // NOOP
-    }
-
-  }
-
   private class TestTopologyListener implements TopologyListener {
 
     public ArrayList<List<TopologyEvent>> events = new ArrayList<List<TopologyEvent>>();

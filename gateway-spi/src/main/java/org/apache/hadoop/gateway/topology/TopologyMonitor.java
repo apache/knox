@@ -21,8 +21,8 @@ public interface TopologyMonitor {
 
   void addTopologyChangeListener( TopologyListener listener );
 
-  void startMonitor();
+  void startMonitor() throws Exception;
 
-  void stopMonitor();
+  void stopMonitor() throws Exception;
 
 }

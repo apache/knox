@@ -17,14 +17,17 @@
  */
 package org.apache.hadoop.test;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.util.UUID;
 
 public class TestUtils {
 
@@ -54,6 +57,13 @@ public class TestUtils {
 
   public static String getResourceString( Class clazz, String name, String charset ) throws IOException {
     return IOUtils.toString( getResourceReader( clazz, name, charset ) );
+  }
+
+  public static File createTempDir( String prefix ) throws IOException {
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File tempDir = new File( targetDir, prefix + UUID.randomUUID() );
+    FileUtils.forceMkdir( tempDir );
+    return tempDir;
   }
 
 }
