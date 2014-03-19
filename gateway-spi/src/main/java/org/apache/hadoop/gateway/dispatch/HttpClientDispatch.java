@@ -63,22 +63,22 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
   
   // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
   // private static final String CT_APP_XML = "application/xml";
-  private static final String Q_DELEGATION_EQ = "?delegation=";
-  private static final String AMP_DELEGATION_EQ = "&delegation=";
-  private static final String COOKIE = "Cookie";
-  private static final String SET_COOKIE = "Set-Cookie";
-  private static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-  private static final String NEGOTIATE = "Negotiate";
+  protected static final String Q_DELEGATION_EQ = "?delegation=";
+  protected static final String AMP_DELEGATION_EQ = "&delegation=";
+  protected static final String COOKIE = "Cookie";
+  protected static final String SET_COOKIE = "Set-Cookie";
+  protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+  protected static final String NEGOTIATE = "Negotiate";
 
-  private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
-  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+  protected static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+  protected static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final int DEFAULT_REPLAY_BUFFER_SIZE =  4 * 1024; // 4K
 
-  private AppCookieManager appCookieManager = new AppCookieManager();
+  protected AppCookieManager appCookieManager = new AppCookieManager();
   
-  private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
+  protected static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
   
   private int replayBufferSize = 0;
   
@@ -104,6 +104,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       String query = outboundRequest.getURI().getQuery();
       if (!"true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
         // Hadoop cluster not Kerberos enabled
+        addCredentialsToRequest(outboundRequest);
         inboundResponse = client.execute(outboundRequest);
       } else if (query.contains(Q_DELEGATION_EQ) ||
         // query string carries delegation token
@@ -167,7 +168,16 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     }
   }
 
-  private HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
+  /**
+   * This method provides a hook for specialized credential propagation
+   * in subclasses.
+   * 
+   * @param outboundRequest
+   */
+  protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
+  }
+
+  protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
       DefaultHttpClient client) throws IOException, ClientProtocolException {
     HttpResponse inboundResponse;
     outboundRequest.removeHeaders(COOKIE);
@@ -190,15 +200,15 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
         inboundResponse = client.execute(outboundRequest);
       } else {
         // no supported authentication type found
-        // we would let the original response propogate
+        // we would let the original response propagate
       }
     } else {
       // not a 401 Unauthorized status code
-      // we would let the original response propogate
+      // we would let the original response propagate
     }
     return inboundResponse;
   }
-
+  
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
 
@@ -276,11 +286,11 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
     executeRequest( method, request, response );
   }
 
-  int getReplayBufferSize() {
+  protected int getReplayBufferSize() {
     return replayBufferSize;
   }
   
-  void setReplayBufferSize(int size) {
+  protected void setReplayBufferSize(int size) {
     replayBufferSize = size;
   }
   

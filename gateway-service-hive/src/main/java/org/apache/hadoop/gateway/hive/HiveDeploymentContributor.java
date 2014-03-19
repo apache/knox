@@ -79,6 +79,6 @@ public class HiveDeploymentContributor extends ServiceDeploymentContributorBase 
   }
 
   private void addDispatchFilter( DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "dispatch", null, null );
+    context.contributeFilter( service, resource, "dispatch", "hive", null );
   }
 }
