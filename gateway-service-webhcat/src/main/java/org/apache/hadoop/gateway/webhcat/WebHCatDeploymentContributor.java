@@ -90,6 +90,6 @@ public class WebHCatDeploymentContributor extends ServiceDeploymentContributorBa
 
   private void addDispatchFilter(
       DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "dispatch", null, null );
+    context.contributeFilter( service, resource, "dispatch", "http-client", null );
   }
 }

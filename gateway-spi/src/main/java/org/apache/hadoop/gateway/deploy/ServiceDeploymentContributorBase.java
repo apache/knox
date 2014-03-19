@@ -87,6 +87,9 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
   }
 
   protected void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+    if (name == null) {
+      name = "http-client";
+    }
     context.contributeFilter( service, resource, role, name, null );
   }
 
