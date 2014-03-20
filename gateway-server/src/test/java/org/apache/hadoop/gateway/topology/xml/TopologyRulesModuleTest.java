@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -79,6 +80,39 @@ public class TopologyRulesModuleTest {
     assertThat( provider.getRole(), is( "authentication" ) );
     assertThat( provider.getParams().size(), is(5));
   }
+
+  @Test
+  public void testParseServiceParamsInKnoxFormat() throws IOException, SAXException {
+    Digester digester = loader.newDigester();
+    String name = "org/apache/hadoop/gateway/topology/xml/service-param-topology-knox-format.xml";
+    URL url = ClassLoader.getSystemResource( name );
+    assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
+    File file = new File( url.getFile() );
+    TopologyBuilder topologyBuilder = digester.parse( url );
+    Topology topology = topologyBuilder.build();
+    assertThat( "Failed to parse resource " + name, topology, notNullValue() );
+    topology.setTimestamp( file.lastModified() );
+
+    assertThat( topology.getName(), is( "test-topology-name" ) );
+    assertThat( topology.getTimestamp(), is( file.lastModified() ) );
+    assertThat( topology.getServices().size(), is( 1 ) );
+
+    Provider provider = topology.getProviders().iterator().next();
+    assertThat( provider, notNullValue() );
+    assertThat( provider.getRole(), is( "test-provider-role" ) );
+    assertThat( provider.getName(), is( "test-provider-name" ) );
+    assertThat( provider.getParams(), hasEntry( is( "test-provider-param-name-1" ), is( "test-provider-param-value-1" ) ) );
+    assertThat( provider.getParams(), hasEntry( is( "test-provider-param-name-2" ), is( "test-provider-param-value-2" ) ) );
+
+    Service service = topology.getServices().iterator().next();
+    assertThat( service, notNullValue() );
+    assertThat( service.getRole(), is( "test-service-role" ) );
+    assertThat( service.getUrl(), is( "test-service-scheme://test-service-host:42/test-service-path" ) );
+    assertThat( service.getName(), is( "test-service-name" ) );
+    assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
+    assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
+  }
+
 
   @Test
   public void testParseSimpleTopologyXmlInHadoopFormat() throws IOException, SAXException, URISyntaxException {
@@ -136,6 +170,40 @@ public class TopologyRulesModuleTest {
     assertThat( identityAssertionProvider.getName(), is( "Pseudo" ) );
     assertThat( identityAssertionProvider.getParams().size(), is( 2 ) );
     assertThat( identityAssertionProvider.getParams().get("name"), is( "user.name" ) );
+  }
+
+  @Test
+  public void testParseServiceParamsInAmbariFormat() throws IOException, SAXException {
+    Digester digester = loader.newDigester();
+    String name = "org/apache/hadoop/gateway/topology/xml/service-param-topology-ambari-format.conf";
+    URL url = ClassLoader.getSystemResource( name );
+    assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
+    File file = new File( url.getFile() );
+    TopologyBuilder topologyBuilder = digester.parse( url );
+    Topology topology = topologyBuilder.build();
+    assertThat( "Failed to parse resource " + name, topology, notNullValue() );
+    topology.setTimestamp( file.lastModified() );
+
+    assertThat( topology.getName(), is( "test-topology-name" ) );
+    assertThat( topology.getTimestamp(), is( file.lastModified() ) );
+
+    assertThat( topology.getProviders().size(), is( 1 ) );
+    Provider provider = topology.getProviders().iterator().next();
+    assertThat( provider, notNullValue() );
+    assertThat( provider.getRole(), is( "test-provider-role" ) );
+    assertThat( provider.getName(), is( "test-provider-name" ) );
+    assertThat( provider.isEnabled(), is( true ) );
+    assertThat( provider.getParams(), hasEntry( is( "test-provider-param-name-1" ), is( "test-provider-param-value-1" ) ) );
+    assertThat( provider.getParams(), hasEntry( is( "test-provider-param-name-2" ), is( "test-provider-param-value-2" ) ) );
+
+    assertThat( topology.getServices().size(), is( 1 ) );
+    Service service = topology.getServices().iterator().next();
+    assertThat( service, notNullValue() );
+    assertThat( service.getRole(), is( "test-service-role" ) );
+    assertThat( service.getUrl(), is( "test-service-scheme://test-service-host:42/test-service-path" ) );
+    assertThat( service.getName(), is( "test-service-name" ) );
+    assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
+    assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
   }
 
 }

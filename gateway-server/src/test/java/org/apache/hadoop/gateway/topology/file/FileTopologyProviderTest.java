@@ -40,8 +40,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
+import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
-import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
@@ -173,9 +173,9 @@ public class FileTopologyProviderTest {
         "ldapGroupRealm.contextFactory.systemAuthenticationMechanism"
     };
     
-    ProviderParam param = null;
+    Param param = null;
     for (String name : names) {
-      param = new ProviderParam();
+      param = new Param();
       param.setName(name);
       param.setValue(name);
       provider.addParam(param);

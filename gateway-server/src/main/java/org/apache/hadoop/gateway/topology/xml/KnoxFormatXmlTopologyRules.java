@@ -17,11 +17,13 @@
  */
 package org.apache.hadoop.gateway.topology.xml;
 
+import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
-import org.apache.hadoop.gateway.topology.ProviderParam;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.builder.BeanPropertyTopologyBuilder;
+import org.xml.sax.Attributes;
 
 public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
 
@@ -36,21 +38,42 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String PARAM_TAG = "param";
   private static final String VALUE_TAG = "value";
 
+  private static final Rule paramRule = new ParamRule();
   @Override
   protected void configure() {
     forPattern( ROOT_TAG ).createObject().ofType( BeanPropertyTopologyBuilder.class );
     forPattern( ROOT_TAG + "/" + NAME_TAG ).callMethod("name").usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + VERSION_TAG ).callMethod("version").usingElementBodyAsArgument();
+
     forPattern( ROOT_TAG + "/" + SERVICE_TAG ).createObject().ofType( Service.class ).then().setNext( "addService" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + ROLE_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + URL_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
+
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG ).createObject().ofType( Provider.class ).then().setNext( "addProvider" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ROLE_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ENABLED_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + NAME_TAG ).setBeanProperty();
-    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG ).createObject().ofType( ProviderParam.class ).then().setNext( "addParam" );
+    forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
+  }
+
+  private static class ParamRule extends Rule {
+
+    @Override
+    public void begin( String namespace, String name, Attributes attributes ) {
+      Param param = getDigester().peek();
+      String paramName = attributes.getValue( "name" );
+      if( paramName != null ) {
+        param.setName( paramName );
+        param.setValue( attributes.getValue( "value" ) );
+      }
+    }
+
   }
 
 }

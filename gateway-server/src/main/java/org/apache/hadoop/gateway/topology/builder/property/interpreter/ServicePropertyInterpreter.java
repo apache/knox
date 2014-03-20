@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.topology.Topology;
 public class ServicePropertyInterpreter extends AbstractInterpreter {
 
     private static final String SERVICE_URL = "url";
+    private static final String AGGREGATOR_PARAM = "param";
 
     private static GatewayResources gatewayResources = ResourcesFactory.get(GatewayResources.class);
 
@@ -68,7 +69,19 @@ public class ServicePropertyInterpreter extends AbstractInterpreter {
         if (SERVICE_URL.equalsIgnoreCase(nextToken)) {
             service.setUrl( value );
         } else {
+          dotPosition = nextToken.indexOf(DOT);
+          if (dotPosition != -1) {
+            String aggregator = nextToken.substring(0, dotPosition);
+            nextToken = nextToken.substring(dotPosition + 1);
+
+            if (AGGREGATOR_PARAM.equalsIgnoreCase(aggregator)) {
+              new ServiceParameterPropertyInterpreter(service).interpret(nextToken, value);
+            } else {
+              throw new InterpretException(gatewayResources.unsupportedPropertyTokenError(token));
+            }
+          } else {
             throw new InterpretException(gatewayResources.unsupportedPropertyTokenError(token));
+          }
         }
     }
 }

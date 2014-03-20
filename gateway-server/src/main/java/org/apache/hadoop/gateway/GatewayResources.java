@@ -68,6 +68,12 @@ public interface GatewayResources {
   @Resource( text="Provider parameter value is required." )
   String providerParameterValueIsRequiredError();
 
+  @Resource( text="Service parameter name is required." )
+  String serviceParameterNameIsRequiredError();
+
+  @Resource( text="Service parameter value is required." )
+  String serviceParameterValueIsRequiredError();
+
   @Resource( text="Failed to create keystore directory: {0}" )
   String failedToCreateKeyStoreDirectory( String name );
 
