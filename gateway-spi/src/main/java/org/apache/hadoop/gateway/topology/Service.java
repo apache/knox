@@ -17,10 +17,14 @@
  */
 package org.apache.hadoop.gateway.topology;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class Service {
 
   private String role;
   private String name;
+  private Map<String, String> params = new LinkedHashMap<String, String>();
 
   public String getRole() {
     return role;
@@ -46,6 +50,18 @@ public class Service {
 
   public void setUrl( String url ) {
     this.url = url;
+  }
+
+  public Map<String, String> getParams() {
+    return params;
+  }
+
+  public void setParams(Map<String, String> params) {
+    this.params = params;
+  }
+
+  public void addParam( Param param ) {
+    params.put(param.getName(), param.getValue());
   }
 
 }

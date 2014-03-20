@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Provider {
+
   private String role;
   private String name;
   private boolean enabled;
@@ -53,7 +54,7 @@ public class Provider {
     this.params = params;
   }
 
-  public void addParam(ProviderParam param) {
+  public void addParam(Param param) {
     params.put(param.getName(), param.getValue());
   }
 
@@ -64,4 +65,5 @@ public class Provider {
   public void setRole( String role ) {
     this.role = role;
   }
+
 }

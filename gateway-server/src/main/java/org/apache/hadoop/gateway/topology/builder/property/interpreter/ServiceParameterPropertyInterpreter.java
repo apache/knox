@@ -19,32 +19,32 @@ package org.apache.hadoop.gateway.topology.builder.property.interpreter;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.topology.Param;
-import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
 
-public class ProviderParameterPropertyInterpreter extends AbstractInterpreter {
+public class ServiceParameterPropertyInterpreter extends AbstractInterpreter {
 
     private static GatewayResources gatewayResources = ResourcesFactory.get(GatewayResources.class);
 
-    private Provider provider;
+    private Service service;
 
-    public ProviderParameterPropertyInterpreter(Provider provider) {
-        if (provider == null) {
+    public ServiceParameterPropertyInterpreter( Service service ) {
+        if ( service == null) {
             throw new IllegalArgumentException(gatewayResources.providerIsRequiredError());
         }
-        this.provider = provider;
+        this.service = service;
     }
 
     @Override
     public void interpret(String token, String value) throws InterpretException {
         if (token == null || token.isEmpty()) {
-            throw new InterpretException(gatewayResources.providerParameterNameIsRequiredError());
+            throw new InterpretException(gatewayResources.serviceParameterNameIsRequiredError());
         }
         if (value == null || value.isEmpty()) {
-            throw new InterpretException(gatewayResources.providerParameterValueIsRequiredError());
+            throw new InterpretException(gatewayResources.serviceParameterValueIsRequiredError());
         }
         Param param = new Param();
         param.setName(token);
         param.setValue(value);
-        provider.addParam( param );
+        service.addParam( param );
     }
 }
