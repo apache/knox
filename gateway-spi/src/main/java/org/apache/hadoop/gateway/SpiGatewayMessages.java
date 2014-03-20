@@ -29,7 +29,7 @@ import java.net.URI;
  *
  */
 @Messages(logger="org.apache.hadoop.gateway")
-public interface GatewayMessages {
+public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );

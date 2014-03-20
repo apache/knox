@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.Principal;
 
-import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -57,7 +57,7 @@ public class AppCookieManager {
   private static final String HADOOP_AUTH_EQ = "hadoop.auth=";
   private static final String SET_COOKIE = "Set-Cookie";
 
-  private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+  private static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();

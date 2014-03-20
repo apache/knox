@@ -24,7 +24,7 @@ import org.apache.hadoop.gateway.i18n.resources.Resources;
  *
  */
 @Resources
-public interface GatewayResources {
+public interface SpiGatewayResources {
 
   @Resource( text="Service connectivity error." )
   String dispatchConnectionError();

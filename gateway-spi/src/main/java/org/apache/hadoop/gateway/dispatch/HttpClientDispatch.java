@@ -27,8 +27,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.GatewayMessages;
-import org.apache.hadoop.gateway.GatewayResources;
+import org.apache.hadoop.gateway.SpiGatewayMessages;
+import org.apache.hadoop.gateway.SpiGatewayResources;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -70,8 +70,8 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
   protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
   protected static final String NEGOTIATE = "Negotiate";
 
-  protected static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  protected static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  protected static SpiGatewayMessages LOG = MessagesFactory.get( SpiGatewayMessages.class );
+  protected static SpiGatewayResources RES = ResourcesFactory.get( SpiGatewayResources.class );
   protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final int DEFAULT_REPLAY_BUFFER_SIZE =  4 * 1024; // 4K
