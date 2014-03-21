@@ -20,5 +20,5 @@
   <name>knox-demo-ldap</name>
   <description>This service runs the Knox demonstration LDAP server.</description>
   <executable>"cmd"</executable>
-  <arguments> /c ldap.cmd</arguments>
+  <arguments> /c ldap.cmd </arguments>
 </service>
