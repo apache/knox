@@ -14,7 +14,7 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 
-REM Start/stop script location
+REM Script location
 set APP_BIN_DIR=%~dp0
 
 REM  The app's home dir
@@ -28,16 +28,20 @@ set APP_JAR=%APP_BIN_DIR%ldap.jar
 
 if not exist "%JAVA_HOME%"\bin\java.exe (
   echo Error: JAVA_HOME is incorrectly set.
-  exit /B 1
+  exit /b 1
 )
-set JAVA="%JAVA_HOME%"\bin\java
+set JAVA=%JAVA_HOME%\bin\java
+
+if "%1" == "--service" (
+  @echo ^<service^>
+  @echo   ^<id^>knox-demo-ldap^</id^>
+  @echo   ^<name^>knox-demo-ldap^</name^>
+  @echo   ^<description^>This service runs the Knox demonstration LDAP server^</description^>
+  @echo   ^<executable^>%JAVA%^</executable^>
+  @echo   ^<arguments^>-jar "%APP_JAR%" "%APP_CONF_DIR%"^</arguments^>
+  @echo ^</service^>
+  exit /b 0
+)
 
 "%JAVA%" -jar "%APP_JAR%" "%APP_CONF_DIR%"
-
-if not %ERRORLEVEL% == 0 (
-  exit /B %ERRORLEVEL%
-)
-
-exit /B 0
-
-
+exit /b %ERRORLEVEL%

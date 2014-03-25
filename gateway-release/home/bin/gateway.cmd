@@ -22,14 +22,20 @@ set APP_JAR=%APP_BIN_DIR%gateway.jar
 
 if not exist "%JAVA_HOME%"\bin\java.exe (
   echo Error: JAVA_HOME is incorrectly set.
-  exit /B 1
+  exit /b 1
 )
-set JAVA="%JAVA_HOME%"\bin\java
+set JAVA=%JAVA_HOME%\bin\java
+
+if "%1" == "--service" (
+  echo ^<service^>
+  echo   ^<id^>knox-gateway^</id^>
+  echo   ^<name^>knox-gateway^</name^>
+  echo   ^<description^>This service runs the Knox Gateway^</description^>
+  echo   ^<executable^>%JAVA%^</executable^>
+  echo   ^<arguments^>-jar "%APP_JAR%"^</arguments^>
+  echo ^</service^>
+  exit /b 0
+)
 
 "%JAVA%" -jar "%APP_JAR%"
-
-if not %ERRORLEVEL% == 0 (
-  exit /B %ERRORLEVEL%
-)
-
-exit /B 0
+exit /b %ERRORLEVEL%
