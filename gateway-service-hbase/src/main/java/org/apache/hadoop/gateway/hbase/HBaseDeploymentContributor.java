@@ -114,8 +114,8 @@ public class HBaseDeploymentContributor extends ServiceDeploymentContributorBase
   }
 
   private void addDispatchFilter(
-      DeploymentContext context, Service service, ResourceDescriptor resource ) {
-    context.contributeFilter( service, resource, "dispatch", "http-client", null );
+    DeploymentContext context, Service service, ResourceDescriptor resource ) {
+    context.contributeFilter( service, resource, "dispatch", "hbase", null );
   }
 
   private String getQualifiedName() {

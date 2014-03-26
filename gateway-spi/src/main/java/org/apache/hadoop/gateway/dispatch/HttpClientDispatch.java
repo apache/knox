@@ -76,21 +76,26 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private static final int DEFAULT_REPLAY_BUFFER_SIZE =  4 * 1024; // 4K
 
-  protected AppCookieManager appCookieManager = new AppCookieManager();
+  protected AppCookieManager appCookieManager;
   
   protected static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
   
   private int replayBufferSize = 0;
-  
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
-    super.init(filterConfig);
+    this.init(filterConfig, new AppCookieManager() );
+  }
+
+  protected void init( FilterConfig filterConfig, AppCookieManager cookieManager ) throws ServletException {
+    super.init( filterConfig );
+    appCookieManager = cookieManager;
     String replayBufferSizeString = filterConfig.getInitParameter( REPLAY_BUFFER_SIZE_PARAM );
     if ( replayBufferSizeString != null ) {
       setReplayBufferSize(Integer.valueOf(replayBufferSizeString));
     }
   }
-  
+
   protected void executeRequest(
       HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest,
