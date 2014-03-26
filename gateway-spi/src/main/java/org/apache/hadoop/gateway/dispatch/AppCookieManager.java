@@ -43,6 +43,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 /**
  * Handles SPNego authentication as a client of hadoop service, caches
@@ -95,7 +96,6 @@ public class AppCookieManager {
     String scheme = uri.getScheme();
     String host = uri.getHost();
     int port = uri.getPort();
-    String path = uri.getPath();
     if (!refresh) {
       if (appCookie != null) {
         return appCookie;
@@ -116,10 +116,11 @@ public class AppCookieManager {
     HttpResponse httpResponse = null;
     try {
       HttpHost httpHost = new HttpHost(host, port, scheme);
-      HttpRequest httpRequest = new HttpOptions(path);
+      HttpRequest httpRequest = createKerberosAuthenticationRequest( outboundRequest );
       httpResponse = client.execute(httpHost, httpRequest);
       Header[] headers = httpResponse.getHeaders(SET_COOKIE);
       hadoopAuthCookie = getHadoopAuthCookieValue(headers);
+      EntityUtils.consume( httpResponse.getEntity() );
       if (hadoopAuthCookie == null) {
         LOG.failedSPNegoAuthn(uri.toString());
         auditor.audit( Action.AUTHENTICATION, uri.toString(), ResourceType.URI, ActionOutcome.FAILURE );
@@ -140,6 +141,11 @@ public class AppCookieManager {
     hadoopAuthCookie = HADOOP_AUTH_EQ + quote(hadoopAuthCookie);
     setAppCookie(hadoopAuthCookie);
     return appCookie;
+  }
+
+  protected HttpRequest createKerberosAuthenticationRequest( HttpUriRequest userRequest ) {
+    HttpRequest authRequest = new HttpOptions( userRequest.getURI().getPath() );
+    return authRequest;
   }
 
   /**
