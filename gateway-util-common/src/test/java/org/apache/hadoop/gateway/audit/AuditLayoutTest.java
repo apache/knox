@@ -17,12 +17,6 @@
  */
 package org.apache.hadoop.gateway.audit;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.hadoop.gateway.audit.api.AuditContext;
 import org.apache.hadoop.gateway.audit.api.AuditService;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -33,10 +27,19 @@ import org.apache.hadoop.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.audit.log4j.layout.AuditLayout;
 import org.apache.hadoop.test.log.CollectAppender;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AuditLayoutTest {
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -67,13 +70,25 @@ public class AuditLayoutTest {
 
   @Before
   public void setup() {
-    CollectAppender.queue.clear();
+    cleanup();
   }
 
   @After
   public void cleanup() {
+    CollectAppender.queue.clear();
     auditService.detachContext();
     correlationService.detachContext();
+    LogManager.shutdown();
+    String absolutePath = "target/audit";
+    File db = new File( absolutePath + ".db" );
+    if( db.exists() ) {
+      assertThat( "Failed to delete audit store db file.", db.delete(), is( true ) );
+    }
+    File lg = new File( absolutePath + ".lg" );
+    if( lg.exists() ) {
+      assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
+    }
+    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
   }
 
   @Test

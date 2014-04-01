@@ -19,6 +19,8 @@ package org.apache.hadoop.gateway.audit;
 
 import org.apache.hadoop.gateway.audit.log4j.appender.JdbmQueue;
 import org.apache.log4j.LogManager;
+import org.apache.log4j.PropertyConfigurator;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class JdbmQueueTest {
 
@@ -42,25 +45,33 @@ public class JdbmQueueTest {
 
   @Before
   public void setup() throws IOException {
-    LogManager.getCurrentLoggers();
     file = new File( "target/JdbmQueueTest" );
     cleanup();
     queue = new JdbmQueue<String>( file );
   }
 
-  public void cleanup() {
-    File db = new File( file.getAbsolutePath() + ".db" );
+  @After
+  public void cleanup() throws IOException {
+    if( queue != null ) {
+      queue.close();
+      queue = null;
+    }
+    LogManager.shutdown();
+    String absolutePath = "target/audit";
+    File db = new File( absolutePath + ".db" );
     if( db.exists() ) {
-      assertThat( db.delete(), is( true ) );
+      assertThat( "Failed to delete audit store db file.", db.delete(), is( true ) );
     }
-    File lg = new File( file.getAbsolutePath() + ".lg" );
+    File lg = new File( absolutePath + ".lg" );
     if( lg.exists() ) {
-      assertThat( lg.delete(), is( true ) );
+      assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
     }
+    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
   }
 
   @Test
   public void testSimple() throws IOException, InterruptedException {
+    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
     String one = UUID.randomUUID().toString();
     String two = UUID.randomUUID().toString();
     String three = UUID.randomUUID().toString();
@@ -87,6 +98,7 @@ public class JdbmQueueTest {
   @Ignore
   @Test
   public void testPerformanceAndStorageFootprint() throws IOException, InterruptedException {
+    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     String fill = createFillString( 100 );
     File dbFile = new File( file.getAbsolutePath() + ".db" );
@@ -120,6 +132,7 @@ public class JdbmQueueTest {
   @Ignore
   @Test
   public void testFileGrowth() throws IOException, InterruptedException {
+    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     String fill = createFillString( 100 );
     File dbFile = new File( file.getAbsolutePath() + ".db" );
@@ -152,7 +165,9 @@ public class JdbmQueueTest {
   }
 
   @Test( timeout = 120000 )
-  public void testConcurrentConsumer() throws InterruptedException {
+  public void testConcurrentConsumer() throws InterruptedException, IOException {
+    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
+
     int iterations = 100;
     HashSet<String> consumed = new HashSet<String>();
     Consumer consumer = new Consumer( consumed );
@@ -166,13 +181,15 @@ public class JdbmQueueTest {
     while (consumed.size() < iterations * 2) {
       Thread.sleep( 5 );
     }
-    queue.close();
+    queue.stop();
     consumer.join();
-    assertThat( consumed.size(), is( iterations * 2 ) );
+    assertThat( consumed, hasSize( iterations * 2 ) );
   }
 
   @Test( timeout=120000 )
-  public void testConcurrentProcessor() throws InterruptedException {
+  public void testConcurrentProcessor() throws InterruptedException, IOException {
+    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
+
     int iterations = 100;
     HashSet<String> consumed = new HashSet<String>();
     Processor consumer = new Processor( consumed );
@@ -186,9 +203,9 @@ public class JdbmQueueTest {
     while (consumed.size() < iterations * 2) {
       Thread.sleep( 5 );
     }
-    queue.close();
-    //consumer.join();
-    assertThat( consumed.size(), is( iterations * 2 ) );
+    queue.stop();
+    consumer.join();
+    assertThat( consumed, hasSize( iterations * 2 ) );
   }
 
   public class Producer extends Thread {

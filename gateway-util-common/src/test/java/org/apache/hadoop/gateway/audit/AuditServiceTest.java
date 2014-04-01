@@ -17,13 +17,6 @@
  */
 package org.apache.hadoop.gateway.audit;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsNull.nullValue;
-
-import java.util.Iterator;
-import java.util.UUID;
-
 import org.apache.hadoop.gateway.audit.api.AuditContext;
 import org.apache.hadoop.gateway.audit.api.AuditService;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -35,9 +28,20 @@ import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.audit.log4j.audit.Log4jAuditService;
 import org.apache.hadoop.gateway.audit.log4j.correlation.Log4jCorrelationService;
 import org.apache.hadoop.test.log.CollectAppender;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.spi.LoggingEvent;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.util.Iterator;
+import java.util.UUID;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsNull.nullValue;
 
 public class AuditServiceTest {
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -49,12 +53,28 @@ public class AuditServiceTest {
   private String remoteIp = "127.0.0.1";
   private String remoteHostname = "localhost";
   private String targetServiceName = "service";
-  
+
   @Before
-  public void cleanAppenderDb() {
-    CollectAppender.queue.clear();
+  public void setup() {
+    cleanup();
   }
-  
+
+  @After
+  public void cleanup() {
+    CollectAppender.queue.clear();
+    LogManager.shutdown();
+    String absolutePath = "target/audit";
+    File db = new File( absolutePath + ".db" );
+    if( db.exists() ) {
+      assertThat( "Failed to delete audit store db file.", db.delete(), is( true ) );
+    }
+    File lg = new File( absolutePath + ".lg" );
+    if( lg.exists() ) {
+      assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
+    }
+    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
+  }
+
   @Test
   public void testMultipleRequestEvents() {
     int iterations = 1000;
