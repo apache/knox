@@ -78,7 +78,15 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
 
   @Override
   public void close() {
-    queue.close();
+    try {
+      queue.stop();
+      forwarder.join();
+      queue.close();
+    } catch( InterruptedException e ) {
+      throw new RuntimeException( e );
+    } catch( IOException e ) {
+      throw new RuntimeException( e );
+    }
   }
 
   private class Forwarder extends Thread {

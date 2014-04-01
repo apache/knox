@@ -112,9 +112,14 @@ public class JdbmQueue<E> {
     return committed;
   }
 
-  public synchronized void close() {
+  public synchronized void stop() {
     open = false;
     notifyAll();
+  }
+
+  public synchronized void close() throws IOException {
+    stop();
+    db.close();
   }
 
   long findStat() throws IOException {
