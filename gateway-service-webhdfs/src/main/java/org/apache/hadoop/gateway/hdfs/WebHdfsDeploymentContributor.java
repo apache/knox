@@ -78,7 +78,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, rootResource, params );
     addIdentityAssertionFilter( context, service, rootResource );
     addAuthorizationFilter( context, service, rootResource );
-    addDispatchFilter( context, service, rootResource, "dispatch", null );
+    addDispatchFilter( context, service, rootResource, "dispatch", "http-client" );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
@@ -93,7 +93,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, fileResource, params );
     addIdentityAssertionFilter( context, service, fileResource );
     addAuthorizationFilter( context, service, fileResource );
-    addDispatchFilter( context, service, fileResource, "dispatch", null );
+    addDispatchFilter( context, service, fileResource, "dispatch", "http-client" );
 
     ResourceDescriptor homeResource = context.getGatewayDescriptor().addResource();
     homeResource.role( service.getRole() );
@@ -106,7 +106,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, homeResource, params );
     addIdentityAssertionFilter( context, service, homeResource );
     addAuthorizationFilter( context, service, homeResource );
-    addDispatchFilter( context, service, homeResource, "dispatch", null );
+    addDispatchFilter( context, service, homeResource, "dispatch", "http-client" );
 
     ResourceDescriptor homeFileResource = context.getGatewayDescriptor().addResource();
     homeFileResource.role( service.getRole() );
@@ -121,7 +121,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, homeFileResource, params );
     addIdentityAssertionFilter( context, service, homeFileResource );
     addAuthorizationFilter( context, service, homeFileResource );
-    addDispatchFilter( context, service, homeFileResource, "dispatch", null );
+    addDispatchFilter( context, service, homeFileResource, "dispatch", "http-client" );
   }
 
   public void contributeDataNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
@@ -137,7 +137,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     params.add( fileResource.createFilterParam().
         name( UrlRewriteServletFilter.REQUEST_URL_RULE_PARAM ).value( getQualifiedName() + "/inbound/datanode" ) );
     addRewriteFilter( context, service, fileResource, params );
-    addDispatchFilter( context, service, fileResource, "dispatch", null );
+    addDispatchFilter( context, service, fileResource, "dispatch", "http-client" );
   }
 
   String getQualifiedName() {

@@ -23,10 +23,8 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRulesDescriptorImpl;
 import org.apache.hadoop.gateway.topology.Service;
 import org.easymock.EasyMock;
-import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,7 +33,6 @@ import java.util.Iterator;
 import java.util.ServiceLoader;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
 
@@ -80,34 +77,54 @@ public class OozieDeploymentContributorTest {
     assertThat( oozieRules.getFilter( "OOZIE/oozie/configuration" ), notNullValue() );
   }
 
-  @Ignore
-  @Test
-  public void testDeployment() throws Exception {
-    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-acrhive" );
-
-    UrlRewriteRulesDescriptorImpl rules = new UrlRewriteRulesDescriptorImpl();
-
-    DeploymentContext context = EasyMock.createNiceMock( DeploymentContext.class );
-    EasyMock.expect( context.getDescriptor( "rewrite" ) ).andReturn( rules ).anyTimes();
-    EasyMock.expect( context.getWebArchive() ).andReturn( webArchive ).anyTimes();
-
-    Service service = EasyMock.createNiceMock( Service.class );
-    EasyMock.expect( service.getRole() ).andReturn( "OOZIE" ).anyTimes();
-    EasyMock.expect( service.getName() ).andReturn( null ).anyTimes();
-    EasyMock.expect( service.getUrl() ).andReturn( "http://test-host:777" ).anyTimes();
-
-    EasyMock.replay( context, service );
-
-    OozieDeploymentContributor contributor = new OozieDeploymentContributor();
-    assertThat( contributor.getRole(), is( "OOZIE" ) );
-    assertThat( contributor.getName(), is( "oozie" ) );
-
-    contributor.initializeContribution( context );
-    contributor.contributeService( context, service );
-    contributor.finalizeContribution( context );
-
-    Node node = webArchive.get( "TODO" );
-    assertThat( node, notNullValue() );
-  }
+//  @Test
+//  public void testDeployment() throws Exception {
+//    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-archive" );
+//
+//    UrlRewriteRulesDescriptorImpl rewriteRules = new UrlRewriteRulesDescriptorImpl();
+//
+//    Map<String,String> serviceParams = new HashMap<String, String>();
+//    Service service = new Service();
+//    service.setRole( "OOZIE" );
+//    service.setName( "oozie" );
+//    service.setUrl( "http://test-host:42/test-path" );
+//    service.setParams( serviceParams );
+//
+//    Topology topology = new Topology();
+//    topology.setName( "test-topology" );
+//    topology.addService( service );
+//
+//    GatewayDescriptor gateway = EasyMock.createNiceMock( GatewayDescriptor.class );
+//    DeploymentContext context = EasyMock.createNiceMock( DeploymentContext.class );
+//    EasyMock.expect( context.getWebArchive() ).andReturn( webArchive ).anyTimes();
+//    EasyMock.expect( context.getDescriptor( "rewrite" ) ).andReturn( rewriteRules ).anyTimes();
+//    EasyMock.expect( context.getWebAppDescriptor() ).andReturn( Descriptors.create( WebAppDescriptor.class ) ).anyTimes();
+//    EasyMock.expect( context.getTopology() ).andReturn( topology ).anyTimes();
+//    EasyMock.expect( context.getGatewayDescriptor() ).andReturn( gateway ).anyTimes();
+//    Capture<Service> capturedService = new Capture<Service>();
+//    Capture<ResourceDescriptor> capturedResource = new Capture<ResourceDescriptor>();
+//    Capture<String> capturedRole = new Capture<String>();
+//    Capture<String> capturedName = new Capture<String>();
+//    Capture<List<FilterParamDescriptor>> capturedParams = new Capture<List<FilterParamDescriptor>>();
+//    context.contributeFilter( capture(capturedService) , capture(capturedResource), capture(capturedRole), capture(capturedName), capture(capturedParams) );
+//    EasyMock.expectLastCall().anyTimes();
+//    EasyMock.replay( gateway, context );
+//
+//    OozieDeploymentContributor contributor = new OozieDeploymentContributor();
+//
+//    assertThat( contributor.getRole(), CoreMatchers.is( "OOZIE" ) );
+//    assertThat( contributor.getName(), CoreMatchers.is( "oozie" ) );
+//
+//    // Just make sure it doesn't blow up.
+//    contributor.initializeContribution( context );
+//
+//    contributor.contributeService( context, service );
+//
+//    // Just make sure it doesn't blow up.
+//    contributor.finalizeContribution( context );
+//
+//    assertThat( capturedRole.getValue(), is( "dispatch" ) );
+//    assertThat( capturedName.getValue(), is( "http-client" ) );
+//  }
 
 }
