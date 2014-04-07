@@ -26,15 +26,7 @@ function findJava() {
       JAVA=""
     fi
   fi
-
-  # Try to find java on PATH.
-  if [ "$JAVA" == "" ]; then
-    JAVA=`which java 2>/dev/null`
-    if [ ! -x "$JAVA" ]; then
-      JAVA=""
-    fi
-  fi
-
+  
   # Try to use JAVA_HOME to find java.
   if [ "$JAVA" == "" ]; then
     if [ "$JAVA_HOME" != "" ]; then
@@ -42,6 +34,14 @@ function findJava() {
       if [ ! -x "$JAVA" ]; then
         JAVA=""
       fi
+    fi
+  fi
+
+  # Try to find java on PATH.
+  if [ "$JAVA" == "" ]; then
+    JAVA=`which java 2>/dev/null`
+    if [ ! -x "$JAVA" ]; then
+      JAVA=""
     fi
   fi
 
