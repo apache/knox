@@ -89,8 +89,7 @@
             <arg value="clean"/>
             <arg value="install"/>
         </exec>
-        <copy file="KEYS" todir="target/${gateway-version}">
-            <fileset file="KEYS"/>
+        <copy todir="target/${gateway-version}">
             <fileset file="CHANGES"/>
         </copy>
     </target>
@@ -151,7 +150,6 @@
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/CHANGES"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/KEYS"/>
         </get>
     </target>
 
@@ -190,7 +188,7 @@
 
     <target name="sign-candidate" depends="_init" description="Sign a downloaded created release.">
         <delete>
-            <fileset dir="${candidate.dir}" includes="*.asc,KEYS"/>
+            <fileset dir="${candidate.dir}" includes="*.asc"/>
         </delete>
         <exec executable="gpg" dir="${candidate.dir}">
             <arg value="--armor"/>
@@ -206,12 +204,6 @@
             <arg value="--armor"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
-        </exec>
-        <exec executable="gpg" dir="${candidate.dir}">
-            <arg value="--export"/>
-            <arg value="--armor"/>
-            <arg value="--output"/>
-            <arg value="KEYS"/>
         </exec>
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
