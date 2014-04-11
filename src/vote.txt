@@ -4,7 +4,7 @@ Subject: [VOTE] Release ${gateway-name} ${gateway-version}
 
 A candidate for the ${gateway-name} ${gateway-version} release is available at:
 
-http://people.apache.org/~${release-manager}/${gateway-project}/${gateway-version}/
+https://dist.apache.org/repos/dist/dev/knox/${gateway-project}/${gateway-project}-${gateway-version}/
 
 The release candidate is a zip archive of the sources in:
 
