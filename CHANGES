@@ -1,11 +1,129 @@
 ------------------------------------------------------------------------------
-Release Notes - Apache Knox - Version 0.3.1
+Release Notes - Apache Knox - Version 0.4.0
 ------------------------------------------------------------------------------
-    * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed
-    * [KNOX-199] - ExampleHBase.groovy fails with Sandbox 2 GA (HBase 0.96)
-    * [KNOX-203] - Gateway fails to start when bin dir not writable
-    * [KNOX-205] - Launcher script gateway sh not working when gateway installed via RPM
-    * [KNOX-224] - Update samples to match Hive config
+
+** Improvements
+    * [KNOX-193] - document configuration to use AD as authentication source
+    * [KNOX-211] - Add classes KnoxLdapRealm, KnoxLdapContextFactory
+    * [KNOX-212] - provide sample topology files to work with KnoxLdapRealm
+    * [KNOX-214] - ShiroSubjectIdentityAdapter needs to map ldap groups looked up by shiro to java subject principals
+    * [KNOX-215] - enhance AbstractIdentityAssertionFilter to make use of ldap groups looked up by shiro
+    * [KNOX-216] - add functional tests to test ldap group lookup and usage
+    * [KNOX-217] - enhance KnoxLdapGroupRealm to accept password alias in place of plain text password
+    * [KNOX-221] - provide sample ldif file to work with KnoxLdapRealm
+    * [KNOX-225] - update sample ldif file with ldapgroups to work with apache ds 2
+    * [KNOX-230] - provide ldap schema file to allow creation of daynamic groups in apache ds
+    * [KNOX-231] - shiro realm implementation to support ldap dynamic groups
+    * [KNOX-232] - add automation test case for ldap dynamic group support
+    * [KNOX-233] - add a topology template file to illustrate the use of dynamic groups
+    * [KNOX-234] - add documentation for dynamic groups
+    * [KNOX-268] - document work around for Knox to Hadoop SPNego authn problem
+    * [KNOX-21] - Utilize knox.auth cookie to prevent re-authentication for every request from end user
+    * [KNOX-105] - Command line tooling for CMF provisioning
+    * [KNOX-165] - Stress testing
+    * [KNOX-166] - Improve diagnosability of connectivity issues
+    * [KNOX-167] - Knox passes down incorrect Host header to Hadoop service
+    * [KNOX-188] - encryptQueryString Password is Recreated when Topology is Changed.
+    * [KNOX-199] - ExampleHBase.groovy fails with HBase 0.96 due to empty column qualifier REST API incompatibility
+    * [KNOX-203] - Gateway fails to start when {GATEWAY_HOME}/bin not writable
+    * [KNOX-205] - Launcher script (gateway.sh) not working when gateway installed via RPM
+    * [KNOX-206] - User should be able to run gateway.sh script under its own but not root account
+    * [KNOX-209] - Fix the Location of KEYS File
+    * [KNOX-213] - Reame PostAuthenticationFilter to ShiroSubjectIdentityAdapter
+    * [KNOX-219] - Fix NOTICE file for Releases
+    * [KNOX-220] - Fix JWT POC Code for HSSO
+    * [KNOX-222] - Remove hadoop-examples.jar from source tree
+    * [KNOX-223] - generated shiro.ini file does not preserve property order
+    * [KNOX-226] - Need more Linux friendly installation layout
+    * [KNOX-229] - some properties of KnoxLdapRealm need to be renamed
+    * [KNOX-235] - Pre-authenticated SSO/Federation Provider
+    * [KNOX-244] - Knox run from the directory with spaces in Windows OS
+    * [KNOX-245] - Knox is missing rewrite rule for WebHCat root path.
+    * [KNOX-246] - Knox is missing authorization filter for HBase root path.
+    * [KNOX-247] -  Exception in Oozie workflow definition response rewrite
+    * [KNOX-249] - Fix issues with shell scripts and home directory
+    * [KNOX-251] - knoxcli.sh reports NullPointerException if not given arguments
+    * [KNOX-253] - log error message for exception  ldapContextFactory.getSystemLdapContext()
+    * [KNOX-254] - use system password set using knoxcli in KnoxLdapContextFactory
+    * [KNOX-269] - Set JSSESSIONID cookie as HttpOnly and Secure.
+    * [KNOX-270] - service level authorization should return 403 on deny
+    * [KNOX-271] - Audit records duplication when no matching filter was found for requested resource
+    * [KNOX-280] - Topology undeploy is broken
+    * [KNOX-281] - Fix the typo in user's guide
+    * [KNOX-282] - document configuration to look up group membership from ldap
+    * [KNOX-287] - Update documentation to be consistent with Hive 0.12 configuration
+    * [KNOX-289] - Remove incubating/incubator from source and build
+    * [KNOX-292] - Invalid command line arguments don't print usage.
+    * [KNOX-294] - Add -version support to gateway.sh
+    * [KNOX-297] - Should not send Knox stack trace to client in error responses
+    * [KNOX-298] - add a topology template for using Active Directroy as authentication back end
+    * [KNOX-299] - Cannot update existing master via knoxcli
+    * [KNOX-301] - Unit tests unstable on different platforms
+    * [KNOX-306] - Change linux scripts to use /bin/bash
+    * [KNOX-308] - Windows .cmd scripts not passing parameters to java correctly.
+    * [KNOX-309] - Attempt to reparse topology files to recover from overlapping write
+    * [KNOX-311] - Parameters not passed to java properly by knoxcli.sh on Ubuntu.
+    * [KNOX-312] - PID File Created For Failed Deployments
+    * [KNOX-313] - WebHdfs service broken for HDFS 2.4.0
+    * [KNOX-314] - JDBC/HTTP for Hive Requires Specialized Dispatch
+    * [KNOX-318] - HBase demo scripts fail against recent HBase versions
+    * [KNOX-319] - Build fails on windows
+    * [KNOX-322] - Incomplete Documentation for Quick Start
+    * [KNOX-323] - Update Apache Knox Details Doc
+    * [KNOX-324] - Obsolete Knox Directory Layout Doc
+    * [KNOX-325] - Obsolete Docs for Services Supported
+    * [KNOX-326] - Obsolete Docs for Sandbox Config
+    * [KNOX-327] - Incomplete/Obsolete Docs for Gateway Details
+    * [KNOX-328] - Obsolete Docs for Configuration
+    * [KNOX-329] - Obsolete Docs for KnoxCLI
+    * [KNOX-330] - Consolidate Authentication, GroupLookup and Shiro Docs
+    * [KNOX-331] - Obsolete Docs for Secure Clusters
+    * [KNOX-332] - Clarifications in Docs for Preauth SSO
+    * [KNOX-333] - Incomplete Docs for HBase
+    * [KNOX-334] - Obsolete Docs for Hive
+    * [KNOX-335] - Obsolete Docs for Limitations
+    * [KNOX-336] - Obsolete Disclaimer in Export Controls Page
+    * [KNOX-337] - Knox not authenticating with HBase 0.98 in secure mode
+    * [KNOX-342] - Document configuration for enabled HBase Access Control
+    * [KNOX-344] - Update documentation/samples to be consistent with Hive 0.13.
+    * [KNOX-345] - WebHDFS and Oozie not specifying dispatch provider and end up with HiveDispatchProvider
+    * [KNOX-346] - The knox-env.sh script should prefer JAVA_HOME over java on path.
+    * [KNOX-347] - Fix Knox DSL documentation
+    * [KNOX-139] - Move hostmap provider configuration from a rewrite function provider to real provider config
+    * [KNOX-140] - Support a forced redeploy of topologies
+    * [KNOX-161] - Support Hive 0.11.0 via JDBC+ODBC/Thrift/HTTP
+    * [KNOX-174] - support service specific cap for buffering request entities for replay against WWW-authenticate challenge
+    * [KNOX-202] - Diagnosability/troubleshooting when wrong protocol (http vs https) used
+    * [KNOX-240] - Update Hadoop dependencies to 2.x
+    * [KNOX-257] - add a template topology file to illustrate preauth provider
+    * [KNOX-261] - Better env checking and error messages in gateway.sh
+    * [KNOX-262] - Improve JRE detection in scripting
+    * [KNOX-263] - Docs - User Guide list of Services missing straight MapReduce?
+    * [KNOX-265] - Add master secret generation to knoxcli
+    * [KNOX-275] - Add topology template file to illustrate use of staticgroup and SLA
+    * [KNOX-296] - Provide a command line tools to redeploy all topologies
+    * [KNOX-300] - create a topology file that uses openldap as authen back end
+    * [KNOX-315] - Add support for service params in topology file
+    * [KNOX-316] - Create windows service template file for LDAP server.
+    * [KNOX-320] - Simplify scripts for using Knox on windows
+    * [KNOX-341] - Knox needs to work with secure Hive asserting authenticated user as doAs
+    * [KNOX-4] - Extend Shiro Provider to Include Groups
+    * [KNOX-23] - Generate audit log of all gateway activity
+    * [KNOX-33] - Provide support for hosting Jersey services for the purposes of protocol mediation of non-REST services
+    * [KNOX-48] - Cluster topology must not be exposed in datanode redirect query parameters
+    * [KNOX-54] - Support horizontal scalability of gateway via clustering
+    * [KNOX-172] - Support ~ to represent user's home directory in WebHDFS
+    * [KNOX-179] - Simple way to introduce new provider/servlet filters into the chains
+    * [KNOX-194] - Document Knox HA with Apache HTTP Server + mod_proxy + mod_proxy_balancer
+    * [KNOX-198] - CSRF header support
+    * [KNOX-228] - Knox should support dynamic LDAP Groups
+    * [KNOX-243] -  bat/cmd script for the gateway 
+    * [KNOX-248] - XML configuration file to describe how to launch Knox as Windows service
+    * [KNOX-90] - Support HBase/Stargate for Kerberized cluster
+    * [KNOX-92] - Support Hive/JDBC/HTTP for Kerberized cluster
+    * [KNOX-208] - Upgrade ApacheDS for demo LDAP server to ApacheDS 2
+    * [KNOX-290] - Upgrade Shiro dependency to 1.2.3
+    * [KNOX-210] - Create functional test template
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.3.0
