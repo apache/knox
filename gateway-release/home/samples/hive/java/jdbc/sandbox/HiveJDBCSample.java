@@ -37,8 +37,10 @@ public class HiveJDBCSample {
       String password = user + "-password";
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
+      String trustStore = "/usr/lib/knox/data/security/keystores/gateway.jks";
+      String trustStorePassword = "knoxsecret";
       String contextPath = "gateway/sandbox/hive";
-      String connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.transport.mode=https;hive.server2.thrift.http.path=%s", gatewayHost, gatewayPort, contextPath );
+      String connectionString = String.format( "jdbc:hive2://%s:%d/;ssl=true;sslTrustStore=%s;trustStorePassword=%s?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s", gatewayHost, gatewayPort, trustStore, trustStorePassword, contextPath );
 
       // Load Hive JDBC Driver
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );
