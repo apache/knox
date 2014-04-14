@@ -21,8 +21,10 @@ user = "guest";
 password = user + "-password";
 gatewayHost = "localhost";
 gatewayPort = 8443;
+trustStore = "/usr/lib/knox/data/security/keystores/gateway.jks";
+trustStorePassword = "knoxsecret";
 contextPath = "gateway/sandbox/hive";
-connectionString = String.format( "jdbc:hive2://%s:%d/?hive.server2.transport.mode=https;hive.server2.thrift.http.path=%s", gatewayHost, gatewayPort, contextPath );
+connectionString = String.format( "jdbc:hive2://%s:%d/;ssl=true;sslTrustStore=%s;trustStorePassword=%s?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s", gatewayHost, gatewayPort, trustStore, trustStorePassword, contextPath );
 
 // Load Hive JDBC Driver
 Class.forName( "org.apache.hive.jdbc.HiveDriver" );
