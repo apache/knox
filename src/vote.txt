@@ -4,14 +4,14 @@ Subject: [VOTE] Release ${gateway-name} ${gateway-version}
 
 A candidate for the ${gateway-name} ${gateway-version} release is available at:
 
-https://dist.apache.org/repos/dist/dev/knox/${gateway-project}/${gateway-project}-${gateway-version}/
+https://dist.apache.org/repos/dist/dev/${gateway-project}/${gateway-project}-${gateway-version}/
 
 The release candidate is a zip archive of the sources in:
 
 https://git-wip-us.apache.org/repos/asf/knox.git
 Branch v${gateway-version} (git checkout -b v{gateway-version})
 
-The SHA1 checksum of the archive is ${checksum}.
+The KEYS file for signature validation is available at: https://dist.apache.org/repos/dist/release/knox/KEYS
 
 Please vote on releasing this package as ${gateway-name} ${gateway-version}.
 The vote is open for the next 72 hours and passes if a majority of at
