@@ -145,6 +145,23 @@ public class GatewayTestConfig implements GatewayConfig {
   public String getKerberosLoginConfig() {
     return kerberosLoginConfig;
   }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultTopologyName()
+   */
+  @Override
+  public String getDefaultTopologyName() {
+    return "default";
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultAppRedirectPath()
+   */
+  @Override
+  public String getDefaultAppRedirectPath() {
+    // TODO Auto-generated method stub
+    return "/gateway/sandbox";
+  }
   
 //  public void setKerberosLoginConfig(String kerberosLoginConfig) {
 //   this.kerberosLoginConfig = kerberosLoginConfig;

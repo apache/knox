@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayRedirectServlet;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -52,6 +53,7 @@ import java.util.Set;
 
 public abstract class DeploymentFactory {
 
+  private static final String DEFAULT_APP_REDIRECT_CONTEXT_PATH = "redirectTo";
   private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServices gatewayServices = null;
@@ -73,13 +75,42 @@ public abstract class DeploymentFactory {
   }
 
   public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
-    Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
-    Map<String,List<ServiceDeploymentContributor>> services = selectContextServices( topology );
-    DeploymentContext context = createDeploymentContext( config, topology, providers, services );
-    initialize( context, providers, services );
-    contribute( context, providers, services );
-    finalize( context, providers, services );
+    DeploymentContext context = null;
+    if (!config.getDefaultTopologyName().equals(topology.getName())) {
+      Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
+      Map<String,List<ServiceDeploymentContributor>> services = selectContextServices( topology );
+      context = createDeploymentContext( config, topology, providers, services );
+      initialize( context, providers, services );
+      contribute( context, providers, services );
+      finalize( context, providers, services );
+    }
+    else {
+      context = deployDefaultTopology(config, topology);
+    }
     return context.getWebArchive();
+  }
+
+  private static DeploymentContext deployDefaultTopology(GatewayConfig config,
+      Topology topology) {
+    // this is the "default" topology which does some specialized
+    // redirects for compatibility with hadoop cli java client use
+    // we do not want the various listeners and providers added or
+    // the usual gateway.xml, etc.
+    DeploymentContext context;
+    Map<String,List<ProviderDeploymentContributor>> providers = new HashMap<String,List<ProviderDeploymentContributor>>();
+    Map<String,List<ServiceDeploymentContributor>> services = new HashMap<String,List<ServiceDeploymentContributor>>();
+    context = createDeploymentContext( config, topology, providers, services);
+    WebAppDescriptor wad = context.getWebAppDescriptor();
+    String servletName = context.getTopology().getName();
+    String servletClass = GatewayRedirectServlet.class.getName();
+    wad.createServlet().servletName( servletName ).servletClass( servletClass );
+    wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
+    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
+    servlet.createInitParam()
+      .paramName( DEFAULT_APP_REDIRECT_CONTEXT_PATH )
+    .  paramValue( config.getDefaultAppRedirectPath() );
+    writeDeploymentDescriptor(context);
+    return context;
   }
 
   private static DeploymentContext createDeploymentContext(
@@ -343,13 +374,17 @@ public abstract class DeploymentFactory {
         }
       }
 
-      // Write the web.xml into the war.
-      Asset webXmlAsset = new StringAsset( context.getWebAppDescriptor().exportAsString() );
-      context.getWebArchive().setWebXML( webXmlAsset );
+      writeDeploymentDescriptor(context);
 
     } catch ( IOException e ) {
       throw new RuntimeException( e );
     }
+  }
+
+  private static void writeDeploymentDescriptor(DeploymentContext context) {
+    // Write the web.xml into the war.
+    Asset webXmlAsset = new StringAsset( context.getWebAppDescriptor().exportAsString() );
+    context.getWebArchive().setWebXML( webXmlAsset );
   }
 
   public static ServletType<WebAppDescriptor> findServlet( DeploymentContext context, String name ) {

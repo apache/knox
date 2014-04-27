@@ -76,5 +76,8 @@ public interface GatewayConfig {
   boolean isKerberosDebugEnabled();
   
   String getKerberosLoginConfig();
+  
+  String getDefaultTopologyName();
 
+  String getDefaultAppRedirectPath();
 }
