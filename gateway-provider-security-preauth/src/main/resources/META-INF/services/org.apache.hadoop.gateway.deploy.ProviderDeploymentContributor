@@ -17,3 +17,4 @@
 ##########################################################################
 
 org.apache.hadoop.gateway.preauth.deploy.HeaderPreAuthContributor
+org.apache.hadoop.gateway.preauth.deploy.PseudoAuthContributor
