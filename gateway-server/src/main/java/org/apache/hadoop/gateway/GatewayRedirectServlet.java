@@ -81,6 +81,7 @@ public class GatewayRedirectServlet extends HttpServlet{
     if (qstr != null && qstr.length() > 0) {
       location = location + "?" + qstr;
     }
-    response.sendRedirect(location);
+    response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+    response.setHeader("Location", location);
   }
 } 

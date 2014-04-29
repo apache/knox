@@ -47,7 +47,9 @@ public class GatewayRedirectServletTest extends TestCase {
     EasyMock.expect(request.getPathInfo()).andReturn("/webhdfs/v1/tmp");
     EasyMock.expect(request.getQueryString()).andReturn("op=LISTSTATUS");
     EasyMock.expect(context.getContextPath()).andReturn("");
-    response.sendRedirect("/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS");
+    response.setStatus(307);
+    EasyMock.expectLastCall().once();
+    response.setHeader("Location", "/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS");
     EasyMock.expectLastCall().once();
     // logging
     context.log((String)EasyMock.anyObject());
