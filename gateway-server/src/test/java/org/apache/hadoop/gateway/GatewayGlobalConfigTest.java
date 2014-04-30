@@ -61,4 +61,15 @@ public class GatewayGlobalConfigTest {
     //assertThat( config.getShiroConfigFile(), is( "shiro.ini") );
   }
 
+  @Test
+  public void testDefaultTopologyName() {
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat( config.getDefaultTopologyName(), is( "_default" ) );
+  }
+
+  @Test
+  public void testDefaultAppRedirectPath() {
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat( config.getDefaultAppRedirectPath(), is( "/gateway/sandbox" ) );
+  }
 }

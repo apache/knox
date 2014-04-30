@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.gateway.preauth.deploy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
@@ -27,13 +29,11 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
-public class PreAuthContributor extends
+public class PseudoAuthContributor extends
     ProviderDeploymentContributorBase {
-  private static final String ROLE = "webappsec";
-  private static final String NAME = "WebAppSec";
-  private static final String CSRF_SUFFIX = "_CSRF";
-  private static final String CSRF_FILTER_CLASSNAME = "org.apache.hadoop.gateway.webappsec.filter.CSRFPreventionFilter";
-  private static final String CSRF_ENABLED = "csrf.enabled";
+  private static final String ROLE = "federation";
+  private static final String NAME = "Pseudo";
+  private static final String PREAUTH_FILTER_CLASSNAME = "org.apache.hadoop.gateway.preauth.filter.PseudoAuthFederationFilter";
 
   @Override
   public String getRole() {
@@ -53,14 +53,14 @@ public class PreAuthContributor extends
   @Override
   public void contributeFilter(DeploymentContext context, Provider provider, Service service, 
       ResourceDescriptor resource, List<FilterParamDescriptor> params) {
-    
-    Provider webappsec = context.getTopology().getProvider(ROLE, NAME);
-    if (webappsec != null && webappsec.isEnabled()) {
-      Map<String,String> map = provider.getParams();
-      String csrfEnabled = map.get(CSRF_ENABLED);
-      if ( csrfEnabled != null && csrfEnabled.equals("true")) {
-        resource.addFilter().name( getName() + CSRF_SUFFIX ).role( getRole() ).impl( CSRF_FILTER_CLASSNAME ).params( params );
-      }
+    // blindly add all the provider params as filter init params
+    if (params == null) {
+      params = new ArrayList<FilterParamDescriptor>();
     }
+    Map<String, String> providerParams = provider.getParams();
+    for(Entry<String, String> entry : providerParams.entrySet()) {
+      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+    }
+    resource.addFilter().name( getName() ).role( getRole() ).impl( PREAUTH_FILTER_CLASSNAME ).params( params );
   }
 }

@@ -371,7 +371,12 @@ public class GatewayServer {
     errorHandler.setShowStacks(false);
     WebAppContext context = new WebAppContext();
     context.setDefaultsDescriptor( null );
-    context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
+    if (!name.equals(config.getDefaultTopologyName())) {
+      context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
+    }
+    else {
+      context.setContextPath( "/" );
+    }
     context.setWar( warPath );
     context.setErrorHandler(errorHandler);
     // internalUndeploy( topology ); KNOX-152

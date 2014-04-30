@@ -64,6 +64,11 @@ import java.util.Map;
  */
 public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
+  private static final String DEFAULT_APP_REDIRECT_PATH_PARAM = "default.app.redirect.path";
+  private static final String DEFAULT_APP_REDIRECT_PATH = "/gateway/sandbox";
+  private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM = "default.app.topology.name";
+  private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME = "_default";
+
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
@@ -101,7 +106,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   private static final String SSL_ENABLED = "ssl.enabled";
 //  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
-  
+
   public GatewayConfigImpl() {
     init();
   }
@@ -311,6 +316,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getKerberosLoginConfig() {
     return get( KRB5_LOGIN_CONFIG );
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultTopologyName()
+   */
+  @Override
+  public String getDefaultTopologyName() {
+    String name = get(GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM);
+    return name != null ? name : GATEWAY_DEFAULT_TOPOLOGY_NAME;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultAppRedirectPath()
+   */
+  @Override
+  public String getDefaultAppRedirectPath() {
+    String path = get(DEFAULT_APP_REDIRECT_PATH_PARAM);
+    return path != null ? path : DEFAULT_APP_REDIRECT_PATH;
   }
   
 }
