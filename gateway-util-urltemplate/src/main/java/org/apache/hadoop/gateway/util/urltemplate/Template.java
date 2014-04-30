@@ -24,6 +24,7 @@ import java.util.Map;
 
 public class Template {
 
+  private String original;
   private Scheme scheme;
   private boolean hasScheme;
   private Username username;
@@ -44,6 +45,7 @@ public class Template {
   private Integer hash;
 
   Template(
+      String original,
       Scheme scheme,
       boolean hasScheme,
       Username username,
@@ -60,6 +62,7 @@ public class Template {
       boolean hasQuery,
       Fragment fragment,
       boolean hasFragment ) {
+    this.original = original;
     this.scheme = scheme;
     this.hasScheme = hasScheme;
     this.username = username;
@@ -78,6 +81,10 @@ public class Template {
     this.hasFragment = hasFragment;
     this.image = null;
     this.hash = null;
+  }
+
+  public String getPattern() {
+    return original != null ? original : toString();
   }
 
   public Scheme getScheme() {
@@ -183,13 +190,14 @@ public class Template {
     if( paramName != null && paramName.length() > 0 ) {
       b.append( "{" );
       b.append( s.getParamName() );
-      if( v.getType() != Segment.DEFAULT ) {
+      String actualPattern = v.getToken().originalPattern;
+      if( ( actualPattern != null ) && ( v.getType() != Segment.DEFAULT ) )  {
         b.append( '=' );
-        b.append( v.getPattern() );
+        b.append( v.getOriginalPattern() );
       }
       b.append( '}' );
     } else {
-      b.append( s.getFirstValue().getPattern() );
+      b.append( s.getFirstValue().getOriginalPattern() );
     }
   }
 
@@ -205,14 +213,18 @@ public class Template {
         b.append( '/' );
       }
       String paramName = segment.getParamName();
+      Segment.Value firstValue = segment.getFirstValue();
       if( paramName != null && paramName.length() > 0 ) {
         b.append( "{" );
         b.append( segment.getParamName() );
-        b.append( '=' );
-        b.append( segment.getFirstValue().getPattern() );
+        String pattern = firstValue.getOriginalPattern();
+        if( pattern != null && !pattern.isEmpty() ) {
+          b.append( '=' );
+          b.append( firstValue );
+        }
         b.append( '}' );
       } else {
-        b.append( segment.getFirstValue().getPattern() );
+        b.append( firstValue.getOriginalPattern() );
       }
     }
     if( isDirectory && ( !isAbsolute || path.size() > 0 ) ) {
@@ -224,14 +236,14 @@ public class Template {
     if( hasQuery ) {
       int count = 0;
       for( Query segment: query.values() ) {
-        count++;
-        if( count == 1 ) {
-          b.append( '?' );
-        } else {
-          b.append( '&' );
-        }
 //        String paramName = segment.getParamName();
         for( Segment.Value value: segment.getValues() ) {
+          count++;
+          if( count == 1 ) {
+            b.append( '?' );
+          } else {
+            b.append( '&' );
+          }
           buildQuerySegment( b, segment, value );
 //          String valuePattern = value.getPattern();
 //          if( paramName != null && paramName.length() > 0 ) {
@@ -270,7 +282,7 @@ public class Template {
   private void buildQuerySegment( StringBuilder b, Query segment, Segment.Value value ) {
     String paramName = segment.getParamName();
     String queryName = segment.getQueryName();
-    String valuePattern = value.getPattern();
+    String valuePattern = value.getOriginalPattern();
     if( paramName != null && paramName.length() > 0 ) {
       if( !Segment.GLOB_PATTERN.equals( queryName ) && !Segment.STAR_PATTERN.equals( queryName ) ) {
         b.append( segment.getQueryName() );
@@ -296,7 +308,7 @@ public class Template {
     if( hasFragment ) {
       b.append( '#' );
       if( fragment != null ) {
-        b.append( fragment.getFirstValue().getPattern() );
+        b.append( fragment.getFirstValue().getOriginalPattern() );
       }
     }
   }

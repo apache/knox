@@ -17,18 +17,26 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class Port extends Segment {
+import org.junit.Test;
 
-  public Port( String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern ) );
-  }
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-  public Port( Port port ) {
-    super( port.getToken() );
-  }
+public class TokenTest {
 
-  Port( Token token ) {
-    super( token );
+  @Test
+  public void testConstructorAndGetters() throws Exception {
+
+    Token token = new Token( "test-parameter-name", "test-original-value", "test-effective-value" );
+
+    assertThat( token.parameterName, is( "test-parameter-name" ) );
+    assertThat( token.originalPattern, is( "test-original-value" ) );
+    assertThat( token.effectivePattern, is( "test-effective-value" ) );
+
+    assertThat( token.getParameterName(), is( "test-parameter-name" ) );
+    assertThat( token.getOriginalPattern(), is( "test-original-value" ) );
+    assertThat( token.getEffectivePattern(), is( "test-effective-value" ) );
+
   }
 
 }

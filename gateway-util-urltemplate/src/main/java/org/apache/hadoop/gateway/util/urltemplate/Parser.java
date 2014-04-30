@@ -89,7 +89,7 @@ public class Parser {
 
   public Template parseTemplate( String template ) throws URISyntaxException {
     this.template = template;
-    builder = new Builder();
+    builder = new Builder( template );
     builder.setHasScheme( false );
     builder.setHasAuthority( false ); // Assume no until found otherwise.  If true, will cause // in output URL.
     builder.setIsAuthorityOnly( false );
@@ -121,19 +121,27 @@ public class Parser {
         !builder.getHasFragment() ) {
       Scheme scheme = builder.getScheme();
       builder.setHasScheme( false );
-      builder.setHost( scheme.getParamName(), makePatternSingular( scheme.getFirstValue().getPattern() ) );
+      builder.setHost( makeTokenSingular( scheme.getToken() ) );
       Path path = builder.getPath().remove( 0 );
-      builder.setPort( path.getParamName(), makePatternSingular( path.getFirstValue().getPattern() ) );
+      builder.setPort( makeTokenSingular( path.getToken() ) );
       builder.setIsAuthorityOnly( true );
     }
   }
 
-  private String makePatternSingular( String pattern ) {
-    if( Segment.GLOB_PATTERN.equals( pattern ) ) {
-      pattern = Segment.STAR_PATTERN;
+  private Token makeTokenSingular( Token token ) {
+    String effectivePattern = token.getEffectivePattern();
+    if( Segment.GLOB_PATTERN.equals( effectivePattern ) ) {
+      token = new Token( token.getParameterName(), token.getOriginalPattern(), Segment.STAR_PATTERN );
     }
-    return pattern;
+    return token;
   }
+
+//  private String makePatternSingular( String pattern ) {
+//    if( Segment.GLOB_PATTERN.equals( pattern ) ) {
+//      pattern = Segment.STAR_PATTERN;
+//    }
+//    return pattern;
+//  }
 
   private void consumeSchemeMatch( Matcher match ) {
     if( match.group( MATCH_GROUP_SCHEME ) != null ) {
@@ -144,8 +152,8 @@ public class Parser {
 
   private void consumeSchemeToken( String token ) {
     if( token != null ) {
-      String[] pair = parseTemplateToken( token, Segment.STAR_PATTERN );
-      builder.setScheme( pair[0], pair[1] );
+      Token t = parseTemplateToken( token, Segment.STAR_PATTERN );
+      builder.setScheme( t );
     }
   }
 
@@ -158,7 +166,8 @@ public class Parser {
 
   private void consumeAuthorityToken( String token ) {
     if( token != null ) {
-      String[] usernamePassword=null, hostPort=null, paramPattern=null;
+      Token paramPattern;
+      String[] usernamePassword=null, hostPort;
       String[] userAddr = split( token, '@' );
       if( userAddr.length == 1 ) {
         hostPort = split( userAddr[ 0 ], ':' );
@@ -168,21 +177,21 @@ public class Parser {
       }
       if( usernamePassword != null ) {
         if( usernamePassword[ 0 ].length() > 0 ) {
-          paramPattern = parseTemplateToken( usernamePassword[ 0 ], Segment.STAR_PATTERN );
-          builder.setUsername( paramPattern[ 0 ], paramPattern[ 1 ] );
+          paramPattern = makeTokenSingular( parseTemplateToken( usernamePassword[ 0 ], Segment.STAR_PATTERN ) );
+          builder.setUsername( paramPattern );
         }
         if( usernamePassword.length > 1 && usernamePassword[ 1 ].length() > 0 ) {
-          paramPattern = parseTemplateToken( usernamePassword[ 1 ], Segment.STAR_PATTERN );
-          builder.setPassword( paramPattern[ 0 ], paramPattern[ 1 ] );
+          paramPattern = makeTokenSingular( parseTemplateToken( usernamePassword[ 1 ], Segment.STAR_PATTERN ) );
+          builder.setPassword( paramPattern );
         }
       }
       if( hostPort[ 0 ].length() > 0 ) {
-        paramPattern = parseTemplateToken( hostPort[ 0 ], Segment.STAR_PATTERN );
-        builder.setHost( paramPattern[ 0 ], paramPattern[1] );
+        paramPattern = makeTokenSingular( parseTemplateToken( hostPort[ 0 ], Segment.STAR_PATTERN ) );
+        builder.setHost( paramPattern );
       }
       if( hostPort.length > 1 && hostPort[ 1 ].length() > 0 ) {
-        paramPattern = parseTemplateToken( hostPort[ 1 ], Segment.STAR_PATTERN );
-        builder.setPort( paramPattern[ 0 ], paramPattern[ 1 ] );
+        paramPattern = makeTokenSingular( parseTemplateToken( hostPort[ 1 ], Segment.STAR_PATTERN ) );
+        builder.setPort( paramPattern );
       }
     }
   }
@@ -207,8 +216,8 @@ public class Parser {
 
   private void consumePathSegment( String token ) {
     if( token != null ) {
-      String[] pair = parseTemplateToken( token, Segment.GLOB_PATTERN );
-      builder.addPath( pair[ 0 ], pair[ 1 ] );
+      Token t = parseTemplateToken( token, Segment.GLOB_PATTERN );
+      builder.addPath( t );
     }
   }
 
@@ -232,23 +241,27 @@ public class Parser {
     if( token != null && token.length() > 0 ) {
       // Shorthand format {queryParam} == queryParam={queryParam=*}
       if( TEMPLATE_OPEN_MARKUP == token.charAt( 0 ) ) {
-        String[] paramPattern = parseTemplateToken( token, Segment.GLOB_PATTERN );
-        if( paramPattern.length == 1 ) {
-          String paramName = paramPattern[ 0 ];
-          builder.addQuery( paramName, paramName, Segment.STAR_PATTERN );
+        Token paramPattern = parseTemplateToken( token, Segment.GLOB_PATTERN );
+        String paramName = paramPattern.parameterName;
+        if( paramPattern.originalPattern == null ) {
+          builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
+//          if( Segment.STAR_PATTERN.equals( paramName ) || Segment.GLOB_PATTERN.equals( paramName ) ) {
+//            builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
+//          } else {
+//            builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
+//          }
         } else {
-          String paramName = paramPattern[ 0 ];
-          builder.addQuery( paramName, paramName, paramPattern[ 1 ] );
+          builder.addQuery( paramName, new Token( paramName, paramPattern.originalPattern ) );
         }
       } else {
         String nameValue[] = split( token, '=' );
         if( nameValue.length == 1 ) {
           String queryName = nameValue[ 0 ];
-          builder.addQuery( queryName, Segment.ANONYMOUS_PARAM, null );
+          builder.addQuery( queryName, new Token( Segment.ANONYMOUS_PARAM, null ) );
         } else {
           String queryName = nameValue[ 0 ];
-          String[] paramPattern = parseTemplateToken( nameValue[ 1 ], Segment.GLOB_PATTERN );
-          builder.addQuery( queryName, paramPattern[ 0 ], paramPattern[ 1 ] );
+          Token paramPattern = parseTemplateToken( nameValue[ 1 ], Segment.GLOB_PATTERN );
+          builder.addQuery( queryName, paramPattern );
         }
       }
     }
@@ -263,40 +276,50 @@ public class Parser {
 
   private void consumeFragmentToken( String token ) {
     if( token != null && token.length() > 0 ) {
-      String[] pair = parseTemplateToken( token, Segment.STAR_PATTERN );
-      builder.setFragment( pair[0], pair[1] );
+      Token t = parseTemplateToken( token, Segment.STAR_PATTERN );
+      builder.setFragment( t );
     }
   }
 
-  private static String[] parseTemplateToken( String t, String defaultPattern ) {
-    String[] a;
-    int l = t.length();
+  static Token parseTemplateToken( String s, String defaultEffectivePattern ) {
+    String paramName, actualPattern, effectivePattern;
+    int l = s.length();
+    // If the token isn't the empty string, then
     if( l > 0 ) {
-      int b = ( t.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : 0 );
-      int e = ( t.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : l );
-      int i = t.indexOf( NAME_PATTERN_SEPARATOR, b );
-      // If this is a parameter template (ie {...}
-      if( b > 0 ) {
+      int b = ( s.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : -1 );
+      int e = ( s.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : -1 );
+      // If this is a parameter template, ie {...}
+      if( ( b > 0 ) && ( e > 0 ) && ( e > b ) ) {
+        int i = s.indexOf( NAME_PATTERN_SEPARATOR, b );
+        // If this is an anonymous template
         if( i < 0 ) {
-          String n = t.substring( b, e );
-          String p;
-          if( Segment.GLOB_PATTERN.equals( n ) ) {
-            p = Segment.GLOB_PATTERN;
+          paramName = s.substring( b, e );
+          actualPattern = null;
+          if( Segment.GLOB_PATTERN.equals( paramName ) ) {
+            effectivePattern = Segment.GLOB_PATTERN;
           } else {
-            p = defaultPattern; //Segment.STAR_PATTERN;
+            effectivePattern = defaultEffectivePattern;
           }
-          a = new String[]{ n, p };
+        // Otherwise populate the NVP.
         } else {
-          a = new String[]{ t.substring( b, i ), t.substring( i+1, e ) };
+          paramName = s.substring( b, i );
+          actualPattern = s.substring( i+1, e );
+          effectivePattern = actualPattern;
         }
-      // Otherwise this is an anonymous template
+      // Otherwise it is just a pattern.
       } else {
-        a = new String[]{ Segment.ANONYMOUS_PARAM, t.substring( b, e ) };
+        paramName = Segment.ANONYMOUS_PARAM;
+        actualPattern = s;
+        effectivePattern = actualPattern;
       }
+    // Otherwise the token has no value.
     } else {
-      a = new String[]{ Segment.ANONYMOUS_PARAM, null };
+      paramName = Segment.ANONYMOUS_PARAM;
+      actualPattern = null;
+      effectivePattern = actualPattern;
     }
-    return a;
+    Token token = new Token( paramName, actualPattern, effectivePattern );
+    return token;
   }
 
   // Using this because String.split is very inefficient.

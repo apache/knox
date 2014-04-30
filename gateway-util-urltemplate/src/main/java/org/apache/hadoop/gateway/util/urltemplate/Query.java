@@ -22,13 +22,18 @@ public class Query extends Segment {
   private String queryName;
 
   public Query( String queryName, String paramName, String valuePattern ) {
-    super( paramName, valuePattern );
+    super( new Token( paramName, valuePattern ) );
     this.queryName = queryName;
   }
 
   public Query( Query that ) {
-    super( that );
+    super( that.getToken() );
     this.queryName = that.queryName;
+  }
+
+  Query( String queryName, Token token ) {
+    super( token );
+    this.queryName = queryName;
   }
 
   public String getQueryName() {

@@ -50,7 +50,7 @@ public class FormUrlRewriteFilterReader extends FormFilterReader {
     try {
       Template input = Parser.parse( value );
       Template output = rewriter.rewrite( resolver, input, direction, rule );
-      value = output.toString();
+      value = output.getPattern();
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
     }

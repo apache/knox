@@ -146,7 +146,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     try {
       Template input = Parser.parse( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN, rule );
-      value = output.toString();
+      value = output.getPattern();
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
     }

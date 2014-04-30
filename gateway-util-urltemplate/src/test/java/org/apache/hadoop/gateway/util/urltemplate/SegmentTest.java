@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
@@ -103,10 +104,32 @@ public class SegmentTest {
 //    assertThat( s1.matches( s7 ), equalTo( false ) );
   }
 
+  @Test
+  public void testCreateRegex() {
+    assertThat( Segment.createRegex( "" ), is( "" ) );
+    assertThat( Segment.createRegex( " " ), is( " " ) );
+    assertThat( Segment.createRegex( "X" ), is( "X" ) );
+    assertThat( Segment.createRegex( "$" ), is( "\\$" ) );
+    assertThat( Segment.createRegex( "{" ), is( "\\{" ) );
+    assertThat( Segment.createRegex( "}" ), is( "\\}" ) );
+    assertThat( Segment.createRegex( "$$" ), is( "\\$\\$" ) );
+    assertThat( Segment.createRegex( "." ), is( "\\." ) );
+    assertThat( Segment.createRegex( ".." ), is( "\\.\\." ) );
+    assertThat( Segment.createRegex( "\\" ), is( "\\\\" ) );
+    assertThat( Segment.createRegex( "*" ), is( ".*" ) );
+    assertThat( Segment.createRegex( "**" ), is( ".*.*" ) );
+    assertThat( Segment.createRegex( "\\.${}*" ), is( "\\\\\\.\\$\\{\\}.*" ) );
+
+    String input  = "/var/lib/oozie/*.jar,/usr/lib/hadoop/client/*.jar,/usr/lib/oozie/libserver/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar";
+    String expect = "/var/lib/oozie/.*\\.jar,/usr/lib/hadoop/client/.*\\.jar,/usr/lib/oozie/libserver/.*\\.jar,\\$\\{catalina\\.home\\}/lib,\\$\\{catalina\\.home\\}/lib/.*\\.jar";
+    String output = Segment.createRegex( input );
+    assertThat( expect, is( output ) );
+  }
+
   private class TestSegment extends Segment {
 
     public TestSegment( String paramName, String valuePattern ) {
-      super( paramName, valuePattern );
+      super( new Token( paramName, valuePattern ) );
     }
 
   }

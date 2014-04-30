@@ -35,16 +35,16 @@ public class Expander {
     return new Expander().expandToUri( template, params, evaluator );
   }
 
-  public URI expandToUri( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
+  public static URI expandToUri( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
     return new URI( expandToString( template, params, evaluator ) );
   }
 
-  public Template expandToTemplate( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
+  public static Template expandToTemplate( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
     //TODO: This could be much more efficient if it didn't create and then parse a string.
     return Parser.parse( expandToString( template, params, evaluator ) );
   }
 
-  public String expandToString( Template template, Params params, Evaluator evaluator ) {
+  public static String expandToString( Template template, Params params, Evaluator evaluator ) {
     StringBuilder builder = new StringBuilder();
     if( params == null ) {
       params = EMPTY_PARAMS;
@@ -107,7 +107,7 @@ public class Expander {
       Segment.Value value = segment.getFirstValue();
       switch( value.getType() ) {
         case( Segment.STATIC ):
-          String pattern = value.getPattern();
+          String pattern = value.getOriginalPattern();
           builder.append( pattern );
           break;
         case( Segment.DEFAULT ):
@@ -139,7 +139,7 @@ public class Expander {
         builder.append( values.get( 0 ) );
       }
     } else {
-      builder.append( segment.getFirstValue().getPattern() );
+      builder.append( segment.getFirstValue().getOriginalPattern() );
     }
   }
 
@@ -172,8 +172,8 @@ public class Expander {
         for( Segment.Value value: segment.getValues() ) {
           switch( value.getType() ) {
             case( Segment.STATIC ):
-              String pattern = value.getPattern();
               builder.append( queryName );
+              String pattern = value.getOriginalPattern();
               if( pattern != null ) {
                 builder.append( "=" );
                 builder.append( pattern );
@@ -266,11 +266,11 @@ public class Expander {
           } else if( function.getFunctionName() != null ) {
             str = paramName;
           } else {
-            str = value.getPattern();
+            str = value.getOriginalPattern();
           }
           break;
         default:
-          str = value.getPattern();
+          str = value.getOriginalPattern();
           break;
       }
       builder.append( str );

@@ -24,6 +24,7 @@ import java.util.Map;
 
 public class Builder {
 
+  private String original;
   private boolean hasScheme;
   private Scheme scheme;
   private boolean hasAuthority;
@@ -42,6 +43,11 @@ public class Builder {
   private Fragment fragment;
 
   public Builder() {
+    this( (String)null );
+  }
+
+  public Builder( String original ) {
+    this.original = original;
     this.hasScheme = false;
     this.scheme = null;
     this.hasAuthority = false;
@@ -157,6 +163,7 @@ public class Builder {
 
   public Template build() {
     return new Template(
+        original,
         scheme, hasScheme,
         username, password, host, port, hasAuthority, isAuthorityOnly,
         path, isAbsolute, isDirectory,
@@ -184,6 +191,11 @@ public class Builder {
     setHasScheme( true );
   }
 
+  void setScheme( Token t ) {
+    this.scheme = new Scheme( t );
+    setHasScheme( true );
+  }
+
   public boolean getHasAuthority() {
     return hasAuthority;
   }
@@ -206,7 +218,12 @@ public class Builder {
 
   public void setUsername( String paramName, String valuePattern ) {
     setHasAuthority( true );
-    username = new Username( paramName, valuePattern );
+    username = new Username( new Token( paramName, valuePattern ) );
+  }
+
+  void setUsername( Token token ) {
+    setHasAuthority( true );
+    username = new Username( token );
   }
 
   public Password getPassword() {
@@ -218,17 +235,22 @@ public class Builder {
     password = new Password( paramName, valuePattern );
   }
 
+  void setPassword( Token token ) {
+    setHasAuthority( true );
+    password = new Password( token );
+  }
+
   public Host getHost() {
     return host;
   }
 
   public void setHost( String paramName, String valuePattern ) {
+    setHost( new Token( paramName, valuePattern ) );
+  }
+
+  void setHost( Token token ) {
     setHasAuthority( true );
-    // Make sure that ** is converted to * since ** doesn't make any sense in this context.
-    if( Segment.GLOB_PATTERN.equals( valuePattern ) ) {
-      valuePattern = Segment.STAR_PATTERN;
-    }
-    host = new Host( paramName, valuePattern );
+    host = new Host( token );
   }
 
   public Port getPort() {
@@ -236,12 +258,12 @@ public class Builder {
   }
 
   public void setPort( String paramName, String valuePattern ) {
+    setPort( new Token( paramName, valuePattern ) );
+  }
+
+  void setPort( Token token ) {
     setHasAuthority( true );
-    // Make sure that ** is converted to * since ** doesn't make any sense in this context.
-    if( Segment.GLOB_PATTERN.equals( valuePattern ) ) {
-      valuePattern = Segment.STAR_PATTERN;
-    }
-    port = new Port( paramName, valuePattern );
+    port = new Port( token );
   }
 
   public boolean getIsAbsolute() {
@@ -268,6 +290,12 @@ public class Builder {
 
   public Builder addPath( String paramName, String valuePattern ) {
     Path segment = new Path( paramName, valuePattern );
+    path.add( segment );
+    return this;
+  }
+
+  Builder addPath( Token token ) {
+    Path segment = new Path( token );
     path.add( segment );
     return this;
   }
@@ -304,7 +332,32 @@ public class Builder {
         // Should probably throw an exception in this case.  However, you can have this in a valid URL.
         // This causes a problem with how templates are used for both URLs and Templates.
         // For a template only the first parameter name will be used.
-        segment.addValue( valuePattern );
+        segment.addValue( new Token( queryName, valuePattern ) );
+      }
+    }
+    return this;
+  }
+
+  Builder addQuery( String queryName, Token token ) {
+    if( Segment.STAR_PATTERN.equals( queryName ) || Segment.GLOB_PATTERN.equals( queryName ) ) {
+      if( extra == null ) {
+        Query segment = new Query( queryName, token );
+        extra = segment;
+      } else {
+        // Can't have two extras: ?{*}&{**}
+        //TODO throw new URISyntaxException()? because
+      }
+    } else {
+      Query segment = query.get( queryName );
+      if( segment == null ) {
+        segment = new Query( queryName, token );
+        query.put( queryName, segment );
+      } else {
+        // Can't have two queryParam names for the same query name: ?query={param1}&query={param2} in a template.
+        // Should probably throw an exception in this case.  However, you can have this in a valid URL.
+        // This causes a problem with how templates are used for both URLs and Templates.
+        // For a template only the first parameter name will be used.
+        segment.addValue( token );
       }
     }
     return this;
@@ -325,6 +378,11 @@ public class Builder {
   public void setFragment( String paramName, String valuePattern ) {
     setHasFragment( true );
     this.fragment = new Fragment( paramName, valuePattern );
+  }
+
+  void setFragment( Token t ) {
+    setHasFragment( true );
+    this.fragment = new Fragment( t );
   }
 
 }

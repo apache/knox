@@ -28,14 +28,10 @@ import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class ExpanderTest {
-
-  @Ignore( "TODO" )
-  @Test
-  public void testUrlEncoding() {
-  }
 
   @Test
   public void testCompleteUrl() throws URISyntaxException {
@@ -273,9 +269,12 @@ public class ExpanderTest {
 
   @Test
   public void testExtraParamHandling() throws Exception {
+    String text;
     Template template;
     MockParams params;
-    URI expanded;
+    URI expandedUri;
+    Template expandedTemplate;
+    String expandedString;
 
     params = new MockParams();
     params.addValue(  "scheme", "schemeA"  );
@@ -286,33 +285,42 @@ public class ExpanderTest {
     params.addValue( "path", "pathB" );
     params.addValue( "extra", "extraA" );
 
-    template = Parser.parse( "{scheme}://host/{path=*]?{query=*}" );
-    expanded = Expander.expand( template, params, null );
-    assertThat( expanded.toString(), equalTo( "schemeA://host/pathA?query=queryA" ) );
+    text = "{scheme}://host/{path=*]?{query=*}";
+    template = Parser.parse( text );
+    expandedTemplate = Expander.expandToTemplate( template, params, null );
+    assertThat( expandedTemplate.toString(), equalTo( "schemeA://host/{path=*]?query=queryA" ) );
+    expandedString = Expander.expandToString( template, params, null );
+    assertThat( expandedString, equalTo( "schemeA://host/{path=*]?query=queryA" ) );
+    try {
+      expandedUri = Expander.expand( template, params, null );
+      fail( "Should have thrown exception" );
+    } catch( URISyntaxException e ) {
+      // Expected.
+    }
 
     template = Parser.parse( "{scheme}://host/{path=**}?{query=**}" );
-    expanded = Expander.expand( template, params, null );
-    assertThat( expanded.toString(), equalTo( "schemeA://host/pathA/pathB?query=queryA&query=queryB" ) );
+    expandedUri = Expander.expand( template, params, null );
+    assertThat( expandedUri.toString(), equalTo( "schemeA://host/pathA/pathB?query=queryA&query=queryB" ) );
 
     template = Parser.parse( "{scheme}://host/{path=**}?{host}&{query=**}&{**}" );
-    expanded = Expander.expand( template, params, null );
+    expandedUri = Expander.expand( template, params, null );
     assertThat(
-        expanded.toString(),
+        expandedUri.toString(),
         equalTo( "schemeA://host/pathA/pathB?host=hostA&query=queryA&query=queryB&extra=extraA" ) );
 
     template = Parser.parse( "{scheme}://host/{path=**}?server={host}&{query=**}&{**}" );
-    expanded = Expander.expand( template, params, null );
+    expandedUri = Expander.expand( template, params, null );
     assertThat(
-        expanded.toString(),
+        expandedUri.toString(),
         equalTo( "schemeA://host/pathA/pathB?server=hostA&query=queryA&query=queryB&extra=extraA" ) );
 
     // In this case "server-host" is treated as a param name and not found in the params so it
     // is copied.  I'm not really sure what the correct behavior should be.  My initial thinking
     // is that if something within {} isn't resolve to a param it should be dropped from the output.
     template = Parser.parse( "{scheme}://host/{path=**}?{server=host}&{query=**}&{**}" );
-    expanded = Expander.expand( template, params, null );
+    expandedUri = Expander.expand( template, params, null );
     assertThat(
-        expanded.toString(),
+        expandedUri.toString(),
         equalTo( "schemeA://host/pathA/pathB?server=host&query=queryA&query=queryB&host=hostA&extra=extraA" ) );
   }
 

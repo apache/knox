@@ -57,7 +57,7 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
       if( input != null ) {
         Template output = rewriter.rewrite( resolver, input, direction, rule );
         if( output != null ) {
-          value = output.toString();
+          value = output.getPattern();
         } else {
           LOG.failedToFilterValue( value, rule );
         }

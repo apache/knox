@@ -20,12 +20,14 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -50,6 +52,126 @@ public class MatcherTest {
       assertThat( "Expected to find a match.", match, notNullValue() );
       assertThat( match.getValue(), equalTo( template ) );
     }
+  }
+
+  @Test
+  public void testGlobMatching() throws Exception {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    matcher = new Matcher<String>();
+    patternTemplate = Parser.parse( "*://*:*/a/{pathB=**}/c" );
+    matcher.add( patternTemplate, "webhdfs" );
+    inputTemplate = Parser.parse( "s://h:5/a/b1/b2/c" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+    assertThat( match.getParams().resolve( "pathB" ), hasItems( "b1", "b2" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "s://h:5/a/b/c" );
+    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/a/{pathB=**}/c" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+    assertThat( match.getParams().resolve( "pathB" ), hasItems( "b" ) );
+
+    // KNOX-357
+//    matcher = new Matcher<String>();
+//    inputTemplate = Parser.parse( "s://h:5/a/c" );
+//    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/a/{pathB=**}/c" );
+//    matcher.add( patternTemplate, "webhdfs" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, notNullValue() );
+//    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "s://h:5/a/b" );
+    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/{pathA=**}/b" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    // KNOX-357
+//    matcher = new Matcher<String>();
+//    inputTemplate = Parser.parse( "s://h:5/b" );
+//    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/{pathA=**}/b" );
+//    matcher.add( patternTemplate, "webhdfs" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, notNullValue() );
+//    assertThat( match.getValue(), is( "webhdfs" ) );
+  }
+
+  @Test
+  public void testDefaultAppDeployment() throws Exception {
+    Matcher<String> matcher;
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://127.0.0.1:8443/webhdfs/v1/tmp?op=LISTSTATUS" );
+    patternTemplate = Parser.parse( "*://*:*/webhdfs/{version}/{path=**}?{**}" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://127.0.0.1:8443/top/webhdfs/v1/tmp?op=LISTSTATUS" );
+    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://127.0.0.1:8443/a/b/c" );
+    patternTemplate = Parser.parse( "*://*:*/**/c" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://127.0.0.1:8443/a/b/c/d" );
+    patternTemplate = Parser.parse( "*://*:*/{pathA=**}/b/{pathC=**}/d" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+    assertThat( match.getParams().resolve( "pathA" ), hasItems( "a" ) );
+    assertThat( match.getParams().resolve( "pathC" ), hasItems( "c" ) );
+
+    matcher = new Matcher<String>();
+    inputTemplate = Parser.parse( "https://127.0.0.1:8443/a1/a2/b/c1/c2/d" );
+    patternTemplate = Parser.parse( "*://*:*/{pathA=**}/b/{pathC=**}/d" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+    assertThat( match.getParams().resolve( "pathA" ), hasItems( "a1", "a2" ) );
+    assertThat( match.getParams().resolve( "pathC" ), hasItems( "c1", "c2" ) );
+
+    // KNOX-357
+//    matcher = new Matcher<String>();
+//    inputTemplate = Parser.parse( "https://0.0.0.0:0/b" );
+//    patternTemplate = Parser.parse( "*://*:*/**/b/**" );
+//    matcher.add( patternTemplate, "webhdfs" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, notNullValue() );
+//    assertThat( match.getValue(), is( "webhdfs" ) );
+
+    // KNOX-357
+//    matcher = new Matcher<String>();
+//    inputTemplate = Parser.parse( "https://127.0.0.1:8443/webhdfs/v1/tmp?op=LISTSTATUS" );
+//    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
+//    matcher.add( patternTemplate, "webhdfs" );
+//    match = matcher.match( inputTemplate );
+//    assertThat( match, notNullValue() );
+//    assertThat( match.getValue(), is( "webhdfs" ) );
   }
 
   @Test

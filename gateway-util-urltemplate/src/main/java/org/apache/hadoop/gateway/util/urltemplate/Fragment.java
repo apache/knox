@@ -20,10 +20,15 @@ package org.apache.hadoop.gateway.util.urltemplate;
 public class Fragment extends Segment {
 
   public Fragment( String paramName, String valuePattern ) {
-    super( paramName, valuePattern );
+    super( new Token( paramName, valuePattern ) );
   }
 
   public Fragment( Fragment fragment ) {
-    super( fragment );
+    super( fragment.getToken() );
   }
+
+  Fragment( Token t ) {
+    super( t );
+  }
+
 }

@@ -20,10 +20,15 @@ package org.apache.hadoop.gateway.util.urltemplate;
 public class Host extends Segment {
 
   public Host( String paramName, String valuePattern ) {
-    super( paramName, valuePattern );
+    super( new Token( paramName, valuePattern ) );
   }
 
   public Host( Host host ) {
-    super( host );
+    super( host.getToken() );
   }
+
+  Host( Token token ) {
+    super( token );
+  }
+
 }

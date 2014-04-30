@@ -17,18 +17,33 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
-public class Port extends Segment {
+final class Token {
 
-  public Port( String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern ) );
+  String parameterName = null;
+  String originalPattern = null;
+  String effectivePattern = null;
+
+  Token( String parameterName, String originalPattern, String effectivePattern ) {
+    this.parameterName = parameterName;
+    this.originalPattern = originalPattern;
+    this.effectivePattern = effectivePattern;
   }
 
-  public Port( Port port ) {
-    super( port.getToken() );
+  Token( String parameterName, String originalPattern ) {
+    this( parameterName, originalPattern, originalPattern );
   }
 
-  Port( Token token ) {
-    super( token );
+  public String getParameterName() {
+    return parameterName;
+  }
+
+  public String getOriginalPattern() {
+    return originalPattern;
+  }
+
+  public String getEffectivePattern() {
+    return effectivePattern;
   }
 
 }
+

@@ -289,7 +289,7 @@ public class Matcher<V> {
               String queryName = query.getQueryName();
               if( matchParams.resolve( queryName ) == null ) {
                 for( Segment.Value value: query.getValues() ) {
-                  matchParams.addValue( queryName, value.getPattern() );
+                  matchParams.addValue( queryName, value.getEffectivePattern() );
                 }
               }
             }
@@ -313,7 +313,7 @@ public class Matcher<V> {
       String paramName = extractSegment.getParamName();
       if( paramName.length() > 0 ) {
         for( Segment.Value value: inputSegment.getValues() ) {
-          params.insertValue( paramName, value.getPattern() );
+          params.insertValue( paramName, value.getEffectivePattern() );
         }
       }
     }
