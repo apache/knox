@@ -22,7 +22,7 @@ import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-public class GatewayRedirectServlet extends HttpServlet{
+public class GatewayForwardingServlet extends HttpServlet{
 
   private static final long serialVersionUID = 1L;  
   private String redirectToContext = null;
@@ -68,20 +68,34 @@ public class GatewayRedirectServlet extends HttpServlet{
                     HttpServletResponse response)
             throws ServletException, IOException
   {
-    String location = redirectToContext;
-    String ctxPath = request.getServletContext().getContextPath();
-    if (ctxPath != null && ctxPath.length() > 0) {
-      location = location + ctxPath;
-    }
+    String path = "";
     String pathInfo = request.getPathInfo();
     if (pathInfo != null && pathInfo.length() > 0) {
-      location = location + pathInfo;
+      path = path + pathInfo;
     }
     String qstr =  request.getQueryString();
     if (qstr != null && qstr.length() > 0) {
-      location = location + "?" + qstr;
+      path = path + "?" + qstr;
     }
-    response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-    response.setHeader("Location", location);
+
+    // Perform cross context dispatch to the configured topology context
+    ServletContext ctx = getServletContext().getContext(redirectToContext);
+    RequestDispatcher dispatcher = ctx.getRequestDispatcher(path);
+    dispatcher.forward(request, response);    
   }
+
+  public static class MyRequest extends HttpServletRequestWrapper {
+    private String redirectTo = null;
+    
+    public MyRequest(HttpServletRequest request, String redirectTo) {
+        super(request);
+    }
+
+    @Override    
+    public String getContextPath() {
+        return redirectTo;
+    }
+
+  }
+
 } 

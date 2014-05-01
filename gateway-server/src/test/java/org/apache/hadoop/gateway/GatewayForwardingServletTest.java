@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway;
 
 import java.io.IOException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -27,41 +28,38 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
+import org.junit.Test;
 
-import junit.framework.TestCase;
-
-public class GatewayRedirectServletTest extends TestCase {
+public class GatewayForwardingServletTest {
   
+  @Test
   public void testRedirectDefaults() throws ServletException, IOException {
     IMocksControl mockControl = EasyMock.createControl();
     ServletConfig config = (ServletConfig)mockControl.createMock(ServletConfig.class);
     ServletContext context = (ServletContext)mockControl.createMock(ServletContext.class);
     HttpServletRequest request = (HttpServletRequest)mockControl.createMock(HttpServletRequest.class);
     HttpServletResponse response = (HttpServletResponse)mockControl.createMock(HttpServletResponse.class);
+    RequestDispatcher dispatcher = (RequestDispatcher)mockControl.createMock(RequestDispatcher.class);
     // setup expectations
     EasyMock.expect(config.getServletName()).andStubReturn("default");
     EasyMock.expect(config.getServletContext()).andStubReturn(context);
     EasyMock.expect(config.getInitParameter("redirectTo")).andReturn("/gateway/sandbox");
-    EasyMock.expect(request.getServletContext()).andReturn(context);
     EasyMock.expect(request.getMethod()).andReturn("GET");
     EasyMock.expect(request.getPathInfo()).andReturn("/webhdfs/v1/tmp");
     EasyMock.expect(request.getQueryString()).andReturn("op=LISTSTATUS");
-    EasyMock.expect(context.getContextPath()).andReturn("");
-    response.setStatus(307);
-    EasyMock.expectLastCall().once();
-    response.setHeader("Location", "/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS");
+    EasyMock.expect(context.getContext("/gateway/sandbox")).andReturn(context);
+    EasyMock.expect(context.getRequestDispatcher("/webhdfs/v1/tmp?op=LISTSTATUS")).andReturn(dispatcher);
+    dispatcher.forward(request, response);
     EasyMock.expectLastCall().once();
     // logging
     context.log((String)EasyMock.anyObject());
     EasyMock.expectLastCall().anyTimes();
     // run the test
     mockControl.replay();
-    GatewayRedirectServlet servlet = new GatewayRedirectServlet();
+    GatewayForwardingServlet servlet = new GatewayForwardingServlet();
     servlet.init(config);
     servlet.service(request, response);
-//    assertTrue(response.getStatus() == 302);
     mockControl.verify();
-    
   }
 
 }

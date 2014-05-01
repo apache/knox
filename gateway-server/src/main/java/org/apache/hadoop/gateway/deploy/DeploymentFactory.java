@@ -18,7 +18,7 @@
 package org.apache.hadoop.gateway.deploy;
 
 import org.apache.hadoop.gateway.GatewayMessages;
-import org.apache.hadoop.gateway.GatewayRedirectServlet;
+import org.apache.hadoop.gateway.GatewayForwardingServlet;
 import org.apache.hadoop.gateway.GatewayResources;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -102,7 +102,7 @@ public abstract class DeploymentFactory {
     context = createDeploymentContext( config, topology, providers, services);
     WebAppDescriptor wad = context.getWebAppDescriptor();
     String servletName = context.getTopology().getName();
-    String servletClass = GatewayRedirectServlet.class.getName();
+    String servletClass = GatewayForwardingServlet.class.getName();
     wad.createServlet().servletName( servletName ).servletClass( servletClass );
     wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
     ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );

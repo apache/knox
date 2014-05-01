@@ -65,7 +65,7 @@ import java.util.Map;
 public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String DEFAULT_APP_REDIRECT_PATH_PARAM = "default.app.redirect.path";
-  private static final String DEFAULT_APP_REDIRECT_PATH = "/gateway/sandbox";
+  private static final String DEFAULT_APP_REDIRECT_PATH = "/sandbox";
   private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM = "default.app.topology.name";
   private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME = "_default";
 
@@ -333,7 +333,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDefaultAppRedirectPath() {
     String path = get(DEFAULT_APP_REDIRECT_PATH_PARAM);
-    return path != null ? path : DEFAULT_APP_REDIRECT_PATH;
+    return path != null ? path : "/" + getGatewayPath() + DEFAULT_APP_REDIRECT_PATH;
   }
   
 }
