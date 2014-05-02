@@ -64,7 +64,7 @@ public class GatewayGlobalConfigTest {
   @Test
   public void testDefaultTopologyName() {
     GatewayConfig config = new GatewayConfigImpl();
-    assertThat( config.getDefaultTopologyName(), is( "_default" ) );
+    assertThat( config.getDefaultTopologyName(), is( "sandbox" ) );
   }
 
   @Test

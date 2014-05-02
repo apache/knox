@@ -371,7 +371,7 @@ public class GatewayServer {
     errorHandler.setShowStacks(false);
     WebAppContext context = new WebAppContext();
     context.setDefaultsDescriptor( null );
-    if (!name.equals(config.getDefaultTopologyName())) {
+    if (!name.equals("_default")) {
       context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
     }
     else {
@@ -416,43 +416,55 @@ public class GatewayServer {
           Topology topology = event.getTopology();
           File deployDir = calculateAbsoluteDeploymentsDir();
           if( event.getType().equals( TopologyEvent.Type.DELETED ) ) {
-            File[] files = deployDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
-            if( files != null ) {
-              for( File file : files ) {
-                auditor.audit( Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
-                log.deletingDeployment( file.getAbsolutePath() );
-                internalUndeploy( topology );
-                FileUtils.deleteQuietly( file );
-              }
-            }
+            handleDeleteDeployment(topology, deployDir);
           } else {
-            try {
-              File warDir = calculateDeploymentDir( topology );
-              if( !warDir.exists() ) {
-                auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
-                log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
-                internalUndeploy( topology ); // KNOX-152
-                WebArchive war = null;
-                war = DeploymentFactory.createDeployment( config, topology );
-                if( !deployDir.exists() ) {
-                  deployDir.mkdirs();
-                }
-                File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
-                tmp.renameTo( warDir );
-                internalDeploy( topology, warDir );
-                //log.deployedTopology( topology.getName());
-              } else {
-                auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
-                log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
-                internalDeploy( topology, warDir );
-                //log.redeployedTopology( topology.getName() );
-              }
-            } catch( Throwable e ) {
-              auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
-              log.failedToDeployTopology( topology.getName(), e );
-            }
+            handleCreateDeployment(topology, deployDir);
           }
         }
+      }
+    }
+
+    private void handleDeleteDeployment(Topology topology, File deployDir) {
+      File[] files = deployDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
+      if( files != null ) {
+        for( File file : files ) {
+          auditor.audit( Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
+          log.deletingDeployment( file.getAbsolutePath() );
+          internalUndeploy( topology );
+          FileUtils.deleteQuietly( file );
+        }
+      }
+    }
+
+    private void handleCreateDeployment(Topology topology, File deployDir) {
+      try {
+        File warDir = calculateDeploymentDir( topology );
+        if( !warDir.exists() ) {
+          auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
+          log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
+          internalUndeploy( topology ); // KNOX-152
+          WebArchive war = null;
+          war = DeploymentFactory.createDeployment( config, topology );
+          if( !deployDir.exists() ) {
+            deployDir.mkdirs();
+          }
+          File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
+          tmp.renameTo( warDir );
+          internalDeploy( topology, warDir );
+          //log.deployedTopology( topology.getName());
+          if (topology.getName().equals(config.getDefaultTopologyName())) {
+            topology.setName("_default");
+            handleCreateDeployment(topology, deployDir);
+          }
+        } else {
+          auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
+          log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
+          internalDeploy( topology, warDir );
+          //log.redeployedTopology( topology.getName() );
+        }
+      } catch( Throwable e ) {
+        auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
+        log.failedToDeployTopology( topology.getName(), e );
       }
     }
 

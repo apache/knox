@@ -76,15 +76,14 @@ public abstract class DeploymentFactory {
 
   public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
     DeploymentContext context = null;
-    if (!config.getDefaultTopologyName().equals(topology.getName())) {
-      Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
-      Map<String,List<ServiceDeploymentContributor>> services = selectContextServices( topology );
-      context = createDeploymentContext( config, topology, providers, services );
-      initialize( context, providers, services );
-      contribute( context, providers, services );
-      finalize( context, providers, services );
-    }
-    else {
+    Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
+    Map<String,List<ServiceDeploymentContributor>> services = selectContextServices( topology );
+    context = createDeploymentContext( config, topology.getName(), topology, providers, services );
+    initialize( context, providers, services );
+    contribute( context, providers, services );
+    finalize( context, providers, services );
+    if (topology.getName().equals("_default")) {
+      // if this is the default topology then add the forwarding webapp as well
       context = deployDefaultTopology(config, topology);
     }
     return context.getWebArchive();
@@ -99,7 +98,7 @@ public abstract class DeploymentFactory {
     DeploymentContext context;
     Map<String,List<ProviderDeploymentContributor>> providers = new HashMap<String,List<ProviderDeploymentContributor>>();
     Map<String,List<ServiceDeploymentContributor>> services = new HashMap<String,List<ServiceDeploymentContributor>>();
-    context = createDeploymentContext( config, topology, providers, services);
+    context = createDeploymentContext( config, "forward", topology, providers, services);
     WebAppDescriptor wad = context.getWebAppDescriptor();
     String servletName = context.getTopology().getName();
     String servletClass = GatewayForwardingServlet.class.getName();
@@ -108,16 +107,16 @@ public abstract class DeploymentFactory {
     ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
     servlet.createInitParam()
       .paramName( DEFAULT_APP_REDIRECT_CONTEXT_PATH )
-    .  paramValue( config.getDefaultAppRedirectPath() );
+      .paramValue( config.getDefaultAppRedirectPath() );
     writeDeploymentDescriptor(context);
     return context;
   }
 
   private static DeploymentContext createDeploymentContext(
-      GatewayConfig config, Topology topology,
+      GatewayConfig config, String archiveName, Topology topology,
       Map<String,List<ProviderDeploymentContributor>> providers,
       Map<String,List<ServiceDeploymentContributor>> services ) {
-    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, topology.getName() );
+    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, archiveName );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
     GatewayDescriptor gateway = GatewayDescriptorFactory.create();
     DeploymentContext context = new DeploymentContextImpl(
