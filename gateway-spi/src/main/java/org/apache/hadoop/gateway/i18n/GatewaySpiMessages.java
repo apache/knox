@@ -73,4 +73,6 @@ public interface GatewaySpiMessages {
   @Message( level = MessageLevel.DEBUG, text = "MASTER SERVICE == NULL: {0}" )
   void printMasterServiceIsNull( boolean masterServiceIsNull );
 
+  @Message( level = MessageLevel.ERROR, text = "Gateway has failed to start. Unable to prompt user for master secret setup. Please consider using knoxcli.sh create-master" )
+  void unableToPromptForMasterUseKnoxCLI();
 }

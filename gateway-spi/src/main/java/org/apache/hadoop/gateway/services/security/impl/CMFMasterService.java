@@ -78,8 +78,9 @@ public class CMFMasterService {
   protected void promptUser() {
     Console c = System.console();
     if (c == null) {
-        System.err.println("No console.");
-        System.exit(1);
+      LOG.unableToPromptForMasterUseKnoxCLI();
+      System.err.println("No console.");
+      System.exit(1);
     }
   
     boolean noMatch;
@@ -100,6 +101,7 @@ public class CMFMasterService {
   protected void displayWarning(boolean persisting) {
     Console c = System.console();
     if (c == null) {
+        LOG.unableToPromptForMasterUseKnoxCLI();
         System.err.println("No console.");
         System.exit(1);
     }
