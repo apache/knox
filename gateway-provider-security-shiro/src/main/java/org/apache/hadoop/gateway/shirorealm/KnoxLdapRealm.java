@@ -134,6 +134,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     
     private boolean authorizationEnabled;
 
+    private String userSearchAttributeName;
+
+
     public KnoxLdapRealm() {
     }
     
@@ -330,7 +333,18 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public void setAuthorizationEnabled(boolean authorizationEnabled) {
       this.authorizationEnabled = authorizationEnabled;
     }
-    
+
+    public String getUserSearchAttributeName() {
+        return userSearchAttributeName;
+    }
+
+    public void setUserSearchAttributeName(String userSearchAttributeName) {
+      if (userSearchAttributeName != null) {
+        userSearchAttributeName = userSearchAttributeName.trim();
+      }
+      this.userSearchAttributeName = userSearchAttributeName;
+    }
+
     private Map<String, List<String>> parsePermissionByRoleString(String permissionsByRoleStr) {
       Map<String,List<String>> perms = new HashMap<String, List<String>>();
    
@@ -402,4 +416,52 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     return member;
   }
    
+    /**
+     * Returns the LDAP User Distinguished Name (DN) to use when acquiring an
+     * {@link javax.naming.ldap.LdapContext LdapContext} from the {@link LdapContextFactory}.
+     * <p/>
+     * If the the {@link #getUserDnTemplate() userDnTemplate} property has been set, this implementation will construct
+     * the User DN by substituting the specified {@code principal} into the configured template.  If the
+     * {@link #getUserDnTemplate() userDnTemplate} has not been set, the method argument will be returned directly
+     * (indicating that the submitted authentication token principal <em>is</em> the User DN).
+     *
+     * @param principal the principal to substitute into the configured {@link #getUserDnTemplate() userDnTemplate}.
+     * @return the constructed User DN to use at runtime when acquiring an {@link javax.naming.ldap.LdapContext}.
+     * @throws IllegalArgumentException if the method argument is null or empty
+     * @throws IllegalStateException    if the {@link #getUserDnTemplate userDnTemplate} has not been set.
+     * @see LdapContextFactory#getLdapContext(Object, Object)
+     */
+    @Override
+    protected String getUserDn(String principal) throws IllegalArgumentException, IllegalStateException {
+      if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
+        return super.getUserDn(principal);
+      }
+
+      // search for userDn and return
+      String userDn = null;
+      LdapContext systemLdapCtx = null;
+      try {
+          systemLdapCtx = getContextFactory().getSystemLdapContext();
+          String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", 
+              "person", userSearchAttributeName, principal);
+          final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx.search(
+              searchBase, 
+              searchFilter,
+              SUBTREE_SCOPE);
+          if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
+            SearchResult searchResult =  searchResultEnum.next();
+            return searchResult.getNameInNamespace();
+          } else {
+            throw new IllegalArgumentException("Illegal principal name: " + principal);
+          }
+      } catch (AuthenticationException e) {
+        LOG.failedToGetSystemLdapConnection(e);
+        throw new IllegalArgumentException("Illegal principal name: " + principal);
+      } catch (NamingException e) {
+        throw new IllegalArgumentException("Hit NamingException: " + e.getMessage());
+      } finally {
+          LdapUtils.closeContext(systemLdapCtx);
+      }
+    }
+
 }
