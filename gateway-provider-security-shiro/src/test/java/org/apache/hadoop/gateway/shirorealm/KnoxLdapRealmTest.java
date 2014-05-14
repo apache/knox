@@ -52,5 +52,12 @@ public class KnoxLdapRealmTest {
     assertEquals(realm.getUserSearchAttributeName(), "uid");
   }
   
+  @Test
+  public void setGetUserObjectClass() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setUserObjectClass("inetuser");
+    assertEquals(realm.getUserObjectClass(), "inetuser");
+  }
+  
   
 }

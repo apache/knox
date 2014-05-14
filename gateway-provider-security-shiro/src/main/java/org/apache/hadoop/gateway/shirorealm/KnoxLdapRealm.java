@@ -135,6 +135,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private boolean authorizationEnabled;
 
     private String userSearchAttributeName;
+    private String userObjectClass = "person";
 
 
     public KnoxLdapRealm() {
@@ -345,6 +346,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       this.userSearchAttributeName = userSearchAttributeName;
     }
 
+    public String getUserObjectClass() {
+      return userObjectClass;
+    }
+    
+    public void setUserObjectClass(String userObjectClass) {
+        this.userObjectClass = userObjectClass;
+    }
+
     private Map<String, List<String>> parsePermissionByRoleString(String permissionsByRoleStr) {
       Map<String,List<String>> perms = new HashMap<String, List<String>>();
    
@@ -443,7 +452,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       try {
           systemLdapCtx = getContextFactory().getSystemLdapContext();
           String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", 
-              "person", userSearchAttributeName, principal);
+              userObjectClass, userSearchAttributeName, principal);
           final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx.search(
               searchBase, 
               searchFilter,
