@@ -73,5 +73,17 @@ public class KnoxLdapRealmTest {
     assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
   }
   
+  @Test
+  public void verifyDefaultUserSearchAttributeName() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    assertNull(realm.getUserSearchAttributeName());
+  }
+  
+  @Test
+  public void verifyDefaultGetUserObjectClass() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    assertEquals(realm.getUserObjectClass(), "person");
+  }
+  
   
 }
