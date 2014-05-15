@@ -116,7 +116,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
         ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
     }
-    
+
+    private String userSearchBase;
+ 
     private String searchBase;
     // typical alue: groupOfNames, groupOfUniqueNames, groupOfUrls
     private String groupObjectClass = "groupOfNames";
@@ -276,7 +278,15 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public void setSearchBase(String searchBase) {
       this.searchBase = searchBase;
     }
-    
+
+    public String getUserSearchBase() {
+        return userSearchBase;
+    }
+
+    public void setUserSearchBase(String userSearchBase) {
+      this.userSearchBase = userSearchBase;
+    }
+ 
     public String getGroupObjectClass() {
       return groupObjectClass;
     }
@@ -446,6 +456,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         return super.getUserDn(principal);
       }
 
+      String base = (userSearchBase != null && !userSearchBase.isEmpty()) ? 
+          userSearchBase : searchBase;
+
       // search for userDn and return
       String userDn = null;
       LdapContext systemLdapCtx = null;
@@ -454,7 +467,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
           String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", 
               userObjectClass, userSearchAttributeName, principal);
           final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx.search(
-              searchBase, 
+              base, 
               searchFilter,
               SUBTREE_SCOPE);
           if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope

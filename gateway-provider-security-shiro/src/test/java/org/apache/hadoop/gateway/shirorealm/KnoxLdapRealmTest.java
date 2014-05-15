@@ -59,5 +59,12 @@ public class KnoxLdapRealmTest {
     assertEquals(realm.getUserObjectClass(), "inetuser");
   }
   
+  @Test
+  public void setGetUserSearchBase() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setUserSearchBase("dc=knox,dc=example,dc=com");
+    assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
+  }
+  
   
 }
