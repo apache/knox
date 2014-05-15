@@ -66,5 +66,12 @@ public class KnoxLdapRealmTest {
     assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
   }
   
+  @Test
+  public void setGetGroupSearchBase() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setGroupSearchBase("dc=knox,dc=example,dc=com");
+    assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
+  }
+  
   
 }

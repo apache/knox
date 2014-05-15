@@ -117,10 +117,11 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
     }
 
-    private String userSearchBase;
  
     private String searchBase;
-    // typical alue: groupOfNames, groupOfUniqueNames, groupOfUrls
+    private String userSearchBase;
+    private String groupSearchBase;
+
     private String groupObjectClass = "groupOfNames";
     
     //  typical value: member, uniqueMember, meberUrl
@@ -189,10 +190,16 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         final LdapContextFactory ldapContextFactory) throws NamingException {
         final Set<String> roleNames = new HashSet();
         final Set<String> groupNames = new HashSet();
-        
+       
+        String base =  (groupSearchBase != null && !groupSearchBase.isEmpty()) ? 
+            groupSearchBase : searchBase;
+
         // ldapsearch -h localhost -p 33389 -D uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w  guest-password 
         //       -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
-        final NamingEnumeration<SearchResult> searchResultEnum = ldapCtx.search(searchBase, "objectClass="+groupObjectClass, SUBTREE_SCOPE);
+        final NamingEnumeration<SearchResult> searchResultEnum = ldapCtx.search(
+            base, 
+            "objectClass=" + groupObjectClass, 
+            SUBTREE_SCOPE);
         
         while (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
             final SearchResult group = searchResultEnum.next();
@@ -286,7 +293,15 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public void setUserSearchBase(String userSearchBase) {
       this.userSearchBase = userSearchBase;
     }
- 
+
+    public String getGroupSearchBase() {
+        return groupSearchBase;
+    }
+
+    public void setGroupSearchBase(String groupSearchBase) {
+      this.groupSearchBase = groupSearchBase;
+    }
+
     public String getGroupObjectClass() {
       return groupObjectClass;
     }
