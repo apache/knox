@@ -62,6 +62,7 @@ public class KnoxLdapRealmTest {
   @Test
   public void setGetUserSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setSearchBase("dc=example,dc=com");
     realm.setUserSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
   }
@@ -69,6 +70,7 @@ public class KnoxLdapRealmTest {
   @Test
   public void setGetGroupSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setSearchBase("dc=example,dc=com");
     realm.setGroupSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
   }
@@ -85,5 +87,18 @@ public class KnoxLdapRealmTest {
     assertEquals(realm.getUserObjectClass(), "person");
   }
   
+  @Test
+  public void verifyDefaultUserSearchBase() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setSearchBase("dc=knox,dc=example,dc=com");
+    assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
+  }
+  
+  @Test
+  public void verifyDefaultGroupSearchBase() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setSearchBase("dc=knox,dc=example,dc=com");
+    assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
+  }
   
 }
