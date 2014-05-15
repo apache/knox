@@ -217,7 +217,13 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       final Set<String> roleNames, final Set<String> groupNames,
       final LdapContextFactory ldapContextFactory) throws NamingException {
    
-    String userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+    String userDn = null;
+    if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
+      // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
+      userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+    } else {
+      userDn = getUserDn(userName);
+    }
     Attribute attribute = group.getAttributes().get(getGroupIdAttribute()); 
     String groupName = attribute.get().toString();
     
