@@ -191,13 +191,10 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         final Set<String> roleNames = new HashSet();
         final Set<String> groupNames = new HashSet();
        
-        String base =  (groupSearchBase != null && !groupSearchBase.isEmpty()) ? 
-            groupSearchBase : searchBase;
-
         // ldapsearch -h localhost -p 33389 -D uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w  guest-password 
         //       -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
         final NamingEnumeration<SearchResult> searchResultEnum = ldapCtx.search(
-            base, 
+            getGroupSearchBase(), 
             "objectClass=" + groupObjectClass, 
             SUBTREE_SCOPE);
         
@@ -293,7 +290,8 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
 
     public String getUserSearchBase() {
-        return userSearchBase;
+      return  (userSearchBase != null && !userSearchBase.isEmpty()) ? 
+          userSearchBase : searchBase;
     }
 
     public void setUserSearchBase(String userSearchBase) {
@@ -301,7 +299,8 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
 
     public String getGroupSearchBase() {
-        return groupSearchBase;
+      return (groupSearchBase != null && !groupSearchBase.isEmpty()) ? 
+          groupSearchBase : searchBase;
     }
 
     public void setGroupSearchBase(String groupSearchBase) {
@@ -477,9 +476,6 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         return super.getUserDn(principal);
       }
 
-      String base = (userSearchBase != null && !userSearchBase.isEmpty()) ? 
-          userSearchBase : searchBase;
-
       // search for userDn and return
       String userDn = null;
       LdapContext systemLdapCtx = null;
@@ -488,7 +484,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
           String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", 
               userObjectClass, userSearchAttributeName, principal);
           final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx.search(
-              base, 
+              getUserSearchBase(), 
               searchFilter,
               SUBTREE_SCOPE);
           if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
