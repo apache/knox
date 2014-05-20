@@ -68,7 +68,9 @@ public class Expander {
 
   private static void expandAuthority( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.hasAuthority() ) {
-      builder.append( "//" );
+      if( !template.isAuthorityOnly() ) {
+        builder.append( "//" );
+      }
       Segment username = template.getUsername();
       Segment password = template.getPassword();
       Segment host = template.getHost();

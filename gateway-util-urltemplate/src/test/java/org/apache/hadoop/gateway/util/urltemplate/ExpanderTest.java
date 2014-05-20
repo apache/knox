@@ -34,6 +34,17 @@ import static org.junit.Assert.fail;
 public class ExpanderTest {
 
   @Test
+  public void testHostAndPortOnlyExpansionBugKnox381() throws Exception {
+    String text = "{host}:{port}";
+    Template template = Parser.parse( text );
+    MockParams params = new MockParams();
+    params.addValue( "host", "test-host" );
+    params.addValue( "port", "777" );
+    URI expanded = Expander.expand( template, params, null );
+    assertThat( expanded.toString(), equalTo( "test-host:777" ) ) ;
+  }
+
+  @Test
   public void testCompleteUrl() throws URISyntaxException {
     String text;
     Template template;

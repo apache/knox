@@ -142,6 +142,11 @@ public class TemplateTest {
     template = Parser.parse( text );
     actual = template.toString();
     assertThat( actual, is( text ) );
+
+    text = "host:42";
+    template = Parser.parse( text );
+    actual = template.toString();
+    assertThat( actual, is( text ) );
   }
 
   @Test
