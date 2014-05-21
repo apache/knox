@@ -25,7 +25,7 @@
             <name>ShiroProvider</name>
             <param>
                 <name>main.ldapRealm</name>
-                <value>org.apache.shiro.realm.ldap.JndiLdapRealm</value>
+                <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
             </param>
             <param>
                 <name>main.ldapRealm.userDnTemplate</name>
