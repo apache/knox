@@ -472,12 +472,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
      */
     @Override
     protected String getUserDn(String principal) throws IllegalArgumentException, IllegalStateException {
+      String userDn = null;
       if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
-        return super.getUserDn(principal);
+        userDn = super.getUserDn(principal);
+        LOG.computedUserDn(userDn, principal);
+        return userDn;
       }
 
       // search for userDn and return
-      String userDn = null;
       LdapContext systemLdapCtx = null;
       try {
           systemLdapCtx = getContextFactory().getSystemLdapContext();
@@ -489,7 +491,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
               SUBTREE_SCOPE);
           if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
             SearchResult searchResult =  searchResultEnum.next();
-            return searchResult.getNameInNamespace();
+            userDn = searchResult.getNameInNamespace();
+            LOG.searchedAndFoundUserDn(userDn, principal);
+            return userDn;
           } else {
             throw new IllegalArgumentException("Illegal principal name: " + principal);
           }

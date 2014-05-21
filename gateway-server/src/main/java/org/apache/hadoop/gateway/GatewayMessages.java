@@ -316,4 +316,10 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Value not found for cluster:{0}, alias: {1}" )
   void aliasValueNotFound( String cluster, String alias );
 
+  @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using dnTemplate for principal: {1}" )
+  void computedUserDn(String userDn, String principal);
+
+  @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using ldapSearch for principal: {1}" )
+  void searchedAndFoundUserDn(String userDn, String principal);
+
 }
