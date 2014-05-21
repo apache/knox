@@ -209,10 +209,8 @@ function getPID {
    
    APP_PID="$(<$APP_PID_FILE)"
 
-   if ps -p $APP_PID > /dev/null
+   if [ ! $APP_PD > /dev/null ];
    then
-     echo "$PID is running"
-   else
      return 1
    fi
       
