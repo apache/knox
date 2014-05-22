@@ -138,7 +138,7 @@ public class GatewayLocalServiceFuncTest {
         .addTag( "enabled" ).addText( "true" )
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm" )
-        .addTag( "value" ).addText( "org.apache.shiro.realm.ldap.JndiLdapRealm" ).gotoParent()
+        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()

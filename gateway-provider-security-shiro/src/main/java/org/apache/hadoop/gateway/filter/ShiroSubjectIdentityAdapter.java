@@ -114,7 +114,6 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "Groups: " + userRoles );
       }
       
-      // TODO: add groups through extended JndiLdapRealm implementation once Jira KNOX-4 is resolved
       
 //      The newly constructed Sets check whether this Subject has been set read-only 
 //      before permitting subsequent modifications. The newly created Sets also prevent 
