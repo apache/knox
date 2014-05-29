@@ -24,7 +24,7 @@ if not exist "%JAVA_HOME%"\bin\java.exe (
   echo Error: JAVA_HOME is incorrectly set.
   exit /B 1
 )
-set JAVA="%JAVA_HOME%"\bin\java
+set JAVA=%JAVA_HOME%\bin\java
 
 "%JAVA%" -jar "%APP_JAR%" %*
 
