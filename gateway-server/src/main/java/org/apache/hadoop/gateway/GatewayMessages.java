@@ -29,6 +29,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -321,5 +322,8 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using ldapSearch for principal: {1}" )
   void searchedAndFoundUserDn(String userDn, String principal);
+
+  @Message( level = MessageLevel.INFO, text = "Computed roles/groups: {0} for principal: {1}" )
+  void lookedUpUserRoles(Set<String> roleNames, String userName);
 
 }

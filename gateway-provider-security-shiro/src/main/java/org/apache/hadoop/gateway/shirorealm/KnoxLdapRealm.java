@@ -206,7 +206,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         // save role names and group names in session so that they can be easily looked up outside of this object
         SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
         SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
-        
+        LOG.lookedUpUserRoles(roleNames, userName);
         return roleNames;
     }
 
@@ -221,6 +221,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     } else {
       userDn = getUserDn(userName);
     }
+    LdapName userLdapDn = new LdapName(userDn);
     Attribute attribute = group.getAttributes().get(getGroupIdAttribute()); 
     String groupName = attribute.get().toString();
     
@@ -235,7 +236,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       while (e.hasMore()) {
         String attrValue = e.next().toString();
         if (memberAttribute.equalsIgnoreCase(MEMBER_URL)) {
-          boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userDn, 
+          boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userLdapDn, 
               attrValue, // memberUrl value
               ldapContextFactory);
           if (dynamicGroupMember) {
@@ -248,7 +249,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
             }
           }
         } else {
-          if (userDn.equals(attrValue)) {
+          if (userLdapDn.equals(new LdapName(attrValue))) {
          
             groupNames.add(groupName);
             String roleName = roleNameFor(groupName);
@@ -407,7 +408,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       return perms;
   }
 
-  boolean isUserMemberOfDynamicGroup(String userDnString, String memberUrl,
+  boolean isUserMemberOfDynamicGroup(LdapName userLdapDn, String memberUrl,
       final LdapContextFactory ldapContextFactory) throws NamingException {
 
     // ldap://host:port/dn?attributes?scope?filter?extensions
@@ -428,16 +429,16 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     String searchFilter = tokens[3];
 
     LdapName searchBaseDn = new LdapName(searchBaseString);
-    LdapName userDn = new LdapName(userDnString);
+   
     // do scope test
     if (searchScope.equalsIgnoreCase("base")) {
       return false;
     }
-    if (!userDn.toString().endsWith(searchBaseDn.toString())) {
+    if (!userLdapDn.toString().endsWith(searchBaseDn.toString())) {
       return false;
     }
     if (searchScope.equalsIgnoreCase("one")
-        && (userDn.size() != searchBaseDn.size() - 1)) {
+        && (userLdapDn.size() != searchBaseDn.size() - 1)) {
       return false;
     }
     // search for the filter, substituting base with userDn
@@ -445,7 +446,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     LdapContext systemLdapCtx = null;
     systemLdapCtx = ldapContextFactory.getSystemLdapContext();
     final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx
-        .search(userDn, searchFilter,
+        .search(userLdapDn, searchFilter,
             searchScope.equalsIgnoreCase("sub") ? SUBTREE_SCOPE
                 : ONELEVEL_SCOPE);
     if (searchResultEnum.hasMore()) {
