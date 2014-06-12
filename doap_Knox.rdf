@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl"?>
+<rdf:RDF xml:lang="en"
+         xmlns="http://usefulinc.com/ns/doap#" 
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+         xmlns:asfext="http://projects.apache.org/ns/asfext#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+   
+         http://www.apache.org/licenses/LICENSE-2.0
+   
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+  <Project rdf:about="http://knox.apache.org">
+    <created>2014-06-12</created>
+    <license rdf:resource="http://spdx.org/licenses/Apache-2.0" />
+    <name>Apache Knox</name>
+    <homepage rdf:resource="http://knox.apache.org" />
+    <asfext:pmc rdf:resource="http://knox.apache.org" />
+    <shortdesc>A REST API Gateway for Hadoop Services</shortdesc>
+    <description>The Apache Knox Gateway is a REST API Gateway for interacting with Hadoop clusters.
+
+The Knox Gateway provides a single access point for all REST interactions with Hadoop clusters.
+
+In this capacity, the Knox Gateway is able to provide valuable functionality to aid in the control,
+integration, monitoring and automation of critical administrative and analytical needs of the enterprise.
+
+Authentication (LDAP and Active Directory Authentication Provider)
+Federation/SSO (HTTP Header Based Identity Federation)
+Authorization (Service Level Authorization)
+Auditing
+While there are a number of benefits for unsecured Hadoop clusters,
+the Knox Gateway also complements the kerberos secured cluster quite nicely.
+
+Coupled with proper network isolation of a Kerberos secured Hadoop cluster,
+the Knox Gateway provides the enterprise with a solution that:
+
+Integrates well with enterprise identity management solutions
+Protects the details of the Hadoop cluster deployment (hosts and ports are hidden from endusers)
+Simplifies the number of services that clients need to interact with</description>
+    <bug-database rdf:resource="http://issues.apache.org/jira/browse/KNOX" />
+    <mailing-list rdf:resource="http://knox.apache.org/mail-lists.html" />
+    <download-page rdf:resource="https://cwiki.apache.org/confluence/display/KNOX/Release+0.4.0" />
+    <programming-language>Java</programming-language>
+    <category rdf:resource="http://projects.apache.org/category/big-data" />
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.4.0</name>
+        <created>2014/04/15</created>
+        <revision>0.4.0</revision>
+      </Version>
+    </release>
+    <repository>
+      <SVNRepository>
+        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/knox.git"/>
+        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=knox.git;a=tree"/>
+      </SVNRepository>
+    </repository>
+    <maintainer>
+      <foaf:Person>
+        <foaf:name>Kevin Minder</foaf:name>
+          <foaf:mbox rdf:resource="mailto:kminder@apache.org"/>
+      </foaf:Person>
+    </maintainer>
+  </Project>
+</rdf:RDF>
