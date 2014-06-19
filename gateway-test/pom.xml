@@ -40,6 +40,11 @@
             <artifactId>gateway-provider-jersey</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-vault</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>${gateway-group}</groupId>

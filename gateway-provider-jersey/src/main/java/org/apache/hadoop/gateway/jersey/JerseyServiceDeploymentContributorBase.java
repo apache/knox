@@ -30,6 +30,7 @@ import java.util.List;
 public abstract class JerseyServiceDeploymentContributorBase extends ServiceDeploymentContributorBase {
 
   private static final String PACKAGES_PARAM = "jersey.config.server.provider.packages";
+  private static final String TRACE_LOGGING_PARAM = "jersey.config.server.tracing";
 
   protected abstract String[] getPackages();
 
@@ -50,8 +51,11 @@ public abstract class JerseyServiceDeploymentContributorBase extends ServiceDepl
       param.name( PACKAGES_PARAM );
       param.value( packages );
       params.add( param );
+//      FilterParamDescriptor trace = resource.createFilterParam();
+//      param.name( TRACE_LOGGING_PARAM );
+//      param.value( "ALL" );
+//      params.add( trace );
       context.contributeFilter( service, resource, "pivot", "jersey", params );
     }
   }
-
 }
