@@ -209,7 +209,7 @@ function getPID {
    
    APP_PID="$(<$APP_PID_FILE)"
 
-   if [ ! $APP_PD > /dev/null ];
+   if [ ! $APP_PID > /dev/null ];
    then
      return 1
    fi
