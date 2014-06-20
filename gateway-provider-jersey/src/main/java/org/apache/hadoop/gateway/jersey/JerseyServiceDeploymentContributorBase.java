@@ -30,7 +30,7 @@ import java.util.List;
 public abstract class JerseyServiceDeploymentContributorBase extends ServiceDeploymentContributorBase {
 
   private static final String PACKAGES_PARAM = "jersey.config.server.provider.packages";
-  private static final String TRACE_LOGGING_PARAM = "jersey.config.server.tracing";
+//  private static final String TRACE_LOGGING_PARAM = "jersey.config.server.tracing";
 
   protected abstract String[] getPackages();
 

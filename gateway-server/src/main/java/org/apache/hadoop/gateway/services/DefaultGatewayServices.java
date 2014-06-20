@@ -92,6 +92,10 @@ public class DefaultGatewayServices implements GatewayServices {
     DefaultHostMapperService hm = new DefaultHostMapperService();
     hm.init( config, options );
     services.put( HOST_MAPPING_SERVICE, hm );
+
+    DefaultServerInfoService sis = new DefaultServerInfoService();
+    sis.init( config, options );
+    services.put( SERVER_INFO_SERVICE, sis );
   }
   
   public void start() throws ServiceLifecycleException {
@@ -104,6 +108,9 @@ public class DefaultGatewayServices implements GatewayServices {
 
     SSLService ssl = (SSLService) services.get(SSL_SERVICE);
     ssl.start();
+
+    ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
+    sis.start();
   }
 
   public void stop() throws ServiceLifecycleException {
@@ -116,6 +123,9 @@ public class DefaultGatewayServices implements GatewayServices {
 
     SSLService ssl = (SSLService) services.get(SSL_SERVICE);
     ssl.stop();
+
+    ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
+    sis.stop();
   }
   
   /* (non-Javadoc)

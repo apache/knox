@@ -97,6 +97,7 @@ public class GatewayServer {
         GatewayConfig config = new GatewayConfigImpl();
         redeployTopologies( config, cmd.getOptionValue( GatewayCommandLine.REDEPLOY_LONG ) );
       } else {
+        buildProperties = loadBuildProperties();
         services = instantiateGatewayServices();
         if (services == null) {
           log.failedToInstantiateGatewayServices();
@@ -121,10 +122,17 @@ public class GatewayServer {
   }
 
   private static void printVersion() {
-    buildProperties = loadBuildProperties();
     System.out.println( res.gatewayVersionMessage( // I18N not required.
-        buildProperties.getProperty( "build.version", "unknown" ),
-        buildProperties.getProperty( "build.hash", "unknown" ) ) );
+        getBuildVersion(),
+        getBuildHash() ) );
+  }
+
+  public static String getBuildHash() {
+    return buildProperties.getProperty( "build.hash", "unknown" );
+  }
+
+  public static String getBuildVersion() {
+    return buildProperties.getProperty( "build.version", "unknown" );
   }
 
   private static GatewayServices instantiateGatewayServices() {
