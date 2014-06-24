@@ -209,7 +209,10 @@ function getPID {
    
    APP_PID="$(<$APP_PID_FILE)"
 
-   if [ ! $APP_PID > /dev/null ];
+   ps -p $APP_PID > /dev/null
+   # if the exit code was 1 then it isn't running
+   # and it is safe to start
+   if [ "$?" -eq "1" ];
    then
      return 1
    fi
