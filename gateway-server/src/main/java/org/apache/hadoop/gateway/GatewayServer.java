@@ -128,11 +128,19 @@ public class GatewayServer {
   }
 
   public static String getBuildHash() {
-    return buildProperties.getProperty( "build.hash", "unknown" );
+    String hash = "unknown";
+    if( buildProperties != null ) {
+      hash = buildProperties.getProperty( "build.hash", hash );
+    }
+    return hash;
   }
 
   public static String getBuildVersion() {
-    return buildProperties.getProperty( "build.version", "unknown" );
+    String version = "unknown";
+    if( buildProperties != null ) {
+      version = buildProperties.getProperty( "build.version", version );
+    }
+    return version;
   }
 
   private static GatewayServices instantiateGatewayServices() {
