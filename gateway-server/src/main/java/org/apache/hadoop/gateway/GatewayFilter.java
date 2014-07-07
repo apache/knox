@@ -124,6 +124,7 @@ public class GatewayFilter implements Filter {
     
     if( match != null ) {
       Chain chain = match.getValue();
+      servletRequest.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, chain.getResourceRole() );
       try {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
@@ -209,7 +210,9 @@ public class GatewayFilter implements Filter {
 
     public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
       if( chain != null && !chain.isEmpty() ) {
-        chain.get( 0 ).doFilter( servletRequest, servletResponse, subChain() );
+        final Filter filter = chain.get( 0 );
+        final FilterChain chain = subChain();
+        filter.doFilter( servletRequest, servletResponse, chain );
       }
     }
 
@@ -308,7 +311,8 @@ public class GatewayFilter implements Filter {
 
     @Override
     public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain ) throws IOException, ServletException {
-      getInstance().doFilter( servletRequest, servletResponse, filterChain );
+      final Filter filter = getInstance();
+      filter.doFilter( servletRequest, servletResponse, filterChain );
     }
 
     @Override

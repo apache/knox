@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.easymock.EasyMock;
@@ -28,6 +29,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  *
@@ -81,6 +85,45 @@ public class GatewayFilterTest {
     gateway.init( config );
     gateway.doFilter( request, response, chain );
     gateway.destroy();
+
+  }
+
+  public static class TestRoleFilter extends AbstractGatewayFilter {
+
+    public Object role;
+
+    @Override
+    protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+      this.role = request.getAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE );
+    }
+
+  }
+
+  @Test
+  public void testTargetServiceRoleRequestAttribute() throws Exception {
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.replay( config );
+
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getPathInfo() ).andReturn( "test-path/test-resource" ).anyTimes();
+    request.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, "test-role" );
+    EasyMock.expectLastCall().anyTimes();
+    EasyMock.expect( request.getAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE ) ).andReturn( "test-role" ).anyTimes();
+    EasyMock.replay( request );
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( response );
+
+    TestRoleFilter filter = new TestRoleFilter();
+
+    GatewayFilter gateway = new GatewayFilter();
+    gateway.addFilter( "test-path/**", "test-filter", filter, null, "test-role" );
+    gateway.init( config );
+    gateway.doFilter( request, response );
+    gateway.destroy();
+
+    assertThat( (String)filter.role, is( "test-role" ) );
 
   }
 
