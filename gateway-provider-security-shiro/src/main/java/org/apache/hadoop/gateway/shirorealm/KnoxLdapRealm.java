@@ -198,9 +198,16 @@ public class KnoxLdapRealm extends JndiLdapRealm {
             "objectClass=" + groupObjectClass, 
             SUBTREE_SCOPE);
         
+        String userDn = null;
+        if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
+          // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
+          userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+        } else {
+          userDn = getUserDn(userName);
+        }
         while (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
             final SearchResult group = searchResultEnum.next();
-            addRoleIfMember(userName, group, roleNames, groupNames, ldapContextFactory);
+            addRoleIfMember(userDn, group, roleNames, groupNames, ldapContextFactory);
         }
         
         // save role names and group names in session so that they can be easily looked up outside of this object
@@ -210,17 +217,10 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         return roleNames;
     }
 
-  private void addRoleIfMember(final String userName, final SearchResult group,
+  private void addRoleIfMember(final String userDn, final SearchResult group,
       final Set<String> roleNames, final Set<String> groupNames,
       final LdapContextFactory ldapContextFactory) throws NamingException {
    
-    String userDn = null;
-    if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
-      // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
-      userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
-    } else {
-      userDn = getUserDn(userName);
-    }
     LdapName userLdapDn = new LdapName(userDn);
     Attribute attribute = group.getAttributes().get(getGroupIdAttribute()); 
     String groupName = attribute.get().toString();
