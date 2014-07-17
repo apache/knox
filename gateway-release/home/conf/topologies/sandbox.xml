@@ -120,4 +120,9 @@
         <url>http://localhost:10001/cliservice</url>
     </service>
 
+    <service>
+        <role>RESOURCEMANAGER</role>
+        <url>http://localhost:8088/ws</url>
+    </service>
+
 </topology>

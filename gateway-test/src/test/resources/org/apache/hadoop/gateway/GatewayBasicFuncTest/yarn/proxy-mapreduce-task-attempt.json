@@ -1,0 +1,21 @@
+{
+	"taskAttempt":{
+		"startTime":1401273289105,
+		"finishTime":0,
+		"elapsedTime":0,
+		"progress":68.680374,
+		"id":"attempt_1399541193872_0036_r_000000_0",
+		"rack":"/default-rack",
+		"state":"RUNNING",
+		"status":"Sleeping... (109692800) ms left > reduce",
+		"nodeHttpAddress":"host.yarn.com:50060",
+		"diagnostics":"",
+		"type":"REDUCE",
+		"assignedContainerId":"container_1399541193872_0036_01_000003",
+		"shuffleFinishTime":1401273296009,
+		"mergeFinishTime":1401273296736,
+		"elapsedShuffleTime":6904,
+		"elapsedMergeTime":727,
+		"elapsedReduceTime":0
+	}
+}

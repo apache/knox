@@ -1,0 +1,14 @@
+{
+	"clusterInfo":{
+		"id":1399541193872,
+		"startedOn":1399541193872,
+		"state":"STARTED",
+		"haState":"ACTIVE",
+		"resourceManagerVersion":"2.4.0.2.1.1.0-390",
+		"resourceManagerBuildVersion":"2.4.0.2.1.1.0-390 from 68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum a06aa69de28a8ebc9ddba56f20d6d73d",
+		"resourceManagerVersionBuiltOn":"2014-04-23T16:39Z",
+		"hadoopVersion":"2.4.0.2.1.1.0-390",
+		"hadoopBuildVersion":"2.4.0.2.1.1.0-390 from 68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum 9e788148daa5dd7934eb468e57e037b5",
+		"hadoopVersionBuiltOn":"2014-04-23T16:32Z"
+	}
+}

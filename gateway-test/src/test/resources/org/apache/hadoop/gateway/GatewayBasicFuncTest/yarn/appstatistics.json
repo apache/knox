@@ -1,0 +1,26 @@
+{
+	"appStatInfo":{
+		"statItem":[
+			{
+				"state":"FAILED",
+				"type":"mapreduce",
+				"count":2
+			},
+			{
+				"state":"FINISHED",
+				"type":"mapreduce",
+				"count":31
+			},
+			{
+				"state":"RUNNING",
+				"type":"mapreduce",
+				"count":1
+			},
+			{
+				"state":"ACCEPTED",
+				"type":"mapreduce",
+				"count":0
+			}
+		]
+	}
+}

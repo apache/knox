@@ -1,0 +1,33 @@
+{
+	"job":{
+		"startTime":1401199825397,
+		"finishTime":0,
+		"elapsedTime":10573843,
+		"id":"job_1399541193872_0035",
+		"name":"Sleep job",
+		"user":"hdfs",
+		"state":"RUNNING",
+		"mapsTotal":1,
+		"mapsCompleted":1,
+		"reducesTotal":1,
+		"reducesCompleted":0,
+		"mapProgress":100.0,
+		"reduceProgress":86.803696,
+		"mapsPending":0,
+		"mapsRunning":0,
+		"reducesPending":0,
+		"reducesRunning":1,
+		"uberized":false,
+		"diagnostics":"",
+		"newReduceAttempts":0,
+		"runningReduceAttempts":1,
+		"failedReduceAttempts":0,
+		"killedReduceAttempts":0,
+		"successfulReduceAttempts":0,
+		"newMapAttempts":0,
+		"runningMapAttempts":0,
+		"failedMapAttempts":0,
+		"killedMapAttempts":0,
+		"successfulMapAttempts":1
+	}
+}

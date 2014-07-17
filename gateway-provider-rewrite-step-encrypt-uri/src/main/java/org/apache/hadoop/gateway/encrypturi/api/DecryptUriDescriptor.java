@@ -15,31 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.spi;
+package org.apache.hadoop.gateway.encrypturi.api;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.hadoop.gateway.util.urltemplate.Evaluator;
-import org.apache.hadoop.gateway.util.urltemplate.Params;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
+import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteActionDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
 
-public interface UrlRewriteContext {
+public class DecryptUriDescriptor extends UrlRewriteActionDescriptorBase
+    implements UrlRewriteActionDescriptor {
+  public static final String STEP_NAME = "decrypt";
+  private String param;
 
-  UrlRewriter.Direction getDirection();
+  public DecryptUriDescriptor() {
+    super( STEP_NAME );
+  }
 
-  Template getOriginalUrl();
+  public String getParam() {
+    return param;
+  }
 
-  Template getCurrentUrl();
-
-  void setCurrentUrl( Template url );
-
-  /**
-   * Adds parameters to the rewrite context and replaces some of them if they already exist
-   * @param parameters the parameters to be added or replaced
-   */
-  void addParameters( Params parameters );
-
-  Params getParameters();
-
-  Evaluator getEvaluator();
-
+  public void setParam( String param ) {
+    this.param = param;
+  }
 }

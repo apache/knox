@@ -15,31 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.spi;
+package org.apache.hadoop.gateway.shell.yarn;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.hadoop.gateway.util.urltemplate.Evaluator;
-import org.apache.hadoop.gateway.util.urltemplate.Params;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
+import org.apache.hadoop.gateway.shell.Hadoop;
 
-public interface UrlRewriteContext {
+public class Yarn {
 
-  UrlRewriter.Direction getDirection();
+    static String SERVICE_PATH = "/resourcemanager";
 
-  Template getOriginalUrl();
+    public static NewApp.Request newApp(Hadoop session) {
+        return new NewApp.Request(session);
+    }
 
-  Template getCurrentUrl();
+    public static SubmitApp.Request submitApp(Hadoop session) {
+        return new SubmitApp.Request(session);
+    }
 
-  void setCurrentUrl( Template url );
+    public static KillApp.Request killApp(Hadoop session) {
+        return new KillApp.Request(session);
+    }
 
-  /**
-   * Adds parameters to the rewrite context and replaces some of them if they already exist
-   * @param parameters the parameters to be added or replaced
-   */
-  void addParameters( Params parameters );
-
-  Params getParameters();
-
-  Evaluator getEvaluator();
+    public static AppState.Request appState(Hadoop session) {
+        return new AppState.Request(session);
+    }
 
 }

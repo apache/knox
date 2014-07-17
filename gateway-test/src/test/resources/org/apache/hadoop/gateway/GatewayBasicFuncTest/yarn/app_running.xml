@@ -1,0 +1,40 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<app>
+	<id>application_1399541193872_0033</id>
+	<user>hdfs</user>
+	<name>Sleep job</name>
+	<queue>default</queue>
+	<state>RUNNING</state>
+	<finalStatus>UNDEFINED</finalStatus>
+	<progress>89.94973</progress>
+	<trackingUI>ApplicationMaster</trackingUI>
+	<trackingUrl>$proxy_address/proxy/application_1399541193872_0033/</trackingUrl>
+	<diagnostics></diagnostics>
+	<clusterId>1399541193872</clusterId>
+	<applicationType>MAPREDUCE</applicationType>
+	<applicationTags></applicationTags>
+	<startedTime>1401184778896</startedTime>
+	<finishedTime>0</finishedTime>
+	<elapsedTime>438390</elapsedTime>
+	<amContainerLogs>http://localhost:50060/node/containerlogs/container_1399541193872_0033_01_000001/hdfs</amContainerLogs>
+	<amHostHttpAddress>localhost:50060</amHostHttpAddress>
+	<allocatedMB>4608</allocatedMB>
+	<allocatedVCores>2</allocatedVCores>
+	<runningContainers>2</runningContainers>
+</app>

@@ -39,7 +39,11 @@ public class UrlRewriteActionRewriteProcessorExt
   @Override
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteActionRewriteDescriptorExt descriptor ) throws Exception {
     this.expander = new Expander();
-    this.template = Parser.parse( descriptor.parameter() );
+    if ( descriptor.parameter() != null ) {
+      this.template = Parser.parse( descriptor.parameter() );
+    } else {
+      this.template = Parser.parse( "" );
+    }
   }
 
   @Override

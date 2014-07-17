@@ -1,0 +1,13 @@
+{
+	"task":{
+		"startTime":1401273289105,
+		"finishTime":0,
+		"elapsedTime":3343308,
+		"progress":67.33751,
+		"id":"task_1399541193872_0036_r_000000",
+		"state":"RUNNING",
+		"type":"REDUCE",
+		"successfulAttempt":"",
+		"status":"Sleeping... (116684700) ms left > reduce"
+	}
+}

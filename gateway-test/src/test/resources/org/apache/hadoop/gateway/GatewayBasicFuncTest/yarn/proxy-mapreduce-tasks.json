@@ -1,0 +1,28 @@
+{
+	"tasks":{
+		"task":[
+			{
+				"startTime":1401273271711,
+				"finishTime":1401273284990,
+				"elapsedTime":13279,
+				"progress":100.0,
+				"id":"task_1399541193872_0036_m_000000",
+				"state":"SUCCEEDED",
+				"type":"MAP",
+				"successfulAttempt":"attempt_1399541193872_0036_m_000000_0",
+				"status":"Sleeping... (20) ms left"
+			},
+			{
+				"startTime":1401273289105,
+				"finishTime":0,
+				"elapsedTime":31069,
+				"progress":67.33751,
+				"id":"task_1399541193872_0036_r_000000",
+				"state":"RUNNING",
+				"type":"REDUCE",
+				"successfulAttempt":"",
+				"status":"Sleeping... (119977500) ms left > reduce"
+			}
+		]
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"jobAttempts":{
+		"jobAttempt":[
+			{
+				"nodeHttpAddress":"host.yarn.com:50060",
+				"nodeId":"host.yarn.com:45454",
+				"id":1,
+				"startTime":1401199817106,
+				"containerId":"container_1399541193872_0035_01_000001",
+				"logsLink":"http://host.yarn.com:50060/node/containerlogs/container_1399541193872_0035_01_000001/hdfs"
+			}
+		]
+	}
+}

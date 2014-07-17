@@ -1,0 +1,15 @@
+{
+	"node":{
+		"rack":"/default-rack",
+		"state":"RUNNING",
+		"id":"localhost:45454",
+		"nodeHostName":"localhost",
+		"nodeHTTPAddress":"localhost:50060",
+		"lastHealthUpdate":1401197561733,
+		"version":"2.4.0.2.1.1.0-390",
+		"healthReport":"",
+		"numContainers":0,
+		"usedMemoryMB":0,
+		"availMemoryMB":8192
+	}
+}

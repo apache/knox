@@ -147,11 +147,19 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-yarn-rm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite-step-secure-query</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite-step-encrypt-uri</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

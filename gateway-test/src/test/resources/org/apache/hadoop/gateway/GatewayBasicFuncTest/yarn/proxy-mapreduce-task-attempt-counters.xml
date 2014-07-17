@@ -1,0 +1,163 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<jobTaskAttemptCounters>
+	<id>attempt_1399541193872_0036_r_000000_0</id>
+	<taskAttemptCounterGroup>
+		<counterGroupName>org.apache.hadoop.mapreduce.FileSystemCounter
+		</counterGroupName>
+		<counter>
+			<name>FILE_BYTES_READ</name>
+			<value>655360</value>
+		</counter>
+		<counter>
+			<name>FILE_BYTES_WRITTEN</name>
+			<value>4883518</value>
+		</counter>
+		<counter>
+			<name>FILE_READ_OPS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>FILE_LARGE_READ_OPS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>FILE_WRITE_OPS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>HDFS_BYTES_READ</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>HDFS_BYTES_WRITTEN</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>HDFS_READ_OPS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>HDFS_LARGE_READ_OPS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>HDFS_WRITE_OPS</name>
+			<value>0</value>
+		</counter>
+	</taskAttemptCounterGroup>
+	<taskAttemptCounterGroup>
+		<counterGroupName>org.apache.hadoop.mapreduce.TaskCounter
+		</counterGroupName>
+		<counter>
+			<name>COMBINE_INPUT_RECORDS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>COMBINE_OUTPUT_RECORDS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>REDUCE_INPUT_GROUPS</name>
+			<value>109953</value>
+		</counter>
+		<counter>
+			<name>REDUCE_SHUFFLE_BYTES</name>
+			<value>4780221</value>
+		</counter>
+		<counter>
+			<name>REDUCE_INPUT_RECORDS</name>
+			<value>109953</value>
+		</counter>
+		<counter>
+			<name>REDUCE_OUTPUT_RECORDS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>SPILLED_RECORDS</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>SHUFFLED_MAPS</name>
+			<value>1</value>
+		</counter>
+		<counter>
+			<name>FAILED_SHUFFLE</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>MERGED_MAP_OUTPUTS</name>
+			<value>1</value>
+		</counter>
+		<counter>
+			<name>GC_TIME_MILLIS</name>
+			<value>6722</value>
+		</counter>
+		<counter>
+			<name>CPU_MILLISECONDS</name>
+			<value>99330</value>
+		</counter>
+		<counter>
+			<name>PHYSICAL_MEMORY_BYTES</name>
+			<value>110190592</value>
+		</counter>
+		<counter>
+			<name>VIRTUAL_MEMORY_BYTES</name>
+			<value>2812141568</value>
+		</counter>
+		<counter>
+			<name>COMMITTED_HEAP_BYTES</name>
+			<value>30474240</value>
+		</counter>
+	</taskAttemptCounterGroup>
+	<taskAttemptCounterGroup>
+		<counterGroupName>Shuffle Errors</counterGroupName>
+		<counter>
+			<name>BAD_ID</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>CONNECTION</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>IO_ERROR</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>WRONG_LENGTH</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>WRONG_MAP</name>
+			<value>0</value>
+		</counter>
+		<counter>
+			<name>WRONG_REDUCE</name>
+			<value>0</value>
+		</counter>
+	</taskAttemptCounterGroup>
+	<taskAttemptCounterGroup>
+		<counterGroupName>org.apache.hadoop.mapreduce.lib.output.FileOutputFormatCounter
+		</counterGroupName>
+		<counter>
+			<name>BYTES_WRITTEN</name>
+			<value>0</value>
+		</counter>
+	</taskAttemptCounterGroup>
+</jobTaskAttemptCounters>

@@ -1,0 +1,49 @@
+{
+    "application-id": "application_1405356982244_0031",
+    "application-name": "test",
+    "am-container-spec": {
+        "local-resources": {
+            "entry": {
+                "key": "AppMaster.jar",
+                "value": {
+                    "resource": "hdfs://localhost:9000/user/hdfs/AppMaster.jar",
+                    "type": "FILE",
+                    "visibility": "APPLICATION",
+                    "size": "41601",
+                    "timestamp": "1405544667528"
+                }
+            }
+        },
+        "commands": {
+            "command": "{{JAVA_HOME}}/bin/java -Xmx10m org.apache.hadoop.yarn.applications.distributedshell.ApplicationMaster --container_memory 10 --container_vcores 1 --num_containers 1 --priority 0 1><LOG_DIR>/AppMaster.stdout 2><LOG_DIR>/AppMaster.stderr"
+        },
+        "environment": {
+            "entry": [
+                {
+                    "key": "DISTRIBUTEDSHELLSCRIPTTIMESTAMP",
+                    "value": "1405545208994"
+                },
+                {
+                    "key": "CLASSPATH",
+                    "value": "{{CLASSPATH}}<CPS>./*<CPS>{{HADOOP_CONF_DIR}}<CPS>{{HADOOP_COMMON_HOME}}/share/hadoop/common/*<CPS>{{HADOOP_COMMON_HOME}}/share/hadoop/common/lib/*<CPS>{{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/*<CPS>{{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/lib/*<CPS>{{HADOOP_YARN_HOME}}/share/hadoop/yarn/*<CPS>{{HADOOP_YARN_HOME}}/share/hadoop/yarn/lib/*<CPS>./log4j.properties"
+                },
+                {
+                    "key": "DISTRIBUTEDSHELLSCRIPTLEN",
+                    "value": "50"
+                },
+                {
+                    "key": "DISTRIBUTEDSHELLSCRIPTLOCATION",
+                    "value": "hdfs://localhost:9000/user/hdfs/shellCommands.sh"
+                }
+            ]
+        }
+    },
+    "unmanaged-AM": "false",
+    "max-app-attempts": "2",
+    "resource": {
+        "memory": "1024",
+        "vCores": "1"
+    },
+    "application-type": "YARN",
+    "keep-containers-across-application-attempts": "false"
+}

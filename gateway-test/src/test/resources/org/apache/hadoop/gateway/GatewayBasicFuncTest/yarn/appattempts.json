@@ -1,0 +1,14 @@
+{
+	"appAttempts":{
+		"appAttempt":[
+			{
+				"id":1,
+				"startTime":1399903578541,
+				"containerId":"container_1399541193872_0018_01_000001",
+				"nodeHttpAddress":"localhost:50060",
+				"nodeId":"localhost:45454",
+				"logsLink":"//localhost:50060/node/containerlogs/container_1399541193872_0018_01_000001/hdfs"
+			}
+		]
+	}
+}

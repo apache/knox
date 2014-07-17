@@ -45,6 +45,7 @@
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
         <module>gateway-provider-rewrite-step-secure-query</module>
+        <module>gateway-provider-rewrite-step-encrypt-uri</module>
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-webappsec</module>
         <module>gateway-provider-security-preauth</module>
@@ -60,6 +61,7 @@
         <module>gateway-service-oozie</module>
         <module>gateway-service-webhcat</module>
         <module>gateway-service-tgs</module>
+        <module>gateway-service-yarn-rm</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>knox-cli-launcher</module>
@@ -417,6 +419,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-rewrite-step-encrypt-uri</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-jersey</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -458,6 +465,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-webhcat</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-yarn-rm</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

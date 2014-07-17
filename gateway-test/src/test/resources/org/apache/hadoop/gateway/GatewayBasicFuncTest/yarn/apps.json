@@ -1,0 +1,72 @@
+{
+	"apps":{
+		"app":[
+			{
+				"id":"application_1399541193872_0018",
+				"user":"hdfs",
+				"name":"Sleep job",
+				"queue":"default",
+				"state":"FINISHED",
+				"finalStatus":"SUCCEEDED",
+				"progress":100.0,
+				"trackingUI":"History",
+				"trackingUrl":"http://localhost:8088/proxy/application_1399541193872_0018/jobhistory/job/job_1399541193872_0018",
+				"diagnostics":"",
+				"clusterId":1399541193872,
+				"applicationType":"MAPREDUCE",
+				"applicationTags":"",
+				"startedTime":1399903578539,
+				"finishedTime":1399904819572,
+				"elapsedTime":1241033,
+				"amContainerLogs":"http://localhost:50060/node/containerlogs/container_1399541193872_0018_01_000001/hdfs",
+				"amHostHttpAddress":"localhost:50060",
+				"allocatedMB":0,
+				"allocatedVCores":0,
+				"runningContainers":0
+			},
+			{
+				"id":"application_1399541193872_0031",
+				"user":"hdfs",
+				"name":"Sleep job",
+				"queue":"default",
+				"state":"RUNNING",
+				"finalStatus":"UNDEFINED",
+				"progress":89.94973,
+				"trackingUI":"ApplicationMaster",
+				"trackingUrl":"http://localhost:8088/proxy/application_1399541193872_0031/",
+				"diagnostics":"",
+				"clusterId":1399541193872,
+				"applicationType":"MAPREDUCE",
+				"applicationTags":"",
+				"startedTime":1400855314702,
+				"finishedTime":0,
+				"elapsedTime":471349,
+				"amContainerLogs":"http://localhost:50060/node/containerlogs/container_1399541193872_0031_01_000001/hdfs",
+				"amHostHttpAddress":"localhost:50060",
+				"allocatedMB":4608,
+				"allocatedVCores":2,
+				"runningContainers":2
+			},
+			{
+				"id":"application_1399541193872_0009",
+				"user":"hdfs",
+				"name":"Sleep job",
+				"queue":"a1",
+				"state":"FAILED",
+				"finalStatus":"FAILED",
+				"progress":0.0,
+				"trackingUI":"UNASSIGNED",
+				"diagnostics":"Application application_1399541193872_0009 submitted by user hdfs to unknown queue: a1",
+				"clusterId":1399541193872,
+				"applicationType":"MAPREDUCE",
+				"applicationTags":"",
+				"startedTime":1399543135010,
+				"finishedTime":1399543135013,
+				"elapsedTime":3,
+				"allocatedMB":0,
+				"allocatedVCores":0,
+				"runningContainers":0
+			}
+		]
+	}
+}

@@ -20,13 +20,16 @@ package org.apache.hadoop.gateway;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Cookie;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.specification.ResponseSpecification;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.log.NoOpLogger;
+import org.apache.hadoop.test.mock.MockRequestMatcher;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -34,7 +37,9 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.eclipse.jetty.util.log.Log;
+import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -51,11 +56,16 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,6 +73,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
+import static org.hamcrest.text.IsEmptyString.isEmptyString;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -131,6 +142,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "WEBHBASE", "http://" + TEST_HOST + ":60080", "/cluster/hbase", USE_MOCK_SERVICES );
     driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
+    driver.setupService( "RESOURCEMANAGER", "http://" + TEST_HOST + ":8088/ws", "/cluster/resourcemanager", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -215,7 +227,10 @@ public class GatewayBasicFuncTest {
             .addTag( "url" ).addText( driver.getRealUrl( "HIVE" ) ).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "WEBHBASE" )
-            .addTag( "url" ).addText( driver.getRealUrl( "WEBHBASE" ) )
+            .addTag( "url" ).addText( driver.getRealUrl( "WEBHBASE" ) ).gotoParent()
+        .addTag( "service" )
+            .addTag( "role" ).addText( "RESOURCEMANAGER" )
+            .addTag( "url" ).addText( driver.getRealUrl( "RESOURCEMANAGER" ) ).gotoParent()
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -1658,7 +1673,7 @@ public class GatewayBasicFuncTest {
       .statusCode( HttpStatus.SC_OK )
       .when().post( driver.getUrl( "WEBHBASE" ) + multipleRowPath );
     driver.assertComplete();
-    
+
     driver.getMock( "WEBHBASE" )
     .expect()
     .method( "POST" )
@@ -1990,6 +2005,708 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
+  @Test
+  public void testYarnRmGetClusterInfo() throws Exception {
+    getYarnRmResource( "/v1/cluster/", ContentType.JSON, "yarn/cluster-info" );
+    getYarnRmResource( "/v1/cluster/", ContentType.XML, "yarn/cluster-info" );
+    getYarnRmResource( "/v1/cluster/info/", ContentType.JSON, "yarn/cluster-info" );
+    getYarnRmResource( "/v1/cluster/info/", ContentType.XML, "yarn/cluster-info" );
+  }
+
+  @Test
+  public void testYarnRmGetClusterMetrics() throws Exception {
+    getYarnRmResource( "/v1/cluster/metrics/", ContentType.JSON, "yarn/cluster-metrics" );
+    getYarnRmResource( "/v1/cluster/metrics/", ContentType.XML, "yarn/cluster-metrics" );
+  }
+
+  @Test
+  public void testYarnRnGetScheduler() throws Exception {
+    getYarnRmResource( "/v1/cluster/scheduler/", ContentType.JSON, "yarn/scheduler" );
+    getYarnRmResource( "/v1/cluster/scheduler/", ContentType.XML, "yarn/scheduler" );
+  }
+
+  @Test
+  public void getYarnRmAppstatistics() throws Exception {
+    getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.JSON, "yarn/appstatistics" );
+    getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.XML, "yarn/appstatistics" );
+  }
+
+  @Test
+  public void testYarnRmGetApplications() throws Exception {
+    getYarnRmApps( ContentType.XML, null );
+    getYarnRmApps( ContentType.JSON, null );
+
+    Map<String, String> params = new HashMap<String, String>();
+    params.put( "states", "FINISHED" );
+    params.put( "finalStatus", "SUCCEEDED" );
+    params.put( "user", "test" );
+    params.put( "queue", "queueName" );
+    params.put( "limit", "100" );
+    params.put( "startedTimeBegin", "1399903578539" );
+    params.put( "startedTimeEnd", "1399903578539" );
+    params.put( "finishedTimeBegin", "1399904819572" );
+    params.put( "finishedTimeEnd", "1399904819572" );
+    params.put( "applicationTypes", "MAPREDUCE" );
+    params.put( "applicationTags", "a" );
+
+    getYarnRmApps( ContentType.XML, params );
+    getYarnRmApps( ContentType.JSON, params );
+  }
+
+  private void getYarnRmApps( ContentType contentType, Map<String,String> params ) throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/apps/";
+    String resource = "/yarn/apps";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
+    String gatewayPathQuery = driver.isUseGateway() ? "" : "?user.name=" + username;
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+
+    MockRequestMatcher mockRequestMatcher = driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path ).queryParam( "user.name", username );
+
+    if ( params != null ) {
+      for (Entry<String, String> param : params.entrySet()) {
+        mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
+        if (gatewayPathQuery.isEmpty()) {
+          gatewayPathQuery += "?";
+        } else {
+          gatewayPathQuery += "&";
+        }
+        gatewayPathQuery += param.getKey() + "=" + param.getValue();
+      }
+    }
+
+
+    mockRequestMatcher.respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( resource ) )
+        .contentType( contentType.toString() );
+
+    given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType )
+        .content( "apps.app[0].trackingUrl", isEmptyString() )
+        .content( "apps.app[1].trackingUrl", startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) )
+        .content( "apps.app[0].amContainerLogs", isEmptyString() )
+        .content( "apps.app[1].amContainerLogs", isEmptyString() )
+        .content( "apps.app[0].amHostHttpAddress", isEmptyString() )
+        .content( "apps.app[1].amHostHttpAddress", isEmptyString() )
+        .content( "apps.app[2].id", is( "application_1399541193872_0009" ) )
+        .when()
+        .get( gatewayPath + gatewayPathQuery );
+
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testYarnApplicationLifecycle() throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/apps/new-application";
+    String resource = "yarn/new-application.json";
+
+    driver.getMock("RESOURCEMANAGER")
+        .expect()
+        .method("POST")
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json");
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/json")
+        .when().post(driver.getUrl("RESOURCEMANAGER") + path + (driver.isUseGateway() ? "" : "?user.name=" + username));
+    assertThat(response.getBody().asString(), Matchers.containsString("application-id"));
+
+    path = "/v1/cluster/apps";
+    resource = "yarn/application-submit-request.json";
+
+    driver.getMock("RESOURCEMANAGER")
+        .expect()
+        .method("POST")
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json")
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .contentType("application/json");
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/json")
+        .when().post(driver.getUrl("RESOURCEMANAGER") + path + (driver.isUseGateway() ? "" : "?user.name=" + username));
+    driver.assertComplete();
+
+    path = "/v1/cluster/apps/application_1405356982244_0031/state";
+    resource = "yarn/application-killing.json";
+    driver.getMock("RESOURCEMANAGER")
+        .expect()
+        .method("PUT")
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json")
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json");
+    response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .content(driver.getResourceBytes(resource))
+        .contentType("application/json")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/json")
+        .when().put(driver.getUrl("RESOURCEMANAGER") + path + (driver.isUseGateway() ? "" : "?user.name=" + username));
+    assertThat(response.getBody().asString(), Matchers.is("{\"state\":\"KILLING\"}"));
+  }
+
+  @Test
+  public void testYarnRmApplication() throws Exception {
+    getYarnRmApp( ContentType.JSON, true );
+    getYarnRmApp( ContentType.XML, true );
+    getYarnRmApp( ContentType.JSON, false );
+    getYarnRmApp( ContentType.XML, false );
+  }
+
+  private void getYarnRmApp( ContentType contentType, boolean running ) throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/apps/application_1399541193872_0033/";
+    String resource;
+    if ( running ) {
+      resource = "/yarn/app_running";
+    } else {
+      resource = "/yarn/app_succeeded";
+    }
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path + (driver.isUseGateway() ? "" : "?user.name=" + username);
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    VelocityEngine velocity = new VelocityEngine();
+    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+    velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+    velocity.init();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "proxy_address", driver.getRealUrl( "RESOURCEMANAGER" ) );
+
+    String name = TestUtils.getResourceName( this.getClass(), resource );
+    Template template = velocity.getTemplate( name );
+    StringWriter sw = new StringWriter();
+    template.merge( context, sw );
+    String request = sw.toString();
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path ).queryParam( "user.name", username ).respond()
+        .status( HttpStatus.SC_OK )
+        .content( request.getBytes() )
+        .contentType( contentType.toString() );
+
+    ResponseSpecification response = given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType );
+    if ( running ) {
+      response.content( "app.trackingUrl", startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+    } else {
+      response.content( "app.trackingUrl", isEmptyString() );
+    }
+
+    response.content( "app.amContainerLogs", isEmptyString() )
+        .content( "app.amHostHttpAddress", isEmptyString() )
+        .when()
+        .get( gatewayPath );
+
+    driver.assertComplete();
+  }
+
+  private void getYarnRmResource( String path, ContentType contentType, String resource )
+      throws Exception {
+
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path ).queryParam( "user.name", username ).respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( resource ) )
+        .contentType( contentType.toString() );
+
+    Response response = given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType )
+        .when()
+        .get(
+            driver.getUrl( "RESOURCEMANAGER" ) + path
+                + (driver.isUseGateway() ? "" : "?user.name=" + username) );
+
+    switch( contentType ) {
+    case JSON:
+      MatcherAssert.assertThat( response.getBody().asString(),
+          sameJSONAs( driver.getResourceString( resource, UTF8 ) ) );
+      break;
+    case XML:
+      MatcherAssert
+      .assertThat( the( response.getBody().asString() ),
+          isEquivalentTo( the( driver.getResourceString( resource, UTF8 ) ) ) );
+      break;
+    default:
+      break;
+    }
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testYarnRmAppattempts() throws Exception {
+    getYarnRmAppattempts( ContentType.JSON );
+    getYarnRmAppattempts( ContentType.XML );
+  }
+
+  private void getYarnRmAppattempts( ContentType contentType ) throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/apps/application_1399541193872_0018/appattempts/";
+    String resource = "/yarn/appattempts";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path + (driver.isUseGateway() ? "" : "?user.name=" + username);
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path ).queryParam( "user.name", username ).respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( resource ) )
+        .contentType( contentType.toString() );
+
+    given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType )
+        .content( "appAttempts.appAttempt[0].nodeHttpAddress", isEmptyString() )
+        .content( "appAttempts.appAttempt[0].nodeId", not( containsString( "localhost:50060" ) ) )
+        .content( "appAttempts.appAttempt[0].logsLink", isEmptyString() )
+        .when()
+        .get( gatewayPath );
+
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testYarnRmNodes() throws Exception {
+    getYarnRmNodes( ContentType.JSON, null );
+    getYarnRmNodes( ContentType.XML, null );
+
+    Map<String, String> params = new HashMap<String, String>();
+    params.put( "state", "new,running" );
+    params.put( "healthy", "true" );
+
+    getYarnRmNodes( ContentType.JSON, params );
+    getYarnRmNodes( ContentType.XML, params );
+  }
+
+  private void getYarnRmNodes( ContentType contentType, Map<String, String> params ) throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/nodes/";
+    String nodesResource = "/yarn/nodes";
+    String nodeResource = "/yarn/node";
+    String nodeId = "localhost:45454";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
+    String gatewayPathQuery = driver.isUseGateway() ? "" : "?user.name=" + username;
+
+
+    MockRequestMatcher mockRequestMatcher = driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path ).queryParam( "user.name", username );
+
+    if ( params != null ) {
+      for (Entry<String, String> param : params.entrySet()) {
+        mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
+        if (gatewayPathQuery.isEmpty()) {
+          gatewayPathQuery += "?";
+        } else {
+          gatewayPathQuery += "&";
+        }
+        gatewayPathQuery += param.getKey() + "=" + param.getValue();
+      }
+    }
+
+    mockRequestMatcher.respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( nodesResource + (contentType == ContentType.JSON ? ".json" : ".xml" ) ) )
+        .contentType( contentType.toString() );
+
+    String encryptedNodeId = given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType )
+        .content( "nodes.node[0].id", not( containsString( nodeId ) ) )
+        .content( "nodes.node[0].nodeHostName", isEmptyString() )
+        .content( "nodes.node[0].nodeHTTPAddress", isEmptyString() )
+        .when()
+        .get( gatewayPath + gatewayPathQuery ).getBody().path( "nodes.node[0].id" );
+
+    driver.assertComplete();
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path + nodeId ).queryParam( "user.name", username ).respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( nodeResource + (contentType == ContentType.JSON ? ".json" : ".xml" ) ) )
+        .contentType( contentType.toString() );
+
+    given()
+//         .log().all()
+        .auth()
+        .preemptive()
+        .basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+//         .log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( contentType )
+        .content( "node.id", not( containsString( nodeId ) ) )
+        .content( "node.nodeHostName", isEmptyString() )
+        .content( "node.nodeHTTPAddress", isEmptyString() )
+        .when()
+        .get( gatewayPath + encryptedNodeId );
+
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testYarnRmProxy() throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String path = "/v1/cluster/apps/application_1399541193872_0033/";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
+
+    Map<String, Matcher<?>> matchers = new HashMap<String, Matcher<?>>();
+
+    VelocityEngine velocity = new VelocityEngine();
+    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+    velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+    velocity.init();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "proxy_address", driver.getRealUrl( "RESOURCEMANAGER" ) );
+
+    String name = TestUtils.getResourceName( this.getClass(), "yarn/app_running.json" );
+    Template template = velocity.getTemplate( name );
+    StringWriter sw = new StringWriter();
+    template.merge( context, sw );
+    String request = sw.toString();
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+        .pathInfo( path )
+        .queryParam( "user.name", username ).respond()
+        .status( HttpStatus.SC_OK )
+        .content( request.getBytes() )
+        .contentType( ContentType.JSON.toString() );
+
+    String encryptedTrackingUrl = given()
+        // .log().all()
+        .auth().preemptive().basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+        // .log().all()
+        .statusCode( HttpStatus.SC_OK ).contentType( ContentType.JSON ).when()
+        .get( gatewayPath + ( driver.isUseGateway() ? "" : "?user.name=" + username ) ).getBody()
+        .path( "app.trackingUrl" );
+
+    String encryptedQuery = new URI( encryptedTrackingUrl ).getQuery();
+
+    driver.assertComplete();
+
+    // Test that root address of MapReduce Application Master REST API is not accessible through Knox
+    // For example, https://{gateway_host}:{gateway_port}/gateway/{cluster}/resourcemanager/proxy/{app_id}/?_={encrypted_application_proxy_location} should return Not Found response
+    //  https://{gateway_host}:{gateway_port}/gateway/{cluster}/resourcemanager/proxy/{app_id}/ws/v1/mapreduce/?_={encrypted_application_proxy_location} returns OK
+    given()
+        // .log().all()
+        .auth().preemptive().basic( username, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" ).expect()
+        // .log().all()
+        .statusCode( HttpStatus.SC_NOT_FOUND ).when()
+        .get( encryptedTrackingUrl );
+
+    String resource = null;
+
+    path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce/info";
+    resource = "yarn/proxy-mapreduce-info";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+    path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+    path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce/jobs";
+    resource = "yarn/proxy-mapreduce-jobs";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+    path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce/jobs/job_1399541193872_0035";
+    resource = "yarn/proxy-mapreduce-job";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+    path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce/jobs/job_1399541193872_0035/counters";
+    resource = "yarn/proxy-mapreduce-job-counters";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+
+
+//    TODO: Need to understand what we should do with following properties
+//    hadoop.proxyuser.HTTP.hosts
+//    dfs.namenode.secondary.http-address
+//    dfs.namenode.http-address
+//    mapreduce.jobhistory.webapp.address
+//    mapreduce.jobhistory.webapp.https.address
+//    dfs.namenode.https-address
+//    mapreduce.job.submithostname
+//    yarn.resourcemanager.webapp.address
+//    yarn.resourcemanager.hostname
+//    mapreduce.jobhistory.address
+//    yarn.resourcemanager.webapp.https.address
+//    hadoop.proxyuser.oozie.hosts
+//    hadoop.proxyuser.hive.hosts
+//    dfs.namenode.secondary.https-address
+//    hadoop.proxyuser.hcat.hosts
+//    hadoop.proxyuser.HTTP.hosts
+//    TODO: resolve java.util.regex.PatternSyntaxException: Unmatched closing ')' near index 17   m@\..*EXAMPLE\.COM)s
+    path = "/proxy/application_1399541193872_0035/ws/v1/mapreduce/jobs/job_1399541193872_0035/conf";
+    resource = "yarn/proxy-mapreduce-job-conf";
+//    getYarnRmProxyJobConf( encryptedQuery, path, resource, ContentType.JSON );
+//    getYarnRmProxyJobConf( encryptedQuery, path, resource, ContentType.XML );
+
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/jobattempts";
+    resource = "yarn/proxy-mapreduce-job-attempts";
+    matchers.clear();
+    matchers.put( "jobAttempts.jobAttempt[0].nodeHttpAddress", isEmptyString() );
+    matchers.put( "jobAttempts.jobAttempt[0].nodeId", not( containsString( "host.yarn.com:45454" ) ) );
+    matchers.put( "jobAttempts.jobAttempt[0].logsLink", isEmptyString() );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks";
+    resource = "yarn/proxy-mapreduce-tasks";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00";
+    resource = "yarn/proxy-mapreduce-task";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/counters";
+    resource = "yarn/proxy-mapreduce-task-counters";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/attempts";
+    resource = "yarn/proxy-mapreduce-task-attempts";
+    matchers.clear();
+    matchers.put( "taskAttempts.taskAttempt[0].nodeHttpAddress", isEmptyString() );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/attempts/attempt_1399541193872_0036_r_000000_0";
+    resource = "yarn/proxy-mapreduce-task-attempt";
+    matchers.clear();
+    matchers.put( "taskAttempt.nodeHttpAddress", isEmptyString() );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
+
+    path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/attempts/attempt_1399541193872_0036_r_000000_0/counters";
+    resource = "yarn/proxy-mapreduce-task-attempt-counters";
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
+    getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
+
+  }
+
+  private void getYarnRmProxyData( String encryptedQuery, String path, String resource, ContentType contentType ) throws Exception {
+    getYarnRmProxyData( encryptedQuery, path, resource, contentType, null );
+  }
+
+  private void getYarnRmProxyData( String encryptedQuery, String path, String resource, ContentType contentType, Map<String, Matcher<?>> contentMatchers ) throws Exception {
+
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path + "?" + encryptedQuery + ( driver.isUseGateway() ? "" : "&user.name=" + username );
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+    .pathInfo( path )
+    .queryParam( "user.name", username ).respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resource ) )
+    .contentType( contentType.toString() );
+
+    ResponseSpecification responseSpecification = given()
+//     .log().all()
+    .auth().preemptive().basic( username, password )
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .expect()
+//     .log().all()
+    .statusCode( HttpStatus.SC_OK ).contentType( contentType );
+
+    if ( contentMatchers != null ) {
+      for ( Entry<String, Matcher<?>> matcher : contentMatchers.entrySet() ) {
+        responseSpecification.content( matcher.getKey(), matcher.getValue() );
+      }
+    }
+
+    Response response = responseSpecification.when().get( gatewayPath );
+
+    if ( contentMatchers == null || contentMatchers.isEmpty() ) {
+      switch( contentType ) {
+      case JSON:
+        MatcherAssert.assertThat( response.getBody().asString(),
+            sameJSONAs( driver.getResourceString( resource, UTF8 ) ) );
+        break;
+      case XML:
+        MatcherAssert
+        .assertThat( the( response.getBody().asString() ),
+            isEquivalentTo( the( driver.getResourceString( resource, UTF8 ) ) ) );
+        break;
+      default:
+        break;
+      }
+    }
+
+    driver.assertComplete();
+  }
+
+  @SuppressWarnings("unused")
+  private void getYarnRmProxyJobConf( String encryptedQuery, String path, String resource, ContentType contentType ) throws Exception {
+
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path + "?" + encryptedQuery + ( driver.isUseGateway() ? "" : "&user.name=" + username );
+
+    switch( contentType ) {
+    case JSON:
+      resource += ".json";
+      break;
+    case XML:
+      resource += ".xml";
+      break;
+    default:
+      break;
+    }
+
+    driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
+    .pathInfo( path )
+    .queryParam( "user.name", username ).respond()
+    .status( HttpStatus.SC_OK )
+    .content( driver.getResourceBytes( resource ) )
+    .contentType( contentType.toString() );
+
+    Response response = given()
+//     .log().all()
+    .auth().preemptive().basic( username, password )
+    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .expect()
+//     .log().all()
+    .statusCode( HttpStatus.SC_OK ).contentType( contentType ).when()
+    .get( gatewayPath );
+
+    assertThat( response.body().asString(), not( containsString( "host.yarn.com" ) ) );
+
+    driver.assertComplete();
+  }
+
   private File findFile( File dir, String pattern ) {
     File file = null;
     FileFilter filter = new WildcardFileFilter( pattern );
@@ -2012,6 +2729,4 @@ public class GatewayBasicFuncTest {
     }
     return file.toURI().toString();
   }
-
-
 }

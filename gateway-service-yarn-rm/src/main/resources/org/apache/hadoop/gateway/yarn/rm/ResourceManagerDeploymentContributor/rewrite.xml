@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <rule dir="IN" name="RESOURCEMANAGER/resourcemanager/inbound/root" pattern="*://*:*/**/resourcemanager/v1/?{**}">
+        <rewrite template="{$serviceUrl[RESOURCEMANAGER]}/v1/?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="RESOURCEMANAGER/resourcemanager/inbound/path" pattern="*://*:*/**/resourcemanager/v1/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RESOURCEMANAGER]}/v1/{path=**}/?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="RESOURCEMANAGER/resourcemanager/inbound/proxy" pattern="*://*:*/**/resourcemanager/proxy/{appid=*}/ws/v1/{path=**}?{**}">
+        <decrypt-query/>
+        <match pattern="*://*:*/**/resourcemanager/proxy/{appid=*}/ws/v1/{path=**}?{scheme}?{host}?{port}?{**}"/>
+        <rewrite template="{scheme}://{host}:{port}/proxy/{appid=*}/ws/v1/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/url/outbound">
+        <match pattern="*://*:*/**?**"/>
+		<rewrite template=""/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound">
+        <match pattern="{scheme}://{host}:{port}/proxy/{appid=*}/jobhistory/job/**"/>
+		<rewrite template=""/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound">
+        <match pattern="{scheme}://{host}:{port}/proxy/{appid=*}"/>
+		<rewrite template="{gateway.url}/resourcemanager/proxy/{appid=*}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+		<encrypt-query/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/hostport/outbound">
+        <match pattern="*:*"/>
+		<rewrite template=""/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/logsLink/outbound">
+        <match pattern="//*:*/**?**"/>
+		<rewrite template=""/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/host/outbound">
+		<rewrite template=""/>
+    </rule>
+    <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/nodeId/outbound">
+        <match pattern="{host=*}:{port=*}"/>
+        <encrypt template="{host}:{port}" param="encaddr"/>
+        <rewrite template="{encaddr}"/>
+    </rule>
+    <rule dir="IN" name="RESOURCEMANAGER/resourcemanager/nodeId/inbound">
+        <match pattern="*://*:*/**/resourcemanager/v1/cluster/nodes/{addr=*}?{**}"/>
+        <decrypt param="addr"/>
+        <rewrite template="{$serviceUrl[RESOURCEMANAGER]}/v1/cluster/nodes/{addr}?{**}"/>
+    </rule>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/apps/outbound">
+        <content type="*/json">
+        	<buffer path="$.apps.app[*]">
+        		<detect path="$.trackingUI" value="History">
+					<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+				</detect>
+				<detect path="$.trackingUI" value="ApplicationMaster">
+					<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
+				</detect>
+				<apply path="$.amContainerLogs" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+            	<apply path="$.amHostHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        	</buffer>
+        </content>
+        <content type="*/xml">
+        	<buffer path="/apps/app">
+        		<detect path="trackingUI" value="History">
+					<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+				</detect>
+				<detect path="trackingUI" value="ApplicationMaster">
+					<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
+				</detect>
+				<apply path="amContainerLogs" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+            	<apply path="amHostHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        	</buffer>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/app/outbound">
+        <content type="*/json">
+        	<buffer path="$.app">
+	       		<detect path="$.trackingUI" value="History">
+	       			<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+	       		</detect>
+	       		<detect path="$.trackingUI" value="ApplicationMaster">
+	       			<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
+	       		</detect>
+	            <apply path="$.amContainerLogs" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+	            <apply path="$.amHostHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            </buffer>
+        </content>
+        <content type="*/xml">
+        	<buffer path="/app">
+	       		<detect path="trackingUI" value="History">
+	       			<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+	       		</detect>
+	       		<detect path="trackingUI" value="ApplicationMaster">
+	       			<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
+	       		</detect>
+	            <apply path="amContainerLogs" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+	            <apply path="amHostHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            </buffer>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/appattempts/outbound">
+        <content type="*/json">
+            <apply path="$.appAttempts.appAttempt[*].nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="$.appAttempts.appAttempt[*].logsLink" rule="RESOURCEMANAGER/resourcemanager/logsLink/outbound"/>
+            <apply path="$.appAttempts.appAttempt[*].nodeId" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/appAttempts/appAttempt/nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="/appAttempts/appAttempt/logsLink" rule="RESOURCEMANAGER/resourcemanager/logsLink/outbound"/>
+            <apply path="/appAttempts/appAttempt/nodeId" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/nodes/outbound">
+        <content type="*/json">
+            <apply path="$.nodes.node[*].nodeHTTPAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="$.nodes.node[*].nodeHostName" rule="RESOURCEMANAGER/resourcemanager/host/outbound"/>
+            <apply path="$.nodes.node[*].id" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/nodes/node/nodeHTTPAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="/nodes/node/nodeHostName" rule="RESOURCEMANAGER/resourcemanager/host/outbound"/>
+            <apply path="/nodes/node/id" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/node/outbound">
+        <content type="*/json">
+            <apply path="$.node.nodeHTTPAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="$.node.nodeHostName" rule="RESOURCEMANAGER/resourcemanager/host/outbound"/>
+            <apply path="$.node.id" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/node/nodeHTTPAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="/node/nodeHostName" rule="RESOURCEMANAGER/resourcemanager/host/outbound"/>
+            <apply path="/node/id" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/proxy/jobattempts/outbound">
+        <content type="*/json">
+            <apply path="$.jobAttempts.jobAttempt[*].nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="$.jobAttempts.jobAttempt[*].nodeId" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+            <apply path="$.jobAttempts.jobAttempt[*].logsLink" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/jobAttempts/jobAttempt/nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+            <apply path="/jobAttempts/jobAttempt/nodeId" rule="RESOURCEMANAGER/resourcemanager/nodeId/outbound"/>
+            <apply path="/jobAttempts/jobAttempt/logsLink" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/proxy/taskattempts/outbound">
+        <content type="*/json">
+            <apply path="$.taskAttempts.taskAttempt[*].nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/taskAttempts/taskAttempt/nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="RESOURCEMANAGER/resourcemanager/proxy/taskattempt/outbound">
+        <content type="*/json">
+            <apply path="$.taskAttempt.nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/taskAttempt/nodeHttpAddress" rule="RESOURCEMANAGER/resourcemanager/hostport/outbound"/>
+        </content>
+    </filter>
+
+</rules>

@@ -45,6 +45,7 @@ public class Shell {
       setup.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs;" );
       setup.println( "import org.apache.hadoop.gateway.shell.job.Job;" );
       setup.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow;" );
+      setup.println( "import org.apache.hadoop.gateway.shell.yarn.Yarn;" );
       setup.println( "import java.util.concurrent.TimeUnit;" );
       //setup.println( "set verbosity QUIET;" );
       //setup.println( "set show-last-result false;" );

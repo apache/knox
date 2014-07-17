@@ -1,0 +1,25 @@
+{
+	"app":{
+		"id":"application_1399541193872_0018",
+		"user":"hdfs",
+		"name":"Sleep job",
+		"queue":"default",
+		"state":"FINISHED",
+		"finalStatus":"SUCCEEDED",
+		"progress":100.0,
+		"trackingUI":"History",
+		"trackingUrl":"http://localhost:8088/proxy/application_1399541193872_0018/jobhistory/job/job_1399541193872_0018",
+		"diagnostics":"",
+		"clusterId":1399541193872,
+		"applicationType":"MAPREDUCE",
+		"applicationTags":"",
+		"startedTime":1399903578539,
+		"finishedTime":1399904819572,
+		"elapsedTime":1241033,
+		"amContainerLogs":"http://localhost:50060/node/containerlogs/container_1399541193872_0018_01_000001/hdfs",
+		"amHostHttpAddress":"localhost:50060",
+		"allocatedMB":0,
+		"allocatedVCores":0,
+		"runningContainers":0
+	}
+}
