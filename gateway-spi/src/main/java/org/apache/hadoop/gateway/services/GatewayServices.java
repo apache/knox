@@ -35,6 +35,7 @@ public interface GatewayServices extends Service, ProviderDeploymentContributor 
   public static final String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
   public static final String HOST_MAPPING_SERVICE = "HostMappingService";
   public static final String SERVER_INFO_SERVICE = "ServerInfoService";
+  public static final String TOPOLOGY_SERVICE = "TopologyService";
 
   public abstract Collection<String> getServiceNames();
 

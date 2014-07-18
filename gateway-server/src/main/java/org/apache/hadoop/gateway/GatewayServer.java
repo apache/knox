@@ -34,12 +34,12 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
-import org.apache.hadoop.gateway.topology.file.FileTopologyProvider;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -48,7 +48,6 @@ import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -68,20 +67,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class GatewayServer {
-  private static GatewayResources res = ResourcesFactory.get( GatewayResources.class );
-  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
-          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
+  private static GatewayResources res = ResourcesFactory.get(GatewayResources.class);
+  private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+      AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private static GatewayServer server;
   private static GatewayServices services;
-  
+
   private static Properties buildProperties;
 
   private Server jetty;
   private ErrorHandler errorHandler;
   private GatewayConfig config;
   private ContextHandlerCollection contexts;
-  private FileTopologyProvider monitor;
+  private TopologyService monitor;
   private TopologyListener listener;
   private Map<String, WebAppContext> deployments;
 
@@ -94,8 +93,7 @@ public class GatewayServer {
       } else if( cmd.hasOption( GatewayCommandLine.VERSION_LONG ) ) {
         printVersion();
       } else if( cmd.hasOption( GatewayCommandLine.REDEPLOY_LONG  ) ) {
-        GatewayConfig config = new GatewayConfigImpl();
-        redeployTopologies( config, cmd.getOptionValue( GatewayCommandLine.REDEPLOY_LONG ) );
+        redeployTopologies( cmd.getOptionValue( GatewayCommandLine.REDEPLOY_LONG ) );
       } else {
         buildProperties = loadBuildProperties();
         services = instantiateGatewayServices();
@@ -177,12 +175,12 @@ public class GatewayServer {
   private static void configureKerberosSecurity( GatewayConfig config ) {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
     System.setProperty(GatewayConfig.KRB5_CONFIG, config.getKerberosConfig());
-    System.setProperty(GatewayConfig.KRB5_DEBUG, 
+    System.setProperty(GatewayConfig.KRB5_DEBUG,
         Boolean.toString(config.isKerberosDebugEnabled()));
     System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
     System.setProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
   }
-  
+
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
     InputStream inputStream = GatewayServer.class.getClassLoader().getResourceAsStream( "build.properties" );
@@ -205,50 +203,11 @@ public class GatewayServer {
     input.close();
   }
 
-  private static void redeployTopology( Topology topology ) {
-    File topologyFile = new File( topology.getUri() );
-    long start = System.currentTimeMillis();
-    long limit = 1000L; // One second.
-    long elapsed = 1;
-    while( elapsed <= limit ) {
-      try {
-        long origTimestamp = topologyFile.lastModified();
-        long setTimestamp = Math.max( System.currentTimeMillis(), topologyFile.lastModified() + elapsed );
-        if( topologyFile.setLastModified( setTimestamp ) ) {
-          long newTimstamp = topologyFile.lastModified();
-          if( newTimstamp > origTimestamp ) {
-            break;
-          } else {
-            Thread.sleep( 10 );
-            elapsed = System.currentTimeMillis() - start;
-            continue;
-          }
-        } else {
-          log.failedToRedeployTopology( topology.getName() );
-          break;
-        }
-      } catch( InterruptedException e ) {
-        log.failedToRedeployTopology( topology.getName(), e );
-        e.printStackTrace();
-      }
-    }
-  }
 
-  public static void redeployTopologies( GatewayConfig config, String topologyName ) {
-    try {
-      File topologiesDir = calculateAbsoluteTopologiesDir( config );
-      FileTopologyProvider provider = new FileTopologyProvider( topologiesDir );
-      provider.reloadTopologies();
-      for( Topology topology : provider.getTopologies() ) {
-        if( topologyName == null || topologyName.equals( topology.getName() ) )  {
-          redeployTopology( topology );
-        }
-      }
-    } catch( SAXException e ) {
-      log.failedToRedeployTopologies( e );
-    } catch( IOException e ) {
-      log.failedToRedeployTopologies( e );
-    }
+  public static void redeployTopologies( String topologyName  ) {
+    TopologyService ts = getGatewayServices().getService(GatewayServices.TOPOLOGY_SERVICE);
+    ts.reloadTopologies();
+    ts.redeployTopologies(topologyName);
   }
 
   public static GatewayServer startGateway( GatewayConfig config, GatewayServices svcs ) {
@@ -307,7 +266,7 @@ public class GatewayServer {
 //    jetty.start();
 //  }
 
-  
+
   private synchronized void start() throws Exception {
 
     // Create the global context handler.
@@ -329,7 +288,7 @@ public class GatewayServer {
     if (config.isSSLEnabled()) {
       SSLService ssl = services.getService("SSLService");
       String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
-      Connector connector = (Connector) ssl.buildSSlConnector( keystoreFileName );
+      Connector connector = (Connector) ssl.buildSSlConnector(keystoreFileName);
       connector.setHost(address.getHostName());
       connector.setPort(address.getPort());
       jetty.addConnector(connector);
@@ -345,15 +304,15 @@ public class GatewayServer {
 
     // Create a dir/file based cluster topology provider.
     File topologiesDir = calculateAbsoluteTopologiesDir();
-    monitor = new FileTopologyProvider( topologiesDir );
-    monitor.addTopologyChangeListener( listener );
+    monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    monitor.addTopologyChangeListener(listener);
 
     // Load the current topologies.
-    log.loadingTopologiesFromDirectory( topologiesDir.getAbsolutePath() );
+    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor.reloadTopologies();
 
     // Start the topology monitor.
-    log.monitoringTopologyChangesInDirectory( topologiesDir.getAbsolutePath() );
+    log.monitoringTopologyChangesInDirectory(topologiesDir.getAbsolutePath());
     monitor.startMonitor();
   }
 

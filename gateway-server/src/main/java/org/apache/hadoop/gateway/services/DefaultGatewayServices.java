@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
@@ -96,6 +97,10 @@ public class DefaultGatewayServices implements GatewayServices {
     DefaultServerInfoService sis = new DefaultServerInfoService();
     sis.init( config, options );
     services.put( SERVER_INFO_SERVICE, sis );
+
+    DefaultTopologyService tops = new DefaultTopologyService();
+    tops.init(  config, options  );
+    services.put(  TOPOLOGY_SERVICE, tops  );
   }
   
   public void start() throws ServiceLifecycleException {
@@ -111,6 +116,9 @@ public class DefaultGatewayServices implements GatewayServices {
 
     ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
     sis.start();
+
+    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
+    tops.start();
   }
 
   public void stop() throws ServiceLifecycleException {
@@ -126,6 +134,9 @@ public class DefaultGatewayServices implements GatewayServices {
 
     ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
     sis.stop();
+
+    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
+    tops.stop();
   }
   
   /* (non-Javadoc)

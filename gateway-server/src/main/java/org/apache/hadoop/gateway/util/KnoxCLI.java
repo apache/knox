@@ -20,13 +20,13 @@ package org.apache.hadoop.gateway.util;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.gateway.GatewayCommandLine;
-import org.apache.hadoop.gateway.GatewayServer;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.CLIGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
@@ -273,6 +273,11 @@ public class KnoxCLI extends Configured implements Tool {
     protected KeystoreService getKeystoreService() {
       KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
       return ks;
+    }
+
+    protected TopologyService getTopologyService()  {
+      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      return ts;
     }
   }
   
@@ -586,8 +591,9 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() throws Exception {
-      GatewayConfig config = new GatewayConfigImpl();
-      GatewayServer.redeployTopologies( config, cluster );
+      TopologyService ts = getTopologyService();
+      ts.reloadTopologies();
+      ts.redeployTopologies(cluster);
     }
 
     @Override

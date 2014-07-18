@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
@@ -66,6 +67,10 @@ public class CLIGatewayServices implements GatewayServices {
     crypto.setAliasService(alias);
     crypto.init(config, options);
     services.put(CRYPTO_SERVICE, crypto);
+
+    DefaultTopologyService tops = new DefaultTopologyService();
+    tops.init(  config, options  );
+    services.put(TOPOLOGY_SERVICE, tops);
   }
   
   public void start() throws ServiceLifecycleException {
@@ -75,6 +80,9 @@ public class CLIGatewayServices implements GatewayServices {
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.start();
+
+    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
+    tops.start();
   }
 
   public void stop() throws ServiceLifecycleException {
@@ -84,6 +92,9 @@ public class CLIGatewayServices implements GatewayServices {
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.stop();
+
+    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
+    tops.stop();
   }
   
   /* (non-Javadoc)

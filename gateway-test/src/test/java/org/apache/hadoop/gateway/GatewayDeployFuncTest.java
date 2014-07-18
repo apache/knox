@@ -231,7 +231,7 @@ public class GatewayDeployFuncTest {
 
     // Redeploy and make sure the timestamp is updated.
     topoTimestampBefore = descriptor.lastModified();
-    GatewayServer.redeployTopologies( config, null );
+    GatewayServer.redeployTopologies( null );
     writeTime = System.currentTimeMillis();
     topoTimestampAfter = descriptor.lastModified();
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
@@ -248,7 +248,7 @@ public class GatewayDeployFuncTest {
 
     // Redeploy and make sure the timestamp is updated.
     topoTimestampBefore = descriptor.lastModified();
-    GatewayServer.redeployTopologies( config, "test-cluster" );
+    GatewayServer.redeployTopologies( "test-cluster" );
     writeTime = System.currentTimeMillis();
     topoTimestampAfter = descriptor.lastModified();
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
