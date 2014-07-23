@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ResponseBody;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -27,8 +28,6 @@ import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
-import org.eclipse.jetty.util.ajax.JSON;
-import org.glassfish.jersey.server.JSONP;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
@@ -51,8 +50,6 @@ import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.*;
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 
 public class GatewayAdminTopologyFuncTest {
@@ -209,7 +206,14 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "param" )
         .addTag( "name" ).addText( "urls./**" )
         .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
-        .addTag( "provider" )
+        .addTag("provider")
+        .addTag( "role" ).addText( "authorization" )
+        .addTag( "name" ).addText( "AclsAuthz" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag("param")
+        .addTag("name").addText("knox.acl")
+        .addTag("value").addText("admin;*;*").gotoParent().gotoParent()
+        .addTag("provider")
         .addTag( "role" ).addText( "identity-assertion" )
         .addTag( "enabled" ).addText( "true" )
         .addTag( "name" ).addText( "Pseudo" ).gotoParent()
@@ -256,11 +260,11 @@ public class GatewayAdminTopologyFuncTest {
   @Test
   public void testTopologyCollection() throws ClassNotFoundException {
 
-    String username = "guest";
-    String password = "guest-password";
+    String username = "admin";
+    String password = "admin-password";
     String serviceUrl =  clusterUrl + "/api/v1/topologies";
     String href = given()
-        .log().all()
+        //.log().all()
         .auth().preemptive().basic(username, password)
         .expect()
         //.log().all()
@@ -289,8 +293,8 @@ public class GatewayAdminTopologyFuncTest {
   @Test
   public void testTopologyObject() throws ClassNotFoundException {
 
-    String username = "guest";
-    String password = "guest-password";
+    String username = "admin";
+    String password = "admin-password";
     String serviceUrl =  clusterUrl + "/api/v1/topologies";
     String href = given()
         //.log().all()
@@ -323,6 +327,52 @@ public class GatewayAdminTopologyFuncTest {
         .body("timestamp", equalTo(Long.parseLong(timestamp)))
         .when()
         .get(href).andReturn().getBody();
+
+  }
+
+  @Test
+  public void testPositiveAuthorization() throws ClassNotFoundException{
+
+
+    String adminUser = "admin";
+    String adminPass = "admin-password";
+    String url =  clusterUrl + "/api/v1/topologies";
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(adminUser, adminPass)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(ContentType.JSON)
+        .body("name[0]", not(nullValue()))
+        .body("name[1]", not(nullValue()))
+        .body("uri[0]", not(nullValue()))
+        .body("uri[1]", not(nullValue()))
+        .body("href[0]", not(nullValue()))
+        .body("href[1]", not(nullValue()))
+        .body("timestamp[0]", not(nullValue()))
+        .body("timestamp[1]", not(nullValue()))
+        .get(url);
+
+  }
+
+  @Test
+  public void testNegativeAuthorization() throws ClassNotFoundException{
+
+    String guestUser = "guest";
+    String guestPass = "guest-password";
+    String url =  clusterUrl + "/api/v1/topologies";
+
+    given()
+        //.log().all()
+        .auth().basic(guestUser, guestPass)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_FORBIDDEN)
+        .get(url);
+
+
 
   }
 
