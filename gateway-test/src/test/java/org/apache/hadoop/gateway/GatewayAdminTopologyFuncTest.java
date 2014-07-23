@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.response.ResponseBody;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
@@ -26,6 +27,8 @@ import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
+import org.eclipse.jetty.util.ajax.JSON;
+import org.glassfish.jersey.server.JSONP;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
@@ -46,15 +49,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static com.jayway.restassured.RestAssured.*;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 
-public class GatewayAdminFuncTest {
+public class GatewayAdminTopologyFuncTest {
 
-  private static Class RESOURCE_BASE_CLASS = GatewayAdminFuncTest.class;
-  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
+  private static Class RESOURCE_BASE_CLASS = GatewayAdminTopologyFuncTest.class;
+  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
 
   public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
@@ -104,15 +108,22 @@ public class GatewayAdminFuncTest {
     File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    File descriptor = new File( topoDir, "test-cluster.xml" );
+    File descriptor = new File( topoDir, "admin.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
+    createKnoxTopology().toStream( stream );
     stream.close();
+
+    File descriptor2 = new File( topoDir, "test-cluster.xml" );
+    FileOutputStream stream2 = new FileOutputStream( descriptor2 );
+    createNormalTopology().toStream( stream2 );
+    stream.close();
+
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
     options.put( "persist-master", "false" );
     options.put( "master", "password" );
+
     try {
       srvcs.init( testConfig, options );
     } catch ( ServiceLifecycleException e ) {
@@ -124,10 +135,59 @@ public class GatewayAdminFuncTest {
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
-    clusterUrl = gatewayUrl + "/test-cluster";
+    clusterUrl = gatewayUrl + "/admin";
   }
 
-  private static XMLTag createTopology() {
+  private static XMLTag createNormalTopology() {
+    XMLTag xml = XMLDoc.newDocument( true )
+        .addRoot( "topology" )
+        .addTag( "gateway" )
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "webappsec" )
+        .addTag( "name" ).addText( "WebAppSec" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "param" )
+        .addTag( "name" ).addText( "csrf.enabled" )
+        .addTag( "value" ).addText( "true" ).gotoParent().gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "authentication" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm" )
+        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+        .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getPort() ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+        .addTag( "value" ).addText( "simple" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "urls./**" )
+        .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "identity-assertion" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "authorization" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "name" ).addText( "AclsAuthz" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "webhdfs-acl" )
+        .addTag( "value" ).addText( "hdfs;*;*" ).gotoParent()
+        .gotoRoot()
+        .addTag( "service" )
+        .addTag( "role" ).addText( "WEBHDFS" )
+        .addTag( "url" ).addText( "http://localhost:50070/webhdfs/v1" ).gotoParent()
+        .gotoRoot();
+//     System.out.println( "GATEWAY=" + xml.toString() );
+    return xml;
+  }
+
+  private static XMLTag createKnoxTopology() {
     XMLTag xml = XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -190,25 +250,80 @@ public class GatewayAdminFuncTest {
   @Ignore
   @Test
   public void waitForManualTesting() throws IOException {
-    System.out.println( clusterUrl );
     System.in.read();
   }
 
   @Test
-  public void testAdminService() throws ClassNotFoundException {
+  public void testTopologyCollection() throws ClassNotFoundException {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/api/v1/version";
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
+    String serviceUrl =  clusterUrl + "/api/v1/topologies";
+    String href = given()
+        .log().all()
+        .auth().preemptive().basic(username, password)
         .expect()
         //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .contentType( "application/json" )
-        .body( is( "{\"hash\":\"unknown\",\"version\":\"unknown\"}" ) )
-        .when().get( serviceUrl );
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/JSON")
+        .body("name[0]", not(nullValue()))
+        .body("name[1]", not(nullValue()))
+        .body("uri[0]", not(nullValue()))
+        .body("uri[1]", not(nullValue()))
+        .body("href[0]", not(nullValue()))
+        .body("href[1]", not(nullValue()))
+        .body("timestamp[0]", not(nullValue()))
+        .body("timestamp[1]", not(nullValue()))
+        .when().get(serviceUrl).thenReturn().getBody().path("href[1]");
+
+    given().auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/JSON")
+        .body("name", equalTo("test-cluster"))
+        .when().get(href);
+
+  }
+
+  @Test
+  public void testTopologyObject() throws ClassNotFoundException {
+
+    String username = "guest";
+    String password = "guest-password";
+    String serviceUrl =  clusterUrl + "/api/v1/topologies";
+    String href = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/JSON")
+        .when().get(serviceUrl).thenReturn().getBody().path("href[1]");
+
+    String timestamp = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/JSON")
+        .when().get(serviceUrl)
+        .thenReturn()
+        .getBody()
+        .path("timestamp[1]");
+
+    ResponseBody js = given()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("application/JSON")
+        .body("name", equalTo("test-cluster"))
+        .body("timestamp", equalTo(Long.parseLong(timestamp)))
+        .when()
+        .get(href).andReturn().getBody();
+
   }
 
 }

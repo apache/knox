@@ -29,7 +29,7 @@ public class AdminServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   public String getRole() {
-    return "ADMIN";
+    return "KNOX";
   }
 
   /* (non-Javadoc)
@@ -37,7 +37,7 @@ public class AdminServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   public String getName() {
-    return "admin";
+    return "knox";
   }
 
   /* (non-Javadoc)
@@ -53,7 +53,7 @@ public class AdminServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   protected String[] getPatterns() {
-    return new String[]{ "admin/**?**" };
+    return new String[]{ "*/**?**" };
   }
 
 }

@@ -32,7 +32,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
-@Path( "/admin/api/v1" )
+@Path( "/api/v1" )
 public class VersionResource {
   @Context 
   private HttpServletRequest request;
