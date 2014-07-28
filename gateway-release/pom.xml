@@ -187,6 +187,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-security-hadoopauth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-security-authz-acls</artifactId>
         </dependency>
         <dependency>

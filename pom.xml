@@ -49,6 +49,7 @@
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-webappsec</module>
         <module>gateway-provider-security-preauth</module>
+        <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
@@ -380,6 +381,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-preauth</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-hadoopauth</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
