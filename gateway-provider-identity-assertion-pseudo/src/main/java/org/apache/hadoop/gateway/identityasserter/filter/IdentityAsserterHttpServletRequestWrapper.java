@@ -122,6 +122,7 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
 
     if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
       params.put(DOAS_PRINCIPAL_PARAM, al.toArray(a));
+      params.remove(PRINCIPAL_PARAM);
     } else {
       params.put(PRINCIPAL_PARAM, al.toArray(a));
     }
