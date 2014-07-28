@@ -194,6 +194,7 @@ public class DeploymentFactoryFuncTest {
     topology.addService( service );
     Provider provider = new Provider();
     provider.setRole( "authentication" );
+    provider.setName( "ShiroProvider" );
     provider.setEnabled( true );
     Param param = new Param();
     param.setName( "contextConfigLocation" );

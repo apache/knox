@@ -133,6 +133,7 @@ public class GatewayAdminFuncTest {
         .addTag( "gateway" )
         .addTag( "provider" )
         .addTag( "role" ).addText( "authentication" )
+        .addTag( "name" ).addText( "ShiroProvider" )
         .addTag( "enabled" ).addText( "true" )
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm" )
