@@ -1,0 +1,88 @@
+{"FileStatuses": {
+    "FileStatus": [
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 1,
+            "fileId": 16394,
+            "group": "hadoop",
+            "length": 0,
+            "modificationTime": 1406152272147,
+            "owner": "yarn",
+            "pathSuffix": "app-logs",
+            "permission": "777",
+            "replication": 0,
+            "type": "DIRECTORY"
+        },
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 4,
+            "fileId": 16389,
+            "group": "hdfs",
+            "length": 0,
+            "modificationTime": 1406152166119,
+            "owner": "hdfs",
+            "pathSuffix": "apps",
+            "permission": "755",
+            "replication": 0,
+            "type": "DIRECTORY"
+        },
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 1,
+            "fileId": 16395,
+            "group": "hdfs",
+            "length": 0,
+            "modificationTime": 1406151981789,
+            "owner": "mapred",
+            "pathSuffix": "mapred",
+            "permission": "755",
+            "replication": 0,
+            "type": "DIRECTORY"
+        },
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 2,
+            "fileId": 16397,
+            "group": "hdfs",
+            "length": 0,
+            "modificationTime": 1406151981796,
+            "owner": "hdfs",
+            "pathSuffix": "mr-history",
+            "permission": "755",
+            "replication": 0,
+            "type": "DIRECTORY"
+        },
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 3,
+            "fileId": 16386,
+            "group": "hdfs",
+            "length": 0,
+            "modificationTime": 1406730902050,
+            "owner": "hdfs",
+            "pathSuffix": "tmp",
+            "permission": "777",
+            "replication": 0,
+            "type": "DIRECTORY"
+        },
+        {
+            "accessTime": 0,
+            "blockSize": 0,
+            "childrenNum": 4,
+            "fileId": 16387,
+            "group": "hdfs",
+            "length": 0,
+            "modificationTime": 1406152166125,
+            "owner": "hdfs",
+            "pathSuffix": "user",
+            "permission": "755",
+            "replication": 0,
+            "type": "DIRECTORY"
+        }
+    ]
+}}

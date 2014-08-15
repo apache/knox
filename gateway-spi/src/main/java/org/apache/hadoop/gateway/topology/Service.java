@@ -17,7 +17,9 @@
  */
 package org.apache.hadoop.gateway.topology;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Service {
@@ -25,6 +27,7 @@ public class Service {
   private String role;
   private String name;
   private Map<String, String> params = new LinkedHashMap<String, String>();
+  private List<String> urls;
 
   public String getRole() {
     return role;
@@ -42,14 +45,26 @@ public class Service {
     this.name = name;
   }
 
-  private String url;
-
-  public String getUrl() {
-    return url;
+  public List<String> getUrls() {
+    if ( urls == null ) {
+      urls = new ArrayList<String>();
+    }
+    return urls;
   }
 
-  public void setUrl( String url ) {
-    this.url = url;
+  public void setUrls( List<String> urls ) {
+    this.urls = urls;
+  }
+
+  public String getUrl() {
+    if ( !getUrls().isEmpty() ) {
+      return getUrls().get( 0 );
+    }
+    return null;
+  }
+
+  public void addUrl( String url) {
+    getUrls().add( url );
   }
 
   public Map<String, String> getParams() {

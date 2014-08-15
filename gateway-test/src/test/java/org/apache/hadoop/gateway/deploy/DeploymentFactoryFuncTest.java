@@ -82,7 +82,7 @@ public class DeploymentFactoryFuncTest {
     topology.setName( "test-cluster" );
     Service service = new Service();
     service.setRole( "WEBHDFS" );
-    service.setUrl( "http://localhost:50070/test-service-url" );
+    service.addUrl( "http://localhost:50070/test-service-url" );
     topology.addService( service );
 
     Provider provider = new Provider();
@@ -136,7 +136,7 @@ public class DeploymentFactoryFuncTest {
     topology.setName( "test-cluster" );
     Service service = new Service();
     service.setRole( "WEBHDFS" );
-    service.setUrl( "http://localhost:50070/test-service-url" );
+    service.addUrl( "http://localhost:50070/test-service-url" );
     topology.addService( service );
 
     Provider provider = new Provider();
@@ -190,7 +190,7 @@ public class DeploymentFactoryFuncTest {
     topology.setName( "test-cluster" );
     Service service = new Service();
     service.setRole( "WEBHDFS" );
-    service.setUrl( "http://localhost:50070/webhdfs" );
+    service.addUrl( "http://localhost:50070/webhdfs" );
     topology.addService( service );
     Provider provider = new Provider();
     provider.setRole( "authentication" );

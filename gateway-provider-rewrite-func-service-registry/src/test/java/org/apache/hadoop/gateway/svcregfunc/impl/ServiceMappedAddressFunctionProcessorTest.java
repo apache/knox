@@ -21,6 +21,8 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.hadoop.gateway.ha.provider.HaProvider;
+import org.apache.hadoop.gateway.ha.provider.HaServletContextListener;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.hostmap.HostMapper;
 import org.apache.hadoop.gateway.services.hostmap.HostMapperService;
@@ -34,10 +36,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.fail;
@@ -76,7 +75,13 @@ public class ServiceMappedAddressFunctionProcessorTest {
 
     desc = EasyMock.createNiceMock( ServiceMappedAddressFunctionDescriptor.class );
 
-    EasyMock.replay( hm, hms, reg, svc, env, desc, ctx );
+     HaProvider haProvider = EasyMock.createNiceMock( HaProvider.class );
+
+     EasyMock.expect(env.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(haProvider).anyTimes();
+
+     EasyMock.expect(haProvider.isHaEnabled(EasyMock.anyObject(String.class))).andReturn(Boolean.FALSE).anyTimes();
+
+     EasyMock.replay( hm, hms, reg, svc, env, desc, ctx, haProvider );
   }
 
   @Test

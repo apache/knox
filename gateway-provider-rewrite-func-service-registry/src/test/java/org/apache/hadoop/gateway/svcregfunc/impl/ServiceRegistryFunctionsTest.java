@@ -39,13 +39,7 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -80,7 +74,7 @@ public class ServiceRegistryFunctionsTest {
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
 
     GatewayServices mockGatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( mockGatewayServices.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( mockServiceRegistry ).anyTimes();
+    EasyMock.expect( mockGatewayServices.getService(GatewayServices.SERVICE_REGISTRY_SERVICE) ).andReturn( mockServiceRegistry ).anyTimes();
 
     EasyMock.replay( mockServiceRegistry, mockGatewayServices );
 

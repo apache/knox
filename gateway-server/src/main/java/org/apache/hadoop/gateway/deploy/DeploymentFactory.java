@@ -291,7 +291,7 @@ public abstract class DeploymentFactory {
             ServiceRegistry sr = (ServiceRegistry) gatewayServices.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
             if (sr != null) {
               String regCode = sr.getRegistrationCode(topology.getName());
-              sr.registerService(regCode, topology.getName(), service.getRole(), service.getUrl() );
+              sr.registerService(regCode, topology.getName(), service.getRole(), service.getUrls() );
             }
           }
         } catch( Exception e ) {

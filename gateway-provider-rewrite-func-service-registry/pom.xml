@@ -56,6 +56,10 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-ha</artifactId>
+        </dependency>
 
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->

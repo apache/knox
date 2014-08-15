@@ -36,6 +36,7 @@ import java.net.URL;
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
@@ -72,7 +73,9 @@ public class TopologyRulesModuleTest {
     Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is( "WEBHDFS" ) );
-    assertThat( comp.getUrl(), is( "http://host:80/webhdfs" ) );
+    assertThat( comp.getUrls().size(), is( 2 ) );
+    assertThat( comp.getUrls(), hasItem( "http://host1:80/webhdfs" ) );
+    assertThat( comp.getUrls(), hasItem( "http://host2:80/webhdfs" ) );
 
     Provider provider = topology.getProviders().iterator().next();
     assertThat( provider, notNullValue() );
@@ -107,7 +110,9 @@ public class TopologyRulesModuleTest {
     Service service = topology.getServices().iterator().next();
     assertThat( service, notNullValue() );
     assertThat( service.getRole(), is( "test-service-role" ) );
-    assertThat( service.getUrl(), is( "test-service-scheme://test-service-host:42/test-service-path" ) );
+    assertThat( service.getUrls().size(), is( 2 ) );
+    assertThat( service.getUrls(), hasItem( "test-service-scheme://test-service-host1:42/test-service-path" ) );
+    assertThat( service.getUrls(), hasItem( "test-service-scheme://test-service-host2:42/test-service-path" ) );
     assertThat( service.getName(), is( "test-service-name" ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
@@ -135,25 +140,30 @@ public class TopologyRulesModuleTest {
     assertThat( webhdfsService, notNullValue() );
     assertThat( webhdfsService.getRole(), is( "WEBHDFS" ) );
     assertThat( webhdfsService.getName(), nullValue() );
-    assertThat( webhdfsService.getUrl(), is( "http://host:50070/webhdfs" ) );
+    assertThat( webhdfsService.getUrls().size(), is( 2 ) );
+    assertThat( webhdfsService.getUrls(), hasItem( "http://host1:50070/webhdfs" ) );
+    assertThat( webhdfsService.getUrls(), hasItem( "http://host2:50070/webhdfs" ) );
 
     Service webhcatService = topology.getService( "WEBHCAT", null );
     assertThat( webhcatService, notNullValue() );
     assertThat( webhcatService.getRole(), is( "WEBHCAT" ) );
     assertThat( webhcatService.getName(), nullValue() );
-    assertThat( webhcatService.getUrl(), is( "http://host:50111/templeton" ) );
+    assertThat( webhcatService.getUrls().size(), is( 1 ) );
+    assertThat( webhcatService.getUrls(), hasItem( "http://host:50111/templeton" ) );
 
     Service oozieService = topology.getService( "OOZIE", null );
     assertThat( oozieService, notNullValue() );
     assertThat( oozieService.getRole(), is( "OOZIE" ) );
     assertThat( oozieService.getName(), nullValue() );
-    assertThat( oozieService.getUrl(), is( "http://host:11000/oozie" ) );
+    assertThat( webhcatService.getUrls().size(), is( 1 ) );
+    assertThat( oozieService.getUrls(), hasItem( "http://host:11000/oozie" ) );
 
     Service hiveService = topology.getService( "HIVE", null );
     assertThat( hiveService, notNullValue() );
     assertThat( hiveService.getRole(), is( "HIVE" ) );
     assertThat( hiveService.getName(), nullValue() );
-    assertThat( hiveService.getUrl(), is( "http://host:10000" ) );
+    assertThat( webhcatService.getUrls().size(), is( 1 ) );
+    assertThat( hiveService.getUrls(), hasItem( "http://host:10000" ) );
 
     Provider authenticationProvider = topology.getProvider( "authentication", "ShiroProvider" );
     assertThat( authenticationProvider, notNullValue() );
@@ -200,7 +210,9 @@ public class TopologyRulesModuleTest {
     Service service = topology.getServices().iterator().next();
     assertThat( service, notNullValue() );
     assertThat( service.getRole(), is( "test-service-role" ) );
-    assertThat( service.getUrl(), is( "test-service-scheme://test-service-host:42/test-service-path" ) );
+    assertThat( service.getUrls().size(), is( 2 ) );
+    assertThat( service.getUrls(), hasItem( "test-service-scheme://test-service-host1:42/test-service-path" ) );
+    assertThat( service.getUrls(), hasItem( "test-service-scheme://test-service-host2:42/test-service-path" ) );
     assertThat( service.getName(), is( "test-service-name" ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );

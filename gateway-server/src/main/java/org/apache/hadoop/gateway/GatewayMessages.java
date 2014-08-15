@@ -325,5 +325,4 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Computed roles/groups: {0} for principal: {1}" )
   void lookedUpUserRoles(Set<String> roleNames, String userName);
-
 }

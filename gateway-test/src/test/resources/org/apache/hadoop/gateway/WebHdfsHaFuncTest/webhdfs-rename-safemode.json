@@ -1,0 +1,5 @@
+{"RemoteException": {
+    "exception": "SafeModeException",
+    "javaClassName": "org.apache.hadoop.hdfs.server.namenode.SafeModeException",
+    "message": "Cannot rename /user/sumit.gupta/shellCommands.sh. Name node is in safe mode.\nIt was turned on manually. Use \"hdfs dfsadmin -safemode leave\" to turn safe mode off."
+}}

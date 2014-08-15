@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.io.IOException;
@@ -33,6 +34,7 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBase {
 
@@ -78,7 +80,9 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, rootResource, params );
     addIdentityAssertionFilter( context, service, rootResource );
     addAuthorizationFilter( context, service, rootResource );
-    addDispatchFilter( context, service, rootResource, "dispatch", "http-client" );
+    String dispatchName = getDispatchName( context );
+    String dispatchRole = "dispatch";
+    addDispatchFilter( context, service, rootResource, dispatchRole, dispatchName );
 
     ResourceDescriptor fileResource = context.getGatewayDescriptor().addResource();
     fileResource.role( service.getRole() );
@@ -93,7 +97,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, fileResource, params );
     addIdentityAssertionFilter( context, service, fileResource );
     addAuthorizationFilter( context, service, fileResource );
-    addDispatchFilter( context, service, fileResource, "dispatch", "http-client" );
+    addDispatchFilter( context, service, fileResource, dispatchRole, dispatchName );
 
     ResourceDescriptor homeResource = context.getGatewayDescriptor().addResource();
     homeResource.role( service.getRole() );
@@ -106,7 +110,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, homeResource, params );
     addIdentityAssertionFilter( context, service, homeResource );
     addAuthorizationFilter( context, service, homeResource );
-    addDispatchFilter( context, service, homeResource, "dispatch", "http-client" );
+    addDispatchFilter( context, service, homeResource, dispatchRole, dispatchName );
 
     ResourceDescriptor homeFileResource = context.getGatewayDescriptor().addResource();
     homeFileResource.role( service.getRole() );
@@ -121,7 +125,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, homeFileResource, params );
     addIdentityAssertionFilter( context, service, homeFileResource );
     addAuthorizationFilter( context, service, homeFileResource );
-    addDispatchFilter( context, service, homeFileResource, "dispatch", "http-client" );
+    addDispatchFilter( context, service, homeFileResource, dispatchRole, dispatchName );
   }
 
   public void contributeDataNodeResource( DeploymentContext context, Service service ) throws URISyntaxException {
@@ -153,4 +157,19 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     return rules;
   }
 
+   /**
+    * Returns the name of the dispatch to use by checking to see if 'HA' is enabled.
+    */
+   private String getDispatchName(DeploymentContext context) {
+      Provider provider = getProviderByRole(context, "ha");
+      if (provider != null && provider.isEnabled()) {
+         Map<String, String> params = provider.getParams();
+         if (params != null) {
+            if (params.containsKey(getRole())) {
+               return "ha-http-client";
+            }
+         }
+      }
+      return "http-client";
+   }
 }

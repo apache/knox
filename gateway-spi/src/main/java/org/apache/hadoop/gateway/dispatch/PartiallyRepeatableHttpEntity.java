@@ -37,7 +37,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
   private ReplayStream finalStream;
   private InputStream wrappedStream;
 
-  public PartiallyRepeatableHttpEntity( final HttpEntity entity, int bufferSize ) throws IOException {
+  public PartiallyRepeatableHttpEntity(final HttpEntity entity, int bufferSize) throws IOException {
     super( entity );
     this.wrappedStream = null;
     this.finalStream = null;
@@ -50,7 +50,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
     }
   }
 
-  public PartiallyRepeatableHttpEntity( final HttpEntity entity ) throws IOException {
+  public PartiallyRepeatableHttpEntity(final HttpEntity entity) throws IOException {
     this( entity, DEFAULT_BUFFER_SIZE );
   }
 

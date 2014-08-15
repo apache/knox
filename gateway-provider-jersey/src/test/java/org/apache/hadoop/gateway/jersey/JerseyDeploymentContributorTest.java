@@ -100,7 +100,7 @@ public class JerseyDeploymentContributorTest {
     Service service = new Service();
     service.setRole( "test-service-role" );
     service.setName( "test-service-name" );
-    service.setUrl( "http://test-service-host:777/test-service-path" );
+    service.addUrl( "http://test-service-host:777/test-service-path" );
 
     // This should end up calling providerContributor.contributeFilter
     serviceContributor.contributeService( context, service );

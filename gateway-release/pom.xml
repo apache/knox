@@ -197,6 +197,10 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-ha</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>${gateway-group}</groupId>

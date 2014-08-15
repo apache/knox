@@ -48,7 +48,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + SERVICE_TAG ).createObject().ofType( Service.class ).then().setNext( "addService" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + ROLE_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + NAME_TAG ).setBeanProperty();
-    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + URL_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + URL_TAG ).callMethod( "addUrl" ).usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();

@@ -49,17 +49,16 @@ public class ServiceUrlFunctionProcessor
     return results;
   }
 
-  public String resolve( String parameter ) throws Exception {
-    String url = lookupServiceUrl( parameter );
-    if( url != null ) {
-      URI outputUri;
-      URI inputUri = new URI( url );
-      String host = inputUri.getHost();
-      outputUri = new URI( inputUri.getScheme(), inputUri.getUserInfo(), host, inputUri.getPort(), inputUri.getPath(), inputUri.getQuery(), inputUri.getFragment() );
-      parameter = outputUri.toString();
-    }
-    return parameter;
+  private String resolve( String parameter ) throws Exception {
+     String url = lookupServiceUrl( parameter );
+     if( url != null ) {
+        URI outputUri;
+        URI inputUri = new URI( url );
+        String host = inputUri.getHost();
+        outputUri = new URI( inputUri.getScheme(), inputUri.getUserInfo(), host, inputUri.getPort(), inputUri.getPath(), inputUri.getQuery(), inputUri.getFragment() );
+        parameter = outputUri.toString();
+     }
+     return parameter;
   }
-
 }
 

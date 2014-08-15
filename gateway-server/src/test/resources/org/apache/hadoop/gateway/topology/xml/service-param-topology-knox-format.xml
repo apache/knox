@@ -31,7 +31,8 @@
     <service>
         <role>test-service-role</role>
         <name>test-service-name</name>
-        <url>test-service-scheme://test-service-host:42/test-service-path</url>
+        <url>test-service-scheme://test-service-host1:42/test-service-path</url>
+        <url>test-service-scheme://test-service-host2:42/test-service-path</url>
         <param>
             <name>test-service-param-name-1</name>
             <value>test-service-param-value-1</value>

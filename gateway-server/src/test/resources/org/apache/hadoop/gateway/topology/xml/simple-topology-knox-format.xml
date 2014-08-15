@@ -63,6 +63,7 @@
 
     <service>
         <role>WEBHDFS</role>
-        <url>http://host:80/webhdfs</url>
+        <url>http://host1:80/webhdfs</url>
+        <url>http://host2:80/webhdfs</url>
     </service>
 </topology>

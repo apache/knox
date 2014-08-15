@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway.svcregfunc.impl;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.hadoop.gateway.ha.provider.HaProvider;
+import org.apache.hadoop.gateway.ha.provider.HaServletContextListener;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 
@@ -28,6 +30,7 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
   private String cluster;
   private GatewayServices services;
   private ServiceRegistry registry;
+  private HaProvider haProvider;
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception {
@@ -46,6 +49,7 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
     if( registry == null ) {
       throw new IllegalArgumentException( "registry==null" );
     }
+    haProvider = environment.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME);
   }
 
   @Override
@@ -55,8 +59,10 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
   }
 
   public String lookupServiceUrl( String role ) throws Exception {
-    String url = registry.lookupServiceURL( cluster, role );
-    return url;
+    if (haProvider != null && haProvider.isHaEnabled(role)) {
+       return haProvider.getActiveURL(role);
+    }
+    return registry.lookupServiceURL( cluster, role );
   }
 
   String cluster() {

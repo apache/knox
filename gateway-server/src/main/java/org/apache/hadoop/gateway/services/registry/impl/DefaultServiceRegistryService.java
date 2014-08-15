@@ -36,6 +36,7 @@ import org.apache.hadoop.gateway.services.security.CryptoService;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -81,7 +82,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     registry.remove(clusterName);
   }
 
-  public boolean registerService(String regCode, String clusterName, String serviceName, String url) {
+  public boolean registerService(String regCode, String clusterName, String serviceName, List<String> urls) {
     boolean rc = false;
     // verify the signature of the regCode
     if (regCode == null) {
@@ -102,7 +103,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       RegEntry regEntry = new RegEntry();
       regEntry.setClusterName(clusterName);
       regEntry.setServiceName(serviceName);
-      regEntry.setUrl(url);
+      regEntry.setUrls(urls);
       clusterServices.put(serviceName , regEntry);
       String json = renderAsJsonString(registry);
       try {
@@ -131,17 +132,26 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     return json;
   }
   
+  @Override
   public String lookupServiceURL(String clusterName, String serviceName) {
-    String url = null;
+    List<String> urls = lookupServiceURLs( clusterName, serviceName );
+    if ( urls != null && !urls.isEmpty() ) {
+      return urls.get( 0 );
+    }
+    return null;
+  }
+
+  @Override
+  public List<String> lookupServiceURLs( String clusterName, String serviceName ) {
     RegEntry entry = null;
     HashMap clusterServices = registry.get(clusterName);
     if (clusterServices != null) {
       entry = (RegEntry) clusterServices.get(serviceName);
       if( entry != null ) {
-        url = entry.url;
+        return entry.getUrls();
       }
     }
-    return url;
+    return null;
   }
   
   private HashMap<String, HashMap<String,RegEntry>> getMapFromJsonString(String json) {

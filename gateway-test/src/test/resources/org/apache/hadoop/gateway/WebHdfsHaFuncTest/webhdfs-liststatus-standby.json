@@ -1,0 +1,5 @@
+{"RemoteException": {
+    "exception": "StandbyException",
+    "javaClassName": "org.apache.hadoop.ipc.StandbyException",
+    "message": "Operation category READ is not supported in state standby"
+}}

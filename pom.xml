@@ -54,6 +54,7 @@
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-provider-jersey</module>
+        <module>gateway-provider-ha</module>
         <module>gateway-service-admin</module>
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
@@ -431,6 +432,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-jersey</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-ha</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

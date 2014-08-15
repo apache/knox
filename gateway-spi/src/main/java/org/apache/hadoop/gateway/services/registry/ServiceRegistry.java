@@ -17,13 +17,17 @@
  */
 package org.apache.hadoop.gateway.services.registry;
 
+import java.util.List;
+
 public interface ServiceRegistry {
 
   String getRegistrationCode(String clusterName);
   
-  boolean registerService(String regCode, String ClusterName, String serviceName, String url);
+  boolean registerService(String regCode, String clusterName, String serviceName, List<String> urls);
   
-  String lookupServiceURL(String ClusterName, String serviceName);
+  String lookupServiceURL(String clusterName, String serviceName);
+
+  List<String> lookupServiceURLs( String clusterName, String serviceName );
   
   void removeClusterServices(String clusterName);
 

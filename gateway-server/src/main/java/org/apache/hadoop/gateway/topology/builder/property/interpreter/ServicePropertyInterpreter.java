@@ -37,6 +37,7 @@ public class ServicePropertyInterpreter extends AbstractInterpreter {
         this.topology = topology;
     }
 
+    @Override
     public void interpret(String token, String value) throws InterpretException {
         int dotPosition = token.indexOf(DOT);
         if (dotPosition == -1) {
@@ -67,7 +68,7 @@ public class ServicePropertyInterpreter extends AbstractInterpreter {
         }
 
         if (SERVICE_URL.equalsIgnoreCase(nextToken)) {
-            service.setUrl( value );
+            service.addUrl( value );
         } else {
           dotPosition = nextToken.indexOf(DOT);
           if (dotPosition != -1) {
