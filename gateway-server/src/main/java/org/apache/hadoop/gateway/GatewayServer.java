@@ -430,6 +430,7 @@ public class GatewayServer {
           if (topology.getName().equals(config.getDefaultTopologyName())) {
             topology.setName("_default");
             handleCreateDeployment(topology, deployDir);
+            topology.setName(config.getDefaultTopologyName());
           }
         } else {
           auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
