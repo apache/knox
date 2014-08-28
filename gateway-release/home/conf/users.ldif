@@ -42,6 +42,7 @@ sn: User
 uid: guest
 userPassword:guest-password
 
+# entry for sample user admin
 dn: uid=admin,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
@@ -51,3 +52,51 @@ cn: Admin
 sn: Admin
 uid: admin
 userPassword:admin-password
+
+# entry for sample user sam
+dn: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: sam
+sn: sam
+uid: sam
+userPassword:sam-password
+
+# entry for sample user tom
+dn: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: tom
+sn: tom
+uid: tom
+userPassword:tom-password
+
+# create FIRST Level groups branch
+dn: ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: groups
+description: generic groups branch
+
+# create the analyst group under groups
+dn: cn=analyst,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: analyst
+description:analyst  group
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
+
+
+# create the scientist group under groups
+dn: cn=scientist,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: scientist
+description: scientist group
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+
