@@ -45,7 +45,7 @@ or more contributor license agreements.  See the NOTICE file
         <java-type name="Service" xml-accessor-type="NONE">
             <java-attributes>
                 <xml-element java-attribute="role" name="role"/>
-                <xml-element java-attribute="url" name="url"/>
+                <xml-element java-attribute="urls" name="url"/>
                 <xml-element java-attribute="paramsList" name="param"/>
             </java-attributes>
         </java-type>

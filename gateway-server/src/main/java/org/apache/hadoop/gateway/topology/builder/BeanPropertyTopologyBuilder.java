@@ -65,7 +65,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         Topology topology = new Topology();
         topology.setName(name);
 
-        for (Provider provider : providers) {
+          for (Provider provider : providers) {
             topology.addProvider(provider);
         }
 

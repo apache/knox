@@ -45,11 +45,10 @@
 	    <groupId>${gateway-group}</groupId>
 	    <artifactId>gateway-provider-jersey</artifactId>
 	  </dependency>
-		<dependency>
-		  <groupId>com.owlike</groupId>
-		  <artifactId>genson</artifactId>
-		  <version>0.99</version>
-		</dependency>
+    <dependency>
+      <groupId>org.eclipse.persistence</groupId>
+      <artifactId>eclipselink</artifactId>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

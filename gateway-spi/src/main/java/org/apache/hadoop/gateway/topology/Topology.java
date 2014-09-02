@@ -29,9 +29,9 @@ public class Topology {
   private URI uri;
   private String name;
   private long timestamp;
-  private List<Provider> providerList = new ArrayList<Provider>();
+  public List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
-  private List<Service> services = new ArrayList<Service>();
+  public List<Service> services = new ArrayList<Service>();
   private Map<String, Map<String, Service>> serviceMap = new HashMap<String, Map<String, Service>>();
 
   public URI getUri() {

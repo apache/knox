@@ -15,31 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services.topology;
 
-import org.apache.hadoop.gateway.services.Service;
-import org.apache.hadoop.gateway.topology.Topology;
-import org.apache.hadoop.gateway.topology.TopologyListener;
+package org.apache.hadoop.gateway.service.admin;
 
-import java.util.Collection;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.ext.Provider;
 
+@Provider
+@Produces( MediaType.APPLICATION_XML )
+public class TopologyContextResolverXML extends TopologyContextResolver {
 
-public interface TopologyService extends Service {
+  public TopologyContextResolverXML(){
+    super("org/apache/hadoop/gateway/topology/topology_binding-xml.xml");
 
-  public void reloadTopologies();
-
-  public void deployTopology(Topology t);
-
-  public void redeployTopologies(String topologyName);
-
-  public void addTopologyChangeListener(TopologyListener listener);
-
-  public void startMonitor() throws Exception;
-
-  public void stopMonitor() throws Exception;
-
-  public Collection<Topology> getTopologies();
-
-  public void deleteTopology(Topology t);
-
+  }
 }

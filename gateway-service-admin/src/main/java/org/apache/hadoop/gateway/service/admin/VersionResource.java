@@ -23,11 +23,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServerInfoService;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -38,7 +41,7 @@ public class VersionResource {
   private HttpServletRequest request;
 
   @GET
-  @Produces({APPLICATION_JSON})
+  @Produces({APPLICATION_JSON, APPLICATION_XML})
   @Path( "version" )
   public Response getVersion() {
     ServerVersion version = getServerVersion();
@@ -60,9 +63,13 @@ public class VersionResource {
 
     return new ServerVersion(sis.getBuildVersion(), sis.getBuildHash());
   }
-  
+
+  @XmlRootElement(name="ServerVersion")
   public static class ServerVersion {
+
+    @XmlElement(name="version")
     private String version;
+    @XmlElement(name="hash")
     private String hash;
     
     public ServerVersion(String version, String hash) {
@@ -70,6 +77,8 @@ public class VersionResource {
       this.version = version;
       this.hash = hash;
     }
+
+    public ServerVersion() { }
     
     public String getVersion() {
       return version;

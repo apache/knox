@@ -18,14 +18,19 @@
 package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.response.ResponseBody;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
+import org.apache.hadoop.gateway.topology.Param;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -37,19 +42,26 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.*;
-import static org.hamcrest.CoreMatchers.*;
+import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class GatewayAdminTopologyFuncTest {
@@ -265,30 +277,55 @@ public class GatewayAdminTopologyFuncTest {
     String username = "admin";
     String password = "admin-password";
     String serviceUrl =  clusterUrl + "/api/v1/topologies";
-    String href = given()
+    String href1 = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .body("topologies.topology[0].name", not(nullValue()))
+        .body("topologies.topology[1].name", not(nullValue()))
+        .body("topologies.topology[0].uri", not(nullValue()))
+        .body("topologies.topology[1].uri", not(nullValue()))
+        .body("topologies.topology[0].href", not(nullValue()))
+        .body("topologies.topology[1].href", not(nullValue()))
+        .body("topologies.topology[0].timestamp", not(nullValue()))
+        .body("topologies.topology[1].timestamp", not(nullValue()))
+        .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology.href[1]");
+
+       given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .expect()
+        //.log().all()
+        .body("topologies.topology.href[1]", equalTo(href1))
+        .statusCode(HttpStatus.SC_OK)
+        .when().get(serviceUrl);
+
+
+
+
+
+    given()
         //.log().all()
         .auth().preemptive().basic(username, password)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
-        .contentType("application/JSON")
-        .body("name[0]", not(nullValue()))
-        .body("name[1]", not(nullValue()))
-        .body("uri[0]", not(nullValue()))
-        .body("uri[1]", not(nullValue()))
-        .body("href[0]", not(nullValue()))
-        .body("href[1]", not(nullValue()))
-        .body("timestamp[0]", not(nullValue()))
-        .body("timestamp[1]", not(nullValue()))
-        .when().get(serviceUrl).thenReturn().getBody().path("href[1]");
+        .contentType(MediaType.APPLICATION_XML)
+        .get(serviceUrl);
+
 
     given().auth().preemptive().basic(username, password)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
-        .contentType("application/JSON")
-        .body("name", equalTo("test-cluster"))
-        .when().get(href);
+        .contentType("application/json")
+        .body("topology.name", equalTo("test-cluster"))
+        .when().get(href1);
 
   }
 
@@ -298,37 +335,57 @@ public class GatewayAdminTopologyFuncTest {
     String username = "admin";
     String password = "admin-password";
     String serviceUrl =  clusterUrl + "/api/v1/topologies";
-    String href = given()
+    String hrefJson = given()
         //.log().all()
         .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
-        .contentType("application/JSON")
-        .when().get(serviceUrl).thenReturn().getBody().path("href[1]");
+        .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology[1].href");
 
-    String timestamp = given()
+    String timestampJson = given()
         //.log().all()
         .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
-        .contentType("application/JSON")
-        .when().get(serviceUrl)
-        .thenReturn()
-        .getBody()
-        .path("timestamp[1]");
+        .contentType("application/json")
+        .when().get(serviceUrl).andReturn()
+        .getBody().path("topologies.topology[1].timestamp");
 
-    ResponseBody js = given()
+        given()
+        //.log().all()
         .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
-        .contentType("application/JSON")
-        .body("name", equalTo("test-cluster"))
-        .body("timestamp", equalTo(Long.parseLong(timestamp)))
+        .body("topology.name", equalTo("test-cluster"))
+        .body("topology.timestamp", equalTo(Long.parseLong(timestampJson)))
         .when()
-        .get(href).andReturn().getBody();
+        .get(hrefJson);
+
+
+    String hrefXml = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology[1].href");
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .when()
+        .get(hrefXml);
 
   }
 
@@ -347,14 +404,14 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(ContentType.JSON)
-        .body("name[0]", not(nullValue()))
-        .body("name[1]", not(nullValue()))
-        .body("uri[0]", not(nullValue()))
-        .body("uri[1]", not(nullValue()))
-        .body("href[0]", not(nullValue()))
-        .body("href[1]", not(nullValue()))
-        .body("timestamp[0]", not(nullValue()))
-        .body("timestamp[1]", not(nullValue()))
+        .body("topologies.topology[0].name", not(nullValue()))
+        .body("topologies.topology[1].name", not(nullValue()))
+        .body("topologies.topology[0].uri", not(nullValue()))
+        .body("topologies.topology[1].uri", not(nullValue()))
+        .body("topologies.topology[0].href", not(nullValue()))
+        .body("topologies.topology[1].href", not(nullValue()))
+        .body("topologies.topology[0].timestamp", not(nullValue()))
+        .body("topologies.topology[1].timestamp", not(nullValue()))
         .get(url);
 
   }
@@ -374,6 +431,225 @@ public class GatewayAdminTopologyFuncTest {
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .get(url);
 
+
+
+  }
+
+  private Topology createTestTopology(){
+    Topology topology = new Topology();
+    topology.setName("test-topology");
+
+    try {
+      topology.setUri(new URI(gatewayUrl + "/" + topology.getName()));
+    } catch (URISyntaxException ex) {
+      assertThat(topology.getUri(), not(nullValue()));
+    }
+
+    Provider identityProvider = new Provider();
+    identityProvider.setName("Pseudo");
+    identityProvider.setRole("identity-assertion");
+    identityProvider.setEnabled(true);
+
+    Provider AuthenicationProvider = new Provider();
+    AuthenicationProvider.setName("ShiroProvider");
+    AuthenicationProvider.setRole("authentication");
+    AuthenicationProvider.setEnabled(true);
+
+    Param ldapMain = new Param();
+    ldapMain.setName("main.ldapRealm");
+    ldapMain.setValue("org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm");
+
+    Param ldapGroupContextFactory = new Param();
+    ldapGroupContextFactory.setName("main.ldapGroupContextFactory");
+    ldapGroupContextFactory.setValue("org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory");
+
+    Param ldapRealmContext = new Param();
+    ldapRealmContext.setName("main.ldapRealm.contextFactory");
+    ldapRealmContext.setValue("$ldapGroupContextFactory");
+
+    Param ldapURL = new Param();
+    ldapURL.setName("main.ldapRealm.contextFactory.url");
+    ldapURL.setValue("ldap://localhost:" + ldapTransport.getPort());
+
+    Param ldapUserTemplate = new Param();
+    ldapUserTemplate.setName("main.ldapRealm.userDnTemplate");
+    ldapUserTemplate.setValue("uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
+
+    Param authcBasic = new Param();
+    authcBasic.setName("urls./**");
+    authcBasic.setValue("authcBasic");
+
+    AuthenicationProvider.addParam(ldapGroupContextFactory);
+    AuthenicationProvider.addParam(ldapMain);
+    AuthenicationProvider.addParam(ldapRealmContext);
+    AuthenicationProvider.addParam(ldapURL);
+    AuthenicationProvider.addParam(ldapUserTemplate);
+    AuthenicationProvider.addParam(authcBasic);
+
+    Service testService = new Service();
+    testService.setRole("test-service-role");
+
+    topology.addProvider(AuthenicationProvider);
+    topology.addProvider(identityProvider);
+    topology.addService(testService);
+    topology.setTimestamp(System.nanoTime());
+
+    return topology;
+  }
+
+  @Test
+  public void testDeployTopology() throws ClassNotFoundException {
+
+    Topology testTopology = createTestTopology();
+
+    String user = "guest";
+    String password = "guest-password";
+
+    String url = gatewayUrl + "/" + testTopology.getName() + "/test-service-path/test-service-resource";
+
+    GatewayServices srvs = GatewayServer.getGatewayServices();
+
+    TopologyService ts = srvs.getService(GatewayServices.TOPOLOGY_SERVICE);
+
+    assertThat(testTopology, not(nullValue()));
+    assertThat(testTopology.getName(), is("test-topology"));
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(user, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_NOT_FOUND)
+        .when()
+        .get(url);
+
+    ts.deployTopology(testTopology);
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(user, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType("text/plain")
+        .body(is("test-service-response"))
+        .when()
+        .get(url).getBody();
+
+    ts.deleteTopology(testTopology);
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(user, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_NOT_FOUND)
+        .when()
+        .get(url);
+  }
+
+  @Test
+  public void testDeleteTopology() throws ClassNotFoundException {
+
+    Topology test = createTestTopology();
+
+    String username = "admin";
+    String password = "admin-password";
+    String url =  clusterUrl + "/api/v1/topologies/" + test.getName();
+
+    GatewayServices gs = GatewayServer.getGatewayServices();
+
+    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+
+    ts.deployTopology(test);
+
+    given()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .get(url);
+
+    given()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .delete(url);
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .expect()
+        //.log().all()
+        .statusCode(HttpStatus.SC_NO_CONTENT)
+        .get(url);
+  }
+
+  @Test
+  public void testPutTopology() throws ClassNotFoundException {
+
+    String username = "admin";
+    String password = "admin-password";
+    String url =  clusterUrl + "/api/v1/topologies/test-put";
+
+    String JsonPut =
+        given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
+        .get(clusterUrl + "/api/v1/topologies/test-cluster")
+        .getBody().asString();
+
+    String XML = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .body(JsonPut)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        //.log().all()
+        .put(url).getBody().asString();
+
+
+        given()
+            .auth().preemptive().basic(username, password)
+            .header("Accept", MediaType.APPLICATION_XML)
+            .expect()
+            .statusCode(HttpStatus.SC_OK)
+            .body(equalTo(XML))
+            .get(url)
+            .getBody().asString();
+
+
+    String XmlPut =
+        given()
+            .auth().preemptive().basic(username, password)
+            .header("Accept", MediaType.APPLICATION_XML)
+            .get(clusterUrl + "/api/v1/topologies/test-cluster")
+            .getBody().asString();
+
+    String JSON = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .contentType(MediaType.APPLICATION_XML)
+        .header("Accept", MediaType.APPLICATION_JSON)
+        .body(XmlPut)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+            //.log().all()
+        .put(url).getBody().asString();
+
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(equalTo(JSON))
+        .get(url)
+        .getBody().asString();
 
 
   }

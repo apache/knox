@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<xml-bindings
+    xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/oxm"
+    package-name="org.apache.hadoop.gateway.topology" 
+    xml-mapping-metadata-complete="true">
+    <xml-schema
+        element-form-default="QUALIFIED"/>
+    <java-types>
+        <java-type name="Topology" xml-accessor-type="NONE">
+            <xml-type prop-order="name providers services timestamp"/>
+            <xml-root-element/>
+            <java-attributes prop-order="providers services">
+                <xml-element java-attribute="providers" name="providers"/>
+                <xml-element java-attribute="services" name="services"/>
+                <xml-element java-attribute="name" name="name"/>
+                <xml-element java-attribute="timestamp" name="timestamp"/>
+            </java-attributes>
+        </java-type>
+        <java-type name="Provider" xml-accessor-type="NONE">
+            <xml-type prop-order="enabled name paramsList role"/>
+            <java-attributes>
+                <xml-element java-attribute="name" name="name"/>
+                <xml-element java-attribute="enabled" name="enabled"/>
+                <xml-element java-attribute="role" name="role"/>
+                <xml-variable-node java-attribute="paramsList" java-variable-attribute="name">
+                    <xml-element-wrapper name="params"/>
+                </xml-variable-node>
+            </java-attributes>
+        </java-type>
+        <java-type name="Service" xml-accessor-type="NONE">
+            <java-attributes>
+                <xml-element java-attribute="role" name="role"/>
+                <xml-element java-attribute="urls" name="urls"/>
+                <xml-variable-node java-attribute="paramsList" java-variable-attribute="name">
+                    <xml-element-wrapper name="params"/>
+                </xml-variable-node>
+            </java-attributes>
+        </java-type>
+        <java-type name="Param" xml-accessor-type="NONE">
+            <java-attributes>
+                <xml-value java-attribute="value"/>
+            </java-attributes>
+        </java-type>
+    </java-types>
+</xml-bindings>

@@ -32,29 +32,32 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
-import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
-import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
-import org.apache.hadoop.gateway.topology.TopologyEvent;
+import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
 import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.hadoop.gateway.topology.xml.KnoxFormatXmlTopologyRules;
+import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Collections;
-
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -214,6 +217,36 @@ public class DefaultTopologyService
     return map;
   }
 
+  public void deployTopology(Topology t){
+
+    try {
+      File temp = new File(directory.getAbsolutePath() + "/" + t.getName() + ".xml.temp");
+      Package topologyPkg = Topology.class.getPackage();
+      String pkgName = topologyPkg.getName();
+      String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
+
+      Map<String, Object> properties = new HashMap<String, Object>(1);
+      properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
+      JAXBContext jc = JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
+      Marshaller mr = jc.createMarshaller();
+
+      mr.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+      mr.marshal(t, temp);
+
+      File topology = new File(directory.getAbsolutePath() + "/" + t.getName() + ".xml");
+      if(!temp.renameTo(topology)) {
+        FileUtils.forceDelete(temp);
+        throw new IOException("Could not rename temp file");
+      }
+
+    } catch (JAXBException e) {
+      log.failedToDeployTopology(t.getName(), e);
+    } catch (IOException io) {
+      log.failedToDeployTopology(t.getName(), io);
+    }
+    reloadTopologies();
+  }
+
   public void redeployTopologies(String topologyName) {
 
     for (Topology topology : getTopologies()) {
@@ -237,6 +270,21 @@ public class DefaultTopologyService
       // Maybe it makes sense to throw exception
       log.failedToReloadTopologies(e);
     }
+  }
+
+  public void deleteTopology(Topology t) {
+    File topoDir = directory;
+
+    if(topoDir.exists() && topoDir.canRead()) {
+      File[] results = topoDir.listFiles();
+      for (File f : results) {
+        String fName = FilenameUtils.getBaseName(f.getName());
+        if(fName.equals(t.getName())) {
+          f.delete();
+        }
+      }
+    }
+    reloadTopologies();
   }
 
   private void notifyChangeListeners(List<TopologyEvent> events) {

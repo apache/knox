@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.topology;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,20 @@ public class Service {
 
   public Map<String, String> getParams() {
     return params;
+  }
+
+  private Collection<Param> getParamsList(){
+
+    ArrayList<Param> paramList = new ArrayList<Param>();
+
+    for(Map.Entry<String, String> entry : params.entrySet()){
+      Param p = new Param();
+      p.setName(entry.getKey());
+      p.setValue(entry.getValue());
+      paramList.add(p);
+    }
+
+    return paramList;
   }
 
   public void setParams(Map<String, String> params) {
