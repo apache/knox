@@ -90,7 +90,11 @@ public class WebHdfsHaHttpClientDispatchTest {
       WebHdfsHaHttpClientDispatch dispatch = new WebHdfsHaHttpClientDispatch();
       dispatch.init(filterConfig);
       long startTime = System.currentTimeMillis();
-      dispatch.executeRequest(outboundRequest, inboundRequest, outboundResponse);
+      try {
+         dispatch.executeRequest(outboundRequest, inboundRequest, outboundResponse);
+      } catch (IOException e) {
+        //this is expected after the failover limit is reached
+      }
       long elapsedTime = System.currentTimeMillis() - startTime;
       Assert.assertEquals(uri2.toString(), provider.getActiveURL(serviceName));
       //test to make sure the sleep took place

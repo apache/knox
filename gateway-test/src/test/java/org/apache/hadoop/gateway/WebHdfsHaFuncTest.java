@@ -210,6 +210,26 @@ public class WebHdfsHaFuncTest {
    }
 
    @Test
+   public void testFailoverLimit() throws Exception {
+      String username = "hdfs";
+      String password = "hdfs-password";
+      //Shutdown master and expect standby to serve the list response
+      masterServer.stop();
+      standbyServer.stop();
+      given()
+            .auth().preemptive().basic(username, password)
+            .header("X-XSRF-Header", "jksdhfkhdsf")
+            .queryParam("op", "LISTSTATUS")
+            .expect()
+//            .log().ifError()
+            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+            .when().get(driver.getUrl("WEBHDFS") + "/v1/");
+      standbyServer.start();
+      masterServer.start();
+   }
+
+
+   @Test
    public void testServerInStandby() throws IOException {
       String username = "hdfs";
       String password = "hdfs-password";
@@ -241,6 +261,59 @@ public class WebHdfsHaFuncTest {
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
+            .when().get(driver.getUrl("WEBHDFS") + "/v1/");
+      masterServer.isEmpty();
+      standbyServer.isEmpty();
+   }
+
+   @Test
+   public void testServerInStandbyFailoverLimit() throws IOException {
+      String username = "hdfs";
+      String password = "hdfs-password";
+      //make master the server that is in standby
+      masterServer.expect()
+            .method("GET")
+            .pathInfo("/webhdfs/v1/")
+            .queryParam("op", "LISTSTATUS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-liststatus-standby.json"))
+            .contentType("application/json");
+      standbyServer.expect()
+            .method("GET")
+            .pathInfo("/webhdfs/v1/")
+            .queryParam("op", "LISTSTATUS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-liststatus-standby.json"))
+            .contentType("application/json");
+      masterServer.expect()
+            .method("GET")
+            .pathInfo("/webhdfs/v1/")
+            .queryParam("op", "LISTSTATUS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-liststatus-standby.json"))
+            .contentType("application/json");
+      standbyServer.expect()
+            .method("GET")
+            .pathInfo("/webhdfs/v1/")
+            .queryParam("op", "LISTSTATUS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-liststatus-standby.json"))
+            .contentType("application/json");
+      given()
+            .auth().preemptive().basic(username, password)
+            .header("X-XSRF-Header", "jksdhfkhdsf")
+            .queryParam("op", "LISTSTATUS")
+            .expect()
+//            .log().ifError()
+            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
       standbyServer.isEmpty();
@@ -280,6 +353,63 @@ public class WebHdfsHaFuncTest {
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .content("boolean", is(true))
+            .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
+      masterServer.isEmpty();
+   }
+
+   @Test
+   public void testServerInSafeModeRetryLimit() throws IOException {
+      String username = "hdfs";
+      String password = "hdfs-password";
+      //master is in safe mode
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
+            .queryParam("op", "RENAME")
+            .queryParam("destination", "/user/hdfs/foo.txt")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
+            .contentType("application/json");
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
+            .queryParam("op", "RENAME")
+            .queryParam("destination", "/user/hdfs/foo.txt")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
+            .contentType("application/json");
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
+            .queryParam("op", "RENAME")
+            .queryParam("destination", "/user/hdfs/foo.txt")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
+            .contentType("application/json");
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
+            .queryParam("op", "RENAME")
+            .queryParam("destination", "/user/hdfs/foo.txt")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
+            .contentType("application/json");
+      given()
+            .auth().preemptive().basic(username, password)
+            .header("X-XSRF-Header", "jksdhfkhdsf")
+            .queryParam("op", "RENAME")
+            .queryParam("destination", "/user/hdfs/foo.txt")
+            .expect()
+//            .log().ifError()
+            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
       masterServer.isEmpty();
    }

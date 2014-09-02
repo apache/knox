@@ -73,20 +73,20 @@ public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
    }
 
    @Override
-   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
       HttpResponse inboundResponse = null;
       try {
          inboundResponse = executeOutboundRequest(outboundRequest);
          writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
       } catch (StandbyException e) {
          LOG.errorReceivedFromStandbyNode(e);
-         failoverRequest(outboundRequest, inboundRequest, outboundResponse);
+         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
       } catch (SafeModeException e) {
          LOG.errorReceivedFromSafeModeNode(e);
-         retryRequest(outboundRequest, inboundRequest, outboundResponse);
+         retryRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
       } catch (IOException e) {
          LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
-         failoverRequest(outboundRequest, inboundRequest, outboundResponse);
+         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
       }
    }
 
@@ -111,11 +111,11 @@ public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
       super.writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
    }
 
-   private void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+   private void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
       LOG.failingOverRequest(outboundRequest.getURI().toString());
       AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
       if (counter == null) {
-         counter = new AtomicInteger(1);
+         counter = new AtomicInteger(0);
       }
       inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
       if (counter.incrementAndGet() <= maxFailoverAttempts) {
@@ -134,14 +134,19 @@ public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
          LOG.maxFailoverAttemptsReached(maxFailoverAttempts, resourceRole);
+         if (inboundResponse != null) {
+            writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
+         } else {
+            throw new IOException(exception);
+         }
       }
    }
 
-   private void retryRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+   private void retryRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
       LOG.retryingRequest(outboundRequest.getURI().toString());
       AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(RETRY_COUNTER_ATTRIBUTE);
       if (counter == null) {
-         counter = new AtomicInteger(1);
+         counter = new AtomicInteger(0);
       }
       inboundRequest.setAttribute(RETRY_COUNTER_ATTRIBUTE, counter);
       if (counter.incrementAndGet() <= maxRetryAttempts) {
@@ -155,6 +160,11 @@ public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
          LOG.maxRetryAttemptsReached(maxRetryAttempts, resourceRole, outboundRequest.getURI().toString());
+         if (inboundResponse != null) {
+            writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
+         } else {
+            throw new IOException(exception);
+         }
       }
    }
 }
