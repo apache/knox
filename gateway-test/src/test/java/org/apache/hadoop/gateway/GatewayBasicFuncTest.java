@@ -2107,6 +2107,7 @@ public class GatewayBasicFuncTest {
         .contentType( contentType )
         .content( "apps.app[0].trackingUrl", isEmptyString() )
         .content( "apps.app[1].trackingUrl", startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) )
+        .content( "apps.app[2].trackingUrl", isEmptyString() )
         .content( "apps.app[0].amContainerLogs", isEmptyString() )
         .content( "apps.app[1].amContainerLogs", isEmptyString() )
         .content( "apps.app[0].amHostHttpAddress", isEmptyString() )

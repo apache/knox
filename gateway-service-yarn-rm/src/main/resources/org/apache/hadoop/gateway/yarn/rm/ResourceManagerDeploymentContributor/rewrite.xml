@@ -70,7 +70,7 @@
         <content type="*/json">
         	<buffer path="$.apps.app[*]">
         		<detect path="$.trackingUI" value="History">
-					<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+					<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
 				</detect>
 				<detect path="$.trackingUI" value="ApplicationMaster">
 					<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
@@ -82,7 +82,7 @@
         <content type="*/xml">
         	<buffer path="/apps/app">
         		<detect path="trackingUI" value="History">
-					<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+					<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
 				</detect>
 				<detect path="trackingUI" value="ApplicationMaster">
 					<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
@@ -97,7 +97,7 @@
         <content type="*/json">
         	<buffer path="$.app">
 	       		<detect path="$.trackingUI" value="History">
-	       			<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+	       			<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
 	       		</detect>
 	       		<detect path="$.trackingUI" value="ApplicationMaster">
 	       			<apply path="$.trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
@@ -109,7 +109,7 @@
         <content type="*/xml">
         	<buffer path="/app">
 	       		<detect path="trackingUI" value="History">
-	       			<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlHistory/outbound"/>
+	       			<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/url/outbound"/>
 	       		</detect>
 	       		<detect path="trackingUI" value="ApplicationMaster">
 	       			<apply path="trackingUrl" rule="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound"/>
