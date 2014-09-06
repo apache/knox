@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.hdfs.dispatch;
 
-import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.ha.provider.HaProvider;
 import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
@@ -38,9 +37,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
+public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
 
-   private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
+  private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
 
    private static final String RETRY_COUNTER_ATTRIBUTE = "dispatch.ha.retry.counter";
 
@@ -59,6 +58,13 @@ public class WebHdfsHaHttpClientDispatch extends HttpClientDispatch {
    private String resourceRole;
 
    private HaProvider haProvider;
+
+   /**
+   * @throws ServletException
+   */
+  public WebHdfsHaHttpClientDispatch() throws ServletException {
+    super();
+  }
 
    @Override
    public void init(FilterConfig filterConfig) throws ServletException {
