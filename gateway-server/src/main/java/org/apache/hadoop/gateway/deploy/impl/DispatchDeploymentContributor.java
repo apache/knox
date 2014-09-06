@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DispatchDeploymentContributor extends ProviderDeploymentContributorBase {

@@ -33,7 +33,7 @@ public class NameNodeHaDispatchDeploymentContributor extends ProviderDeploymentC
 
    private static final String ROLE = "dispatch";
 
-   private static final String NAME = "ha-http-client";
+   private static final String NAME = "ha-hdfs";
 
    @Override
    public String getRole() {

@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.deploy.impl;
+package org.apache.hadoop.gateway.hdfs;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
-import org.apache.hadoop.gateway.dispatch.HdfsDispatch;
+import org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
@@ -31,7 +31,7 @@ public class WebHdfsDispatchDeploymentContributor extends ProviderDeploymentCont
 
   @Override
   public String getRole() {
-    return "dispatch-hdfs";
+    return "dispatch";
   }
 
   @Override
@@ -41,7 +41,7 @@ public class WebHdfsDispatchDeploymentContributor extends ProviderDeploymentCont
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().role( getRole() ).name( getName() ).impl( HdfsDispatch.class );
+    resource.addFilter().role( getRole() ).name( getName() ).impl( HdfsDispatch.class ).params(params);
   }
 
 }

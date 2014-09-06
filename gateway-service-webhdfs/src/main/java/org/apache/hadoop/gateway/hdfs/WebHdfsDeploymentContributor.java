@@ -80,7 +80,7 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
     addRewriteFilter( context, service, rootResource, params );
     addIdentityAssertionFilter( context, service, rootResource );
     addAuthorizationFilter( context, service, rootResource );
-    String dispatchName = getDispatchName( context );
+    String dispatchName = getDispatchNameForNN( context );
     String dispatchRole = "dispatch";
     addDispatchFilter( context, service, rootResource, dispatchRole, dispatchName );
 
@@ -160,16 +160,16 @@ public class WebHdfsDeploymentContributor extends ServiceDeploymentContributorBa
    /**
     * Returns the name of the dispatch to use by checking to see if 'HA' is enabled.
     */
-   private String getDispatchName(DeploymentContext context) {
+   private String getDispatchNameForNN(DeploymentContext context) {
       Provider provider = getProviderByRole(context, "ha");
       if (provider != null && provider.isEnabled()) {
          Map<String, String> params = provider.getParams();
          if (params != null) {
             if (params.containsKey(getRole())) {
-               return "ha-http-client";
+               return "ha-hdfs";
             }
          }
       }
-      return "http-client";
+      return "hdfs";
    }
 }
