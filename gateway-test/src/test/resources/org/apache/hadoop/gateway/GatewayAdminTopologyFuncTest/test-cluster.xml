@@ -55,7 +55,7 @@ or more contributor license agreements.  See the NOTICE file
         <provider>
             <role>identity-assertion</role>
             <enabled>true</enabled>
-            <name>Pseudo</name>
+            <name>Default</name>
         </provider>
         <provider>
             <role>authorization</role>

@@ -47,7 +47,7 @@
         <provider>
             <role>identity-assertion</role>
             <enabled>true</enabled>
-            <name>Pseudo</name>
+            <name>Default</name>
         </provider>
 
         <!--

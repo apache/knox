@@ -203,7 +203,7 @@ public class DeploymentFactoryFuncTest {
     topology.addProvider( provider );
     Provider asserter = new Provider();
     asserter.setRole( "identity-assertion" );
-    asserter.setName("Pseudo");
+    asserter.setName("Default");
     asserter.setEnabled( true );
     topology.addProvider( asserter );
     Provider authorizer = new Provider();

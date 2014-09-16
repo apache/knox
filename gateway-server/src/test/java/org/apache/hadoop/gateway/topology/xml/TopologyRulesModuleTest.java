@@ -173,11 +173,11 @@ public class TopologyRulesModuleTest {
     assertThat( authenticationProvider.getParams().size(), is( 5 ) );
     assertThat( authenticationProvider.getParams().get("main.ldapRealm.contextFactory.url"), is( "ldap://localhost:33389" ) );
 
-    Provider identityAssertionProvider = topology.getProvider( "identity-assertion", "Pseudo" );
+    Provider identityAssertionProvider = topology.getProvider( "identity-assertion", "Default" );
     assertThat( identityAssertionProvider, notNullValue() );
     assertThat( identityAssertionProvider.isEnabled(), is( false ) );
     assertThat( identityAssertionProvider.getRole(), is( "identity-assertion" ) );
-    assertThat( identityAssertionProvider.getName(), is( "Pseudo" ) );
+    assertThat( identityAssertionProvider.getName(), is( "Default" ) );
     assertThat( identityAssertionProvider.getParams().size(), is( 2 ) );
     assertThat( identityAssertionProvider.getParams().get("name"), is( "user.name" ) );
   }
