@@ -180,7 +180,7 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "provider" )
         .addTag( "role" ).addText( "identity-assertion" )
         .addTag( "enabled" ).addText( "true" )
-        .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+        .addTag( "name" ).addText( "Default" ).gotoParent()
         .addTag( "provider" )
         .addTag( "role" ).addText( "authorization" )
         .addTag( "enabled" ).addText( "true" )
@@ -230,7 +230,7 @@ public class GatewayAdminTopologyFuncTest {
         .addTag("provider")
         .addTag( "role" ).addText( "identity-assertion" )
         .addTag( "enabled" ).addText( "true" )
-        .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+        .addTag( "name" ).addText( "Default" ).gotoParent()
         .addTag( "provider" )
         .gotoRoot()
         .addTag( "service" )
@@ -446,7 +446,7 @@ public class GatewayAdminTopologyFuncTest {
     }
 
     Provider identityProvider = new Provider();
-    identityProvider.setName("Pseudo");
+    identityProvider.setName("Default");
     identityProvider.setRole("identity-assertion");
     identityProvider.setEnabled(true);
 

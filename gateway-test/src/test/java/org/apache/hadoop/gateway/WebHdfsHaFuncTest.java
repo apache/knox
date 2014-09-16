@@ -131,7 +131,7 @@ public class WebHdfsHaFuncTest {
             .addTag("provider")
             .addTag("role").addText("identity-assertion")
             .addTag("enabled").addText("true")
-            .addTag("name").addText("Pseudo").gotoParent()
+            .addTag("name").addText("Default").gotoParent()
             .addTag("provider")
             .addTag("role").addText("authorization")
             .addTag("enabled").addText("true")

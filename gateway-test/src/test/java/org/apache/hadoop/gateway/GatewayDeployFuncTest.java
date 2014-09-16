@@ -163,7 +163,7 @@ public class GatewayDeployFuncTest {
         .addTag( "provider" )
         .addTag( "role" ).addText( "identity-assertion" )
         .addTag( "enabled" ).addText( "true" )
-        .addTag( "name" ).addText( "Pseudo" ).gotoParent()
+        .addTag( "name" ).addText( "Default" ).gotoParent()
         .addTag( "provider" )
         .gotoRoot()
         .addTag( "service" )

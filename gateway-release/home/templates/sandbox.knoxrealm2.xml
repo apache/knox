@@ -149,7 +149,7 @@
 
         <provider>
             <role>identity-assertion</role>
-            <name>Pseudo</name>
+            <name>Default</name>
             <enabled>true</enabled>
             <param>
                 <name>group.principal.mapping</name>
