@@ -19,6 +19,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache</groupId>
+        <artifactId>apache</artifactId>
+        <version>14</version>
+    </parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
     <version>0.6.0-SNAPSHOT</version>
@@ -77,8 +82,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <internal.maven.repo>file:///tmp/knoxtemprepo</internal.maven.repo>
         <repo.id>internal.repo</repo.id>
+        <internal.maven.repo>file:///tmp/knoxtemprepo</internal.maven.repo>
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
@@ -111,6 +116,11 @@
             <name>Internal Repository</name>
             <url>${internal.maven.repo}</url>
         </repository>
+        <snapshotRepository>
+            <id>${repo.id}</id>
+            <name>Internal Repository</name>
+            <url>${internal.maven.repo}</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <profiles>
