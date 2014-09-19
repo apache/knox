@@ -2,13 +2,5 @@
 Known Issues
 ------------------------------------------------------------------------------
 
-In order to comply with Hive 0.13 REST contract changes, the Knox Gateway v0.4.0 
+In order to comply with Hive 0.13 REST contract changes, the Knox Gateway 
 no longer works with previous versions of Hive.
-
-ODBC access to HiveServer2 through Knox is not possible at the moment due to driver
-changes that hive has made necessary. This may be able to be resolved with the source
-of the ODBC driver independent of a Knox release. NOTE: JDBC does work.
-
-LDAP based Group Lookup within the Shiro provider has not been verified to work 
-with Microsoft Active Directory. Specific work for Active Directory support will 
-be done for the next release.
