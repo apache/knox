@@ -16,6 +16,7 @@ Release Notes - Apache Knox - Version 0.5.0
     * [KNOX-375] - add functional test for KNOX-242 find client bind dn using ldapsearch
 
 ** Bug
+    * [KNOX-432] - Add Transfer_Encoding to EXCLUDE_HEADERS
     * [KNOX-410] - TopologyService Incorrect when _default Topology is Deployed
     * [KNOX-424] - Fix maven groupId
     * [KNOX-426] - change assertion provider name to Default

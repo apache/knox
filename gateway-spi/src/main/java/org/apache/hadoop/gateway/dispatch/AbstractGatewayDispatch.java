@@ -42,7 +42,7 @@ public abstract class AbstractGatewayDispatch extends AbstractGatewayFilter impl
 
   private static Map<String,Adapter> METHOD_ADAPTERS = createMethodAdapters();
   private static int STREAM_COPY_BUFFER_SIZE = 4096;
-  private static final List<String> EXCLUDE_HEADERS = Arrays.asList( "Host", "Authorization", "Content-Length" );
+  private static final List<String> EXCLUDE_HEADERS = Arrays.asList( "Host", "Authorization", "Content-Length", "Transfer-Encoding" );
 
   private static Map<String,Adapter> createMethodAdapters() {
     Map<String,Adapter> map = new HashMap<String,Adapter>();
