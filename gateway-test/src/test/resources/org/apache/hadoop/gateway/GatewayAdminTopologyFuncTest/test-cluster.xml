@@ -36,6 +36,14 @@ or more contributor license agreements.  See the NOTICE file
                 <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
             </param>
             <param>
+                <name>main.ldapContextFactory</name>
+                <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.contextFactory</name>
+                <value>$ldapContextFactory</value>
+            </param>
+            <param>
                 <name>main.ldapRealm.userDnTemplate</name>
                 <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
             </param>

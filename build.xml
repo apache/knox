@@ -82,6 +82,14 @@
         </exec>
     </target>
 
+    <target name="build-notest" depends="_init" description="Build the product without running tests.">
+        <exec executable="${mvn.cmd}">
+            <arg value="-DskipTests"/>
+            <arg value="clean"/>
+            <arg value="install"/>
+        </exec>
+    </target>
+
     <target name="verify" depends="package" description="Perform the verification build."/>
     <target name="package" depends="_init" description="Build and package the product (aka verify).">
         <exec executable="${mvn.cmd}">
