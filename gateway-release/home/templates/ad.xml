@@ -37,6 +37,14 @@
                 <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
             </param>
             <param>
+                <name>main.ldapContextFactory</name>
+                <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.contextFactory</name>
+                <value>$ldapContextFactory</value>
+            </param>
+            <param>
                 <name>main.ldapRealm.userDnTemplate</name>
                 <!-- If your AD is configured to authenticate based on just the cn and password and does not require user DN, 
                     you do not have to specify value for  main.ldapRealm.userDnTemplate. -->
