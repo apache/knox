@@ -43,7 +43,7 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   private static IdentityAsserterMessages log = MessagesFactory.get( IdentityAsserterMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
-  private static final String DOAS_PRINCIPAL_PARAM = "doAs";
+  private static final String DOAS_PRINCIPAL_PARAM = "doas";
   
   String username = null;
 
