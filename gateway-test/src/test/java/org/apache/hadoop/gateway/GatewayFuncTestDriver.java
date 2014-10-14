@@ -744,7 +744,7 @@ public class GatewayFuncTestDriver {
     getMock( "WEBHCAT" )
           .expect()
           .method( "GET" )
-          .pathInfo( "/v1/queue/" + job )
+          .pathInfo( "/v1/jobs/" + job )
           .respond()
           .status( HttpStatus.SC_OK )
           .content( getResourceBytes( "webhcat-job-status.json" ) )
@@ -758,7 +758,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .content( "status.jobId", equalTo( job ) )
         .statusCode( HttpStatus.SC_OK )
-        .when().get( getUrl( "WEBHCAT" ) + "/v1/queue/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+        .when().get( getUrl( "WEBHCAT" ) + "/v1/jobs/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
     assertComplete();
   }
