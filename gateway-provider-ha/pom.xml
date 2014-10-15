@@ -63,6 +63,11 @@
             <artifactId>hamcrest-library</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.xmlmatchers</groupId>
+            <artifactId>xml-matchers</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>${gateway-group}</groupId>
