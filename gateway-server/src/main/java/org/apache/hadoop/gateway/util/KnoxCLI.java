@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
@@ -120,11 +121,11 @@ public class KnoxCLI extends Configured implements Tool {
    * <pre>
    * % knoxcli version
    * % knoxcli master-create keyName [--size size] [--generate]
-   * % knoxcli create-alias alias [--cluster c] [--generate] [--value v]
-   * % knoxcli list-alias [--cluster c]
-   * % knoxcli delete=alias alias [--cluster c]
+   * % knoxcli create-alias alias [--cluster clustername] [--generate] [--value v]
+   * % knoxcli list-alias [--cluster clustername]
+   * % knoxcli delete=alias alias [--cluster clustername]
    * % knoxcli create-cert alias [--hostname h]
-   * % knoxcli redeploy [--cluster c]
+   * % knoxcli redeploy [--cluster clustername]
    * </pre>
    * @param args
    * @return
@@ -283,7 +284,7 @@ public class KnoxCLI extends Configured implements Tool {
   
  private class AliasListCommand extends Command {
 
-  public static final String USAGE = "list-alias [--cluster c]";
+  public static final String USAGE = "list-alias [--cluster clustername]";
   public static final String DESC = "The list-alias command lists all of the aliases\n" +
                                     "for the given hadoop --cluster. The default\n" +
                                     "--cluster being the gateway itself.";
@@ -382,7 +383,7 @@ public class KnoxCLI extends Configured implements Tool {
 
  public class AliasCreateCommand extends Command {
 
-  public static final String USAGE = "create-alias aliasname [--cluster c] " +
+  public static final String USAGE = "create-alias aliasname [--cluster clustername] " +
                                      "[ (--value v) | (--generate) ]";
   public static final String DESC = "The create-alias command will create an alias\n" +
                                     "and secret pair within the credential store for the\n" +
@@ -439,7 +440,7 @@ public class KnoxCLI extends Configured implements Tool {
   *
   */
  public class AliasDeleteCommand extends Command {
-  public static final String USAGE = "delete-alias aliasname [--cluster c]";
+  public static final String USAGE = "delete-alias aliasname [--cluster clustername]";
   public static final String DESC = "The delete-alias command removes the\n" +
                                     "indicated alias from the --cluster specific\n" +
                                     "credential store or the gateway credential store.";
@@ -585,7 +586,7 @@ public class KnoxCLI extends Configured implements Tool {
 
   private class RedeployCommand extends Command {
 
-    public static final String USAGE = "redeploy [--cluster c]";
+    public static final String USAGE = "redeploy [--cluster clustername]";
     public static final String DESC =
         "Redeploys one or all of the gateway's clusters (a.k.a topologies).";
 
@@ -593,7 +594,29 @@ public class KnoxCLI extends Configured implements Tool {
     public void execute() throws Exception {
       TopologyService ts = getTopologyService();
       ts.reloadTopologies();
-      ts.redeployTopologies(cluster);
+      if (cluster != null) {
+        if (validateClusterName(cluster, ts)) {
+          ts.redeployTopologies(cluster);
+        }
+        else {
+          out.println("Invalid clusterName provided. No topologies to redeploy.");
+        }
+      }
+    }
+
+    /**
+     * @param cluster
+     * @param ts
+     */
+    private boolean validateClusterName(String cluster, TopologyService ts) {
+      boolean valid = false;
+      for (Topology t : ts.getTopologies() ) {
+        if (t.getName().equals(cluster)) {
+          valid = true;
+          break;
+        }
+      }
+      return valid;
     }
 
     @Override
