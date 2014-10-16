@@ -27,6 +27,7 @@ import org.apache.http.HttpStatus;
 import org.eclipse.jetty.util.log.Log;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -182,6 +183,7 @@ public class WebHdfsHaFuncTest {
    }
 
    @Test
+   @Ignore( "KNOX-446" )
    public void testFailoverListOperation() throws Exception {
       String username = "hdfs";
       String password = "hdfs-password";
@@ -230,6 +232,7 @@ public class WebHdfsHaFuncTest {
 
 
    @Test
+   @Ignore( "KNOX-446" )
    public void testServerInStandby() throws IOException {
       String username = "hdfs";
       String password = "hdfs-password";
