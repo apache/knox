@@ -75,4 +75,8 @@ public interface GatewaySpiMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Gateway has failed to start. Unable to prompt user for master secret setup. Please consider using knoxcli.sh create-master" )
   void unableToPromptForMasterUseKnoxCLI();
+
+ @Message( level = MessageLevel.ERROR, text = "Error in generating certificate: {0}" )
+ void failedToGenerateCertificate( @StackTrace( level = MessageLevel.ERROR ) Exception e );
+
 }

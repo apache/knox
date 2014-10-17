@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.services.security.impl.X509CertificateUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,11 +106,11 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
       X509Certificate cert = null;
       if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
         String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
       }
       else {
         String dn = buildDistinguishedName(hostname);
-        cert = generateCertificate(dn, KPair, 365, "SHA1withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
       }
 
       KeyStore privateKS = getKeystoreForGateway();

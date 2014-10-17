@@ -34,6 +34,7 @@ import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.services.security.impl.X509CertificateUtil;
 
 
 public class CMFKeystoreService extends BaseKeystoreService {
@@ -70,7 +71,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
       keyPairGenerator.initialize(1024);  
       KeyPair KPair = keyPairGenerator.generateKeyPair();
-      X509Certificate cert = generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
+      X509Certificate cert = X509CertificateUtil.generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
 
       KeyStore privateKS = getKeystore();
       privateKS.setKeyEntry(alias, KPair.getPrivate(),  
