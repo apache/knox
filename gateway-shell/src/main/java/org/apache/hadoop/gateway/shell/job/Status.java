@@ -45,7 +45,7 @@ class Status {
       return new Callable<Response>() {
         @Override
         public Response call() throws Exception {
-          URIBuilder uri = uri( Job.SERVICE_PATH, "/queue/", jobId );
+          URIBuilder uri = uri( Job.SERVICE_PATH, "/jobs/", jobId );
           HttpGet request = new HttpGet( uri.build() );
           return new Response( execute( request ) );
         }
