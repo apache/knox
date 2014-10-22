@@ -68,6 +68,7 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
 
    @Override
    public void init(FilterConfig filterConfig) throws ServletException {
+      super.init(filterConfig);
       resourceRole = filterConfig.getInitParameter(RESOURCE_ROLE_ATTRIBUTE);
       LOG.initializingForResourceRole(resourceRole);
       haProvider = HaServletContextListener.getHaProvider(filterConfig.getServletContext());
