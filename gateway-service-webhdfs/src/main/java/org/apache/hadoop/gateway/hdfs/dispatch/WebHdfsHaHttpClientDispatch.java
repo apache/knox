@@ -110,7 +110,7 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
          if (body.contains("StandbyException")) {
             throw new StandbyException();
          }
-         if (body.contains("SafeModeException")) {
+         if (body.contains("SafeModeException") || body.contains("RetriableException")) {
             throw new SafeModeException();
          }
       }

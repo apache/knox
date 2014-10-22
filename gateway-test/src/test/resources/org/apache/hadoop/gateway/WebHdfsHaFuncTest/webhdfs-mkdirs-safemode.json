@@ -1,0 +1,5 @@
+{"RemoteException": {
+    "exception": "RetriableException",
+    "javaClassName": "org.apache.hadoop.ipc.RetriableException",
+    "message": "org.apache.hadoop.hdfs.server.namenode.SafeModeException: Cannot create directory /user/root/knox-ha/test_dir_27_0. Name node is in safe mode.\nThe reported blocks 0 needs additional 565 blocks to reach the threshold 1.0000 of total blocks 564.\nThe number of live datanodes 1 has reached the minimum number 0. Safe mode will be turned off automatically once the thresholds have been reache."
+}}
