@@ -17,10 +17,13 @@
  */
 package org.apache.hadoop.gateway.hdfs.dispatch;
 
+import org.apache.hadoop.gateway.dispatch.AppCookieManager;
 import org.apache.hadoop.gateway.ha.provider.HaDescriptor;
 import org.apache.hadoop.gateway.ha.provider.HaProvider;
 import org.apache.hadoop.gateway.ha.provider.HaServletContextListener;
+import org.apache.hadoop.gateway.ha.provider.impl.DefaultHaDescriptor;
 import org.apache.hadoop.gateway.ha.provider.impl.DefaultHaProvider;
+import org.apache.hadoop.gateway.ha.provider.impl.DefaultHaServiceConfig;
 import org.apache.hadoop.gateway.ha.provider.impl.HaDescriptorFactory;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -32,6 +35,7 @@ import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +44,40 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class WebHdfsHaHttpClientDispatchTest {
+
+  private class InstrumentedWebHdfsHaHttpClientDispatch extends WebHdfsHaHttpClientDispatch {
+
+    public InstrumentedWebHdfsHaHttpClientDispatch() throws ServletException {
+    }
+
+    public AppCookieManager getAppCookieManager() {
+      return appCookieManager;
+    }
+
+  }
+
+   @Test
+   public void testInitCallsSuperInit() throws Exception {
+     DefaultHaDescriptor haDescriptor = new DefaultHaDescriptor();
+     haDescriptor.addServiceConfig( new DefaultHaServiceConfig( "test-role" ) );
+     HaProvider haProvider = new DefaultHaProvider( haDescriptor );
+     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+     EasyMock.expect(context.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(haProvider).anyTimes();
+     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+     EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
+     EasyMock.expect(config.getInitParameter( WebHdfsHaHttpClientDispatch.RESOURCE_ROLE_ATTRIBUTE )).andReturn("test-role").anyTimes();
+     EasyMock.expect(config.getInitParameter(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+     InstrumentedWebHdfsHaHttpClientDispatch dispatch = new InstrumentedWebHdfsHaHttpClientDispatch();
+     EasyMock.replay(context,config);
+
+     dispatch.init(config);
+
+     assertThat( dispatch.getAppCookieManager(), notNullValue() );
+   }
 
    @Test
    public void testConnectivityFailover() throws Exception {
