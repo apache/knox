@@ -361,6 +361,41 @@ public class WebHdfsHaFuncTest {
    }
 
    @Test
+   public void testServerInSafeModeRetriableException() throws IOException {
+      String username = "hdfs";
+      String password = "hdfs-password";
+      //master is in safe mode
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/new")
+            .queryParam("op", "MKDIRS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-mkdirs-safemode.json"))
+            .contentType("application/json");
+      masterServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/new")
+            .queryParam("op", "MKDIRS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_OK)
+            .content(driver.getResourceBytes("webhdfs-rename-safemode-off.json"))
+            .contentType("application/json");
+      given()
+            .auth().preemptive().basic(username, password)
+            .header("X-XSRF-Header", "jksdhfkhdsf")
+            .queryParam("op", "MKDIRS")
+            .expect()
+            .log().ifError()
+            .statusCode(HttpStatus.SC_OK)
+            .content("boolean", is(true))
+            .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/new");
+      masterServer.isEmpty();
+   }
+
+   @Test
    public void testServerInSafeModeRetryLimit() throws IOException {
       String username = "hdfs";
       String password = "hdfs-password";
