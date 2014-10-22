@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
+import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -279,7 +280,83 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch" ) ) );
   }
 
-  private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
+
+   @Test
+   public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+      GatewayConfig config = new GatewayTestConfig();
+      File targetDir = new File(System.getProperty("user.dir"), "target");
+      File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+      gatewayDir.mkdirs();
+      ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+      File deployDir = new File(config.getGatewayDeploymentDir());
+      deployDir.mkdirs();
+
+      DefaultGatewayServices srvcs = new DefaultGatewayServices();
+      Map<String, String> options = new HashMap<String, String>();
+      options.put("persist-master", "false");
+      options.put("master", "password");
+      try {
+         DeploymentFactory.setGatewayServices(srvcs);
+         srvcs.init(config, options);
+      } catch (ServiceLifecycleException e) {
+         e.printStackTrace(); // I18N not required.
+      }
+
+      Topology topology = new Topology();
+      topology.setName("test-cluster");
+      Service service = new Service();
+      service.setRole("WEBHDFS");
+      service.addUrl("http://localhost:50070/webhdfs");
+      topology.addService(service);
+      Provider provider = new Provider();
+      provider.setRole("authentication");
+      provider.setName("ShiroProvider");
+      provider.setEnabled(true);
+      Param param = new Param();
+      param.setName("contextConfigLocation");
+      param.setValue("classpath:app-context-security.xml");
+      provider.addParam(param);
+      topology.addProvider(provider);
+      Provider asserter = new Provider();
+      asserter.setRole("identity-assertion");
+      asserter.setName("Default");
+      asserter.setEnabled(true);
+      topology.addProvider(asserter);
+      Provider authorizer = new Provider();
+      authorizer.setRole("authorization");
+      authorizer.setName("AclsAuthz");
+      authorizer.setEnabled(true);
+      topology.addProvider(authorizer);
+      Provider ha = new Provider();
+      ha.setRole("ha");
+      ha.setName("HaProvider");
+      ha.setEnabled(true);
+      topology.addProvider(ha);
+
+      for (int i = 0; i < 100; i++) {
+         createAndTestDeployment(config, topology);
+      }
+   }
+
+   private void createAndTestDeployment(GatewayConfig config, Topology topology) throws IOException, SAXException, ParserConfigurationException {
+      WebArchive war = DeploymentFactory.createDeployment(config, topology);
+//      File dir = new File( System.getProperty( "user.dir" ) );
+//      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+
+      Document web = parse(war.get("WEB-INF/web.xml").getAsset().openStream());
+      assertThat(web, hasXPath("/web-app/servlet/servlet-class", equalTo("org.apache.hadoop.gateway.GatewayServlet")));
+      assertThat(web, hasXPath("/web-app/servlet/init-param/param-name", equalTo("gatewayDescriptorLocation")));
+      assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("gateway.xml")));
+      assertThat(web, hasXPath("/web-app/servlet-mapping/servlet-name", equalTo("test-cluster")));
+      assertThat(web, hasXPath("/web-app/servlet-mapping/url-pattern", equalTo("/*")));
+      //testing the order of listener classes generated
+      assertThat(web, hasXPath("/web-app/listener[2]/listener-class", equalTo("org.apache.hadoop.gateway.services.GatewayServicesContextListener")));
+      assertThat(web, hasXPath("/web-app/listener[3]/listener-class", equalTo("org.apache.hadoop.gateway.ha.provider.HaServletContextListener")));
+      assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener")));
+   }
+
+
+   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
     InputSource source = new InputSource( stream );

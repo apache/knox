@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.LinkedHashMap;
 
 public abstract class DeploymentFactory {
 
@@ -128,7 +129,7 @@ public abstract class DeploymentFactory {
   // Scan through all of the loaded providers.  For each that doesn't have an existing provider in the role
   // list add it.
   private static Map<String,List<ProviderDeploymentContributor>> selectContextProviders( Topology topology ) {
-    Map<String,List<ProviderDeploymentContributor>> providers = new HashMap<String,List<ProviderDeploymentContributor>>();
+    Map<String,List<ProviderDeploymentContributor>> providers = new LinkedHashMap<String, List<ProviderDeploymentContributor>>();
     collectTopologyProviders( topology, providers );
     collectDefaultProviders( providers );
     return providers;
