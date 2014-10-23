@@ -25,7 +25,9 @@ import java.io.File;
 import java.net.URL;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class GatewayGlobalConfigTest {
 
@@ -42,6 +44,16 @@ public class GatewayGlobalConfigTest {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-full/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
+    assertNull("ssl.exclude.protocols should be null.", config.getExcludedSSLProtocols());
+    //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
+  }
+
+  @Test
+  public void testDemoConfig() {
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-demo/conf/gateway-default.xml" ) );
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat(config.getGatewayPort(), is( 8888 ) );
+    assertTrue( config.getExcludedSSLProtocols().get(0).equals("SSLv3"));
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
 

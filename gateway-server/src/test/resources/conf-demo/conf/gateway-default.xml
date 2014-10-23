@@ -43,4 +43,9 @@ limitations under the License.
         <description>The default address of WebHCat.</description>
     </property>
 
+    <property>
+        <name>ssl.exclude.protocols</name>
+        <value>SSLv3</value>
+        <description>Excluded SSL protocols.</description>
+    </property>
 </configuration>
