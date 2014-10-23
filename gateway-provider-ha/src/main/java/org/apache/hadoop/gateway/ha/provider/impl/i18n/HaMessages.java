@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.i18n.messages.Messages;
 
 @Messages(logger = "org.apache.hadoop.gateway")
 public interface HaMessages {
+
    @Message(level = MessageLevel.ERROR, text = "Failed to Write HA Descriptor: {0}")
    void failedToWriteHaDescriptor(Exception e);
 
@@ -34,4 +35,8 @@ public interface HaMessages {
 
    @Message(level = MessageLevel.INFO, text = "No Service by this name was found: {0}")
    void noServiceFound(String serviceName);
+
+   @Message(level = MessageLevel.DEBUG, text = "Moving failed URL to the bottom {0}, new top is {1}")
+   void markedFailedUrl(String failedUrl, String top);
+
 }

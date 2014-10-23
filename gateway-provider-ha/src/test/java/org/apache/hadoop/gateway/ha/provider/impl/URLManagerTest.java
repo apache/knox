@@ -41,4 +41,31 @@ public class URLManagerTest {
       manager.markFailed(url2);
       assertEquals(url1, manager.getActiveURL());
    }
+
+   @Test
+   public void testMarkingFailedURL() {
+      ArrayList<String> urls = new ArrayList<String>();
+      String url1 = "http://host1:4555";
+      urls.add(url1);
+      String url2 = "http://host2:1234";
+      urls.add(url2);
+      String url3 = "http://host1:1234";
+      urls.add(url3);
+      String url4 = "http://host2:4555";
+      urls.add(url4);
+      URLManager manager = new URLManager(urls);
+      assertTrue(manager.getURLs().containsAll(urls));
+      assertEquals(url1, manager.getActiveURL());
+      manager.markFailed(url1);
+      assertEquals(url2, manager.getActiveURL());
+      manager.markFailed(url1);
+      assertEquals(url2, manager.getActiveURL());
+      manager.markFailed(url3);
+      assertEquals(url2, manager.getActiveURL());
+      manager.markFailed(url4);
+      assertEquals(url2, manager.getActiveURL());
+      manager.markFailed(url2);
+      assertEquals(url3, manager.getActiveURL());
+   }
+
 }
