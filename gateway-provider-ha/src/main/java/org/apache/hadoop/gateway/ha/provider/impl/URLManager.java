@@ -18,11 +18,16 @@
 package org.apache.hadoop.gateway.ha.provider.impl;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.gateway.ha.provider.impl.i18n.HaMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class URLManager {
+
+   private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
 
    private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<String>();
 
@@ -45,12 +50,21 @@ public class URLManager {
       }
    }
 
-   public void markFailed(String url) {
-      //TODO: check if the url is the one on top
-//      if (urls.peek().equals(url)) {
+   public synchronized void markFailed(String url) {
+      String top = urls.peek();
+      boolean pushToBottom = false;
+      URI topUri = URI.create(top);
+      URI incomingUri = URI.create(url);
+      String topHostPort = topUri.getHost() + topUri.getPort();
+      String incomingHostPort = incomingUri.getHost() + incomingUri.getPort();
+      if (topHostPort.equals(incomingHostPort)) {
+         pushToBottom = true;
+      }
       //put the failed url at the bottom
-      String failed = urls.poll();
-      urls.offer(failed);
-//      }
+      if (pushToBottom) {
+         String failed = urls.poll();
+         urls.offer(failed);
+         LOG.markedFailedUrl(failed, top);
+      }
    }
 }
