@@ -21,7 +21,7 @@ limitations under the License.
 
     <property>
         <name>gateway.port</name>
-        <value>8888</value>
+        <value>8443</value>
         <description>The HTTP port for the Gateway.</description>
     </property>
 
@@ -33,8 +33,13 @@ limitations under the License.
 
     <property>
         <name>gateway.gateway.conf.dir</name>
-        <value>clusters</value>
-        <description>The directory within GATEWAY_HOME that contains gateway topology files and deployments.</description>
+        <value>deployments</value>
+        <description>The directory within GATEWAY_HOME that contains gateway topology deployments.</description>
     </property>
 
+    <property>
+        <name>ssl.exclude.protocols</name>
+        <value>SSLv3</value>
+        <description>SSL protocols to be excluded from the connector.</description>
+    </property>
 </configuration>

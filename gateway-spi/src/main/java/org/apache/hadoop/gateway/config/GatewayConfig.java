@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.config;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 
 public interface GatewayConfig {
 
@@ -66,17 +67,19 @@ public interface GatewayConfig {
   String getGatewayDeploymentDir();
 
   InetSocketAddress getGatewayAddress() throws UnknownHostException;
-  
+
   boolean isSSLEnabled();
   
+  List<String> getExcludedSSLProtocols();
+
   boolean isHadoopKerberosSecured();
-  
+
   String getKerberosConfig();
-  
+
   boolean isKerberosDebugEnabled();
-  
+
   String getKerberosLoginConfig();
-  
+
   String getDefaultTopologyName();
 
   String getDefaultAppRedirectPath();

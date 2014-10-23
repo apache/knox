@@ -49,4 +49,10 @@ limitations under the License.
         <description>The location of the Shiro configuration file.</description>
     </property>
 
+    <property>
+        <name>ssl.exclude.protocols</name>
+        <value>SSLv3</value>
+        <description>Excluded SSL protocols.</description>
+    </property>
+
 </configuration>

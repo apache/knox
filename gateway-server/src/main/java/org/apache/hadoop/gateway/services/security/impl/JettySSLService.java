@@ -17,12 +17,12 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
-import java.io.File;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.x500.X500Principal;
@@ -49,6 +49,7 @@ public class JettySSLService implements SSLService {
   private MasterService ms;
   private KeystoreService ks;
   private AliasService as;
+  private List<String> sslExcludeProtocols = null;
 
   public void setMasterService(MasterService ms) {
     this.ms = ms;
@@ -93,6 +94,8 @@ public class JettySSLService implements SSLService {
     } catch (KeystoreServiceException e) {
       throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
     }
+
+    sslExcludeProtocols = config.getExcludedSSLProtocols();
   }
 
   private void logAndValidateCertificate() throws ServiceLifecycleException {
@@ -145,6 +148,9 @@ public class JettySSLService implements SSLService {
 //    sslContextFactory.setTrustStorePassword(new String(keypass));
     sslContextFactory.setNeedClientAuth( false );
     sslContextFactory.setTrustAll( true );
+    if (sslExcludeProtocols != null) {
+      sslContextFactory.setExcludeProtocols((String[]) sslExcludeProtocols.toArray());
+    }
     SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
 
     return sslConnector;
