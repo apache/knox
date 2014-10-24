@@ -23,8 +23,6 @@
 
 # /etc/init.d/knox
 
-VERSION="0.5.0.2.2"
-
 KNOX_HOME="/usr/hdp/current/knox-server"
 KNOX_USER="knox"
 
