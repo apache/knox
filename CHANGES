@@ -6,6 +6,9 @@ Release Notes - Apache Knox - Version 0.5.0
     * [KNOX-25] - KNOX should support authentication using SPNEGO from browser
 
 ** Improvements
+    * [KNOX-455] - Configuration for Excluding SSL Protocols
+    * [KNOX-422] - provide support for IBM JVM - via Pascal Oliva
+    * [KNOX-437] - KnoxLdapContextFactory should be configured by default in all topology files
     * [KNOX-88] - Support HDFS HA
     * [KNOX-415] - Add some static group entires, associate some users with groups in user.ldif in the bundled Apache DS
     * [KNOX-404] - GATEWAY_HOME/conf needs to be added to gateway server classpath
@@ -16,6 +19,24 @@ Release Notes - Apache Knox - Version 0.5.0
     * [KNOX-375] - add functional test for KNOX-242 find client bind dn using ldapsearch
 
 ** Bug
+    * [KNOX-451] - WebHDFS HA failover does not account for URL of unsuccessful request
+    * [KNOX-414] - WebHDFS HA enablement in web.xml is sensitive to order of context listeners
+    * [KNOX-453] - HDFS HA not working for secure clusters
+    * [KNOX-450] - WebHDFS HA retry should also handle RetriableException scenarios
+    * [KNOX-442] - Align DSL with WebHCat REST API changes.
+    * [KNOX-448] - Remove Reference to ReflectiveOperationException
+    * [KNOX-446] - Disable unstable unit tests in WebHdfsHaFuncTest
+    * [KNOX-445] - Fix HaDescriptorManagerTest.testDescriptorStoring to be platform independent.
+    * [KNOX-444] - KnoxCLI Usability Improvements
+    * [KNOX-442] - Align Tests with Hive API Change
+    * [KNOX-441] - Ensure all pom.xml files reference junit so that excludeGroups work
+    * [KNOX-439] - URL pattern matching fails for default ports HTTP 80 and HTTPS 443
+    * [KNOX-418] - remove the Pseudo federation provider
+    * [KNOX-432] - Add Transfer_Encoding to EXCLUDE_HEADERS
+    * [KNOX-431] - Update ISSUES file for 0.5.0 release
+    * [KNOX-426] - change assertion provider name to Default
+    * [KNOX-428] - Prepare pom.xml files for publishing via mvn deploy.
+    * [KNOX-424] - Fix maven groupId
     * [KNOX-432] - Add Transfer_Encoding to EXCLUDE_HEADERS
     * [KNOX-410] - TopologyService Incorrect when _default Topology is Deployed
     * [KNOX-424] - Fix maven groupId
@@ -36,7 +57,7 @@ Release Notes - Apache Knox - Version 0.5.0
     * [KNOX-396] - gateway.sh and ldap.sh status commands incorrect
     * [KNOX-395] - POC for Jersey Topology Service from Knox
     * [KNOX-350] - DOAP file for the Knox Project
-    * [KNOX-391-392] - KnoxLdaRealm should use LdapName.equals for groupDn compare
+    * [KNOX-391-392] - KnoxLdapRealm should use LdapName.equals for groupDn compare
     * [KNOX-389] - Knoxcli.cmd fails when space in JAVA_HOME
     * [KNOX-387] - replace JndiLdapRealm with KnoxLdapRelam in unit tests and functional tests
     * [KNOX-386] - update topology template files to use KnoxLdapRealm
