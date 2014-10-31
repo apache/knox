@@ -40,7 +40,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -175,11 +177,25 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     }
   }
 
+  // KNOX-464: Doing this because Jetty only returns the string version of the IP address for request.getLocalName().
+  // Hopefully the local hostname will be cached so this will not be a significant performance hit.
+  // Previously this was an inline request.getServerName() but this ended up mixing the hostname from the Host header
+  // and the local port which was making load balancer configuration difficult if not impossible.
+  private String getRequestLocalHostName() {
+    String hostName = request.getLocalName();
+    try {
+      hostName = InetAddress.getByName( hostName ).getHostName();
+    } catch( UnknownHostException e ) {
+      // Ignore it and use the original hostname.
+    }
+    return hostName;
+  }
+
   private String getGatewayParam( String name ) {
     if( "url".equals( name ) ) {
-      return request.getScheme() + "://" + request.getServerName() + ":" + request.getLocalPort() + request.getContextPath();
+      return request.getScheme() + "://" + getRequestLocalHostName() + ":" + request.getLocalPort() + request.getContextPath();
     } else if( "address".equals( name ) ) {
-      return request.getServerName() + ":" + request.getLocalPort();
+      return getRequestLocalHostName() + ":" + request.getLocalPort();
     } else if( "path".equals( name ) ) {
       return request.getContextPath();
     } else {
