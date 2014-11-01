@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.naming.AuthenticationException;
-import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -190,79 +189,96 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         final LdapContextFactory ldapContextFactory) throws NamingException {
         final Set<String> roleNames = new HashSet();
         final Set<String> groupNames = new HashSet();
-       
-        // ldapsearch -h localhost -p 33389 -D uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w  guest-password 
-        //       -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
-        final NamingEnumeration<SearchResult> searchResultEnum = ldapCtx.search(
-            getGroupSearchBase(), 
-            "objectClass=" + groupObjectClass, 
-            SUBTREE_SCOPE);
-        
-        String userDn = null;
-        if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
-          // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
-          userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
-        } else {
-          userDn = getUserDn(userName);
+        NamingEnumeration<SearchResult> searchResultEnum = null;
+        try {
+          // ldapsearch -h localhost -p 33389 -D uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w  guest-password
+          //       -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
+          searchResultEnum = ldapCtx.search(
+              getGroupSearchBase(),
+              "objectClass=" + groupObjectClass,
+              SUBTREE_SCOPE);
+          
+          String userDn = null;
+          if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
+            // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
+            userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+          } else {
+            userDn = getUserDn(userName);
+          }
+          while (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
+              final SearchResult group = searchResultEnum.next();
+              addRoleIfMember(userDn, group, roleNames, groupNames, ldapContextFactory);
+          }
+
+          // save role names and group names in session so that they can be easily looked up outside of this object
+          SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
+          SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
+          LOG.lookedUpUserRoles(roleNames, userName);
         }
-        while (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
-            final SearchResult group = searchResultEnum.next();
-            addRoleIfMember(userDn, group, roleNames, groupNames, ldapContextFactory);
+        finally {
+          if (searchResultEnum != null) {
+            searchResultEnum.close();
+          }
         }
-        
-        // save role names and group names in session so that they can be easily looked up outside of this object
-        SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
-        SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
-        LOG.lookedUpUserRoles(roleNames, userName);
         return roleNames;
     }
 
   private void addRoleIfMember(final String userDn, final SearchResult group,
       final Set<String> roleNames, final Set<String> groupNames,
       final LdapContextFactory ldapContextFactory) throws NamingException {
-   
-    LdapName userLdapDn = new LdapName(userDn);
-    Attribute attribute = group.getAttributes().get(getGroupIdAttribute()); 
-    String groupName = attribute.get().toString();
-    
-    final NamingEnumeration<? extends Attribute> attributeEnum = group
-        .getAttributes().getAll();
-    while (attributeEnum.hasMore()) {
-      final Attribute attr = attributeEnum.next();
-      if (!memberAttribute.equalsIgnoreCase(attr.getID())) {
-        continue;
-      }
-      final NamingEnumeration<?> e = attr.getAll();
-      while (e.hasMore()) {
-        String attrValue = e.next().toString();
-        if (memberAttribute.equalsIgnoreCase(MEMBER_URL)) {
-          boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userLdapDn, 
-              attrValue, // memberUrl value
-              ldapContextFactory);
-          if (dynamicGroupMember) {
-            groupNames.add(groupName);
-            String roleName = roleNameFor(groupName);
-            if (roleName != null) {
-              roleNames.add(roleName);
-            } else {
-              roleNames.add(groupName);
+
+    NamingEnumeration<? extends Attribute> attributeEnum = null;
+    NamingEnumeration<?> e = null;
+    try {
+      LdapName userLdapDn = new LdapName(userDn);
+      Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
+      String groupName = attribute.get().toString();
+      
+      attributeEnum = group
+          .getAttributes().getAll();
+      while (attributeEnum.hasMore()) {
+        final Attribute attr = attributeEnum.next();
+        if (!memberAttribute.equalsIgnoreCase(attr.getID())) {
+          continue;
+        }
+        e = attr.getAll();
+        while (e.hasMore()) {
+          String attrValue = e.next().toString();
+          if (memberAttribute.equalsIgnoreCase(MEMBER_URL)) {
+            boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userLdapDn,
+                attrValue, // memberUrl value
+                ldapContextFactory);
+            if (dynamicGroupMember) {
+              groupNames.add(groupName);
+              String roleName = roleNameFor(groupName);
+              if (roleName != null) {
+                roleNames.add(roleName);
+              } else {
+                roleNames.add(groupName);
+              }
             }
-          }
-        } else {
-          if (userLdapDn.equals(new LdapName(attrValue))) {
-         
-            groupNames.add(groupName);
-            String roleName = roleNameFor(groupName);
-            if (roleName != null) {
-              roleNames.add(roleName);
-            } else {
-              roleNames.add(groupName);
+          } else {
+            if (userLdapDn.equals(new LdapName(attrValue))) {
+              groupNames.add(groupName);
+              String roleName = roleNameFor(groupName);
+              if (roleName != null) {
+                roleNames.add(roleName);
+              } else {
+                roleNames.add(groupName);
+              }
+              break;
             }
-            break;
           }
         }
       }
-
+    }
+    finally {
+      try {
+        attributeEnum.close();
+      }
+      finally {
+        e.close();
+      }
     }
   }
 
@@ -429,7 +445,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     String searchFilter = tokens[3];
 
     LdapName searchBaseDn = new LdapName(searchBaseString);
-   
+
     // do scope test
     if (searchScope.equalsIgnoreCase("base")) {
       return false;
@@ -445,14 +461,26 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     // search for base_dn=userDn, scope=base, filter=filter
     LdapContext systemLdapCtx = null;
     systemLdapCtx = ldapContextFactory.getSystemLdapContext();
-    final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx
+    NamingEnumeration<SearchResult> searchResultEnum = null;
+    try {
+      searchResultEnum = systemLdapCtx
         .search(userLdapDn, searchFilter,
             searchScope.equalsIgnoreCase("sub") ? SUBTREE_SCOPE
                 : ONELEVEL_SCOPE);
-    if (searchResultEnum.hasMore()) {
-      return true;
+      if (searchResultEnum.hasMore()) {
+        return true;
+      }
     }
-
+    finally {
+      if (searchResultEnum != null) {
+        try {
+          searchResultEnum.close();
+        }
+        finally {
+          LdapUtils.closeContext(systemLdapCtx);
+        }
+      }
+    }
     return member;
   }
    
@@ -482,30 +510,36 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
       // search for userDn and return
       LdapContext systemLdapCtx = null;
+      NamingEnumeration<SearchResult> searchResultEnum = null;
       try {
-          systemLdapCtx = getContextFactory().getSystemLdapContext();
-          String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))", 
-              userObjectClass, userSearchAttributeName, principal);
-          final NamingEnumeration<SearchResult> searchResultEnum = systemLdapCtx.search(
-              getUserSearchBase(), 
-              searchFilter,
-              SUBTREE_SCOPE);
-          if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
-            SearchResult searchResult =  searchResultEnum.next();
-            userDn = searchResult.getNameInNamespace();
-            LOG.searchedAndFoundUserDn(userDn, principal);
-            return userDn;
-          } else {
-            throw new IllegalArgumentException("Illegal principal name: " + principal);
-          }
+        systemLdapCtx = getContextFactory().getSystemLdapContext();
+        String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))",
+            userObjectClass, userSearchAttributeName, principal);
+        searchResultEnum = systemLdapCtx.search(
+            getUserSearchBase(),
+            searchFilter,
+            SUBTREE_SCOPE);
+        if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
+          SearchResult searchResult =  searchResultEnum.next();
+          userDn = searchResult.getNameInNamespace();
+          LOG.searchedAndFoundUserDn(userDn, principal);
+          return userDn;
+        } else {
+          throw new IllegalArgumentException("Illegal principal name: " + principal);
+        }
       } catch (AuthenticationException e) {
         LOG.failedToGetSystemLdapConnection(e);
         throw new IllegalArgumentException("Illegal principal name: " + principal);
       } catch (NamingException e) {
         throw new IllegalArgumentException("Hit NamingException: " + e.getMessage());
       } finally {
+        try {
+          searchResultEnum.close();
+        } catch (NamingException e) {
+        }
+        finally {
           LdapUtils.closeContext(systemLdapCtx);
+        }
       }
     }
-
 }
