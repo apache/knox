@@ -17,10 +17,13 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,6 +41,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 @Category( { UnitTests.class, FastTests.class } )
 public class GatewayFilterTest {
+
+  @Before
+  public void setup() {
+    AuditServiceFactory.getAuditService().createContext();
+  }
+
+  @After
+  public void reset() {
+    AuditServiceFactory.getAuditService().detachContext();
+  }
 
   @Test
   public void testNoFilters() throws ServletException, IOException {

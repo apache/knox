@@ -100,7 +100,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       Set<Principal> principals = new HashSet<Principal>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
-      auditService.createContext().setUsername( principal );
+      auditService.getContext().setUsername( principal ); //KM: Audit Fix
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
       

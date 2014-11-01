@@ -116,7 +116,7 @@ public class GatewayFilter implements Filter {
     
     assignCorrelationRequestId();
     // Populate Audit/correlation parameters
-    AuditContext auditContext = auditService.createContext();
+    AuditContext auditContext = auditService.getContext();
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
     auditContext.setRemoteIp( servletRequest.getRemoteAddr() );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
