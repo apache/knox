@@ -125,6 +125,9 @@ public class GatewayServlet implements Servlet {
         } catch( ServletException e ) {
           LOG.failedToExecuteFilter( e );
           throw e;
+        } catch( RuntimeException e ) {
+          LOG.failedToExecuteFilter( e );
+          throw e;
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
