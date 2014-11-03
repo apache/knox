@@ -274,10 +274,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
     finally {
       try {
-        attributeEnum.close();
+        if (attributeEnum != null) {
+          attributeEnum.close();
+        }
       }
       finally {
-        e.close();
+        if (e != null) {
+          e.close();
+        }
       }
     }
   }
@@ -474,7 +478,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     finally {
       if (searchResultEnum != null) {
         try {
-          searchResultEnum.close();
+          if (searchResultEnum != null) {
+            searchResultEnum.close();
+          }
         }
         finally {
           LdapUtils.closeContext(systemLdapCtx);
@@ -534,7 +540,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         throw new IllegalArgumentException("Hit NamingException: " + e.getMessage());
       } finally {
         try {
-          searchResultEnum.close();
+          if (searchResultEnum != null) {
+            searchResultEnum.close();
+          }
         } catch (NamingException e) {
         }
         finally {
