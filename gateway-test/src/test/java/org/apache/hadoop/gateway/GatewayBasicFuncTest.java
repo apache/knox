@@ -54,6 +54,7 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -63,9 +64,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -287,6 +288,8 @@ public class GatewayBasicFuncTest {
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String forwardHostName = gatewayAddress.getHostName();
+    String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
 
     driver.getMock( "WEBHDFS" )
         .expect()
@@ -311,7 +314,9 @@ public class GatewayBasicFuncTest {
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, anyOf(
+          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
       MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
     MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
@@ -380,6 +385,9 @@ public class GatewayBasicFuncTest {
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+
+    String forwardHostName = gatewayAddress.getHostName();
+    String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
 
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
@@ -547,8 +555,9 @@ public class GatewayBasicFuncTest {
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
-      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, anyOf(
+          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
       MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
     MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
@@ -566,7 +575,9 @@ public class GatewayBasicFuncTest {
     location = response.getHeader( "Location" );
     log.debug( "Created location: " + location );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      MatcherAssert.assertThat( location, anyOf(
+          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
     }
     driver.assertComplete();
 
@@ -2251,7 +2262,13 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType );
     if ( running ) {
-      response.content( "app.trackingUrl", startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) );
+      String forwardHostName = gatewayAddress.getHostName();
+      String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
+      response.content(
+          "app.trackingUrl",
+          anyOf(
+              startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
+              startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
     } else {
       response.content( "app.trackingUrl", isEmptyString() );
     }

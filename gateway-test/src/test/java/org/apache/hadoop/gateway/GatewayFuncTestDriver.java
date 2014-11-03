@@ -53,9 +53,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -194,13 +196,24 @@ public class GatewayFuncTestDriver {
     return getUrl( serviceRole, false );
   }
 
+  private String getLocalHostName() {
+    String hostName = "localhost";
+    try {
+      hostName = InetAddress.getByName( "127.0.0.1" ).getHostName();
+    } catch( UnknownHostException e ) {
+      // Ignore and use the default.
+    }
+    return hostName;
+  }
+
   public String getUrl( String serviceRole, boolean real ) {
     String url;
+    String localHostName = getLocalHostName();
     Service service = services.get( serviceRole );
     if( useGateway && !real ) {
-      url = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath() + service.gatewayPath;
+      url = "http://" + localHostName + ":" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath() + service.gatewayPath;
     } else if( service.mock ) {
-      url = "http://localhost:" + service.server.getPort();
+      url = "http://" + localHostName + ":" + service.server.getPort();
     } else {
       url = service.realUrl.toASCIIString();
     }
