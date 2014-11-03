@@ -184,11 +184,11 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to initialize contribution: {0}" )
   void failedToInitializeContribution( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to initialize servlet instace: {0}" )
+  @Message( level = MessageLevel.ERROR, text = "Failed to initialize servlet instance: {0}" )
   void failedToInitializeServletInstace( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to execute filter: {0}" )
-  void failedToExecuteFilter( @StackTrace( level = MessageLevel.DEBUG ) Throwable t );
+  @Message( level = MessageLevel.ERROR, text = "Gateway processing failed: {0}" )
+  void failedToExecuteFilter( @StackTrace( level = MessageLevel.INFO ) Throwable t );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to load topology {0}: {1}")
   void failedToLoadTopology( String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
