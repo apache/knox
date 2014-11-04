@@ -288,8 +288,8 @@ public class GatewayBasicFuncTest {
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
-    String forwardHostName = gatewayAddress.getHostName();
-    String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     driver.getMock( "WEBHDFS" )
         .expect()
@@ -315,8 +315,8 @@ public class GatewayBasicFuncTest {
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
       MatcherAssert.assertThat( location, anyOf(
-          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
-          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
+          startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
       MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
     MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
@@ -385,9 +385,8 @@ public class GatewayBasicFuncTest {
     String username = "hdfs";
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
-
-    String forwardHostName = gatewayAddress.getHostName();
-    String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     // Attempt to delete the test directory in case a previous run failed.
     // Ignore any result.
@@ -556,8 +555,8 @@ public class GatewayBasicFuncTest {
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
       MatcherAssert.assertThat( location, anyOf(
-          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
-          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
+          startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
       MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
     MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
@@ -576,8 +575,8 @@ public class GatewayBasicFuncTest {
     log.debug( "Created location: " + location );
     if( driver.isUseGateway() ) {
       MatcherAssert.assertThat( location, anyOf(
-          startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
-          startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
+          startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
+          startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
     }
     driver.assertComplete();
 
@@ -2073,6 +2072,8 @@ public class GatewayBasicFuncTest {
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
     String gatewayPathQuery = driver.isUseGateway() ? "" : "?user.name=" + username;
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     switch( contentType ) {
     case JSON:
@@ -2117,7 +2118,10 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType )
         .content( "apps.app[0].trackingUrl", isEmptyString() )
-        .content( "apps.app[1].trackingUrl", startsWith( "http://" + gatewayAddress.getHostName() + ":" + gatewayAddress.getPort() + "/" ) )
+        .content( "apps.app[1].trackingUrl",
+            anyOf(
+                startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
+                startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) )
         .content( "apps.app[2].trackingUrl", isEmptyString() )
         .content( "apps.app[0].amContainerLogs", isEmptyString() )
         .content( "apps.app[1].amContainerLogs", isEmptyString() )
@@ -2229,6 +2233,8 @@ public class GatewayBasicFuncTest {
     }
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path + (driver.isUseGateway() ? "" : "?user.name=" + username);
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     VelocityEngine velocity = new VelocityEngine();
     velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
@@ -2262,13 +2268,11 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType );
     if ( running ) {
-      String forwardHostName = gatewayAddress.getHostName();
-      String reverseHostName = InetAddress.getByName( forwardHostName ).getHostName();
       response.content(
           "app.trackingUrl",
           anyOf(
-              startsWith( "http://" + forwardHostName + ":" + gatewayAddress.getPort() + "/" ),
-              startsWith( "http://" + reverseHostName + ":" + gatewayAddress.getPort() + "/" ) ) );
+              startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
+              startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
     } else {
       response.content( "app.trackingUrl", isEmptyString() );
     }
