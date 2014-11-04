@@ -222,9 +222,10 @@ public class GatewayFuncTestDriver {
 
   public String getRealAddr( String role ) {
     String addr;
+    String localHostName = getLocalHostName();
     Service service = services.get( role );
     if( service.mock ) {
-      addr = "localhost:" + service.server.getPort();
+      addr = localHostName + ":" + service.server.getPort();
     } else {
       addr = service.realUrl.getHost() + ":" + service.realUrl.getPort();
     }
