@@ -2,5 +2,3 @@
 Known Issues
 ------------------------------------------------------------------------------
 
-In order to comply with Hive 0.13 REST contract changes, the Knox Gateway 
-no longer works with previous versions of Hive.
