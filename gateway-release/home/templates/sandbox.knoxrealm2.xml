@@ -123,6 +123,14 @@
             </param>
             -->
             <param>
+              <name>main.cacheManager</name>
+              <value>org.apache.shiro.cache.MemoryConstrainedCacheManager</value>
+            </param>
+            <param>
+              <name>main.securityManager.cacheManager</name>
+              <value>$cacheManager</value>
+            </param>
+            <param>
               <name>main.ldapGroupRealm.memberAttributeValueTemplate</name>
               <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
             </param>
