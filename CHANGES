@@ -1,4 +1,16 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.5.1
+------------------------------------------------------------------------------
+** Bug
+    * [KNOX-467] - Unit tests failing on windows. Second attempt.
+    * [KNOX-467] - Unit tests failing on windows
+    * [KNOX-466] - Log exception stack traces at INFO level when they reach gateway servlet
+    * [KNOX-459] - added null checks to the closing of resultEnums to avoid NPEs
+    * [KNOX-465] - Initial audit record can contain leftover principal name
+    * [KNOX-459] - fixed LDAP connection leaks in KnoxLdapRealm
+    * [KNOX-464] - Location headers have wrong hostname when used behind load balancer
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.0
 ------------------------------------------------------------------------------
 ** New Feature
