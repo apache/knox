@@ -84,6 +84,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <internal.maven.repo>https://repository.apache.org/service/local/staging/deploy/maven2</internal.maven.repo>
         <repo.id>internal.repo</repo.id>
+        <internal.maven.repo>https://repository.apache.org/service/local/staging/deploy/maven2</internal.maven.repo>
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
