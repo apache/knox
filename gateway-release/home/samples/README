@@ -1,0 +1,13 @@
+*********************************************************************
+Samples README
+*********************************************************************
+The purpose of the samples within this directory is to demonstrate the capabilities
+of the Apache Knox Gateway to provide access to the numerous APIs that are available
+from the service components of a Hadoop cluster.
+
+Depending on exactly how your Knox installation was done, there will be some number of
+steps required in order fully install and configure the samples for use in your environment.
+
+Please see the following section within the Apache Knox Users Guide: 
+
+http://knox.apache.org/books/knox-0-5-0/knox-0-5-0.html#Gateway+Samples

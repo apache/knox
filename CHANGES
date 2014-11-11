@@ -1,6 +1,9 @@
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.1
 ------------------------------------------------------------------------------
+** Improvement
+  * [KNOX-470] - add README and site docs for samples
+
 ** Bug
     * [KNOX-467] - Unit tests failing on windows. Second attempt.
     * [KNOX-467] - Unit tests failing on windows
