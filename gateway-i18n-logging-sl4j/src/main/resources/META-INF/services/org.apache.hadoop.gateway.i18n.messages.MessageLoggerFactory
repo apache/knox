@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.i18n.messages.loggers.sl4j.Log4jMessageLoggerFactory
+org.apache.hadoop.gateway.i18n.messages.loggers.sl4j.Sl4jMessageLoggerFactory
