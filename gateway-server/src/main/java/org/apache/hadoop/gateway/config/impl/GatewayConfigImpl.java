@@ -100,6 +100,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
 //  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_FILE_PREFIX + ".shiro.config.file";
+  public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
 
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
@@ -334,6 +335,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDefaultAppRedirectPath() {
     return "/" + getGatewayPath() + "/" + getDefaultTopologyName();
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getFrontendUrl()
+   */
+  @Override
+  public String getFrontendUrl() {
+    String url = get( FRONTEND_URL, null );
+    return url;
   }
 
   /* (non-Javadoc)

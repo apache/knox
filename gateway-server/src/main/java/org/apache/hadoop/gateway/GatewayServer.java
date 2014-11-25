@@ -57,6 +57,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -356,6 +358,7 @@ public class GatewayServer {
     context.setErrorHandler(errorHandler);
     // internalUndeploy( topology ); KNOX-152
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
+    context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
     deployments.put( name, context );
     contexts.addHandler( context );
     try {
@@ -494,6 +497,25 @@ public class GatewayServer {
     public boolean accept( File dir, String name ) {
       return pattern.matcher( name ).matches();
     }
+  }
+
+  public URI getFrontendUri( WebAppContext context, GatewayConfig config ) {
+    URI frontendUri = null;
+    String frontendStr = config.getFrontendUrl();
+    if( frontendStr != null && !frontendStr.trim().isEmpty() ) {
+      String topoName = (String)context.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
+      try {
+        frontendStr = frontendStr.trim();
+        if( frontendStr.endsWith( "/" ) ) {
+          frontendUri = new URI( frontendStr + topoName );
+        } else {
+          frontendUri = new URI( frontendStr + "/" + topoName );
+        }
+      } catch( URISyntaxException e ) {
+        throw new IllegalArgumentException( e );
+      }
+    }
+    return frontendUri;
   }
 
 }

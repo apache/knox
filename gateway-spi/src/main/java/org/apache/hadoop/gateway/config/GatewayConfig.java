@@ -83,4 +83,6 @@ public interface GatewayConfig {
   String getDefaultTopologyName();
 
   String getDefaultAppRedirectPath();
+
+  String getFrontendUrl();
 }

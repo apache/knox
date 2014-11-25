@@ -19,8 +19,6 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.hadoop.gateway.util.urltemplate.Rewriter;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -33,6 +31,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsCollectionContaining.hasItems;
 
 public class UrlRewriteResponseTest {
 
@@ -47,6 +46,7 @@ public class UrlRewriteResponseTest {
     EasyMock.expect( context.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriter ).anyTimes();
 
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect( config.getInitParameter( "test-filter-init-param-name" ) ).andReturn( "test-filter-init-param-value" ).anyTimes();
     EasyMock.expect( config.getServletContext() ).andReturn( context ).anyTimes();
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -54,11 +54,55 @@ public class UrlRewriteResponseTest {
 
     EasyMock.replay( rewriter, context, config, request, response );
 
-    UrlRewriteResponse reponse = new UrlRewriteResponse( config, request, response );
+    UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, request, response );
 
-    List<String> names = reponse.resolve( "cluster.name" );
+    List<String> names = rewriteResponse.resolve( "test-filter-init-param-name" );
     assertThat( names.size(), is( 1 ) );
-    assertThat( names.get( 0 ), is( "test-cluster-name" ) );
+    assertThat( names.get( 0 ), is( "test-filter-init-param-value" ) );
+  }
+
+  @Test
+  public void testResolveGatewayParams() throws Exception {
+
+    UrlRewriteProcessor rewriter = EasyMock.createNiceMock( UrlRewriteProcessor.class );
+
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    EasyMock.expect( context.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriter ).anyTimes();
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect( config.getServletContext() ).andReturn( context ).anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getScheme() ).andReturn( "mock-scheme" ).anyTimes();
+    EasyMock.expect( request.getLocalName() ).andReturn( "mock-host" ).anyTimes();
+    EasyMock.expect( request.getLocalPort() ).andReturn( 42 ).anyTimes();
+    EasyMock.expect( request.getContextPath() ).andReturn( "/mock-path" ).anyTimes();
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+
+    EasyMock.replay( rewriter, context, config, request, response );
+
+    UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, request, response );
+
+    List<String> url = rewriteResponse.resolve( "gateway.url" );
+    assertThat( url, hasItems( new String[]{ "mock-scheme://mock-host:42/mock-path" } ) );
+
+    List<String> scheme = rewriteResponse.resolve( "gateway.scheme" );
+    assertThat( scheme, hasItems( new String[]{ "mock-scheme" } ) );
+
+    List<String> host = rewriteResponse.resolve( "gateway.host" );
+    assertThat( host, hasItems( new String[]{ "mock-host" } ) );
+
+    List<String> port = rewriteResponse.resolve( "gateway.port" );
+    assertThat( port, hasItems( new String[]{ "42" } ) );
+
+    List<String> addr = rewriteResponse.resolve( "gateway.addr" );
+    assertThat( addr, hasItems( new String[]{ "mock-host:42" } ) );
+
+    List<String> address = rewriteResponse.resolve( "gateway.addr" );
+    assertThat( address, hasItems( new String[]{ "mock-host:42" } ) );
+
+    List<String> path = rewriteResponse.resolve( "gateway.path" );
+    assertThat( path, hasItems( new String[]{ "/mock-path" } ) );
   }
 
 }

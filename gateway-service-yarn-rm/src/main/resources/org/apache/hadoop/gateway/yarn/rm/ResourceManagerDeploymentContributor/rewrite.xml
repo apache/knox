@@ -41,7 +41,7 @@
     </rule>
     <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/trackingUrlAM/outbound">
         <match pattern="{scheme}://{host}:{port}/proxy/{appid=*}"/>
-		<rewrite template="{gateway.url}/resourcemanager/proxy/{appid=*}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+		<rewrite template="{$frontend[url]}/resourcemanager/proxy/{appid=*}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
 		<encrypt-query/>
     </rule>
     <rule dir="OUT" name="RESOURCEMANAGER/resourcemanager/hostport/outbound">

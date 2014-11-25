@@ -42,8 +42,7 @@
         <filter>
             <name>rewrite</name>
             <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
-            <rewrite>webhdfs://*:*/{path=**}
-                http://{gateway.address}/webhdfs/v1/{path=**}</rewrite>
+            <rewrite>webhdfs://*:*/{path=**} http://{$frontend[url]}/webhdfs/v1/{path=**}</rewrite>
         </filter>
         <filter>
             <name>dispatch</name>

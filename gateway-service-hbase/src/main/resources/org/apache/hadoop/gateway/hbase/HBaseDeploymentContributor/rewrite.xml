@@ -26,12 +26,12 @@
 
     <rule name="WEBHBASE/webhbase/location/outbound">
         <match pattern="*://*:*/{path=**}?{**}"/>
-        <rewrite template="{gateway.url}/hbase/{path=**}?{**}"/>
+        <rewrite template="{$frontend[url]}/hbase/{path=**}?{**}"/>
     </rule>
 
     <rule name="WEBHBASE/webhbase/address/outbound">
         <match pattern="{host}:{port}"/>
-        <rewrite template="{gateway.url}/hbase-region?host={host}?port={port}"/>
+        <rewrite template="{$frontend[url]}/hbase-region?host={host}?port={port}"/>
         <encrypt-query/>
     </rule>
 

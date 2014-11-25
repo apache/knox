@@ -35,6 +35,7 @@ public class GatewayTestConfig implements GatewayConfig {
   private String kerberosConfig = "/etc/knox/conf/krb5.conf";
   private boolean kerberosDebugEnabled = false;
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
+  private String frontendUrl = null;
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -166,6 +167,12 @@ public class GatewayTestConfig implements GatewayConfig {
   }
 
   /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getFrontendUrl()
+   */
+  @Override
+  public String getFrontendUrl() { return frontendUrl; }
+
+  /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getExcludedSSLProtocols()
    */
   @Override
@@ -174,7 +181,11 @@ public class GatewayTestConfig implements GatewayConfig {
     protocols.add("SSLv3");
     return protocols;
   }
-  
+
+  public void setFrontendUrl( String frontendUrl ) {
+    this.frontendUrl = frontendUrl;
+  }
+
 //  public void setKerberosLoginConfig(String kerberosLoginConfig) {
 //   this.kerberosLoginConfig = kerberosLoginConfig;
 //  }

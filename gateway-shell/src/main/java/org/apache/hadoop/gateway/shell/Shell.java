@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.shell;
 
 import groovy.ui.GroovyMain;
+import org.apache.log4j.PropertyConfigurator;
 import org.codehaus.groovy.tools.shell.AnsiDetector;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.fusesource.jansi.Ansi;
@@ -36,6 +37,7 @@ public class Shell {
   }
 
   public static void main( String... args ) throws IOException {
+    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     if( args.length > 0 ) {
       GroovyMain.main( args );
     } else {

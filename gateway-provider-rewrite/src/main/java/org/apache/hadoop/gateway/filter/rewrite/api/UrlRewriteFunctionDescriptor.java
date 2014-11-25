@@ -21,6 +21,4 @@ public interface UrlRewriteFunctionDescriptor<T> {
 
   String name();
 
-  //T name( String name );
-
 }

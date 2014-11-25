@@ -90,7 +90,7 @@
     </rule>
     <rule dir="OUT" name="WEBHDFS/webhdfs/datanode/outbound" pattern="*://*:*/**?**">
         <match pattern="*://{host}:{port}/{path=**}?{**}"/>
-        <rewrite template="{gateway.url}/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
+        <rewrite template="{$frontend[url]}/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
         <encode-query/>
     </rule>
     <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/templeton/{version}/{path=**}?{**}">

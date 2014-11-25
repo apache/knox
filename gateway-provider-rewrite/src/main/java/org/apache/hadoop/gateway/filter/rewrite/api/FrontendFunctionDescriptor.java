@@ -15,21 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs
+package org.apache.hadoop.gateway.filter.rewrite.api;
 
-gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
-dataDir = "/user/" + username + "/example"
-dataFile = "README"
+public class FrontendFunctionDescriptor implements UrlRewriteFunctionDescriptor<FrontendFunctionDescriptor> {
 
-session = Hadoop.login( gateway, username, password )
+  public static final String FUNCTION_NAME = "frontend";
 
-Hdfs.rm( session ).file( dataDir ).recursive().now()
+  public static final String FRONTEND_URI_ATTRIBUTE = "org.apache.knox.gateway.frontend.uri";
 
-Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).now()
+  @Override
+  public String name() {
+    return FUNCTION_NAME;
+  }
 
-println Hdfs.get( session ).from( dataDir + "/" + dataFile ).now().string
-
-session.shutdown()
+}

@@ -35,4 +35,7 @@ public interface UrlRewriteResources {
 
   @Resource( text="Unexpected selected node type {0}" )
   String unexpectedSelectedNodeType( Object node );
+
+  @Resource( text="Invalid frontend rewrite function parameter {0}" )
+  String invalidFrontendFunctionParameter( String parameter );
 }

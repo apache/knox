@@ -194,7 +194,13 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private String getGatewayParam( String name ) {
     if( "url".equals( name ) ) {
       return request.getScheme() + "://" + getRequestLocalHostName() + ":" + request.getLocalPort() + request.getContextPath();
-    } else if( "address".equals( name ) ) {
+    } else if( "scheme".equals( name ) ) {
+      return request.getScheme();
+    } else if( "host".equals( name ) ) {
+      return getRequestLocalHostName();
+    } else if( "port".equals( name ) ) {
+        return Integer.toString( request.getLocalPort() );
+    } else if( "addr".equals( name ) || "address".equals( name ) ) {
       return getRequestLocalHostName() + ":" + request.getLocalPort();
     } else if( "path".equals( name ) ) {
       return request.getContextPath();
