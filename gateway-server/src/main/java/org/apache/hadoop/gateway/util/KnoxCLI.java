@@ -144,16 +144,22 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
       } else if (args[i].equals("delete-alias")) {
-        String alias = args[++i];
+        String alias = null;
+        if (args.length >= 2) {
+          alias = args[++i];
+        }
         command = new AliasDeleteCommand(alias);
-        if (alias.equals("--help")) {
+        if (alias == null || alias.equals("--help")) {
           printKnoxShellUsage();
           return -1;
         }
       } else if (args[i].equals("create-alias")) {
-        String alias = args[++i];
+        String alias = null;
+        if (args.length >= 2) {
+          alias = args[++i];
+        }
         command = new AliasCreateCommand(alias);
-        if (alias.equals("--help")) {
+        if (alias == null || alias.equals("--help")) {
           printKnoxShellUsage();
           return -1;
         }
