@@ -58,7 +58,7 @@
             -->
             <param>
               <name>main.ldapRealm.contextFactory.url</name>
-              <value>ldap://localhost:33389</value>
+              <value>ldap://hdp.example.com:33389</value>
             </param>
             <param>
               <name>main.ldapRealm.userDnTemplate</name>
@@ -70,7 +70,7 @@
               <!-- defaults to: false -->
               <value>true</value>
             </param>
-            <!-- defaults to: simple
+            <!-- defaults to: simple 
             <param>
               <name>main.ldapRealm.contextFactory.systemAuthenticationMechanism</name>
               <value>simple</value>
@@ -80,18 +80,16 @@
               <name>main.ldapRealm.searchBase</name>
               <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
             </param>
-            <!-- defaults to: groupOfNames
             <param>
               <name>main.ldapRealm.groupObjectClass</name>
-              <value>groupOfNames</value>
+              <!-- defaults to: groupOfNames -->
+              <value>groupofurls</value>
             </param>
-            -->
-            <!-- defaults to: member
             <param>
               <name>main.ldapRealm.memberAttribute</name>
-              <value>member</value>
+              <!-- defaults to: member -->
+              <value>memberurl</value>
             </param>
-            -->
             <!-- 
             If this topology requires authorization then the group lookup can be optimized
             with the following configuration.
@@ -104,14 +102,14 @@
             NOTE: including the following config for clients that DO NOT send JSESSIONID
             will result in authorization failures because group lookup will not be done.
              -->
-            <!-- param>
+            <param>
               <name>main.cacheManager</name>
               <value>org.apache.shiro.cache.MemoryConstrainedCacheManager</value>
             </param>
             <param>
               <name>main.securityManager.cacheManager</name>
               <value>$cacheManager</value>
-            </param-->
+            </param>
             <param>
               <name>main.ldapRealm.memberAttributeValueTemplate</name>
               <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
@@ -120,6 +118,14 @@
               <name>main.ldapRealm.contextFactory.systemUsername</name>
               <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
             </param>
+            <!--
+            ldapsearch -h hdp.example.com -p 33389 -D "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" \
+                -w guest-password -b "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" "objectclass=*"
+
+            bin/knoxcli.sh  create-alias ldcSystemPassword -d-cluster dynamicgroup -d-value guest-password
+
+            curl -i  -k -u bob:bob-password https://localhost:8443/gateway/dynamicgroup/webhdfs/v1?op=GETHOMEDIRECTORY
+            -->
             <param>
               <name>main.ldapRealm.contextFactory.systemPassword</name>
               <value>${ALIAS=ldcSystemPassword}</value>
@@ -148,7 +154,7 @@
           <enabled>true</enabled>
           <param>
             <name>webhdfs.acl</name>
-            <value>*;analyst;*</value>
+            <value>*;directors;*</value>
           </param>
         </provider>
 
@@ -171,45 +177,15 @@
         <provider>
             <role>hostmap</role>
             <name>static</name>
-            <enabled>true</enabled>
+            <enabled>false</enabled>
             <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>
         </provider>
 
     </gateway>
 
     <service>
-        <role>NAMENODE</role>
-        <url>hdfs://localhost:8020</url>
-    </service>
-
-    <service>
-        <role>JOBTRACKER</role>
-        <url>rpc://localhost:8050</url>
-    </service>
-
-    <service>
-        <role>WEBHDFS</role>
-        <url>http://localhost:50070/webhdfs</url>
-    </service>
-
-    <service>
-        <role>WEBHCAT</role>
-        <url>http://localhost:50111/templeton</url>
-    </service>
-
-    <service>
-        <role>OOZIE</role>
-        <url>http://localhost:11000/oozie</url>
-    </service>
-
-    <service>
-        <role>WEBHBASE</role>
-        <url>http://localhost:60080</url>
-    </service>
-
-    <service>
         <role>HIVE</role>
-        <url>http://localhost:10000</url>
+        <url>http://hdp.example.com:10000</url>
     </service>
 
 </topology>

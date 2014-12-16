@@ -95,14 +95,26 @@
               <!-- defaults to: member -->
               <value>member</value>
             </param>
-            <param>
+            <!-- 
+            If this topology requires authorization then the group lookup can be optimized
+            with the following configuration.
+            Uncommnent the following if you know that all of the clients for the services
+            for which you have routing services defined will be sending JSESSIONID.
+            
+            It may make sense to isolate those services that you can be sure will be sending
+            JSESSIONID - such as ODBC/JDBC drivers for access to HiveServer2.
+            
+            NOTE: including the following config for clients that DO NOT send JSESSIONID
+            will result in authorization failures because group lookup will not be done.
+             -->
+            <!-- param>
               <name>main.cacheManager</name>
               <value>org.apache.shiro.cache.MemoryConstrainedCacheManager</value>
             </param>
             <param>
               <name>main.securityManager.cacheManager</name>
               <value>$cacheManager</value>
-            </param>
+            </param-->
             <param>
               <name>main.ldapRealm.memberAttributeValueTemplate</name>
               <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
