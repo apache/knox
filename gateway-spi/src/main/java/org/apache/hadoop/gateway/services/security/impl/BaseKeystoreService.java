@@ -183,7 +183,7 @@ public class BaseKeystoreService {
           ks.deleteEntry(alias);
         }
       } catch (KeyStoreException e) {
-        LOG.failedToAddCredential(e);
+        LOG.failedToRemoveCredential(e);
       }
     }
   }
