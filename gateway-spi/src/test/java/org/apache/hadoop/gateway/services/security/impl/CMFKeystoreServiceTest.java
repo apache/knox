@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.services.security.impl;
 
 import java.io.File;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.Map;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -39,6 +41,12 @@ import static org.junit.Assert.fail;
 @Category( { UnitTests.class, FastTests.class } )
 public class CMFKeystoreServiceTest {
   CMFKeystoreService ks;
+  String aliasName = "TestAliasName";
+  String secretValue = "AliasSecretValue";
+  char[] password = { 'P', 'A', 'S', 'S' };
+  File credentialsStoreFile = new File("ambari-credentials.jceks");
+  File keyStoreFile = new File("ambari.jks");
+  File certificateFile = new File("ambari");
 
   @Before
   public void setup() {
@@ -75,26 +83,80 @@ public class CMFKeystoreServiceTest {
   }
   
   @Test
-  public void testCredentialStore() {
+  public void testCreationOfStoreForCredential() throws KeystoreServiceException {
+    try {
+      ks.createCredentialStore();
+      assertTrue("Credential Store file is not created", ks.isCredentialStoreAvailable()
+          && credentialsStoreFile.exists());
+      KeyStore credentialStore = ks.getCredentialStore();
+      assertTrue("Credential Store file is not created with proper file type",
+        ("JCEKS").equalsIgnoreCase(credentialStore.getType()));
+    } finally {
+      credentialsStoreFile.deleteOnExit();
+    }
+  }
+
+  @Test
+  public void testCreationOfKeyStore() throws KeystoreServiceException {
     try {
       ks.createKeystore();
-      assertTrue(ks.isKeystoreAvailable());
+      assertTrue("Key Store file is not created", ks.isKeystoreAvailable() && keyStoreFile.exists());
+      KeyStore keystore = ks.getKeystore();
+      assertTrue("Key Store file is not created with proper file type",
+        ("JKS").equalsIgnoreCase(keystore.getType()));
       ks.createCredentialStore();
-      assertTrue(ks.isCredentialStoreAvailable());
-      ks.addCredential("aliasName", "secretValue");
-      char[] secret = ks.getCredential("aliasName");
-      assertTrue(new String(secret).equals("secretValue"));
-      ks.addCredential("encrypt_url", "sdkgfksdgfjkhsdjkfhb");
-      File file = new File("ambari-credentials.jceks");
-      assertTrue(file.exists());
-      file.delete();
-      file = new File("ambari.jks");
-      assertTrue(file.exists());
-      file.delete();
-    } catch (KeystoreServiceException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      fail();
+      ks.addCredential(aliasName, "secretValue");
+    } finally {
+      keyStoreFile.deleteOnExit();
+      credentialsStoreFile.deleteOnExit();
+    }
+  }
+
+  @Test
+  public void testAdditionOfCredentialsToKeyStore() throws KeystoreServiceException {
+    try {
+      ks.createKeystore();
+      ks.createCredentialStore();
+      ks.addCredential(aliasName, "secretValue");
+      char[] secret = ks.getCredential(aliasName);
+      assertTrue("Addition of Credentials failed", new String(secret).equals("secretValue"));
+    } finally {
+      credentialsStoreFile.deleteOnExit();
+      keyStoreFile.deleteOnExit();
+    }
+  }
+
+  @Test
+  public void testAdditionOfAliasWithSelfSignedCertificate() throws KeystoreServiceException,
+      KeyStoreException {
+    try {
+      ks.createKeystore();
+      ks.createCredentialStore();
+      ks.addCredential(aliasName, "secretValue");
+      ks.addSelfSignedCert(aliasName, password);
+      KeyStore keystore = ks.getKeystore();
+      assertTrue("Addition of Alias with Self Signed Certificate failed",
+        !keystore.getCertificate(aliasName).toString().isEmpty() && certificateFile.exists());
+    } finally {
+      credentialsStoreFile.deleteOnExit();
+      keyStoreFile.deleteOnExit();
+      certificateFile.deleteOnExit();
+    }
+  }
+
+  @Test
+  public void testFetchOfAliasKey() throws KeystoreServiceException {
+    try {
+      ks.createKeystore();
+      ks.createCredentialStore();
+      ks.addCredential(aliasName, "secretValue");
+      ks.addSelfSignedCert(aliasName, password);
+      assertTrue("Fetch of AliasKey failed", !ks.getKey(aliasName, password).toString().isEmpty()
+          && certificateFile.exists());
+    } finally {
+      credentialsStoreFile.deleteOnExit();
+      keyStoreFile.deleteOnExit();
+      certificateFile.deleteOnExit();
     }
   }
 }
