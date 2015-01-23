@@ -301,16 +301,23 @@ public class KnoxCLI extends Configured implements Tool {
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
+      KeystoreService keystoreService = getKeystoreService();
 
      if (cluster == null) {
        cluster = "__gateway";
      }
-     out.println("Listing aliases for: " + cluster);
-     List<String> aliases = as.getAliasesForCluster(cluster);
-     for (String alias : aliases) {
-       out.println(alias);
-     }
-     out.println("\n" + aliases.size() + " items.");
+      boolean credentialStoreForClusterAvailable =
+          keystoreService.isCredentialStoreForClusterAvailable(cluster);
+      if (credentialStoreForClusterAvailable) {
+        out.println("Listing aliases for: " + cluster);
+        List<String> aliases = as.getAliasesForCluster(cluster);
+        for (String alias : aliases) {
+          out.println(alias);
+        }
+        out.println("\n" + aliases.size() + " items.");
+      } else {
+        out.println("Invalid cluster name provided: " + cluster);
+      }
    }
 
    /* (non-Javadoc)
@@ -466,12 +473,19 @@ public class KnoxCLI extends Configured implements Tool {
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
+      KeystoreService keystoreService = getKeystoreService();
      if (as != null) {
        if (cluster == null) {
          cluster = "__gateway";
        }
-       as.removeAliasForCluster(cluster, name);
-       out.println(name + " has been successfully deleted.");
+        boolean credentialStoreForClusterAvailable =
+            keystoreService.isCredentialStoreForClusterAvailable(cluster);
+        if (credentialStoreForClusterAvailable) {
+          as.removeAliasForCluster(cluster, name);
+          out.println(name + " has been successfully deleted.");
+        } else {
+          out.println("Invalid cluster name provided: " + cluster);
+        }
      }
    }
 
@@ -605,7 +619,7 @@ public class KnoxCLI extends Configured implements Tool {
           ts.redeployTopologies(cluster);
         }
         else {
-          out.println("Invalid clusterName provided. No topologies to redeploy.");
+          out.println("Invalid cluster name provided. Nothing to redeploy.");
         }
       }
     }

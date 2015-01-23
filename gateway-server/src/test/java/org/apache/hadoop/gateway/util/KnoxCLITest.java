@@ -88,6 +88,74 @@ public class KnoxCLITest {
   }
   
   @Test
+  public void testListAndDeleteOfAliasForInvalidClusterName() throws Exception {
+    outContent.reset();
+    String[] args1 =
+        { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
+            "master" };
+    int rc = 0;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains(
+      "alias1 has been successfully " + "created."));
+
+    outContent.reset();
+    String[] args2 = { "list-alias", "--cluster", "Invalidcluster1", "--master", "master" };
+    rc = cli.run(args2);
+    assertEquals(0, rc);
+    System.out.println(outContent.toString());
+    assertTrue(outContent.toString(),
+      outContent.toString().contains("Invalid cluster name provided: Invalidcluster1"));
+
+    outContent.reset();
+    String[] args4 =
+        { "delete-alias", "alias1", "--cluster", "Invalidcluster1", "--master", "master" };
+    rc = cli.run(args4);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(),
+      outContent.toString().contains("Invalid cluster name provided: Invalidcluster1"));
+
+  }
+
+  @Test
+  public void testListAndDeleteOfAliasForValidClusterName() throws Exception {
+    outContent.reset();
+    String[] args1 =
+        { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
+            "master" };
+    int rc = 0;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains(
+      "alias1 has been successfully " + "created."));
+
+    outContent.reset();
+    String[] args2 = { "list-alias", "--cluster", "cluster1", "--master", "master" };
+    rc = cli.run(args2);
+    assertEquals(0, rc);
+    System.out.println(outContent.toString());
+    assertTrue(outContent.toString(), outContent.toString().contains("alias1"));
+
+    outContent.reset();
+    String[] args4 =
+        { "delete-alias", "alias1", "--cluster", "cluster1", "--master", "master" };
+    rc = cli.run(args4);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains(
+      "alias1 has been successfully " + "deleted."));
+
+    outContent.reset();
+    rc = cli.run(args2);
+    assertEquals(0, rc);
+    assertFalse(outContent.toString(), outContent.toString().contains("alias1"));
+
+  }
+
+  @Test
   public void testGatewayAndClusterStores() throws Exception {
     GatewayConfigImpl config = new GatewayConfigImpl();
     FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
