@@ -48,4 +48,9 @@ limitations under the License.
         <value>SSLv3</value>
         <description>Excluded SSL protocols.</description>
     </property>
+    <property>
+        <name>gateway.deployment.dir</name>
+        <value>/test</value>
+        <description>The path that contains deployments.</description>
+    </property>
 </configuration>

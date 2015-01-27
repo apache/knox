@@ -84,4 +84,22 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getDefaultAppRedirectPath(), is( "/gateway/sandbox" ) );
   }
+
+  @Test
+  public void testForUpdatedDeploymentDir() {
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue(("/test").equalsIgnoreCase(config.getGatewayDeploymentDir()));
+  }
+
+  @Test
+  public void testDefaultDeploymentDir() {
+    String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat(config.getGatewayDeploymentDir(), is(homeDirName + File.separator + "deployments"));
+  }
 }
