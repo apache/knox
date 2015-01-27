@@ -274,7 +274,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewayDeploymentDir() {
-    return get(DEPLOYMENT_DIR, getGatewayDataDir() + File.separator + DEFAULT_DEPLOYMENT_DIR);
+    return getGatewayDataDir() + File.separator + "deployments";
   }
 
   @Override
