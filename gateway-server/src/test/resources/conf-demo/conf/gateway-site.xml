@@ -54,5 +54,10 @@ limitations under the License.
         <value>shiro.ini</value>
         <description>The location of the Shiro configuration file.</description>
     </property>
+    <property>
+        <name>gateway.deployment.dir</name>
+        <value>/test</value>
+        <description>The path that contains deployments.</description>
+    </property>
 
 </configuration>
