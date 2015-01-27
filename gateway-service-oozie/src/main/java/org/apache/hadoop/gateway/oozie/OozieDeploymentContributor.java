@@ -41,7 +41,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
   private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
   
   // Oozie replay buffer size in KB
-  private static final String OOZIW_REPLAY_BUFFER_SIZE = "8";
+  private static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
 
   @Override
   public String getRole() {
@@ -109,7 +109,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
     List<FilterParamDescriptor> filterParams = new ArrayList<FilterParamDescriptor>();
     FilterParamDescriptor filterParamDescriptor = resource.createFilterParam();
     filterParamDescriptor.name(REPLAY_BUFFER_SIZE_PARAM);
-    filterParamDescriptor.value(OOZIW_REPLAY_BUFFER_SIZE);
+    filterParamDescriptor.value( DEFAULT_REPLAY_BUFFER_SIZE );
     filterParams.add(filterParamDescriptor);
     context.contributeFilter(service, resource, "dispatch", "http-client", filterParams);
   }

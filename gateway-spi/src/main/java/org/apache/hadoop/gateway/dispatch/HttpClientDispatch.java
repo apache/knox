@@ -74,7 +74,6 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
    protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
    protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
-   private static final int DEFAULT_REPLAY_BUFFER_SIZE = 4 * 1024; // 4K
 
    protected AppCookieManager appCookieManager;
 

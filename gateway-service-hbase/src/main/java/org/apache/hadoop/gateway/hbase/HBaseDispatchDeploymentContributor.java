@@ -32,7 +32,7 @@ public class HBaseDispatchDeploymentContributor extends ProviderDeploymentContri
   private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
   
   // Default global replay buffer size in KB
-  public static final String DEFAULT_REPLAY_BUFFER_SIZE = "4";
+  public static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
 
   @Override
   public String getRole() {
