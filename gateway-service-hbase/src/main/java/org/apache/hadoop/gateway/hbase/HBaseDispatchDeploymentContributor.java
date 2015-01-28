@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.List;
+import java.util.Map;
 
 public class HBaseDispatchDeploymentContributor extends ProviderDeploymentContributorBase {
   
@@ -46,17 +47,22 @@ public class HBaseDispatchDeploymentContributor extends ProviderDeploymentContri
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    String replayBufferSize = DEFAULT_REPLAY_BUFFER_SIZE;
-    if (params != null) {
-      for (FilterParamDescriptor paramDescriptor : params) {
-        if (REPLAY_BUFFER_SIZE_PARAM.equals( paramDescriptor.name() )) {
-          replayBufferSize = paramDescriptor.value();
-          break;
+    FilterDescriptor filter = resource.addFilter().name( getName() ).role( getRole() ).impl( HBaseHttpClientDispatch.class );
+
+    FilterParamDescriptor filterParam = filter.param().name( REPLAY_BUFFER_SIZE_PARAM ).value( DEFAULT_REPLAY_BUFFER_SIZE );
+    for ( Map.Entry<String,String> serviceParam : service.getParams().entrySet() ) {
+      if ( REPLAY_BUFFER_SIZE_PARAM.equals( serviceParam.getKey() ) ) {
+        filterParam.value( serviceParam.getValue() );
+      }
+    }
+    if ( params != null ) {
+      for ( FilterParamDescriptor customParam : params ) {
+        if ( REPLAY_BUFFER_SIZE_PARAM.equals( customParam.name() ) ) {
+          filterParam.value( customParam.value() );
         }
       }
     }
-    FilterDescriptor filter = resource.addFilter().name( getName() ).role( getRole() ).impl( HBaseHttpClientDispatch.class );
-    filter.param().name("replayBufferSize").value(replayBufferSize);
+
     if( context.getGatewayConfig().isHadoopKerberosSecured() ) {
       filter.param().name("kerberos").value("true");
     }

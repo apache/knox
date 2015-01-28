@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.gateway.GatewayTestConfig;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
@@ -27,28 +28,41 @@ import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 import static org.junit.Assert.fail;
 
@@ -356,21 +370,190 @@ public class DeploymentFactoryFuncTest {
    }
 
 
-   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
+  @Test
+  public void testDeploymentWithoutReplayBufferSize() throws Exception {
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File(System.getProperty("user.dir"), "target");
+    File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    File deployDir = new File(config.getGatewayDeploymentDir());
+    deployDir.mkdirs();
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Service service;
+    Topology topology = new Topology();
+    topology.setName( "test-cluster" );
+
+    service = new Service();
+    service.setRole( "HIVE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hive-host:50001/" } ) );
+    topology.addService( service );
+
+    service = new Service();
+    service.setRole( "WEBHBASE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50002/" } ) );
+    topology.addService( service );
+
+    service = new Service();
+    service.setRole( "OOZIE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50003/" } ) );
+    topology.addService( service );
+
+    WebArchive war = DeploymentFactory.createDeployment( config, topology );
+    Document doc = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    //dump( doc );
+
+    Node resourceNode, filterNode, paramNode;
+    String value;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='HIVE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "8" ) ) ;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='WEBHBASE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "8" ) ) ;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='OOZIE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "8" ) ) ;
+
+    FileUtils.deleteQuietly( deployDir );
+  }
+
+  @Test
+  public void testDeploymentWithReplayBufferSize() throws Exception {
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File(System.getProperty("user.dir"), "target");
+    File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    File deployDir = new File(config.getGatewayDeploymentDir());
+    deployDir.mkdirs();
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Service service;
+    Param param;
+    Topology topology = new Topology();
+    topology.setName( "test-cluster" );
+
+    service = new Service();
+    service.setRole( "HIVE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hive-host:50001/" } ) );
+    param = new Param();
+    param.setName( "replayBufferSize" );
+    param.setValue( "17" );
+    service.addParam( param );
+    topology.addService( service );
+
+    service = new Service();
+    service.setRole( "WEBHBASE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50002/" } ) );
+    param = new Param();
+    param.setName( "replayBufferSize" );
+    param.setValue( "33" );
+    service.addParam( param );
+    topology.addService( service );
+
+    service = new Service();
+    service.setRole( "OOZIE" );
+    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50003/" } ) );
+    param = new Param();
+    param.setName( "replayBufferSize" );
+    param.setValue( "65" );
+    service.addParam( param );
+    topology.addService( service );
+
+    WebArchive war = DeploymentFactory.createDeployment( config, topology );
+    Document doc = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    //dump( doc );
+
+    Node resourceNode, filterNode, paramNode;
+    String value;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='HIVE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "17" ) ) ;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='WEBHBASE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "33" ) ) ;
+
+    resourceNode = node( doc, "gateway/resource[role/text()='OOZIE']" );
+    assertThat( resourceNode, is(not(nullValue())));
+    filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
+    assertThat( filterNode, is(not(nullValue())));
+    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    value = value( paramNode, "value/text()" );
+    assertThat( value, is( "65" ) ) ;
+
+    FileUtils.deleteQuietly( deployDir );
+  }
+
+  private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
     InputSource source = new InputSource( stream );
     return builder.parse( source );
   }
 
-//  private void dump( Document document ) throws TransformerException {
-//    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-//    StreamResult result = new StreamResult( new StringWriter() );
-//    DOMSource source = new DOMSource( document );
-//    transformer.transform( source, result );
-//    String xmlString = result.getWriter().toString();
-//    System.out.println( xmlString );
-//  }
+  private void dump( Document document ) throws TransformerException {
+    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+    StreamResult result = new StreamResult( new StringWriter() );
+    DOMSource source = new DOMSource( document );
+    transformer.transform( source, result );
+    String xmlString = result.getWriter().toString();
+    System.out.println( xmlString );
+  }
+
+  private Node node( Node scope, String expression ) throws XPathExpressionException {
+    return (Node)XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope, XPathConstants.NODE );
+  }
+
+  private String value( Node scope, String expression ) throws XPathExpressionException {
+    return XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope );
+  }
 
 }

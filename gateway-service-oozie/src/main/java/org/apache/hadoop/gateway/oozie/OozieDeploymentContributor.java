@@ -106,12 +106,7 @@ public class OozieDeploymentContributor extends ServiceDeploymentContributorBase
 
   private void addDispatchFilter(DeploymentContext context, Service service,
       ResourceDescriptor resource) {
-    List<FilterParamDescriptor> filterParams = new ArrayList<FilterParamDescriptor>();
-    FilterParamDescriptor filterParamDescriptor = resource.createFilterParam();
-    filterParamDescriptor.name(REPLAY_BUFFER_SIZE_PARAM);
-    filterParamDescriptor.value( DEFAULT_REPLAY_BUFFER_SIZE );
-    filterParams.add(filterParamDescriptor);
-    context.contributeFilter(service, resource, "dispatch", "http-client", filterParams);
+    context.contributeFilter(service, resource, "dispatch", "http-client", null );
   }
 
   UrlRewriteRulesDescriptor loadRulesFromTemplate() throws IOException {
