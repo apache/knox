@@ -98,6 +98,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
   public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.dir";
+  public static final String SECURITY_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".security.dir";
+  public static final String DATA_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".data.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
 //  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_FILE_PREFIX + ".shiro.config.file";
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
@@ -105,6 +107,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
+  public static final String DEFAULT_SECURITY_DIR = "security";
+  public static final String DEFAULT_DATA_DIR = "data";
   private static final String SSL_ENABLED = "ssl.enabled";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
 //  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
@@ -148,8 +152,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewayDataDir() {
-    String value = getVar( GATEWAY_DATA_HOME_VAR, getGatewayHomeDir() + File.separator + "data" );
-    return value;
+    String systemValue =
+        System.getProperty(GATEWAY_DATA_HOME_VAR, System.getenv(GATEWAY_DATA_HOME_VAR));
+    String dataDir = null;
+    if (systemValue != null) {
+      dataDir = systemValue;
+    } else {
+      dataDir = get(DATA_DIR, getGatewayHomeDir() + File.separator + DEFAULT_DATA_DIR);
+    }
+    return dataDir;
   }
 
   @Override
@@ -280,7 +291,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewaySecurityDir() {
-    return getGatewayDataDir() + File.separator + "security";
+    return get(SECURITY_DIR, getGatewayDataDir() + File.separator + DEFAULT_SECURITY_DIR);
   }
 
   @Override

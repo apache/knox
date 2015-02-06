@@ -6,6 +6,7 @@ Release Notes - Apache Knox - Version 0.6.0
   * [KNOX-479] - Remove cacheManager configuration from template files
   * [KNOX-480] - KnoxCLI needs to print usage when alias not provided
   * [KNOX-494] - knox-env.sh script should print proper warning message , if JAVA is not set. (Andreina J via lmccay)
+  * [KNOX-493] - Data and sub data directory should be made configurable. (Andreina J via lmccay)
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.1

@@ -102,4 +102,68 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewayDeploymentDir(), is(homeDirName + File.separator + "deployments"));
   }
+
+  @Test
+  public void testForDefaultSecurityDataDir() {
+    String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat(config.getGatewaySecurityDir(), is(homeDirName + File.separator + "security"));
+  }
+
+  @Test
+  public void testForUpdatedSecurityDataDir() {
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue(("/test").equalsIgnoreCase(config.getGatewaySecurityDir()));
+  }
+
+  @Test
+  public void testForDataDirSetAsSystemProperty() {
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
+        + "DataDirSystemProperty");
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue((homeDirName + File.separator + "DataDirSystemProperty").equalsIgnoreCase(config
+        .getGatewayDataDir()));
+  }
+
+  @Test
+  public void testForDataDirSetAsConfiguration() {
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue(("/testDataDir").equalsIgnoreCase(config
+        .getGatewayDataDir()));
+  }
+
+  @Test
+  public void testForDefaultDataDir() {
+    String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue((homeDirName + File.separator + "data").equalsIgnoreCase(config.getGatewayDataDir()));
+  }
+
+  /**
+   * When data dir is set at both system property and configuration level , then system property
+   * value should be considered
+   **/
+  @Test
+  public void testDataDirSetAsBothSystemPropertyAndConfig() {
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
+        + "DataDirSystemProperty");
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue((homeDirName + File.separator + "DataDirSystemProperty").equalsIgnoreCase(config
+        .getGatewayDataDir()));
+  }
+
+
 }
