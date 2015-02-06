@@ -59,3 +59,8 @@ function findJava() {
 }
 
 findJava
+
+  if [[ -z $JAVA ]]; then
+    echo "Warning: JAVA is not set and could not be found." 1>&2
+  fi
+
