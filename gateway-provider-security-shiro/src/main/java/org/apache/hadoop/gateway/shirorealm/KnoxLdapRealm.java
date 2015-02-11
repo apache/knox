@@ -476,7 +476,6 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       }
     }
     finally {
-      if (searchResultEnum != null) {
         try {
           if (searchResultEnum != null) {
             searchResultEnum.close();
@@ -485,7 +484,6 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         finally {
           LdapUtils.closeContext(systemLdapCtx);
         }
-      }
     }
     return member;
   }

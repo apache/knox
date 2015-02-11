@@ -219,9 +219,7 @@ public abstract class DeploymentFactory {
     for( String role : providers.keySet() ) {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
         try {
-          if (gatewayServices != null) {
-            injectServices(contributor);
-          }
+          injectServices(contributor);
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
@@ -232,9 +230,7 @@ public abstract class DeploymentFactory {
     for( String role : services.keySet() ) {
       for( ServiceDeploymentContributor contributor : services.get( role ) ) {
         try {
-          if (services != null) {
-            injectServices(contributor);
-          }
+          injectServices(contributor);
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
