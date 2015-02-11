@@ -91,7 +91,7 @@ public class GatewayGlobalConfigTest {
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
-    assertTrue(("/test").equalsIgnoreCase(config.getGatewayDeploymentDir()));
+    assertTrue(("target/test").equalsIgnoreCase(config.getGatewayDeploymentDir()));
   }
 
   @Test
@@ -118,7 +118,7 @@ public class GatewayGlobalConfigTest {
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
-    assertTrue(("/test").equalsIgnoreCase(config.getGatewaySecurityDir()));
+    assertTrue(("target/test").equalsIgnoreCase(config.getGatewaySecurityDir()));
   }
 
   @Test
@@ -137,7 +137,7 @@ public class GatewayGlobalConfigTest {
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
     GatewayConfig config = new GatewayConfigImpl();
-    assertTrue(("/testDataDir").equalsIgnoreCase(config
+    assertTrue(("target/testDataDir").equalsIgnoreCase(config
         .getGatewayDataDir()));
   }
 

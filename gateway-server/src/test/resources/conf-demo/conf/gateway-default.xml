@@ -50,17 +50,17 @@ limitations under the License.
     </property>
     <property>
         <name>gateway.deployment.dir</name>
-        <value>/test</value>
+        <value>target/test</value>
         <description>The path that contains deployments.</description>
     </property>
     <property>
         <name>gateway.security.dir</name>
-        <value>/test</value>
+        <value>target/test</value>
         <description>The path that contains Security.</description>
     </property>
      <property>
         <name>gateway.data.dir</name>
-        <value>/testDataDir</value>
+        <value>target/testDataDir</value>
         <description>The path that contains Gateway Data (Security and deployments)</description>
     </property>
     

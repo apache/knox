@@ -53,7 +53,7 @@ public class KnoxCLITest {
     System.setOut(new PrintStream(outContent));
     System.setErr(new PrintStream(errContent));
   }
-  
+
   @Test
   public void testSuccessfulAlaisLifecycle() throws Exception {
     outContent.reset();
@@ -333,7 +333,7 @@ public class KnoxCLITest {
 
     outContent.reset();
     rc = cli.run(args);
-    assertThat( rc, is( -1 ) );
+    assertThat( rc, not(is(0)) );
     assertThat( outContent.toString(), containsString( "Master secret is already present on disk." ) );
 
     outContent.reset();

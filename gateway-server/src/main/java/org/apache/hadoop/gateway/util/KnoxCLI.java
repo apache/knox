@@ -93,11 +93,12 @@ public class KnoxCLI extends Configured implements Tool {
           initializeServices( command instanceof MasterCreateCommand );
           command.execute();
       } else {
-        exitCode = -1;
+        exitCode = -2;
       }
     } catch (Exception e) {
-      e.printStackTrace(err);
-      return -1;
+      e.printStackTrace( err );
+      err.flush();
+      return -3;
     }
     return exitCode;
   }
