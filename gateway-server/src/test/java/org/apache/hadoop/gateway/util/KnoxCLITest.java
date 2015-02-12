@@ -120,6 +120,17 @@ public class KnoxCLITest {
   }
 
   @Test
+  public void testForInvalidArgument() throws Exception {
+    outContent.reset();
+    String[] args1 = { "--value", "testvalue1", "--master", "master" };
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    int rc = cli.run(args1);
+    assertEquals(-2, rc);
+    assertTrue(outContent.toString().contains("ERROR: Invalid Command"));
+  }
+
+  @Test
   public void testListAndDeleteOfAliasForValidClusterName() throws Exception {
     outContent.reset();
     String[] args1 =

@@ -89,10 +89,12 @@ public class KnoxCLI extends Configured implements Tool {
       if (exitCode != 0) {
         return exitCode;
       }
-      if (command.validate()) {
-          initializeServices( command instanceof MasterCreateCommand );
-          command.execute();
+      if (command != null && command.validate()) {
+        initializeServices( command instanceof MasterCreateCommand );
+        command.execute();
       } else {
+        out.println("ERROR: Invalid Command" + "\n" + "Unrecognized option:" + args[0] + "\n"
+            + "A fatal exception has occurred. Program will exit.");
         exitCode = -2;
       }
     } catch (Exception e) {
