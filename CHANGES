@@ -8,6 +8,9 @@ Release Notes - Apache Knox - Version 0.6.0
   * [KNOX-494] - knox-env.sh script should print proper warning message , if JAVA is not set. (Andreina J via lmccay)
   * [KNOX-493] - Data and sub data directory should be made configurable. (Andreina J via lmccay)
 
+** Improvement
+  * [KNOX-462] - Proper error message when root tag of topology file incorrect
+
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.1
 ------------------------------------------------------------------------------

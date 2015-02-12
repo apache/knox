@@ -28,6 +28,12 @@ import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -65,7 +71,9 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 public class DefaultTopologyService
     extends FileAlterationListenerAdaptor
     implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener {
-
+  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
+    AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+    AuditConstants.KNOX_COMPONENT_NAME);
   private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<String>();
   static {
     SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("xml");
@@ -111,6 +119,9 @@ public class DefaultTopologyService
     Topology topology;
     Digester digester = digesterLoader.newDigester();
     TopologyBuilder topologyBuilder = digester.parse(FileUtils.openInputStream(file));
+    if (null == topologyBuilder) {
+      return null;
+    }
     topology = topologyBuilder.build();
     topology.setUri(file.toURI());
     topology.setName(FilenameUtils.removeExtension(file.getName()));
@@ -137,10 +148,14 @@ public class DefaultTopologyService
             continue;
           }
         } else {
+          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+            ActionOutcome.FAILURE);
           log.failedToRedeployTopology(topology.getName());
           break;
         }
       } catch (InterruptedException e) {
+        auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+          ActionOutcome.FAILURE);
         log.failedToRedeployTopology(topology.getName(), e);
         e.printStackTrace();
       }
@@ -201,15 +216,28 @@ public class DefaultTopologyService
     if (directory.exists() && directory.canRead()) {
       for (File file : directory.listFiles(this)) {
         try {
-          map.put(file, loadTopology(file));
+          Topology loadTopology = loadTopology(file);
+          if (null != loadTopology) {
+            map.put(file, loadTopology);
+          } else {
+            auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+              ActionOutcome.FAILURE);
+            log.failedToLoadTopology(file.getAbsolutePath());
+          }
         } catch (IOException e) {
           // Maybe it makes sense to throw exception
+          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+            ActionOutcome.FAILURE);
           log.failedToLoadTopology(file.getAbsolutePath(), e);
         } catch (SAXException e) {
           // Maybe it makes sense to throw exception
+          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+            ActionOutcome.FAILURE);
           log.failedToLoadTopology(file.getAbsolutePath(), e);
         } catch (Exception e) {
           // Maybe it makes sense to throw exception
+          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+            ActionOutcome.FAILURE);
           log.failedToLoadTopology(file.getAbsolutePath(), e);
         }
       }
@@ -240,8 +268,10 @@ public class DefaultTopologyService
       }
 
     } catch (JAXBException e) {
+      auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology(t.getName(), e);
     } catch (IOException io) {
+      auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology(t.getName(), io);
     }
     reloadTopologies();
@@ -292,6 +322,7 @@ public class DefaultTopologyService
       try {
         listener.handleTopologyEvent(events);
       } catch (RuntimeException e) {
+        auditor.audit(Action.LOAD, "Topology_Event", ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
         log.failedToHandleTopologyEvents(e);
       }
     }

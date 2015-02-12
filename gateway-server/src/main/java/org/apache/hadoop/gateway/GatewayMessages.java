@@ -97,6 +97,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to redeploy topology {0}: {1}" )
   void failedToRedeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Throwable e );
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to load topology {0}: Topology configuration is invalid!")
+  void failedToLoadTopology(String fileName);
+
   @Message( level = MessageLevel.ERROR, text = "Failed to redeploy topologies: {0}" )
   void failedToRedeployTopologies( @StackTrace(level=MessageLevel.DEBUG) Throwable e );
 

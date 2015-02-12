@@ -25,6 +25,7 @@ public abstract class Action {
   public static final String AUTHORIZATION = "authorization";
   public static final String REDEPLOY = "redeploy";
   public static final String DEPLOY = "deploy";
+  public static final String LOAD = "load";
   public static final String UNDEPLOY = "undeploy";
   public static final String IDENTITY_MAPPING = "identity-mapping";
   public static final String DISPATCH = "dispatch";
