@@ -186,6 +186,51 @@ public class GatewayTestConfig implements GatewayConfig {
     this.frontendUrl = frontendUrl;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#isClientAuthNeeded()
+   */
+  @Override
+  public boolean isClientAuthNeeded() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTruststorePath()
+   */
+  @Override
+  public String getTruststorePath() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTrustAllCerts()
+   */
+  @Override
+  public boolean getTrustAllCerts() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTruststoreType()
+   */
+  @Override
+  public String getTruststoreType() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getKeystoreType()
+   */
+  @Override
+  public String getKeystoreType() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
 //  public void setKerberosLoginConfig(String kerberosLoginConfig) {
 //   this.kerberosLoginConfig = kerberosLoginConfig;
 //  }

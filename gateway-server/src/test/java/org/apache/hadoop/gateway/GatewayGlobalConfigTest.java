@@ -44,6 +44,7 @@ public class GatewayGlobalConfigTest {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-full/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
+    assertThat( config.isClientAuthNeeded(), is( false ) );
     assertNull("ssl.exclude.protocols should be null.", config.getExcludedSSLProtocols());
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
@@ -62,7 +63,10 @@ public class GatewayGlobalConfigTest {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 5555 ) );
-    //assertThat( config.getShiroConfigFile(), is( "site-shiro.ini") );
+    assertThat( config.isClientAuthNeeded(), is( true ) );
+    assertThat( config.getTruststorePath(), is("./gateway-trust.jks"));
+    assertThat( config.getTruststoreType(), is( "PKCS12" ) );
+    assertThat( config.getKeystoreType(), is( "JKS" ) );
   }
 
   @Test

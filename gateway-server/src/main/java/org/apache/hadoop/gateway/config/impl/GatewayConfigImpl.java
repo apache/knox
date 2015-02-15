@@ -101,17 +101,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String SECURITY_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".security.dir";
   public static final String DATA_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".data.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
-//  public static final String SHIRO_CONFIG_FILE = GATEWAY_CONFIG_FILE_PREFIX + ".shiro.config.file";
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
+  private static final String TRUST_ALL_CERTS = GATEWAY_CONFIG_FILE_PREFIX + ".trust.all.certs";
+  private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
+  private static final String TRUSTSTORE_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.path";
+  private static final String TRUSTSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.type";
+  private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
 
+  // These config property names are not inline with the convention of using the
+  // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
+  // backward compatibility. 
+  // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
+  private static final String SSL_ENABLED = "ssl.enabled";
+  private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
+  // END BACKWARD COMPATIBLE BLOCK
+  
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   public static final String DEFAULT_SECURITY_DIR = "security";
   public static final String DEFAULT_DATA_DIR = "data";
-  private static final String SSL_ENABLED = "ssl.enabled";
-  private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
-//  public static final String DEFAULT_SHIRO_CONFIG_FILE = "shiro.ini";
+  
 
   public GatewayConfigImpl() {
     init();
@@ -369,5 +379,46 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
     return protocols;
   }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#isClientAuthNeeded()
+   */
+  @Override
+  public boolean isClientAuthNeeded() {
+    String clientAuthNeeded = get( CLIENT_AUTH_NEEDED, "false" );
+    return "true".equals(clientAuthNeeded);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTruststorePath()
+   */
+  @Override
+  public String getTruststorePath() {
+    return get( TRUSTSTORE_PATH, null);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTrustAllCerts()
+   */
+  @Override
+  public boolean getTrustAllCerts() {
+    String trustAllCerts = get( TRUST_ALL_CERTS, "false" );
+    return "true".equals(trustAllCerts);
+  }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTruststorePath()
+   */
+  @Override
+  public String getTruststoreType() {
+    return get( TRUSTSTORE_TYPE, "JKS");
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getTruststorePath()
+   */
+  @Override
+  public String getKeystoreType() {
+    return get( KEYSTORE_TYPE, "JKS");
+  }
 }

@@ -49,4 +49,21 @@ limitations under the License.
         <description>The location of the Shiro configuration file.</description>
     </property>
 
+    <property>
+        <name>gateway.client.auth.needed</name>
+        <value>true</value>
+        <description>mutual authentication required for all topologies</description>
+    </property>
+
+    <property>
+        <name>gateway.truststore.path</name>
+        <value>./gateway-trust.jks</value>
+        <description>path to truststore</description>
+    </property>
+
+    <property>
+        <name>gateway.truststore.type</name>
+        <value>PKCS12</value>
+        <description>type of truststore</description>
+    </property>
 </configuration>

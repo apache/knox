@@ -43,6 +43,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class JettySSLService implements SSLService {
   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
+  private static final String GATEWAY_TRUSTSTORE_PASSWORD = "gateway-truststore-password";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   
@@ -50,6 +51,11 @@ public class JettySSLService implements SSLService {
   private KeystoreService ks;
   private AliasService as;
   private List<String> sslExcludeProtocols = null;
+  private boolean clientAuthNeeded;
+  private boolean trustAllCerts;
+  private String truststorePath;
+  private String keystoreType;
+  private String trustStoreType;
 
   public void setMasterService(MasterService ms) {
     this.ms = ms;
@@ -95,7 +101,12 @@ public class JettySSLService implements SSLService {
       throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
     }
 
+    keystoreType = config.getKeystoreType();
     sslExcludeProtocols = config.getExcludedSSLProtocols();
+    clientAuthNeeded = config.isClientAuthNeeded();
+    truststorePath = config.getTruststorePath();
+    trustAllCerts = config.getTrustAllCerts();
+    trustStoreType = config.getTruststoreType();
   }
 
   private void logAndValidateCertificate() throws ServiceLifecycleException {
@@ -131,23 +142,41 @@ public class JettySSLService implements SSLService {
   public Object buildSSlConnector( String keystoreFileName ) {
     SslContextFactory sslContextFactory = new SslContextFactory( true );
     sslContextFactory.setCertAlias( "gateway-identity" );
-//    String keystorePath = gatewayHomeDir + File.separatorChar +  "conf" + File.separatorChar +  "security" + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
-    sslContextFactory.setKeyStoreType("JKS");
+    sslContextFactory.setKeyStoreType(keystoreType);
     sslContextFactory.setKeyStorePath(keystoreFileName);
     char[] master = ms.getMasterSecret();
     sslContextFactory.setKeyStorePassword(new String(master));
-    char[] keypass = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+    char[] keypass = as.getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
     if (keypass == null) {
       // there has been no alias created for the key - let's assume it is the same as the keystore password
       keypass = master;
     }
     sslContextFactory.setKeyManagerPassword(new String(keypass));
 
-    // TODO: make specific truststore too?
-//    sslContextFactory.setTrustStore(keystorePath);
-//    sslContextFactory.setTrustStorePassword(new String(keypass));
-    sslContextFactory.setNeedClientAuth( false );
-    sslContextFactory.setTrustAll( true );
+    String truststorePassword = null;
+    if (clientAuthNeeded) {
+      if (truststorePath != null) {
+        sslContextFactory.setTrustStore(truststorePath);
+        char[] truststorePwd = as.getPasswordFromAliasForGateway(GATEWAY_TRUSTSTORE_PASSWORD);
+        if (truststorePwd != null) {
+          truststorePassword = new String(truststorePwd);
+        }
+        else {
+          truststorePassword = new String(master);
+        }
+        sslContextFactory.setTrustStorePassword(truststorePassword);
+        sslContextFactory.setTrustStoreType(trustStoreType);
+      }
+      else {
+        // when clientAuthIsNeeded but no truststore provided
+        // default to the server's keystore and details
+        sslContextFactory.setTrustStore(keystoreFileName);
+        sslContextFactory.setTrustStorePassword(new String(master));
+        sslContextFactory.setTrustStoreType(keystoreType);
+      }
+    }
+    sslContextFactory.setNeedClientAuth( clientAuthNeeded );
+    sslContextFactory.setTrustAll( trustAllCerts );
     if (sslExcludeProtocols != null) {
       sslContextFactory.setExcludeProtocols((String[]) sslExcludeProtocols.toArray());
     }

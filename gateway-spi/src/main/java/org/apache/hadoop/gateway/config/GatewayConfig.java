@@ -85,4 +85,14 @@ public interface GatewayConfig {
   String getDefaultAppRedirectPath();
 
   String getFrontendUrl();
+
+  boolean isClientAuthNeeded();
+
+  String getTruststorePath();
+
+  boolean getTrustAllCerts();
+
+  String getKeystoreType();
+
+  String getTruststoreType();
 }
