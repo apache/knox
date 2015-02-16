@@ -308,8 +308,7 @@ public interface GatewayMessages {
   void assumingKeyPassphraseIsMaster();
 
   @Message( level = MessageLevel.ERROR, text = "Failed to remove alias for cluster: {0} {1}." )
-  void failedToRemoveCredentialForCluster(String clusterName,
-      KeystoreServiceException e);
+  void failedToRemoveCredentialForCluster(String clusterName, Exception e);
 
   @Message( level = MessageLevel.WARN, text = "Failed to match path {0}" )
   void failedToMatchPath( String path );

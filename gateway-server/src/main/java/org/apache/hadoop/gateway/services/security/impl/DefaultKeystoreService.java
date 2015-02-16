@@ -246,13 +246,13 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     try {
       writeKeystoreToFile(ks, keyStoreFile);
     } catch (KeyStoreException e) {
-      LOG.failedToAddCredentialForCluster( clusterName, e );
+      LOG.failedToRemoveCredentialForCluster(clusterName, e);
     } catch (NoSuchAlgorithmException e) {
-      LOG.failedToAddCredentialForCluster( clusterName, e );
+      LOG.failedToRemoveCredentialForCluster(clusterName, e);
     } catch (CertificateException e) {
-      LOG.failedToAddCredentialForCluster( clusterName, e );
+      LOG.failedToRemoveCredentialForCluster(clusterName, e);
     } catch (IOException e) {
-      LOG.failedToAddCredentialForCluster( clusterName, e );
+      LOG.failedToRemoveCredentialForCluster(clusterName, e);
     }
   }
 }
