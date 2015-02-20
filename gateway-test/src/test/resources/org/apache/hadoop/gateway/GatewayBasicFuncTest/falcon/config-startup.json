@@ -1,0 +1,188 @@
+{
+  "properties": [
+    {
+      "key": "ProcessInstanceManager.impl",
+      "value": "org.apache.falcon.resource.InstanceManager"
+    },
+    {
+      "key": "oozie.process.workflow.builder",
+      "value": "org.apache.falcon.workflow.OozieProcessWorkflowBuilder"
+    },
+    {
+      "key": "falcon.http.authentication.kerberos.name.rules",
+      "value": "DEFAULT"
+    },
+    {
+      "key": "catalog.service.impl",
+      "value": "org.apache.falcon.catalog.HiveCatalogService"
+    },
+    {
+      "key": "falcon.graph.storage.directory",
+      "value": "/hadoop/falcon/data/lineage/graphdb"
+    },
+    {
+      "key": "ConfigSyncService.impl",
+      "value": "org.apache.falcon.resource.ConfigSyncService"
+    },
+    {
+      "key": "journal.impl",
+      "value": "org.apache.falcon.transaction.SharedFileSystemJournal"
+    },
+    {
+      "key": "max.retry.failure.count",
+      "value": "1"
+    },
+    {
+      "key": "dfs.namenode.kerberos.principal",
+      "value": "nn/_HOST@EXAMPLE.COM"
+    },
+    {
+      "key": "application.services",
+      "value": "org.apache.falcon.security.AuthenticationInitializationService,org.apache.falcon.workflow.WorkflowJobEndNotificationService, org.apache.falcon.service.ProcessSubscriberService,org.apache.falcon.entity.store.ConfigurationStore,org.apache.falcon.rerun.service.RetryService,org.apache.falcon.rerun.service.LateRunService,org.apache.falcon.service.LogCleanupService,org.apache.falcon.metadata.MetadataMappingService"
+    },
+    {
+      "key": "broker.ttlInMins",
+      "value": "4320"
+    },
+    {
+      "key": "falcon.http.authentication.token.validity",
+      "value": "36000"
+    },
+    {
+      "key": "broker.impl.class",
+      "value": "org.apache.activemq.ActiveMQConnectionFactory"
+    },
+    {
+      "key": "domain",
+      "value": "falcon"
+    },
+    {
+      "key": "shared.libs",
+      "value": "activemq-core,ant,geronimo-j2ee-management,hadoop-distcp,jms,json-simple,oozie-client,spring-jms"
+    },
+    {
+      "key": "system.lib.location",
+      "value": "/usr/hdp/current/falcon-server/server/webapp/falcon/WEB-INF/lib"
+    },
+    {
+      "key": "falcon.service.authentication.kerberos.principal",
+      "value": "falcon/_HOST@EXAMPLE.COM"
+    },
+    {
+      "key": "config.store.uri",
+      "value": "file:///hadoop/falcon/store"
+    },
+    {
+      "key": "falcon.authentication.type",
+      "value": "simple"
+    },
+    {
+      "key": "falcon.security.authorization.admin.groups",
+      "value": "falcon"
+    },
+    {
+      "key": "falcon.graph.blueprints.graph",
+      "value": "com.thinkaurelius.titan.core.TitanFactory"
+    },
+    {
+      "key": "falcon.http.authentication.simple.anonymous.allowed",
+      "value": "true"
+    },
+    {
+      "key": "falcon.http.authentication.blacklisted.users",
+      "value": ""
+    },
+    {
+      "key": "falcon.security.authorization.provider",
+      "value": "org.apache.falcon.security.DefaultAuthorizationProvider"
+    },
+    {
+      "key": "falcon.http.authentication.signature.secret",
+      "value": "falcon"
+    },
+    {
+      "key": "configstore.listeners",
+      "value": "org.apache.falcon.entity.v0.EntityGraph,org.apache.falcon.entity.ColoClusterRelation,org.apache.falcon.group.FeedGroupMap,org.apache.falcon.service.SharedLibraryHostingService"
+    },
+    {
+      "key": "falcon.http.authentication.kerberos.keytab",
+      "value": "/etc/security/keytabs/spnego.service.keytab"
+    },
+    {
+      "key": "falcon.http.authentication.type",
+      "value": "simple"
+    },
+    {
+      "key": "oozie.feed.workflow.builder",
+      "value": "org.apache.falcon.workflow.OozieFeedWorkflowBuilder"
+    },
+    {
+      "key": "falcon.security.authorization.superusergroup",
+      "value": "falcon"
+    },
+    {
+      "key": "internal.queue.size",
+      "value": "1000"
+    },
+    {
+      "key": "SchedulableEntityManager.impl",
+      "value": "org.apache.falcon.resource.SchedulableEntityManager"
+    },
+    {
+      "key": "falcon.security.authorization.enabled",
+      "value": "false"
+    },
+    {
+      "key": "falcon.graph.preserve.history",
+      "value": "false"
+    },
+    {
+      "key": "falcon.service.authentication.kerberos.keytab",
+      "value": "/etc/security/keytabs/falcon.service.keytab"
+    },
+    {
+      "key": "broker.url",
+      "value": "tcp://sandbox.hortonworks.com:61616"
+    },
+    {
+      "key": "falcon.graph.storage.backend",
+      "value": "berkeleyje"
+    },
+    {
+      "key": "falcon.graph.serialize.path",
+      "value": "/hadoop/falcon/data/lineage"
+    },
+    {
+      "key": "falcon.cleanup.service.frequency",
+      "value": "days(1)"
+    },
+    {
+      "key": "retry.recorder.path",
+      "value": "/var/log/falcon/retry"
+    },
+    {
+      "key": "falcon.http.authentication.cookie.domain",
+      "value": "EXAMPLE.COM"
+    },
+    {
+      "key": "falcon.enableTLS",
+      "value": "false"
+    },
+    {
+      "key": "entity.topic",
+      "value": "FALCON.ENTITY.TOPIC"
+    },
+    {
+      "key": "falcon.security.authorization.admin.users",
+      "value": "falcon,ambari-qa"
+    },
+    {
+      "key": "workflow.engine.impl",
+      "value": "org.apache.falcon.workflow.engine.OozieWorkflowEngine"
+    },
+    {
+      "key": "falcon.http.authentication.kerberos.principal",
+      "value": "HTTP/_HOST@EXAMPLE.COM"
+    }
+  ]
+}

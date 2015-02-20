@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="yes"?>
+<properties>
+    <properties>
+        <key>deploy.mode</key>
+        <value>embedded</value>
+    </properties>
+    <properties>
+        <key>domain</key>
+        <value>all</value>
+    </properties>
+</properties>

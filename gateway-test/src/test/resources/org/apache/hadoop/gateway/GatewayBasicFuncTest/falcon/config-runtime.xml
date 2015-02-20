@@ -1,0 +1,23 @@
+<?xml version="1.0" standalone="yes"?>
+<properties>
+    <properties>
+        <key>log.cleanup.frequency.days.retention</key>
+        <value>days(7)</value>
+    </properties>
+    <properties>
+        <key>log.cleanup.frequency.months.retention</key>
+        <value>months(3)</value>
+    </properties>
+    <properties>
+        <key>domain</key>
+        <value>falcon</value>
+    </properties>
+    <properties>
+        <key>log.cleanup.frequency.hours.retention</key>
+        <value>minutes(1)</value>
+    </properties>
+    <properties>
+        <key>log.cleanup.frequency.minutes.retention</key>
+        <value>hours(6)</value>
+    </properties>
+</properties>

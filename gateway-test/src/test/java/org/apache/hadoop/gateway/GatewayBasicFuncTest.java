@@ -23,7 +23,6 @@ import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.ResponseSpecification;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
@@ -42,6 +41,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -64,17 +64,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
-import static org.hamcrest.text.IsEmptyString.isEmptyString;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
@@ -133,9 +129,9 @@ public class GatewayBasicFuncTest {
     Log.setLog( new NoOpLogger() );
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
-    driver.setResourceBase( GatewayBasicFuncTest.class );
-    driver.setupLdap( findFreePort() );
-    driver.setupService( "WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES );
+    driver.setResourceBase(GatewayBasicFuncTest.class);
+    driver.setupLdap(findFreePort());
+    driver.setupService("WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/webhdfs/data", USE_MOCK_SERVICES );
     driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/templeton", "/cluster/templeton", USE_MOCK_SERVICES );
     driver.setupService( "OOZIE", "http://" + TEST_HOST + ":11000/oozie", "/cluster/oozie", USE_MOCK_SERVICES );
@@ -144,6 +140,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "NAMENODE", "hdfs://" + TEST_HOST + ":8020", null, USE_MOCK_SERVICES );
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupService( "RESOURCEMANAGER", "http://" + TEST_HOST + ":8088/ws", "/cluster/resourcemanager", USE_MOCK_SERVICES );
+    driver.setupService( "FALCON", "http://" + TEST_HOST + ":15000", "/cluster/falcon", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -170,18 +167,18 @@ public class GatewayBasicFuncTest {
           .addTag( "gateway" )
             .addTag( "provider" )
               .addTag( "role" ).addText( "webappsec" )
-              .addTag( "name" ).addText( "WebAppSec" )
-              .addTag( "enabled" ).addText( "true" )
+              .addTag("name").addText("WebAppSec")
+              .addTag("enabled").addText("true")
               .addTag( "param" )
-                .addTag( "name" ).addText( "csrf.enabled" )
-                .addTag( "value" ).addText( "true" ).gotoParent().gotoParent()
-            .addTag( "provider" )
-              .addTag( "role" ).addText( "authentication" )
-              .addTag( "name" ).addText( "ShiroProvider" )
-              .addTag( "enabled" ).addText( "true" )
+                .addTag("name").addText("csrf.enabled")
+                .addTag("value").addText("true").gotoParent().gotoParent()
+            .addTag("provider")
+              .addTag("role").addText("authentication")
+              .addTag("name").addText("ShiroProvider")
+              .addTag("enabled").addText("true")
               .addTag( "param" )
-                .addTag( "name" ).addText( "main.ldapRealm" )
-                .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+                .addTag("name").addText("main.ldapRealm")
+                .addTag("value").addText("org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm").gotoParent()
               .addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
                 .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
@@ -194,21 +191,21 @@ public class GatewayBasicFuncTest {
               .addTag( "param" )
                 .addTag( "name" ).addText( "urls./**" )
                 .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
-            .addTag( "provider" )
-              .addTag( "role" ).addText( "identity-assertion" )
-              .addTag( "enabled" ).addText( "true" )
-              .addTag( "name" ).addText( "Default" ).gotoParent()
-            .addTag( "provider" )
+            .addTag("provider")
+              .addTag("role").addText("identity-assertion")
+              .addTag("enabled").addText("true")
+              .addTag("name").addText("Default").gotoParent()
+            .addTag("provider")
               .addTag( "role" ).addText( "authorization" )
               .addTag( "enabled" ).addText( "true" )
-              .addTag( "name" ).addText( "AclsAuthz" ).gotoParent()
-              .addTag( "param" )
-                .addTag( "name" ).addText( "webhdfs-acl" )
-                .addTag( "value" ).addText( "hdfs;*;*" ).gotoParent()
+              .addTag("name").addText("AclsAuthz").gotoParent()
+              .addTag("param")
+                .addTag("name").addText( "webhdfs-acl" )
+                .addTag("value").addText( "hdfs;*;*" ).gotoParent()
           .gotoRoot()
-          .addTag( "service" )
-            .addTag( "role" ).addText( "WEBHDFS" )
-            .addTag( "url" ).addText( driver.getRealUrl( "WEBHDFS" ) ).gotoParent()
+          .addTag("service")
+            .addTag("role").addText("WEBHDFS")
+            .addTag("url").addText(driver.getRealUrl("WEBHDFS")).gotoParent()
           .addTag( "service" )
             .addTag( "role" ).addText( "NAMENODE" )
             .addTag( "url" ).addText( driver.getRealUrl( "NAMENODE" ) ).gotoParent()
@@ -230,9 +227,12 @@ public class GatewayBasicFuncTest {
           .addTag( "service" )
             .addTag( "role" ).addText( "WEBHBASE" )
             .addTag( "url" ).addText( driver.getRealUrl( "WEBHBASE" ) ).gotoParent()
-        .addTag( "service" )
+        .addTag("service")
             .addTag( "role" ).addText( "RESOURCEMANAGER" )
             .addTag( "url" ).addText( driver.getRealUrl( "RESOURCEMANAGER" ) ).gotoParent()
+        .addTag( "service" )
+            .addTag( "role" ).addText( "FALCON" )
+            .addTag( "url" ).addText( driver.getRealUrl( "FALCON" ) ).gotoParent()
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -2681,7 +2681,7 @@ public class GatewayBasicFuncTest {
       case XML:
         MatcherAssert
         .assertThat( the( response.getBody().asString() ),
-            isEquivalentTo( the( driver.getResourceString( resource, UTF8 ) ) ) );
+            isEquivalentTo(the(driver.getResourceString(resource, UTF8))) );
         break;
       default:
         break;
@@ -2751,5 +2751,108 @@ public class GatewayBasicFuncTest {
       throw new FileNotFoundException( pattern );
     }
     return file.toURI().toString();
+  }
+
+  @Test
+  public void testFalconAdmin() throws Exception {
+    String resourceName = "falcon/version";
+    String path = "/api/admin/version";
+    testFalconResource(resourceName, path, ContentType.XML);
+    testFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/config-runtime";
+    path = "/api/admin/config/runtime";
+    testFalconResource(resourceName, path, ContentType.XML);
+    testFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/config-deploy";
+    path = "/api/admin/config/deploy";
+    testFalconResource(resourceName, path, ContentType.XML);
+    testFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/config-startup";
+    path = "/api/admin/config/startup";
+    testFalconResource(resourceName, path, ContentType.XML);
+    testFalconResource(resourceName, path, ContentType.JSON);
+
+
+    String username = "hdfs";
+    String password = "hdfs-password";
+    resourceName = "falcon/stack.txt";
+    path = "/api/admin/config/stack";
+    String gatewayPath = driver.getUrl( "FALCON" ) + path;
+
+    driver.getMock("FALCON")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.TEXT.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .when().get( gatewayPath );
+
+    Assert.assertEquals(response.getBody().asString(), driver.getResourceString( resourceName, UTF8 ) );
+    driver.assertComplete();
+  }
+
+  private void testFalconResource(String resourceName, String path, ContentType contentType) throws IOException {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "FALCON" ) + path;
+
+    switch( contentType ) {
+      case JSON:
+        resourceName += ".json";
+        break;
+      case XML:
+        resourceName += ".xml";
+        break;
+      default:
+        break;
+    }
+
+    driver.getMock("FALCON")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .header("Accept", contentType.toString())
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(contentType.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", contentType.toString())
+        .expect()
+//        .log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( contentType )
+        .when().get( gatewayPath );
+
+    switch( contentType ) {
+      case JSON:
+        MatcherAssert.assertThat( response.getBody().asString(),
+            sameJSONAs( driver.getResourceString( resourceName, UTF8 ) ) );
+        break;
+      case XML:
+        MatcherAssert
+            .assertThat( the( response.getBody().asString() ),
+                isEquivalentTo( the( driver.getResourceString( resourceName, UTF8 ) ) ) );
+        break;
+      default:
+        break;
+    }
+    driver.assertComplete();
   }
 }

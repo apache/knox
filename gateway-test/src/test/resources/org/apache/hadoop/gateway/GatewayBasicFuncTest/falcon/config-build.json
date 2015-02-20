@@ -1,0 +1,32 @@
+{
+  "properties": [
+    {
+      "key": "vc.source.url",
+      "value": "scm:git:https://git-wip-us.apache.org/repos/asf/incubator-falcon.git/falcon-webapp"
+    },
+    {
+      "key": "build.epoch",
+      "value": "1416432530059"
+    },
+    {
+      "key": "project.version",
+      "value": "0.6.0.2.2.0.0-2041"
+    },
+    {
+      "key": "build.user",
+      "value": "jenkins"
+    },
+    {
+      "key": "vc.revision",
+      "value": "5fa2772890a189327d5d62a3353290c54613246c"
+    },
+    {
+      "key": "domain",
+      "value": "all"
+    },
+    {
+      "key": "build.version",
+      "value": "0.6.0.2.2.0.0-2041-r5fa2772890a189327d5d62a3353290c54613246c"
+    }
+  ]
+}

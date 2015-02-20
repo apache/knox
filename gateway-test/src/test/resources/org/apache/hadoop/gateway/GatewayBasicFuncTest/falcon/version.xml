@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="yes"?>
+<properties>
+    <properties>
+        <key>Version</key>
+        <value>0.6.0.2.2.0.0-2041-r5fa2772890a189327d5d62a3353290c54613246c</value>
+    </properties>
+    <properties>
+        <key>Mode</key>
+        <value>embedded</value>
+    </properties>
+    <properties>
+        <key>Hadoop</key>
+        <value>2.6.0.2.2.0.0-2041-r7d56f02902b436d46efba030651a2fbe7c1cf1e9</value>
+    </properties>
+</properties>

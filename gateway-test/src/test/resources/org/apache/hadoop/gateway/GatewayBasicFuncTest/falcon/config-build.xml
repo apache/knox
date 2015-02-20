@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="yes"?>
+<properties>
+    <properties>
+        <key>vc.source.url</key>
+        <value>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-falcon.git/falcon-webapp</value>
+    </properties>
+    <properties>
+        <key>build.epoch</key>
+        <value>1416432530059</value>
+    </properties>
+    <properties>
+        <key>project.version</key>
+        <value>0.6.0.2.2.0.0-2041</value>
+    </properties>
+    <properties>
+        <key>build.user</key>
+        <value>jenkins</value>
+    </properties>
+    <properties>
+        <key>vc.revision</key>
+        <value>5fa2772890a189327d5d62a3353290c54613246c</value>
+    </properties>
+    <properties>
+        <key>domain</key>
+        <value>all</value>
+    </properties>
+    <properties>
+        <key>build.version</key>
+        <value>0.6.0.2.2.0.0-2041-r5fa2772890a189327d5d62a3353290c54613246c</value>
+    </properties>
+</properties>

@@ -1,0 +1,40 @@
+Reference Handler
+State: WAITING
+java.lang.Object.wait(Native Method)
+java.lang.Object.wait(Object.java:503)
+java.lang.ref.Reference$ReferenceHandler.run(Reference.java:133)Finalizer
+State: WAITING
+java.lang.Object.wait(Native Method)
+java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:135)
+java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:151)
+java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:209)Signal Dispatcher
+State: RUNNABLE
+main
+State: WAITING
+java.lang.Object.wait(Native Method)
+java.lang.Object.wait(Object.java:503)
+org.mortbay.thread.QueuedThreadPool.join(QueuedThreadPool.java:298)
+org.mortbay.jetty.Server.join(Server.java:332)
+org.apache.falcon.util.EmbeddedServer.start(EmbeddedServer.java:58)
+org.apache.falcon.Main.main(Main.java:83)KahaDB Scheduler
+State: TIMED_WAITING
+java.lang.Object.wait(Native Method)
+java.util.TimerThread.mainLoop(Timer.java:552)
+java.util.TimerThread.run(Timer.java:505)ActiveMQ Journal Checkpoint Worker
+State: TIMED_WAITING
+java.lang.Thread.sleep(Native Method)
+org.apache.activemq.store.kahadb.MessageDatabase$3.run(MessageDatabase.java:286)ActiveMQ Data File Writer
+State: WAITING
+java.lang.Object.wait(Native Method)
+java.lang.Object.wait(Object.java:503)
+org.apache.kahadb.journal.DataFileAppender.processQueue(DataFileAppender.java:325)
+org.apache.kahadb.journal.DataFileAppender$2.run(DataFileAppender.java:216)ActiveMQ Broker[localhost] Scheduler
+State: TIMED_WAITING
+java.lang.Object.wait(Native Method)
+java.util.TimerThread.mainLoop(Timer.java:552)
+java.util.TimerThread.run(Timer.java:505)KahaDB Scheduler
+State: TIMED_WAITING
+java.lang.Object.wait(Native Method)
+java.util.TimerThread.mainLoop(Timer.java:552)
+java.util.TimerThread.run(Timer.java:505)JobScheduler:JMS
+State: TIMED_WAITING

@@ -1,0 +1,24 @@
+{
+  "properties": [
+    {
+      "key": "log.cleanup.frequency.days.retention",
+      "value": "days(7)"
+    },
+    {
+      "key": "log.cleanup.frequency.months.retention",
+      "value": "months(3)"
+    },
+    {
+      "key": "domain",
+      "value": "falcon"
+    },
+    {
+      "key": "log.cleanup.frequency.hours.retention",
+      "value": "minutes(1)"
+    },
+    {
+      "key": "log.cleanup.frequency.minutes.retention",
+      "value": "hours(6)"
+    }
+  ]
+}
