@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import org.apache.http.client.HttpClient;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,6 +27,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public interface Dispatch {
+
+  void init();
+
+  void destroy();
+
+  HttpClient getHttpClient();
+
+  void setHttpClient(HttpClient httpClient);
 
   void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;

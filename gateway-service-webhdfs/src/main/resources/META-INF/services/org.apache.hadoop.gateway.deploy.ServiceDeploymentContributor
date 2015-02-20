@@ -16,6 +16,5 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.hdfs.WebHdfsDeploymentContributor
 org.apache.hadoop.gateway.hdfs.NameNodeDeploymentContributor
 org.apache.hadoop.gateway.hdfs.JobTrackerDeploymentContributor

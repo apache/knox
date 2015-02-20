@@ -22,6 +22,7 @@ import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Version;
 import org.apache.hadoop.gateway.topology.builder.BeanPropertyTopologyBuilder;
 import org.xml.sax.Attributes;
 
@@ -39,6 +40,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String VALUE_TAG = "value";
 
   private static final Rule paramRule = new ParamRule();
+
   @Override
   protected void configure() {
     forPattern( ROOT_TAG ).createObject().ofType( BeanPropertyTopologyBuilder.class );
@@ -48,6 +50,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + SERVICE_TAG ).createObject().ofType( Service.class ).then().setNext( "addService" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + ROLE_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + VERSION_TAG ).createObject().ofType(Version.class).then().setBeanProperty().then().setNext("setVersion");
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + URL_TAG ).callMethod( "addUrl" ).usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();

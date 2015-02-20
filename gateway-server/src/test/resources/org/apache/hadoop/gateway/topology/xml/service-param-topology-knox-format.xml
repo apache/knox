@@ -31,6 +31,7 @@
     <service>
         <role>test-service-role</role>
         <name>test-service-name</name>
+        <version>1.0.0</version>
         <url>test-service-scheme://test-service-host1:42/test-service-path</url>
         <url>test-service-scheme://test-service-host2:42/test-service-path</url>
         <param>

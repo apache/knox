@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -36,6 +37,8 @@ import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,7 +56,7 @@ import java.util.Enumeration;
 /**
  *
  */
-public class UrlConnectionDispatch extends AbstractGatewayDispatch {
+public class UrlConnectionDispatch extends AbstractGatewayFilter {
 
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
@@ -61,6 +64,30 @@ public class UrlConnectionDispatch extends AbstractGatewayDispatch {
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   @Override
+  protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    String method = request.getMethod().toUpperCase();
+    if (method.equals("GET")) {
+      try {
+        doGet(getDispatchUrl(request), request, response);
+      } catch ( URISyntaxException e ) {
+        throw new ServletException(e);
+      }
+    } else {
+      response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+    }
+  }
+
+  protected static URI getDispatchUrl(HttpServletRequest request) {
+    StringBuffer str = request.getRequestURL();
+    String query = request.getQueryString();
+    if ( query != null ) {
+      str.append('?');
+      str.append(query);
+    }
+    URI url = URI.create(str.toString());
+    return url;
+  }
+
   public void doGet( URI url, HttpServletRequest request, HttpServletResponse response ) throws IOException, URISyntaxException {
     String sourcePathInfo = request.getPathInfo();
     String sourcePattern = getConfig().getInitParameter( "pattern" );

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.hive;
 
+import org.apache.hadoop.gateway.config.Configure;
 import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.http.Header;
@@ -46,18 +47,14 @@ import java.security.Principal;
  * default HttpClientDispatch.
  */
 public class HiveHttpClientDispatch extends HttpClientDispatch {
-  private static final String BASIC_AUTH_PREEMPTIVE_PARAM = "basicAuthPreemptive";
   private static final String PASSWORD_PLACEHOLDER = "*";
   private boolean basicAuthPreemptive = false;
+  private boolean kerberos = false;
   private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
 
   @Override
-  public void init( FilterConfig filterConfig ) throws ServletException {
-    super.init( filterConfig );
-    String basicAuthPreemptiveString = filterConfig.getInitParameter( BASIC_AUTH_PREEMPTIVE_PARAM );
-    if( basicAuthPreemptiveString != null ) {
-      setBasicAuthPreemptive( Boolean.parseBoolean( basicAuthPreemptiveString ) );
-    }
+  public void init() {
+    super.init();
   }
 
   protected Principal getPrimaryPrincipal() {
@@ -82,6 +79,7 @@ public class HiveHttpClientDispatch extends HttpClientDispatch {
     }
   }
 
+  @Configure
   public void setBasicAuthPreemptive( boolean basicAuthPreemptive ) {
     this.basicAuthPreemptive = basicAuthPreemptive;
   }
@@ -89,7 +87,16 @@ public class HiveHttpClientDispatch extends HttpClientDispatch {
   public boolean isBasicAuthPreemptive() {
     return basicAuthPreemptive;
   }
-  
+
+  public boolean isKerberos() {
+    return kerberos;
+  }
+
+  @Configure
+  public void setKerberos(boolean kerberos) {
+    this.kerberos = kerberos;
+  }
+
   protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
       DefaultHttpClient client) throws IOException, ClientProtocolException {
     //DefaultHttpClient client = new DefaultHttpClient();

@@ -234,5 +234,9 @@ public class GatewayTestConfig implements GatewayConfig {
 //  public void setKerberosLoginConfig(String kerberosLoginConfig) {
 //   this.kerberosLoginConfig = kerberosLoginConfig;
 //  }
-  
+
+   @Override
+   public String getGatewayStacksDir() {
+      return gatewayHomeDir + "/data/services";
+   }
 }

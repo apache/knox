@@ -19,15 +19,15 @@ package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.easymock.internal.matchers.EndsWith;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class GatewayGlobalConfigTest {
 
@@ -169,5 +169,15 @@ public class GatewayGlobalConfigTest {
         .getGatewayDataDir()));
   }
 
+  @Test
+  public void testStacksServicesDir() {
+    System.clearProperty(GatewayConfigImpl.GATEWAY_HOME_VAR);
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat(config.getGatewayStacksDir(), Matchers.endsWith("data/services"));
+    String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    config = new GatewayConfigImpl();
+    assertEquals("target/test", config.getGatewayStacksDir());
+  }
 
 }

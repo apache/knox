@@ -58,6 +58,13 @@
             </includes>
             <fileMode>0444</fileMode>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/services</directory>
+            <outputDirectory>data/services</outputDirectory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>

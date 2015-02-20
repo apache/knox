@@ -119,19 +119,11 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-oozie</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-service-webhcat</artifactId>
+            <artifactId>gateway-service-definitions</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-service-tgs</artifactId>
-        </dependency>
-        <dependency>
-        	<groupId>${gateway-group}</groupId>
-        	<artifactId>gateway-service-yarn-rm</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

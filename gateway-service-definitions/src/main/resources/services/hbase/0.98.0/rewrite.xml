@@ -1,0 +1,62 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <rule dir="IN" name="WEBHBASE/webhbase/root/inbound" pattern="*://*:*/**/hbase/?{**}">
+        <rewrite template="{$serviceUrl[WEBHBASE]}/?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHBASE/webhbase/path/inbound" pattern="*://*:*/**/hbase/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHBASE]}/{path=**}?{**}"/>
+    </rule>
+
+    <rule name="WEBHBASE/webhbase/location/outbound">
+        <match pattern="*://*:*/{path=**}?{**}"/>
+        <rewrite template="{$frontend[url]}/hbase/{path=**}?{**}"/>
+    </rule>
+
+    <rule name="WEBHBASE/webhbase/address/outbound">
+        <match pattern="{host}:{port}"/>
+        <rewrite template="{$frontend[url]}/hbase-region?host={host}?port={port}"/>
+        <encrypt-query/>
+    </rule>
+
+    <filter name="WEBHBASE/webhbase/headers/outbound">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="WEBHBASE/webhbase/location/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="WEBHBASE/webhbase/status/outbound">
+        <content type="*/json">
+            <apply path="$[LiveNodes][*][name]" rule="WEBHBASE/webhbase/address/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/ClusterStatus/LiveNodes/Node/@name" rule="WEBHBASE/webhbase/address/outbound"/>
+        </content>
+    </filter>
+
+    <filter name="WEBHBASE/webhbase/regions/outbound">
+        <content type="*/json">
+            <apply path="$[Region][*][location]" rule="WEBHBASE/webhbase/address/outbound"/>
+        </content>
+        <content type="*/xml">
+            <apply path="/TableInfo/Region/@location" rule="WEBHBASE/webhbase/address/outbound"/>
+        </content>
+    </filter>
+
+</rules>

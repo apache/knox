@@ -27,6 +27,7 @@ public class Service {
 
   private String role;
   private String name;
+  private Version version;
   private Map<String, String> params = new LinkedHashMap<String, String>();
   private List<String> urls;
 
@@ -44,6 +45,14 @@ public class Service {
 
   public void setName( String name ) {
     this.name = name;
+  }
+
+  public Version getVersion() {
+    return version;
+  }
+
+  public void setVersion(Version version) {
+    this.version = version;
   }
 
   public List<String> getUrls() {

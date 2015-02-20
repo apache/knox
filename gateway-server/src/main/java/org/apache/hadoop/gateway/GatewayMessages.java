@@ -127,6 +127,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Ignoring service deployment contributor with invalid null role: {0}" )
   void ignoringServiceContributorWithMissingRole( String className );
 
+  @Message( level = MessageLevel.WARN, text = "Ignoring service deployment contributor with invalid null version: {0}" )
+  void ignoringServiceContributorWithMissingVersion( String className );
+
   @Message( level = MessageLevel.WARN, text = "Ignoring provider deployment contributor with invalid null name: {0}" )
   void ignoringProviderContributorWithMissingName( String className );
 
@@ -327,4 +330,17 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Computed roles/groups: {0} for principal: {1}" )
   void lookedUpUserRoles(Set<String> roleNames, String userName);
+
+  @Message( level = MessageLevel.INFO, text = "Configured stacks directory is {0}" )
+  void usingStacksDirectory(String path);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to load {0} file : {1}" )
+  void failedToLoadServiceDefinition(String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "No rewrite file found in service directory {0}" )
+  void noRewriteFileFound(String path);
+
+  @Message( level = MessageLevel.DEBUG, text = "Added Service definition name: {0}, role : {1}, version : {2}" )
+  void addedServiceDefinition(String serviceName, String serviceRole, String version);
+
 }

@@ -49,6 +49,7 @@ import org.apache.hadoop.gateway.audit.log4j.correlation.Log4jCorrelationService
 import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.test.log.CollectAppender;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.spi.LoggingEvent;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -171,6 +172,7 @@ public class AuditLoggingTest {
     EasyMock.replay( outboundResponse );
 
     HttpClientDispatch dispatch = new HttpClientDispatch();
+    dispatch.setHttpClient(new DefaultHttpClient());
     try {
       dispatch.doGet( new URI( uri ), inboundRequest, outboundResponse );
       fail( "Expected exception while accessing to unreachable host" );

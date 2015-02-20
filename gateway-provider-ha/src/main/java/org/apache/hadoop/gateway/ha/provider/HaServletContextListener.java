@@ -36,7 +36,7 @@ import java.util.List;
 
 public class HaServletContextListener implements ServletContextListener {
 
-   public static final String PROVIDER_ATTRIBUTE_NAME = HaProvider.class.getName();
+   public static final String PROVIDER_ATTRIBUTE_NAME = "haProvider";
 
    public static final String DESCRIPTOR_LOCATION_INIT_PARAM_NAME = "haDescriptorLocation";
 

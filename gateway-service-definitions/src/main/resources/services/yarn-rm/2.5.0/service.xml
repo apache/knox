@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="RESOURCEMANAGER" name="resourcemanager" version="2.5.0">
+    <routes>
+        <route path="/resourcemanager/v1/cluster/"/>
+        <route path="/resourcemanager/v1/cluster/**?**"/>
+        <route path="/resourcemanager/v1/cluster/apps?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/apps/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/v1/cluster/apps?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/apps/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/v1/cluster/apps/*?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/app/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/v1/cluster/apps/*/appattempts?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/appattempts/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/v1/cluster/nodes?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/nodes/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/v1/cluster/nodes/*?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/nodeId/inbound" to="request.url"/>
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/node/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/proxy/*/ws/v1/**?**">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/inbound/proxy" to="request.url"/>
+        </route>
+        <route path="/resourcemanager/proxy/*/ws/v1/mapreduce/jobs/*/jobattempts">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/proxy/jobattempts/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/proxy/*/ws/v1/mapreduce/jobs/*/tasks/*/attempts">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/proxy/taskattempts/outbound" to="response.body"/>
+        </route>
+        <route path="/resourcemanager/proxy/*/ws/v1/mapreduce/jobs/*/tasks/*/attempts/*">
+            <rewrite apply="RESOURCEMANAGER/resourcemanager/proxy/taskattempt/outbound" to="response.body"/>
+        </route>
+    </routes>
+</service>

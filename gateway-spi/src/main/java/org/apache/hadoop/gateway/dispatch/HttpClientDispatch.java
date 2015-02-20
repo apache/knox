@@ -35,6 +35,8 @@ import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.config.Configure;
+import org.apache.hadoop.gateway.config.Default;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -43,6 +45,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpOptions;
@@ -59,43 +62,39 @@ import org.apache.http.message.BasicHeader;
  */
 public class HttpClientDispatch extends AbstractGatewayDispatch {
 
-   private static final String REPLAY_BUFFER_SIZE = "replayBufferSize";
+  // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
+  // private static final String CT_APP_XML = "application/xml";
+  protected static final String Q_DELEGATION_EQ = "?delegation=";
+  protected static final String AMP_DELEGATION_EQ = "&delegation=";
+  protected static final String COOKIE = "Cookie";
+  protected static final String SET_COOKIE = "Set-Cookie";
+  protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+  protected static final String NEGOTIATE = "Negotiate";
 
-   // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
-   // private static final String CT_APP_XML = "application/xml";
-   protected static final String Q_DELEGATION_EQ = "?delegation=";
-   protected static final String AMP_DELEGATION_EQ = "&delegation=";
-   protected static final String COOKIE = "Cookie";
-   protected static final String SET_COOKIE = "Set-Cookie";
-   protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-   protected static final String NEGOTIATE = "Negotiate";
+  protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+  protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
+  protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+      AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-   protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
-   protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
-   protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-         AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+  protected AppCookieManager appCookieManager;
 
-   protected AppCookieManager appCookieManager;
+  private int replayBufferSize = 0;
 
-   protected static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
+  @Override
+  public void init() {
+    setAppCookieManager(new AppCookieManager());
+  }
 
-   private int replayBufferSize = 0;
+  @Override
+  public void destroy() {
 
-   @Override
-   public void init(FilterConfig filterConfig) throws ServletException {
-      this.init(filterConfig, new AppCookieManager());
-   }
+  }
 
-   protected void init(FilterConfig filterConfig, AppCookieManager cookieManager) throws ServletException {
-      super.init(filterConfig);
-      appCookieManager = cookieManager;
-      String replayBufferSizeString = filterConfig.getInitParameter(REPLAY_BUFFER_SIZE_PARAM);
-      if (replayBufferSizeString != null) {
-         setReplayBufferSize(Integer.valueOf(replayBufferSizeString));
-      }
-   }
+  public void setAppCookieManager(AppCookieManager appCookieManager) {
+    this.appCookieManager = appCookieManager;
+  }
 
-   protected void executeRequest(
+  protected void executeRequest(
          HttpUriRequest outboundRequest,
          HttpServletRequest inboundRequest,
          HttpServletResponse outboundResponse)
@@ -107,7 +106,6 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
    protected HttpResponse executeOutboundRequest(HttpUriRequest outboundRequest) throws IOException {
       LOG.dispatchRequest(outboundRequest.getMethod(), outboundRequest.getURI());
       HttpResponse inboundResponse = null;
-      DefaultHttpClient client = new DefaultHttpClient();
 
       try {
          String query = outboundRequest.getURI().getQuery();
@@ -190,7 +188,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
    }
 
    protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-                                                  DefaultHttpClient client) throws IOException, ClientProtocolException {
+                                                  HttpClient client) throws IOException, ClientProtocolException {
       HttpResponse inboundResponse;
       outboundRequest.removeHeaders(COOKIE);
       String appCookie = appCookieManager.getCachedAppCookie();
@@ -302,7 +300,8 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       return replayBufferSize;
    }
 
-   protected void setReplayBufferSize(int size) {
+   @Configure
+   protected void setReplayBufferSize(@Default("8") int size) {
       replayBufferSize = size;
    }
 

@@ -82,6 +82,7 @@ public class DeploymentFactoryFuncTest {
 
 //    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
 
+    addStacksDir(config, targetDir);
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
     options.put("persist-master", "false");
@@ -135,6 +136,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
+    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -189,6 +191,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
+    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -228,8 +231,8 @@ public class DeploymentFactoryFuncTest {
     topology.addProvider( authorizer );
 
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
-    //File dir = new File( System.getProperty( "user.dir" ) );
-    //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+//    File dir = new File( System.getProperty( "user.dir" ) );
+//    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
     Document web = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( web, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
@@ -264,8 +267,8 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "org.apache.hadoop.gateway.filter.AclsAuthorizationFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/role", equalTo( "dispatch" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/name", equalTo( "hdfs" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/name", equalTo( "webhdfs" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/webhdfs/v1/**?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
@@ -290,8 +293,8 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "org.apache.hadoop.gateway.filter.AclsAuthorizationFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/role", equalTo( "dispatch" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/name", equalTo( "hdfs" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/name", equalTo( "webhdfs" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter" ) ) );
   }
 
 
@@ -379,6 +382,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
+    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<String, String>();
@@ -453,6 +457,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
+    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<String, String>();
@@ -499,7 +504,7 @@ public class DeploymentFactoryFuncTest {
 
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
     Document doc = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
-    //dump( doc );
+    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
     String value;
@@ -538,6 +543,33 @@ public class DeploymentFactoryFuncTest {
     return builder.parse( source );
   }
 
+  private void addStacksDir(GatewayConfig config, File targetDir) {
+    File stacksDir = new File( config.getGatewayStacksDir() );
+    stacksDir.mkdirs();
+    //TODO: [sumit] This is a hack for now, need to find a better way to locate the source resources for 'stacks' to be tested
+    String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
+    File stacksSourceDir = new File( targetDir.getParent(), pathToStacksSource);
+    if (!stacksSourceDir.exists()) {
+      stacksSourceDir = new File( targetDir.getParentFile().getParent(), pathToStacksSource);
+    }
+    if (stacksSourceDir.exists()) {
+      try {
+        FileUtils.copyDirectoryToDirectory(stacksSourceDir, stacksDir);
+      } catch ( IOException e) {
+        fail(e.getMessage());
+      }
+    }
+
+  }
+//  private void dump( Document document ) throws TransformerException {
+//    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+//    StreamResult result = new StreamResult( new StringWriter() );
+//    DOMSource source = new DOMSource( document );
+//    transformer.transform( source, result );
+//    String xmlString = result.getWriter().toString();
+//    System.out.println( xmlString );
+//  }
   private void dump( Document document ) throws TransformerException {
     Transformer transformer = TransformerFactory.newInstance().newTransformer();
     transformer.setOutputProperty( OutputKeys.INDENT, "yes" );

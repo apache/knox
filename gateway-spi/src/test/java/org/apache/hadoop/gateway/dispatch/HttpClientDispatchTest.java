@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -76,6 +77,7 @@ public class HttpClientDispatchTest {
     EasyMock.replay( outboundRequest, inboundRequest, outboundResponse );
 
     HttpClientDispatch dispatch = new HttpClientDispatch();
+    dispatch.setHttpClient(new DefaultHttpClient());
     try {
       dispatch.executeRequest( outboundRequest, inboundRequest, outboundResponse );
       fail( "Should have thrown IOException" );

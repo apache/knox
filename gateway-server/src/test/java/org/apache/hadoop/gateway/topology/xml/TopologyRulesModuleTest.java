@@ -22,6 +22,7 @@ import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.Version;
 import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
 import org.junit.After;
 import org.junit.Before;
@@ -72,7 +73,8 @@ public class TopologyRulesModuleTest {
 
     Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
-    assertThat( comp.getRole(), is( "WEBHDFS" ) );
+    assertThat( comp.getRole(), is("WEBHDFS") );
+    assertThat( comp.getVersion().toString(), is( "2.4.0" ));
     assertThat( comp.getUrls().size(), is( 2 ) );
     assertThat( comp.getUrls(), hasItem( "http://host1:80/webhdfs" ) );
     assertThat( comp.getUrls(), hasItem( "http://host2:80/webhdfs" ) );
@@ -116,6 +118,7 @@ public class TopologyRulesModuleTest {
     assertThat( service.getName(), is( "test-service-name" ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
+    assertThat( service.getVersion(), is( new Version(1,0,0)));
   }
 
 
@@ -136,7 +139,7 @@ public class TopologyRulesModuleTest {
     assertThat( topology.getServices().size(), is( 4 ) );
     assertThat( topology.getProviders().size(), is( 2 ) );
 
-    Service webhdfsService = topology.getService( "WEBHDFS", null );
+    Service webhdfsService = topology.getService( "WEBHDFS", null, null);
     assertThat( webhdfsService, notNullValue() );
     assertThat( webhdfsService.getRole(), is( "WEBHDFS" ) );
     assertThat( webhdfsService.getName(), nullValue() );
@@ -144,21 +147,21 @@ public class TopologyRulesModuleTest {
     assertThat( webhdfsService.getUrls(), hasItem( "http://host1:50070/webhdfs" ) );
     assertThat( webhdfsService.getUrls(), hasItem( "http://host2:50070/webhdfs" ) );
 
-    Service webhcatService = topology.getService( "WEBHCAT", null );
+    Service webhcatService = topology.getService( "WEBHCAT", null, null);
     assertThat( webhcatService, notNullValue() );
     assertThat( webhcatService.getRole(), is( "WEBHCAT" ) );
     assertThat( webhcatService.getName(), nullValue() );
     assertThat( webhcatService.getUrls().size(), is( 1 ) );
     assertThat( webhcatService.getUrls(), hasItem( "http://host:50111/templeton" ) );
 
-    Service oozieService = topology.getService( "OOZIE", null );
+    Service oozieService = topology.getService( "OOZIE", null, null);
     assertThat( oozieService, notNullValue() );
     assertThat( oozieService.getRole(), is( "OOZIE" ) );
     assertThat( oozieService.getName(), nullValue() );
     assertThat( webhcatService.getUrls().size(), is( 1 ) );
     assertThat( oozieService.getUrls(), hasItem( "http://host:11000/oozie" ) );
 
-    Service hiveService = topology.getService( "HIVE", null );
+    Service hiveService = topology.getService( "HIVE", null, null);
     assertThat( hiveService, notNullValue() );
     assertThat( hiveService.getRole(), is( "HIVE" ) );
     assertThat( hiveService.getName(), nullValue() );
@@ -217,5 +220,4 @@ public class TopologyRulesModuleTest {
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
   }
-
 }

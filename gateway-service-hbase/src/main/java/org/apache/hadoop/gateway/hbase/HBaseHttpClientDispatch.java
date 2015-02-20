@@ -29,8 +29,9 @@ import javax.servlet.ServletException;
 public class HBaseHttpClientDispatch extends HttpClientDispatch {
 
   @Override
-  public void init( FilterConfig filterConfig ) throws ServletException {
-    super.init( filterConfig, new HBaseCookieManager() );
+  public void init() {
+    super.init();
+    setAppCookieManager(new HBaseCookieManager());
   }
 
 }

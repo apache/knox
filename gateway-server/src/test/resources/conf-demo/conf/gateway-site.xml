@@ -69,6 +69,9 @@ limitations under the License.
         <value>target/testDataDir</value>
         <description>The path that contains Gateway Data (Security and deployments)</description>
     </property>
-    
-
+     <property>
+        <name>gateway.services.dir</name>
+        <value>target/test</value>
+        <description>The path that contains the service definitions</description>
+    </property>
 </configuration>

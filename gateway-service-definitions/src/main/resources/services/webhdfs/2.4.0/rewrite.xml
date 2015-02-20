@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
+        <rewrite template="{$frontend[url]}/webhdfs/v1/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="webhdfs://*:*/{path=**}?{**}">
+        <rewrite template="{$frontend[url]}/webhdfs/v1/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="WEBHDFS/webhdfs/outbound/namenode/headers/location">
+        <match pattern="{scheme}://{host}:{port}/{path=**}?{**}"/>
+        <rewrite template="{$frontend[url]}/webhdfs/data/v1/{path=**}?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+        <encrypt-query/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/hdfs" pattern="hdfs:/{path=**}?{**}">
+        <rewrite template="{$serviceMappedUrl[NAMENODE]}/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/webhdfs" pattern="webhdfs:/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/root" pattern="*://*:*/**/webhdfs/{version}/?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/file" pattern="*://*:*/**/webhdfs/{version}/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/home" pattern="*://*:*/**/webhdfs/{version}/~?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/user/{$username}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/namenode/home/file" pattern="*://*:*/**/webhdfs/{version}/~/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[WEBHDFS]}/{version}/user/{$username}/{path=**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/inbound/datanode">
+        <decrypt-query/>
+        <match pattern="*://*:*/**/webhdfs/data/*/{path=**}?{scheme}?{host}?{port}?{**}"/>
+        <rewrite template="{scheme}://{host}:{port}/{path=**}?{**}"/>
+    </rule>
+
+    <filter name="WEBHDFS/webhdfs/outbound/namenode/headers">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="WEBHDFS/webhdfs/outbound/namenode/headers/location"/>
+        </content>
+    </filter>
+
+</rules>

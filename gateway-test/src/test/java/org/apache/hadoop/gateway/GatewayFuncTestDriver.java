@@ -157,6 +157,18 @@ public class GatewayFuncTestDriver {
     } catch (ServiceLifecycleException e) {
       e.printStackTrace(); // I18N not required.
     }
+    File stacksDir = new File( config.getGatewayStacksDir() );
+    stacksDir.mkdirs();
+    //TODO: [sumit] This is a hack for now, need to find a better way to locate the source resources for 'stacks' to be tested
+    String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
+    File stacksSourceDir = new File( targetDir.getParent(), pathToStacksSource);
+    if (!stacksSourceDir.exists()) {
+      stacksSourceDir = new File( targetDir.getParentFile().getParent(), pathToStacksSource);
+    }
+    if (stacksSourceDir.exists()) {
+      FileUtils.copyDirectoryToDirectory(stacksSourceDir, stacksDir);
+    }
+
     gateway = GatewayServer.startGateway( config, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
@@ -170,6 +182,7 @@ public class GatewayFuncTestDriver {
     FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayStacksDir() ) );
 
     for( Service service : services.values() ) {
       service.server.stop();

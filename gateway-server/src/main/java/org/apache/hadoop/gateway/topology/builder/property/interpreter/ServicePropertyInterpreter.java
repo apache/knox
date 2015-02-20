@@ -59,7 +59,8 @@ public class ServicePropertyInterpreter extends AbstractInterpreter {
         }
         nextToken = nextToken.substring(dotPosition + 1);
 
-        Service service = topology.getService(serviceRole, serviceName);
+      //TODO: sumit - version needs to be passed parsed and passed in if we want to continue to support the 'ambari' format
+        Service service = topology.getService(serviceRole, serviceName, null);
         if (service == null) {
             service = new Service();
             service.setName(serviceName);

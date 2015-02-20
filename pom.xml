@@ -36,6 +36,7 @@
     <modules>
         <module>gateway-test-utils</module>
         <module>gateway-util-common</module>
+        <module>gateway-util-configinjector</module>
         <module>gateway-util-launcher</module>
         <module>gateway-util-urltemplate</module>
         <module>gateway-test-ldap</module>
@@ -65,10 +66,8 @@
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
         <module>gateway-service-webhdfs</module>
-        <module>gateway-service-oozie</module>
-        <module>gateway-service-webhcat</module>
         <module>gateway-service-tgs</module>
-        <module>gateway-service-yarn-rm</module>
+        <module>gateway-service-definitions</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>knox-cli-launcher</module>
@@ -351,6 +350,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-util-configinjector</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-util-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -486,17 +490,7 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-service-webhcat</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-service-yarn-rm</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-service-oozie</artifactId>
+                <artifactId>gateway-service-definitions</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -608,7 +602,7 @@
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.2.5</version>
+                <version>4.3.6</version>
             </dependency>
 
             <!--
@@ -818,7 +812,11 @@
                 <artifactId>commons-net</artifactId>
                 <version>1.4.1</version>
             </dependency>
-
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>3.2.1</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-digester3</artifactId>

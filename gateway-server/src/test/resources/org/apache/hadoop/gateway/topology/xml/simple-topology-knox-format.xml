@@ -63,6 +63,7 @@
 
     <service>
         <role>WEBHDFS</role>
+        <version>2.4.0</version>
         <url>http://host1:80/webhdfs</url>
         <url>http://host2:80/webhdfs</url>
     </service>

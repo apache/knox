@@ -17,10 +17,12 @@
  */
 package org.apache.hadoop.gateway.hdfs.dispatch;
 
+import org.apache.hadoop.gateway.config.Configure;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.ha.provider.HaProvider;
 import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
 import org.apache.hadoop.gateway.ha.provider.HaServletContextListener;
+import org.apache.hadoop.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.hadoop.gateway.hdfs.i18n.WebHdfsMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.HttpResponse;
@@ -43,19 +45,17 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
 
    private static final String RETRY_COUNTER_ATTRIBUTE = "dispatch.ha.retry.counter";
 
-   public static final String RESOURCE_ROLE_ATTRIBUTE = "resource.role";
+   public static final String RESOURCE_ROLE = "WEBHDFS";
 
    private static final WebHdfsMessages LOG = MessagesFactory.get(WebHdfsMessages.class);
 
-   private int maxFailoverAttempts;
+   private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
 
-   private int failoverSleep;
+   private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
 
-   private int maxRetryAttempts;
+   private int maxRetryAttempts = HaServiceConfigConstants.DEFAULT_MAX_RETRY_ATTEMPTS;
 
-   private int retrySleep;
-
-   private String resourceRole;
+   private int retrySleep = HaServiceConfigConstants.DEFAULT_RETRY_SLEEP;
 
    private HaProvider haProvider;
 
@@ -67,19 +67,27 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
   }
 
    @Override
-   public void init(FilterConfig filterConfig) throws ServletException {
-      super.init(filterConfig);
-      resourceRole = filterConfig.getInitParameter(RESOURCE_ROLE_ATTRIBUTE);
-      LOG.initializingForResourceRole(resourceRole);
-      haProvider = HaServletContextListener.getHaProvider(filterConfig.getServletContext());
-      HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(resourceRole);
-      maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
-      failoverSleep = serviceConfig.getFailoverSleep();
-      maxRetryAttempts = serviceConfig.getMaxRetryAttempts();
-      retrySleep = serviceConfig.getRetrySleep();
+   public void init() {
+     super.init();
+     if (haProvider != null) {
+       HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(RESOURCE_ROLE);
+       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
+       failoverSleep = serviceConfig.getFailoverSleep();
+       maxRetryAttempts = serviceConfig.getMaxRetryAttempts();
+       retrySleep = serviceConfig.getRetrySleep();
+     }
    }
 
-   @Override
+  public HaProvider getHaProvider() {
+    return haProvider;
+  }
+
+  @Configure
+  public void setHaProvider(HaProvider haProvider) {
+    this.haProvider = haProvider;
+  }
+
+  @Override
    protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
       HttpResponse inboundResponse = null;
       try {
@@ -126,7 +134,7 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
       }
       inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
       if (counter.incrementAndGet() <= maxFailoverAttempts) {
-         haProvider.markFailedURL(resourceRole, outboundRequest.getURI().toString());
+         haProvider.markFailedURL(RESOURCE_ROLE, outboundRequest.getURI().toString());
          //null out target url so that rewriters run again
          inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
          URI uri = getDispatchUrl(inboundRequest);
@@ -135,12 +143,12 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
             try {
                Thread.sleep(failoverSleep);
             } catch (InterruptedException e) {
-               LOG.failoverSleepFailed(resourceRole, e);
+               LOG.failoverSleepFailed(RESOURCE_ROLE, e);
             }
          }
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
-         LOG.maxFailoverAttemptsReached(maxFailoverAttempts, resourceRole);
+         LOG.maxFailoverAttemptsReached(maxFailoverAttempts, RESOURCE_ROLE);
          if (inboundResponse != null) {
             writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
          } else {
@@ -161,12 +169,12 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
             try {
                Thread.sleep(retrySleep);
             } catch (InterruptedException e) {
-               LOG.retrySleepFailed(resourceRole, e);
+               LOG.retrySleepFailed(RESOURCE_ROLE, e);
             }
          }
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
-         LOG.maxRetryAttemptsReached(maxRetryAttempts, resourceRole, outboundRequest.getURI().toString());
+         LOG.maxRetryAttemptsReached(maxRetryAttempts, RESOURCE_ROLE, outboundRequest.getURI().toString());
          if (inboundResponse != null) {
             writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
          } else {
@@ -174,4 +182,16 @@ public class WebHdfsHaHttpClientDispatch extends HdfsDispatch {
          }
       }
    }
+
+  private static URI getDispatchUrl(HttpServletRequest request) {
+    StringBuffer str = request.getRequestURL();
+    String query = request.getQueryString();
+    if ( query != null ) {
+      str.append('?');
+      str.append(query);
+    }
+    URI url = URI.create(str.toString());
+    return url;
+  }
+
 }

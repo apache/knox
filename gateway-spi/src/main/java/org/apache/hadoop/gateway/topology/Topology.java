@@ -17,12 +17,11 @@
  */
 package org.apache.hadoop.gateway.topology;
 
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.collections.map.MultiKeyMap;
+
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Topology {
 
@@ -32,7 +31,12 @@ public class Topology {
   public List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
   public List<Service> services = new ArrayList<Service>();
-  private Map<String, Map<String, Service>> serviceMap = new HashMap<String, Map<String, Service>>();
+
+  private MultiKeyMap serviceMap;
+
+  public Topology() {
+    serviceMap = MultiKeyMap.decorate(new HashedMap());
+  }
 
   public URI getUri() {
     return uri;
@@ -62,27 +66,13 @@ public class Topology {
     return services;
   }
 
-  public Service getService( String role, String name ) {
-    Service service = null;
-    Map<String, Service> nameMap = serviceMap.get( role );
-    if( nameMap != null) {
-      service = nameMap.get( name );
-      if ( service == null && !nameMap.values().isEmpty() ) {
-        service = (Service) nameMap.values().toArray()[0];
-      }
-    }
-    return service;
+  public Service getService(String role, String name, Version version) {
+    return (Service)serviceMap.get(role, name, version);
   }
 
   public void addService( Service service ) {
     services.add( service );
-    String role = service.getRole();
-    Map<String, Service> nameMap = serviceMap.get( role );
-    if( nameMap == null ) {
-      nameMap = new HashMap<String, Service>();
-      serviceMap.put( role, nameMap );
-    }
-    nameMap.put( service.getName(), service );
+    serviceMap.put(service.getRole(), service.getName(), service.getVersion(), service);
   }
 
   public Collection<Provider> getProviders() {

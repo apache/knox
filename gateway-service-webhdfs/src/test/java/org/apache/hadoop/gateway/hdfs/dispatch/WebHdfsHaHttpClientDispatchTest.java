@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.ha.provider.impl.DefaultHaServiceConfig;
 import org.apache.hadoop.gateway.ha.provider.impl.HaDescriptorFactory;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -69,12 +70,11 @@ public class WebHdfsHaHttpClientDispatchTest {
      EasyMock.expect(context.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(haProvider).anyTimes();
      FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
      EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
-     EasyMock.expect(config.getInitParameter( WebHdfsHaHttpClientDispatch.RESOURCE_ROLE_ATTRIBUTE )).andReturn("test-role").anyTimes();
      EasyMock.expect(config.getInitParameter(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
      InstrumentedWebHdfsHaHttpClientDispatch dispatch = new InstrumentedWebHdfsHaHttpClientDispatch();
      EasyMock.replay(context,config);
 
-     dispatch.init(config);
+     dispatch.init();
 
      assertThat( dispatch.getAppCookieManager(), notNullValue() );
    }
@@ -94,7 +94,6 @@ public class WebHdfsHaHttpClientDispatchTest {
       FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
       ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
 
-      EasyMock.expect(filterConfig.getInitParameter(WebHdfsHaHttpClientDispatch.RESOURCE_ROLE_ATTRIBUTE)).andReturn(serviceName).anyTimes();
       EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
       EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
 
@@ -125,7 +124,9 @@ public class WebHdfsHaHttpClientDispatchTest {
       EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
       Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
       WebHdfsHaHttpClientDispatch dispatch = new WebHdfsHaHttpClientDispatch();
-      dispatch.init(filterConfig);
+      dispatch.setHttpClient(new DefaultHttpClient());
+      dispatch.setHaProvider(provider);
+      dispatch.init();
       long startTime = System.currentTimeMillis();
       try {
          dispatch.executeRequest(outboundRequest, inboundRequest, outboundResponse);
