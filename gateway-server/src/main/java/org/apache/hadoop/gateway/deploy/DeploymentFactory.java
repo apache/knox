@@ -78,8 +78,8 @@ public abstract class DeploymentFactory {
   public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
     DeploymentContext context = null;
      //TODO move the loading of service defs
-    String stacks = config.getGatewayStacksDir();
-    log.usingStacksDirectory(stacks);
+    String stacks = config.getGatewayServicesDir();
+    log.usingServicesDirectory(stacks);
     File stacksDir = new File(stacks);
     Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader.loadServiceDefinitions(stacksDir);
     addServiceDeploymentContributors(deploymentContributors.iterator());

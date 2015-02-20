@@ -103,4 +103,24 @@ public class Service {
     params.put(param.getName(), param.getValue());
   }
 
+  @Override
+  public boolean equals(Object object) {
+    if (!(object instanceof Service)) {
+      return false;
+    }
+    Service that = (Service) object;
+    String thatName = that.getName();
+    if (thatName != null && !(thatName.equals(name))) {
+        return false;
+    }
+    String thatRole = that.getRole();
+    if (thatRole != null && !thatRole.equals(role)) {
+        return false;
+    }
+    Version thatVersion = that.getVersion();
+    if (thatVersion != null && !(thatVersion.equals(version))) {
+        return false;
+    }
+    return true;
+  }
 }

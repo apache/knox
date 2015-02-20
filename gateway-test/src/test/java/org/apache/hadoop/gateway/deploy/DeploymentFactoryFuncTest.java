@@ -544,7 +544,7 @@ public class DeploymentFactoryFuncTest {
   }
 
   private void addStacksDir(GatewayConfig config, File targetDir) {
-    File stacksDir = new File( config.getGatewayStacksDir() );
+    File stacksDir = new File( config.getGatewayServicesDir() );
     stacksDir.mkdirs();
     //TODO: [sumit] This is a hack for now, need to find a better way to locate the source resources for 'stacks' to be tested
     String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";

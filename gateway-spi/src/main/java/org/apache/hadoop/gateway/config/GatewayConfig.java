@@ -53,10 +53,10 @@ public interface GatewayConfig {
   String getGatewayDataDir();
 
   /**
-   * The location of the gateway stack definitions
-   * @return The location of the gateway stacks top level directory.
+   * The location of the gateway services definition's root directory
+   * @return The location of the gateway services top level directory.
    */
-  String getGatewayStacksDir();
+  String getGatewayServicesDir();
 
   String getHadoopConfDir();
 

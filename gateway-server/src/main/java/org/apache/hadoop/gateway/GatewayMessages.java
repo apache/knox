@@ -331,11 +331,20 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Computed roles/groups: {0} for principal: {1}" )
   void lookedUpUserRoles(Set<String> roleNames, String userName);
 
-  @Message( level = MessageLevel.INFO, text = "Configured stacks directory is {0}" )
-  void usingStacksDirectory(String path);
+  @Message( level = MessageLevel.INFO, text = "Configured services directory is {0}" )
+  void usingServicesDirectory(String path);
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to load {0} file : {1}" )
+  @Message( level = MessageLevel.ERROR, text = "Failed to unmarshall service definition file {0} file : {1}" )
   void failedToLoadServiceDefinition(String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to find service definition file {0} file : {1}" )
+  void failedToFindServiceDefinitionFile(String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to find rewrite file {0} file : {1}" )
+  void failedToFindRewriteFile(String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to unmarshall rewrite file {0} file : {1}" )
+  void failedToLoadRewriteFile(String fileName, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
   @Message( level = MessageLevel.DEBUG, text = "No rewrite file found in service directory {0}" )
   void noRewriteFileFound(String path);

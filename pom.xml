@@ -818,6 +818,11 @@
                 <version>3.2.1</version>
             </dependency>
             <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>1.9.2</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-digester3</artifactId>
                 <version>3.2</version>

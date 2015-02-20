@@ -63,8 +63,19 @@
 
     <service>
         <role>WEBHDFS</role>
+        <name>webhdfs</name>
         <version>2.4.0</version>
         <url>http://host1:80/webhdfs</url>
         <url>http://host2:80/webhdfs</url>
+    </service>
+    <service>
+        <role>RESOURCEMANAGER</role>
+        <version>2.5.0</version>
+        <url>http://host1:8088/ws</url>
+    </service>
+    <service>
+        <role>HIVE</role>
+        <name>hive</name>
+        <url>http://host2:10001/cliservice</url>
     </service>
 </topology>

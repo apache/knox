@@ -236,7 +236,7 @@ public class GatewayTestConfig implements GatewayConfig {
 //  }
 
    @Override
-   public String getGatewayStacksDir() {
+   public String getGatewayServicesDir() {
       return gatewayHomeDir + "/data/services";
    }
 }

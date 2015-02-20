@@ -40,6 +40,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class TopologyRulesModuleTest {
@@ -69,12 +70,12 @@ public class TopologyRulesModuleTest {
 
     assertThat( topology.getName(), is( "topology" ) );
     assertThat( topology.getTimestamp(), is( file.lastModified() ) );
-    assertThat( topology.getServices().size(), is( 1 ) );
+    assertThat( topology.getServices().size(), is( 3 ) );
 
     Service comp = topology.getServices().iterator().next();
     assertThat( comp, notNullValue() );
     assertThat( comp.getRole(), is("WEBHDFS") );
-    assertThat( comp.getVersion().toString(), is( "2.4.0" ));
+    assertThat( comp.getVersion().toString(), is( "2.4.0" ) );
     assertThat( comp.getUrls().size(), is( 2 ) );
     assertThat( comp.getUrls(), hasItem( "http://host1:80/webhdfs" ) );
     assertThat( comp.getUrls(), hasItem( "http://host2:80/webhdfs" ) );
@@ -84,6 +85,21 @@ public class TopologyRulesModuleTest {
     assertThat( provider.isEnabled(), is(true) );
     assertThat( provider.getRole(), is( "authentication" ) );
     assertThat( provider.getParams().size(), is(5));
+
+    Service service = topology.getService("WEBHDFS", "webhdfs", new Version(2,4,0));
+    assertEquals(comp, service);
+
+    comp = topology.getService("RESOURCEMANAGER", null, new Version("2.5.0"));
+    assertThat( comp, notNullValue() );
+    assertThat( comp.getRole(), is("RESOURCEMANAGER") );
+    assertThat( comp.getVersion().toString(), is("2.5.0") );
+    assertThat(comp.getUrl(), is("http://host1:8088/ws") );
+
+    comp = topology.getService("HIVE", "hive", null);
+    assertThat( comp, notNullValue() );
+    assertThat( comp.getRole(), is("HIVE") );
+    assertThat( comp.getName(), is("hive") );
+    assertThat( comp.getUrl(), is("http://host2:10001/cliservice" ) );
   }
 
   @Test

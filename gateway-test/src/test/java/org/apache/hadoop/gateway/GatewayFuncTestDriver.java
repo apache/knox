@@ -157,7 +157,7 @@ public class GatewayFuncTestDriver {
     } catch (ServiceLifecycleException e) {
       e.printStackTrace(); // I18N not required.
     }
-    File stacksDir = new File( config.getGatewayStacksDir() );
+    File stacksDir = new File( config.getGatewayServicesDir() );
     stacksDir.mkdirs();
     //TODO: [sumit] This is a hack for now, need to find a better way to locate the source resources for 'stacks' to be tested
     String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
@@ -182,7 +182,7 @@ public class GatewayFuncTestDriver {
     FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewayStacksDir() ) );
+    FileUtils.deleteQuietly( new File( config.getGatewayServicesDir() ) );
 
     for( Service service : services.values() ) {
       service.server.stop();

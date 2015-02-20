@@ -96,6 +96,12 @@
                         </dependencies>
                     </plugin>
                     <plugin>
+                        <!-- Using the dependency plugin to grab a dependency jar (gateway-service-definitions) and
+                        unpack some resources into the build directory so that it can be included in the assembly.
+                        The phase 'generate-resources' is chosen since it is not only the closest fit to the description
+                        of the action, but more importantly, it is a phase that is guaranteed to occur before the
+                        assembly which is tied to 'package'.
+                        -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <version>2.8</version>
@@ -115,12 +121,8 @@
                                             <overWrite>true</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
                                             <includes>services/**/*</includes>
-                                            <!--<excludes>**/*.class</excludes>-->
                                         </artifactItem>
                                     </artifactItems>
-                                    <!--<outputDirectory>${project.build.directory}/data</outputDirectory>-->
-                                    <!--<overWriteReleases>false</overWriteReleases>-->
-                                    <!--<overWriteSnapshots>true</overWriteSnapshots>-->
                                 </configuration>
                             </execution>
                         </executions>

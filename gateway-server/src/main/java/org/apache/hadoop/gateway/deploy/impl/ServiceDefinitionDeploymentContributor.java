@@ -195,6 +195,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if ( context.getGatewayConfig().isHadoopKerberosSecured() ) {
       filter.param().name("kerberos").value("true");
     } else {
+      //TODO: [sumit] Get rid of special case. Add config/param capabilities to service definitions?
       //special case for hive
       filter.param().name("basicAuthPreemptive").value("true");
     }

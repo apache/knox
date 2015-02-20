@@ -74,7 +74,7 @@ public class ServiceDefinitionsLoader {
             contributors.add(new ServiceDefinitionDeploymentContributor(definition, rewriteRulesDescriptor));
             log.addedServiceDefinition(definition.getName(), definition.getRole(), definition.getVersion());
           } catch ( FileNotFoundException e ) {
-            log.failedToLoadServiceDefinition(file.getAbsolutePath(), e);
+            log.failedToFindServiceDefinitionFile(file.getAbsolutePath(), e);
           }
         }
       } catch ( JAXBException e ) {
@@ -97,9 +97,9 @@ public class ServiceDefinitionsLoader {
         stream.close();
         return rules;
       } catch ( FileNotFoundException e ) {
-        log.failedToLoadServiceDefinition(rewriteFile.getAbsolutePath(), e);
+        log.failedToFindRewriteFile(rewriteFile.getAbsolutePath(), e);
       } catch ( IOException e ) {
-        log.failedToLoadServiceDefinition(rewriteFile.getAbsolutePath(), e);
+        log.failedToLoadRewriteFile(rewriteFile.getAbsolutePath(), e);
       }
     }
     log.noRewriteFileFound(servicesDir.getAbsolutePath());

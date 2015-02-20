@@ -177,7 +177,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getGatewayStacksDir() {
+  public String getGatewayServicesDir() {
     return get(STACKS_SERVICES_DIR, getGatewayDataDir() + File.separator + DEFAULT_STACKS_SERVICES_DIR);
   }
 

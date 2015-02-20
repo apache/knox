@@ -127,4 +127,9 @@ public class Version implements Comparable<Version> {
     }
     return false;
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }
