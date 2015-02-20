@@ -20,24 +20,17 @@ package org.apache.hadoop.gateway.hive;
 import org.apache.hadoop.gateway.config.Configure;
 import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHeader;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.Principal;
@@ -98,7 +91,7 @@ public class HiveHttpClientDispatch extends HttpClientDispatch {
   }
 
   protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-      DefaultHttpClient client) throws IOException, ClientProtocolException {
+      DefaultHttpClient client) throws IOException {
     //DefaultHttpClient client = new DefaultHttpClient();
     SPNegoSchemeFactory spNegoSF = new SPNegoSchemeFactory(
           /* stripPort */true);

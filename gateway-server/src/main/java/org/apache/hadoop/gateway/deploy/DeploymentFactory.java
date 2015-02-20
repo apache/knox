@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayForwardingServlet;
+import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.GatewayServlet;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
@@ -43,7 +43,16 @@ import java.beans.Statement;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeMap;
 
 public abstract class DeploymentFactory {
 
@@ -477,19 +486,4 @@ public abstract class DeploymentFactory {
     }
     return contributor;
   }
-
-//  static ServiceDeploymentContributor getServiceContributor(
-//      Map<String,List<ServiceDeploymentContributor>> services, String role, String name ) {
-//    ServiceDeploymentContributor contributor = null;
-//    if( name == null ) {
-//      List<ServiceDeploymentContributor> list = services.get( role );
-//      if( !list.isEmpty() ) {
-//        contributor = list.get( 0 );
-//      }
-//    } else {
-//      contributor = getServiceContributor( role, name );
-//    }
-//    return contributor;
-//  }
-
 }

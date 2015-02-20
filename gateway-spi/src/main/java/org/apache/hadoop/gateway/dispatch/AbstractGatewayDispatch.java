@@ -17,14 +17,11 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.GatewayResponse;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,11 +30,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
 
@@ -102,7 +96,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       HttpServletRequest inboundRequest) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();
     while( headerNames.hasMoreElements() ) {
-      String name = (String) headerNames.nextElement();
+      String name = headerNames.nextElement();
       if ( !outboundRequest.containsHeader( name )
           && !EXCLUDE_HEADERS.contains( name ) ) {
         String vaule = inboundRequest.getHeader( name );

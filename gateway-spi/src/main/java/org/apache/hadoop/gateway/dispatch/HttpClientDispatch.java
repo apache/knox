@@ -17,16 +17,6 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.SpiGatewayResources;
 import org.apache.hadoop.gateway.audit.api.Action;
@@ -44,7 +34,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -56,6 +45,13 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  *
@@ -188,7 +184,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
    }
 
    protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-                                                  HttpClient client) throws IOException, ClientProtocolException {
+                                                  HttpClient client) throws IOException {
       HttpResponse inboundResponse;
       outboundRequest.removeHeaders(COOKIE);
       String appCookie = appCookieManager.getCachedAppCookie();

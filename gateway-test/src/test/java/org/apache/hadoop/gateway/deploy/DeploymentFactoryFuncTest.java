@@ -504,7 +504,7 @@ public class DeploymentFactoryFuncTest {
 
     WebArchive war = DeploymentFactory.createDeployment( config, topology );
     Document doc = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
-    dump( doc );
+//    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
     String value;
@@ -561,15 +561,7 @@ public class DeploymentFactoryFuncTest {
     }
 
   }
-//  private void dump( Document document ) throws TransformerException {
-//    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-//    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-//    StreamResult result = new StreamResult( new StringWriter() );
-//    DOMSource source = new DOMSource( document );
-//    transformer.transform( source, result );
-//    String xmlString = result.getWriter().toString();
-//    System.out.println( xmlString );
-//  }
+
   private void dump( Document document ) throws TransformerException {
     Transformer transformer = TransformerFactory.newInstance().newTransformer();
     transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
