@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone="yes"?>
+<entities>
+    <entity>
+        <type>feed</type>
+        <name>cleansedEmailFeed</name>
+        <list>
+            <tag>Output</tag>
+        </list>
+    </entity>
+    <entity>
+        <type>cluster</type>
+        <name>primaryCluster</name>
+        <list></list>
+    </entity>
+    <entity>
+        <type>feed</type>
+        <name>rawEmailFeed</name>
+        <list>
+            <tag>Input</tag>
+        </list>
+    </entity>
+</entities>

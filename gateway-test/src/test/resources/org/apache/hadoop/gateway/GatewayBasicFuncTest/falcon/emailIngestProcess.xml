@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Hourly process, ingests raw emails from all US west email servers
+ -->
+<process name="rawEmailIngestProcess" xmlns="uri:falcon:process:0.1">
+    
+    <tags>pipeline=churnAnalysisDataPipeline,owner=ETLGroup,externalSystem=USWestEmailServers</tags>
+    
+    
+    <clusters>
+        <cluster name="primaryCluster">
+            <validity start="2014-02-28T00:00Z" end="2016-03-31T00:00Z"/>
+        </cluster>
+    </clusters>
+    
+    <parallel>1</parallel>
+    <order>FIFO</order>
+    <frequency>hours(1)</frequency>
+    
+    <outputs>
+        <output name="output" feed="rawEmailFeed" instance="now(0,0)" />
+    </outputs>
+    
+    <workflow name="emailIngestWorkflow" version="2.0.0"
+    engine="oozie" path="/user/ambari-qa/falcon/demo/apps/ingest/fs" />
+    
+    <retry policy="periodic" delay="minutes(15)" attempts="3" />
+    
+</process>

@@ -1,0 +1,238 @@
+{
+  "results": [
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "primaryCluster",
+      "type": "cluster-entity",
+      "_id": 4,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "USWestOregon",
+      "type": "data-center",
+      "_id": 8,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "backupCluster",
+      "type": "cluster-entity",
+      "_id": 12,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "USEastVirginia",
+      "type": "data-center",
+      "_id": 16,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "rawEmailFeed",
+      "type": "feed-entity",
+      "_id": 20,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "ambari-qa",
+      "type": "user",
+      "_id": 24,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "USWestEmailServers",
+      "type": "classification",
+      "_id": 28,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "secure",
+      "type": "classification",
+      "_id": 32,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "churnAnalysisDataPipeline",
+      "type": "group",
+      "_id": 36,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "cleansedEmailFeed",
+      "type": "feed-entity",
+      "_id": 40,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "USMarketing",
+      "type": "classification",
+      "_id": 44,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "Secure",
+      "type": "classification",
+      "_id": 48,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "USProdEmailServers",
+      "type": "classification",
+      "_id": 52,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "BITools",
+      "type": "classification",
+      "_id": 56,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "rawEmailIngestProcess",
+      "type": "process-entity",
+      "version": "2.0.0",
+      "_id": 60,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "churnAnalysisDataPipeline",
+      "type": "classification",
+      "_id": 64,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "ETLGroup",
+      "type": "classification",
+      "_id": 68,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "cleanseEmailProcess",
+      "type": "process-entity",
+      "version": "5.0",
+      "_id": 72,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailIngestProcess/2014-02-28T00:00Z",
+      "type": "process-instance",
+      "version": "2.0.0",
+      "_id": 76,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailFeed/2014-02-28T00:00Z",
+      "type": "feed-instance",
+      "_id": 80,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailIngestProcess/2014-02-28T01:00Z",
+      "type": "process-instance",
+      "version": "2.0.0",
+      "_id": 84,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailFeed/2014-02-28T01:00Z",
+      "type": "feed-instance",
+      "_id": 88,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleanseEmailProcess/2014-02-28T00:00Z",
+      "type": "process-instance",
+      "version": "5.0",
+      "_id": 92,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleansedEmailFeed/2014-02-28T00:00Z",
+      "type": "feed-instance",
+      "_id": 96,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailIngestProcess/2014-02-28T02:00Z",
+      "type": "process-instance",
+      "version": "2.0.0",
+      "_id": 100,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailFeed/2014-02-28T02:00Z",
+      "type": "feed-instance",
+      "_id": 104,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleanseEmailProcess/2014-02-28T02:00Z",
+      "type": "process-instance",
+      "version": "5.0",
+      "_id": 108,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleansedEmailFeed/2014-02-28T02:00Z",
+      "type": "feed-instance",
+      "_id": 112,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleanseEmailProcess/2014-02-28T01:00Z",
+      "type": "process-instance",
+      "version": "5.0",
+      "_id": 116,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:56Z",
+      "name": "cleansedEmailFeed/2014-02-28T01:00Z",
+      "type": "feed-instance",
+      "_id": 120,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailIngestProcess/2014-02-28T03:00Z",
+      "type": "process-instance",
+      "version": "2.0.0",
+      "_id": 124,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailFeed/2014-02-28T03:00Z",
+      "type": "feed-instance",
+      "_id": 128,
+      "_type": "vertex"
+    }
+  ],
+  "totalSize": 32
+}

@@ -1,0 +1,10 @@
+{
+  "results": {
+    "timestamp": "2015-02-19T20:55Z",
+    "name": "rawEmailIngestProcess/2014-02-28T00:00Z",
+    "type": "process-instance",
+    "version": "2.0.0",
+    "_id": 76,
+    "_type": "vertex"
+  }
+}

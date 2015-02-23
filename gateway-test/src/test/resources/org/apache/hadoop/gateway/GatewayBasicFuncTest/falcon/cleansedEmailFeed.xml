@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ A feed representing hourly cleansed customer email data
+ -->
+<feed description="Cleansed customer emails" name="cleansedEmailFeed"
+    xmlns="uri:falcon:feed:0.1">
+    
+    <tags>owner=USMarketing,classification=Secure,externalSource=USProdEmailServers,externalTarget=BITools</tags>
+    <groups>churnAnalysisDataPipeline</groups>
+    
+    <frequency>hours(1)</frequency>
+    
+    <clusters>
+        <cluster name="primaryCluster" type="source">
+            <validity start="2014-02-28T00:00Z" end="2016-03-31T00:00Z"/>
+            <retention limit="days(90)" action="delete"/>
+            
+            <locations>
+                <location type="data"
+                path="/user/ambari-qa/falcon/demo/primary/processed/enron/${YEAR}-${MONTH}-${DAY}-${HOUR}"/>
+            </locations>
+        </cluster>
+        
+        <cluster name="backupCluster" type="target">
+            <validity start="2014-02-28T00:00Z" end="2016-03-31T00:00Z"/>
+            <retention limit="months(36)" action="delete"/>
+            
+            <locations>
+                <location type="data"
+                path="/falcon/demo/bcp/processed/enron/${YEAR}-${MONTH}-${DAY}-${HOUR}"/>
+            </locations>
+        </cluster>
+        
+    </clusters>
+    
+    <locations>
+        <location type="data"
+        path="/user/ambari-qa/falcon/demo/processed/enron/${YEAR}-${MONTH}-${DAY}-${HOUR}"/>
+    </locations>
+    
+    <ACL owner="ambari-qa" group="users" permission="0755"/>
+    <schema location="/none" provider="none"/>
+</feed>

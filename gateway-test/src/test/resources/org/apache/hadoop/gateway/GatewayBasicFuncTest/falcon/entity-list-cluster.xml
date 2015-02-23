@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="yes"?>
+<entities>
+    <entity>
+        <type>CLUSTER</type>
+        <name>backupCluster</name>
+    </entity>
+    <entity>
+        <type>CLUSTER</type>
+        <name>primaryCluster</name>
+    </entity>
+</entities>

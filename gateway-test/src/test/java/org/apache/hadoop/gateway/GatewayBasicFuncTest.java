@@ -289,7 +289,7 @@ public class GatewayBasicFuncTest {
     String password = "hdfs-password";
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     String gatewayHostName = gatewayAddress.getHostName();
-    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
+    String gatewayAddrName = InetAddress.getByName(gatewayHostName).getHostAddress();
 
     driver.getMock( "WEBHDFS" )
         .expect()
@@ -300,7 +300,7 @@ public class GatewayBasicFuncTest {
         .queryParam( "user.name", username )
         .respond()
         .status( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .header( "Location", driver.getRealUrl( "DATANODE" ) + "/v1" + root + "/dir/file?op=CREATE&user.name=hdfs" );
+        .header("Location", driver.getRealUrl("DATANODE") + "/v1" + root + "/dir/file?op=CREATE&user.name=hdfs");
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -319,8 +319,8 @@ public class GatewayBasicFuncTest {
           startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
       MatcherAssert.assertThat( location, containsString( "?_=" ) );
     }
-    MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
-    MatcherAssert.assertThat( location, not( containsString( "port=" ) ) );
+    MatcherAssert.assertThat(location, not(containsString("host=")));
+    MatcherAssert.assertThat(location, not(containsString("port=")));
   }
 
   @Test
@@ -363,7 +363,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "webhdfs-success.json" ) )
-        .contentType( "application/json" );
+        .contentType("application/json");
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -869,10 +869,10 @@ public class GatewayBasicFuncTest {
     // Post the data to HDFS
 
     // Post the script to HDFS
-    driver.createFile( user, pass, null, root + "/script.hive", "777", "text/plain", "script.hive", 307, 201, 200 );
+    driver.createFile(user, pass, null, root + "/script.hive", "777", "text/plain", "script.hive", 307, 201, 200);
 
     // Submit the job
-    driver.submitHive( user, pass, group, root + "/script.hive", root + "/output", 200 );
+    driver.submitHive(user, pass, group, root + "/script.hive", root + "/output", 200);
 
     // Check job status (if possible)
     // Check output (if possible)
@@ -1465,7 +1465,7 @@ public class GatewayBasicFuncTest {
     .statusCode( HttpStatus.SC_CREATED )
     .contentType( ContentType.XML )
     .header( "Location", startsWith( driver.getUrl( "WEBHBASE" ) + path ) )
-    .when().put( driver.getUrl( "WEBHBASE" ) + path );
+    .when().put(driver.getUrl("WEBHBASE") + path);
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1473,10 +1473,10 @@ public class GatewayBasicFuncTest {
     .method( "PUT" )
     .pathInfo( path )
     .respond()
-    .status( HttpStatus.SC_CREATED )
-    .content( driver.getResourceBytes( resourceName + ".json" ) )
-    .contentType( ContentType.JSON.toString() )
-    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path );
+    .status(HttpStatus.SC_CREATED)
+    .content(driver.getResourceBytes(resourceName + ".json"))
+    .contentType(ContentType.JSON.toString())
+    .header("Location", driver.getRealUrl("WEBHBASE") + path);
     
     given()
     .auth().preemptive().basic( username, password )
@@ -1496,16 +1496,16 @@ public class GatewayBasicFuncTest {
     .status( HttpStatus.SC_CREATED )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
     .contentType( "application/x-protobuf" )
-    .header( "Location", driver.getRealUrl( "WEBHBASE" ) + path );
+    .header("Location", driver.getRealUrl("WEBHBASE") + path);
 
     given()
-    .auth().preemptive().basic( username, password )
-    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .auth().preemptive().basic(username, password)
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
-    .statusCode( HttpStatus.SC_CREATED )
-    .contentType( "application/x-protobuf" )
-    .header( "Location", startsWith( driver.getUrl( "WEBHBASE" ) + path ) )
-    .when().put( driver.getUrl( "WEBHBASE" ) + path );
+    .statusCode(HttpStatus.SC_CREATED)
+    .contentType("application/x-protobuf")
+    .header("Location", startsWith(driver.getUrl("WEBHBASE") + path))
+    .when().put(driver.getUrl("WEBHBASE") + path);
     driver.assertComplete();
 
   }
@@ -1521,11 +1521,11 @@ public class GatewayBasicFuncTest {
     .expect()
     .method( "GET" )
     .pathInfo( path )
-    .header( "Accept", ContentType.XML.toString() )
+    .header("Accept", ContentType.XML.toString())
     .respond()
-    .status( HttpStatus.SC_OK )
-    .content( driver.getResourceBytes( resourceName + ".xml" ) )
-    .contentType( ContentType.XML.toString() );
+    .status(HttpStatus.SC_OK)
+    .content(driver.getResourceBytes(resourceName + ".xml"))
+    .contentType(ContentType.XML.toString());
 
     Response response = given()
     .auth().preemptive().basic( username, password )
@@ -1538,19 +1538,19 @@ public class GatewayBasicFuncTest {
 
     MatcherAssert
         .assertThat(
-            the( response.getBody().asString() ),
-            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
+            the(response.getBody().asString()),
+            isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
     driver.assertComplete();
     
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .method( "GET" )
-    .pathInfo( path )
-    .header( "Accept", ContentType.JSON.toString() )
+    .method("GET")
+    .pathInfo(path)
+    .header("Accept", ContentType.JSON.toString())
     .respond()
-    .status( HttpStatus.SC_OK )
-    .content( driver.getResourceBytes( resourceName + ".json" ) )
-    .contentType( ContentType.JSON.toString() );
+    .status(HttpStatus.SC_OK)
+    .content(driver.getResourceBytes(resourceName + ".json"))
+    .contentType(ContentType.JSON.toString());
 
     response = given()
     .auth().preemptive().basic( username, password )
@@ -1562,7 +1562,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "WEBHBASE" ) + path );
     
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
+    .assertThat(response.getBody().asString(), sameJSONAs(driver.getResourceString(resourceName + ".json", UTF8)));
     driver.assertComplete();
     
     driver.getMock( "WEBHBASE" )
@@ -1573,7 +1573,7 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_OK )
     .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
-    .contentType( "application/x-protobuf" );
+    .contentType("application/x-protobuf");
 
     response = given()
     .auth().preemptive().basic( username, password )
@@ -1608,7 +1608,7 @@ public class GatewayBasicFuncTest {
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
     .contentType( ContentType.XML.toString() )
     .respond()
-    .status( HttpStatus.SC_OK );
+    .status(HttpStatus.SC_OK);
 
     given()
     .auth().preemptive().basic( username, password )
@@ -1618,7 +1618,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().put( driver.getUrl( "WEBHBASE" ) + multipleRowPath );
+    .when().put(driver.getUrl("WEBHBASE") + multipleRowPath);
     driver.assertComplete();
     
     driver.getMock( "WEBHBASE" )
@@ -1638,18 +1638,18 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON.toString() )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().put( driver.getUrl( "WEBHBASE" ) + singleRowPath );
+    .when().put(driver.getUrl("WEBHBASE") + singleRowPath);
     driver.assertComplete();
  
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .method( "PUT" )
-    .pathInfo( multipleRowPath )
+    .method("PUT")
+    .pathInfo(multipleRowPath)
     //.header( "Content-Type", "application/x-protobuf" )
-    .contentType( "application/x-protobuf" )
-    .content( driver.getResourceBytes( resourceName + ".protobuf" ) )
+    .contentType("application/x-protobuf")
+    .content(driver.getResourceBytes(resourceName + ".protobuf"))
     .respond()
-    .status( HttpStatus.SC_OK );
+    .status(HttpStatus.SC_OK);
 
     given()
     .auth().preemptive().basic( username, password )
@@ -1723,7 +1723,7 @@ public class GatewayBasicFuncTest {
     .contentType( "application/x-protobuf" )
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().post( driver.getUrl( "WEBHBASE" ) + multipleRowPath );
+    .when().post(driver.getUrl("WEBHBASE") + multipleRowPath);
     driver.assertComplete();
   }
 
@@ -1737,52 +1737,52 @@ public class GatewayBasicFuncTest {
     String familyId = "family";
     String columnId = "column";
     
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .from( "testHBaseDeleteDataFromTable-1" )
-    .method( "DELETE" )
-    .pathInfo( "/" + tableId + "/" + rowId )
+    .from("testHBaseDeleteDataFromTable-1")
+    .method("DELETE")
+    .pathInfo("/" + tableId + "/" + rowId)
     .respond()
-    .status( HttpStatus.SC_OK );
+    .status(HttpStatus.SC_OK);
 
     given()
-    .auth().preemptive().basic( username, password )
-    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .auth().preemptive().basic(username, password)
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId );
+    .when().delete(driver.getUrl("WEBHBASE") + "/" + tableId + "/" + rowId);
     driver.assertComplete();
     
     driver.getMock( "WEBHBASE" )
     .expect()
-    .from( "testHBaseDeleteDataFromTable-2" )
-    .method( "DELETE" )
-    .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId )
+    .from("testHBaseDeleteDataFromTable-2")
+    .method("DELETE")
+    .pathInfo("/" + tableId + "/" + rowId + "/" + familyId)
     .respond()
     .status( HttpStatus.SC_OK );
 
     given()
-    .auth().preemptive().basic( username, password )
-    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .auth().preemptive().basic(username, password)
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId );
+    .when().delete(driver.getUrl("WEBHBASE") + "/" + tableId + "/" + rowId + "/" + familyId);
     driver.assertComplete();
 
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .from( "testHBaseDeleteDataFromTable-3" )
-    .method( "DELETE" )
-    .pathInfo( "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId )
+    .from("testHBaseDeleteDataFromTable-3")
+    .method("DELETE")
+    .pathInfo("/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId)
     .respond()
-    .status( HttpStatus.SC_OK );
+    .status(HttpStatus.SC_OK);
 
     given()
-    .auth().preemptive().basic( username, password )
-    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .auth().preemptive().basic(username, password)
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "WEBHBASE" ) + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId );
+    .when().delete(driver.getUrl("WEBHBASE") + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId);
     driver.assertComplete();
 
   }
@@ -1799,15 +1799,15 @@ public class GatewayBasicFuncTest {
     String rowsWithKeyPath = "/table/row";
     String rowsWithKeyAndColumnPath = "/table/row/family:col";
     
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .method( "GET" )
-    .pathInfo( allRowsPath )
-    .header( "Accept", ContentType.XML.toString() )
+    .method("GET")
+    .pathInfo(allRowsPath)
+    .header("Accept", ContentType.XML.toString())
     .respond()
-    .status( HttpStatus.SC_OK )
-    .content( driver.getResourceBytes( resourceName + ".xml" ) )
-    .contentType( ContentType.XML.toString() );
+    .status(HttpStatus.SC_OK)
+    .content(driver.getResourceBytes(resourceName + ".xml"))
+    .contentType(ContentType.XML.toString());
 
     Response response = given()
     .auth().preemptive().basic( username, password )
@@ -1820,8 +1820,8 @@ public class GatewayBasicFuncTest {
     
     MatcherAssert
     .assertThat(
-        the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
+        the(response.getBody().asString()),
+        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
     driver.assertComplete();
     
     driver.getMock( "WEBHBASE" )
@@ -1832,7 +1832,7 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_OK )
     .content( driver.getResourceBytes( resourceName + ".xml" ) )
-    .contentType( ContentType.XML.toString() );
+    .contentType(ContentType.XML.toString());
 
     response = given()
     .auth().preemptive().basic( username, password )
@@ -1845,8 +1845,8 @@ public class GatewayBasicFuncTest {
     
     MatcherAssert
     .assertThat(
-        the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
+        the(response.getBody().asString()),
+        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
     driver.assertComplete();
     
     driver.getMock( "WEBHBASE" )
@@ -1907,13 +1907,13 @@ public class GatewayBasicFuncTest {
     String scannerId = "13705290446328cff5ed";
     
     //Create scanner for table using PUT and POST requests
-    driver.getMock( "WEBHBASE" )
+    driver.getMock("WEBHBASE")
     .expect()
-    .method( "PUT" )
-    .pathInfo( scannerPath )
-    .header( "Content-Type", ContentType.XML.toString() )
+    .method("PUT")
+    .pathInfo(scannerPath)
+    .header("Content-Type", ContentType.XML.toString())
     .respond()
-    .status( HttpStatus.SC_CREATED );
+    .status(HttpStatus.SC_CREATED);
 
     given()
     .auth().preemptive().basic( username, password )
@@ -1936,7 +1936,7 @@ public class GatewayBasicFuncTest {
     .respond()
     .status( HttpStatus.SC_OK )
     .content( driver.getResourceBytes( tableDataResourceName + ".xml" ) )
-    .contentType( ContentType.XML.toString() );
+    .contentType(ContentType.XML.toString());
 
     Response response = given()
     .auth().preemptive().basic( username, password )
@@ -1949,8 +1949,8 @@ public class GatewayBasicFuncTest {
     
     MatcherAssert
     .assertThat(
-        the( response.getBody().asString() ),
-        isEquivalentTo( the( driver.getResourceString( tableDataResourceName + ".xml", UTF8 ) ) ) );
+        the(response.getBody().asString()),
+        isEquivalentTo(the(driver.getResourceString(tableDataResourceName + ".xml", UTF8))));
     driver.assertComplete();
     
     //Delete scanner
@@ -1967,7 +1967,7 @@ public class GatewayBasicFuncTest {
     .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
     .statusCode( HttpStatus.SC_OK )
-    .when().delete( driver.getUrl( "WEBHBASE" ) + scannerPath + "/" + scannerId );
+    .when().delete(driver.getUrl("WEBHBASE") + scannerPath + "/" + scannerId);
     driver.assertComplete();
   }
 
@@ -1995,14 +1995,14 @@ public class GatewayBasicFuncTest {
     String username = "hdfs";
     String password = "hdfs-password";
 
-    driver.getMock( "WEBHDFS" )
+    driver.getMock("WEBHDFS")
         .expect()
-        .method( "GET" )
-        .pathInfo( "/v1" + root + "/dir" )
-        .queryParam( "op", "LISTSTATUS" )
-        .queryParam( "user.name", username )
+        .method("GET")
+        .pathInfo("/v1" + root + "/dir")
+        .queryParam("op", "LISTSTATUS")
+        .queryParam("user.name", username)
         .respond()
-        .status( HttpStatus.SC_OK );
+        .status(HttpStatus.SC_OK);
     given()
 //        .log().all()
         .auth().preemptive().basic( username, password )
@@ -2021,25 +2021,25 @@ public class GatewayBasicFuncTest {
     getYarnRmResource( "/v1/cluster/", ContentType.JSON, "yarn/cluster-info" );
     getYarnRmResource( "/v1/cluster/", ContentType.XML, "yarn/cluster-info" );
     getYarnRmResource( "/v1/cluster/info/", ContentType.JSON, "yarn/cluster-info" );
-    getYarnRmResource( "/v1/cluster/info/", ContentType.XML, "yarn/cluster-info" );
+    getYarnRmResource("/v1/cluster/info/", ContentType.XML, "yarn/cluster-info");
   }
 
   @Test
   public void testYarnRmGetClusterMetrics() throws Exception {
     getYarnRmResource( "/v1/cluster/metrics/", ContentType.JSON, "yarn/cluster-metrics" );
-    getYarnRmResource( "/v1/cluster/metrics/", ContentType.XML, "yarn/cluster-metrics" );
+    getYarnRmResource("/v1/cluster/metrics/", ContentType.XML, "yarn/cluster-metrics");
   }
 
   @Test
   public void testYarnRnGetScheduler() throws Exception {
     getYarnRmResource( "/v1/cluster/scheduler/", ContentType.JSON, "yarn/scheduler" );
-    getYarnRmResource( "/v1/cluster/scheduler/", ContentType.XML, "yarn/scheduler" );
+    getYarnRmResource("/v1/cluster/scheduler/", ContentType.XML, "yarn/scheduler");
   }
 
   @Test
   public void getYarnRmAppstatistics() throws Exception {
     getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.JSON, "yarn/appstatistics" );
-    getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.XML, "yarn/appstatistics" );
+    getYarnRmResource("/v1/cluster/appstatistics/", ContentType.XML, "yarn/appstatistics");
   }
 
   @Test
@@ -2105,7 +2105,7 @@ public class GatewayBasicFuncTest {
     mockRequestMatcher.respond()
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( resource ) )
-        .contentType( contentType.toString() );
+        .contentType(contentType.toString());
 
     given()
 //         .log().all()
@@ -2129,7 +2129,7 @@ public class GatewayBasicFuncTest {
         .content( "apps.app[1].amHostHttpAddress", isEmptyString() )
         .content( "apps.app[2].id", is( "application_1399541193872_0009" ) )
         .when()
-        .get( gatewayPath + gatewayPathQuery );
+        .get(gatewayPath + gatewayPathQuery);
 
     driver.assertComplete();
   }
@@ -2342,7 +2342,7 @@ public class GatewayBasicFuncTest {
   @Test
   public void testYarnRmAppattempts() throws Exception {
     getYarnRmAppattempts( ContentType.JSON );
-    getYarnRmAppattempts( ContentType.XML );
+    getYarnRmAppattempts(ContentType.XML);
   }
 
   private void getYarnRmAppattempts( ContentType contentType ) throws Exception {
@@ -2398,7 +2398,7 @@ public class GatewayBasicFuncTest {
     params.put( "healthy", "true" );
 
     getYarnRmNodes( ContentType.JSON, params );
-    getYarnRmNodes( ContentType.XML, params );
+    getYarnRmNodes(ContentType.XML, params);
   }
 
   private void getYarnRmNodes( ContentType contentType, Map<String, String> params ) throws Exception {
@@ -2718,12 +2718,12 @@ public class GatewayBasicFuncTest {
 
     Response response = given()
 //     .log().all()
-    .auth().preemptive().basic( username, password )
-    .header( "X-XSRF-Header", "jksdhfkhdsf" )
+    .auth().preemptive().basic(username, password)
+    .header("X-XSRF-Header", "jksdhfkhdsf")
     .expect()
 //     .log().all()
-    .statusCode( HttpStatus.SC_OK ).contentType( contentType ).when()
-    .get( gatewayPath );
+    .statusCode(HttpStatus.SC_OK).contentType(contentType).when()
+    .get(gatewayPath);
 
     assertThat( response.body().asString(), not( containsString( "host.yarn.com" ) ) );
 
@@ -2743,7 +2743,7 @@ public class GatewayBasicFuncTest {
   private String findHadoopExamplesJar() throws IOException {
     String pattern = "hadoop-examples-*.jar";
     File dir = new File( System.getProperty( "user.dir" ), "hadoop-examples/target" );
-    File file = findFile( dir, pattern );
+    File file = findFile(dir, pattern);
     if( file == null || !file.exists() ) {
       file = findFile( new File( System.getProperty( "user.dir" ), "../hadoop-examples/target" ), pattern );
     }
@@ -2757,23 +2757,23 @@ public class GatewayBasicFuncTest {
   public void testFalconAdmin() throws Exception {
     String resourceName = "falcon/version";
     String path = "/api/admin/version";
-    testFalconResource(resourceName, path, ContentType.XML);
-    testFalconResource(resourceName, path, ContentType.JSON);
+    testGetFalconResource(resourceName, path, ContentType.XML);
+    testGetFalconResource(resourceName, path, ContentType.JSON);
 
     resourceName = "falcon/config-runtime";
     path = "/api/admin/config/runtime";
-    testFalconResource(resourceName, path, ContentType.XML);
-    testFalconResource(resourceName, path, ContentType.JSON);
+    testGetFalconResource(resourceName, path, ContentType.XML);
+    testGetFalconResource(resourceName, path, ContentType.JSON);
 
     resourceName = "falcon/config-deploy";
     path = "/api/admin/config/deploy";
-    testFalconResource(resourceName, path, ContentType.XML);
-    testFalconResource(resourceName, path, ContentType.JSON);
+    testGetFalconResource(resourceName, path, ContentType.XML);
+    testGetFalconResource(resourceName, path, ContentType.JSON);
 
     resourceName = "falcon/config-startup";
     path = "/api/admin/config/startup";
-    testFalconResource(resourceName, path, ContentType.XML);
-    testFalconResource(resourceName, path, ContentType.JSON);
+    testGetFalconResource(resourceName, path, ContentType.XML);
+    testGetFalconResource(resourceName, path, ContentType.JSON);
 
 
     String username = "hdfs";
@@ -2803,7 +2803,139 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  private void testFalconResource(String resourceName, String path, ContentType contentType) throws IOException {
+  @Test
+  public void testFalconEntities() throws Exception {
+    String resourceName = "falcon/entity-status-process";
+    String path = "/api/entities/status/process/cleanseEmailProcess";
+    testGetFalconResource(resourceName, path, ContentType.XML);
+
+    resourceName = "falcon/oregonCluster";
+    path = "/api/entities/definition/cluster/primaryCluster";
+    testGetFalconResource(resourceName, path, ContentType.XML);
+
+    resourceName = "falcon/entity-list-cluster";
+    path = "/api/entities/list/cluster";
+    testGetFalconResource(resourceName, path, ContentType.XML);
+
+//    resourceName = "falcon/entity-summary-feed";
+//    path = "/api/entities/summary/feed?cluster=primaryCluster&filterBy=STATUS:RUNNING&fields=status&tags=consumer=consumer@xyz.com&orderBy=name&offset=0&numResults=1&numInstances=2";
+//    testGetFalconResource(resourceName, path, ContentType.XML);
+//    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/entity-dependency-process";
+    path = "/api/entities/dependencies/process/cleanseEmailProcess";
+    testGetFalconResource(resourceName, path, ContentType.XML);
+
+    String postResource = "falcon/oregonCluster.xml";
+    String responseResource = "falcon/entity-validate-cluster.xml";
+    path = "/api/entities/validate/cluster";
+    testPostFalconResource(postResource, responseResource, path, ContentType.XML);
+
+    postResource = "falcon/rawEmailFeed.xml";
+    responseResource = "falcon/entity-submit-feed.json";
+    path = "/api/entities/submit/feed";
+    testPostFalconResource(postResource, responseResource, path, ContentType.JSON);
+
+    postResource = "falcon/rawEmailFeed.xml";
+    responseResource = "falcon/entity-update-feed.xml";
+    path = "/api/entities/update/feed";
+    testPostFalconResource(postResource, responseResource, path, ContentType.XML);
+
+    postResource = "falcon/cleanseEmailProcess.xml";
+    responseResource = "falcon/entity-submit-schedule-process.json";
+    path = "/api/entities/submitAndSchedule/process";
+    testPostFalconResource(postResource, responseResource, path, ContentType.JSON);
+
+    postResource = null;
+    responseResource = "falcon/entity-schedule-feed.xml";
+    path = "/api/entities/schedule/feed/rawEmailFeed";
+    testPostFalconResource(postResource, responseResource, path, ContentType.XML);
+
+    responseResource = "falcon/entity-resume-feed.xml";
+    path = "/api/entities/resume/feed/rawEmailFeed";
+    testPostFalconResource(postResource, responseResource, path, ContentType.XML);
+
+  }
+
+  @Test
+  public void testFalconFeedAndProcess() throws Exception {
+    String resourceName = "falcon/instance-running-process";
+    String path = "/api/instance/running/process/cleanseEmailProcess";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/instance-params-process";
+    path = "/api/instance/params/process/cleanseEmailProcess";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+  }
+
+  @Test
+  public void testFalconMetadataLineage() throws Exception {
+    String resourceName = "falcon/metadata-lineage-vertices-all";
+    String path = "/api/metadata/lineage/vertices/all";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-lineage-vertices-id";
+    path = "/api/metadata/lineage/vertices/76";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-lineage-vertices-direction";
+    path = "/api/metadata/lineage/vertices/76/out";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-lineage-edges-all";
+    path = "/api/metadata/lineage/edges/all";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-lineage-edges-id";
+    path = "/api/metadata/lineage/edges/Q2v-4-4m";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    String username = "hdfs";
+    String password = "hdfs-password";
+    resourceName = "falcon/metadata-lineage-vertices-key.json";
+    path = "/api/metadata/lineage/vertices";
+    String gatewayPath = driver.getUrl( "FALCON" ) + path + "?key=name&value=rawEmailIngestProcess";
+
+    driver.getMock("FALCON")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .queryParam("key", "name")
+        .queryParam("value", "rawEmailIngestProcess")
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .when().get( gatewayPath );
+
+    MatcherAssert.assertThat(response.getBody().asString(),
+        sameJSONAs(driver.getResourceString(resourceName, UTF8)));
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testFalconMetadataDiscovery() throws Exception {
+    String resourceName = "falcon/metadata-disc-process-entity";
+    String path = "/api/metadata/discovery/process_entity/list";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-disc-cluster-entity";
+    path = "/api/metadata/discovery/cluster_entity/list";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/metadata-disc-cluster-relations";
+    path = "/api/metadata/discovery/cluster_entity/primaryCluster/relations";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
+  }
+
+  private void testGetFalconResource(String resourceName, String path, ContentType contentType) throws IOException {
     String username = "hdfs";
     String password = "hdfs-password";
     String gatewayPath = driver.getUrl( "FALCON" ) + path;
@@ -2849,6 +2981,72 @@ public class GatewayBasicFuncTest {
         MatcherAssert
             .assertThat( the( response.getBody().asString() ),
                 isEquivalentTo( the( driver.getResourceString( resourceName, UTF8 ) ) ) );
+        break;
+      default:
+        break;
+    }
+    driver.assertComplete();
+  }
+
+  private void testPostFalconResource(String postResource, String responseResource, String path, ContentType contentType) throws IOException {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "FALCON" ) + path;
+    Response response;
+
+    if (postResource != null) {
+      driver.getMock("FALCON")
+          .expect()
+          .method("POST")
+          .content(driver.getResourceBytes(postResource))
+          .header("Accept", contentType.toString())
+          .pathInfo(path)
+          .queryParam("user.name", username)
+          .respond()
+          .status(HttpStatus.SC_OK)
+          .content(driver.getResourceBytes(responseResource))
+          .contentType(contentType.toString());
+
+     response = given()
+          .auth().preemptive().basic(username, password)
+          .header("X-XSRF-Header", "jksdhfkhdsf")
+          .header("Accept", contentType.toString())
+          .content(driver.getResourceBytes(postResource))
+          .expect()
+          .statusCode(HttpStatus.SC_OK)
+          .contentType(contentType.toString())
+          .when().post(gatewayPath);
+    } else {
+      driver.getMock("FALCON")
+          .expect()
+          .method("POST")
+          .header("Accept", contentType.toString())
+          .pathInfo(path)
+          .queryParam("user.name", username)
+          .respond()
+          .status(HttpStatus.SC_OK)
+          .content(driver.getResourceBytes(responseResource))
+          .contentType(contentType.toString());
+
+      response = given()
+          .auth().preemptive().basic(username, password)
+          .header("X-XSRF-Header", "jksdhfkhdsf")
+          .header("Accept", contentType.toString())
+          .expect()
+          .statusCode(HttpStatus.SC_OK)
+          .contentType(contentType.toString())
+          .when().post(gatewayPath);
+    }
+
+    switch( contentType ) {
+      case JSON:
+        MatcherAssert.assertThat( response.getBody().asString(),
+            sameJSONAs( driver.getResourceString( responseResource, UTF8 ) ) );
+        break;
+      case XML:
+        MatcherAssert
+            .assertThat( the( response.getBody().asString() ),
+                isEquivalentTo( the( driver.getResourceString( responseResource, UTF8 ) ) ) );
         break;
       default:
         break;

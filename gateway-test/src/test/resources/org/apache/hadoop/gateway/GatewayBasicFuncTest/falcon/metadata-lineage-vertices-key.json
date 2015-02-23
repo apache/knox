@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "rawEmailIngestProcess",
+      "type": "process-entity",
+      "version": "2.0.0",
+      "_id": 60,
+      "_type": "vertex"
+    }
+  ],
+  "totalSize": 1
+}

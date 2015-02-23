@@ -1,0 +1,106 @@
+{
+  "timestamp": "2015-02-19T20:54Z",
+  "name": "primaryCluster",
+  "type": "CLUSTER_ENTITY",
+  "_id": 4,
+  "_type": "vertex",
+  "inVertices": [
+    {
+      "name": "rawEmailFeed/2014-02-28T00:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "rawEmailFeed",
+      "type": "FEED_ENTITY",
+      "label": "stored-in"
+    },
+    {
+      "name": "rawEmailFeed/2014-02-28T01:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "cleansedEmailFeed/2014-02-28T00:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "rawEmailFeed/2014-02-28T02:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "cleansedEmailFeed",
+      "type": "FEED_ENTITY",
+      "label": "stored-in"
+    },
+    {
+      "name": "cleansedEmailFeed/2014-02-28T02:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "cleansedEmailFeed/2014-02-28T01:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "rawEmailFeed/2014-02-28T03:00Z",
+      "type": "FEED_INSTANCE",
+      "label": "stored-in"
+    },
+    {
+      "name": "cleanseEmailProcess",
+      "type": "PROCESS_ENTITY",
+      "label": "runs-on"
+    },
+    {
+      "name": "rawEmailIngestProcess/2014-02-28T00:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "rawEmailIngestProcess/2014-02-28T01:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "cleanseEmailProcess/2014-02-28T00:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "rawEmailIngestProcess/2014-02-28T02:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "cleanseEmailProcess/2014-02-28T02:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "cleanseEmailProcess/2014-02-28T01:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "rawEmailIngestProcess/2014-02-28T03:00Z",
+      "type": "PROCESS_INSTANCE",
+      "label": "runs-on"
+    },
+    {
+      "name": "rawEmailIngestProcess",
+      "type": "PROCESS_ENTITY",
+      "label": "runs-on"
+    }
+  ],
+  "outVertices": [
+    {
+      "name": "USWestOregon",
+      "type": "COLO",
+      "label": "collocated"
+    }
+  ]
+}

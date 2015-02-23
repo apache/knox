@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Hourly process, cleanses raw data
+ -->
+<process name="cleanseEmailProcess" xmlns="uri:falcon:process:0.1">
+    
+    <tags>pipeline=churnAnalysisDataPipeline,owner=ETLGroup</tags>
+    
+    
+    <clusters>
+        <cluster name="primaryCluster">
+            <validity start="2014-02-28T00:00Z" end="2016-03-31T00:00Z"/>
+        </cluster>
+    </clusters>
+    
+    <parallel>1</parallel>
+    <order>FIFO</order>
+    <frequency>hours(1)</frequency>
+    
+    <inputs>
+        <input name="input" feed="rawEmailFeed" start="now(0,0)" end="now(0,0)" />
+    </inputs>
+    
+    <outputs>
+        <output name="output" feed="cleansedEmailFeed" instance="now(0,0)" />
+    </outputs>
+    
+    <workflow name="emailCleanseWorkflow" version="5.0"
+    engine="pig" path="/user/ambari-qa/falcon/demo/apps/pig/id.pig" />
+    
+    <retry policy="periodic" delay="minutes(15)" attempts="3" />
+    <!-- <late-process policy="exp-backoff" delay="hours(1)">
+     <late-input input="input" workflow-path="/apps/clickstream/late" />
+     </late-process> -->
+    
+</process>

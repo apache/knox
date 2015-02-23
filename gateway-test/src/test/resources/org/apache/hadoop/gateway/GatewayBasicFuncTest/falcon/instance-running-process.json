@@ -1,0 +1,13 @@
+{
+  "status": "SUCCEEDED",
+  "message": "default/Running Instances\n",
+  "requestId": "default/null\n",
+  "instances": [
+    {
+      "instance": "2014-02-28T03:00Z",
+      "status": "RUNNING",
+      "cluster": "primaryCluster",
+      "startTime": "2015-02-20T03:09:07Z"
+    }
+  ]
+}

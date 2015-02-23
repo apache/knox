@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "ambari-qa",
+      "type": "user",
+      "_id": 24,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "primaryCluster",
+      "type": "cluster-entity",
+      "_id": 4,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:55Z",
+      "name": "rawEmailFeed/2014-02-28T00:00Z",
+      "type": "feed-instance",
+      "_id": 80,
+      "_type": "vertex"
+    },
+    {
+      "timestamp": "2015-02-19T20:54Z",
+      "name": "rawEmailIngestProcess",
+      "type": "process-entity",
+      "version": "2.0.0",
+      "_id": 60,
+      "_type": "vertex"
+    }
+  ],
+  "totalSize": 4
+}

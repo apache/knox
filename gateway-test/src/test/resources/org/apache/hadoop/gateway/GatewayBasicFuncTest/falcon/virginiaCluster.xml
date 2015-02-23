@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<cluster colo="USEastVirginia" description="virginiaHadoopCluster" name="backupCluster" xmlns="uri:falcon:cluster:0.1">
+    <interfaces>
+        <interface type="readonly" endpoint="hftp://sandbox.hortonworks.com:50070" version="2.2.0" />
+        <interface type="write" endpoint="hdfs://sandbox.hortonworks.com:8020" version="2.2.0" />
+        <interface type="execute" endpoint="sandbox.hortonworks.com:8050" version="2.2.0" />
+        <interface type="workflow" endpoint="http://sandbox.hortonworks.com:11000/oozie/" version="4.0.0" />
+        <interface type="messaging" endpoint="tcp://sandbox.hortonworks.com:61616?daemon=true" version="5.1.6" />
+    </interfaces>
+    <locations>
+        <location name="staging" path="/apps/falcon/backupCluster/staging" />
+        <location name="temp" path="/tmp" />
+        <location name="working" path="/apps/falcon/backupCluster/working" />
+    </locations>
+</cluster>
