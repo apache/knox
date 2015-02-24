@@ -1,0 +1,11 @@
+{
+  "supervisors": [
+    {
+      "id": "9bda48ca-7f71-4829-b463-16fd97cf0391",
+      "host": "sandbox.hortonworks.com",
+      "uptime": "4h 55m 1s",
+      "slotsTotal": 2,
+      "slotsUsed": 2
+    }
+  ]
+}

@@ -141,6 +141,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "JOBTRACKER", "thrift://" + TEST_HOST + ":8021", null, USE_MOCK_SERVICES );
     driver.setupService( "RESOURCEMANAGER", "http://" + TEST_HOST + ":8088/ws", "/cluster/resourcemanager", USE_MOCK_SERVICES );
     driver.setupService( "FALCON", "http://" + TEST_HOST + ":15000", "/cluster/falcon", USE_MOCK_SERVICES );
+    driver.setupService( "STORM", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -233,6 +234,9 @@ public class GatewayBasicFuncTest {
         .addTag( "service" )
             .addTag( "role" ).addText( "FALCON" )
             .addTag( "url" ).addText( driver.getRealUrl( "FALCON" ) ).gotoParent()
+        .addTag( "service" )
+            .addTag( "role" ).addText( "STORM" )
+            .addTag( "url" ).addText( driver.getRealUrl( "STORM" ) ).gotoParent()
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -3051,6 +3055,64 @@ public class GatewayBasicFuncTest {
       default:
         break;
     }
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testStormUiApi() throws Exception {
+    String resourceName = "storm/cluster-configuration.json";
+    String path = "/api/v1/cluster/configuration";
+    testGetStormResource(resourceName, path);
+
+    resourceName = "storm/cluster-summary.json";
+    path = "/api/v1/cluster/summary";
+    testGetStormResource(resourceName, path);
+
+    resourceName = "storm/supervisor-summary.json";
+    path = "/api/v1/supervisor/summary";
+    testGetStormResource(resourceName, path);
+
+    resourceName = "storm/topology-summary.json";
+    path = "/api/v1/topology/summary";
+    testGetStormResource(resourceName, path);
+
+    resourceName = "storm/topology-id.json";
+    path = "/api/v1/topology/WordCount-1-1424792039";
+    testGetStormResource(resourceName, path);
+
+    resourceName = "storm/topology-component-id.json";
+    path = "/api/v1/topology/WordCount-1-1424792039/component/spout";
+    testGetStormResource(resourceName, path);
+
+  }
+
+  private void testGetStormResource(String resourceName, String path) throws IOException {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "STORM" ) + path;
+
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .expect()
+//       .log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.JSON.toString() )
+        .when().get( gatewayPath );
+
+    MatcherAssert.assertThat( response.getBody().asString(),
+            sameJSONAs( driver.getResourceString( resourceName, UTF8 ) ) );
     driver.assertComplete();
   }
 }

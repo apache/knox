@@ -1,0 +1,12 @@
+{
+  "slotsFree": 0,
+  "executorsTotal": 28,
+  "supervisors": 1,
+  "user": null,
+  "topologies": 1,
+  "slotsTotal": 2,
+  "stormVersion": "0.9.3.2.2.0.0-2041",
+  "slotsUsed": 2,
+  "tasksTotal": 28,
+  "nimbusUptime": "4h 54m 52s"
+}

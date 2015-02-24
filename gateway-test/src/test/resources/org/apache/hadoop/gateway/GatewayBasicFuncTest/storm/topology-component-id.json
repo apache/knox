@@ -1,0 +1,122 @@
+{
+  "executors": 5,
+  "componentErrors": [],
+  "topologyId": "WordCount-1-1424792039",
+  "name": "WordCount",
+  "user": null,
+  "executorStats": [
+    {
+      "workerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-6700.log",
+      "emitted": 124600,
+      "port": 6700,
+      "completeLatency": "0.000",
+      "transferred": 124600,
+      "host": "sandbox.hortonworks.com",
+      "acked": 0,
+      "uptime": "4h 49m 30s",
+      "id": "[24-24]",
+      "failed": 0
+    },
+    {
+      "workerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-6701.log",
+      "emitted": 124560,
+      "port": 6701,
+      "completeLatency": "0.000",
+      "transferred": 124560,
+      "host": "sandbox.hortonworks.com",
+      "acked": 0,
+      "uptime": "4h 49m 30s",
+      "id": "[25-25]",
+      "failed": 0
+    },
+    {
+      "workerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-6700.log",
+      "emitted": 124540,
+      "port": 6700,
+      "completeLatency": "0.000",
+      "transferred": 124540,
+      "host": "sandbox.hortonworks.com",
+      "acked": 0,
+      "uptime": "4h 49m 30s",
+      "id": "[26-26]",
+      "failed": 0
+    },
+    {
+      "workerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-6701.log",
+      "emitted": 124580,
+      "port": 6701,
+      "completeLatency": "0.000",
+      "transferred": 124580,
+      "host": "sandbox.hortonworks.com",
+      "acked": 0,
+      "uptime": "4h 49m 30s",
+      "id": "[27-27]",
+      "failed": 0
+    },
+    {
+      "workerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-6700.log",
+      "emitted": 124660,
+      "port": 6700,
+      "completeLatency": "0.000",
+      "transferred": 124660,
+      "host": "sandbox.hortonworks.com",
+      "acked": 0,
+      "uptime": "4h 49m 30s",
+      "id": "[28-28]",
+      "failed": 0
+    }
+  ],
+  "tasks": 5,
+  "window": ":all-time",
+  "spoutSummary": [
+    {
+      "windowPretty": "10m 0s",
+      "window": "600",
+      "emitted": 0,
+      "transferred": 0,
+      "completeLatency": "0.000",
+      "acked": 0,
+      "failed": 0
+    },
+    {
+      "windowPretty": "3h 0m 0s",
+      "window": "10800",
+      "emitted": 273620,
+      "transferred": 273620,
+      "completeLatency": "0.000",
+      "acked": 0,
+      "failed": 0
+    },
+    {
+      "windowPretty": "1d 0h 0m 0s",
+      "window": "86400",
+      "emitted": 622940,
+      "transferred": 622940,
+      "completeLatency": "0.000",
+      "acked": 0,
+      "failed": 0
+    },
+    {
+      "windowPretty": "All time",
+      "window": ":all-time",
+      "emitted": 622940,
+      "transferred": 622940,
+      "completeLatency": "0.000",
+      "acked": 0,
+      "failed": 0
+    }
+  ],
+  "componentType": "spout",
+  "windowHint": "All time",
+  "id": "spout",
+  "outputStats": [
+    {
+      "stream": "default",
+      "emitted": 622940,
+      "transferred": 622940,
+      "completeLatency": "0",
+      "acked": 0,
+      "failed": 0
+    }
+  ]
+}

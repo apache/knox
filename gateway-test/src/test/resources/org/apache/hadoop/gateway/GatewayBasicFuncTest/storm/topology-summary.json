@@ -1,0 +1,15 @@
+{
+  "topologies": [
+    {
+      "executorsTotal": 28,
+      "uptime": "4h 48m 23s",
+      "schedulerInfo": null,
+      "name": "WordCount",
+      "workersTotal": 2,
+      "status": "INACTIVE",
+      "owner": "",
+      "tasksTotal": 28,
+      "id": "WordCount-1-1424792039"
+    }
+  ]
+}
