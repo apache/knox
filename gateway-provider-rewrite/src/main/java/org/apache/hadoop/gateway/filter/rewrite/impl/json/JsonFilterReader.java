@@ -341,37 +341,89 @@ class JsonFilterReader extends Reader {
     if( parent.isArray() ) {
       if( bufferingLevel != null ) {
         ArrayNode array = (ArrayNode)parent.node;
-        array.add( parser.getDecimalValue() );
+        processBufferedArrayValueNumber( array );
       }
     } else {
       child = stack.pop();
       if( bufferingLevel != null ) {
         parent = stack.peek();
         ObjectNode object = (ObjectNode)parent.node;
-        object.put( child.field, parser.getDecimalValue() );
+        processBufferedFieldValueNumber( child, object );
       }
     }
     if( bufferingLevel == null ) {
-      switch( parser.getNumberType() ) {
-        case INT:
-          generator.writeNumber( parser.getIntValue() );
-          break;
-        case LONG:
-          generator.writeNumber( parser.getLongValue() );
-          break;
-        case BIG_INTEGER:
-          generator.writeNumber( parser.getBigIntegerValue() );
-          break;
-        case FLOAT:
-          generator.writeNumber( parser.getFloatValue() );
-          break;
-        case DOUBLE:
-          generator.writeNumber( parser.getDoubleValue() );
-          break;
-        case BIG_DECIMAL:
-          generator.writeNumber( parser.getDecimalValue() );
-          break;
-      }
+      processedUnbufferedValueNumber();
+    }
+  }
+
+  private void processedUnbufferedValueNumber() throws IOException {
+    switch( parser.getNumberType() ) {
+      case INT:
+        generator.writeNumber( parser.getIntValue() );
+        break;
+      case LONG:
+        generator.writeNumber( parser.getLongValue() );
+        break;
+      case BIG_INTEGER:
+        generator.writeNumber( parser.getBigIntegerValue() );
+        break;
+      case FLOAT:
+        generator.writeNumber( parser.getFloatValue() );
+        break;
+      case DOUBLE:
+        generator.writeNumber( parser.getDoubleValue() );
+        break;
+      case BIG_DECIMAL:
+        generator.writeNumber( parser.getDecimalValue() );
+        break;
+    }
+  }
+
+  private void processBufferedFieldValueNumber( Level child, ObjectNode object ) throws IOException {
+    //object.put( child.field, parser.getDecimalValue() );
+    switch( parser.getNumberType() ) {
+      case INT:
+        object.put( child.field, parser.getIntValue() );
+        break;
+      case LONG:
+        object.put( child.field, parser.getLongValue() );
+        break;
+      case BIG_INTEGER:
+        object.put( child.field, parser.getDecimalValue() );
+        break;
+      case FLOAT:
+        object.put( child.field, parser.getFloatValue() );
+        break;
+      case DOUBLE:
+        object.put( child.field, parser.getDoubleValue() );
+        break;
+      case BIG_DECIMAL:
+        object.put( child.field, parser.getDecimalValue() );
+        break;
+    }
+  }
+
+  private void processBufferedArrayValueNumber( ArrayNode array ) throws IOException {
+    //array.add( parser.getDecimalValue() );
+    switch( parser.getNumberType() ) {
+      case INT:
+        array.add( parser.getIntValue() );
+        break;
+      case LONG:
+        array.add( parser.getLongValue() );
+        break;
+      case BIG_INTEGER:
+        array.add( parser.getDecimalValue() );
+        break;
+      case FLOAT:
+        array.add( parser.getFloatValue() );
+        break;
+      case DOUBLE:
+        array.add( parser.getDoubleValue() );
+        break;
+      case BIG_DECIMAL:
+        array.add( parser.getDecimalValue() );
+        break;
     }
   }
 

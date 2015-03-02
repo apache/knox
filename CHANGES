@@ -12,6 +12,10 @@ Release Notes - Apache Knox - Version 0.6.0
   * [KNOX-462] - Proper error message when root tag of topology file incorrect
   * [KNOX-501] - Avoid NPE in case of passing invalid argument to KnoxCli.
 
+** Bug
+  * [KNOX-378] - Knox rewrites numbers in JSON to engineering notation
+
+
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.1
 ------------------------------------------------------------------------------
@@ -27,6 +31,7 @@ Release Notes - Apache Knox - Version 0.5.1
     * [KNOX-459] - fixed LDAP connection leaks in KnoxLdapRealm
     * [KNOX-464] - Location headers have wrong hostname when used behind load balancer
     * [KNOX-468] - update group lookup topologies to configure cache manager
+
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.0
 ------------------------------------------------------------------------------

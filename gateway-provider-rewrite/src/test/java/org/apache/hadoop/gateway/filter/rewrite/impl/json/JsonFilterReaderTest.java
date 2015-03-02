@@ -32,14 +32,32 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
 
 public class JsonFilterReaderTest {
+
+  @Test
+  public void testValueNumberWithBuffering() throws Exception {
+    String input = "{ \"apps\" : {\"app\":[{\"id\":\"one\", \"progress\":100.0, \"startedTime\":1399975176760}]} }";
+
+    UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
+    UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
+    UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
+    UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$.apps.app[*]" );
+    UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.id", "test-rule" );
+
+    JsonFilterReader filter = new JsonFilterReader( new StringReader( input ), contentConfig );
+    String output = IOUtils.toString( filter );
+    assertThat( output, containsString( "\"startedTime\":1399975176760}" ) );
+  }
+
 
   @Test
   public void testSimple() throws IOException {
