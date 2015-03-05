@@ -142,6 +142,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "RESOURCEMANAGER", "http://" + TEST_HOST + ":8088/ws", "/cluster/resourcemanager", USE_MOCK_SERVICES );
     driver.setupService( "FALCON", "http://" + TEST_HOST + ":15000", "/cluster/falcon", USE_MOCK_SERVICES );
     driver.setupService( "STORM", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
+    driver.setupService( "STORM-LOGVIEWER", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
   }
 
@@ -237,6 +238,9 @@ public class GatewayBasicFuncTest {
         .addTag( "service" )
             .addTag( "role" ).addText( "STORM" )
             .addTag( "url" ).addText( driver.getRealUrl( "STORM" ) ).gotoParent()
+        .addTag( "service" )
+            .addTag( "role" ).addText( "STORM-LOGVIEWER" )
+            .addTag( "url" ).addText( driver.getRealUrl( "STORM-LOGVIEWER" ) ).gotoParent()
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -2870,6 +2874,10 @@ public class GatewayBasicFuncTest {
     resourceName = "falcon/instance-params-process";
     path = "/api/instance/params/process/cleanseEmailProcess";
     testGetFalconResource(resourceName, path, ContentType.JSON);
+
+    resourceName = "falcon/instance-status-process";
+    path = "/api/instance/status/process/cleanseEmailProcess";
+    testGetFalconResource(resourceName, path, ContentType.JSON);
   }
 
   @Test
@@ -3076,13 +3084,86 @@ public class GatewayBasicFuncTest {
     path = "/api/v1/topology/summary";
     testGetStormResource(resourceName, path);
 
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
+
     resourceName = "storm/topology-id.json";
     path = "/api/v1/topology/WordCount-1-1424792039";
-    testGetStormResource(resourceName, path);
+    String gatewayPath = driver.getUrl( "STORM" ) + path;
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.JSON.toString() )
+        .when().get( gatewayPath );
+
+    String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
+    MatcherAssert.assertThat(link, anyOf(
+        startsWith("http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/"),
+        startsWith("http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/")));
+    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+
+    driver.assertComplete();
 
     resourceName = "storm/topology-component-id.json";
     path = "/api/v1/topology/WordCount-1-1424792039/component/spout";
-    testGetStormResource(resourceName, path);
+    gatewayPath = driver.getUrl( "STORM" ) + path;
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .expect()
+//        .log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.JSON.toString() )
+        .when().get( gatewayPath );
+
+
+    link = response.getBody().jsonPath().getString("executorStats[0].workerLogLink");
+    MatcherAssert.assertThat(link, anyOf(
+        startsWith("http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/"),
+        startsWith("http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/")));
+    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+
+    driver.assertComplete();
+
+    path = "/api/v1/topology/WordCount-1-1424792039/activate";
+    testPostStormResource(path);
+
+    path = "/api/v1/topology/WordCount-1-1424792039/deactivate";
+    testPostStormResource(path);
+
+    path = "/api/v1/topology/WordCount-1-1424792039/rebalance/20";
+    testPostStormResource(path);
+
+    path = "/api/v1/topology/WordCount-1-1424792039/kill/20";
+    testPostStormResource(path);
 
   }
 
@@ -3106,13 +3187,40 @@ public class GatewayBasicFuncTest {
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .header("Accept", ContentType.JSON.toString())
         .expect()
-//       .log().all()
+//        .log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType( ContentType.JSON.toString() )
         .when().get( gatewayPath );
 
-    MatcherAssert.assertThat( response.getBody().asString(),
-            sameJSONAs( driver.getResourceString( resourceName, UTF8 ) ) );
+    MatcherAssert.assertThat(response.getBody().asString(),
+        sameJSONAs(driver.getResourceString(resourceName, UTF8)));
+    driver.assertComplete();
+  }
+
+    private void testPostStormResource(String path) throws IOException {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String gatewayPath = driver.getUrl( "STORM" ) + path;
+
+    driver.getMock("STORM")
+        .expect()
+        .method("POST")
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_MOVED_TEMPORARILY)
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("X-CSRF-Token", "H/8xIWCYQo4ZDWLvV9k0FAkjD0omWI8beVTp2mEPRxCbJmWBTYhRMhIV9LGIY3E51OAj+s6T7eQChpGJ")
+        .header("Accept", ContentType.JSON.toString())
+        .expect()
+        .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
+        .contentType( ContentType.JSON.toString() )
+        .when().post( gatewayPath );
+
     driver.assertComplete();
   }
 }

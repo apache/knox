@@ -18,4 +18,21 @@
     <rule dir="IN" name="STORM/storm/inbound" pattern="*://*:*/**/storm/api/{path=**}?{**}">
         <rewrite template="{$serviceUrl[STORM]}/api/{path=**}?{**}"/>
     </rule>
+    <rule dir="OUT" name="STORM/storm/url/outbound">
+        <match pattern="*://*:*/{**}?{**}"/>
+        <rewrite template="{$frontend[url]}/storm/logviewer/{**}?{**}"/>
+    </rule>
+    <filter name="STORM/storm/logs/outbound">
+        <content type="*/json">
+            <buffer path="$.executorStats[*]">
+                <apply path="$.workerLogLink" rule="STORM/storm/url/outbound"/>
+            </buffer>
+            <buffer path="$.spouts[*]">
+                <apply path="$.errorWorkerLogLink" rule="STORM/storm/url/outbound"/>
+            </buffer>
+            <buffer path="$.bolts[*]">
+                <apply path="$.errorWorkerLogLink" rule="STORM/storm/url/outbound"/>
+            </buffer>
+        </content>
+    </filter>
 </rules>

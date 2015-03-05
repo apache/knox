@@ -48,4 +48,7 @@ public interface SpiGatewayMessages {
   
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
+
+  @Message( level = MessageLevel.WARN, text = "Error occurred when closing HTTP client : {0}" )
+  void errorClosingHttpClient(@StackTrace(level=MessageLevel.WARN) Exception e);
 }

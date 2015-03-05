@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -75,10 +77,14 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
   protected AppCookieManager appCookieManager;
 
   private int replayBufferSize = 0;
+  private Set<String> outboundResponseExcludeHeaders;
 
   @Override
   public void init() {
     setAppCookieManager(new AppCookieManager());
+    outboundResponseExcludeHeaders = new HashSet<String>();
+    outboundResponseExcludeHeaders.add(SET_COOKIE);
+    outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
   }
 
   @Override
@@ -144,35 +150,40 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       return inboundResponse;
    }
 
-   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
-      // Copy the client respond header to the server respond.
-      outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());
-      Header[] headers = inboundResponse.getAllHeaders();
-      for (Header header : headers) {
-         String name = header.getName();
-         if (name.equals(SET_COOKIE) || name.equals(WWW_AUTHENTICATE)) {
-            continue;
-         }
-         String value = header.getValue();
-         outboundResponse.addHeader(name, value);
+  protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
+    // Copy the client respond header to the server respond.
+    outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());
+    Header[] headers = inboundResponse.getAllHeaders();
+    Set<String> excludeHeaders = getOutboundResponseExcludeHeaders();
+    boolean hasExcludeHeaders = false;
+    if ((excludeHeaders != null) && !(excludeHeaders.isEmpty())) {
+      hasExcludeHeaders = true;
+    }
+    for ( Header header : headers ) {
+      String name = header.getName();
+      if (hasExcludeHeaders && excludeHeaders.contains(name)) {
+        continue;
       }
+      String value = header.getValue();
+      outboundResponse.addHeader(name, value);
+    }
 
-      HttpEntity entity = inboundResponse.getEntity();
-      if (entity != null) {
-         Header contentType = entity.getContentType();
-         if (contentType != null) {
-            outboundResponse.setContentType(contentType.getValue());
-         }
-         //KM[ If this is set here it ends up setting the content length to the content returned from the server.
-         // This length might not match if the the content is rewritten.
-         //      long contentLength = entity.getContentLength();
-         //      if( contentLength <= Integer.MAX_VALUE ) {
-         //        outboundResponse.setContentLength( (int)contentLength );
-         //      }
-         //]
-         writeResponse(inboundRequest, outboundResponse, entity.getContent());
+    HttpEntity entity = inboundResponse.getEntity();
+    if ( entity != null ) {
+      Header contentType = entity.getContentType();
+      if ( contentType != null ) {
+        outboundResponse.setContentType(contentType.getValue());
       }
-   }
+      //KM[ If this is set here it ends up setting the content length to the content returned from the server.
+      // This length might not match if the the content is rewritten.
+      //      long contentLength = entity.getContentLength();
+      //      if( contentLength <= Integer.MAX_VALUE ) {
+      //        outboundResponse.setContentLength( (int)contentLength );
+      //      }
+      //]
+      writeResponse(inboundRequest, outboundResponse, entity.getContent());
+    }
+  }
 
    /**
     * This method provides a hook for specialized credential propagation
@@ -301,4 +312,7 @@ public class HttpClientDispatch extends AbstractGatewayDispatch {
       replayBufferSize = size;
    }
 
+  public Set<String> getOutboundResponseExcludeHeaders() {
+    return outboundResponseExcludeHeaders;
+  }
 }

@@ -17,7 +17,11 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.http.client.CookieStore;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
@@ -30,7 +34,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.hadoop.gateway.config.ConfigurationInjectorBuilder.configuration;
@@ -39,7 +45,11 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   private static Map<String, Adapter> METHOD_ADAPTERS = createMethodAdapters();
 
+  protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+
   private Dispatch dispatch;
+
+  private CloseableHttpClient httpClient;
 
   private static Map<String, Adapter> createMethodAdapters() {
     Map<String, Adapter> map = new HashMap<String, Adapter>();
@@ -57,10 +67,20 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
     dispatch = newDispatch(dispatchImpl);
     configuration().target(dispatch).source(filterConfig).inject();
-    CloseableHttpClient client = HttpClients.createSystem();
+    httpClient = HttpClients.custom().setDefaultCookieStore(new NoCookieStore()).build();
     //[sumit] this can perhaps be stashed in the servlet context to increase sharing of the client
-    dispatch.setHttpClient(client);
+    dispatch.setHttpClient(httpClient);
     dispatch.init();
+  }
+
+  @Override
+  public void destroy() {
+    dispatch.destroy();
+    try {
+      httpClient.close();
+    } catch ( IOException e ) {
+      LOG.errorClosingHttpClient(e);
+    }
   }
 
   public Dispatch getDispatch() {
@@ -147,6 +167,28 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       return clazz.newInstance();
     } catch ( Exception e ) {
       throw new ServletException(e);
+    }
+  }
+
+  private class NoCookieStore implements CookieStore {
+    @Override
+    public void addCookie(Cookie cookie) {
+      //no op
+    }
+
+    @Override
+    public List<Cookie> getCookies() {
+      return Collections.EMPTY_LIST;
+    }
+
+    @Override
+    public boolean clearExpired(Date date) {
+      return true;
+    }
+
+    @Override
+    public void clear() {
+      //no op
     }
   }
 }

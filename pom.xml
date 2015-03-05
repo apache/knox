@@ -67,6 +67,7 @@
         <module>gateway-service-hive</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
+        <module>gateway-service-storm</module>
         <module>gateway-service-definitions</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
@@ -486,6 +487,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-webhdfs</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-storm</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

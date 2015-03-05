@@ -14,15 +14,8 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="STORM" name="storm" version="0.9.3">
-    <routes>
-        <route path="/storm/api/**"/>
-        <route path="/storm/api/v1/topology/*">
-            <rewrite apply="STORM/storm/logs/outbound" to="response.body"/>
-        </route>
-        <route path="/storm/api/v1/topology/**/component/**?**">
-            <rewrite apply="STORM/storm/logs/outbound" to="response.body"/>
-        </route>
-    </routes>
-    <dispatch classname="org.apache.hadoop.gateway.storm.StormHttpClientDispatch"/>
-</service>
+<rules>
+    <rule dir="IN" name="STORM/storm/inbound" pattern="*://*:*/**/storm/logviewer/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[STORM-LOGVIEWER]}/{path=**}?{**}"/>
+    </rule>
+</rules>

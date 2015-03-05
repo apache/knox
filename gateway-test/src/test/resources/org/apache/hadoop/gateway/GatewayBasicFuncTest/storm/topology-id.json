@@ -11,9 +11,9 @@
       "errorPort": "",
       "spoutId": "spout",
       "tasks": 5,
-      "errorHost": "",
+      "errorHost": "sandbox.hortonworks.com",
       "lastError": "",
-      "errorWorkerLogLink": "http://:8005/log?file=WordCount-1-1424792039-worker-.log",
+      "errorWorkerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-.log",
       "failed": 0
     }
   ],
@@ -256,9 +256,9 @@
       "executed": 3985560,
       "processLatency": "0.107",
       "boltId": "count",
-      "errorHost": "",
+      "errorHost": "sandbox.hortonworks.com",
       "lastError": "",
-      "errorWorkerLogLink": "http://:8005/log?file=WordCount-1-1424792039-worker-.log",
+      "errorWorkerLogLink": "http://sandbox.hortonworks.com:8005/log?file=WordCount-1-1424792039-worker-.log",
       "capacity": "0.000",
       "failed": 0
     },
