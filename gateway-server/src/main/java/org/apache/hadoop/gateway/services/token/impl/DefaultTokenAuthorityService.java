@@ -17,7 +17,11 @@
  */
 package org.apache.hadoop.gateway.services.token.impl;
 
+import java.security.KeyStoreException;
 import java.security.Principal;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -25,13 +29,29 @@ import javax.security.auth.Subject;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.security.CryptoService;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   
-  private CryptoService crypto = null;
+  private AliasService as = null;
+  private KeystoreService ks = null;
+
+  public void setKeystoreService(KeystoreService ks) {
+    this.ks = ks;
+  }
+
+  public void setAliasService(AliasService as) {
+    this.as = as;
+  }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
@@ -77,7 +97,16 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     JWTToken token = null;
     if ("RS256".equals(algorithm)) {
       token = new JWTToken("RS256", claimArray);
-      signToken(token);
+      RSAPrivateKey key;
+      try {
+        key = (RSAPrivateKey) ks.getKeyForGateway("gateway-identity", 
+            as.getPasswordFromAliasForGateway("gateway-identity-passphrase"));
+        JWSSigner signer = new RSASSASigner(key);
+        token.sign(signer);
+      } catch (KeystoreServiceException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
     }
     else {
       // log inappropriate alg
@@ -86,31 +115,31 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return token;
   }
 
-  private void signToken(JWTToken token) {
-    byte[] signature = null;
-    signature = crypto.sign("SHA256withRSA","gateway-identity",token.getPayloadToSign());
-    token.setSignaturePayload(signature);
-  }
-
   @Override
   public boolean verifyToken(JWTToken token) {
     boolean rc = false;
-    
-    // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
-    // consider jwk for specifying the key too
-    rc = crypto.verify("SHA256withRSA", "gateway-identity", token.getPayloadToSign(), token.getSignaturePayload());
+    PublicKey key;
+    try {
+      key = ks.getKeystoreForGateway().getCertificate("gateway-identity").getPublicKey();
+      JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) key);
+      // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
+      // consider jwk for specifying the key too
+      rc = token.verify(verifier);
+    } catch (KeyStoreException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (KeystoreServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     return rc;
   }
 
-  public void setCryptoService(CryptoService crypto) {
-    this.crypto = crypto;
-  }
-  
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    if (crypto == null) {
-      throw new ServiceLifecycleException("Crypto service is not set");
+    if (as == null || ks == null) {
+      throw new ServiceLifecycleException("Alias or Keystore service is not set");
     }
   }
 

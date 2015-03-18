@@ -72,7 +72,8 @@ public class HssoGatewayServices implements GatewayServices {
     services.put(CRYPTO_SERVICE, crypto);
     
     DefaultTokenAuthorityService ts = new DefaultTokenAuthorityService();
-    ts.setCryptoService(crypto);
+    ts.setAliasService(alias);
+    ts.setKeystoreService(ks);
     ts.init(config, options);
     // prolly should not allow the token service to be looked up?
     services.put(TOKEN_SERVICE, ts);

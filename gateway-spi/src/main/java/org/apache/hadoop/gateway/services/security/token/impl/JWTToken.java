@@ -18,118 +18,214 @@
 package org.apache.hadoop.gateway.services.security.token.impl;
 
 import java.io.UnsupportedEncodingException;
-import java.text.MessageFormat;
-
+import java.text.ParseException;
+import java.util.Date;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
-import com.jayway.jsonpath.JsonPath;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
-public class JWTToken {
-  private static final String headerTemplate = "'{'\"alg\": \"{0}\"'}'";
-  private static final String claimTemplate = "'{'\"iss\": \"{0}\", \"prn\": \"{1}\", \"aud\": \"{2}\", \"exp\": \"{3}\"'}'";
-  public static final String PRINCIPAL = "prn";
-  public static final String ISSUER = "iss";
-  public static final String AUDIENCE = "aud";
-  public static final String EXPIRES = "exp";
+public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
-  public String header = null;
-  public String claims = null;
-  
-  byte[] payload = null;
+  SignedJWT jwt = null;
   
   private JWTToken(byte[] header, byte[] claims, byte[] signature) {
     try {
-      this.header = new String(header, "UTF-8");
-      this.claims = new String(claims, "UTF-8");
-      this.payload = signature;
+      jwt = new SignedJWT(new Base64URL(new String(header, "UTF8")), new Base64URL(new String(claims, "UTF8")), 
+          new Base64URL(new String(signature, "UTF8")));
     } catch (UnsupportedEncodingException e) {
-      log.unsupportedEncoding( e );
+      log.unsupportedEncoding(e);
+    } catch (ParseException e) {
+      e.printStackTrace();
     }
   }
 
   public JWTToken(String alg, String[] claimsArray) {
-    MessageFormat headerFormatter = new MessageFormat(headerTemplate);
-    String[] algArray = new String[1];
-    algArray[0] = alg;
-    header = headerFormatter.format(algArray);
-
-    MessageFormat claimsFormatter = new MessageFormat(claimTemplate);
-    claims = claimsFormatter.format(claimsArray);
+    JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
+    JWTClaimsSet claims = new JWTClaimsSet();
+    claims.setIssuer(claimsArray[0]);
+    claims.setSubject(claimsArray[1]);
+    claims.setAudience(claimsArray[2]);
+    claims.setExpirationTime(new Date(Long.parseLong(claimsArray[3])));
+    jwt = new SignedJWT(header, claims);
   }
-  
-  public String getPayloadToSign() {
-    StringBuffer sb = new StringBuffer();
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPayloadToSign()
+   */
+  @Override
+  public String getHeader() {
+    JWSHeader header = jwt.getHeader();
+    return header.toString();
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPayloadToSign()
+   */
+  @Override
+  public String getClaims() {
+    String c = null;
+    JWTClaimsSet claims = null;
     try {
-      sb.append(Base64.encodeBase64URLSafeString(header.getBytes("UTF-8")));
-      sb.append(".");
-      sb.append(Base64.encodeBase64URLSafeString(claims.getBytes("UTF-8")));
-    } catch (UnsupportedEncodingException e) {
-      log.unsupportedEncoding( e );
+      claims = (JWTClaimsSet) jwt.getJWTClaimsSet();
+      c = claims.toJSONObject().toJSONString();
+    } catch (ParseException e) {
+      e.printStackTrace();
     }
-    
-    return sb.toString();
+    return c;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPayloadToSign()
+   */
+  @Override
+  public String getPayload() {
+    Payload payload = jwt.getPayload();
+    return payload.toString();
   }
 
   public String toString() {
-    StringBuffer sb = new StringBuffer();
-    try {
-      sb.append(Base64.encodeBase64URLSafeString(header.getBytes("UTF-8")));
-      sb.append(".");
-      sb.append(Base64.encodeBase64URLSafeString(claims.getBytes("UTF-8")));
-      sb.append(".");
-      sb.append(Base64.encodeBase64URLSafeString(payload));
-    } catch (UnsupportedEncodingException e) {
-      log.unsupportedEncoding( e );
-    }
-    
-    log.renderingJWTTokenForTheWire(sb.toString());
-
-    return sb.toString();
+    return jwt.serialize();
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#setSignaturePayload(byte[])
+   */
+  @Override
   public void setSignaturePayload(byte[] payload) {
-    this.payload = payload;
+//    this.payload = payload;
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getSignaturePayload()
+   */
+  @Override
   public byte[] getSignaturePayload() {
-    return this.payload;
+    byte[] b = null;
+    Base64URL b64 = jwt.getSignature();
+    if (b64 != null) {
+      b = b64.decode();
+    }
+    return b;
   }
 
   public static JWTToken parseToken(String wireToken) {
-    JWTToken token = null;
     log.parsingToken(wireToken);
     String[] parts = wireToken.split("\\.");
-    token = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
+    JWTToken jwt = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
 //    System.out.println("header: " + token.header);
 //    System.out.println("claims: " + token.claims);
 //    System.out.println("payload: " + new String(token.payload));
     
-    return token;
+    return jwt;
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getClaim(java.lang.String)
+   */
+  @Override
   public String getClaim(String claimName) {
     String claim = null;
     
-    claim = JsonPath.read(claims, "$." + claimName);
+    try {
+      claim = jwt.getJWTClaimsSet().getStringClaim(claimName);
+    } catch (ParseException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     
     return claim;
   }
 
-  public String getPrincipal() {
-    return getClaim(JWTToken.PRINCIPAL);
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getSubject()
+   */
+  @Override
+  public String getSubject() {
+    return getClaim(JWT.SUBJECT);
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getIssuer()
+   */
+  @Override
   public String getIssuer() {
-    return getClaim(JWTToken.ISSUER);
+    return getClaim(JWT.ISSUER);
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getAudience()
+   */
+  @Override
   public String getAudience() {
-    return getClaim(JWTToken.AUDIENCE);
+    String[] claim = null;
+    String c = null;
+    
+    try {
+      claim = jwt.getJWTClaimsSet().getStringArrayClaim(JWT.AUDIENCE);
+      if (claim != null) {
+        c = claim[0];
+      }
+    } catch (ParseException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return c;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getExpires()
+   */
+  @Override
   public String getExpires() {
-    return getClaim(JWTToken.EXPIRES);
+    return getClaim(JWT.EXPIRES);
   }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()
+   */
+  @Override
+  public String getPrincipal() {
+    return getClaim(JWT.PRINCIPAL);
+  }
+  
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()
+   */
+  @Override
+  public void sign(JWSSigner signer) {
+    try {
+      jwt.sign(signer);
+    } catch (JOSEException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * @param verifier
+   * @return
+   */
+  public boolean verify(JWSVerifier verifier) {
+    boolean rc = false;
+    
+    try {
+      rc = jwt.verify(verifier);
+    } catch (JOSEException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    return rc;
+  }  
 }

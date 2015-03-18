@@ -56,6 +56,7 @@ public class DefaultGatewayServices implements GatewayServices {
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
     ms = new DefaultMasterService();
     ms.init(config, options);
+    services.put("MasterService", ms);
 
     ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -73,7 +74,8 @@ public class DefaultGatewayServices implements GatewayServices {
     services.put(CRYPTO_SERVICE, crypto);
     
     DefaultTokenAuthorityService ts = new DefaultTokenAuthorityService();
-    ts.setCryptoService(crypto);
+    ts.setAliasService(alias);
+    ts.setKeystoreService(ks);
     ts.init(config, options);
     // prolly should not allow the token service to be looked up?
     services.put(TOKEN_SERVICE, ts);
