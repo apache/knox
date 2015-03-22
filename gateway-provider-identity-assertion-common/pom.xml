@@ -25,10 +25,10 @@
         <artifactId>gateway</artifactId>
         <version>0.6.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
+    <artifactId>gateway-provider-identity-assertion-common</artifactId>
 
-    <name>gateway-provider-identity-assertion-pseudo</name>
-    <description>An extension to the gateway that asserts identity to Hadoop clusters using the pseudo or simple authentication mechanism.</description>
+    <name>gateway-provider-identity-assertion-common</name>
+    <description>An extension to the gateway that provides an easy integration point for asserting identity to Hadoop clusters using using some custom mapping facility.</description>
 
     <licenses>
         <license>
@@ -47,7 +47,7 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-identity-assertion-common</artifactId>
+            <artifactId>gateway-spi</artifactId>
         </dependency>
 
         <dependency>

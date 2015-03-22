@@ -21,21 +21,17 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.List;
 
-public class IdentityAsserterDeploymentContributor extends ProviderDeploymentContributorBase {
+public class IdentityAsserterDeploymentContributor extends AbstractIdentityAsserterDeploymentContributor {
 
   private static final String FILTER_CLASSNAME = IdentityAsserterFilter.class.getName();
   private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
   private static final String GROUP_PRINCIPAL_MAPPING_PARAM_NAME = "group.principal.mapping";
-
-  @Override
-  public String getRole() {
-    return "identity-assertion";
-  }
 
   @Override
   public String getName() {
@@ -44,20 +40,19 @@ public class IdentityAsserterDeploymentContributor extends ProviderDeploymentCon
 
   @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
+    super.contributeProvider(context, provider);
     String mappings = provider.getParams().get(PRINCIPAL_MAPPING_PARAM_NAME);
     String groupMappings = provider.getParams().get(GROUP_PRINCIPAL_MAPPING_PARAM_NAME);
 
-//    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
-//    servlet.createInitParam()
-//        .paramName( PRINCIPAL_MAPPING_PARAM_NAME )
-//        .paramValue( mappings );
-    
     context.getWebAppDescriptor().createContextParam().paramName(PRINCIPAL_MAPPING_PARAM_NAME).paramValue(mappings);
     context.getWebAppDescriptor().createContextParam().paramName(GROUP_PRINCIPAL_MAPPING_PARAM_NAME).paramValue(groupMappings);
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor#getFilterClassname()
+   */
   @Override
-  public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
+  protected String getFilterClassname() {
+    return FILTER_CLASSNAME;
   }
 }

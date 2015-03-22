@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.identityasserter.filter;
+package org.apache.hadoop.gateway.identityasserter.common.filter;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.IdentityAsserterMessages;
+import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
@@ -40,7 +40,7 @@ import java.util.Map;
 
 public class IdentityAsserterHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-  private static IdentityAsserterMessages log = MessagesFactory.get( IdentityAsserterMessages.class );
+  private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
@@ -174,7 +174,7 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
     }
   }
 
-  static String urlEncode( Map<String, String[]> map, String encoding ) {
+  public static String urlEncode( Map<String, String[]> map, String encoding ) {
     StringBuilder sb = new StringBuilder();
     for( Map.Entry<String,String[]> entry : map.entrySet() ) {
       String name = entry.getKey();

@@ -15,17 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.identityasserter.function;
+package org.apache.hadoop.gateway;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
+import org.apache.hadoop.gateway.i18n.messages.Message;
+import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
+import org.apache.hadoop.gateway.i18n.messages.Messages;
+import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
-public class UsernameFunctionDescriptor implements UrlRewriteFunctionDescriptor<UsernameFunctionDescriptor> {
+@Messages(logger="org.apache.hadoop.gateway")
+public interface ConcatIdentityAsserterMessages {
 
-  public static final String FUNCTION_NAME = "username";
-
-  @Override
-  public String name() {
-    return FUNCTION_NAME;
-  }
+  @Message( level = MessageLevel.WARN, text = "Skipping unencodable parameter {0}={1}, {2}: {3}" )
+  void skippingUnencodableParameter( String name, String value, String encoding, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
 }

@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.hadoop.gateway.identityasserter.common.function.UsernameFunctionProcessor;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.test.log.NoOpLogger;

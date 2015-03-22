@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.identityasserter.function.UsernameFunctionDescriptor
+org.apache.hadoop.gateway.identityasserter.common.function.UsernameFunctionProcessor

@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.identityasserter.common.filter.IdentityAsserterHttpServletRequestWrapper;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.apache.hadoop.test.mock.MockHttpServletRequest;

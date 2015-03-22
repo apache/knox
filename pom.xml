@@ -58,6 +58,8 @@
         <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-authz-acls</module>
+        <module>gateway-provider-identity-assertion-common</module>
+        <module>gateway-provider-identity-assertion-concat</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
@@ -412,6 +414,16 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-authz-acls</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-identity-assertion-common</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-identity-assertion-concat</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

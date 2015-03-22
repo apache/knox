@@ -19,39 +19,43 @@ package org.apache.hadoop.gateway.identityasserter.filter;
 
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import org.apache.hadoop.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
+import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
+import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
-import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter;
+public class IdentityAsserterFilter extends CommonIdentityAssertionFilter {
+  private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
+  private static final String PRINCIPAL_MAPPING = "principal.mapping";
+  private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
 
-import java.io.IOException;
-import java.security.AccessController;
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {
+    String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
+    if (principalMapping == null || principalMapping.isEmpty()) {
+      principalMapping = filterConfig.getServletContext().getInitParameter(PRINCIPAL_MAPPING);
+    }
+    String groupPrincipalMapping = filterConfig.getInitParameter(GROUP_PRINCIPAL_MAPPING);
+    if (groupPrincipalMapping == null || groupPrincipalMapping.isEmpty()) {
+      groupPrincipalMapping = filterConfig.getServletContext().getInitParameter(GROUP_PRINCIPAL_MAPPING);
+    }
+    if (principalMapping != null && !principalMapping.isEmpty() || groupPrincipalMapping != null && !groupPrincipalMapping.isEmpty()) {
+      try {
+        mapper.loadMappingTable(principalMapping, groupPrincipalMapping);
+      } catch (PrincipalMappingException e) {
+        throw new ServletException("Unable to load principal mapping table.", e);
+      }
+    }
+  }
 
-public class IdentityAsserterFilter extends AbstractIdentityAssertionFilter {
+  @Override
+  public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
+    return mapper.mapGroupPrincipal(mappedPrincipalName);
+  }
 
-  /**
-   * Obtain the standard javax.security.auth.Subject, retrieve the caller principal, map
-   * to the identity to be asserted as appropriate and create the provider specific
-   * assertion token. Add the assertion token to the request.
-   */
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
-      throws IOException, ServletException {
-//    System.out.println("+++++++++++++ Identity Assertion Filtering");
-    Subject subject = Subject.getSubject(AccessController.getContext());
-
-    String principalName = getPrincipalName(subject);
-    String mappedPrincipalName = mapper.mapUserPrincipal(principalName);
-    
-    // wrap the request so that the proper principal is returned
-    // from request methods
-    IdentityAsserterHttpServletRequestWrapper wrapper =
-        new IdentityAsserterHttpServletRequestWrapper(
-        (HttpServletRequest)request, 
-        mappedPrincipalName);
-
-    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName);
+  @Override
+  public String mapUserPrincipal(String principalName) {
+    return mapper.mapUserPrincipal(principalName);
   }
 }

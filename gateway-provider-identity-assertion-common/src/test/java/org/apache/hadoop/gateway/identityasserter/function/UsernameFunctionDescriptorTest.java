@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.identityasserter.function;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
+import org.apache.hadoop.gateway.identityasserter.common.function.UsernameFunctionDescriptor;
 import org.junit.Test;
 
 import java.util.Iterator;

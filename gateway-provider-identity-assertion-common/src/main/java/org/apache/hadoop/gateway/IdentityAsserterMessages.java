@@ -22,35 +22,8 @@ import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
-import java.net.URI;
-
-
-/**
- *
- */
 @Messages(logger="org.apache.hadoop.gateway")
-public interface SpiGatewayMessages {
-
-  @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
-  void dispatchRequest( String method, URI uri );
-  
-  @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
-  void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.WARN) Exception e );
-
-  @Message( level = MessageLevel.DEBUG, text = "Dispatch response status: {0}" )
-  void dispatchResponseStatusCode(int statusCode);
-
-  @Message( level = MessageLevel.DEBUG, text = "Dispatch response status: {0}, Location: {1}" )
-  void dispatchResponseCreatedStatusCode( int statusCode, String location );
-
-  @Message( level = MessageLevel.DEBUG, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
-  void successfulSPNegoAuthn(String uri);
-  
-  @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
-  void failedSPNegoAuthn(String uri);
-
-  @Message( level = MessageLevel.WARN, text = "Error occurred when closing HTTP client : {0}" )
-  void errorClosingHttpClient(@StackTrace(level=MessageLevel.WARN) Exception e);
+public interface IdentityAsserterMessages {
 
   @Message( level = MessageLevel.WARN, text = "Skipping unencodable parameter {0}={1}, {2}: {3}" )
   void skippingUnencodableParameter( String name, String value, String encoding, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
