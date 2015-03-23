@@ -68,15 +68,22 @@ public abstract class AbstractIdentityAssertionFilter extends
   }
 
   /**
-   * @param mappedPrincipalName
-   * @param subject
-   * @return
+   * This method returns a Stringp[] of new group principal names to use
+   * based on implementation specific mapping or lookup mechanisms.
+   * Returning null means that whatever set of GroupPrincipals is in the
+   * provided Subject is sufficient to use and no additional mapping is required.
+   * @param mappedPrincipalName username for the authenticated identity - post mapUserPrincipal mapping.
+   * @param subject the existing Subject from the authentication event which may or may not contain GroupPrincipals.
+   * @return String[] of new principal names to use as GroupPrincipals or null.
    */
   public abstract String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject);
 
   /**
+   * This method is used to map the username of the authenticated identity to some other
+   * principal name based on an implementation specific mechanism. It will either return
+   * a new principal name or the provided principal name if there is no mapping required.
    * @param principalName
-   * @return
+   * @return new username or the provided principalName
    */
   public abstract String mapUserPrincipal(String principalName);
 
