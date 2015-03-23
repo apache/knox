@@ -17,15 +17,10 @@
  */
 package org.apache.hadoop.gateway.identityasserter.concat.filter;
 
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Set;
-
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import org.apache.hadoop.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
-import org.apache.hadoop.gateway.security.GroupPrincipal;
 
 public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter {
   private String prefix = null;
