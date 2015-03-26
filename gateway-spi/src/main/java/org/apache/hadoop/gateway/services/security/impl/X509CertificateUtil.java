@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.services.security.impl;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -27,6 +28,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -86,22 +88,34 @@ public class X509CertificateUtil {
 				certificateSerialNumberObject);
 
     // info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-    Class<?> certificateSubjectNameClass = Class.forName(getCertificateSubjectNameModuleName());
-    Constructor<?> certificateSubjectNameConstr = certificateSubjectNameClass
-				.getConstructor(new Class[] { x500NameClass });
-    Object certificateSubjectNameObject = certificateSubjectNameConstr
-				.newInstance(x500NameObject);
-    methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SUBJECT"),
-				certificateSubjectNameObject);
+    try {
+      Class<?> certificateSubjectNameClass = Class.forName(getCertificateSubjectNameModuleName());
+      Constructor<?> certificateSubjectNameConstr = certificateSubjectNameClass
+  				.getConstructor(new Class[] { x500NameClass });
+      Object certificateSubjectNameObject = certificateSubjectNameConstr
+  				.newInstance(x500NameObject);
+      methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SUBJECT"),
+  				certificateSubjectNameObject);
+    }
+    catch (InvocationTargetException ite) {
+      methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SUBJECT"),
+          x500NameObject);
+    }
 
     // info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
-    Class<?> certificateIssuerNameClass = Class.forName(getCertificateIssuerNameModuleName());
-    Constructor<?> certificateIssuerNameConstr = certificateIssuerNameClass
-				.getConstructor(new Class[] { x500NameClass });
-    Object certificateIssuerNameObject = certificateIssuerNameConstr
-				.newInstance(x500NameObject);
-    methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ISSUER"),
-				certificateIssuerNameObject);
+    try {
+      Class<?> certificateIssuerNameClass = Class.forName(getCertificateIssuerNameModuleName());
+      Constructor<?> certificateIssuerNameConstr = certificateIssuerNameClass
+  				.getConstructor(new Class[] { x500NameClass });
+      Object certificateIssuerNameObject = certificateIssuerNameConstr
+  				.newInstance(x500NameObject);
+      methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ISSUER"),
+  				certificateIssuerNameObject);
+    }
+    catch (InvocationTargetException ite) {
+      methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ISSUER"),
+          x500NameObject);
+    }
 
     // info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
     Class<?> certificateX509KeyClass = Class.forName(getCertificateX509KeyModuleName());
