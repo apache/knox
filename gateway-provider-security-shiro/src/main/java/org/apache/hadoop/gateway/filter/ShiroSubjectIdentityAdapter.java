@@ -103,17 +103,20 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       auditService.getContext().setUsername( principal ); //KM: Audit Fix
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
-      
+
+      Set<String> userGroups = null;
       // map ldap groups saved in session to Java Subject GroupPrincipal(s)
       if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
-        Set<String> userRoles = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
-        for (String userRole : userRoles) {
-          Principal gp = new GroupPrincipal(userRole);
-          principals.add(gp);
-        }
-        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "Groups: " + userRoles );
+        userGroups = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
+      } else {
+        userGroups = new HashSet<String>(shiroSubject.getPrincipals().asSet());
+        userGroups.remove(principal);
       }
-      
+      for (String userGroup : userGroups) {
+        Principal gp = new GroupPrincipal(userGroup);
+        principals.add(gp);
+      }
+      auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "Groups: " + userGroups );
       
 //      The newly constructed Sets check whether this Subject has been set read-only 
 //      before permitting subsequent modifications. The newly created Sets also prevent 

@@ -42,11 +42,17 @@ import javax.naming.ldap.LdapName;
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.crypto.hash.DefaultHashService;
+import org.apache.shiro.crypto.hash.HashRequest;
+import org.apache.shiro.crypto.hash.HashService;
 import org.apache.shiro.realm.ldap.JndiLdapRealm;
 import org.apache.shiro.realm.ldap.LdapContextFactory;
 import org.apache.shiro.realm.ldap.LdapUtils;
+import org.apache.shiro.subject.MutablePrincipalCollection;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.StringUtils;
 
@@ -139,10 +145,11 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private String userSearchAttributeName;
     private String userObjectClass = "person";
 
+    private HashService hashService = new DefaultHashService();
 
     public KnoxLdapRealm() {
     }
-    
+
     /**
      * Get groups from LDAP.
      * 
@@ -169,14 +176,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         return simpleAuthorizationInfo;
     }
 
-    private Set<String> getRoles(final PrincipalCollection principals, 
+    private Set<String> getRoles(PrincipalCollection principals,
         final LdapContextFactory ldapContextFactory) throws NamingException {
         final String username = (String) getAvailablePrincipal(principals);
 
         LdapContext systemLdapCtx = null;
         try {
             systemLdapCtx = ldapContextFactory.getSystemLdapContext();
-            return rolesFor(username, systemLdapCtx, ldapContextFactory);
+            return rolesFor(principals, username, systemLdapCtx, ldapContextFactory);
         } catch (AuthenticationException e) {
           LOG.failedToGetSystemLdapConnection(e);
           return Collections.emptySet();
@@ -185,7 +192,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         }
     }
 
-    private Set<String> rolesFor(final String userName, final LdapContext ldapCtx, 
+    private Set<String> rolesFor(PrincipalCollection principals, final String userName, final LdapContext ldapCtx,
         final LdapContextFactory ldapContextFactory) throws NamingException {
         final Set<String> roleNames = new HashSet();
         final Set<String> groupNames = new HashSet();
@@ -213,6 +220,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
           // save role names and group names in session so that they can be easily looked up outside of this object
           SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
           SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
+          if (!groupNames.isEmpty() && (principals instanceof MutablePrincipalCollection)) {
+            ((MutablePrincipalCollection)principals).addAll(groupNames, getName());
+          }
           LOG.lookedUpUserRoles(roleNames, userName);
         }
         finally {
@@ -547,5 +557,17 @@ public class KnoxLdapRealm extends JndiLdapRealm {
           LdapUtils.closeContext(systemLdapCtx);
         }
       }
+    }
+
+    @Override
+    protected Object getAuthenticationCacheKey(AuthenticationToken token) {
+      if (token instanceof UsernamePasswordToken) {
+        HashRequest.Builder builder = new HashRequest.Builder();
+        StringBuilder key = new StringBuilder();
+        key.append(hashService.computeHash(builder.setSource(((UsernamePasswordToken) token).getUsername()).build()).toHex());
+        key.append(hashService.computeHash(builder.setSource(((UsernamePasswordToken) token).getPassword()).build()).toHex());
+        return key.toString();
+      }
+      return super.getAuthenticationCacheKey(token);
     }
 }
