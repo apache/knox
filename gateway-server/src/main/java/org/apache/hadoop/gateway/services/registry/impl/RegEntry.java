@@ -17,12 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.registry.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RegEntry {
   public String clusterName;
   public String serviceName;
   public List<String> urls;
+  public String url;
 
   public RegEntry() {
   }
@@ -44,6 +46,10 @@ public class RegEntry {
   }
 
   public List<String> getUrls() {
+    if (urls == null && url != null) {
+      urls = new ArrayList<String>();
+      urls.add(url);
+    }
     return urls;
   }
 
@@ -51,4 +57,9 @@ public class RegEntry {
     this.urls = urls;
   }
 
+  public void setUrl( String url) {
+    ArrayList<String> urls = new ArrayList<String>();
+    urls.add(url);
+    this.urls = urls;
+  }
 }

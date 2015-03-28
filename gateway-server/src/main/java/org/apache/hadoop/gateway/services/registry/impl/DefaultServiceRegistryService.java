@@ -185,7 +185,10 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     if (registryFile.exists()) {
       try {
         String json = FileUtils.readFileToString(registryFile);
-        registry = (Registry) getMapFromJsonString(json);
+        Registry reg = (Registry) getMapFromJsonString(json);
+        if (reg != null) {
+          registry = reg;
+        }
       } catch (Exception e) {
         throw new ServiceLifecycleException("Unable to load the persisted registry.", e);
       }
