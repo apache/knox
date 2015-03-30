@@ -42,11 +42,15 @@ import javax.naming.ldap.LdapName;
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.cache.MemoryConstrainedCacheManager;
 import org.apache.shiro.crypto.hash.DefaultHashService;
+import org.apache.shiro.crypto.hash.Hash;
 import org.apache.shiro.crypto.hash.HashRequest;
 import org.apache.shiro.crypto.hash.HashService;
 import org.apache.shiro.realm.ldap.JndiLdapRealm;
@@ -116,11 +120,13 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private final static String  SUBJECT_USER_GROUPS = "subject.userGroups";
 
     private final static String  MEMBER_URL = "memberUrl";
-   
+
+    private static final String HASHING_ALGORITHM = "MD5";
+
     static {
-        SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-    }
+          SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
+          ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+      }
 
  
     private String searchBase;
@@ -148,6 +154,12 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private HashService hashService = new DefaultHashService();
 
     public KnoxLdapRealm() {
+      HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
+      setCredentialsMatcher(credentialsMatcher);
+      setCacheManager(new MemoryConstrainedCacheManager());
+      setCachingEnabled(true);
+      setAuthenticationCachingEnabled(true);
+      setAuthorizationCachingEnabled(true);
     }
 
     /**
@@ -560,14 +572,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
 
     @Override
-    protected Object getAuthenticationCacheKey(AuthenticationToken token) {
-      if (token instanceof UsernamePasswordToken) {
-        HashRequest.Builder builder = new HashRequest.Builder();
-        StringBuilder key = new StringBuilder();
-        key.append(hashService.computeHash(builder.setSource(((UsernamePasswordToken) token).getUsername()).build()).toHex());
-        key.append(hashService.computeHash(builder.setSource(((UsernamePasswordToken) token).getPassword()).build()).toHex());
-        return key.toString();
-      }
-      return super.getAuthenticationCacheKey(token);
+    protected AuthenticationInfo createAuthenticationInfo(AuthenticationToken token, Object ldapPrincipal, Object ldapCredentials, LdapContext ldapContext) throws NamingException {
+      HashRequest.Builder builder = new HashRequest.Builder();
+      Hash credentialsHash = hashService.computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
+      return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
     }
 }
