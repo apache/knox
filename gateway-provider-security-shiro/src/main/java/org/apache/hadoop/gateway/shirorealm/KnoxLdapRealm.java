@@ -48,7 +48,6 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.cache.MemoryConstrainedCacheManager;
 import org.apache.shiro.crypto.hash.DefaultHashService;
 import org.apache.shiro.crypto.hash.Hash;
 import org.apache.shiro.crypto.hash.HashRequest;
@@ -156,10 +155,6 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public KnoxLdapRealm() {
       HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
       setCredentialsMatcher(credentialsMatcher);
-      setCacheManager(new MemoryConstrainedCacheManager());
-      setCachingEnabled(true);
-      setAuthenticationCachingEnabled(true);
-      setAuthorizationCachingEnabled(true);
     }
 
     /**
