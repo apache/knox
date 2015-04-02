@@ -46,7 +46,7 @@ public class RegEntry {
   }
 
   public List<String> getUrls() {
-    if (urls == null && url != null) {
+    if (urls == null && url != null && !"null".equals(url)) {
       urls = new ArrayList<String>();
       urls.add(url);
     }
@@ -54,12 +54,6 @@ public class RegEntry {
   }
 
   public void setUrls( List<String> urls) {
-    this.urls = urls;
-  }
-
-  public void setUrl( String url) {
-    ArrayList<String> urls = new ArrayList<String>();
-    urls.add(url);
     this.urls = urls;
   }
 }
