@@ -92,9 +92,19 @@
               <value>member</value>
             </param>
             -->
+            <!--
+            The ehcache can be configured further by placing a ehcache.xml file
+            in an appropriate location in classpath.
+            For example: cacheManager.cacheManagerConfigFile = classpath:ehcache.xml
+            <param>
+              <name>main.cacheManager.cacheManagerConfigFile</name>
+              <value>classpath:ehcache.xml</value>
+            </param>
+
+            -->
             <param>
               <name>main.cacheManager</name>
-              <value>org.apache.shiro.cache.MemoryConstrainedCacheManager</value>
+              <value>org.apache.shiro.cache.ehcache.EhCacheManager</value>
             </param>
             <param>
               <name>main.securityManager.cacheManager</name>
