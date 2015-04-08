@@ -64,8 +64,10 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
-    String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
-    dispatch = newDispatch(dispatchImpl);
+    if (dispatch == null) {
+      String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
+      dispatch = newDispatch(dispatchImpl);
+    }
     configuration().target(dispatch).source(filterConfig).inject();
     httpClient = HttpClients.custom().setDefaultCookieStore(new NoCookieStore()).build();
     //[sumit] this can perhaps be stashed in the servlet context to increase sharing of the client

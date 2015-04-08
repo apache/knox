@@ -75,12 +75,12 @@ public class ServiceDefinitionTest {
     url = ClassLoader.getSystemResource("services/hbase/0.98.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
     assertNotNull(definition.getDispatch());
-    assertEquals("org.apache.hadoop.gateway.hbase.HBaseHttpClientDispatch", definition.getDispatch().getClassName());
+    assertEquals("org.apache.hadoop.gateway.hbase.HBaseDispatch", definition.getDispatch().getClassName());
     url = ClassLoader.getSystemResource("services/webhdfs/2.4.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
     assertNotNull(definition.getDispatch());
-    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch", definition.getDispatch().getClassName());
-    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaHttpClientDispatch", definition.getDispatch().getHaClassName());
+    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.HdfsHttpClientDispatch", definition.getDispatch().getClassName());
+    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaDispatch", definition.getDispatch().getHaClassName());
   }
 
 }

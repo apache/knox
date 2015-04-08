@@ -36,5 +36,5 @@
             <dispatch contributor-name="http-client" />
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.hdfs.dispatch.HdfsDispatch" ha-classname="org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaHttpClientDispatch"/>
+    <dispatch classname="org.apache.hadoop.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
 </service>

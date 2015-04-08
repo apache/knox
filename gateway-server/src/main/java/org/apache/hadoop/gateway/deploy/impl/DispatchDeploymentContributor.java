@@ -23,7 +23,7 @@ import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter;
-import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
+import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
@@ -52,7 +52,7 @@ public class DispatchDeploymentContributor extends ProviderDeploymentContributor
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
     FilterDescriptor filter = resource.addFilter().name( getName() ).role( getRole() ).impl( GatewayDispatchFilter.class );
-    filter.param().name(DISPATCH_IMPL_PARAM).value(HttpClientDispatch.class.getName());
+    filter.param().name(DISPATCH_IMPL_PARAM).value(DefaultDispatch.class.getName());
     FilterParamDescriptor filterParam = filter.param().name( REPLAY_BUFFER_SIZE_PARAM ).value( DEFAULT_REPLAY_BUFFER_SIZE );
     for ( Map.Entry<String,String> serviceParam : service.getParams().entrySet() ) {
       if ( REPLAY_BUFFER_SIZE_PARAM.equals( serviceParam.getKey() ) ) {

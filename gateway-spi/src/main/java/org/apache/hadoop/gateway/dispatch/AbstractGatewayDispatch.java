@@ -99,8 +99,8 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       String name = headerNames.nextElement();
       if ( !outboundRequest.containsHeader( name )
           && !EXCLUDE_HEADERS.contains( name ) ) {
-        String vaule = inboundRequest.getHeader( name );
-        outboundRequest.addHeader( name, vaule );
+        String value = inboundRequest.getHeader( name );
+        outboundRequest.addHeader( name, value );
       }
     }
   }

@@ -17,15 +17,15 @@
  */
 package org.apache.hadoop.gateway.storm;
 
-import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
+import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 
 import java.util.Set;
 
 /**
  * This specialized dispatch provides Storm specific features to the
- * default HttpClientDispatch.
+ * default dispatch.
  */
-public class StormHttpClientDispatch extends HttpClientDispatch {
+public class StormDispatch extends DefaultDispatch {
 
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {

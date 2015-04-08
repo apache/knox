@@ -29,5 +29,5 @@
             <rewrite apply="WEBHBASE/webhbase/regions/outbound" to="response.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.hbase.HBaseHttpClientDispatch"/>
+    <dispatch classname="org.apache.hadoop.gateway.hbase.HBaseDispatch"/>
 </service>

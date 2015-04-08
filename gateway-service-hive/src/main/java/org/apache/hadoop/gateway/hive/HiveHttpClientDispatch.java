@@ -17,103 +17,22 @@
  */
 package org.apache.hadoop.gateway.hive;
 
-import org.apache.hadoop.gateway.config.Configure;
-import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
-import org.apache.hadoop.gateway.security.PrimaryPrincipal;
-import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.params.AuthPolicy;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.auth.SPNegoSchemeFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter;
 
-import javax.security.auth.Subject;
-import java.io.IOException;
-import java.security.AccessController;
-import java.security.Principal;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
 
-/**
- * This specialized dispatch provides Hive specific features to the
- * default HttpClientDispatch.
+/***
+ * KNOX-526. Need to keep this class around for backward compatibility of deployed
+ * topologies. This is required for releases older than Apache Knox 0.6.0
  */
-public class HiveHttpClientDispatch extends HttpClientDispatch {
-  private static final String PASSWORD_PLACEHOLDER = "*";
-  private boolean basicAuthPreemptive = false;
-  private boolean kerberos = false;
-  private static final EmptyJaasCredentials EMPTY_JAAS_CREDENTIALS = new EmptyJaasCredentials();
+@Deprecated
+public class HiveHttpClientDispatch extends GatewayDispatchFilter {
 
   @Override
-  public void init() {
-    super.init();
+  public void init(FilterConfig filterConfig) throws ServletException {
+    setDispatch(new HiveDispatch());
+    super.init(filterConfig);
   }
-
-  protected Principal getPrimaryPrincipal() {
-    Principal principal = null;
-    Subject subject = Subject.getSubject( AccessController.getContext());
-    if( subject != null ) {
-      principal = (Principal)subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
-    }
-    return principal;
-  }
-
-  protected void addCredentialsToRequest(HttpUriRequest request) {
-    if( isBasicAuthPreemptive() ) {
-      Principal principal = getPrimaryPrincipal();
-      if( principal != null ) {
-
-        UsernamePasswordCredentials credentials =
-            new UsernamePasswordCredentials( principal.getName(), PASSWORD_PLACEHOLDER );
-        
-        request.addHeader(BasicScheme.authenticate(credentials,"US-ASCII",false));
-      }
-    }
-  }
-
-  @Configure
-  public void setBasicAuthPreemptive( boolean basicAuthPreemptive ) {
-    this.basicAuthPreemptive = basicAuthPreemptive;
-  }
-
-  public boolean isBasicAuthPreemptive() {
-    return basicAuthPreemptive;
-  }
-
-  public boolean isKerberos() {
-    return kerberos;
-  }
-
-  @Configure
-  public void setKerberos(boolean kerberos) {
-    this.kerberos = kerberos;
-  }
-
-  protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-      DefaultHttpClient client) throws IOException {
-    //DefaultHttpClient client = new DefaultHttpClient();
-    SPNegoSchemeFactory spNegoSF = new SPNegoSchemeFactory(
-          /* stripPort */true);
-    // spNegoSF.setSpengoGenerator(new BouncySpnegoTokenGenerator());
-    client.getAuthSchemes().register(AuthPolicy.SPNEGO, spNegoSF);
-    client.getCredentialsProvider().setCredentials(
-        new AuthScope(/* host */null, /* port */-1, /* realm */null),
-        EMPTY_JAAS_CREDENTIALS);
-    return client.execute(outboundRequest);
-  }
- 
-  private static class EmptyJaasCredentials implements Credentials {
-
-    public String getPassword() {
-      return null;
-    }
-
-    public Principal getUserPrincipal() {
-      return null;
-    }
-
-  }
-  
 }
 

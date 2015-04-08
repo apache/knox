@@ -15,21 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.dispatch;
+package org.apache.hadoop.gateway.hbase;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 
-/***
- * KNOX-526. Need to keep this class around for backward compatibility of deployed
- * topologies. This is required for releases older than Apache Knox 0.6.0
+/**
+ * This specialized dispatch provides HBase specific features to the
+ * default HttpClientDispatch.
  */
-@Deprecated
-public class HttpClientDispatch extends GatewayDispatchFilter {
+public class HBaseDispatch extends DefaultDispatch {
 
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-    setDispatch(new DefaultDispatch());
-    super.init(filterConfig);
+  public void init() {
+    super.init();
+    setAppCookieManager(new HBaseCookieManager());
   }
+
 }
+

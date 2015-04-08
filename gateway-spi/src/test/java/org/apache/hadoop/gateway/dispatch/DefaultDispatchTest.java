@@ -45,7 +45,7 @@ import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Test;
 
-public class HttpClientDispatchTest {
+public class DefaultDispatchTest {
 
   // Make sure Hadoop cluster topology isn't exposed to client when there is a connectivity issue.
   @Test
@@ -76,7 +76,7 @@ public class HttpClientDispatchTest {
 
     EasyMock.replay( outboundRequest, inboundRequest, outboundResponse );
 
-    HttpClientDispatch dispatch = new HttpClientDispatch();
+    DefaultDispatch dispatch = new DefaultDispatch();
     dispatch.setHttpClient(new DefaultHttpClient());
     try {
       dispatch.executeRequest( outboundRequest, inboundRequest, outboundResponse );
@@ -91,13 +91,13 @@ public class HttpClientDispatchTest {
   @Test
   public void testCallToSecureClusterWithDelegationTpken() throws URISyntaxException, IOException {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
-    HttpClientDispatch httpClientDispatch = new HttpClientDispatch();
+    DefaultDispatch defaultDispatch = new DefaultDispatch();
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect(inboundRequest.getQueryString()).andReturn( "delegation=123").anyTimes();
     EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
     EasyMock.replay( inboundRequest );
-    HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
+    HttpEntity httpEntity = defaultDispatch.createRequestEntity(inboundRequest);
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
     assertFalse("buffering in the presence of delegation token", 
         (httpEntity instanceof CappedBufferHttpEntity));
@@ -106,14 +106,14 @@ public class HttpClientDispatchTest {
   @Test
   public void testCallToSecureClusterWithoutDelegationTpken() throws URISyntaxException, IOException {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
-    HttpClientDispatch httpClientDispatch = new HttpClientDispatch();
-    httpClientDispatch.setReplayBufferSize(10);
+    DefaultDispatch defaultDispatch = new DefaultDispatch();
+    defaultDispatch.setReplayBufferSize(10);
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect(inboundRequest.getQueryString()).andReturn( "a=123").anyTimes();
     EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
     EasyMock.replay( inboundRequest );
-    HttpEntity httpEntity = httpClientDispatch.createRequestEntity(inboundRequest);
+    HttpEntity httpEntity = defaultDispatch.createRequestEntity(inboundRequest);
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
     assertTrue("not buffering in the absence of delegation token", 
         (httpEntity instanceof CappedBufferHttpEntity));

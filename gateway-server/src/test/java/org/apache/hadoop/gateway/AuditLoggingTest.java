@@ -46,7 +46,7 @@ import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.audit.log4j.audit.Log4jAuditService;
 import org.apache.hadoop.gateway.audit.log4j.correlation.Log4jCorrelationService;
-import org.apache.hadoop.gateway.dispatch.HttpClientDispatch;
+import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.test.log.CollectAppender;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -171,7 +171,7 @@ public class AuditLoggingTest {
     HttpServletResponse outboundResponse = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( outboundResponse );
 
-    HttpClientDispatch dispatch = new HttpClientDispatch();
+    DefaultDispatch dispatch = new DefaultDispatch();
     dispatch.setHttpClient(new DefaultHttpClient());
     try {
       dispatch.doGet( new URI( uri ), inboundRequest, outboundResponse );

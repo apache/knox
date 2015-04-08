@@ -48,9 +48,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class WebHdfsHaHttpClientDispatchTest {
+public class WebHdfsHaDispatchTest {
 
-  private class InstrumentedWebHdfsHaHttpClientDispatch extends WebHdfsHaHttpClientDispatch {
+  private class InstrumentedWebHdfsHaHttpClientDispatch extends WebHdfsHaDispatch {
 
     public InstrumentedWebHdfsHaHttpClientDispatch() throws ServletException {
     }
@@ -123,7 +123,7 @@ public class WebHdfsHaHttpClientDispatchTest {
       }).once();
       EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
       Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
-      WebHdfsHaHttpClientDispatch dispatch = new WebHdfsHaHttpClientDispatch();
+      WebHdfsHaDispatch dispatch = new WebHdfsHaDispatch();
       dispatch.setHttpClient(new DefaultHttpClient());
       dispatch.setHaProvider(provider);
       dispatch.init();

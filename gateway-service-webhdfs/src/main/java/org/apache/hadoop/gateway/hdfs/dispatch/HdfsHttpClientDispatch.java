@@ -17,21 +17,29 @@
  */
 package org.apache.hadoop.gateway.hdfs.dispatch;
 
-import org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter;
-
-import javax.servlet.FilterConfig;
+import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
+import org.apache.http.HttpEntity;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
-/***
- * KNOX-526. Need to keep this class around for backward compatibility of deployed
- * topologies. This is required for releases older than Apache Knox 0.6.0
- */
-@Deprecated
-public class HdfsDispatch extends GatewayDispatchFilter {
+public class HdfsHttpClientDispatch extends DefaultDispatch {
 
-  @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-    setDispatch(new HdfsHttpClientDispatch());
-    super.init(filterConfig);
+  public HdfsHttpClientDispatch() throws ServletException {
+    super();
+  }
+
+  //@Override
+  /**
+   * This method ensures that the request InputStream is not acquired
+   * prior to a dispatch to a component such as a namenode that doesn't
+   * the request body. The side effect of this is that the client does
+   * not get a 100 continue from Knox which will trigger the client to
+   * send the entire payload before redirect to the target component
+   * like a datanode and have to send it again.
+   */
+  protected HttpEntity createRequestEntity(HttpServletRequest request)
+      throws IOException {
+    return null;
   }
 }
