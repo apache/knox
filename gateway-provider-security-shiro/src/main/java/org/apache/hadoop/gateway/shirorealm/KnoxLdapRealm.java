@@ -120,7 +120,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
     private final static String  MEMBER_URL = "memberUrl";
 
-    private static final String HASHING_ALGORITHM = "MD5";
+    private static final String HASHING_ALGORITHM = "SHA-1";
 
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
