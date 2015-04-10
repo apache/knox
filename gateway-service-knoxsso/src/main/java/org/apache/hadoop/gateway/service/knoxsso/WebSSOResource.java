@@ -32,7 +32,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.WebApplicationException;
 
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.impl.JWT;
@@ -42,6 +44,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 @Path( "/knoxsso/websso" )
 public class WebSSOResource {
+  private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
+
   @Context 
   private HttpServletRequest request;
 
@@ -78,54 +82,37 @@ public class WebSSOResource {
     JWT token = ts.issueToken(p, "RS256");
     
     addJWTHadoopCookie(original, token);
-    addHadoopCookie(original, p);
     
     if (removeOriginalUrlCookie) {
       removeOriginalUrlCookie(response);
     }
     
-    System.out.println( new Date() + "about to redirect to original: " + original );
+    log.aboutToRedirectToOriginal(original);
     response.setStatus(statusCode);
     response.setHeader("Location", original);
     try {
       response.getOutputStream().close();
     } catch (IOException e) {
-      e.printStackTrace();
+      log.unableToCloseOutputStream(e.getMessage(), e.getStackTrace().toString());
     }
     return null;
   }
 
   public void addJWTHadoopCookie(String original, JWT token) {
-    System.out.println( "adding JWT cookie: " + token.toString() );
+    log.addingJWTCookie(token.toString());
     Cookie c = new Cookie("hadoop-jwt",  token.toString());
     c.setPath("/");
     try {
       String domain = getDomainName(original);
       c.setDomain(domain);
-      // c.setHttpOnly(false);
-      // c.setSecure(false);
+      c.setHttpOnly(true);
+      c.setSecure(true);
+      c.setMaxAge(120);
+      response.addCookie(c);
     }
     catch(Exception e) {
-      e.printStackTrace();
+      throw new WebApplicationException("Unable to add JWT cookie to response.");
     }
-    c.setMaxAge(120);
-    response.addCookie(c);
-  }
-
-  public void addHadoopCookie(String original, Principal p) {
-    System.out.println( "adding cookie with username: " + p.getName() );
-    Cookie c = new Cookie("hadoop-auth", p.getName());
-    c.setPath("/");
-    try {
-      String domain = getDomainName(original);
-      System.out.println("Setting domain on cookie: " + domain);
-      c.setDomain(domain);
-    }
-    catch(Exception e) {
-      e.printStackTrace();
-    }
-    c.setMaxAge(120);
-    response.addCookie(c);
   }
 
   private void removeOriginalUrlCookie(HttpServletResponse response) {
@@ -145,11 +132,12 @@ public class WebSSOResource {
     Cookie[] cookies = request.getCookies();
     String value = null;
     for(Cookie cookie : cookies){
-      System.out.println( "cookie name: " + cookie.getName());
-      System.out.println( "cookie value: " + cookie.getValue());
       if(name.equals(cookie.getName())){
           value = cookie.getValue();
       }
+    }
+    if (value == null) {
+      log.cookieNotFound(name);
     }
     return value;
   }
