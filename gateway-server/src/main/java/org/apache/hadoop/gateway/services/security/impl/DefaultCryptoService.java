@@ -47,9 +47,8 @@ public class DefaultCryptoService implements CryptoService {
     this.ks = ks;
   }
 
-  public CryptoService setAliasService(AliasService as) {
+  public void setAliasService(AliasService as) {
     this.as = as;
-    return this;
   }
 
   @Override

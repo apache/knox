@@ -80,6 +80,17 @@
             <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
         </dependency>
         <dependency>
+          <groupId>com.nimbusds</groupId>
+          <artifactId>nimbus-jose-jwt</artifactId>
+          <scope>compile</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.bouncycastle</groupId>
+              <artifactId>bcprov-jdk15on</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
         </dependency>

@@ -60,6 +60,7 @@
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
+        <module>gateway-provider-security-picketlink</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
@@ -67,6 +68,7 @@
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
+        <module>gateway-service-knoxsso</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
         <module>gateway-service-storm</module>
@@ -398,6 +400,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-picketlink</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-preauth</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -478,6 +485,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-knoxsso</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-admin</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -552,6 +564,16 @@
                 <version>${gateway-version}</version>
             </dependency>
 
+        <dependency>
+            <groupId>org.picketlink</groupId>
+            <artifactId>picketlink-federation</artifactId>
+            <version>2.7.0.CR3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.2.0.Final</version>
+        </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet</artifactId>
@@ -562,7 +584,18 @@
                 <artifactId>jersey-server</artifactId>
                 <version>2.6</version>
             </dependency>
-
+            <dependency>
+              <groupId>com.nimbusds</groupId>
+              <artifactId>nimbus-jose-jwt</artifactId>
+              <version>3.9</version>
+              <scope>compile</scope>
+              <exclusions>
+                <exclusion>
+                  <groupId>org.bouncycastle</groupId>
+                  <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+              </exclusions>
+            </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>

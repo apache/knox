@@ -70,7 +70,10 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   @Override
   public Enumeration getParameterNames() {
     Map<String, String[]> params = getParams();
-    Enumeration<String> e = Collections.enumeration((Collection<String>) params);
+    if (params == null) {
+      params = new HashMap<String, String[]>();
+    }
+    Enumeration<String> e = Collections.enumeration((Collection<String>) params.keySet());
 
     return e;
   }
@@ -78,6 +81,9 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   @Override
   public String[] getParameterValues(String name) {
     Map<String, String[]> params = getParams();
+    if (params == null) {
+      params = new HashMap<String, String[]>();
+    }
 
     return params.get(name);
   }
@@ -158,6 +164,9 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
       }
       String body = IOUtils.toString( super.getInputStream(), encoding );
       Map<String, String[]> params = getParams( body );
+      if (params == null) {
+        params = new HashMap<String, String[]>();
+      }
       body = urlEncode( params, encoding );
       // ASCII is OK here because the urlEncode about should have already escaped
       return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes( "US-ASCII" ) ) );

@@ -176,6 +176,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-knoxsso</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
@@ -193,6 +197,10 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite-func-service-registry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-security-picketlink</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>

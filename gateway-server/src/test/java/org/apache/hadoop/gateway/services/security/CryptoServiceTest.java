@@ -104,7 +104,8 @@ public class CryptoServiceTest {
         return null;
       }
     };
-    cs = new DefaultCryptoService().setAliasService(as);
+    cs = new DefaultCryptoService();
+    ((DefaultCryptoService)cs).setAliasService(as);
   }
   
   @Test
