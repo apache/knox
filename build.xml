@@ -24,7 +24,7 @@
     <property name="gateway-name" value="Apache Knox"/>
     <property name="gateway-project" value="knox"/>
     <property name="gateway-artifact" value="knox"/>
-    <property name="gateway-version" value="0.6.0-SNAPSHOT"/>
+    <property name="gateway-version" value="0.7.0-SNAPSHOT"/>
     <property name="release-manager" value="kminder"/>
 
     <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
