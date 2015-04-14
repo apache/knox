@@ -66,6 +66,24 @@ Release build file for the Apache Knox Gateway
 <os family="windows" />
 </condition>
 
+  <target name="_username">
+    <input message="" addproperty="username">
+      <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
+    </input>
+  </target>
+
+  <target name="_password">
+    <input message="" addproperty="password">
+      <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
+    </input>
+  </target>
+
+  <target name="_passphrase">
+    <input message="" addproperty="phassphrase">
+      <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
+    </input>
+  </target>
+
 <target name="_init" description="Initialize the build.">
 </target>
 
@@ -126,7 +144,7 @@ Release build file for the Apache Knox Gateway
 </exec>
 </target>
 
-    <target name="download-candidate">
+    <target name="download-candidate" depends="_username,_password">
         <mkdir dir="${candidate.dir}"/>
         <get username="${username}" password="${password}" dest="${candidate.dir}">
             <url url="${build-url}/knox-${gateway-version}.zip"/>
@@ -194,7 +212,7 @@ Release build file for the Apache Knox Gateway
 
     </target>
 
-    <target name="sign-candidate" depends="_init" description="Sign a downloaded created release.">
+    <target name="sign-candidate" depends="_init,_passphrase" description="Sign a downloaded created release.">
         <delete>
             <fileset dir="${candidate.dir}" includes="*.asc"/>
         </delete>
@@ -234,7 +252,7 @@ Release build file for the Apache Knox Gateway
 
     <target name="release" depends="package" description="Build release artifacts and sign."/>
 
-    <target name="stage-candidate" depends="unstage-candidate" description="Stage release artifacts.">
+    <target name="stage-candidate" depends="_username,_password,unstage-candidate" description="Stage release artifacts.">
         <exec executable="svn">
             <arg value="import" />
             <arg value="${candidate.dir}"/>
@@ -248,7 +266,7 @@ Release build file for the Apache Knox Gateway
         </exec>
     </target>
 
-    <target name="unstage-candidate" description="Delete staged release artifacts.">
+    <target name="unstage-candidate" depends="_username,_password" description="Delete staged release artifacts.">
         <exec executable="svn">
             <arg value="delete" />
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
@@ -261,7 +279,7 @@ Release build file for the Apache Knox Gateway
         </exec>
     </target>
 
-    <target name="promote-release" description="Promote staged artifacts to release area.">
+    <target name="promote-release" depends="_username,_password" description="Promote staged artifacts to release area.">
         <exec executable="svn">
             <arg value="move"/>
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}"/>
