@@ -128,7 +128,7 @@
 
     <target name="download-candidate">
         <mkdir dir="${candidate.dir}"/>
-        <get dest="${candidate.dir}">
+        <get username="${username}" password="${password}" dest="${candidate.dir}">
             <url url="${build-url}/knox-${gateway-version}.zip"/>
             <url url="${build-url}/knox-${gateway-version}.zip.md5"/>
             <url url="${build-url}/knox-${gateway-version}.zip.sha"/>
@@ -200,16 +200,22 @@
         </delete>
         <exec executable="gpg" dir="${candidate.dir}">
             <arg value="--armor"/>
+            <arg value="--passphrase"/>
+            <arg value="${passphrase}"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip"/>
         </exec>
         <exec executable="gpg" dir="${candidate.dir}">
             <arg value="--armor"/>
+            <arg value="--passphrase"/>
+            <arg value="${passphrase}"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip"/>
         </exec>
         <exec executable="gpg" dir="${candidate.dir}">
             <arg value="--armor"/>
+            <arg value="--passphrase"/>
+            <arg value="${passphrase}"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
         </exec>
@@ -235,6 +241,10 @@
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
             <arg value="-m"/>
             <arg value="Staging Apache Knox Gateway version ${gateway-version}."/>
+            <arg value="--username" />
+            <arg value="${username}" />
+            <arg value="--password" />
+            <arg value="${password}" />
         </exec>
     </target>
 
@@ -244,6 +254,10 @@
             <arg value="${svn.staging.path}/${gateway-artifact}-${gateway-version}/"/>
             <arg value="-m"/>
             <arg value="Removing Apache Knox Gateway version ${gateway-version} from staging."/>
+            <arg value="--username" />
+            <arg value="${username}" />
+            <arg value="--password" />
+            <arg value="${password}" />
         </exec>
     </target>
 
@@ -254,6 +268,10 @@
             <arg value="${svn.release.path}/${gateway-version}"/>
             <arg value="-m"/>
             <arg value="Releasing Apache Knox Gateway version ${gateway-version}." />
+            <arg value="--username" />
+            <arg value="${username}" />
+            <arg value="--password" />
+            <arg value="${password}" />
         </exec>
     </target>
 
