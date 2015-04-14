@@ -79,7 +79,7 @@ Release build file for the Apache Knox Gateway
   </target>
 
   <target name="_passphrase">
-    <input message="" addproperty="phassphrase">
+    <input message="" addproperty="passphrase">
       <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
     </input>
   </target>
@@ -160,9 +160,9 @@ Release build file for the Apache Knox Gateway
         </get>
     </target>
 
-    <target name="download-stage">
+    <target name="download-stage" depends="_username,_password">
         <mkdir dir="${install.dir}"/>
-        <get dest="${install.dir}">
+        <get dest="${install.dir}" username="${username}" password="${password}">
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.md5"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.sha"/>
