@@ -37,6 +37,23 @@ public class PrincipalMapperTest {
   public void setup() {
     mapper = new SimplePrincipalMapper();
   }
+
+  @Test
+  public void testSimplePrincipalMappingWithWildcardGroups() {
+    String principalMapping = "";
+    String groupMapping = "*=users";
+    try {
+      mapper.loadMappingTable(principalMapping, groupMapping);
+    }
+    catch (PrincipalMappingException pme) {
+      pme.printStackTrace();
+      fail();
+    }
+    
+    assertTrue(mapper.mapUserPrincipal("lmccay").equals("lmccay"));
+    assertTrue(mapper.mapGroupPrincipal("hdfs")[0].equals("users"));
+    assertTrue(mapper.mapGroupPrincipal("lmccay")[0].equals("users"));
+  }
   
   @Test
   public void testNonNullSimplePrincipalMappingWithGroups() {

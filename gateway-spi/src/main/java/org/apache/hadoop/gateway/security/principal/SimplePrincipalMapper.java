@@ -97,6 +97,9 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     
     if (groupMappings != null) {
       groups = groupMappings.get(principalName);
+      if (groups == null) {
+        groups = groupMappings.get("*");
+      }
     }
     
     return groups;
