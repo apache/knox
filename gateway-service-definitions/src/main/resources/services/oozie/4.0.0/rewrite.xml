@@ -42,13 +42,13 @@
 
     <rule name="OOZIE/oozie/hdfs-path" flow="OR">
         <match pattern="/~">
-            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/user/{$username}"/>
+            <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}/user/{$username}"/>
         </match>
         <match pattern="/~/{path=**}">
-            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/user/{$username}/{path=**}"/>
+            <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}/user/{$username}/{path=**}"/>
         </match>
         <match pattern="{path=**}">
-            <rewrite template="hdfs://{$serviceMappedHost[NAMENODE]}:{$servicePort[NAMENODE]}/{path=**}"/>
+            <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}/{path=**}"/>
         </match>
     </rule>
 
