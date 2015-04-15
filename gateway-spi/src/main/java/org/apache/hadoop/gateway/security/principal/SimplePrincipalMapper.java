@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.security.principal;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
@@ -94,14 +95,30 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   @Override
   public String[] mapGroupPrincipal(String principalName) {
     String[] groups = null;
+    String[] wildCardGroups = null;
     
     if (groupMappings != null) {
       groups = groupMappings.get(principalName);
-      if (groups == null) {
-        groups = groupMappings.get("*");
+      wildCardGroups = groupMappings.get("*");
+      if (groups != null && wildCardGroups != null) {
+        groups = concat(groups, wildCardGroups); 
+      }
+      else if (wildCardGroups != null) {
+        return wildCardGroups;
       }
     }
     
     return groups;
+  }
+
+  /**
+   * @param groups
+   * @param wildCardGroups
+   * @return
+   */
+  public static <T> T[] concat(T[] first, T[] second) {
+    T[] result = Arrays.copyOf(first, first.length + second.length);
+    System.arraycopy(second, 0, result, first.length, second.length);
+    return result;
   }
 }
