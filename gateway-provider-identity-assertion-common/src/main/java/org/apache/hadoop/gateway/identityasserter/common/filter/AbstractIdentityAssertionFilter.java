@@ -145,7 +145,6 @@ public abstract class AbstractIdentityAssertionFilter extends
           }
           if (groupsMapped) {
             addMappedGroupsToSubject(mappedPrincipalName, groups, subject);
-            addMappedGroupsToSubject("*", groups, subject);
           }
           doAs(request, response, chain, subject);
         }
