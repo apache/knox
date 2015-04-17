@@ -76,6 +76,28 @@ public class PrincipalMapperTest {
   }
 
   @Test
+  public void testSimplePrincipalMappingWithUserAndWildcardAndExplicitGroups() {
+    String principalMapping = "guest=lmccay";
+    String groupMapping = "*=users;lmccay=mrgroup";
+    try {
+      mapper.loadMappingTable(principalMapping, groupMapping);
+    }
+    catch (PrincipalMappingException pme) {
+      pme.printStackTrace();
+      fail();
+    }
+    
+    assertTrue(mapper.mapUserPrincipal("guest").equals("lmccay"));
+    assertTrue(mapper.mapGroupPrincipal("hdfs").length == 1);
+    assertTrue(mapper.mapGroupPrincipal("hdfs")[0].equals("users"));
+    assertTrue(mapper.mapGroupPrincipal("lmccay").length == 2);
+    String group = mapper.mapGroupPrincipal("lmccay")[0];
+    assertTrue(group.equals("users") || group.equals("mrgroup"));
+    group = mapper.mapGroupPrincipal("lmccay")[1];
+    assertTrue(group.equals("users") || group.equals("mrgroup"));
+  }
+
+  @Test
   public void testNonNullSimplePrincipalMappingWithGroups() {
     String principalMapping = "lmccay,kminder=hdfs;newuser=mapred";
     String groupMapping = "hdfs=group1;mapred=mrgroup,mrducks";
