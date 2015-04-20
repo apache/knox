@@ -62,20 +62,15 @@ Known Issues
 Please see the ISSUES file.
 
 ------------------------------------------------------------------------------
-Installation
+Installation & Usage
 ------------------------------------------------------------------------------
 Please see the Apache Knox Gateway User's Guide for details.
-http://knox.apache.org/books/knox-0-5-0/knox-0-5-0.html#Getting+Started
-
-------------------------------------------------------------------------------
-Examples
-------------------------------------------------------------------------------
-Please see the Apache Knox Gateway User's Guide for detailed examples.
-http://knox.apache.org/books/knox-0-5-0/knox-0-5-0.html#Basic+Usage
-http://knox.apache.org/books/knox-0-5-0/knox-0-5-0.html#Service+Details
+http://knox.apache.org/books/knox-0-6-0/user-guide.html#Quick+Start
+http://knox.apache.org/books/knox-0-6-0/user-guide.html#Service+Details
 
 ------------------------------------------------------------------------------
 Troubleshooting & Filing bugs
 ------------------------------------------------------------------------------
 Please see the Apache Knox Gateway User's Guide for detailed information.
-http://knox.apache.org/books/knox-0-5-0/knox-0-5-0.html#Troubleshooting
+http://knox.apache.org/books/knox-0-6-0/user-guide.html#Troubleshooting
+
