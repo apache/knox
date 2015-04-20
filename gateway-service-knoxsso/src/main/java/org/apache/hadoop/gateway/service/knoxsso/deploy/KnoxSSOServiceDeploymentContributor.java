@@ -54,7 +54,7 @@ public class KnoxSSOServiceDeploymentContributor extends JerseyServiceDeployment
    */
   @Override
   protected String[] getPatterns() {
-    return new String[]{ "knoxsso/**?**" };
+    return new String[]{ "knoxsso/api/**?**" };
   }
 
 }
