@@ -2,20 +2,55 @@
 Release Notes - Apache Knox - Version 0.6.0
 ------------------------------------------------------------------------------
 ** New Feature
-  * [KNOX-473] - Configurable front end URL for simplified load balancer configuration
-  * [KNOX-479] - Remove cacheManager configuration from template files
-  * [KNOX-480] - KnoxCLI needs to print usage when alias not provided
-  * [KNOX-494] - knox-env.sh script should print proper warning message , if JAVA is not set. (Andreina J via lmccay)
-  * [KNOX-493] - Data and sub data directory should be made configurable. (Andreina J via lmccay)
+    * [KNOX-134] - Knox should avoid repeated LDAP authentication even if Shiro session is disabled.
+    * [KNOX-177] - Simplify service deployment contributor implementation
+    * [KNOX-185] - Use Shiro AuthenticationInfo caching to avoid repeated ldap bind
+    * [KNOX-195] - Simple way to introduce new service without requiring code
+    * [KNOX-473] - Configurable front end URL for simplified load balancer configuration
+    * [KNOX-481] - Support configuration driven REST API integration (aka Stacks)
+    * [KNOX-493] - Data and sub data directory should be made configurable. (Andreina J via lmccay)
+    * [KNOX-500] - Support for Storm REST APIs
+    * [KNOX-504] - Enable SSL Mutual Authentication
+    * [KNOX-521] - Enhance Principal Mapping to Handle Dynamic Mappings
+    * [KNOX-523] - Java 8 Compatibility
+    * [KNOX-524] - Support LDAP authentication caching
+    * [KNOX-532] - Update Knox build to use JDK 1.7
 
 ** Improvement
-  * [KNOX-462] - Proper error message when root tag of topology file incorrect
-  * [KNOX-501] - Avoid NPE in case of passing invalid argument to KnoxCli.
-  * [KNOX-291] - Improve audit for topology deployment process
+    * [KNOX-263] - Docs - User Guide list of Services missing straight MapReduce?
+    * [KNOX-291] - Improve audit for topology deployment process
+    * [KNOX-458] - Surface Config for Shiro LDAP Connection Pooling
+    * [KNOX-462] - Proper error message when root tag of topology file incorrect
+    * [KNOX-466] - Log exception stack traces at INFO level when they reach gateway servlet
+    * [KNOX-468] - Add default config to optimize LDAP group lookup
+    * [KNOX-471] - User's guide needs update after trying examples
+    * [KNOX-480] - KnoxCLI needs to print usage when alias not provided
+    * [KNOX-491] - Increase default replay buffer size to 8K
+    * [KNOX-492] - Support service level replayBufferLimit for Ozzie, Hive and HBase
 
 ** Bug
-  * [KNOX-378] - Knox rewrites numbers in JSON to engineering notation
+    * [KNOX-175] - Filter order in generated gateway.xml needs to be consistent
+    * [KNOX-343] - Knox PID directory does not exists on Ubuntu after reboot
+    * [KNOX-378] - Knox rewrites numbers in JSON to engineering notation
+    * [KNOX-464] - Location headers have wrong hostname when used behind load balancer
+    * [KNOX-465] - Initial audit record can contain leftover principal name
+    * [KNOX-467] - Unit tests failing on windows
+    * [KNOX-479] - Remove cacheManager configuration from template files
+    * [KNOX-494] - knox-env.sh script should print proper warning message , if JAVA is not set. (Andreina J via lmccay)
+    * [KNOX-501] - Avoid NPE , in case of passing invalid argument to KnoxCli.
+    * [KNOX-505] - Failure during removing credential from Cluster should exit with proper error message
+    * [KNOX-525] - Fix ServiceRegistry Persistence to deal with Upgrade from 0.4.0
+    * [KNOX-526] - Dispatch Refactoring Breaks Upgrade Compatibility
+    * [KNOX-529] - Wildcard Group Principal Mapping Not Working
+    * [KNOX-530] - Running Oozie jobs through Knox on a cluster with HDFS HA does not rewrite proper namenode host name.
+    * [KNOX-531] - Fix extraneous audit entries for wildcard group mappings
 
+** Sub-task
+    * [KNOX-483] - Implement service configuration 
+    * [KNOX-487] - Add policy information to Service Definitions
+    * [KNOX-510] - KnoxSSO API
+    * [KNOX-511] - Picketlink SAML Federation Provider
+    * [KNOX-533] - Add Version to KnoxSSO URL Patterns
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.5.1
