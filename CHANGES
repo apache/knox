@@ -11,6 +11,7 @@ Release Notes - Apache Knox - Version 0.6.0
 ** Improvement
   * [KNOX-462] - Proper error message when root tag of topology file incorrect
   * [KNOX-501] - Avoid NPE in case of passing invalid argument to KnoxCli.
+  * [KNOX-291] - Improve audit for topology deployment process
 
 ** Bug
   * [KNOX-378] - Knox rewrites numbers in JSON to engineering notation

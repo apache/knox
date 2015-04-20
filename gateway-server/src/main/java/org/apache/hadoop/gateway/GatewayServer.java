@@ -364,6 +364,8 @@ public class GatewayServer {
     try {
       context.start();
     } catch( Exception e ) {
+      auditor
+          .audit(Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology( name, e );
     }
   }
@@ -379,6 +381,8 @@ public class GatewayServer {
       try {
         context.stop();
       } catch( Exception e ) {
+        auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+          ActionOutcome.FAILURE);
         log.failedToUndeployTopology( topology.getName(), e );
       }
     }
@@ -405,8 +409,9 @@ public class GatewayServer {
     private void handleDeleteDeployment(Topology topology, File deployDir) {
       File[] files = deployDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
       if( files != null ) {
+        auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+          ActionOutcome.UNAVAILABLE);
         for( File file : files ) {
-          auditor.audit( Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
           log.deletingDeployment( file.getAbsolutePath() );
           internalUndeploy( topology );
           FileUtils.deleteQuietly( file );
