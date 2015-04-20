@@ -56,7 +56,7 @@ public class WebSSOResource {
    * 
    */
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
-  static final String RESOURCE_PATH = "/knoxsso/websso";
+  static final String RESOURCE_PATH = "/knoxsso/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
 
   @Context 

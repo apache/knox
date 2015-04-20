@@ -41,7 +41,7 @@ public class CaptureOriginalURLFilter implements Filter {
   public void init( FilterConfig filterConfig ) throws ServletException {
     cookiePath = filterConfig.getInitParameter(COOKIE_PATH);
     if (cookiePath == null) {
-      cookiePath = "/gateway/idp/knoxsso/websso";
+      cookiePath = "/gateway/idp/knoxsso/api/v1/websso";
     }
   }
 
