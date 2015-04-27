@@ -40,6 +40,13 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -110,7 +117,11 @@ import org.apache.shiro.util.StringUtils;
 public class KnoxLdapRealm extends JndiLdapRealm {
 
     private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  
+    private static AuditService auditService = AuditServiceFactory.getAuditService();
+    private static Auditor auditor = auditService.getAuditor(
+        AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+        AuditConstants.KNOX_COMPONENT_NAME );
+
     private static final String MEMBER_SUBSTITUTION_TOKEN = "{0}";
     private final static SearchControls SUBTREE_SCOPE = new SearchControls();
     private final static SearchControls ONELEVEL_SCOPE = new SearchControls();
@@ -157,7 +168,18 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       setCredentialsMatcher(credentialsMatcher);
     }
 
-    /**
+  @Override
+  //KNOX-534 overriding this method to be able to audit authentication exceptions
+  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws org.apache.shiro.authc.AuthenticationException {
+    try {
+      return super.doGetAuthenticationInfo(token);
+    } catch ( org.apache.shiro.authc.AuthenticationException e ) {
+      auditor.audit( Action.AUTHENTICATION , token.getPrincipal().toString(), ResourceType.PRINCIPAL, ActionOutcome.FAILURE, e.getMessage() );
+      throw e;
+    }
+  }
+
+  /**
      * Get groups from LDAP.
      * 
      * @param principals
