@@ -352,4 +352,6 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Added Service definition name: {0}, role : {1}, version : {2}" )
   void addedServiceDefinition(String serviceName, String serviceRole, String version);
 
+  @Message( level = MessageLevel.INFO, text = "System Property: {0}={1}" )
+  void logSysProp( String name, String property );
 }

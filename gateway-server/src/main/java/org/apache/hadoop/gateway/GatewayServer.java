@@ -89,6 +89,7 @@ public class GatewayServer {
   public static void main( String[] args ) {
     try {
       configureLogging();
+      logSysProps();
       CommandLine cmd = GatewayCommandLine.parse( args );
       if( cmd.hasOption( GatewayCommandLine.HELP_LONG ) ) {
         GatewayCommandLine.printHelp();
@@ -154,6 +155,18 @@ public class GatewayServer {
 
   public static synchronized GatewayServices getGatewayServices() {
     return services;
+  }
+
+  private static void logSysProp( String name ) {
+    log.logSysProp( name, System.getProperty( name ) );
+  }
+
+  private static void logSysProps() {
+    logSysProp( "user.name" );
+    logSysProp( "user.dir" );
+    logSysProp( "java.runtime.name" );
+    logSysProp( "java.runtime.version" );
+    logSysProp( "java.home" );
   }
 
   private static void configureLogging() {
