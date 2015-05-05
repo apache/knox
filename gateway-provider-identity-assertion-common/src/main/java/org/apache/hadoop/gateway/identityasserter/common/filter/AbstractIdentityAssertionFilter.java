@@ -115,7 +115,8 @@ public abstract class AbstractIdentityAssertionFilter extends
           if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
             impersonationNeeded = true;
             auditService.getContext().setProxyUsername( mappedPrincipalName );
-            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(), ResourceType.PRINCIPAL, ActionOutcome.SUCCESS );
+            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(), 
+                ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, RES.effectiveUser(mappedPrincipalName) );
           }
         }
         else {
