@@ -36,6 +36,7 @@ public class GatewayTestConfig implements GatewayConfig {
   private boolean kerberosDebugEnabled = false;
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
   private String frontendUrl = null;
+  private boolean xForwardedEnabled = true;
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -239,4 +240,13 @@ public class GatewayTestConfig implements GatewayConfig {
    public String getGatewayServicesDir() {
       return gatewayHomeDir + "/data/services";
    }
+
+  @Override
+  public boolean isXForwardedEnabled() {
+    return xForwardedEnabled;
+  }
+
+  public void setXForwardedEnabled(boolean enabled) {
+    xForwardedEnabled = enabled;
+  }
 }

@@ -19,6 +19,8 @@ package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -51,7 +53,7 @@ public class MockRequestMatcher {
   private Set<String> methods = null;
   private String pathInfo = null;
   private String requestURL = null;
-  Map<String,String> headers = null;
+  Map<String,Matcher> headers = null;
   Set<Cookie> cookies = null;
   private Map<String,Object> attributes = null;
   private Map<String,String> queryParams = null;
@@ -98,9 +100,17 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher header( String name, String value ) {
     if( headers == null ) {
-      headers = new HashMap<String, String>();
+      headers = new HashMap<String, Matcher>();
     }
-    headers.put( name, value );
+    headers.put( name, Matchers.is(value) );
+    return this;
+  }
+
+  public MockRequestMatcher header( String name, Matcher matcher ) {
+    if( headers == null ) {
+      headers = new HashMap<String, Matcher>();
+    }
+    headers.put( name, matcher );
     return this;
   }
 
@@ -207,7 +217,7 @@ public class MockRequestMatcher {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
                 " does not have the expected value for header " + name,
-            request.getHeader( name ), is( headers.get( name ) ) );
+            request.getHeader( name ),  headers.get(name) );
       }
     }
     if( cookies != null ) {

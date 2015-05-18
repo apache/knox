@@ -80,6 +80,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private UrlRewriteFilterContentDescriptor headersFilterConfig;
   private String cookiesFilterName;
   private UrlRewriteFilterContentDescriptor cookiesFilterConfig;
+  private String xForwardedHostname;
+  private String xForwardedPort;
+  private String xForwardedScheme;
 
   public UrlRewriteResponse( FilterConfig config, HttpServletRequest request, HttpServletResponse response )
       throws IOException {
@@ -89,6 +92,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     this.request = request;
     this.response = response;
     this.output = null;
+    getXForwardedHeaders();
     this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_BODY_FILTER_PARAM );
     this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_HEADERS_FILTER_PARAM );
     this.headersFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
@@ -193,15 +197,15 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
   private String getGatewayParam( String name ) {
     if( "url".equals( name ) ) {
-      return request.getScheme() + "://" + getRequestLocalHostName() + ":" + request.getLocalPort() + request.getContextPath();
+      return xForwardedScheme + "://" + xForwardedHostname + ":" + xForwardedPort + request.getContextPath();
     } else if( "scheme".equals( name ) ) {
-      return request.getScheme();
+      return xForwardedScheme;
     } else if( "host".equals( name ) ) {
-      return getRequestLocalHostName();
+      return xForwardedHostname;
     } else if( "port".equals( name ) ) {
-        return Integer.toString( request.getLocalPort() );
+        return xForwardedPort;
     } else if( "addr".equals( name ) || "address".equals( name ) ) {
-      return getRequestLocalHostName() + ":" + request.getLocalPort();
+      return xForwardedHostname + ":" + xForwardedPort;
     } else if( "path".equals( name ) ) {
       return request.getContextPath();
     } else {
@@ -250,6 +254,28 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   //TODO: Route these through the rewriter.
   public String encodeRedirectURL( String url ) {
     throw new UnsupportedOperationException();
+  }
+
+  private void getXForwardedHeaders() {
+    xForwardedHostname = request.getHeader( "X-Forwarded-Host" );
+    xForwardedPort = request.getHeader( "X-Forwarded-Port" );
+    xForwardedScheme = request.getHeader( "X-Forwarded-Proto" );
+    if ( xForwardedScheme == null ) {
+      xForwardedScheme = request.getScheme();
+    }
+    if ( xForwardedHostname != null ) {
+      int separator = xForwardedHostname.indexOf( ":" );
+      if ( separator > 0 ) {
+        //a specific port in the forwarded host wins
+        xForwardedPort = xForwardedHostname.substring(separator + 1, xForwardedHostname.length());
+        xForwardedHostname = xForwardedHostname.substring( 0, separator );
+      }
+    } else {
+      xForwardedHostname = getRequestLocalHostName();
+    }
+    if (xForwardedPort == null) {
+      xForwardedPort = Integer.toString( request.getLocalPort() );
+    }
   }
 
 }

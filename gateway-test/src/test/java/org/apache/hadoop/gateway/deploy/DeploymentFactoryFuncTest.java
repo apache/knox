@@ -120,11 +120,16 @@ public class DeploymentFactoryFuncTest {
     Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
     //dump( gateway );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/name", equalTo( "generic" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.opensource.ExistingFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/name", equalTo( "test-param-name" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/param[1]/value", equalTo( "test-param-value" ) ) );
+    //by default the first filter will be the X-Forwarded header filter
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "xforwardedheaders" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/name", equalTo( "XForwardedHeaderFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.hadoop.gateway.filter.XForwardedHeaderFilter" ) ) );
+
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/name", equalTo( "generic" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.opensource.ExistingFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/name", equalTo( "test-param-name" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "test-param-value" ) ) );
   }
 
   @Test
@@ -185,6 +190,8 @@ public class DeploymentFactoryFuncTest {
   @Test
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
     GatewayConfig config = new GatewayTestConfig();
+    //Testing without x-forwarded headers filter
+    ((GatewayTestConfig)config).setXForwardedEnabled(false);
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();

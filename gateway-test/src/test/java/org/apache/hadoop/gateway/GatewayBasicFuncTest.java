@@ -3197,7 +3197,7 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-    private void testPostStormResource(String path) throws IOException {
+  private void testPostStormResource(String path) throws IOException {
     String username = "hdfs";
     String password = "hdfs-password";
     String gatewayPath = driver.getUrl( "STORM" ) + path;
@@ -3222,5 +3222,193 @@ public class GatewayBasicFuncTest {
         .when().post( gatewayPath );
 
     driver.assertComplete();
+  }
+
+
+  @Test
+  public void testXForwardHeadersPopulate() throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    String resourceName = "storm/topology-id.json";
+    String path = "/api/v1/topology/WordCount-1-1424792039";
+    String gatewayPath = driver.getUrl( "STORM" ) + path;
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    int gatewayPort = gatewayAddress.getPort();
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
+
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .header("X-Forwarded-Host", Matchers.isOneOf(gatewayHostName + ":" + gatewayPort, gatewayAddrName + ":" + gatewayPort))
+        .header("X-Forwarded-Proto", "http")
+        .header("X-Forwarded-Port", Integer.toString(gatewayPort))
+        .header("X-Forwarded-Context", "/gateway/cluster")
+        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-For", Matchers.isOneOf(gatewayHostName, gatewayAddrName))
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .expect()
+//        .log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.JSON.toString() )
+        .when().get( gatewayPath );
+
+
+    String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
+    MatcherAssert.assertThat(link, anyOf(
+        startsWith("http://" + gatewayHostName + ":" + gatewayPort + "/"),
+        startsWith("http://" + gatewayAddrName + ":" + gatewayPort + "/")));
+    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    driver.assertComplete();
+
+  }
+
+
+  @Test
+  public void testXForwardHeadersRewrite() throws Exception {
+    String username = "hdfs";
+    String password = "hdfs-password";
+    String host = "whatsinaname";
+    String port = "8889";
+    String scheme = "https";
+
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayHostName = gatewayAddress.getHostName();
+
+    //Test rewriting of body with X-Forwarded headers (using storm)
+    String resourceName = "storm/topology-id.json";
+    String path = "/api/v1/topology/WordCount-1-1424792039";
+    String gatewayPath = driver.getUrl( "STORM" ) + path;
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Context", "/gateway/cluster")
+        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-For", Matchers.containsString("what, boo"))
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Server", "what")
+        .header("X-Forwarded-For", "what, boo")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(ContentType.JSON.toString())
+        .when().get(gatewayPath);
+
+    String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
+    MatcherAssert.assertThat(link, is(
+        startsWith(scheme + "://" + host + ":" + port + "/")));
+    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+
+    driver.assertComplete();
+
+    resourceName = "storm/topology-component-id.json";
+    path = "/api/v1/topology/WordCount-1-1424792039/component/spout";
+    gatewayPath = driver.getUrl( "STORM" ) + path;
+    driver.getMock("STORM")
+        .expect()
+        .method("GET")
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Context", "/gateway/cluster")
+        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-For", Matchers.containsString("what, boo"))
+        .pathInfo(path)
+        .queryParam("user.name", username)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.JSON.toString());
+
+    response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.JSON.toString())
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Server", "what")
+        .header("X-Forwarded-For", "what, boo")
+        .expect()
+//        .log().all()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.JSON.toString() )
+        .when().get( gatewayPath );
+
+
+    link = response.getBody().jsonPath().getString("executorStats[0].workerLogLink");
+    MatcherAssert.assertThat(link, is(
+        startsWith(scheme + "://" + host + ":" + port + "/")));
+    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    driver.assertComplete();
+
+    //Test header rewrite using webhdfs
+    String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
+
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo("/v1" + root + "/dir/file")
+        .header("Host", driver.getRealAddr("WEBHDFS"))
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Context", "/gateway/cluster")
+        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-For", Matchers.containsString("what, boo"))
+        .queryParam("op", "CREATE")
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .header("Location", driver.getRealUrl("DATANODE") + "/v1" + root + "/dir/file?op=CREATE&user.name=hdfs");
+    response = given()
+        //.log().all()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("X-Forwarded-Host", host)
+        .header("X-Forwarded-Proto", scheme)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Server", "what")
+        .header("X-Forwarded-For", "what, boo")
+        .queryParam( "op", "CREATE" )
+        .expect()
+            //.log().ifError()
+        .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
+    String location = response.getHeader( "Location" );
+    //System.out.println( location );
+    log.debug( "Redirect location: " + response.getHeader( "Location" ) );
+    if( driver.isUseGateway() ) {
+      MatcherAssert.assertThat( location, is(startsWith(scheme + "://" + host + ":" + port + "/")));
+      MatcherAssert.assertThat( location, containsString( "?_=" ) );
+    }
+    MatcherAssert.assertThat(location, not(containsString("host=")));
+    MatcherAssert.assertThat(location, not(containsString("port=")));
   }
 }

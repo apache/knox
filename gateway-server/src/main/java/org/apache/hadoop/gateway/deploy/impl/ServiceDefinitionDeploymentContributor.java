@@ -23,8 +23,13 @@ import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter;
+import org.apache.hadoop.gateway.filter.XForwardedHeaderFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.hadoop.gateway.service.definition.*;
+import org.apache.hadoop.gateway.service.definition.CustomDispatch;
+import org.apache.hadoop.gateway.service.definition.Policy;
+import org.apache.hadoop.gateway.service.definition.Rewrite;
+import org.apache.hadoop.gateway.service.definition.Route;
+import org.apache.hadoop.gateway.service.definition.ServiceDefinition;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Version;
@@ -43,7 +48,11 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
 
-  public static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
+  private static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
+
+  private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
+
+  private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
 
   private ServiceDefinition serviceDefinition;
 
@@ -107,6 +116,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role(service.getRole());
     resource.pattern(binding.getPath());
+    //add x-forwarded filter if enabled in config
+    if (context.getGatewayConfig().isXForwardedEnabled()) {
+      resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl(XForwardedHeaderFilter.class);
+    }
     List<Policy> policyBindings = binding.getPolicies();
     if ( policyBindings == null ) {
       policyBindings = serviceDefinition.getPolicies();
