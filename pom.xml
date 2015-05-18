@@ -47,6 +47,7 @@
         <module>gateway-spi</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
+        <module>gateway-server-xforwarded-filter</module>
         <module>gateway-provider-rewrite</module>
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
@@ -533,6 +534,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-server-launcher</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-server-xforwarded-filter</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

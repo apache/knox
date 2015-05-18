@@ -110,6 +110,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String TRUSTSTORE_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.path";
   private static final String TRUSTSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.type";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
+  private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -428,5 +429,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getKeystoreType() {
     return get( KEYSTORE_TYPE, "JKS");
+  }
+
+  @Override
+  public boolean isXForwardedEnabled() {
+    String xForwardedEnabled = get( XFORWARDED_ENABLED, "true" );
+    return "true".equals(xForwardedEnabled);
   }
 }

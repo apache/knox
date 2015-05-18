@@ -101,4 +101,6 @@ public interface GatewayConfig {
   String getKeystoreType();
 
   String getTruststoreType();
+
+  boolean isXForwardedEnabled();
 }
