@@ -77,7 +77,10 @@ public class JettySSLService implements SSLService {
       if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
         log.creatingCredentialStoreForGateway();
         ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
-        as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+        // LET'S NOT GENERATE A DIFFERENT KEY PASSPHRASE BY DEFAULT ANYMORE
+        // IF A DEPLOYMENT WANTS TO CHANGE THE KEY PASSPHRASE TO MAKE IT MORE SECURE THEN
+        // THEY CAN ADD THE ALIAS EXPLICITLY WITH THE CLI
+        // as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
       }
       else {
         log.credentialStoreForGatewayFoundNotCreating();
@@ -91,6 +94,9 @@ public class JettySSLService implements SSLService {
         log.creatingKeyStoreForGateway();
         ks.createKeystoreForGateway();
         char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+        if (passphrase == null) {
+          passphrase = ms.getMasterSecret();
+        }
         ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
       }
       else {
