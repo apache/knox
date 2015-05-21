@@ -86,7 +86,7 @@ public class GatewayAdminFuncTest {
     LOG.info( "LDAP port = " + ldapTransport.getPort() );
   }
 
-  public static void setupGateway() throws IOException {
+  public static void setupGateway() throws Exception {
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );

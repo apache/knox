@@ -117,8 +117,10 @@ public class GatewayServer {
     } catch ( ParseException e ) {
       log.failedToParseCommandLine( e );
       GatewayCommandLine.printHelp();
-    } catch ( ServiceLifecycleException e ) {
+    } catch ( Exception e ) {
       log.failedToStartGateway( e );
+      // Make sure the process exits.
+      System.exit(1);
     }
   }
 
@@ -225,27 +227,22 @@ public class GatewayServer {
     ts.redeployTopologies(topologyName);
   }
 
-  public static GatewayServer startGateway( GatewayConfig config, GatewayServices svcs ) {
-    try {
-      log.startingGateway();
-      server = new GatewayServer( config );
-      synchronized ( server ) {
-        //KM[ Commented this out because is causes problems with
-        // multiple services instance used in a single test process.
-        // I'm not sure what drive including this check though.
-        //if (services == null) {
-        services = svcs;
-        //}
-        //KM]
-        services.start();
-        DeploymentFactory.setGatewayServices(services);
-        server.start();
-        log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
-        return server;
-      }
-    } catch( Exception e ) {
-      log.failedToStartGateway( e );
-      return null;
+  public static GatewayServer startGateway( GatewayConfig config, GatewayServices svcs ) throws Exception {
+    log.startingGateway();
+    server = new GatewayServer( config );
+    synchronized ( server ) {
+      //KM[ Commented this out because is causes problems with
+      // multiple services instance used in a single test process.
+      // I'm not sure what drive including this check though.
+      //if (services == null) {
+      services = svcs;
+      //}
+      //KM]
+      services.start();
+      DeploymentFactory.setGatewayServices(services);
+      server.start();
+      log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
+      return server;
     }
   }
 

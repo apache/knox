@@ -95,7 +95,7 @@ public class GatewayDeployFuncTest {
   }
 
   @Before
-  public void setupGateway() throws IOException {
+  public void setupGateway() throws Exception {
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
