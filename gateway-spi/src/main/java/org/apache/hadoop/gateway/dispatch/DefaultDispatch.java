@@ -43,8 +43,8 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -210,10 +210,12 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
          Header[] wwwAuthHeaders = inboundResponse.getHeaders(WWW_AUTHENTICATE);
          if (wwwAuthHeaders != null && wwwAuthHeaders.length != 0 &&
                wwwAuthHeaders[0].getValue().trim().startsWith(NEGOTIATE)) {
+            //need to consume the previous inbound response first
+            EntityUtils.consume(inboundResponse.getEntity());
+
             appCookie = appCookieManager.getAppCookie(outboundRequest, true);
             outboundRequest.removeHeaders(COOKIE);
             outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
-            client = new DefaultHttpClient();
             inboundResponse = client.execute(outboundRequest);
          } else {
             // no supported authentication type found
