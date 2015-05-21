@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -93,10 +94,14 @@ public class KnoxCLI extends Configured implements Tool {
         initializeServices( command instanceof MasterCreateCommand );
         command.execute();
       } else {
-        out.println("ERROR: Invalid Command" + "\n" + "Unrecognized option:" + args[0] + "\n"
-            + "A fatal exception has occurred. Program will exit.");
+        out.println("ERROR: Invalid Command" + "\n" + "Unrecognized option:" +
+            args[0] + "\n" +
+            "A fatal exception has occurred. Program will exit.");
         exitCode = -2;
       }
+    } catch (ServiceLifecycleException sle) {
+      out.println("ERROR: Internal Error: Please refer to the knoxcli.log " +
+          "file for details. " + sle.getMessage());
     } catch (Exception e) {
       e.printStackTrace( err );
       err.flush();
@@ -364,7 +369,10 @@ public class KnoxCLI extends Configured implements Tool {
          else {
 //           log.credentialStoreForGatewayFoundNotCreating();
          }
-         as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+         // LET'S NOT GENERATE A DIFFERENT KEY PASSPHRASE BY DEFAULT ANYMORE
+         // IF A DEPLOYMENT WANTS TO CHANGE THE KEY PASSPHRASE TO MAKE IT MORE SECURE THEN
+         // THEY CAN ADD THE ALIAS EXPLICITLY WITH THE CLI
+         //as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
        } catch (KeystoreServiceException e) {
          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
        }
@@ -378,6 +386,10 @@ public class KnoxCLI extends Configured implements Tool {
 //           log.keyStoreForGatewayFoundNotCreating();
          }
          char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+         if (passphrase == null) {
+           MasterService ms = services.getService("MasterService");
+           passphrase = ms.getMasterSecret();
+         }
          ks.addSelfSignedCertForGateway("gateway-identity", passphrase, hostname);
 //         logAndValidateCertificate();
          out.println("Certificate gateway-identity has been successfully created.");
