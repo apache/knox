@@ -24,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.impl.auth.BasicScheme;
@@ -91,8 +92,8 @@ public class HiveDispatch extends DefaultDispatch {
   }
 
   protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-      DefaultHttpClient client) throws IOException {
-    //DefaultHttpClient client = new DefaultHttpClient();
+      HttpClient httpClient) throws IOException {
+    DefaultHttpClient client = new DefaultHttpClient();
     SPNegoSchemeFactory spNegoSF = new SPNegoSchemeFactory(
           /* stripPort */true);
     // spNegoSF.setSpengoGenerator(new BouncySpnegoTokenGenerator());
