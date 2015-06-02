@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.GatewayServices;
@@ -27,6 +29,8 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.UUID;
@@ -386,6 +390,94 @@ public class KnoxCLITest {
     }
   }
 
+  private static XMLTag createBadTopology() {
+    XMLTag xml = XMLDoc.newDocument(true)
+        .addRoot( "topology" )
+        .addTag( "gateway" )
+
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "authentication" )
+        .addTag( "name" ).addText( "ShiroProvider" )
+        .addTag( "enabled" ).addText( "123" )
+        .addTag( "param" )
+        .addTag( "name" ).addText( "" )
+        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+        .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+        .addTag( "value" ).addText( "ldap://localhost:8443" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+        .addTag( "value" ).addText( "simple" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "urls./**" )
+        .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "identity-assertion" )
+        .addTag( "enabled" ).addText( "vvv" )
+        .addTag( "name" ).addText( "Default" ).gotoParent()
+        .addTag( "provider" )
+        .gotoRoot()
+        .addTag( "service" )
+        .addTag( "role" ).addText( "test-service-role" )
+        .gotoRoot();
+    return xml;
+  }
+
+  private static XMLTag createGoodTopology() {
+    XMLTag xml = XMLDoc.newDocument( true )
+        .addRoot( "topology" )
+        .addTag( "gateway" )
+
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "authentication" )
+        .addTag( "name" ).addText( "ShiroProvider" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm" )
+        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+        .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+        .addTag( "value" ).addText( "ldap://localhost:8443").gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+        .addTag( "value" ).addText( "simple" ).gotoParent()
+        .addTag( "param" )
+        .addTag( "name" ).addText( "urls./**" )
+        .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "identity-assertion" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "name" ).addText( "Default" ).gotoParent()
+        .addTag( "provider" )
+        .gotoRoot()
+        .addTag( "service" )
+        .addTag( "role" ).addText( "test-service-role" )
+        .gotoRoot();
+    return xml;
+  }
+
+  private File writeTestTopology( String name, XMLTag xml ) throws IOException {
+    // Create the test topology.
+
+    GatewayConfigMock config = new GatewayConfigMock();
+    URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
+    config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+
+    File tempFile = new File( config.getGatewayTopologyDir(), name + ".xml." + UUID.randomUUID() );
+    FileOutputStream stream = new FileOutputStream( tempFile );
+    xml.toStream( stream );
+    stream.close();
+    File descriptor = new File( config.getGatewayTopologyDir(), name + ".xml" );
+    tempFile.renameTo( descriptor );
+    return descriptor;
+  }
+
   @Test
   public void testValidateTopology() throws Exception {
 
@@ -424,5 +516,39 @@ public class KnoxCLITest {
     assertThat(outContent.toString(), containsString("not/a/path"));
   }
 
+  @Test
+  public void testValidateTopologyOutput() throws Exception {
+
+    File bad = writeTestTopology( "test-cluster-bad", createBadTopology() );
+    File good = writeTestTopology( "test-cluster-good", createGoodTopology() );
+
+    GatewayConfigMock config = new GatewayConfigMock();
+    URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
+    config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+    String args[] = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-bad"};
+
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf( config );
+    cli.run( args );
+
+    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString(), containsString("test-cluster-bad"));
+    assertThat(outContent.toString(), containsString("unsuccessful"));
+    assertThat(outContent.toString(), containsString("Invalid content"));
+    assertThat(outContent.toString(), containsString("Line"));
+
+
+    outContent.reset();
+
+    String args2[] = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-good"};
+
+    cli.run(args2);
+
+    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString(), containsString("success"));
+    assertThat(outContent.toString(), containsString("test-cluster-good"));
+
+
+  }
 
 }

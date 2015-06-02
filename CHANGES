@@ -2,8 +2,10 @@
 Release Notes - Apache Knox - Version 0.6.0
 ------------------------------------------------------------------------------
 ** New Feature
-	* [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
+    * [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
 
+** Improvement
+    * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

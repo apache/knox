@@ -32,6 +32,7 @@ import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
@@ -746,9 +747,12 @@ public class KnoxCLI extends Configured implements Tool {
       out.println("==========================================");
 
       if(new File(file).exists()) {
-        if(validateTopology(file)) {
+        TopologyValidator tv = new TopologyValidator(file);
+
+        if(tv.validateTopology()) {
           out.println("Topology file validated successfully");
         } else {
+          out.println(tv.getErrorString()) ;
           out.println("Topology validation unsuccessful");
         }
       } else {
@@ -756,53 +760,6 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    private boolean validateTopology(String pathToFile) {
-      try {
-        File xml = new File(pathToFile);
-
-        SchemaFactory fact = SchemaFactory
-            .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Schema s = fact.newSchema( getClass().getClassLoader().getResource( "conf/topology-v1.xsd" ) );
-        Validator validator = s.newValidator();
-        final List<SAXParseException> exceptions = new LinkedList<>();
-        validator.setErrorHandler(new ErrorHandler() {
-          public void warning(SAXParseException exception) throws SAXException {
-            exceptions.add(exception);
-          }
-
-          public void fatalError(SAXParseException exception) throws SAXException {
-            exceptions.add(exception);
-          }
-
-          public void error(SAXParseException exception) throws SAXException {
-            exceptions.add(exception);
-          }
-        });
-
-        validator.validate(new StreamSource(xml));
-        if(exceptions.size() > 0) {
-
-          for (SAXParseException e : exceptions) {
-            out.println("Line: " + e.getLineNumber() + " -- " + e.getMessage());
-          }
-          return false;
-        } else {
-          return true;
-        }
-
-      } catch (IOException e) {
-        out.println("Error reading topology file");
-        out.println(e.getMessage());
-        return false;
-      } catch (SAXException e) {
-        out.println("There was a fatal error in parsing the xml file.");
-        out.println(e.getMessage());
-        return false;
-      } catch (NullPointerException n) {
-        out.println("Error retrieving schema from ClassLoader");
-        return false;
-      }
-    }
   }
 
   private class ListTopologiesCommand extends Command {

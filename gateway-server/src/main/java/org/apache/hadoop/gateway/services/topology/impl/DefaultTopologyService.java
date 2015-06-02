@@ -44,6 +44,7 @@ import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
 import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
+import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.hadoop.gateway.topology.xml.KnoxFormatXmlTopologyRules;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
@@ -131,34 +132,45 @@ public class DefaultTopologyService
 
   private void redeployTopology(Topology topology) {
     File topologyFile = new File(topology.getUri());
-    long start = System.currentTimeMillis();
-    long limit = 1000L; // One second.
-    long elapsed = 1;
-    while (elapsed <= limit) {
-      try {
-        long origTimestamp = topologyFile.lastModified();
-        long setTimestamp = Math.max(System.currentTimeMillis(), topologyFile.lastModified() + elapsed);
-        if (topologyFile.setLastModified(setTimestamp)) {
-          long newTimstamp = topologyFile.lastModified();
-          if (newTimstamp > origTimestamp) {
-            break;
-          } else {
-            Thread.sleep(10);
-            elapsed = System.currentTimeMillis() - start;
-            continue;
-          }
-        } else {
-          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-            ActionOutcome.FAILURE);
-          log.failedToRedeployTopology(topology.getName());
-          break;
-        }
-      } catch (InterruptedException e) {
-        auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-          ActionOutcome.FAILURE);
-        log.failedToRedeployTopology(topology.getName(), e);
-        e.printStackTrace();
+    try {
+      TopologyValidator tv = new TopologyValidator(topology);
+
+      if(tv.validateTopology()) {
+        throw new SAXException(tv.getErrorString());
       }
+
+      long start = System.currentTimeMillis();
+      long limit = 1000L; // One second.
+      long elapsed = 1;
+      while (elapsed <= limit) {
+        try {
+          long origTimestamp = topologyFile.lastModified();
+          long setTimestamp = Math.max(System.currentTimeMillis(), topologyFile.lastModified() + elapsed);
+          if(topologyFile.setLastModified(setTimestamp)) {
+            long newTimstamp = topologyFile.lastModified();
+            if(newTimstamp > origTimestamp) {
+              break;
+            } else {
+              Thread.sleep(10);
+              elapsed = System.currentTimeMillis() - start;
+              continue;
+            }
+          } else {
+            auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+                ActionOutcome.FAILURE);
+            log.failedToRedeployTopology(topology.getName());
+            break;
+          }
+        } catch (InterruptedException e) {
+          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
+              ActionOutcome.FAILURE);
+          log.failedToRedeployTopology(topology.getName(), e);
+          e.printStackTrace();
+        }
+      }
+    } catch (SAXException e) {
+      auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
+      log.failedToRedeployTopology(topology.getName(), e);
     }
   }
 
@@ -267,12 +279,22 @@ public class DefaultTopologyService
         throw new IOException("Could not rename temp file");
       }
 
+      // This code will check if the topology is valid, and retrieve the errors if it is not.
+      TopologyValidator validator = new TopologyValidator( topology.getAbsolutePath() );
+      if( !validator.validateTopology() ){
+        throw new SAXException( validator.getErrorString() );
+      }
+
+
     } catch (JAXBException e) {
       auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology(t.getName(), e);
     } catch (IOException io) {
       auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology(t.getName(), io);
+    } catch (SAXException sx){
+      auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
+      log.failedToDeployTopology(t.getName(), sx);
     }
     reloadTopologies();
   }
