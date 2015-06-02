@@ -2,6 +2,13 @@
 Release Notes - Apache Knox - Version 0.6.0
 ------------------------------------------------------------------------------
 ** New Feature
+	* [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
+
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.6.0
+------------------------------------------------------------------------------
+** New Feature
     * [KNOX-134] - Knox should avoid repeated LDAP authentication even if Shiro session is disabled.
     * [KNOX-177] - Simplify service deployment contributor implementation
     * [KNOX-185] - Use Shiro AuthenticationInfo caching to avoid repeated ldap bind

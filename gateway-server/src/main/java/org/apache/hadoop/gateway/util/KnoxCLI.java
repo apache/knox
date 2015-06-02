@@ -35,7 +35,15 @@ import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.LinkedList;
 
 /**
  *
@@ -61,21 +70,25 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + AliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
-      "   [" + RedeployCommand.USAGE + "]\n";
+      "   [" + RedeployCommand.USAGE + "]\n" +
+      "   [" + RedeployCommand.USAGE + "]\n" +
+      "   [" + ListTopologiesCommand.USAGE + "]\n" +
+      "   [" + ValidateTopologyCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
   /** allows stderr to be captured if necessary */
   public PrintStream err = System.err;
-  
+
   private static GatewayServices services = new CLIGatewayServices();
   private Command command;
   private String value = null;
   private String cluster = null;
+  private String path = null;
   private String generate = "false";
   private String hostname = null;
   private boolean force = false;
-  
+
   // For testing only
   private String master = null;
 
@@ -128,12 +141,14 @@ public class KnoxCLI extends Configured implements Tool {
    * Parse the command line arguments and initialize the data
    * <pre>
    * % knoxcli version
+   * % knoxcli list-topologies
    * % knoxcli master-create keyName [--size size] [--generate]
    * % knoxcli create-alias alias [--cluster clustername] [--generate] [--value v]
    * % knoxcli list-alias [--cluster clustername]
    * % knoxcli delete=alias alias [--cluster clustername]
    * % knoxcli create-cert alias [--hostname h]
    * % knoxcli redeploy [--cluster clustername]
+   * % knoxcli validate-topology [--cluster clustername] | [--path <path/to/file>]
    * </pre>
    * @param args
    * @return
@@ -192,7 +207,16 @@ public class KnoxCLI extends Configured implements Tool {
         command = new VersionCommand();
       } else if ( args[i].equals("redeploy") ) {
         command = new RedeployCommand();
-      } else if ( args[i].equals("--cluster") || args[i].equals("--topology") ) {
+      } else if ( args[i].equals("validate-topology") ) {
+        if(i + 1 >= args.length) {
+          printKnoxShellUsage();
+          return -1;
+        } else {
+          command = new ValidateTopologyCommand();
+        }
+      } else if( args[i].equals("list-topologies") ){
+        command = new ListTopologiesCommand();
+      }else if ( args[i].equals("--cluster") || args[i].equals("--topology") ) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
           return -1;
@@ -204,7 +228,13 @@ public class KnoxCLI extends Configured implements Tool {
         } else {
           this.generate = "true";
         }
-      } else if (args[i].equals("--hostname")) {
+      } else if(args[i].equals("--path")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.path = args[++i];
+      }else if (args[i].equals("--hostname")) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
           return -1;
@@ -260,6 +290,14 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println( RedeployCommand.USAGE + "\n\n" + RedeployCommand.DESC );
+      out.println();
+      out.println(div);
+      out.println(ValidateTopologyCommand.USAGE + "\n\n" + ValidateTopologyCommand.DESC);
+      out.println();
+      out.println(div);
+      out.println(ListTopologiesCommand.USAGE + "\n\n" + ListTopologiesCommand.DESC);
+      out.println();
+      out.println(div);
     }
   }
 
@@ -295,7 +333,7 @@ public class KnoxCLI extends Configured implements Tool {
       return ts;
     }
   }
-  
+
  private class AliasListCommand extends Command {
 
   public static final String USAGE = "list-alias [--cluster clustername]";
@@ -357,9 +395,9 @@ public class KnoxCLI extends Configured implements Tool {
    @Override
    public void execute() throws Exception {
      KeystoreService ks = getKeystoreService();
-     
+
      AliasService as = getAliasService();
-     
+
      if (ks != null) {
        try {
          if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
@@ -376,7 +414,7 @@ public class KnoxCLI extends Configured implements Tool {
        } catch (KeystoreServiceException e) {
          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
        }
-  
+
        try {
          if (!ks.isKeystoreForGatewayAvailable()) {
 //           log.creatingKeyStoreForGateway();
@@ -419,8 +457,8 @@ public class KnoxCLI extends Configured implements Tool {
                                     "credential store. The actual secret may be specified via\n" +
                                     "the --value option or --generate will create a random secret\n" +
                                     "for you.";
-  
-  private String name = null; 
+
+  private String name = null;
 
   /**
     * @param alias
@@ -472,7 +510,7 @@ public class KnoxCLI extends Configured implements Tool {
   public static final String DESC = "The delete-alias command removes the\n" +
                                     "indicated alias from the --cluster specific\n" +
                                     "credential store or the gateway credential store.";
-  
+
   private String name = null;
 
   /**
@@ -661,6 +699,157 @@ public class KnoxCLI extends Configured implements Tool {
 
   }
 
+  private class ValidateTopologyCommand extends Command {
+
+    public static final String USAGE = "validate-topology [--cluster clustername] | [--path \"path/to/file\"]";
+    public static final String DESC = "Ensures that a cluster's description (a.k.a topology) \n" +
+        "follows the correct formatting rules.\n" +
+        "use the list-topologies command to get a list of available cluster names";
+    private String file = "";
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    public void execute() throws Exception {
+      GatewayConfig gc = getGatewayConfig();
+      String topDir = gc.getGatewayTopologyDir();
+
+      if(path != null) {
+        file = path;
+      } else if(cluster == null) {
+        // The following block of code retreieves the list of files in the topologies directory
+        File tops = new File(topDir + "/topologies");
+        if(tops.exists()) {
+          out.println("List of files available in the topologies directory");
+          for (File f : tops.listFiles()) {
+            if(f.getName().endsWith(".xml")) {
+              String fName = f.getName().replace(".xml", "");
+              out.println(fName);
+            }
+          }
+          return;
+        } else {
+          out.println("Could not locate topologies directory");
+          return;
+        }
+
+      } else {
+        file = topDir + "/" + cluster + ".xml";
+      }
+
+      // The following block checks a topology against the XSD
+      out.println();
+      out.println("File to be validated: ");
+      out.println(file);
+      out.println("==========================================");
+
+      if(new File(file).exists()) {
+        if(validateTopology(file)) {
+          out.println("Topology file validated successfully");
+        } else {
+          out.println("Topology validation unsuccessful");
+        }
+      } else {
+        out.println("The schema file specified does not exist.");
+      }
+    }
+
+    private boolean validateTopology(String pathToFile) {
+      try {
+        File xsd = new File(ClassLoader.getSystemResource( "conf/topology-v1.xsd" ).getFile());
+        File xml = new File(pathToFile);
+
+        SchemaFactory fact = SchemaFactory
+            .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema s = fact.newSchema(xsd);
+        Validator validator = s.newValidator();
+        final List<SAXParseException> exceptions = new LinkedList<>();
+        validator.setErrorHandler(new ErrorHandler() {
+          public void warning(SAXParseException exception) throws SAXException {
+            exceptions.add(exception);
+          }
+
+          public void fatalError(SAXParseException exception) throws SAXException {
+            exceptions.add(exception);
+          }
+
+          public void error(SAXParseException exception) throws SAXException {
+            exceptions.add(exception);
+          }
+        });
+
+        validator.validate(new StreamSource(xml));
+        if(exceptions.size() > 0) {
+
+          for (SAXParseException e : exceptions) {
+            out.println("Line: " + e.getLineNumber() + " -- " + e.getMessage());
+          }
+          return false;
+        } else {
+          return true;
+        }
+
+      } catch (IOException e) {
+        out.println("Error reading topology file");
+        out.println(e.getMessage());
+        return false;
+      } catch (SAXException e) {
+        out.println("There was a fatal error in parsing the xml file.");
+        out.println(e.getMessage());
+        return false;
+      }
+    }
+  }
+
+  private class ListTopologiesCommand extends Command {
+
+    public static final String USAGE = "list-topologies";
+    public static final String DESC = "Retrieves a list of the available topologies within the\n" +
+        "default topologies directory. Will return topologies that may not be deployed due\n" +
+        "errors in file formatting.";
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() {
+
+      String confDir = getGatewayConfig().getGatewayConfDir();
+      File tops = new File(confDir + "/topologies");
+      out.println("List of files available in the topologies directory");
+      out.println(tops.toString());
+      if(tops.exists()) {
+        for (File f : tops.listFiles()) {
+          if(f.getName().endsWith(".xml")) {
+            String fName = f.getName().replace(".xml", "");
+            out.println(fName);
+          }
+        }
+        return;
+      } else {
+        out.println("ERR: Topologies directory does not exist.");
+        return;
+      }
+
+    }
+
+  }
+
+  private GatewayConfig getGatewayConfig() {
+    GatewayConfig result;
+    Configuration conf = getConf();
+    if(conf != null && conf instanceof GatewayConfig) {
+      result = (GatewayConfig) conf;
+    } else {
+      result = new GatewayConfigImpl();
+    }
+    return result;
+  }
+
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
     InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( "build.properties" );
@@ -677,7 +866,7 @@ public class KnoxCLI extends Configured implements Tool {
 
   /**
   * @param args
-  * @throws Exception 
+  * @throws Exception
   */
   public static void main(String[] args) throws Exception {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );

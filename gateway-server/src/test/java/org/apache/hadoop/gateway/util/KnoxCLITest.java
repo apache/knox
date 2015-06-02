@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -356,5 +357,72 @@ public class KnoxCLITest {
     assertThat( master, is( "test-master-2" ) );
     assertThat( outContent.toString(), containsString( "Master secret has been persisted to disk." ) );
   }
+
+  @Test
+  public void testListTopology() throws Exception {
+
+    GatewayConfigMock config = new GatewayConfigMock();
+    URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
+    config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+    String args[] = {"list-topologies", "--master", "knox"};
+
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf( config );
+
+    cli.run( args );
+    assertThat(outContent.toString(), containsString("sandbox"));
+    assertThat(outContent.toString(), containsString("admin"));
+  }
+
+  private class GatewayConfigMock extends GatewayConfigImpl{
+    private String confDir;
+    public void setConfDir(String location) {
+      confDir = location;
+    }
+
+    @Override
+    public String getGatewayConfDir(){
+      return confDir;
+    }
+  }
+
+  @Test
+  public void testValidateTopology() throws Exception {
+
+    GatewayConfigMock config = new GatewayConfigMock();
+    URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
+    config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+    String args[] = {"validate-topology", "--master", "knox", "--cluster", "sandbox"};
+
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf( config );
+    cli.run( args );
+
+    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString(), containsString("sandbox"));
+    assertThat(outContent.toString(), containsString("success"));
+    outContent.reset();
+
+
+    String args2[] = {"validate-topology", "--master", "knox", "--cluster", "NotATopology"};
+    cli.run(args2);
+
+    assertThat(outContent.toString(), containsString("NotATopology"));
+    assertThat(outContent.toString(), containsString("does not exist"));
+    outContent.reset();
+
+    String args3[] = {"validate-topology", "--master", "knox", "--path", config.getGatewayTopologyDir() + "/admin.xml"};
+    cli.run(args3);
+
+    assertThat(outContent.toString(), containsString("admin"));
+    assertThat(outContent.toString(), containsString("success"));
+    outContent.reset();
+
+    String args4[] = {"validate-topology", "--master", "knox", "--path", "not/a/path"};
+    cli.run(args4);
+    assertThat(outContent.toString(), containsString("does not exist"));
+    assertThat(outContent.toString(), containsString("not/a/path"));
+  }
+
 
 }
