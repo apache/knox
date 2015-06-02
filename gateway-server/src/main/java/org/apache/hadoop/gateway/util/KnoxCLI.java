@@ -752,18 +752,17 @@ public class KnoxCLI extends Configured implements Tool {
           out.println("Topology validation unsuccessful");
         }
       } else {
-        out.println("The schema file specified does not exist.");
+        out.println("The topology file specified does not exist.");
       }
     }
 
     private boolean validateTopology(String pathToFile) {
       try {
-        File xsd = new File(ClassLoader.getSystemResource( "conf/topology-v1.xsd" ).getFile());
         File xml = new File(pathToFile);
 
         SchemaFactory fact = SchemaFactory
             .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Schema s = fact.newSchema(xsd);
+        Schema s = fact.newSchema( getClass().getClassLoader().getResource( "conf/topology-v1.xsd" ) );
         Validator validator = s.newValidator();
         final List<SAXParseException> exceptions = new LinkedList<>();
         validator.setErrorHandler(new ErrorHandler() {
@@ -798,6 +797,9 @@ public class KnoxCLI extends Configured implements Tool {
       } catch (SAXException e) {
         out.println("There was a fatal error in parsing the xml file.");
         out.println(e.getMessage());
+        return false;
+      } catch (NullPointerException n) {
+        out.println("Error retrieving schema from ClassLoader");
         return false;
       }
     }
