@@ -120,7 +120,7 @@ public class GatewayFilter implements Filter {
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
     auditContext.setRemoteIp( servletRequest.getRemoteAddr() );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
-    auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.UNAVAILABLE );
+    auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
     
     if( match != null ) {
       Chain chain = match.getValue();

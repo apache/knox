@@ -105,50 +105,45 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
    }
 
-   protected HttpResponse executeOutboundRequest(HttpUriRequest outboundRequest) throws IOException {
-      LOG.dispatchRequest(outboundRequest.getMethod(), outboundRequest.getURI());
-      HttpResponse inboundResponse = null;
+  protected HttpResponse executeOutboundRequest( HttpUriRequest outboundRequest ) throws IOException {
+    LOG.dispatchRequest( outboundRequest.getMethod(), outboundRequest.getURI() );
+    HttpResponse inboundResponse;
 
-      try {
-         String query = outboundRequest.getURI().getQuery();
-         if (!"true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-            // Hadoop cluster not Kerberos enabled
-            addCredentialsToRequest(outboundRequest);
-            inboundResponse = client.execute(outboundRequest);
-         } else if (query.contains(Q_DELEGATION_EQ) ||
-               // query string carries delegation token
-               query.contains(AMP_DELEGATION_EQ)) {
-            inboundResponse = client.execute(outboundRequest);
-         } else {
-            // Kerberos secured, no delegation token in query string
-            inboundResponse = executeKerberosDispatch(outboundRequest, client);
-         }
-      } catch (IOException e) {
-         // we do not want to expose back end host. port end points to clients, see JIRA KNOX-58
-         LOG.dispatchServiceConnectionException(outboundRequest.getURI(), e);
-         auditor.audit(Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE);
-         throw new IOException(RES.dispatchConnectionError());
-      } finally {
-         if (inboundResponse != null) {
-            int statusCode = inboundResponse.getStatusLine().getStatusCode();
-            if (statusCode != 201) {
-               LOG.dispatchResponseStatusCode(statusCode);
-            } else {
-               Header location = inboundResponse.getFirstHeader("Location");
-               if (location == null) {
-                  LOG.dispatchResponseStatusCode(statusCode);
-               } else {
-                  LOG.dispatchResponseCreatedStatusCode(statusCode, location.getValue());
-               }
-            }
-            auditor.audit(Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus(statusCode));
-         } else {
-            auditor.audit(Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE);
-         }
-
+    try {
+      auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod( outboundRequest.getMethod() ) );
+      String query = outboundRequest.getURI().getQuery();
+      if( !"true".equals( System.getProperty( GatewayConfig.HADOOP_KERBEROS_SECURED ) ) ) {
+        // Hadoop cluster not Kerberos enabled
+        addCredentialsToRequest( outboundRequest );
+        inboundResponse = client.execute( outboundRequest );
+      } else if( query.contains( Q_DELEGATION_EQ ) ||
+          // query string carries delegation token
+          query.contains( AMP_DELEGATION_EQ ) ) {
+        inboundResponse = client.execute( outboundRequest );
+      } else {
+        // Kerberos secured, no delegation token in query string
+        inboundResponse = executeKerberosDispatch( outboundRequest, client );
       }
-      return inboundResponse;
-   }
+      int statusCode = inboundResponse.getStatusLine().getStatusCode();
+      if( statusCode != 201 ) {
+        LOG.dispatchResponseStatusCode( statusCode );
+      } else {
+        Header location = inboundResponse.getFirstHeader( "Location" );
+        if( location == null ) {
+          LOG.dispatchResponseStatusCode( statusCode );
+        } else {
+          LOG.dispatchResponseCreatedStatusCode( statusCode, location.getValue() );
+        }
+      }
+      auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( statusCode ) );
+    } catch( Exception e ) {
+      // We do not want to expose back end host. port end points to clients, see JIRA KNOX-58
+      auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE );
+      LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
+      throw new IOException( RES.dispatchConnectionError() );
+    }
+    return inboundResponse;
+  }
 
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
     // Copy the client respond header to the server respond.

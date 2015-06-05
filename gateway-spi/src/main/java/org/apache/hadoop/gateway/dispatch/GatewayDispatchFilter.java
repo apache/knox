@@ -20,10 +20,17 @@ package org.apache.hadoop.gateway.dispatch;
 import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpRequestRetryHandler;
+import org.apache.http.client.RedirectStrategy;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HttpContext;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -69,7 +76,11 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       dispatch = newDispatch(dispatchImpl);
     }
     configuration().target(dispatch).source(filterConfig).inject();
-    httpClient = HttpClients.custom().setDefaultCookieStore(new NoCookieStore()).build();
+    httpClient = HttpClients.custom()
+        .setDefaultCookieStore(new NoCookieStore())
+        .setRedirectStrategy(new NeverRedirectStrategy())
+        .setRetryHandler(new NeverRetryHandler())
+        .build();
     //[sumit] this can perhaps be stashed in the servlet context to increase sharing of the client
     dispatch.setHttpClient(httpClient);
     dispatch.init();
@@ -191,6 +202,27 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     @Override
     public void clear() {
       //no op
+    }
+  }
+
+  private class NeverRedirectStrategy implements RedirectStrategy {
+    @Override
+    public boolean isRedirected( HttpRequest request, HttpResponse response, HttpContext context )
+        throws ProtocolException {
+      return false;
+    }
+
+    @Override
+    public HttpUriRequest getRedirect( HttpRequest request, HttpResponse response, HttpContext context )
+        throws ProtocolException {
+      return null;
+    }
+  }
+
+  private class NeverRetryHandler implements HttpRequestRetryHandler {
+    @Override
+    public boolean retryRequest( IOException exception, int executionCount, HttpContext context ) {
+      return false;
     }
   }
 }

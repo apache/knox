@@ -29,6 +29,9 @@ public interface SpiGatewayResources {
   @Resource( text="Service connectivity error." )
   String dispatchConnectionError();
 
+  @Resource( text="Request method: {0}" )
+  String requestMethod( String method );
+
   @Resource( text="Response status: {0}" )
   String responseStatus( int status );
 

@@ -80,4 +80,6 @@ public interface GatewayResources {
   @Resource( text="Response status: {0}" )
   String responseStatus( int status );
 
+  @Resource( text="Request method: {0}" )
+  String requestMethod( String method );
 }

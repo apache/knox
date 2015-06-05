@@ -57,6 +57,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class AuditLoggingTest {
+  private static final String METHOD = "GET";
   private static final String PATH = "path";
   private static final String CONTEXT_PATH = "contextPath/";
   private static final String ADDRESS = "address";
@@ -87,6 +88,7 @@ public class AuditLoggingTest {
     EasyMock.replay( config );
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getMethod() ).andReturn( METHOD ).anyTimes();
     EasyMock.expect( request.getPathInfo() ).andReturn( PATH ).anyTimes();
     EasyMock.expect( request.getContextPath() ).andReturn( CONTEXT_PATH ).anyTimes();
     EasyMock.expect( request.getRemoteAddr() ).andReturn( ADDRESS ).anyTimes();
@@ -108,7 +110,7 @@ public class AuditLoggingTest {
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
     LoggingEvent accessEvent = iterator.next();
-    verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, null );
+    verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
   }
 
   @Test
@@ -124,6 +126,7 @@ public class AuditLoggingTest {
     EasyMock.replay( config );
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getMethod() ).andReturn( METHOD ).anyTimes();
     EasyMock.expect( request.getPathInfo() ).andReturn( PATH ).anyTimes();
     EasyMock.expect( request.getContextPath() ).andReturn( CONTEXT_PATH ).anyTimes();
     EasyMock.expect( request.getRemoteAddr() ).andReturn( ADDRESS ).anyTimes();
@@ -149,7 +152,7 @@ public class AuditLoggingTest {
     Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
     LoggingEvent accessEvent = iterator.next();
     verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI,
-        Action.ACCESS, ActionOutcome.UNAVAILABLE, null, null );
+        Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
 
   }
 
@@ -178,17 +181,19 @@ public class AuditLoggingTest {
       fail( "Expected exception while accessing to unreachable host" );
     } catch ( IOException e ) {
       Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
-      LoggingEvent failureEvent = iterator.next();
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.FAILURE );
 
       LoggingEvent unavailableEvent = iterator.next();
       verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
       verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
       verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
       verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.UNAVAILABLE );
+
+      LoggingEvent failureEvent = iterator.next();
+      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
+      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
+      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
+      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.FAILURE );
+
     }
   }
 
