@@ -24,21 +24,32 @@ import org.apache.hadoop.gateway.services.Service;
 
 public interface AliasService extends Service {
 
-  public abstract List<String> getAliasesForCluster(String clusterName);
+  List<String> getAliasesForCluster(String clusterName)
+      throws AliasServiceException;
 
-  public abstract void addAliasForCluster(String clusterName, String alias, String value);
+  void addAliasForCluster(String clusterName, String alias,
+      String value) throws AliasServiceException;
 
-  public abstract void removeAliasForCluster(String clusterName, String alias);
+  void removeAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException;
 
-  public abstract char[] getPasswordFromAliasForCluster(String clusterName, String alias);
+  char[] getPasswordFromAliasForCluster(String clusterName,
+      String alias) throws AliasServiceException;
 
-  public abstract char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate);
+  char[] getPasswordFromAliasForCluster(String clusterName,
+      String alias, boolean generate) throws AliasServiceException;
 
-  void generateAliasForCluster(String clusterName, String alias);
+  void generateAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException;
 
-  public abstract char[] getPasswordFromAliasForGateway(String alias);
+  char[] getPasswordFromAliasForGateway(String alias)
+      throws AliasServiceException;
 
-  void generateAliasForGateway(String alias);
-  
-  Certificate getCertificateForGateway(String alias);
+  char[] getGatewayIdentityPassphrase() throws AliasServiceException;
+
+  void generateAliasForGateway(String alias)
+      throws AliasServiceException;
+
+  Certificate getCertificateForGateway(String alias)
+      throws AliasServiceException;
 }

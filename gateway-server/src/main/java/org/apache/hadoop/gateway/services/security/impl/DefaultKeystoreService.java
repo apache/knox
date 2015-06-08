@@ -82,18 +82,19 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   }
 
   @Override
-  public KeyStore getKeystoreForGateway() {
+  public KeyStore getKeystoreForGateway() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
     return getKeystore(keyStoreFile, "JKS");
   }
   
   @Override
-  public void addSelfSignedCertForGateway(String alias, char[] passphrase) {
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException {
     addSelfSignedCertForGateway(alias, passphrase, null);
   }
 
   @Override
-  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) {
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) 
+      throws KeystoreServiceException {
 
     KeyPairGenerator keyPairGenerator;
     try {
@@ -122,10 +123,13 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
       //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
+      throw new KeystoreServiceException(e);
     } catch (GeneralSecurityException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
+      throw new KeystoreServiceException(e);
     } catch (IOException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
+      throw new KeystoreServiceException(e);
     }  
   }
 
@@ -189,12 +193,14 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     return key;
   }  
   
-  public KeyStore getCredentialStoreForCluster(String clusterName) {
+  public KeyStore getCredentialStoreForCluster(String clusterName) 
+      throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     return getKeystore(keyStoreFile, "JCEKS");
   }
 
-  public void addCredentialForCluster(String clusterName, String alias, String value) {
+  public void addCredentialForCluster(String clusterName, String alias, String value) 
+      throws KeystoreServiceException {
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     addCredential(alias, value, ks);
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
@@ -212,7 +218,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   }
   
   @Override
-  public char[] getCredentialForCluster(String clusterName, String alias) {
+  public char[] getCredentialForCluster(String clusterName, String alias) 
+      throws KeystoreServiceException {
     char[] credential = null;
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
@@ -239,7 +246,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
    * @see org.apache.hadoop.gateway.services.security.KeystoreService#removeCredentialForCluster(java.lang.String, java.lang.String, java.security.KeyStore)
    */
   @Override
-  public void removeCredentialForCluster(String clusterName, String alias) {
+  public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException {
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     removeCredential(alias, ks);
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );

@@ -31,6 +31,7 @@ import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
 
@@ -97,7 +98,12 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       //System.err.println("FACTORY systempass 30: " + systemPass);
       //System.err.println("FACTORY clustername 40: " + clusterName);
       //System.err.println("FACTORY SystemProperty GatewayHome 50: " + System.getProperty(GatewayConfig.GATEWAY_HOME_VAR));
-      char[] password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
+      char[] password = null;
+      try {
+        password = aliasService.getPasswordFromAliasForCluster(clusterName, systemPass);
+      } catch (AliasServiceException e) {
+        LOG.unableToGetPassword(e);
+      }
       //System.err.println("FACTORY password: " + ((password == null) ? "NULL" : new String(password)));
       if ( password != null ) {
         //System.err.println("FACTORY SUCCESS 20 system password :" + new String(password));

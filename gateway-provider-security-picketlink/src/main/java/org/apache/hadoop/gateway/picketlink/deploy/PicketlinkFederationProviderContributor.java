@@ -26,7 +26,10 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.picketlink.PicketlinkMessages;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
@@ -47,7 +50,8 @@ public class PicketlinkFederationProviderContributor extends
   private static final String VALIDATING_ALIAS_KEY = "validating.alias.key";
   private static final String VALIDATING_ALIAS_VALUE = "validating.alias.value";
   private static final String CLOCK_SKEW_MILIS = "clock.skew.milis";
-  
+  private static PicketlinkMessages log = MessagesFactory.get( PicketlinkMessages.class );
+
   private MasterService ms = null;
   private AliasService as = null;
 
@@ -92,7 +96,13 @@ public class PicketlinkFederationProviderContributor extends
     }
     config.setSigningKeyAlias(SIGNINGKEY_ALIAS);
     if (as != null) {
-      config.setSigningKeyPass(new String(as.getPasswordFromAliasForGateway("gateway-identity-passphrase")));
+      char[] passphrase = null;
+      try {
+        passphrase = as.getGatewayIdentityPassphrase();
+        config.setSigningKeyPass(new String(passphrase));
+      } catch (AliasServiceException e) {
+        log.unableToGetGatewayIdentityPassphrase(e);
+      }
     }
     config.setValidatingAliasKey(params.get(VALIDATING_ALIAS_KEY));
     config.setValidatingAliasValue(params.get(VALIDATING_ALIAS_VALUE));

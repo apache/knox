@@ -39,6 +39,7 @@ import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 public class AccessTokenFederationFilter implements Filter {
@@ -63,7 +64,12 @@ public class AccessTokenFederationFilter implements Filter {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
       JWTToken token = JWTToken.parseToken(wireToken);
-      boolean verified = authority.verifyToken(token);
+      boolean verified = false;
+      try {
+        verified = authority.verifyToken(token);
+      } catch (TokenServiceException e) {
+        log.unableToVerifyToken(e);
+      }
       if (verified) {
         long expires = Long.parseLong(token.getExpires());
         if (expires > System.currentTimeMillis()) {

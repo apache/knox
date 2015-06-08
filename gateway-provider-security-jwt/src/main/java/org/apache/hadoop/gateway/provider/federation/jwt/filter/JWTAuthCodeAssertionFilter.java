@@ -32,6 +32,7 @@ import org.apache.hadoop.gateway.filter.security.AbstractIdentityAssertionFilter
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.JsonUtils;
 
@@ -63,29 +64,34 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
       principalName = mapper.mapUserPrincipal(principalName);
-      JWTToken authCode = authority.issueToken(subject, "RS256");
-      
-      // get the url for the token service
-      String url = null; 
-      if (sr != null) {
-        url = sr.lookupServiceURL("token", "TGS");
+      JWTToken authCode;
+      try {
+        authCode = authority.issueToken(subject, "RS256");
+        // get the url for the token service
+        String url = null; 
+        if (sr != null) {
+          url = sr.lookupServiceURL("token", "TGS");
+        }
+        
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        // TODO: populate map from JWT authorization code
+        map.put("iss", authCode.getIssuer());
+        map.put("sub", authCode.getPrincipal());
+        map.put("aud", authCode.getAudience());
+        map.put("exp", authCode.getExpires());
+        map.put("code", authCode.toString());
+        if (url != null) {
+          map.put("tke", url);
+        }
+        
+        String jsonResponse = JsonUtils.renderAsJsonString(map);
+        
+        response.getWriter().write(jsonResponse);
+        response.getWriter().flush();
+      } catch (TokenServiceException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
       }
-      
-      HashMap<String, Object> map = new HashMap<String, Object>();
-      // TODO: populate map from JWT authorization code
-      map.put("iss", authCode.getIssuer());
-      map.put("sub", authCode.getPrincipal());
-      map.put("aud", authCode.getAudience());
-      map.put("exp", authCode.getExpires());
-      map.put("code", authCode.toString());
-      if (url != null) {
-        map.put("tke", url);
-      }
-      
-      String jsonResponse = JsonUtils.renderAsJsonString(map);
-      
-      response.getWriter().write(jsonResponse);
-      response.getWriter().flush();
       return; // break filter chain
   }
 }

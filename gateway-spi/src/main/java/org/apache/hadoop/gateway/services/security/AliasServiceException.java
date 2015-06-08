@@ -15,27 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services.security.token;
+package org.apache.hadoop.gateway.services.security;
 
-import java.security.Principal;
+@SuppressWarnings("serial")
+public class AliasServiceException extends Exception {
 
-import javax.security.auth.Subject;
+  public AliasServiceException(Exception e) {
+    super(e);
+  }
 
-import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
-
-public interface JWTokenAuthority {
-
-  JWTToken issueToken(Subject subject, String algorithm)
-      throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String algorithm)
-      throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String audience,
-      String algorithm) throws TokenServiceException;
-
-  boolean verifyToken(JWTToken token) throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String audience, String algorithm,
-      long expires) throws TokenServiceException;
 }

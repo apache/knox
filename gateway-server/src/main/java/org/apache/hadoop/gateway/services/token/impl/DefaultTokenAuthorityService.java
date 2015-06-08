@@ -30,9 +30,11 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 import com.nimbusds.jose.JWSSigner;
@@ -57,7 +59,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Subject subject, String algorithm) {
+  public JWTToken issueToken(Subject subject, String algorithm) throws TokenServiceException {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
     return issueToken(p, algorithm);
   }
@@ -66,11 +68,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Principal p, String algorithm) {
+  public JWTToken issueToken(Principal p, String algorithm) throws TokenServiceException {
     return issueToken(p, null, algorithm);
   }
   
-  public JWTToken issueToken(Principal p, String audience, String algorithm) {
+  public JWTToken issueToken(Principal p, String audience, String algorithm)
+      throws TokenServiceException {
     return issueToken(p, audience, algorithm, -1);
   }
   
@@ -78,7 +81,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Principal p, String audience, String algorithm, long expires) {
+  public JWTToken issueToken(Principal p, String audience, String algorithm, long expires)
+      throws TokenServiceException {
     String[] claimArray = new String[4];
     claimArray[0] = "HSSO";
     claimArray[1] = p.getName();
@@ -98,9 +102,15 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     if ("RS256".equals(algorithm)) {
       token = new JWTToken("RS256", claimArray);
       RSAPrivateKey key;
+      char[] passphrase = null;
+      try {
+        passphrase = as.getGatewayIdentityPassphrase();
+      } catch (AliasServiceException e) {
+        throw new TokenServiceException(e);
+      }
       try {
         key = (RSAPrivateKey) ks.getKeyForGateway("gateway-identity", 
-            as.getPasswordFromAliasForGateway("gateway-identity-passphrase"));
+            passphrase);
         JWSSigner signer = new RSASSASigner(key);
         token.sign(signer);
       } catch (KeystoreServiceException e) {
@@ -116,7 +126,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public boolean verifyToken(JWTToken token) {
+  public boolean verifyToken(JWTToken token)
+      throws TokenServiceException {
     boolean rc = false;
     PublicKey key;
     try {
@@ -126,11 +137,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       // consider jwk for specifying the key too
       rc = token.verify(verifier);
     } catch (KeyStoreException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new TokenServiceException("Cannot verify token.", e);
     } catch (KeystoreServiceException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new TokenServiceException("Cannot verify token.", e);
     }
     return rc;
   }

@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
@@ -37,7 +38,6 @@ import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 
 public class DefaultCryptoService implements CryptoService {
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class ); 
 
   private AliasService as = null;
@@ -73,12 +73,23 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public void createAndStoreEncryptionKeyForCluster(String clusterName, String alias) {
-    as.generateAliasForCluster(clusterName, alias);
+    try {
+      as.generateAliasForCluster(clusterName, alias);
+    } catch (AliasServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
   @Override
   public EncryptionResult encryptForCluster(String clusterName, String alias, byte[] clear) {
-    char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
+    char[] password = null;
+    try {
+      password = as.getPasswordFromAliasForCluster(clusterName, alias);
+    } catch (AliasServiceException e2) {
+      // TODO Auto-generated catch block
+      e2.printStackTrace();
+    }
     if (password != null) {
       AESEncryptor aes = null;
       try {
@@ -107,16 +118,21 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
-  char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
-    if (password != null) {
-      AESEncryptor aes = new AESEncryptor(new String(password));
-      try {
-        return aes.decrypt(salt, iv, cipherText);
-      } catch (Exception e) {
-        LOG.failedToDecryptPasswordForCluster( clusterName, e );
+    char[] password = null;
+    try {
+      password = as.getPasswordFromAliasForCluster(clusterName, alias);
+      if (password != null) {
+        AESEncryptor aes = new AESEncryptor(new String(password));
+        try {
+          return aes.decrypt(salt, iv, cipherText);
+        } catch (Exception e) {
+          LOG.failedToDecryptPasswordForCluster( clusterName, e );
+        }
       }
-    }
-    else {
+      else {
+        LOG.failedToDecryptCipherForClusterNullPassword( clusterName );
+      }
+    } catch (AliasServiceException e1) {
       LOG.failedToDecryptCipherForClusterNullPassword( clusterName );
     }
     return null;
@@ -150,7 +166,7 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] sign(String algorithm, String alias, String payloadToSign) {
     try {
-      char[] passphrase = as.getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
+      char[] passphrase = as.getGatewayIdentityPassphrase();
       PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
@@ -165,6 +181,8 @@ public class DefaultCryptoService implements CryptoService {
     } catch (UnsupportedEncodingException e) {
       LOG.failedToSignData( e );
     } catch (KeystoreServiceException e) {
+      LOG.failedToSignData( e );
+    } catch (AliasServiceException e) {
       LOG.failedToSignData( e );
     }
     return null;

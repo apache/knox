@@ -103,6 +103,12 @@ public class CryptoServiceTest {
         // TODO Auto-generated method stub
         return null;
       }
+
+      @Override
+      public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
+        // TODO Auto-generated method stub
+        return null;
+      }
     };
     cs = new DefaultCryptoService();
     ((DefaultCryptoService)cs).setAliasService(as);

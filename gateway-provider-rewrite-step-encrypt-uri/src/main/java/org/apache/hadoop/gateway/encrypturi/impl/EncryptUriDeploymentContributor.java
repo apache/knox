@@ -22,8 +22,12 @@ import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.encrypturi.EncryptUriMessages;
 import org.apache.hadoop.gateway.encrypturi.api.EncryptUriDescriptor;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
@@ -33,6 +37,7 @@ public class EncryptUriDeploymentContributor
     extends ProviderDeploymentContributorBase
     implements ProviderDeploymentContributor {
 
+  private static EncryptUriMessages log = MessagesFactory.get( EncryptUriMessages.class );
   public static final String PROVIDER_ROLE_NAME = "encrypt";
   public static final String PROVIDER_IMPL_NAME = "default";
   private AliasService as;
@@ -60,7 +65,11 @@ public class EncryptUriDeploymentContributor
     // we don't want to overwrite an existing alias from a previous topology deployment
     // so we can't just blindly generateAlias here.
     // this version of getPassword will generate a value for it only if missing
-    this.as.getPasswordFromAliasForCluster(clusterName, EncryptUriDescriptor.PASSWORD_ALIAS, true);
+    try {
+      this.as.getPasswordFromAliasForCluster(clusterName, EncryptUriDescriptor.PASSWORD_ALIAS, true);
+    } catch (AliasServiceException e) {
+      log.unableCreatePasswordForEncryption(e);
+    }
   }
 
   @Override

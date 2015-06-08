@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -82,7 +83,13 @@ public class CredentialResource {
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     String clusterName = (String) request.getServletContext().getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
     AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-    List<String> aliases = as.getAliasesForCluster(clusterName);
+    List<String> aliases = null;
+    try {
+      aliases = as.getAliasesForCluster(clusterName);
+    } catch (AliasServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     return aliases;
   }
 
@@ -95,7 +102,13 @@ public class CredentialResource {
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     String clusterName = (String) request.getServletContext().getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
     AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-    char[] credential = as.getPasswordFromAliasForCluster(clusterName, alias);
+    char[] credential = null;
+    try {
+      credential = as.getPasswordFromAliasForCluster(clusterName, alias);
+    } catch (AliasServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     if (credential != null) {
       return new CredentialValue(alias, new String(credential));
     }

@@ -60,12 +60,13 @@ public class CMFKeystoreService extends BaseKeystoreService {
     createKeystore(filename, "JKS");
   }
 
-  public KeyStore getKeystore() {
+  public KeyStore getKeystore() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName  );
     return getKeystore(keyStoreFile, "JKS");
   }
   
-  public void addSelfSignedCert(String alias, char[] passphrase) {
+  public void addSelfSignedCert(String alias, char[] passphrase)
+      throws KeystoreServiceException {
     KeyPairGenerator keyPairGenerator;
     try {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
@@ -74,11 +75,14 @@ public class CMFKeystoreService extends BaseKeystoreService {
       X509Certificate cert = X509CertificateUtil.generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
 
       KeyStore privateKS = getKeystore();
-      privateKS.setKeyEntry(alias, KPair.getPrivate(),  
+      if (privateKS != null) {
+        privateKS.setKeyEntry(alias, KPair.getPrivate(),  
           passphrase,  
           new java.security.cert.Certificate[]{cert});  
-      
-      writeKeystoreToFile(privateKS, new File( keyStoreDir + serviceName  ));
+        writeKeystoreToFile(privateKS, new File( keyStoreDir + serviceName  ));
+      } else {
+        throw new IOException("Unable to open gateway keystore.");
+      }
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToAddSeflSignedCertForGateway(alias, e);
     } catch (GeneralSecurityException e) {
@@ -133,12 +137,12 @@ public class CMFKeystoreService extends BaseKeystoreService {
     return key;
   }  
   
-  public KeyStore getCredentialStore() {
+  public KeyStore getCredentialStore() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     return getKeystore(keyStoreFile, "JCEKS");
   }
 
-  public void addCredential(String alias, String value) {
+  public void addCredential(String alias, String value) throws KeystoreServiceException {
     KeyStore ks = getCredentialStore();
     addCredential(alias, value, ks);
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
@@ -155,7 +159,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     }
   }
 
-  public char[] getCredential(String alias) {
+  public char[] getCredential(String alias) throws KeystoreServiceException {
     char[] credential = null;
     KeyStore ks = getCredentialStore();
     credential = getCredential(alias, credential, ks);

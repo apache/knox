@@ -15,30 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.provider.federation.jwt;
+package org.apache.hadoop.gateway.securequery;
 
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.provider.federation.jwt")
-public interface JWTMessages {
-  @Message( level = MessageLevel.INFO, text = "Failed to validate the audience attribute." )
-  void failedToValidateAudience();
+@Messages(logger="org.apache.hadoop.gateway.securequery")
+public interface SecureQueryMessages {
 
-  @Message( level = MessageLevel.INFO, text = "Failed to verify the token signature." )
-  void failedToVerifyTokenSignature();
+  @Message( level = MessageLevel.ERROR, text = "Failed to create or verify the presence of a password for query string encryption: {0}" )
+  void unableCreatePasswordForEncryption(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
-  @Message( level = MessageLevel.INFO, text = "Access token has expired; a new one must be acquired." )
-  void tokenHasExpired();
-
-  @Message( level = MessageLevel.INFO, text = "Expected Bearer token is missing." )
-  void missingBearerToken();
-
-  @Message( level = MessageLevel.INFO, text = "Unable to verify token: {0}" )
-  void unableToVerifyToken(@StackTrace( level = MessageLevel.ERROR) Exception e);
-
-  @Message( level = MessageLevel.ERROR, text = "Unable to verify token: {0}" )
-  void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 }

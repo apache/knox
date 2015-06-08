@@ -17,25 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.security.token;
 
-import java.security.Principal;
+@SuppressWarnings("serial")
+public class TokenServiceException extends Exception {
 
-import javax.security.auth.Subject;
+  public TokenServiceException(Exception e) {
+    super(e);
+  }
 
-import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
-
-public interface JWTokenAuthority {
-
-  JWTToken issueToken(Subject subject, String algorithm)
-      throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String algorithm)
-      throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String audience,
-      String algorithm) throws TokenServiceException;
-
-  boolean verifyToken(JWTToken token) throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, String audience, String algorithm,
-      long expires) throws TokenServiceException;
+  public TokenServiceException(String message, Exception e) {
+    super(message, e);
+  }
 }

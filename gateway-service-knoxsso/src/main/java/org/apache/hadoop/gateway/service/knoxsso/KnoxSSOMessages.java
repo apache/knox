@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.service.knoxsso;
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
+import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.hadoop.gateway.service.knoxsso")
 public interface KnoxSSOMessages {
@@ -43,4 +44,7 @@ public interface KnoxSSOMessages {
 
   @Message( level = MessageLevel.INFO, text = "JWT cookie successfully added.")
   void addedJWTCookie();
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
+  void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 }

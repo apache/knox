@@ -65,7 +65,7 @@ public class BaseKeystoreService {
            keyStore.load( null, masterPassword );
        }
       
-       return keyStore;       
+       return keyStore;
       }
 
   private static FileOutputStream createKeyStoreFile( String fileName ) throws IOException {
@@ -143,18 +143,22 @@ public class BaseKeystoreService {
     return false;
   }
 
-  protected KeyStore getKeystore(final File keyStoreFile, String storeType) {
+  protected KeyStore getKeystore(final File keyStoreFile, String storeType) throws KeystoreServiceException {
     KeyStore credStore = null;
     try {
       credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
     } catch (CertificateException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
+      throw new KeystoreServiceException(e);
     } catch (KeyStoreException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
+      throw new KeystoreServiceException(e);
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
+      throw new KeystoreServiceException(e);
     } catch (IOException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
+      throw new KeystoreServiceException(e);
     }
     return credStore;
   }
@@ -220,12 +224,10 @@ public class BaseKeystoreService {
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
      // TODO: backup the keystore on disk before attempting a write and restore on failure
      final FileOutputStream  out = new FileOutputStream(file);
-     try
-     {
+     try {
          keyStore.store( out, masterService.getMasterSecret());
      }
-     finally
-     {
+     finally {
          out.close();
      }
   }

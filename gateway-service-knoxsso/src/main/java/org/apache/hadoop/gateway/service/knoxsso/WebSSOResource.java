@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Date;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +36,7 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -96,21 +96,26 @@ public class WebSSOResource {
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
 
-    JWT token = ts.issueToken(p, "RS256");
-    
-    addJWTHadoopCookie(original, token);
-    
-    if (removeOriginalUrlCookie) {
-      removeOriginalUrlCookie(response);
-    }
-    
-    log.aboutToRedirectToOriginal(original);
-    response.setStatus(statusCode);
-    response.setHeader("Location", original);
     try {
-      response.getOutputStream().close();
-    } catch (IOException e) {
-      log.unableToCloseOutputStream(e.getMessage(), e.getStackTrace().toString());
+      JWT token = ts.issueToken(p, "RS256");
+      
+      addJWTHadoopCookie(original, token);
+      
+      if (removeOriginalUrlCookie) {
+        removeOriginalUrlCookie(response);
+      }
+      
+      log.aboutToRedirectToOriginal(original);
+      response.setStatus(statusCode);
+      response.setHeader("Location", original);
+      try {
+        response.getOutputStream().close();
+      } catch (IOException e) {
+        log.unableToCloseOutputStream(e.getMessage(), e.getStackTrace().toString());
+      }
+    }
+    catch (TokenServiceException e) {
+      log.unableToIssueToken(e);
     }
     return null;
   }

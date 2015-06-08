@@ -22,7 +22,10 @@ import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.encrypturi.EncryptUriMessages;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 
@@ -32,6 +35,7 @@ public class SecureQueryDeploymentContributor
     extends ProviderDeploymentContributorBase
     implements ProviderDeploymentContributor {
 
+  private static SecureQueryMessages log = MessagesFactory.get( SecureQueryMessages.class );
   public static final String PROVIDER_ROLE_NAME = "secure-query";
   public static final String PROVIDER_IMPL_NAME = "default";
   private AliasService as;
@@ -59,7 +63,11 @@ public class SecureQueryDeploymentContributor
     // we don't want to overwrite an existing alias from a previous topology deployment
     // so we can't just blindly generateAlias here.
     // this version of getPassword will generate a value for it only if missing
-    this.as.getPasswordFromAliasForCluster(clusterName, "encryptQueryString", true);
+    try {
+      this.as.getPasswordFromAliasForCluster(clusterName, "encryptQueryString", true);
+    } catch (AliasServiceException e) {
+      log.unableCreatePasswordForEncryption(e);
+    }
   }
 
   @Override

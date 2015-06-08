@@ -64,6 +64,7 @@ public class DefaultGatewayServices implements GatewayServices {
     
     DefaultAliasService alias = new DefaultAliasService();
     alias.setKeystoreService(ks);
+    alias.setMasterService(ms);
     alias.init(config, options);
     services.put(ALIAS_SERVICE, alias);
 

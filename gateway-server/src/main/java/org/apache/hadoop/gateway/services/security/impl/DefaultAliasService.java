@@ -31,11 +31,15 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
+import org.apache.hadoop.gateway.services.security.MasterService;
 
 public class DefaultAliasService implements AliasService {
-  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class ); 
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+
+  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase"; 
 
   protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
@@ -44,6 +48,7 @@ public class DefaultAliasService implements AliasService {
   '2', '3', '4', '5', '6', '7', '8', '9',};
 
   private KeystoreService keystoreService;
+  private MasterService masterService;
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
@@ -57,12 +62,22 @@ public class DefaultAliasService implements AliasService {
   @Override
   public void stop() throws ServiceLifecycleException {
   }
-  
+
+  @Override
+  public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
+    if (passphrase == null) {
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String)
    */
   @Override
-  public char[] getPasswordFromAliasForCluster(String clusterName, String alias) {
+  public char[] getPasswordFromAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException {
     return getPasswordFromAliasForCluster(clusterName, alias, false);
   }
 
@@ -70,7 +85,8 @@ public class DefaultAliasService implements AliasService {
    * @see org.apache.hadoop.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String, boolean)
    */
   @Override
-  public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate) {
+  public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
+      throws AliasServiceException {
     char[] credential = null;
     try {
       credential = keystoreService.getCredentialForCluster(clusterName, alias);
@@ -82,6 +98,7 @@ public class DefaultAliasService implements AliasService {
       }
     } catch (KeystoreServiceException e) {
       LOG.failedToGetCredentialForCluster(clusterName, e);
+      throw new AliasServiceException(e);
     }
     return credential;
   }
@@ -99,12 +116,19 @@ public class DefaultAliasService implements AliasService {
     this.keystoreService = ks;
   }
 
+  public void setMasterService(MasterService ms) {
+    this.masterService = ms;
+    
+  }
+
   @Override
-  public void generateAliasForCluster(String clusterName, String alias) {
+  public void generateAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException {
     try {
       keystoreService.getCredentialStoreForCluster(clusterName);
     } catch (KeystoreServiceException e) {
       LOG.failedToGenerateAliasForCluster(clusterName, e);
+      throw new AliasServiceException(e);
     }
     String passwordString = generatePassword(16);
     addAliasForCluster(clusterName, alias, passwordString);
@@ -123,17 +147,24 @@ public class DefaultAliasService implements AliasService {
   }
 
   @Override
-  public void removeAliasForCluster(String clusterName, String alias) {
-    keystoreService.removeCredentialForCluster(clusterName, alias);
+  public void removeAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException {
+    try {
+      keystoreService.removeCredentialForCluster(clusterName, alias);
+    } catch (KeystoreServiceException e) {
+      throw new AliasServiceException(e);
+    }
   }
 
   @Override
-  public char[] getPasswordFromAliasForGateway(String alias) {
+  public char[] getPasswordFromAliasForGateway(String alias)
+      throws AliasServiceException {
     return getPasswordFromAliasForCluster("__gateway", alias);
   }
 
   @Override
-  public void generateAliasForGateway(String alias) {
+  public void generateAliasForGateway(String alias)
+      throws AliasServiceException {
     generateAliasForCluster("__gateway", alias);
   }
 
