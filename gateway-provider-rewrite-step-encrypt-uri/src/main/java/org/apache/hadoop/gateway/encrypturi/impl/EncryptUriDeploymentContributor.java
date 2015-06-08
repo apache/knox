@@ -25,7 +25,6 @@ import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.encrypturi.EncryptUriMessages;
 import org.apache.hadoop.gateway.encrypturi.api.EncryptUriDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.topology.Provider;
