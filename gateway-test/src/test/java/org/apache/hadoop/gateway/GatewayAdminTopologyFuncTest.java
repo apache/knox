@@ -62,7 +62,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
 
@@ -81,7 +83,7 @@ public class GatewayAdminTopologyFuncTest {
   public static void setupSuite() throws Exception {
     //appenders = NoOpAppender.setUp();
     setupLdap();
-    setupGateway();
+    setupGateway(new GatewayTestConfig());
   }
 
   @AfterClass
@@ -101,13 +103,12 @@ public class GatewayAdminTopologyFuncTest {
     LOG.info( "LDAP port = " + ldapTransport.getPort() );
   }
 
-  public static void setupGateway() throws Exception {
+  public static void setupGateway(GatewayTestConfig testConfig) throws Exception {
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
 
-    GatewayTestConfig testConfig = new GatewayTestConfig();
     config = testConfig;
     testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
 
@@ -651,7 +652,166 @@ public class GatewayAdminTopologyFuncTest {
         .get(url)
         .getBody().asString();
 
+  }
+
+  @Test
+  public void testXForwardedHeaders() {
+
+    String username = "admin";
+    String password = "admin-password";
+    String url =  clusterUrl + "/api/v1/topologies";
+
+//    X-Forward header values
+    String port = String.valueOf(777);
+    String server = "myserver";
+    String host = server + ":" + port;
+    String proto = "protocol";
+    String context = "/mycontext";
+    String newUrl = proto + "://" + host + context;
+//    String port = String.valueOf(gateway.getAddresses()[0].getPort());
+
+//     Case 1: Add in all x-forward headers (host, port, server, context, proto)
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .header("X-Forwarded-Host", host )
+        .header("X-Forwarded-Port", port )
+        .header("X-Forwarded-Server", server )
+        .header("X-Forwarded-Context", context)
+        .header("X-Forwarded-Proto", proto)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(newUrl))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url).prettyPrint();
+
+
+//     Case 2: add in x-forward headers (host, server, proto, context)
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .header("X-Forwarded-Host", host )
+        .header("X-Forwarded-Server", server )
+        .header("X-Forwarded-Context", context )
+        .header("X-Forwarded-Proto", proto )
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(server))
+        .body(containsString(context))
+        .body(containsString(proto))
+        .body(containsString(host))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url);
+
+//     Case 3: add in x-forward headers (host, proto, port, context)
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .header("X-Forwarded-Host", host )
+        .header("X-Forwarded-Port", port )
+        .header("X-Forwarded-Context", context )
+        .header("X-Forwarded-Proto", proto)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(host))
+        .body(containsString(port))
+        .body(containsString(context))
+        .body(containsString(proto))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url);
+
+//     Case 4: add in x-forward headers (host, proto, port, context) no port in host.
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .header("X-Forwarded-Host", server)
+        .header("X-Forwarded-Port", port)
+        .header("X-Forwarded-Context", context)
+        .header("X-Forwarded-Proto", proto)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(server))
+        .body(containsString(port))
+        .body(containsString(context))
+        .body(containsString(proto))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url);
+
+//     Case 5: add in x-forward headers (host, port)
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .header("X-Forwarded-Host", host )
+        .header("X-Forwarded-Port", port )
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(host))
+        .body(containsString(port))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url);
+
+//     Case 6: Normal Request
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(url))
+        .body(containsString("test-cluster"))
+        .body(containsString("admin"))
+        .get(url);
 
   }
+
+  @Test
+  public void testGatewayPathChange() throws Exception {
+
+    String username = "admin";
+    String password = "admin-password";
+    String url =  clusterUrl + "/api/v1/topologies";
+
+//     Case 1: Normal Request (No Change in gateway.path). Ensure HTTP OK resp + valid URL.
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .body(containsString(url + "/test-cluster"))
+        .get(url);
+
+
+//     Case 2: Change gateway.path to another String. Ensure HTTP OK resp + valid URL.
+   try {
+     gateway.stop();
+
+     GatewayTestConfig conf = new GatewayTestConfig();
+     conf.setGatewayPath("new-gateway-path");
+     setupGateway(conf);
+
+     String newUrl = clusterUrl + "/api/v1/topologies";
+
+     given()
+         .auth().preemptive().basic(username, password)
+         .header("Accept", MediaType.APPLICATION_XML)
+         .expect()
+         .statusCode(HttpStatus.SC_OK)
+         .body(containsString(newUrl + "/test-cluster"))
+         .get(newUrl);
+   } catch(Exception e){
+     fail(e.getMessage());
+   }
+    finally {
+//        Restart the gateway with old settings.
+       gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+  }
+
 
 }

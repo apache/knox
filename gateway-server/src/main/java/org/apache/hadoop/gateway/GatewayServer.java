@@ -369,6 +369,7 @@ public class GatewayServer {
     // internalUndeploy( topology ); KNOX-152
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
+    context.setAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config );
     deployments.put( name, context );
     contexts.addHandler( context );
     try {

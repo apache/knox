@@ -84,6 +84,15 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
   }
 
+//    Temp - TODO refactor xForwardedHeaderFilter
+  protected void addXForwardedFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
+    final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
+    if (context.getGatewayConfig() != null && context.getGatewayConfig().isXForwardedEnabled()) {
+      resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl("org.apache.hadoop.gateway.filter.XForwardedHeaderFilter");
+    }
+  }
+
   protected void addRewriteFilter(
       DeploymentContext context,
       Service service,

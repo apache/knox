@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.service.admin;
 
 import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.topology.Topology;
 
@@ -57,13 +58,14 @@ public class TopologiesResource {
   public Topology getTopology(@PathParam("id") String id) {
     GatewayServices services = (GatewayServices) request.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
     for (Topology t : ts.getTopologies()) {
       if(t.getName().equals(id)) {
         try {
-          t.setUri(new URI(request.getRequestURL().substring(0, request.getRequestURL().indexOf("gateway")) + "gateway/" + t.getName()));
+          t.setUri(new URI( buildURI(t, config, request) ));
         } catch (URISyntaxException se) {
           t.setUri(null);
         }
@@ -84,9 +86,10 @@ public class TopologiesResource {
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
     ArrayList<SimpleTopology> st = new ArrayList<SimpleTopology>();
+    GatewayConfig conf = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
     for (Topology t : ts.getTopologies()) {
-      st.add(getSimpleTopology(t, request.getRequestURL().toString()));
+      st.add(getSimpleTopology(t, conf));
     }
 
     Collections.sort(st, new TopologyComparator());
@@ -147,10 +150,96 @@ public class TopologiesResource {
     }
   }
 
-  private SimpleTopology getSimpleTopology(Topology t, String rURL) {
-    return new SimpleTopology(t, rURL);
+   String buildURI(Topology topology, GatewayConfig config, HttpServletRequest req){
+    String uri = buildXForwardBaseURL(req);
+
+//    Strip extra context
+    uri = uri.replace(req.getContextPath(), "");
+
+//    Add the gateway path
+    String gatewayPath;
+    if(config.getGatewayPath() != null){
+      gatewayPath = config.getGatewayPath();
+    }else{
+      gatewayPath = "gateway";
+    }
+    uri += "/" + gatewayPath;
+
+    uri += "/" + topology.getName();
+    return uri;
   }
 
+   String buildHref(Topology t, HttpServletRequest req) {
+    String href = buildXForwardBaseURL(req);
+//    Make sure that the pathInfo doesn't have any '/' chars at the end.
+    String pathInfo = req.getPathInfo();
+    if(pathInfo.endsWith("/")) {
+      while(pathInfo.endsWith("/")) {
+        pathInfo = pathInfo.substring(0, pathInfo.length() - 1);
+      }
+    }
+
+    href += pathInfo + "/" + t.getName();
+    return href;
+  }
+
+  private SimpleTopology getSimpleTopology(Topology t, GatewayConfig config) {
+    String uri = buildURI(t, config, request);
+    String href = buildHref(t, request);
+    return new SimpleTopology(t, uri, href);
+  }
+
+  private String buildXForwardBaseURL(HttpServletRequest req){
+    final String X_Forwarded = "X-Forwarded-";
+    final String X_Forwarded_Context = X_Forwarded + "Context";
+    final String X_Forwarded_Proto = X_Forwarded + "Proto";
+    final String X_Forwarded_Host = X_Forwarded + "Host";
+    final String X_Forwarded_Port = X_Forwarded + "Port";
+    final String X_Forwarded_Server = X_Forwarded + "Server";
+
+    String baseURL = "";
+
+//    Get Protocol
+    if(req.getHeader(X_Forwarded_Proto) != null){
+      baseURL += req.getHeader(X_Forwarded_Proto) + "://";
+    } else {
+      baseURL += req.getProtocol() + "://";
+    }
+
+//    Handle Server/Host and Port Here
+    if (req.getHeader(X_Forwarded_Host) != null && req.getHeader(X_Forwarded_Port) != null){
+//        Double check to see if host has port
+      if(req.getHeader(X_Forwarded_Host).contains(req.getHeader(X_Forwarded_Port))){
+        baseURL += req.getHeader(X_Forwarded_Host);
+      } else {
+//        If there's no port, add the host and port together;
+        baseURL += req.getHeader(X_Forwarded_Host) + ":" + req.getHeader(X_Forwarded_Port);
+      }
+    } else if(req.getHeader(X_Forwarded_Server) != null && req.getHeader(X_Forwarded_Port) != null){
+//      Tack on the server and port if they're available. Try host if server not available
+      baseURL += req.getHeader(X_Forwarded_Server) + ":" + req.getHeader(X_Forwarded_Port);
+    } else if(req.getHeader(X_Forwarded_Port) != null) {
+//      if we at least have a port, we can use it.
+      baseURL += req.getServerName() + ":" + req.getHeader(X_Forwarded_Port);
+    } else {
+//      Resort to request members
+      baseURL += req.getServerName() + ":" + req.getLocalPort();
+    }
+
+//    Handle Server context
+    if( req.getHeader(X_Forwarded_Context) != null ) {
+      baseURL += req.getHeader( X_Forwarded_Context );
+    } else {
+      baseURL += req.getContextPath();
+    }
+
+    return baseURL;
+  }
+
+//  Uses member request variable
+  private String buildXForwardBaseURL(){
+    return buildXForwardBaseURL(request);
+  }
 
   @XmlAccessorType(XmlAccessType.NONE)
   public static class SimpleTopology {
@@ -166,11 +255,11 @@ public class TopologiesResource {
 
     public SimpleTopology() {}
 
-    public SimpleTopology(Topology t, String reqURL) {
+    public SimpleTopology(Topology t, String uri, String href) {
       this.name = t.getName();
       this.timestamp = Long.toString(t.getTimestamp());
-      this.uri = reqURL.substring(0, reqURL.indexOf("gateway")) + "gateway/" + this.name;
-      this.href = reqURL + "/" + this.name;
+      this.uri = uri;
+      this.href = href;
     }
 
     public String getName() {
