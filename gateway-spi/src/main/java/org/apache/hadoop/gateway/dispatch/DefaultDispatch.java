@@ -48,6 +48,7 @@ import org.apache.http.util.EntityUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -181,7 +182,22 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       //        outboundResponse.setContentLength( (int)contentLength );
       //      }
       //]
-      writeResponse(inboundRequest, outboundResponse, entity.getContent());
+      InputStream stream = entity.getContent();
+      try {
+        writeResponse( inboundRequest, outboundResponse, stream );
+      } finally {
+        closeInboundResponse( inboundResponse, stream );
+      }
+    }
+  }
+
+  protected void closeInboundResponse( HttpResponse response, InputStream stream ) throws IOException {
+    try {
+      stream.close();
+    } finally {
+      if( response instanceof Closeable ) {
+        ( (Closeable)response).close();
+      }
     }
   }
 
