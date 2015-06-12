@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 
 import java.net.InetSocketAddress;
@@ -24,7 +25,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GatewayTestConfig implements GatewayConfig {
+public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   private String gatewayHomeDir = "gateway-home";
   private String hadoopConfDir = "hadoop";

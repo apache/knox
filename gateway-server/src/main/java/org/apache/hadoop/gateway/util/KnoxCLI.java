@@ -17,11 +17,13 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.gateway.GatewayCommandLine;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.services.CLIGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
@@ -31,32 +33,35 @@ import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
+import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.PropertyConfigurator;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.SAXException;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.Factory;
+import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 
-import javax.xml.XMLConstants;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.LinkedList;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Console;
 /**
  *
  */
@@ -74,7 +79,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RedeployCommand.USAGE + "]\n" +
       "   [" + RedeployCommand.USAGE + "]\n" +
       "   [" + ListTopologiesCommand.USAGE + "]\n" +
-      "   [" + ValidateTopologyCommand.USAGE + "]\n";
+      "   [" + ValidateTopologyCommand.USAGE + "]\n" +
+      "   [" + LDAPAuthCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -89,6 +95,10 @@ public class KnoxCLI extends Configured implements Tool {
   private String generate = "false";
   private String hostname = null;
   private boolean force = false;
+  private boolean debug = false;
+  private String user = null;
+  private String pass = null;
+  private boolean groups = false;
 
   // For testing only
   private String master = null;
@@ -129,7 +139,7 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   private void initializeServices(boolean persisting) throws ServiceLifecycleException {
-    GatewayConfig config = new GatewayConfigImpl();
+    GatewayConfig config = getGatewayConfig();
     Map<String,String> options = new HashMap<String,String>();
     options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(persisting));
     if (master != null) {
@@ -150,6 +160,7 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli create-cert alias [--hostname h]
    * % knoxcli redeploy [--cluster clustername]
    * % knoxcli validate-topology [--cluster clustername] | [--path <path/to/file>]
+   * % knoxcli auth-test [--cluster clustername] [--u username] [--p password]
    * </pre>
    * @param args
    * @return
@@ -192,6 +203,13 @@ public class KnoxCLI extends Configured implements Tool {
         if ((args.length > i + 1) && args[i + 1].equals("--help")) {
           printKnoxShellUsage();
           return -1;
+        }
+      }else if(args[i].equals("auth-test")) {
+        if(i + 1 >= args.length) {
+          printKnoxShellUsage();
+          return -1;
+        } else {
+          command = new LDAPAuthCommand();
         }
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
@@ -253,6 +271,24 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equals("--help")) {
         printKnoxShellUsage();
         return -1;
+      } else if(args[i].equals("--d")) {
+        this.debug = true;
+      } else if(args[i].equals("--u")) {
+        if(i + 1 <= args.length) {
+          this.user = args[++i];
+        } else{
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if(args[i].equals("--p")) {
+        if(i + 1 <= args.length) {
+          this.pass = args[++i];
+        } else{
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equals("--g")) {
+        this.groups = true;
       } else {
         printKnoxShellUsage();
         //ToolRunner.printGenericCommandUsage(System.err);
@@ -292,13 +328,16 @@ public class KnoxCLI extends Configured implements Tool {
       out.println( div );
       out.println( RedeployCommand.USAGE + "\n\n" + RedeployCommand.DESC );
       out.println();
-      out.println(div);
+      out.println( div );
       out.println(ValidateTopologyCommand.USAGE + "\n\n" + ValidateTopologyCommand.DESC);
       out.println();
-      out.println(div);
+      out.println( div );
       out.println(ListTopologiesCommand.USAGE + "\n\n" + ListTopologiesCommand.DESC);
       out.println();
-      out.println(div);
+      out.println( div );
+      out.println(LDAPAuthCommand.USAGE + "\n\n" + ListTopologiesCommand.DESC);
+      out.println();
+      out.println( div );
     }
   }
 
@@ -796,6 +835,215 @@ public class KnoxCLI extends Configured implements Tool {
 
     }
 
+  }
+
+  private class LDAPCommand extends Command {
+
+    public static final String USAGE = "ldap-command";
+    public static final String DESC = "This is an internal command. It should not be used.";
+    protected String username = null;
+    protected char[] password = null;
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() {
+    }
+
+    protected void promptCredentials() {
+      if(this.username == null){
+        Console c = System.console();
+        if( c != null) {
+          this.username = c.readLine("Username: ");
+        }else{
+          try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            out.println("Username: ");
+            this.username = reader.readLine();
+            reader.close();
+          } catch (IOException e){
+            out.println(e.getMessage());
+            this.username = "";
+          }
+        }
+      }
+
+      if(this.password == null){
+        Console c = System.console();
+        if( c != null) {
+          this.password = c.readPassword("Password: ");
+        }else{
+          try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            out.println("Password: ");
+            this.password = reader.readLine().toCharArray();
+            reader.close();
+          } catch (IOException e){
+            out.println(e.getMessage());
+            this.password = "".toCharArray();
+          }
+        }
+      }
+    }
+
+    protected Topology getTopology(String topologyName) {
+      TopologyService ts = getTopologyService();
+      ts.reloadTopologies();
+      for (Topology t : ts.getTopologies()) {
+        if(t.getName().equals(topologyName)) {
+          return t;
+        }
+      }
+      return null;
+    }
+
+  }
+
+  private class LDAPAuthCommand extends LDAPCommand {
+
+    public static final String USAGE = "auth-test [--cluster clustername] [--u username] [--p password] [--g]";
+    public static final String DESC = "This command tests a cluster's configuration ability to\n " +
+        "authenticate a user with a cluster's ShiroProvider settings.\n Use \"--g\" if you want to list the groups a" +
+        " user is a member of. \nOptional: [--u username]: Provide a username argument to the command\n" +
+        "Optional: [--p password]: Provide a password argument to the command.\n" +
+        "If a username and password argument are not supplied, the terminal will prompt you for one.";
+
+    private static final String  SUBJECT_USER_GROUPS = "subject.userGroups";
+    private HashSet<String> groupSet = new HashSet<String>();
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() {
+      Topology t = getTopology(cluster);
+      if(user != null){
+        this.username = user;
+      }
+      if(pass != null){
+        this.password = pass.toCharArray();
+      }
+      if(t == null) {
+        out.println("ERR: Topology: " + cluster + " does not exist");
+        return;
+      }
+      if(t.getProvider("authentication", "ShiroProvider") == null) {
+        out.println("ERR: This tool currently only works with shiro as the authentication provider.");
+        out.println("ERR: Please update the topology to use \"ShiroProvider\" as the authentication provider.");
+        return;
+      }
+
+      promptCredentials();
+      if(username == null || password == null){
+        return;
+      }
+
+      File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+      DeploymentFactory.setGatewayServices(services);
+      WebArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
+      File war = archive.as(ExplodedExporter.class).exportExploded(tmpDir, t.getName() + "_deploy.tmp");
+      String config = war.getAbsolutePath() + "/WEB-INF/shiro.ini";
+
+      if(new File(config).exists()) {
+        if(authenticate(config)) {
+          out.println("LDAP authentication successful!");
+          if( groupSet == null || groupSet.isEmpty()){
+            out.println( username + " does not belong to any groups");
+            if(groups){
+              out.println("You were looking for this user's groups but this user does not belong to any.");
+              out.println("Your topology file may be incorrectly configured for group lookup.");
+              if(!hasGroupLookupErrors(t)){
+                out.println("Some of your topology's param values may be incorrect. See the Knox Docs for help");
+              }
+            }
+          } else if (!groupSet.isEmpty()) {
+            for (Object o : groupSet.toArray()) {
+              out.println(username + " is a member of: " + o.toString());
+            }
+          }
+        } else {
+          out.println("ERR: Unable to authenticate user: " + username);
+        }
+      } else {
+        out.println("ERR: No shiro config file found.");
+      }
+
+      //Cleanup temp dir with deployment files
+      try {
+        FileUtils.deleteDirectory(war);
+      } catch (IOException e) {
+        out.println(e.getMessage());
+        out.println("ERR: Error when attempting to delete temp deployment.");
+      }
+    }
+
+//    returns false if any errors are printed
+    private boolean hasGroupLookupErrors(Topology topology){
+      Provider shiro = topology.getProvider("authentication", "ShiroProvider");
+      Map<String, String> params = shiro.getParams();
+      int errs = 0;
+      errs +=  hasParam(params, "main.ldapRealm") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapGroupContextFactory") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.searchBase") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.groupObjectClass") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.memberAttributeValueTemplate") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.memberAttribute") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemUsername") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemPassword") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.userDnTemplate") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.contextFactory.url") ? 0 : 1;
+      errs +=  hasParam(params, "main.ldapRealm.contextFactory.authenticationMechanism")  ? 0 : 1;
+      return errs > 0 ? true : false;
+    }
+
+    // Checks to see if the param name is present. If not, notify the user
+    private boolean hasParam(Map<String, String> params, String key){
+      if(params.get(key) == null){
+        out.println("Error: " + key + " is not present in topology");
+        return false;
+      } else { return true; }
+    }
+
+    protected boolean authenticate(String config) {
+      boolean result = false;
+      try {
+        Factory factory = new IniSecurityManagerFactory(config);
+        org.apache.shiro.mgt.SecurityManager securityManager = (org.apache.shiro.mgt.SecurityManager) factory.getInstance();
+        SecurityUtils.setSecurityManager(securityManager);
+        Subject subject = SecurityUtils.getSubject();
+        if (!subject.isAuthenticated()) {
+          UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+          try {
+            subject.login(token);
+            result = subject.isAuthenticated();
+            subject.hasRole(""); //Populate subject groups
+            groupSet = (HashSet) subject.getSession().getAttribute(SUBJECT_USER_GROUPS);
+          } catch (AuthenticationException e) {
+            out.println(e.getMessage());
+            out.println(e.getCause().getMessage());
+            if (debug) {
+              e.printStackTrace(out);
+            } else {
+              out.println("For more info, use --d for debug output.");
+            }
+          } finally {
+            subject.logout();
+          }
+        }
+      }catch(Exception e){
+        out.println(e.getMessage());
+      } finally {
+        return result;
+
+      }
+    }
   }
 
   private GatewayConfig getGatewayConfig() {
