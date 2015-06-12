@@ -1,4 +1,17 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.6.1
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
+
+** Improvement
+    * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.
+    * [KNOX-561] - Allow Knox pid directory to be configured via the knox-env.sh file
+
+** Bug
+    * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0
 ------------------------------------------------------------------------------
 ** New Feature

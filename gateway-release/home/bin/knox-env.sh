@@ -17,6 +17,8 @@
 #  limitations under the License.
 #
 
+ENV_PID_DIR=""
+
 JAVA_VERSION_PATTERNS=( "1.6.0_31/bin/java$" "1.6.0_.*/bin/java$" "1.6.0.*/bin/java$" "1.6\..*/bin/java$" "/bin/java$" )
 
 function findJava() {

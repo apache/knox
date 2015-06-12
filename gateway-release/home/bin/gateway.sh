@@ -26,6 +26,9 @@ APP_NAME=gateway
 # Start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Setup the common environment
+. $APP_BIN_DIR/knox-env.sh
+
 # The app's jar name
 APP_JAR="$APP_BIN_DIR/gateway.jar"
 
@@ -57,7 +60,7 @@ APP_PID=0
 APP_LAUNCH_CMD=$1
 
 # Name of PID file
-APP_PID_DIR="$APP_HOME_DIR/pids"
+[[ $ENV_PID_DIR ]] && APP_PID_DIR="$ENV_PID_DIR" || APP_PID_DIR="$APP_HOME_DIR/pids"
 APP_PID_FILE="$APP_PID_DIR/$APP_NAME.pid"
 
 # Name of LOG/OUT/ERR file
@@ -69,9 +72,6 @@ APP_START_WAIT_TIME=2
 
 # The kill wait time limit
 APP_KILL_WAIT_TIME=10
-
-# Setup the common environment
-. $APP_BIN_DIR/knox-env.sh
 
 function main {
    case "$1" in
