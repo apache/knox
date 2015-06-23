@@ -268,7 +268,7 @@ public class KnoxCliLdapFuncTestPositive {
     outContent.reset();
     String username = "sam";
     String password = "sam-password";
-    String args[] = {"auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password,
+    String args[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password,
         "--g"};
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
@@ -283,7 +283,7 @@ public class KnoxCliLdapFuncTestPositive {
     cli.setConf(config);
     username = "bad-name";
     password = "bad-password";
-    String args2[] = {"auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password};
+    String args2[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password};
     cli.run( args2 );
     assertThat(outContent.toString(), containsString("LDAP authentication failed"));
 
@@ -293,7 +293,7 @@ public class KnoxCliLdapFuncTestPositive {
     cli.setConf(config);
     username = "guest";
     password = "guest-password";
-    String args3[] = {"auth-test", "--master", "knox", "--cluster", "test-cluster",
+    String args3[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster",
         "--u", username, "--p", password };
     cli.run( args3 );
     assertThat(outContent.toString(), containsString("LDAP authentication success"));
@@ -305,7 +305,7 @@ public class KnoxCliLdapFuncTestPositive {
     cli.setConf(config);
     username = "guest";
     password = "guest-password";
-    String args4[] = {"auth-test", "--master", "knox", "--cluster", "cluster-dne",
+    String args4[] = {"user-auth-test", "--master", "knox", "--cluster", "cluster-dne",
         "--u", username, "--p", password };
     cli.run( args4 );
     assertThat(outContent.toString(), containsString("ERR: Topology"));

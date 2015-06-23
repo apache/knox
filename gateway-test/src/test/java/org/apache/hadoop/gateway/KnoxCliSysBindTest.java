@@ -23,21 +23,21 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.util.KnoxCLI;;
+import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.log4j.Appender;
 import org.hamcrest.Matchers;
-import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.InputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Enumeration;
@@ -46,13 +46,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
-public class KnoxCliLdapFuncTestNegative {
+;
 
-  private static Class RESOURCE_BASE_CLASS = KnoxCliLdapFuncTestPositive.class;
-  private static Logger LOG = LoggerFactory.getLogger( KnoxCliLdapFuncTestPositive.class );
+public class KnoxCliSysBindTest {
+
+  private static Class RESOURCE_BASE_CLASS = KnoxCliSysBindTest.class;
+  private static Logger LOG = LoggerFactory.getLogger( KnoxCliSysBindTest.class );
 
   public static Enumeration<Appender> appenders;
   public static GatewayTestConfig config;
@@ -107,8 +108,11 @@ public class KnoxCliLdapFuncTestNegative {
     File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    createTopology(topoDir, "test-cluster.xml", true);
-    createTopology(topoDir, "bad-cluster.xml", false);
+    writeTopology(topoDir, "test-cluster-1.xml", "guest", "guest-password", true);
+    writeTopology(topoDir, "test-cluster-2.xml", "sam", "sam-password", true);
+    writeTopology(topoDir, "test-cluster-3.xml", "admin", "admin-password", true);
+    writeTopology(topoDir, "test-cluster-4.xml", "", "", false);
+
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -121,7 +125,7 @@ public class KnoxCliLdapFuncTestNegative {
     }
   }
 
-  private static void createTopology(File topoDir, String name, boolean goodTopology) throws Exception {
+  private static void writeTopology(File topoDir, String name, String user, String pass, boolean goodTopology) throws Exception {
     File descriptor = new File(topoDir, name);
 
     if(descriptor.exists()){
@@ -130,14 +134,17 @@ public class KnoxCliLdapFuncTestNegative {
     }
 
     FileOutputStream stream = new FileOutputStream( descriptor, false );
-    if(goodTopology){
-      createTopology().toStream( stream );
+
+    if(goodTopology) {
+      createTopology(user, pass).toStream( stream );
     } else {
       createBadTopology().toStream( stream );
     }
+
     stream.close();
 
   }
+
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -167,44 +174,46 @@ public class KnoxCliLdapFuncTestNegative {
   private static XMLTag createBadTopology(){
     XMLTag xml = XMLDoc.newDocument(true)
         .addRoot("topology")
-        .addTag("gateway")
-        .addTag( "provider" )
+        .addTag( "gateway" )
+        .addTag("provider")
         .addTag("role").addText("authentication")
-        .addTag( "name" ).addText( "ShiroProvider" )
-        .addTag( "enabled" ).addText( "true" )
-        .addTag("param")
-        .addTag( "name" ).addText("main.ldapRealm")
+        .addTag("name").addText("ShiroProvider")
+        .addTag("enabled").addText("true")
+        .addTag( "param" )
+        .addTag("name").addText("main.ldapRealm")
         .addTag("value").addText("org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm").gotoParent()
-        .addTag("param")
-        .addTag( "name" ).addText("main.ldapRealm.userDnTemplate")
+        .addTag( "param" )
+        .addTag("name").addText("main.ldapRealm.userDnTemplate")
         .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
-        .addTag("param")
-        .addTag( "name" ).addText("main.ldapRealm.contextFactory.url")
+        .addTag( "param" )
+        .addTag("name").addText("main.ldapRealm.contextFactory.url")
         .addTag("value").addText("ldap://localhost:" + ldapTransport.getPort()).gotoParent()
-        .addTag("param")
-        .addTag( "name" ).addText("main.ldapRealm.contextFactory.authenticationMechanism")
+        .addTag( "param" )
+        .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
         .addTag("value").addText("simple").gotoParent()
         .addTag("param")
-        .addTag( "name" ).addText("urls./**")
-        .addTag("value").addText("authcBasic").gotoParent().gotoParent()
-        .addTag("provider")
-        .addTag( "role" ).addText("identity-assertion")
-        .addTag("enabled").addText("true")
-        .addTag("name").addText("Default").gotoParent()
-        .addTag("provider")
+        .addTag("name").addText("main.ldapRealm.authorizationEnabled")
+        .addTag("value").addText("true").gotoParent()
+        .addTag("param")
+        .addTag( "name").addText( "urls./**")
+        .addTag("value").addText( "authcBasic" ).gotoParent().gotoParent()
+        .addTag( "provider" )
+        .addTag( "role" ).addText( "identity-assertion" )
+        .addTag( "enabled" ).addText( "true" )
+        .addTag( "name" ).addText( "Default" ).gotoParent()
         .gotoRoot()
-        .addTag( "service" )
-        .addTag( "role" ).addText( "KNOX" )
+        .addTag( "service")
+        .addTag("role").addText( "KNOX" )
         .gotoRoot();
     // System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
   }
 
-  private static XMLTag createTopology() {
+  private static XMLTag createTopology(String username, String password) {
 
     XMLTag xml = XMLDoc.newDocument(true)
         .addRoot("topology")
-        .addTag("gateway" )
+        .addTag("gateway")
         .addTag("provider")
         .addTag("role").addText("authentication")
         .addTag("name").addText("ShiroProvider")
@@ -232,10 +241,10 @@ public class KnoxCliLdapFuncTestNegative {
         .addTag("value").addText("true").gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.systemUsername")
-        .addTag("value").addText("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
+        .addTag("value").addText("uid=" + username + ",ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.systemPassword")
-        .addTag( "value" ).addText("guest-password").gotoParent()
+        .addTag( "value").addText(password).gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.userDnTemplate")
         .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
@@ -246,14 +255,8 @@ public class KnoxCliLdapFuncTestNegative {
         .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
         .addTag("value").addText("simple").gotoParent()
         .addTag("param")
-        .addTag("name").addText("main.ldapRealm.cachingEnabled")
-        .addTag("value").addText("false").gotoParent()
-        .addTag("param")
-        .addTag("name").addText("com.sun.jndi.ldap.connect.pool")
-        .addTag("value").addText("false").gotoParent()
-        .addTag("param")
         .addTag("name" ).addText("urls./**")
-        .addTag("value" ).addText("authcBasic").gotoParent().gotoParent()
+        .addTag("value").addText("authcBasic").gotoParent().gotoParent()
         .addTag("provider" )
         .addTag("role").addText( "identity-assertion" )
         .addTag( "enabled").addText( "true" )
@@ -267,53 +270,56 @@ public class KnoxCliLdapFuncTestNegative {
   }
 
   @Test
-  public void testBadTopology() throws Exception {
+  public void testLDAPAuth() throws Exception {
 
-    //    Test 4: Authenticate a user with a bad topology configured with nothing required for group lookup in the topology
+//    Test 1: Make sure authentication is successful
     outContent.reset();
-    String username = "tom";
-    String password = "tom-password";
+    String args[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-1", "--d" };
     KnoxCLI cli = new KnoxCLI();
-    cli.setConf( config );
+    cli.setConf(config);
+    cli.run(args);
+    assertThat(outContent.toString(), containsString("System LDAP Bind successful"));
 
-    String args1[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
-        "--u", username, "--p", password, "--g" };
-    cli.run( args1 );
-
-    assertThat(outContent.toString(), containsString("LDAP authentication successful"));
-    assertFalse(outContent.toString().contains("analyst"));
-    assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Error:"));
-
+    //    Test 2: Make sure authentication fails
     outContent.reset();
-    username = "bad-name";
-    password = "bad-password";
+    String args2[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-2", "--d" };
     cli = new KnoxCLI();
-    cli.setConf( config );
+    cli.setConf(config);
+    cli.run(args2);
+    assertThat(outContent.toString(), containsString("System LDAP Bind successful"));
 
-    String args2[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
-        "--u", username, "--p", password, "--g" };
-    cli.run( args2 );
 
+    //    Test 3: Make sure authentication is successful
+    outContent.reset();
+    String args3[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
+    cli = new KnoxCLI();
+    cli.setConf(config);
+    cli.run(args3);
     assertThat(outContent.toString(), containsString("LDAP authentication failed"));
-    assertThat(outContent.toString(), containsString("INVALID_CREDENTIALS"));
+    assertThat(outContent.toString(), containsString("Unable to successfully bind to LDAP server with topology credentials"));
 
+    //    Test 4: Assert that we get a username/password not present error is printed
     outContent.reset();
-    username = "sam";
-    password = "sam-password";
+    String args4[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-4" };
     cli = new KnoxCLI();
-    cli.setConf( config );
+    cli.setConf(config);
+    cli.run(args4);
+    assertThat(outContent.toString(),
+        containsString("Verify that the param of name \"main.ldapRealm.contextFactory.systemUsername\" is present."));
+    assertThat(outContent.toString(),
+        containsString("Verify that the param of name \"main.ldapRealm.contextFactory.systemPassword\" is present."));
 
-    String args3[] = {"user-user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
-        "--u", username, "--p", password, "--g" };
-    cli.run( args3 );
+    //    Test 5: Assert that we get a username/password not present error is printed
+    outContent.reset();
+    String args5[] = { "system-user-auth-test", "--master", "knox", "--cluster", "not-a-cluster" };
+    cli = new KnoxCLI();
+    cli.setConf(config);
+    cli.run(args5);
+    assertThat(outContent.toString(),
+        containsString("Topology not-a-cluster does not exist"));
 
-    assertThat(outContent.toString(), containsString("LDAP authentication successful"));
-    assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Error:"));
-    assertFalse(outContent.toString().contains("analyst"));
-    assertFalse(outContent.toString().contains("scientist"));
 
   }
+
 
 }

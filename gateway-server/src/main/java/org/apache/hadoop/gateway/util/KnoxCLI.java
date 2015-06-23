@@ -80,7 +80,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RedeployCommand.USAGE + "]\n" +
       "   [" + ListTopologiesCommand.USAGE + "]\n" +
       "   [" + ValidateTopologyCommand.USAGE + "]\n" +
-      "   [" + LDAPAuthCommand.USAGE + "]\n";
+      "   [" + LDAPAuthCommand.USAGE + "]\n" +
+      "   [" + LDAPSysBindCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -160,7 +161,8 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli create-cert alias [--hostname h]
    * % knoxcli redeploy [--cluster clustername]
    * % knoxcli validate-topology [--cluster clustername] | [--path <path/to/file>]
-   * % knoxcli auth-test [--cluster clustername] [--u username] [--p password]
+   * % knoxcli user-auth-test [--cluster clustername] [--u username] [--p password]
+   * % knoxcli system-user-auth-test [--cluster clustername] [--d]
    * </pre>
    * @param args
    * @return
@@ -204,13 +206,21 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
-      }else if(args[i].equals("auth-test")) {
+      }else if(args[i].equals("user-auth-test")) {
         if(i + 1 >= args.length) {
           printKnoxShellUsage();
           return -1;
         } else {
           command = new LDAPAuthCommand();
         }
+      } else if(args[i].equals("system-user-auth-test")) {
+        if (i + 1 >= args.length){
+          printKnoxShellUsage();
+          return -1;
+        } else {
+          command = new LDAPSysBindCommand();
+        }
+
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
       } else if (args[i].equals("--value")) {
@@ -843,6 +853,8 @@ public class KnoxCLI extends Configured implements Tool {
     public static final String DESC = "This is an internal command. It should not be used.";
     protected String username = null;
     protected char[] password = null;
+    protected static final String debugMessage = "For more information use --d for debug output.";
+    protected Topology topology;
 
     @Override
     public String getUsage() {
@@ -851,8 +863,165 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() {
+      out.println("This command does not have any functionality.");
     }
 
+    /**
+     *
+     * @param config - the path to the shiro.ini file within a topology deployment.
+     * @param token - token for username and password
+     * @return - true/false whether a user was successfully able to authenticate or not.
+     */
+    protected boolean authenticateUser(String config, UsernamePasswordToken token){
+      boolean result = false;
+      try {
+        Subject subject = getSubject(config);
+        try{
+          subject.login(token);
+          if(subject.isAuthenticated()){
+            result = true;
+          }
+        } catch (AuthenticationException e){
+          out.println(e.getMessage());
+          out.println(e.getCause().getMessage());
+          if (debug) {
+            e.printStackTrace(out);
+          } else {
+            out.println(debugMessage);
+          }
+        } catch (NullPointerException e) {
+          out.println("Unable to obtain ShiroSubject");
+          if (debug){
+            e.printStackTrace();
+          } else {
+            out.println(debugMessage);
+          }
+        } finally {
+          subject.logout();
+        }
+      } catch ( Exception e ) {
+        out.println(e.getCause());
+        out.println(e.getMessage());
+      }
+      return result;
+    }
+
+    /**
+     *
+     * @param userDn - fully qualified userDn used for LDAP authentication
+     * @return - returns the principal found in the userDn after "uid="
+     */
+    protected String getPrincipal(String userDn){
+      String result = "";
+      try {
+        int uidStart = userDn.indexOf("uid=") + 4;
+        int uidEnd = userDn.indexOf(",", uidStart);
+        if(uidEnd > uidStart) {
+          result = userDn.substring(uidStart, uidEnd);
+        }
+      } catch (NullPointerException e){
+        out.println("Could not fetch principal from userDn: " + userDn);
+        out.println("The systemUsername should be in the same format as the main.ldapRealm.userDnTemplate");
+        result = userDn;
+      } finally {
+        return result;
+      }
+    }
+
+    /**
+     *
+     * @param t - topology configuration to use
+     * @param config - the path to the shiro.ini file from the topology deployment.
+     * @return - true/false whether LDAP successfully authenticated with system credentials.
+     */
+    protected boolean testSysBind(Topology t, String config) {
+      boolean result = false;
+      String username = getSystemUsername(t);
+      char[] password = getSystemPassword(t);
+
+      if(username == null) {
+        out.println("You are missing a parameter in your topology file.");
+        out.println("Verify that the param of name \"main.ldapRealm.contextFactory.systemUsername\" is present.");
+      }
+
+      if(password == null) {
+        out.println("You are missing a parameter in your topology file.");
+        out.println("Verify that the param of name \"main.ldapRealm.contextFactory.systemPassword\" is present.");
+      }
+
+      if(username != null && password != null){
+        result = authenticateUser(config, new UsernamePasswordToken(username, password));
+      }
+      return result;
+    }
+
+    /**
+     *
+     * @param t - topology configuration to use
+     * @return - the principal of the systemUsername specified in topology. null if non-existent
+     */
+    private String getSystemUsername(Topology t) {
+      final String SYSTEM_USERNAME = "main.ldapRealm.contextFactory.systemUsername";
+      String user = null;
+      Provider shiro = t.getProvider("authentication", "ShiroProvider");
+      if(shiro != null){
+        Map<String, String> params = shiro.getParams();
+        String userDn = params.get(SYSTEM_USERNAME);
+        if(userDn != null) {
+          user = getPrincipal(userDn);
+        }
+      }
+      return user;
+    }
+
+    /**
+     *
+     * @param t - topology configuration to use
+     * @return - the systemPassword specified in topology. null if non-existent
+     */
+    private char[] getSystemPassword(Topology t){
+      final String SYSTEM_PASSWORD = "main.ldapRealm.contextFactory.systemPassword";
+      String pass = null;
+      Provider shiro = t.getProvider("authentication", "ShiroProvider");
+      if(shiro != null){
+        Map<String, String> params = shiro.getParams();
+        pass = params.get(SYSTEM_PASSWORD);
+      }
+
+      if(pass != null) {
+        return pass.toCharArray();
+      } else {
+        return null;
+      }
+    }
+
+
+    /**
+     *
+     * @param config - the shiro.ini config file created in topology deployment.
+     * @return returns the Subject given by the shiro config's settings.
+     */
+    protected Subject getSubject(String config) {
+      try {
+        Factory factory = new IniSecurityManagerFactory(config);
+        org.apache.shiro.mgt.SecurityManager securityManager = (org.apache.shiro.mgt.SecurityManager) factory.getInstance();
+        SecurityUtils.setSecurityManager(securityManager);
+        Subject subject = SecurityUtils.getSubject();
+        if( subject != null) {
+          return subject;
+        } else {
+          out.println("Error Creating Subject from config at: " + config);
+        }
+      } catch (Exception e){
+        out.println(e.getMessage());
+      }
+      return null;
+    }
+
+    /**
+     * prompts the user for credentials in the command line if necessary
+     * populates the username and password members.
+     */
     protected void promptCredentials() {
       if(this.username == null){
         Console c = System.console();
@@ -889,6 +1058,11 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
+    /**
+     *
+     * @param topologyName - the name of the topology to retrieve
+     * @return - Topology object with specified name. null if topology doesn't exist in TopologyService
+     */
     protected Topology getTopology(String topologyName) {
       TopologyService ts = getTopologyService();
       ts.reloadTopologies();
@@ -900,11 +1074,60 @@ public class KnoxCLI extends Configured implements Tool {
       return null;
     }
 
+    /**
+     *
+     * @param t - Topology to use for config
+     * @return - path of shiro.ini config file.
+     */
+    protected String getConfig(Topology t){
+      File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+      DeploymentFactory.setGatewayServices(services);
+      WebArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
+      File war = archive.as(ExplodedExporter.class).exportExploded(tmpDir, t.getName() + "_deploy.tmp");
+      war.deleteOnExit();
+      String config = war.getAbsolutePath() + "/WEB-INF/shiro.ini";
+      try{
+        FileUtils.forceDeleteOnExit(war);
+      } catch (IOException e) {
+        out.println(e.getMessage());
+        war.deleteOnExit();
+      }
+      return config;
+    }
+
+    /**
+     * populates username and password if they were passed as arguments, if not will prompt user for them.
+     */
+    void acquireCredentials(){
+      if(user != null){
+        this.username = user;
+      }
+      if(pass != null){
+        this.password = pass.toCharArray();
+      }
+      promptCredentials();
+    }
+
+    /**
+     *
+     * @return - true or false if the topology was acquired from the topology service and populated in the topology
+     * field.
+     */
+    protected boolean acquireTopology(){
+      topology = getTopology(cluster);
+      if(topology == null) {
+        out.println("ERR: Topology " + cluster + " does not exist");
+        return false;
+      } else {
+        return true;
+      }
+    }
+
   }
 
   private class LDAPAuthCommand extends LDAPCommand {
 
-    public static final String USAGE = "auth-test [--cluster clustername] [--u username] [--p password] [--g]";
+    public static final String USAGE = "user-auth-test [--cluster clustername] [--u username] [--p password] [--g]";
     public static final String DESC = "This command tests a cluster's configuration ability to\n " +
         "authenticate a user with a cluster's ShiroProvider settings.\n Use \"--g\" if you want to list the groups a" +
         " user is a member of. \nOptional: [--u username]: Provide a username argument to the command\n" +
@@ -921,64 +1144,55 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() {
-      Topology t = getTopology(cluster);
-      if(user != null){
-        this.username = user;
-      }
-      if(pass != null){
-        this.password = pass.toCharArray();
-      }
-      if(t == null) {
-        out.println("ERR: Topology: " + cluster + " does not exist");
+      if(!acquireTopology()){
         return;
       }
-      if(t.getProvider("authentication", "ShiroProvider") == null) {
-        out.println("ERR: This tool currently only works with shiro as the authentication provider.");
-        out.println("ERR: Please update the topology to use \"ShiroProvider\" as the authentication provider.");
+      acquireCredentials();
+
+      if(topology.getProvider("authentication", "ShiroProvider") == null) {
+        out.println("ERR: This tool currently only works with Shiro as the authentication provider.");
+        out.println("Please update the topology to use \"ShiroProvider\" as the authentication provider.");
         return;
       }
 
-      promptCredentials();
       if(username == null || password == null){
         return;
       }
 
-      File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-      DeploymentFactory.setGatewayServices(services);
-      WebArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
-      File war = archive.as(ExplodedExporter.class).exportExploded(tmpDir, t.getName() + "_deploy.tmp");
-      String config = war.getAbsolutePath() + "/WEB-INF/shiro.ini";
+      String config = getConfig(topology);
 
       if(new File(config).exists()) {
-        if(authenticate(config)) {
-          out.println("LDAP authentication successful!");
-          if( groupSet == null || groupSet.isEmpty()){
-            out.println( username + " does not belong to any groups");
-            if(groups){
-              out.println("You were looking for this user's groups but this user does not belong to any.");
-              out.println("Your topology file may be incorrectly configured for group lookup.");
-              if(!hasGroupLookupErrors(t)){
-                out.println("Some of your topology's param values may be incorrect. See the Knox Docs for help");
+        if(testSysBind(topology, config)) {
+          if(authenticateUser(config, new UsernamePasswordToken(username, password))) {
+            if(groups) {
+              out.println("LDAP authentication successful!");
+              groupSet = getGroups(topology, new UsernamePasswordToken(username, password));
+              if(groupSet == null || groupSet.isEmpty()) {
+                out.println(username + " does not belong to any groups");
+                if(groups) {
+                  out.println("You were looking for this user's groups but this user does not belong to any.");
+                  out.println("Your topology file may be incorrectly configured for group lookup.");
+                  if(!hasGroupLookupErrors(topology)) {
+                    out.println("Some of your topology's param values may be incorrect.");
+                    out.println("Please refer to the Knox user guide to find out how to correctly configure a" +
+                        "topology for group lookup;");
+                  }
+                }
+              } else if(!groupSet.isEmpty()) {
+                for (Object o : groupSet.toArray()) {
+                  out.println(username + " is a member of: " + o.toString());
+                }
               }
             }
-          } else if (!groupSet.isEmpty()) {
-            for (Object o : groupSet.toArray()) {
-              out.println(username + " is a member of: " + o.toString());
-            }
+          } else {
+            out.println("ERR: Unable to authenticate user: " + username);
           }
         } else {
-          out.println("ERR: Unable to authenticate user: " + username);
+          out.println("Your topology was unable to bind to the LDAP server with system credentials.");
+          out.println("Please consider updating topology parameters");
         }
       } else {
         out.println("ERR: No shiro config file found.");
-      }
-
-      //Cleanup temp dir with deployment files
-      try {
-        FileUtils.deleteDirectory(war);
-      } catch (IOException e) {
-        out.println(e.getMessage());
-        out.println("ERR: Error when attempting to delete temp deployment.");
       }
     }
 
@@ -993,7 +1207,6 @@ public class KnoxCLI extends Configured implements Tool {
       errs +=  hasParam(params, "main.ldapRealm.groupObjectClass") ? 0 : 1;
       errs +=  hasParam(params, "main.ldapRealm.memberAttributeValueTemplate") ? 0 : 1;
       errs +=  hasParam(params, "main.ldapRealm.memberAttribute") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
       errs +=  hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
       errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemUsername") ? 0 : 1;
       errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemPassword") ? 0 : 1;
@@ -1011,39 +1224,61 @@ public class KnoxCLI extends Configured implements Tool {
       } else { return true; }
     }
 
-    protected boolean authenticate(String config) {
-      boolean result = false;
+    private HashSet<String> getGroups(Topology t, UsernamePasswordToken token){
+      HashSet<String> groups = null;
+      Subject subject  = getSubject(getConfig(t));
       try {
-        Factory factory = new IniSecurityManagerFactory(config);
-        org.apache.shiro.mgt.SecurityManager securityManager = (org.apache.shiro.mgt.SecurityManager) factory.getInstance();
-        SecurityUtils.setSecurityManager(securityManager);
-        Subject subject = SecurityUtils.getSubject();
-        if (!subject.isAuthenticated()) {
-          UsernamePasswordToken token = new UsernamePasswordToken(username, password);
-          try {
-            subject.login(token);
-            result = subject.isAuthenticated();
-            subject.hasRole(""); //Populate subject groups
-            groupSet = (HashSet) subject.getSession().getAttribute(SUBJECT_USER_GROUPS);
-          } catch (AuthenticationException e) {
-            out.println(e.getMessage());
-            out.println(e.getCause().getMessage());
-            if (debug) {
-              e.printStackTrace(out);
-            } else {
-              out.println("For more info, use --d for debug output.");
-            }
-          } finally {
-            subject.logout();
-          }
+        if(!subject.isAuthenticated()) {
+          subject.login(token);
         }
-      }catch(Exception e){
+        subject.hasRole(""); //Populate subject groups
+        groups = (HashSet) subject.getSession().getAttribute(SUBJECT_USER_GROUPS);
+      } catch (AuthenticationException e) {
         out.println(e.getMessage());
+        if(debug){
+          e.printStackTrace();
+        } else {
+          out.println(debugMessage);
+        }
+      } catch (NullPointerException n) {
+        out.println(n.getMessage());
+        if(debug) {
+          n.printStackTrace();
+        } else {
+          out.println(debugMessage);
+        }
       } finally {
-        return result;
-
+        subject.logout();
+        return groups;
       }
     }
+
+  }
+
+  public class LDAPSysBindCommand extends LDAPCommand {
+
+    public static final String USAGE = "system-user-auth-test [--cluster clustername] [--d]";
+    public static final String DESC = "This command tests a cluster configuration's ability to\n " +
+        "authenticate a user with a cluster's ShiroProvider settings.";
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() {
+
+      if(!acquireTopology()){
+        return;
+      }
+      if ( testSysBind(topology, getConfig(topology)) ) {
+        out.println("System LDAP Bind successful.");
+       } else {
+        out.println("Unable to successfully bind to LDAP server with topology credentials");
+      }
+    }
+
   }
 
   private GatewayConfig getGatewayConfig() {

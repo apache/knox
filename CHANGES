@@ -1,8 +1,10 @@
 ------------------------------------------------------------------------------
-Release Notes - Apache Knox - Version 0.6.1
+Release Notes - Apache Knox - Version 0.7.0
 ------------------------------------------------------------------------------
 ** New Feature
+    * [KNOX-560] - Test LDAP Authentication+Authorization from KnoxCLI
     * [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
+    * [KNOX-548] - KnoxCLI adds a new system-user-auth-test command to test a topology's system username and password
 
 ** Improvement
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.
