@@ -1048,11 +1048,16 @@ public class KnoxCLI extends Configured implements Tool {
           try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             out.println("Password: ");
-            this.password = reader.readLine().toCharArray();
+            String pw = reader.readLine();
+            if(pw != null){
+              this.password = pw.toCharArray();
+            } else {
+              this.password = new char[0];
+            }
             reader.close();
           } catch (IOException e){
             out.println(e.getMessage());
-            this.password = "".toCharArray();
+            this.password = new char[0];
           }
         }
       }
@@ -1197,23 +1202,28 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
 //    returns false if any errors are printed
-    private boolean hasGroupLookupErrors(Topology topology){
+    private boolean hasGroupLookupErrors(Topology topology) {
       Provider shiro = topology.getProvider("authentication", "ShiroProvider");
-      Map<String, String> params = shiro.getParams();
-      int errs = 0;
-      errs +=  hasParam(params, "main.ldapRealm") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapGroupContextFactory") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.searchBase") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.groupObjectClass") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.memberAttributeValueTemplate") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.memberAttribute") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemUsername") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.contextFactory.systemPassword") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.userDnTemplate") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.contextFactory.url") ? 0 : 1;
-      errs +=  hasParam(params, "main.ldapRealm.contextFactory.authenticationMechanism")  ? 0 : 1;
-      return errs > 0 ? true : false;
+      if(shiro != null) {
+        Map<String, String> params = shiro.getParams();
+        int errs = 0;
+        errs += hasParam(params, "main.ldapRealm") ? 0 : 1;
+        errs += hasParam(params, "main.ldapGroupContextFactory") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.searchBase") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.groupObjectClass") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.memberAttributeValueTemplate") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.memberAttribute") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.authorizationEnabled") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.contextFactory.systemUsername") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.contextFactory.systemPassword") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.userDnTemplate") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.contextFactory.url") ? 0 : 1;
+        errs += hasParam(params, "main.ldapRealm.contextFactory.authenticationMechanism") ? 0 : 1;
+        return errs > 0 ? true : false;
+      } else {
+        out.println("Could not obtain ShiroProvider");
+        return true;
+      }
     }
 
     // Checks to see if the param name is present. If not, notify the user
