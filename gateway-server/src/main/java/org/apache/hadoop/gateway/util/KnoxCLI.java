@@ -345,7 +345,10 @@ public class KnoxCLI extends Configured implements Tool {
       out.println(ListTopologiesCommand.USAGE + "\n\n" + ListTopologiesCommand.DESC);
       out.println();
       out.println( div );
-      out.println(LDAPAuthCommand.USAGE + "\n\n" + ListTopologiesCommand.DESC);
+      out.println(LDAPAuthCommand.USAGE + "\n\n" + LDAPAuthCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(LDAPSysBindCommand.USAGE + "\n\n" + LDAPSysBindCommand.DESC);
       out.println();
       out.println( div );
     }
