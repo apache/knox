@@ -886,7 +886,11 @@ public class XmlFilterReaderTest {
     } catch ( IOException e ) {
       fail( "Should have thrown an IllegalArgumentException." );
     } catch ( IllegalArgumentException e ) {
-      assertThat( e.getMessage(), containsString( "$.url" ) );
+      if(System.getProperty("java.vendor").contains("IBM")){
+        assertThat( e.getMessage(), containsString( "Extra illegal tokens: 'url'" ) );
+      }else {
+        assertThat( e.getMessage(), containsString( "$.url" ) );
+      }
     }
   }
 
