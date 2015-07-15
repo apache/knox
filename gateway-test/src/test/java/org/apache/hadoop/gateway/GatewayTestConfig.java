@@ -250,4 +250,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public void setXForwardedEnabled(boolean enabled) {
     xForwardedEnabled = enabled;
   }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getEphemeralDHKeySize()
+   */
+  @Override
+  public String getEphemeralDHKeySize() {
+    return "2048";
+  }
 }
