@@ -103,4 +103,6 @@ public interface GatewayConfig {
   String getTruststoreType();
 
   boolean isXForwardedEnabled();
+
+  String getEphemeralDHKeySize();
 }

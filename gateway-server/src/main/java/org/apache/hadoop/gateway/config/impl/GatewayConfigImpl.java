@@ -111,6 +111,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String TRUSTSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.type";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
+  private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -435,5 +436,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isXForwardedEnabled() {
     String xForwardedEnabled = get( XFORWARDED_ENABLED, "true" );
     return "true".equals(xForwardedEnabled);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getEphemeralDHKeySize()
+   */
+  @Override
+  public String getEphemeralDHKeySize() {
+    return get( EPHEMERAL_DH_KEY_SIZE, "2048");
   }
 }
