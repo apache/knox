@@ -43,6 +43,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class JettySSLService implements SSLService {
   private static final String EPHEMERAL_DH_KEY_SIZE_PROPERTY = "jdk.tls.ephemeralDHKeySize";
+  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
   private static final String GATEWAY_TRUSTSTORE_PASSWORD = "gateway-truststore-password";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
