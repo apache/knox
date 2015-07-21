@@ -70,7 +70,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * This class was created to reduce much of the duplication and boiler plate that was ending up in the GatewayBasicFuncTest class.
@@ -91,6 +93,7 @@ public class GatewayFuncTestDriver {
   public boolean useGateway;
   public GatewayServer gateway;
   public GatewayConfig config;
+  public String clusterName;
 
   /**
    * Sets the class from which relative test resource names should be resolved.
@@ -130,6 +133,7 @@ public class GatewayFuncTestDriver {
   public void setupGateway( GatewayTestConfig config, String cluster, XMLTag topology, boolean use ) throws Exception {
     this.useGateway = use;
     this.config = config;
+    this.clusterName = cluster;
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -233,6 +237,13 @@ public class GatewayFuncTestDriver {
     return url;
   }
 
+  public String getClusterUrl() {
+    String url;
+    String localHostName = getLocalHostName();
+    url = "http://" + localHostName + ":" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath() + "/" + clusterName;
+    return url;
+  }
+
   public String getRealAddr( String role ) {
     String addr;
     String localHostName = getLocalHostName();
@@ -311,6 +322,25 @@ public class GatewayFuncTestDriver {
             service.server.getCount(), is( 0 ) );
       }
       service.server.reset();
+    }
+  }
+
+
+  public void assertNotComplete(String serviceName) {
+    // Check to make sure that all interaction were satisfied if for mocked services.
+    // Otherwise just clear the mock interaction queue.
+
+    Service service = services.get(serviceName);
+
+    if(service != null) {
+      if(service.mock) {
+        assertThat(
+            "Service " + service.role + " has remaining expected interactions.",
+            service.server.getCount(), not(0));
+      }
+      service.server.reset();
+    } else {
+      fail();
     }
   }
 

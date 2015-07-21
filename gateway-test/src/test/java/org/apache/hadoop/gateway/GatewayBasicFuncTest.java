@@ -19,11 +19,13 @@ package org.apache.hadoop.gateway;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Cookie;
+import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.ResponseSpecification;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
@@ -49,11 +51,14 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
+import javax.ws.rs.core.MediaType;
+import java.io.PrintStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileFilter;
+import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -66,6 +71,7 @@ import java.util.Map.Entry;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
@@ -230,17 +236,19 @@ public class GatewayBasicFuncTest {
             .addTag( "role" ).addText( "WEBHBASE" )
             .addTag( "url" ).addText( driver.getRealUrl( "WEBHBASE" ) ).gotoParent()
         .addTag("service")
-            .addTag( "role" ).addText( "RESOURCEMANAGER" )
-            .addTag( "url" ).addText( driver.getRealUrl( "RESOURCEMANAGER" ) ).gotoParent()
-        .addTag( "service" )
-            .addTag( "role" ).addText( "FALCON" )
-            .addTag( "url" ).addText( driver.getRealUrl( "FALCON" ) ).gotoParent()
-        .addTag( "service" )
-            .addTag( "role" ).addText( "STORM" )
-            .addTag( "url" ).addText( driver.getRealUrl( "STORM" ) ).gotoParent()
-        .addTag( "service" )
-            .addTag( "role" ).addText( "STORM-LOGVIEWER" )
-            .addTag( "url" ).addText( driver.getRealUrl( "STORM-LOGVIEWER" ) ).gotoParent()
+            .addTag("role").addText("RESOURCEMANAGER")
+            .addTag("url").addText(driver.getRealUrl("RESOURCEMANAGER")).gotoParent()
+        .addTag("service")
+            .addTag("role").addText("FALCON")
+            .addTag("url").addText(driver.getRealUrl("FALCON")).gotoParent()
+        .addTag("service")
+            .addTag("role").addText("STORM")
+            .addTag("url").addText(driver.getRealUrl("STORM")).gotoParent()
+        .addTag("service")
+            .addTag("role").addText("STORM-LOGVIEWER")
+            .addTag("url").addText(driver.getRealUrl("STORM-LOGVIEWER")).gotoParent()
+        .addTag("service")
+        .addTag("role").addText("SERVICE-TEST")
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
@@ -3411,4 +3419,214 @@ public class GatewayBasicFuncTest {
     MatcherAssert.assertThat(location, not(containsString("host=")));
     MatcherAssert.assertThat(location, not(containsString("port=")));
   }
+
+  @Test
+  public void testServiceTestAPI() throws Exception {
+
+    String user = "kminder";
+    String password = "kminder-password";
+
+    String queryString = "?username=" + user + "&password=" + password;
+
+    String clusterUrl = driver.getClusterUrl();
+    String testUrl = clusterUrl + "/service-test";
+
+//    XML Response
+    setupResources();
+    given()
+        .header(new Header("Accept", MediaType.APPLICATION_XML))
+        .expect()
+        .contentType(MediaType.APPLICATION_XML)
+        .statusCode(HttpStatus.SC_OK)
+        .body(not(containsString("<httpCode>401")))
+        .body(not(containsString("<httpCode>404")))
+        .body(not(containsString("<httpCode>403")))
+        .body(containsString("<httpCode>200"))
+        .when()
+        .get(testUrl + queryString);
+//        .prettyPrint();
+      driver.assertComplete();
+
+//    JSON Response
+      setupResources();
+    given()
+        .header(new Header("Accept", MediaType.APPLICATION_JSON))
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(not(containsString("\"httpCode\" : 401")))
+        .body(not(containsString("\"httpCode\" : 404")))
+        .body(not(containsString("\"httpCode\" : 403")))
+        .body(containsString("\"httpCode\" : 200"))
+        .when()
+        .get(testUrl + queryString);
+//        .prettyPrint();
+    driver.assertComplete();
+
+//    Test authorization with a header instead
+    setupResources();
+    given()
+        .header(new Header("Accept", MediaType.APPLICATION_JSON))
+        .auth().preemptive().basic("kminder", "kminder-password")
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(not(containsString("\"httpCode\" : 401")))
+        .body(not(containsString("\"httpCode\" : 404")))
+        .body(not(containsString("\"httpCode\" : 403")))
+        .body(containsString("\"httpCode\" : 200"))
+        .when()
+        .get(testUrl);
+//        .prettyPrint();
+    driver.assertComplete();
+
+
+
+//    Authorize as a different (invalid) user
+    setupResources();
+    given()
+        .header(new Header("Accept", MediaType.APPLICATION_JSON))
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(not(containsString("\"httpCode\" : 200")))
+        .body(not(containsString("\"httpCode\" : 404")))
+        .body(not(containsString("\"httpCode\" : 403")))
+        .body(containsString("\"httpCode\" : 401"))
+        .when()
+        .get(testUrl + "?username=bad-user&password=bad-password");
+//        .prettyPrint();
+    driver.assertNotComplete("WEBHDFS");
+    driver.assertNotComplete("OOZIE");
+    driver.assertNotComplete("RESOURCEMANAGER");
+    driver.assertNotComplete("WEBHCAT");
+    driver.assertNotComplete("STORM");
+    driver.assertNotComplete("WEBHBASE");
+    driver.assertNotComplete("FALCON");
+
+      //    Authorize as a different (valid) user
+    setupResources();
+    given()
+        .header(new Header("Accept", MediaType.APPLICATION_JSON))
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(not(containsString("\"httpCode\" : 401")))
+        .body(not(containsString("\"httpCode\" : 404")))
+        .body(not(containsString("\"httpCode\" : 403")))
+        .when()
+        .get(testUrl + "?username=mapred&password=mapred-password");
+//        .prettyPrint();
+    driver.assertComplete();
+  }
+
+  @Test
+  public void testCLIServiceTest() throws Exception {
+
+    setupResources();
+    //    Now let's make sure we can run this same command from the CLI.
+    PrintStream out = System.out;
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    System.setOut(new PrintStream(outContent));
+
+    String args[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+        "--port", Integer.toString(gatewayAddress.getPort()), "--u", "kminder","--p", "kminder-password" };
+    KnoxCLI cli = new KnoxCLI();
+    cli.run(args);
+
+    assertThat(outContent.toString(), not(containsString("\"httpCode\": 401")));
+    assertThat( outContent.toString(), not(containsString("404")));
+    assertThat(outContent.toString(), not(containsString("403")));
+    outContent.reset();
+
+    setupResources();
+
+
+    String args2[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+        "--port", Integer.toString(gatewayAddress.getPort()) };
+
+    cli = new KnoxCLI();
+    cli.run(args2);
+    assertThat(outContent.toString(), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
+    outContent.reset();
+
+
+    String args3[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", "bad-host",
+        "--port", "0" };
+
+    cli = new KnoxCLI();
+    cli.run(args3);
+    assertThat(outContent.toString(), containsString("nodename nor servname provided"));
+    outContent.reset();
+
+    String args4[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+        "--port", "543", "--u", "mapred", "--p", "mapred-password" };
+
+    cli = new KnoxCLI();
+    cli.run(args4);
+    assertThat(outContent.toString(), containsString("failed: Connection refused"));
+    outContent.reset();
+
+
+    String args5[] = {"service-test", "--master", "knox", "--hostname", gatewayAddress.getHostName(),
+        "--port", "543", "--u", "mapred", "--p", "mapred-password" };
+
+    cli = new KnoxCLI();
+    cli.run(args5);
+    assertThat(outContent.toString(), containsString("--cluster argument is required"));
+    outContent.reset();
+
+//    Reset the out content
+    System.setOut(out);
+  }
+
+
+  void setupResource(String serviceRole, String path){
+    driver.getMock(serviceRole)
+        .expect().method("GET")
+        .pathInfo(path)
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .contentType("application/json")
+        .characterEncoding("utf-8");
+//            .content(driver.getResourceBytes(classLoaderResource + "." + type.toString().toLowerCase()))
+//            .contentType(type.toString());
+  }
+
+  void setupResources() {
+
+    driver.setResourceBase(GatewayBasicFuncTest.class);
+
+    try {
+      setupResource("WEBHDFS", "/v1/");
+      setupResource("WEBHCAT", "/v1/status");
+      setupResource("WEBHCAT", "/v1/version");
+      setupResource("WEBHCAT", "/v1/version/hive");
+      setupResource("WEBHCAT", "/v1/version/hadoop");
+      setupResource("OOZIE", "/v1/admin/build-version");
+      setupResource("OOZIE", "/v1/admin/status");
+      setupResource("OOZIE", "/versions");
+      setupResource("WEBHBASE", "/version");
+      setupResource("WEBHBASE", "/version/cluster");
+      setupResource("WEBHBASE", "/status/cluster");
+      setupResource("WEBHBASE", "/");
+      setupResource("RESOURCEMANAGER", "/v1/cluster/info/");
+      setupResource("RESOURCEMANAGER", "/v1/cluster/metrics/");
+      setupResource("RESOURCEMANAGER", "/v1/cluster/apps/");
+      setupResource("STORM", "/api/v1/cluster/configuration");
+      setupResource("STORM", "/api/v1/cluster/summary");
+      setupResource("STORM", "/api/v1/supervisor/summary");
+      setupResource("STORM", "/api/v1/topology/summary");
+      setupResource("FALCON", "/api/admin/stack");
+      setupResource("FALCON", "/api/admin/version");
+      setupResource("FALCON", "/api/metadata/lineage/serialize");
+      setupResource("FALCON", "/api/metadata/lineage/vertices/all");
+      setupResource("FALCON", "/api/metadata/lineage/edges/all");
+
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+    }
+  }
+
 }

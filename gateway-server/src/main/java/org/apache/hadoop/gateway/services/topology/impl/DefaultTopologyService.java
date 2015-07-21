@@ -36,6 +36,7 @@ import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.service.definition.ServiceDefinition;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -47,6 +48,7 @@ import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.hadoop.gateway.topology.xml.KnoxFormatXmlTopologyRules;
+import org.apache.hadoop.gateway.util.ServiceDefinitionsLoader;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
 
@@ -348,6 +350,25 @@ public class DefaultTopologyService
         log.failedToHandleTopologyEvents(e);
       }
     }
+  }
+
+  public Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config) {
+    File tFile = null;
+    Map<String, List<String>> urls = new HashMap<>();
+    for(File f : directory.listFiles()){
+      if(FilenameUtils.removeExtension(f.getName()).equals(t.getName())){
+        tFile = f;
+      }
+    }
+    Set<ServiceDefinition> defs;
+    if(tFile != null) {
+      defs = ServiceDefinitionsLoader.getServiceDefinitions(new File(config.getGatewayServicesDir()));
+
+      for(ServiceDefinition def : defs) {
+        urls.put(def.getRole(), def.getTestURLs());
+      }
+    }
+    return urls;
   }
 
   public Collection<Topology> getTopologies() {

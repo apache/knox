@@ -17,11 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.topology;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 
 public interface TopologyService extends Service {
@@ -42,4 +45,6 @@ public interface TopologyService extends Service {
 
   public void deleteTopology(Topology t);
 
-}
+  public Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config);
+
+  }

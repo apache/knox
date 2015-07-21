@@ -55,17 +55,8 @@ public class ServiceDefinitionsLoader {
       try {
         JAXBContext context = JAXBContext.newInstance(ServiceDefinition.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
-        Collection<File> files = FileUtils.listFiles(servicesDir, new IOFileFilter() {
-          @Override
-          public boolean accept(File file) {
-            return file.getName().contains(SERVICE_FILE_NAME);
-          }
-          @Override
-          public boolean accept(File dir, String name) {
-            return name.contains(SERVICE_FILE_NAME);
-          }
-        }, TrueFileFilter.INSTANCE);
-        for ( File file : files ) {
+
+        for ( File file : getFileList(servicesDir) ) {
           try {
             FileInputStream inputStream = new FileInputStream(file);
             ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
@@ -82,6 +73,45 @@ public class ServiceDefinitionsLoader {
       }
     }
     return contributors;
+  }
+
+  public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {
+    Set<ServiceDefinition> definitions = new HashSet<>();
+    try {
+      JAXBContext context = JAXBContext.newInstance(ServiceDefinition.class);
+      Unmarshaller unmarshaller = context.createUnmarshaller();
+
+      for (File f : getFileList(servicesDir)){
+        ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(f);
+        definitions.add( definition );
+      }
+
+    } catch (JAXBException e) {
+      log.failedToLoadServiceDefinition(SERVICE_FILE_NAME, e);
+    }
+
+    return definitions;
+  }
+
+  private static Collection<File> getFileList(File servicesDir) {
+    Collection<File> files;
+    if ( servicesDir.exists() && servicesDir.isDirectory() ) {
+       files = FileUtils.listFiles(servicesDir, new IOFileFilter() {
+        @Override
+        public boolean accept(File file) {
+          return file.getName().contains(SERVICE_FILE_NAME);
+        }
+
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.contains(SERVICE_FILE_NAME);
+        }
+      }, TrueFileFilter.INSTANCE);
+    } else {
+      return files = new HashSet<File>();
+    }
+
+    return files;
   }
 
   private static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {

@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement(name = "service")
@@ -37,6 +38,8 @@ public class ServiceDefinition {
   private List<Policy> policies;
 
   private CustomDispatch dispatch;
+
+  private List<String> testURLs;
 
   @XmlAttribute
   public String getName() {
@@ -88,6 +91,21 @@ public class ServiceDefinition {
   @XmlElement(name = "dispatch")
   public CustomDispatch getDispatch() {
     return dispatch;
+  }
+
+  @XmlElement(name = "testURL")
+  @XmlElementWrapper(name = "testURLs")
+  public List<String> getTestURLs() {
+
+    if(testURLs != null){
+      return testURLs;
+    } else {
+      return new ArrayList<String>();
+    }
+  }
+
+  public void setTestURLs(List<String> testURLs) {
+    this.testURLs = testURLs;
   }
 
   public void setDispatch(CustomDispatch dispatch) {

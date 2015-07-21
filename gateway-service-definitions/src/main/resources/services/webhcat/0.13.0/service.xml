@@ -20,4 +20,10 @@
         <route path="/templeton/v1/?**"/>
         <route path="/templeton/v1/**?**"/>
     </routes>
+    <testURLs>
+        <testURL>/templeton/v1/status</testURL>
+        <testURL>/templeton/v1/version</testURL>
+        <testURL>/templeton/v1/version/hive</testURL>
+        <testURL>/templeton/v1/version/hadoop</testURL>
+    </testURLs>
 </service>

@@ -25,4 +25,10 @@
         </route>
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.storm.StormDispatch"/>
+    <testURLs>
+        <testURL>/storm/api/v1/cluster/configuration</testURL>
+        <testURL>/storm/api/v1/cluster/summary</testURL>
+        <testURL>/storm/api/v1/supervisor/summary</testURL>
+        <testURL>/storm/api/v1/topology/summary</testURL>
+    </testURLs>
 </service>

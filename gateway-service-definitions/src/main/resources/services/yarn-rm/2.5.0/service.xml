@@ -51,4 +51,9 @@
             <rewrite apply="RESOURCEMANAGER/resourcemanager/proxy/taskattempt/outbound" to="response.body"/>
         </route>
     </routes>
+    <testURLs>
+        <testURL>/resourcemanager/v1/cluster/info</testURL>
+        <testURL>/resourcemanager/v1/cluster/metrics</testURL>
+        <testURL>/resourcemanager/v1/cluster/apps</testURL>
+    </testURLs>
 </service>

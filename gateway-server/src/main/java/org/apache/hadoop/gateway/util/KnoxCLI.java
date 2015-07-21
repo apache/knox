@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -38,6 +39,13 @@ import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -45,13 +53,18 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
+import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +94,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + ListTopologiesCommand.USAGE + "]\n" +
       "   [" + ValidateTopologyCommand.USAGE + "]\n" +
       "   [" + LDAPAuthCommand.USAGE + "]\n" +
-      "   [" + LDAPSysBindCommand.USAGE + "]\n";
+      "   [" + LDAPSysBindCommand.USAGE + "]\n" +
+      "   [" + ServiceTestCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -95,6 +109,7 @@ public class KnoxCLI extends Configured implements Tool {
   private String path = null;
   private String generate = "false";
   private String hostname = null;
+  private String port = null;
   private boolean force = false;
   private boolean debug = false;
   private String user = null;
@@ -163,6 +178,8 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli validate-topology [--cluster clustername] | [--path <path/to/file>]
    * % knoxcli user-auth-test [--cluster clustername] [--u username] [--p password]
    * % knoxcli system-user-auth-test [--cluster clustername] [--d]
+   * % knoxcli service-test [--u user] [--p password] [--cluster clustername] [--hostname name] [--port port]
+   *
    * </pre>
    * @param args
    * @return
@@ -251,6 +268,13 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.cluster = args[++i];
+      } else if (args[i].equals("service-test")) {
+        if( i + 1 >= args[i].length()) {
+          printKnoxShellUsage();
+          return -1;
+        } else {
+          command = new ServiceTestCommand();
+        }
       } else if (args[i].equals("--generate")) {
         if ( command != null && command instanceof MasterCreateCommand ) {
           this.master = UUID.randomUUID().toString();
@@ -269,6 +293,12 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.hostname = args[++i];
+      } else if (args[i].equals("--port")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.port = args[++i];
       } else if (args[i].equals("--master")) {
         // For testing only
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
@@ -349,6 +379,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println(LDAPSysBindCommand.USAGE + "\n\n" + LDAPSysBindCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(ServiceTestCommand.USAGE + "\n\n" + ServiceTestCommand.DESC);
       out.println();
       out.println( div );
     }
@@ -1290,6 +1323,161 @@ public class KnoxCLI extends Configured implements Tool {
        } else {
         out.println("Unable to successfully bind to LDAP server with topology credentials");
       }
+    }
+
+  }
+
+  public class ServiceTestCommand extends Command {
+    public static final String USAGE = "service-test [--u username] [--p password] [--cluster clustername] [--hostname name] " +
+        "[--port port]";
+    public static final String DESC =  "This command requires a running instance of Knox to be present on the same " +
+        "machine. It will execute a test to make sure all services are accessible through the gateway URLs. Errors are " +
+        "reported and suggestions to resolve any problems are returned. JSON formatted.";
+
+    private boolean ssl = true;
+    private int attempts = 0;
+
+    @Override
+    public String getUsage() { return USAGE + ":\n\n" + DESC; };
+
+    @Override
+    public void execute() {
+      attempts++;
+      SSLContext ctx = null;
+      CloseableHttpClient client;
+      String http = "https://";
+      String https = "http://";
+      GatewayConfig conf = getGatewayConfig();
+      String gatewayPort;
+      String host;
+
+
+      if(cluster == null) {
+        printKnoxShellUsage();
+        out.println("A --cluster argument is required.");
+        return;
+      }
+
+      if(hostname != null) {
+        host = hostname;
+      } else {
+        try {
+          host = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+          out.println(e.getMessage());
+          out.println("Defaulting address to localhost. Use --hostname option to specify a different hostname");
+          host = "localhost";
+        }
+      }
+
+      if (port != null) {
+        gatewayPort = port;
+      } else if (conf.getGatewayPort() > -1) {
+        gatewayPort = Integer.toString(conf.getGatewayPort());
+      } else {
+        out.println("Could not get port. Please supply it using the --port option");
+        return;
+      }
+
+
+      String path =  "/" + conf.getGatewayPath();
+      String topology = "/" + cluster;
+      String httpServiceTestURL = http + host + ":" + gatewayPort + path + topology + "/service-test";
+      String httpsServiceTestURL = https + host + ":" + gatewayPort + path + topology + "/service-test";
+
+      String authString = "";
+//    Create Authorization String
+      if( user != null && pass != null) {
+        authString = "Basic " + Base64.encodeBase64String((user + ":" + pass).getBytes());
+      } else {
+        out.println("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.");
+      }
+
+//    Attempt to build SSL context for HTTP client.
+      try {
+        ctx = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
+      } catch (Exception e) {
+        out.println(e.getMessage());
+      }
+
+//    Initialize the HTTP client
+      if(ctx == null) {
+        client = HttpClients.createDefault();
+      } else {
+        client = HttpClients.custom().setSslcontext(ctx).build();
+      }
+
+      HttpGet request = new HttpGet(httpsServiceTestURL);
+      request.setHeader("Authorization", authString);
+      request.setHeader("Accept", MediaType.APPLICATION_JSON.getMediaType());
+      try {
+        CloseableHttpResponse response = client.execute(request);
+
+//        Fallback to http in case Http in case https doesn't work.
+        if(response.getStatusLine().getStatusCode() != 200) {
+          request = new HttpGet(httpServiceTestURL);
+          response = client.execute(request);
+        }
+
+        response.close();
+        request.releaseConnection();
+
+        switch (response.getStatusLine().getStatusCode()) {
+
+          case 200:
+            response.getEntity().writeTo(out);
+            break;
+          case 404:
+            out.println("Could not find service-test resource");
+            out.println("Make sure you have configured the SERVICE-TEST service in your topology.");
+            break;
+          case 500:
+            out.println("HTTP 500 Server error");
+            break;
+
+          default:
+            out.println("Unexpected HTTP response code.");
+            out.println(response.getStatusLine().toString());
+            response.getEntity().writeTo(out);
+            break;
+
+
+        }
+
+
+      } catch (ClientProtocolException e) {
+        out.println(e.getMessage());
+        if (debug) {
+          e.printStackTrace(out);
+        }
+      } catch (SSLException e) {
+        out.println(e.getMessage());
+
+        if(attempts < 2) {
+          if(ssl) {
+            ssl = false;
+            out.println("Attempting request without SSL.");
+          } else {
+            ssl = true;
+            out.println("Attempting request with SSL ");
+          }
+          execute();
+        } else {
+          out.println("Unable to successfully make request. Try using the API with cURL.");
+        }
+      } catch (IOException e) {
+        out.println(e.getMessage());
+        if(debug) {
+          e.printStackTrace(out);
+        }
+      } finally {
+        try {
+          client.close();
+        } catch (IOException e) {
+          out.println(e.getMessage());
+        }
+      }
+
     }
 
   }

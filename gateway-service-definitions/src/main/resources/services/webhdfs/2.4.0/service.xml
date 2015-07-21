@@ -37,4 +37,7 @@
         </route>
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
+    <testURLs>
+        <testURL>/webhdfs/v1/?op=LISTSTATUS</testURL>
+    </testURLs>
 </service>

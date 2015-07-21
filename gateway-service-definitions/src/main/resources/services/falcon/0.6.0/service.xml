@@ -18,4 +18,11 @@
     <routes>
         <route path="/falcon/api/**"/>
     </routes>
+    <testURLs>
+        <testURL>/falcon/api/admin/stack</testURL>
+        <testURL>/falcon/api/admin/version</testURL>
+        <testURL>/falcon/api/metadata/lineage/serialize</testURL>
+        <testURL>/falcon/api/metadata/lineage/vertices/all</testURL>
+        <testURL>/falcon/api/metadata/lineage/edges/all</testURL>
+    </testURLs>
 </service>

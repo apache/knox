@@ -27,4 +27,9 @@
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
         </route>
     </routes>
+    <testURLs>
+        <testURL>/oozie/v1/admin/build-version</testURL>
+        <testURL>/oozie/v1/admin/status</testURL>
+        <testURL>/oozie/versions</testURL>
+    </testURLs>
 </service>

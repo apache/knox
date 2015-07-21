@@ -30,4 +30,10 @@
         </route>
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.hbase.HBaseDispatch"/>
+    <testURLs>
+        <testURL>/hbase/version</testURL>
+        <testURL>/hbase/version/cluster</testURL>
+        <testURL>/hbase/status/cluster</testURL>
+        <testURL>/hbase</testURL>
+    </testURLs>
 </service>
