@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.topology.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class JerseyServiceDeploymentContributorBase extends ServiceDeploymentContributorBase {
 
@@ -56,6 +57,9 @@ public abstract class JerseyServiceDeploymentContributorBase extends ServiceDepl
 //      param.name( TRACE_LOGGING_PARAM );
 //      param.value( "ALL" );
 //      params.add( trace );
+      for ( Map.Entry<String,String> serviceParam : service.getParams().entrySet() ) {
+        context.getWebAppDescriptor().createContextParam().paramName(serviceParam.getKey()).paramValue(serviceParam.getValue());
+      }
       context.contributeFilter( service, resource, "pivot", "jersey", params );
     }
   }

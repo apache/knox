@@ -22,6 +22,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
+import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,26 +46,43 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
-  /**
-   * 
-   */
+  private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
+  private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
-  /**
-   * 
-   */
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
-  /**
-   * 
-   */
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
   static final String RESOURCE_PATH = "/knoxsso/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
+  private boolean secureOnly = true;
+  private int maxAge = 120;
 
   @Context 
   private HttpServletRequest request;
 
   @Context 
   private HttpServletResponse response;
+
+  @Context
+  ServletContext context;
+
+  @PostConstruct
+  public void init() {
+    String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
+    if (secure != null) {
+      secureOnly = ("false".equals(secure) ? false : true);
+      log.cookieSecureOnly(secureOnly);
+    }
+
+    String age = context.getInitParameter(SSO_COOKIE_MAX_AGE_INIT_PARAM);
+    if (age != null) {
+      try {
+        maxAge = Integer.parseInt(age);
+      }
+      catch (NumberFormatException nfe) {
+        log.invalidMaxAgeEncountered(age);
+      }
+    }
+  }
 
   @GET
   @Produces({APPLICATION_JSON, APPLICATION_XML})
@@ -83,7 +102,7 @@ public class WebSSOResource {
     boolean removeOriginalUrlCookie = true;
     String original = getCookieValue((HttpServletRequest) request, ORIGINAL_URL_COOKIE_NAME);
     if (original == null) {
-      // in the case where there is no SAML redirects done before here
+      // in the case where there are no SAML redirects done before here
       // we need to get it from the request parameters
       removeOriginalUrlCookie = false;
       original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
@@ -92,7 +111,7 @@ public class WebSSOResource {
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
       }
     }
-    
+
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
 
@@ -120,7 +139,7 @@ public class WebSSOResource {
     return null;
   }
 
-  public void addJWTHadoopCookie(String original, JWT token) {
+  private void addJWTHadoopCookie(String original, JWT token) {
     log.addingJWTCookie(token.toString());
     Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
     c.setPath("/");
@@ -128,8 +147,10 @@ public class WebSSOResource {
       String domain = getDomainName(original);
       c.setDomain(domain);
       c.setHttpOnly(true);
-      c.setSecure(true);
-      c.setMaxAge(120);
+      if (secureOnly) {
+        c.setSecure(true);
+      }
+      c.setMaxAge(maxAge);
       response.addCookie(c);
       log.addedJWTCookie();
     }
@@ -146,7 +167,7 @@ public class WebSSOResource {
     response.addCookie(c);
   }
 
-  public String getDomainName(String url) throws URISyntaxException {
+  private String getDomainName(String url) throws URISyntaxException {
     URI uri = new URI(url);
     String domain = uri.getHost();
     int idx = domain.indexOf('.');

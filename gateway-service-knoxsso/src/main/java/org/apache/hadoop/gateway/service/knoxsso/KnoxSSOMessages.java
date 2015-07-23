@@ -47,4 +47,10 @@ public interface KnoxSSOMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
+
+  @Message( level = MessageLevel.WARN, text = "The SSO cookie SecureOnly flag is set to FALSE and is therefore insecure.")
+  void cookieSecureOnly(boolean secureOnly);
+
+  @Message( level = MessageLevel.WARN, text = "The SSO cookie max age configuration is invalid: {0} - using default.")
+  void invalidMaxAgeEncountered(String age);
 }
