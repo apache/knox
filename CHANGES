@@ -10,6 +10,7 @@ Release Notes - Apache Knox - Version 0.7.0
 ** Improvement
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.
     * [KNOX-561] - Allow Knox pid directory to be configured via the knox-env.sh file
+    * [KNOX-575] - Adds more logging for ShiroProvider LDAP Authentication.
 
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.

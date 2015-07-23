@@ -48,6 +48,7 @@ import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.shirorealm.impl.i18n.KnoxShiroMessages;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -117,6 +118,7 @@ import org.apache.shiro.util.StringUtils;
 public class KnoxLdapRealm extends JndiLdapRealm {
 
     private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+    KnoxShiroMessages ShiroLog = MessagesFactory.get( KnoxShiroMessages.class );
     private static AuditService auditService = AuditServiceFactory.getAuditService();
     private static Auditor auditor = auditService.getAuditor(
         AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -175,6 +177,10 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       return super.doGetAuthenticationInfo(token);
     } catch ( org.apache.shiro.authc.AuthenticationException e ) {
       auditor.audit( Action.AUTHENTICATION , token.getPrincipal().toString(), ResourceType.PRINCIPAL, ActionOutcome.FAILURE, e.getMessage() );
+      ShiroLog.failedLoginInfo(token);
+      ShiroLog.failedLoginStackTrace(e);
+      ShiroLog.failedLoginAttempt(e.getCause());
+
       throw e;
     }
   }
