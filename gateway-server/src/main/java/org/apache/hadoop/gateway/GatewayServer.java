@@ -59,6 +59,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.ProviderException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -435,6 +436,12 @@ public class GatewayServer {
         File warDir = calculateDeploymentDir( topology );
         if( !warDir.exists() ) {
           auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
+
+//          KNOX-564 - Topology should fail to deploy with no providers configured.
+          if(topology.getProviders().isEmpty()) {
+            throw new ProviderException("No providers found inside topology.");
+          }
+
           log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
           internalUndeploy( topology ); // KNOX-152
           WebArchive war = null;
