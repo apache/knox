@@ -1205,8 +1205,8 @@ public class KnoxCLI extends Configured implements Tool {
       if(new File(config).exists()) {
         if(testSysBind(topology, config)) {
           if(authenticateUser(config, new UsernamePasswordToken(username, password))) {
+            out.println("LDAP authentication successful!");
             if(groups) {
-              out.println("LDAP authentication successful!");
               groupSet = getGroups(topology, new UsernamePasswordToken(username, password));
               if(groupSet == null || groupSet.isEmpty()) {
                 out.println(username + " does not belong to any groups");

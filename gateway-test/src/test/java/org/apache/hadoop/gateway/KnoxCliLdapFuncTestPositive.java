@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 public class KnoxCliLdapFuncTestPositive {
@@ -284,7 +285,7 @@ public class KnoxCliLdapFuncTestPositive {
     username = "bad-name";
     password = "bad-password";
     String args2[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password};
-    cli.run( args2 );
+    cli.run(args2);
     assertThat(outContent.toString(), containsString("LDAP authentication failed"));
 
 //    Test 3: Authenticate a user who belongs to no groups, but specify groups with --g
@@ -294,8 +295,8 @@ public class KnoxCliLdapFuncTestPositive {
     username = "guest";
     password = "guest-password";
     String args3[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster",
-        "--u", username, "--p", password };
-    cli.run( args3 );
+        "--u", username, "--p", password, "--g" };
+    cli.run(args3);
     assertThat(outContent.toString(), containsString("LDAP authentication success"));
     assertThat(outContent.toString(), containsString("does not belong to any groups"));
 
@@ -307,9 +308,22 @@ public class KnoxCliLdapFuncTestPositive {
     password = "guest-password";
     String args4[] = {"user-auth-test", "--master", "knox", "--cluster", "cluster-dne",
         "--u", username, "--p", password };
-    cli.run( args4 );
+    cli.run(args4);
     assertThat(outContent.toString(), containsString("ERR: Topology"));
     assertThat(outContent.toString(), containsString("does not exist"));
+
+
+    //    Test 5: Authenticate a user who belongs to no groups, but specify groups with --g
+    outContent.reset();
+    cli = new KnoxCLI();
+    cli.setConf(config);
+    username = "guest";
+    password = "guest-password";
+    String args5[] = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster",
+        "--u", username, "--p", password };
+    cli.run( args5 );
+    assertThat(outContent.toString(), containsString("LDAP authentication success"));
+    assertThat(outContent.toString(), not(containsString("does not belong to any groups")));
 
   }
 
