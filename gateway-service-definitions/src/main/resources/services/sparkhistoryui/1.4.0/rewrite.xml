@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/root" pattern="*://*:*/**/sparkhistory/">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/"/>
+  </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/path" pattern="*://*:*/**/sparkhistory/{**}">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/query" pattern="*://*:*/**/sparkhistory/{**}?{**}">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/{**}?{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/history" pattern="*://*:*/**/sparkhistory/history/{**}/?{**}">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/history/{**}/?{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/apps" pattern="*://*:*/**/sparkhistory/?{page}?{showIncomplete}">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/?{page}?{showIncomplete}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/history" pattern="/history/{**}">
+    <rewrite template="{$frontend[url]}/sparkhistory/history/{**}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/history/job" pattern="/history/{**}?{**}">
+    <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/bootstrap" pattern="/static/{bootstrap=bootstrap*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{bootstrap}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/vis" pattern="/static/{vis=vis.min.*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{vis}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/webui" pattern="/static/webui.css">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/webui.css"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/timeline" pattern="/static/{timeline=timeline-view*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{timeline}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/sorttable" pattern="/static/sorttable.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/sorttable.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/jquery" pattern="/static/{jquery=jquery*.min.js}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{jquery}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/initialize" pattern="/static/initialize-tooltips.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/initialize-tooltips.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/table" pattern="/static/table.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/table.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/additional" pattern="/static/additional-metrics.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/additional-metrics.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/spark" pattern="/static/{spark=spark*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{spark}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/d3" pattern="/static/{d3=*d3.min.js}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{d3}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/graphlib" pattern="/static/graphlib-dot.min.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/graphlib-dot.min.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/apps" pattern="/?{page}?{showIncomplete}">
+    <rewrite template="{$frontend[url]}/sparkhistory/?{page}?{showIncomplete}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/headers/location">
+    <match pattern="*://*:*/history/{**}/?{**}"/>
+    <rewrite template="{$frontend[url]}/sparkhistory/history/{**}/?{**}"/>
+  </rule>
+  <rule flow="OR" dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs/location">
+    <match pattern="*://*:*/history/{**}/jobs">
+      <rewrite template="{$frontend[url]}/sparkhistory/history/{**}/jobs"/>
+    </match>
+    <match pattern="*://*:*/history/{**}/jobs/">
+      <rewrite template="{$frontend[url]}/sparkhistory/history/{**}/jobs/"/>
+    </match>
+  </rule>
+
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARKHISTORYUI/sparkhistory/outbound/headers/location"/>
+    </content>
+  </filter>
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs/location"/>
+    </content>
+  </filter>
+</rules>

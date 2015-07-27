@@ -24,7 +24,12 @@ import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
+
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterReader;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -35,12 +40,20 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
-public abstract class HtmlFilterReaderBase extends Reader {
+public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteFilterReader {
+
+  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascritp", "text/javascript", "*/javascript",
+      "application/x-javascript", "text/x-javascript", "*/x-javascript" } );
+  private static final String SCRIPTTAG = "script";
+  private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
@@ -53,6 +66,7 @@ public abstract class HtmlFilterReaderBase extends Reader {
   private int offset;
   private StringWriter writer;
   private StringBuffer buffer;
+  private UrlRewriteFilterContentDescriptor config = null;
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
     this.reader = reader;
@@ -63,6 +77,11 @@ public abstract class HtmlFilterReaderBase extends Reader {
     writer = new StringWriter();
     buffer = writer.getBuffer();
     offset = 0;
+  }
+
+  protected HtmlFilterReaderBase( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+    this(reader);
+    this.config = config;
   }
 
   protected abstract String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName );
@@ -179,7 +198,14 @@ public abstract class HtmlFilterReaderBase extends Reader {
         // This can happen for whitespace outside of the root element.
         //outputValue = filterText( null, inputValue );
       } else {
-        outputValue = filterText( stack.peek().getQName(), inputValue, null );
+        String tagType = stack.peek().getTag().getAttributeValue("type");
+        String tagName = stack.peek().getTag().getName();
+        if (SCRIPTTAG.equals(tagName) && JSTYPES.contains(tagType) && config != null && !config.getSelectors().isEmpty() ) {
+          // embedded javascript content
+          outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
+        } else {
+          outputValue = filterText( stack.peek().getQName(), inputValue, null );
+        }
       }
       if( outputValue == null ) {
         outputValue = inputValue;

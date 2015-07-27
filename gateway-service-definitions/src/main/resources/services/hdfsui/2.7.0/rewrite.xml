@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/root" pattern="*://*:*/**/hdfs/">
+    <rewrite template="{$serviceUrl[HDFSUI]}/dfshealth.html"/>
+  </rule>
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/path" pattern="*://*:*/**/hdfs/{**}">
+    <rewrite template="{$serviceUrl[HDFSUI]}/{**}"/>
+  </rule>
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/query" pattern="*://*:*/**/hdfs/{**}?{**}">
+    <rewrite template="{$serviceUrl[HDFSUI]}/{**}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/bootstrapcss" pattern="/static/{bootstrap=bootstrap*}/css/{**}">
+    <rewrite template="{$frontend[url]}/hdfs/static/{bootstrap}/css/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/hadoopcss" pattern="/static/hadoop.css">
+    <rewrite template="{$frontend[url]}/hdfs/static/hadoop.css"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/jquery" pattern="/static/jquery-1.10.2.min.js">
+    <rewrite template="{$frontend[url]}/hdfs/static/jquery-1.10.2.min.js"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/dust" pattern="/static/{dust=*dust*js}">
+    <rewrite template="{$frontend[url]}/hdfs/static/{dust}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/bootstrapjs" pattern="/static/{bootstrap=bootstrap*}/js/{**}">
+    <rewrite template="{$frontend[url]}/hdfs/static/{bootstrap}/js/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/logs" pattern="logs">
+    <rewrite template="{$frontend[url]}/hdfs/logs"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/logs/files" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/hdfs/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/dfshealthjs" pattern="dfshealth.js">
+    <rewrite template="{$frontend[url]}/hdfs/dfshealth.js"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml" pattern="explorer.html">
+    <rewrite template="{$frontend[url]}/hdfs/explorer.html"/>
+  </rule>
+
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/logs" pattern="*://*:*/**/hdfs/logs?{scheme}?{host}?{port}?{**}">
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
+
+  <filter name="HDFSUI/hdfs/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="HDFSUI/hdfs/outbound/headers/location"/>
+    </content>
+  </filter>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/headers/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{$frontend[url]}/hdfs/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/dfs/jmx">
+    <rewrite template="{$frontend[url]}/hdfs/jmx"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/dfs/conf">
+    <rewrite template="{$frontend[url]}/hdfs/conf"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/dfs/startupProgress">
+    <rewrite template="{$frontend[url]}/hdfs/startupProgress"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/dfs/webhdfs">
+    <rewrite template="{$frontend[url]}/webhdfs"/>
+  </rule>
+  <filter name="HDFSUI/hdfs/outbound/namenode/dfs">
+    <content type="*/x-javascript">
+      <apply path="/jmx" rule="HDFSUI/hdfs/outbound/namenode/dfs/jmx"/>
+      <apply path="/conf" rule="HDFSUI/hdfs/outbound/namenode/dfs/conf"/>
+      <apply path="/startupProgress" rule="HDFSUI/hdfs/outbound/namenode/dfs/startupProgress"/>
+      <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/dfs/webhdfs"/>
+    </content>
+    <content type="*/html">
+    </content>
+  </filter>
+
+</rules>

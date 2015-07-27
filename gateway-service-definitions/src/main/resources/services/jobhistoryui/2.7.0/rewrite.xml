@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/root" pattern="*://*:*/**/jobhistory/">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/path" pattern="*://*:*/**/jobhistory/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/query" pattern="*://*:*/**/jobhistory/{**}?{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/{**}?{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/static" pattern="*://*:*/**/jobhistory/static/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/static/{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/conf" pattern="*://*:*/**/jobhistory/conf">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/conf"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/logs" pattern="*://*:*/**/jobhistory/logs">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/logs"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/joblogs" pattern="*://*:*/**/jobhistory/joblogs">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/logs"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/logs/files" pattern="*://*:*/**/jobhistory/logs/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/logs/{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/joblogs/filecontent" pattern="*://*:*/**/jobhistory/joblogs/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/logs/{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/joblogs/fullfilecontent" pattern="*://*:*/**/jobhistory/joblogs/{**}/?{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/logs/{**}/?{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/logs/redirect" pattern="*://*:*/**/jobhistory/logs?{scheme}?{host}?{port}?{**}">
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/stacks" pattern="*://*:*/**/jobhistory/stacks">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/stacks"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/metrics" pattern="*://*:*/**/jobhistory/metrics">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/metrics"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/jmx" pattern="*://*:*/**/jobhistory/jmx">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jmx"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/jmx/query" pattern="*://*:*/**/jobhistory/jmx?{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jmx?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/headers/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{$frontend[url]}/jobhistory/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/logs/files" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/static" pattern="/static/{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/static/{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobhistory" pattern="/jobhistory/{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobhistory/query" pattern="/jobhistory/{**}?{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/{**}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobhistory/logs" pattern="/jobhistory/logs/{**}/?{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/joblogs/{**}/?{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/conf" pattern="/conf">
+    <rewrite template="{$frontend[url]}/jobhistory/conf"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/logs" pattern="/logs">
+    <rewrite template="{$frontend[url]}/jobhistory/logs"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/stacks" pattern="/stacks">
+    <rewrite template="{$frontend[url]}/jobhistory/stacks"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/metrics" pattern="/metrics">
+    <rewrite template="{$frontend[url]}/jobhistory/metrics"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jmx" pattern="/jmx?{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/jmx?{**}"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/job">
+    <rewrite template="{$frontend[url]}/jobhistory/job"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/task">
+    <rewrite template="{$frontend[url]}/jobhistory/task"/>
+  </rule>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/logs">
+    <rewrite template="{$frontend[url]}/jobhistory/joblogs"/>
+  </rule>
+  <filter name="JOBHISTORYUI/jobhistory/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="JOBHISTORYUI/jobhistory/outbound/headers/location"/>
+    </content>
+  </filter>
+  <filter name="JOBHISTORYUI/jobhistory/outbound/configuration">
+    <content type="*/xml">
+      <buffer path="/configuration/property"/>
+    </content>
+  </filter>
+  <filter name="JOBHISTORYUI/jobhistory/outbound/jobs">
+    <content type="*/html">
+      <apply path="/jobhistory/job" rule="JOBHISTORYUI/jobhistory/outbound/jobs/job"/>
+      <apply path="/jobhistory/task" rule="JOBHISTORYUI/jobhistory/outbound/jobs/task"/>
+      <apply path="/jobhistory/logs" rule="JOBHISTORYUI/jobhistory/outbound/jobs/logs"/>
+    </content>
+  </filter>
+</rules>

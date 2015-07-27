@@ -21,3 +21,4 @@ org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlUrlRewriteStreamFilter
 org.apache.hadoop.gateway.filter.rewrite.impl.html.HtmlUrlRewriteStreamFilter
 org.apache.hadoop.gateway.filter.rewrite.impl.form.FormUrlRewriteStreamFilter
 org.apache.hadoop.gateway.filter.rewrite.impl.noop.NoOpUrlRewriteStreamFilter
+org.apache.hadoop.gateway.filter.rewrite.impl.javascript.JavaScriptUrlRewriteStreamFilter

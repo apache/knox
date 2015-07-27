@@ -19,6 +19,9 @@ package org.apache.hadoop.gateway.filter.rewrite.impl.html;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
+
 import java.io.IOException;
 import java.io.Reader;
 
@@ -35,6 +38,10 @@ public abstract class HtmlFilterReader extends HtmlFilterReaderBase {
 
   public HtmlFilterReader( Reader reader ) throws IOException, ParserConfigurationException {
     super( reader );
+  }
+
+  public HtmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+    super( reader, config );
   }
 
   protected abstract String filterAttribute( String tagName, String attributeName, String attributeValue, String ruleName );

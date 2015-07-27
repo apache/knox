@@ -15,7 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.impl.html;
+package org.apache.hadoop.gateway.filter.rewrite.impl.javascript;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.net.URISyntaxException;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
@@ -25,28 +29,22 @@ import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.Reader;
-import java.net.URISyntaxException;
-
-public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
+public class JavaScriptUrlRewriteFilterReader extends JavaScriptFilterReader {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
-  
+
   private Resolver resolver;
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;
 
-  public HtmlUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction, UrlRewriteFilterContentDescriptor config )
-      throws IOException, ParserConfigurationException {
+  public JavaScriptUrlRewriteFilterReader( Reader reader, UrlRewriter rewriter, Resolver resolver, UrlRewriter.Direction direction, UrlRewriteFilterContentDescriptor config )
+      throws IOException {
     super( reader, config );
     this.resolver = resolver;
     this.rewriter = rewriter;
     this.direction = direction;
   }
 
-  //TODO: Need to limit which values are attempted to be filtered by the name.
   @Override
   public String filterValueString( String name, String value, String rule ) {
     try {
@@ -59,16 +57,6 @@ public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
       LOG.failedToParseValueForUrlRewrite( value );
     }
     return value;
-  }
-
-  @Override
-  protected String filterAttribute( String tagName, String attributeName, String attributeValue, String ruleName ) {
-    return filterValueString( attributeName, attributeValue, ruleName );
-  }
-
-  @Override
-  protected String filterText( String tagName, String text, String ruleName ) {
-    return filterValueString( tagName, text, ruleName );
   }
 
 }

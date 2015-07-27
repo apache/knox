@@ -17,17 +17,28 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import javax.activation.MimeTypeParseException;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -105,4 +116,56 @@ public class UrlRewriteResponseTest {
     assertThat( path, hasItems( new String[]{ "/mock-path" } ) );
   }
 
+  @Test
+  public void testStreamResponse() throws IOException, MimeTypeParseException {
+    UrlRewriteProcessor rewriter = EasyMock.createNiceMock( UrlRewriteProcessor.class );
+    EasyMock.expect( rewriter.getConfig() ).andReturn( null ).anyTimes();
+
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    EasyMock.expect( context.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriter ).anyTimes();
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect( config.getInitParameter( UrlRewriteServletFilter.RESPONSE_BODY_FILTER_PARAM ) ).andReturn( "test-filter" ).anyTimes();
+    EasyMock.expect( config.getServletContext() ).andReturn( context ).anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+
+    EasyMock.replay( rewriter, context, config, request, response );
+
+    UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, request, response );
+
+    String content = "content to test gzip streaming";
+    testStreamResponseGzip ( content, rewriteResponse, false );
+    testStreamResponseGzip ( content, rewriteResponse, true );
+  }
+
+  private void testStreamResponseGzip( String content, UrlRewriteResponse rewriteResponse , boolean isGzip ) throws IOException {
+    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    File inputFile = new File( targetDir, "input.test" );
+    File outputFile = new File( targetDir, "output.test" );
+    OutputStream outStream = null, output = null;
+    InputStream inStream = null, input = null;
+    try {
+      outStream = isGzip ? new GZIPOutputStream( new FileOutputStream( inputFile ) ) : new FileOutputStream( inputFile );
+      outStream.write( content.getBytes() );
+      outStream.close();
+
+      input = new FileInputStream( inputFile );
+      output = new FileOutputStream( outputFile );
+      rewriteResponse.streamResponse( input, output );
+
+      inStream = isGzip ? new GZIPInputStream( new FileInputStream( outputFile ) ) : new FileInputStream( outputFile );
+      assertThat( String.valueOf( IOUtils.toCharArray( inStream ) ), is( content ) );
+    } finally {
+      if ( inStream != null ) {
+        inStream.close();
+      }
+      if ( input != null ) {
+        input.close();
+      }
+      inputFile.delete();
+      outputFile.delete();
+    }
+  }
 }

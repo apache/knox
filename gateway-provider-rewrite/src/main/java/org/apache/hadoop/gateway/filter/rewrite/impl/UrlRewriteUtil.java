@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
@@ -55,4 +58,35 @@ public class UrlRewriteUtil {
     return filterContentConfig;
   }
 
+  public static String filterJavaScript( String inputValue, UrlRewriteFilterContentDescriptor config,
+      UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
+    StringBuffer tbuff = new StringBuffer();
+    StringBuffer sbuff = new StringBuffer();
+    sbuff.append( inputValue );
+    if( config != null && !config.getSelectors().isEmpty() ) {
+      for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
+        if ( selector instanceof UrlRewriteFilterApplyDescriptor ) {
+          UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          Matcher matcher = apply.compiledPath( regexCompiler ).matcher( sbuff );
+          int index = 0;
+          while ( matcher.find() ) {
+            int start = matcher.start();
+            int end = matcher.end();
+            if ( start != -1 && end != -1 ) {
+              tbuff.append( sbuff, index, start );
+              String value = matcher.group();
+              value = filterReader.filterValueString( null, value, apply.rule() );
+              tbuff.append(value);
+              index = end;
+            }
+          }
+          tbuff.append( sbuff, index, sbuff.length() );
+          sbuff.setLength( 0 );
+          sbuff.append( tbuff );
+          tbuff.setLength( 0 );
+        }
+      }
+    }
+    return sbuff.toString();
+  }
 }

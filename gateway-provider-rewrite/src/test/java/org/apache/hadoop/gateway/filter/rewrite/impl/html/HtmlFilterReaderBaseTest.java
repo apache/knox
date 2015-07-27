@@ -31,6 +31,7 @@ import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptorExt
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt;
+import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterContentDescriptorImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.xml.XmlRewriteRulesDigester;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
 import org.hamcrest.Matchers;
@@ -56,6 +57,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
@@ -83,6 +85,11 @@ public class HtmlFilterReaderBaseTest {
     protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
       return attributeValue;
     }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      return value;
+    }
   }
 
   public static class MapXmlFilterReader extends HtmlFilterReaderBase {
@@ -101,6 +108,43 @@ public class HtmlFilterReaderBaseTest {
     @Override
     protected String filterText( QName elementName, String text, String ruleName ) {
       return map.get( text.trim() );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      return map.get( value );
+    }
+  }
+
+  public static class MatchRuleXmlFilterReader extends HtmlFilterReaderBase {
+    private Map<String, Map<String,String>> rules;
+    public MatchRuleXmlFilterReader( Reader reader, Map<String, Map<String,String>> rules, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+      super( reader, config );
+      this.rules = rules;
+    }
+
+    @Override
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+      return filterValueString( attributeName.getLocalPart(), attributeValue, ruleName );
+    }
+
+    @Override
+    protected String filterText( QName elementName, String text, String ruleName ) {
+      return filterValueString( elementName.getLocalPart(), text, ruleName );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      Map<String, String> rule = rules.get( ruleName );
+      if ( rule == null ){
+        return value;
+      }
+      for ( Map.Entry<String, String> entry : rule.entrySet() ) {
+        if ( Pattern.compile( entry.getKey() ).matcher( value ).matches() ) {
+          return entry.getValue();
+        }
+      }
+      return value;
     }
   }
 
@@ -242,6 +286,49 @@ public class HtmlFilterReaderBaseTest {
     assertThat( the( outputXml ), hasXPath( "/n1:root/n2:child2/@n1:attr6", ns, equalTo( "attr6-output" ) ) );
     assertThat( the( outputXml ), hasXPath( "/n1:root/n2:child2/@n2:attr7", ns, equalTo( "attr7-output" ) ) );
     assertThat( the( outputXml ), hasXPath( "/n1:root/n2:child2/text()", ns, equalTo( "child2-output" ) ) );
+  }
+
+  @Test
+  public void testSimpleJavaScriptText() throws IOException, ParserConfigurationException {
+    String inputXml = "<root><script type=\"text/javascript\">input-js-text</script></root>";
+    StringReader inputReader = new StringReader( inputXml );
+    HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    assertThat( the( outputXml ), hasXPath( "/root/script/text()", equalTo( "input-js-text" ) ) );
+  }
+
+  @Test
+  public void testMatchedJavaScriptText() throws IOException, ParserConfigurationException {
+    Map<String, Map<String, String>> rules = new HashMap<String, Map<String, String>>();
+    Map<String, String> map = new HashMap<String, String>();
+    map.put( "(https?://[^/':,]+:[\\d]+)?/cluster/app", "https://knoxhost:8443/cluster/app" );
+    rules.put( "test-rule", map );
+    String inputXml =
+        "<root>\n" +
+        "  <script type=\"text/javascript\">\n" +
+        "    var appsTableData=[\n" +
+        "      [\"<a href='/cluster/app/application_1436831599487_0008'>application_1436831599487_0008</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='http://testhost:8088/cluster/app/application_1436831599487_0008'>History</a>\"],\n" +
+        "      [\"<a href='/cluster/app/application_1436831599487_0006'>application_1436831599487_0006</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='http://testhost:8088/cluster/app/application_1436831599487_0006'>History</a>\"],\n" +
+        "      [\"<a href='/cluster/app/application_1436831599487_0007'>application_1436831599487_0007</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='http://testhost:8088/cluster/app/application_1436831599487_0007'>History</a>\"]\n" +
+        "    ]\n" +
+        "  </script>\n" +
+        "</root>\n";
+    StringReader inputReader = new StringReader( inputXml );
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply( "(https?://[^/':,]+:[\\d]+)?/cluster/app", "test-rule" );
+    HtmlFilterReaderBase filterReader = new MatchRuleXmlFilterReader( inputReader, rules, config );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    String expectedOutput =
+        "<root>\n" +
+        "  <script type=\"text/javascript\">\n" +
+        "    var appsTableData=[\n" +
+        "      [\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0008'>application_1436831599487_0008</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0008'>History</a>\"],\n" +
+        "      [\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0006'>application_1436831599487_0006</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0006'>History</a>\"],\n" +
+        "      [\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0007'>application_1436831599487_0007</a>\",\"hdfs\",\"Spark Pi\",\"SPARK\",\"<a href='https://knoxhost:8443/cluster/app/application_1436831599487_0007'>History</a>\"]\n" +
+        "    ]\n" +
+        "  </script>\n" +
+        "</root>\n";
+    assertThat( outputXml, is( expectedOutput ) );
   }
 
   public static class XmlRewriteRulesDescriptorDigesterTest {
@@ -629,6 +716,10 @@ public class HtmlFilterReaderBaseTest {
       return "text:" + ruleName + "{" + text + "}";
     }
 
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      return value;
+    }
   }
 
   public void dump( Node node, Writer writer ) throws TransformerException {

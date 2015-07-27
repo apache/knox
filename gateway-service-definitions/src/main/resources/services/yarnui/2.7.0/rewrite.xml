@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="YARNUI/yarn/inbound/root" pattern="*://*:*/**/yarn/">
+    <rewrite template="{$serviceUrl[YARNUI]}/cluster"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/path" pattern="*://*:*/**/yarn/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/cluster/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/cluster" pattern="*://*:*/**/yarn/cluster/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/cluster/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/proxy" pattern="*://*:*/**/yarn/proxy/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/proxy/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/static" pattern="*://*:*/**/yarn/static/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/static/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/conf" pattern="*://*:*/**/yarn/conf">
+    <rewrite template="{$serviceUrl[YARNUI]}/conf"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/logs" pattern="*://*:*/**/yarn/logs">
+    <rewrite template="{$serviceUrl[YARNUI]}/logs"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/logs/files" pattern="*://*:*/**/yarn/logs/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/logs/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/stacks" pattern="*://*:*/**/yarn/stacks">
+    <rewrite template="{$serviceUrl[YARNUI]}/stacks"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/metrics" pattern="*://*:*/**/yarn/metrics">
+    <rewrite template="{$serviceUrl[YARNUI]}/metrics"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/jmx" pattern="*://*:*/**/yarn/jmx">
+    <rewrite template="{$serviceUrl[YARNUI]}/jmx"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/jmx/query" pattern="*://*:*/**/yarn/jmx?{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/jmx?{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/node" pattern="*://*:*/**/yarn/node/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/node/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/nodemanager/home" pattern="*://*:*/**/yarn/nodemanager?{host}?{port}">
+    <rewrite template="{$serviceScheme[YARNUI]}://{host}:{port}/node"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/resourcemanager/home" pattern="*://*:*/**/yarn/resourcemanager?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/cluster"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/node/containerlogs" pattern="*://*:*/**/yarn/nodemanager/node/containerlogs/{**}?{host}?{port}">
+    <rewrite template="{$serviceScheme[YARNUI]}://{host}:{port}/node/containerlogs/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/logs" pattern="*://*:*/**/yarn/logs?{scheme}?{host}?{port}?{**}">
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/headers/logs/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/logs/files" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/yarn/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/static" pattern="/static/{**}">
+    <rewrite template="{$frontend[url]}/yarn/static/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/cluster" pattern="/cluster/{**}">
+    <rewrite template="{$frontend[url]}/yarn/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/conf" pattern="/conf">
+    <rewrite template="{$frontend[url]}/yarn/conf"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/logs" pattern="/logs">
+    <rewrite template="{$frontend[url]}/yarn/logs"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/stacks" pattern="/stacks">
+    <rewrite template="{$frontend[url]}/yarn/stacks"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/metrics" pattern="/metrics">
+    <rewrite template="{$frontend[url]}/yarn/metrics"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/jmx" pattern="/jmx?{**}">
+    <rewrite template="{$frontend[url]}/yarn/jmx?{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/node" pattern="/node/{**}">
+    <rewrite template="{$frontend[url]}/yarn/node/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/cluster/app" pattern="*://*:*/cluster/app/{**}">
+    <rewrite template="{$frontend[url]}/yarn/cluster/app/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/apps/app">
+    <rewrite template="{$frontend[url]}/yarn/cluster/app"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/cluster/container">
+    <rewrite template="{$frontend[url]}/yarn/cluster/container"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history">
+    <match pattern="*://*:*/proxy/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/node/containerlogs">
+    <match pattern="//{host}:{port}/node/containerlogs/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/node/containerlogs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/proxy" pattern="*://*:*/proxy/{**}">
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+  </rule>
+  <rule flow="OR" dir="OUT" name="YARNUI/yarn/outbound/headers/jobhistory/job/location">
+    <match pattern="{scheme}://{host}:{port}/jobhistory/job/{**}">
+      <rewrite template="{$frontend[url]}/yarn/jobhistory/job/{**}?{scheme}?{host}?{port}"/>
+    </match>
+    <match pattern="{scheme}://{host}:{port}/history/{**}?{**}">
+      <rewrite template="{$frontend[url]}/yarn/history/{**}?{**}?{scheme}?{host}?{port}"/>
+    </match>
+    <match pattern="*://*:*/cluster/app/{**}">
+      <rewrite template="{$frontend[url]}/yarn/cluster/app/{**}"/>
+    </match>
+  </rule>
+  <rule dir="OUT" name="YARNUI/yarn/outbound/headers/sparkhistory/job/location">
+    <match pattern="*://*:*/history/{**}/jobs"/>
+      <rewrite template="{$frontend[url]}/sparkhistory/history/{**}/jobs"/>
+  </rule>
+
+  <rule dir="IN" name="YARNUI/yarn/inbound/jobhistory/job" pattern="*://*:*/**/yarn/jobhistory/job/{**}?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/jobhistory/job/{**}"/>
+  </rule>
+  <rule dir="IN" name="YARNUI/yarn/inbound/sparkhistory/job" pattern="*://*:*/**/yarn/history/{**}?{**}?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/history/{**}?{**}"/>
+  </rule>
+
+  <filter name="YARNUI/yarn/outbound/headers/logs">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUI/yarn/outbound/headers/logs/location"/>
+    </content>
+  </filter>
+  <filter name="YARNUI/yarn/outbound/headers/jobhistory/job">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUI/yarn/outbound/headers/jobhistory/job/location"/>
+    </content>
+  </filter>
+  <filter name="YARNUI/yarn/outbound/headers/sparkhistory/job">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUI/yarn/outbound/headers/sparkhistory/job/location"/>
+    </content>
+  </filter>
+  <filter name="YARNUI/yarn/outbound/configuration">
+    <content type="*/xml">
+      <buffer path="/configuration/property"/>
+    </content>
+  </filter>
+  <filter name="YARNUI/yarn/outbound/apps">
+    <content type="*/html">
+      <apply path="https?://[^/':,]+:[\d]+/proxy/[^']*" rule="YARNUI/yarn/outbound/apps/history"/>
+      <apply path="//[^/':,]+:[\d]+/node/containerlogs/container[^']*" rule="YARNUI/yarn/outbound/node/containerlogs"/>
+      <apply path="(https?://[^/':,]+:[\d]+)?/cluster/app" rule="YARNUI/yarn/outbound/apps/app"/>
+      <apply path="/cluster/container" rule="YARNUI/yarn/outbound/cluster/container"/>
+    </content>
+  </filter>
+
+</rules>
