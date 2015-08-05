@@ -16,6 +16,7 @@ Release Notes - Apache Knox - Version 0.7.0
 
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
+    * [KNOX-581] - Hive dispatch not propagating effective principal name
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

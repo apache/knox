@@ -81,4 +81,16 @@ public class SubjectUtils {
     return name;
   }
 
+  public static String getCurrentEffectivePrincipalName() {
+    String name = null;
+    Subject subject = getCurrentSubject();
+    if( subject != null ) {
+      name = getImpersonatedPrincipalName( subject );
+      if (name == null) {
+        name = getPrimaryPrincipalName(subject);
+      }
+    }
+    return name;
+  }
+
 }
