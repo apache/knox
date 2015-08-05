@@ -46,6 +46,8 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private static final String DISPATCH_IMPL_PARAM = "dispatch-impl";
 
+  private static final String SERVICE_ROLE_PARAM = "serviceRole";
+
   private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
 
   private static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
@@ -53,6 +55,8 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
 
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
+
+  private static final String DEFAULT_HA_DISPATCH_CLASS = "org.apache.hadoop.gateway.ha.dispatch.DefaultHaDispatch";
 
   private ServiceDefinition serviceDefinition;
 
@@ -170,15 +174,17 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if ( customDispatch == null ) {
       customDispatch = serviceDefinition.getDispatch();
     }
+    boolean isHaEnabled = isHaEnabled(context);
     if ( customDispatch != null ) {
-      boolean isHaEnabled = isHaEnabled(context);
       String haContributorName = customDispatch.getHaContributorName();
       String haClassName = customDispatch.getHaClassName();
-      if ( isHaEnabled && (haContributorName != null || haClassName != null)) {
+      if ( isHaEnabled) {
         if (haContributorName != null) {
           addDispatchFilter(context, service, resource, DISPATCH_ROLE, haContributorName);
-        } else {
+        } else if (haClassName != null) {
           addDispatchFilterForClass(context, service, resource, haClassName);
+        } else {
+          addDefaultHaDispatchFilter(context, service, resource);
         }
       } else {
         String contributorName = customDispatch.getContributorName();
@@ -188,15 +194,25 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
           String className = customDispatch.getClassName();
           if ( className != null ) {
             addDispatchFilterForClass(context, service, resource, className);
+          } else {
+            //final fallback to the default dispatch
+            addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client");
           }
         }
       }
+    } else if (isHaEnabled) {
+      addDefaultHaDispatchFilter(context, service, resource);
     } else {
       addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client");
     }
   }
 
-  private void addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String className) {
+  private void addDefaultHaDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS);
+    filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
+  }
+
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String className) {
     FilterDescriptor filter = resource.addFilter().name(getName()).role(DISPATCH_ROLE).impl(GatewayDispatchFilter.class);
     filter.param().name(DISPATCH_IMPL_PARAM).value(className);
     FilterParamDescriptor filterParam = filter.param().name(REPLAY_BUFFER_SIZE_PARAM).value(DEFAULT_REPLAY_BUFFER_SIZE);
@@ -212,6 +228,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       //special case for hive
       filter.param().name("basicAuthPreemptive").value("true");
     }
+    return filter;
   }
 
   private boolean isHaEnabled(DeploymentContext context) {
