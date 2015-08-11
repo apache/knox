@@ -1253,6 +1253,12 @@ public class ParserTest {
     assertThat( output.getParameterName(), is( "" ) );
     assertThat( output.getOriginalPattern(), is( "$" ) );
     assertThat( output.getEffectivePattern(), is( "$" ) );
+
+    input = "";
+    output = Parser.parseTemplateToken( input, Segment.GLOB_PATTERN );
+    assertThat( output.getParameterName(), is( "" ) );
+    assertThat( output.getOriginalPattern(), is( "" ) );
+    assertThat( output.getEffectivePattern(), is( "" ) );
   }
 
 }

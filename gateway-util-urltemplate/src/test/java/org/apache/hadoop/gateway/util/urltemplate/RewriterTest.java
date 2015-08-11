@@ -33,10 +33,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class RewriterTest {
@@ -326,7 +332,36 @@ public class RewriterTest {
 
     assertThat( actualOutput, is( expectOutput ) );
   }
-  
+
+  @Test
+  public void testRewriteHonorsEmptyParameters() throws Exception {
+    Template inputTemplate, outputTemplate;
+    URI actualInput, actualOutput;
+
+    inputTemplate = Parser.parse( "*://*:*/**/oozie/{**}?{**}");
+    outputTemplate = Parser.parse( "http://localhost:11000/oozie/{**}?{**}");
+
+    actualInput = new URI("https://localhost:8443/gateway/oozieui/oozie/v2/jobs?_dc=1438899557070&filter=&timezone=GMT");
+    actualOutput = Rewriter.rewrite( actualInput, inputTemplate, outputTemplate, null, null );
+
+    Map<String, String> actualInputParameters = this.getParameters( actualInput.toURL());
+    Map<String, String> actualOutputParameters  = this.getParameters( actualOutput.toURL());
+    assertTrue( actualInputParameters.equals(actualOutputParameters));
+
+  }
+
+  private Map<String, String> getParameters(URL url) throws UnsupportedEncodingException {
+    final Map<String, String> parameter_pairs = new LinkedHashMap<String, String>();
+    final String[] pairs = url.getQuery().split("&");
+    for (String pair : pairs) {
+       final int idx = pair.indexOf("=");
+       final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+       final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : "";
+       parameter_pairs.put(key, value);
+    }
+    return parameter_pairs;
+    }
+
   private class TestResolver implements Params {
 
     private FilterConfig config;

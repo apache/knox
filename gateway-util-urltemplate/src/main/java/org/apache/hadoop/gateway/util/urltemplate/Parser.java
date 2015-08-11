@@ -315,7 +315,7 @@ public class Parser {
     // Otherwise the token has no value.
     } else {
       paramName = Segment.ANONYMOUS_PARAM;
-      actualPattern = null;
+      actualPattern = s;
       effectivePattern = actualPattern;
     }
     Token token = new Token( paramName, actualPattern, effectivePattern );
