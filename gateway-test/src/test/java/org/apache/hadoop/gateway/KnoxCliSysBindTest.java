@@ -304,10 +304,9 @@ public class KnoxCliSysBindTest {
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args4);
-    assertThat(outContent.toString(),
-        containsString("Verify that the param of name \"main.ldapRealm.contextFactory.systemUsername\" is present."));
-    assertThat(outContent.toString(),
-        containsString("Verify that the param of name \"main.ldapRealm.contextFactory.systemPassword\" is present."));
+    assertThat(outContent.toString(), containsString("Warn: main.ldapRealm.contextFactory.systemUsername is not present"));
+    assertThat(outContent.toString(), containsString("Warn: main.ldapRealm.contextFactory.systemPassword is not present"));
+
 
     //    Test 5: Assert that we get a username/password not present error is printed
     outContent.reset();
@@ -315,8 +314,7 @@ public class KnoxCliSysBindTest {
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args5);
-    assertThat(outContent.toString(),
-        containsString("Topology not-a-cluster does not exist"));
+    assertThat(outContent.toString(), containsString("Topology not-a-cluster does not exist"));
 
 
   }

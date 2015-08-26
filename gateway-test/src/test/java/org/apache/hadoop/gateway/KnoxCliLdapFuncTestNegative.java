@@ -182,6 +182,12 @@ public class KnoxCliLdapFuncTestNegative {
         .addTag( "name" ).addText("main.ldapRealm.contextFactory.url")
         .addTag("value").addText("ldap://localhost:" + ldapTransport.getPort()).gotoParent()
         .addTag("param")
+        .addTag("name").addText("main.ldapRealm.contextFactory.systemUsername")
+        .addTag("value").addText("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
+        .addTag("param")
+        .addTag("name").addText("main.ldapRealm.contextFactory.systemPassword")
+        .addTag( "value" ).addText("guest-password").gotoParent()
+        .addTag("param")
         .addTag( "name" ).addText("main.ldapRealm.contextFactory.authenticationMechanism")
         .addTag("value").addText("simple").gotoParent()
         .addTag("param")
@@ -274,16 +280,17 @@ public class KnoxCliLdapFuncTestNegative {
     String username = "tom";
     String password = "tom-password";
     KnoxCLI cli = new KnoxCLI();
-    cli.setConf( config );
+    cli.setConf(config);
 
     String args1[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
     cli.run( args1 );
 
     assertThat(outContent.toString(), containsString("LDAP authentication successful"));
-    assertFalse(outContent.toString().contains("analyst"));
     assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Error:"));
+    assertThat(outContent.toString(), containsString("Warn: "));
+    assertFalse(outContent.toString().contains("analyst"));
+
 
     outContent.reset();
     username = "bad-name";
@@ -304,13 +311,13 @@ public class KnoxCliLdapFuncTestNegative {
     cli = new KnoxCLI();
     cli.setConf( config );
 
-    String args3[] = {"user-user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
+    String args3[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
     cli.run( args3 );
 
     assertThat(outContent.toString(), containsString("LDAP authentication successful"));
     assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Error:"));
+    assertThat(outContent.toString(), containsString("Warn:"));
     assertFalse(outContent.toString().contains("analyst"));
     assertFalse(outContent.toString().contains("scientist"));
 

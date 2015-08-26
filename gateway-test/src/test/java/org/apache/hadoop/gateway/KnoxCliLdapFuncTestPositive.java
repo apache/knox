@@ -309,8 +309,7 @@ public class KnoxCliLdapFuncTestPositive {
     String args4[] = {"user-auth-test", "--master", "knox", "--cluster", "cluster-dne",
         "--u", username, "--p", password };
     cli.run(args4);
-    assertThat(outContent.toString(), containsString("ERR: Topology"));
-    assertThat(outContent.toString(), containsString("does not exist"));
+    assertThat(outContent.toString(), containsString("Topology cluster-dne does not exist"));
 
 
     //    Test 5: Authenticate a user who belongs to no groups, but specify groups with --g
