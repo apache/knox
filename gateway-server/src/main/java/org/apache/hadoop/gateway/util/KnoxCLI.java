@@ -1480,8 +1480,8 @@ public class KnoxCLI extends Configured implements Tool {
       attempts++;
       SSLContext ctx = null;
       CloseableHttpClient client;
-      String http = "https://";
-      String https = "http://";
+      String http = "http://";
+      String https = "https://";
       GatewayConfig conf = getGatewayConfig();
       String gatewayPort;
       String host;
@@ -1499,7 +1499,7 @@ public class KnoxCLI extends Configured implements Tool {
         try {
           host = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-          out.println(e.getMessage());
+          out.println(e.toString());
           out.println("Defaulting address to localhost. Use --hostname option to specify a different hostname");
           host = "localhost";
         }
@@ -1532,7 +1532,7 @@ public class KnoxCLI extends Configured implements Tool {
       try {
         ctx = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
       } catch (Exception e) {
-        out.println(e.getMessage());
+        out.println(e.toString());
       }
 
 //    Initialize the HTTP client
@@ -1542,20 +1542,19 @@ public class KnoxCLI extends Configured implements Tool {
         client = HttpClients.custom().setSslcontext(ctx).build();
       }
 
-      HttpGet request = new HttpGet(httpsServiceTestURL);
+      HttpGet request;
+      if(ssl) {
+        request = new HttpGet(httpsServiceTestURL);
+      } else {
+        request = new HttpGet(httpServiceTestURL);
+      }
+
+
       request.setHeader("Authorization", authString);
       request.setHeader("Accept", MediaType.APPLICATION_JSON.getMediaType());
       try {
+        out.println(request.toString());
         CloseableHttpResponse response = client.execute(request);
-
-//        Fallback to http in case Http in case https doesn't work.
-        if(response.getStatusLine().getStatusCode() != 200) {
-          request = new HttpGet(httpServiceTestURL);
-          response = client.execute(request);
-        }
-
-        response.close();
-        request.releaseConnection();
 
         switch (response.getStatusLine().getStatusCode()) {
 
@@ -1575,33 +1574,22 @@ public class KnoxCLI extends Configured implements Tool {
             out.println(response.getStatusLine().toString());
             response.getEntity().writeTo(out);
             break;
-
-
         }
 
+        response.close();
+        request.releaseConnection();
 
       } catch (ClientProtocolException e) {
-        out.println(e.getMessage());
+        out.println(e.toString());
         if (debug) {
           e.printStackTrace(out);
         }
       } catch (SSLException e) {
-        out.println(e.getMessage());
-
-        if(attempts < 2) {
-          if(ssl) {
-            ssl = false;
-            out.println("Attempting request without SSL.");
-          } else {
-            ssl = true;
-            out.println("Attempting request with SSL ");
-          }
-          execute();
-        } else {
-          out.println("Unable to successfully make request. Try using the API with cURL.");
-        }
+        out.println(e.toString());
+        retryRequest();
       } catch (IOException e) {
-        out.println(e.getMessage());
+        out.println(e.toString());
+        retryRequest();
         if(debug) {
           e.printStackTrace(out);
         }
@@ -1609,10 +1597,25 @@ public class KnoxCLI extends Configured implements Tool {
         try {
           client.close();
         } catch (IOException e) {
-          out.println(e.getMessage());
+          out.println(e.toString());
         }
       }
 
+    }
+
+    public void retryRequest(){
+      if(attempts < 2) {
+        if(ssl) {
+          ssl = false;
+          out.println("Attempting request without SSL.");
+        } else {
+          ssl = true;
+          out.println("Attempting request with SSL ");
+        }
+        execute();
+      } else {
+        out.println("Unable to successfully make request. Try using the API with cURL.");
+      }
     }
 
   }
@@ -1632,9 +1635,9 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   /**
-  * @param args
-  * @throws Exception
-  */
+   * @param args
+   * @throws Exception
+   */
   public static void main(String[] args) throws Exception {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     int res = ToolRunner.run(new GatewayConfigImpl(), new KnoxCLI(), args);

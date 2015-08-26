@@ -3553,11 +3553,13 @@ public class GatewayBasicFuncTest {
 
 
     String args3[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", "bad-host",
-        "--port", "0" };
+        "--port", "0", "--u", "guest", "--p", "guest-password" };
 
     cli = new KnoxCLI();
     cli.run(args3);
-    assertThat(outContent.toString(), containsString("nodename nor servname provided"));
+    assertThat(outContent.toString().toLowerCase(),
+        either(containsString("nodename nor servname provided")).or(containsString("name or service not known"))
+            .or(containsString("//bad-host:0/")));
     outContent.reset();
 
     String args4[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
