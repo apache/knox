@@ -31,6 +31,8 @@ public class CustomDispatch {
 
   private String haClassName;
 
+  private String httpClientFactory;
+
   @XmlAttribute(name = "contributor-name")
   public String getContributorName() {
     return contributorName;
@@ -65,5 +67,14 @@ public class CustomDispatch {
 
   public void setHaClassName(String haContributorClassName) {
     this.haClassName = haContributorClassName;
+  }
+
+  @XmlAttribute(name = "http-client-factory")
+  public String getHttpClientFactory() {
+    return httpClientFactory;
+  }
+
+  public void setHttpClientFactory(String httpClientFactory) {
+    this.httpClientFactory = httpClientFactory;
   }
 }

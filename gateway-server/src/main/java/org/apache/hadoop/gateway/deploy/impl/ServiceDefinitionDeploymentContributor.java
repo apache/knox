@@ -46,6 +46,8 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private static final String DISPATCH_IMPL_PARAM = "dispatch-impl";
 
+  private static final String HTTP_CLIENT_FACTORY_PARAM = "httpClientFactory";
+
   private static final String SERVICE_ROLE_PARAM = "serviceRole";
 
   private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
@@ -178,11 +180,12 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if ( customDispatch != null ) {
       String haContributorName = customDispatch.getHaContributorName();
       String haClassName = customDispatch.getHaClassName();
+      String httpClientFactory = customDispatch.getHttpClientFactory();
       if ( isHaEnabled) {
         if (haContributorName != null) {
           addDispatchFilter(context, service, resource, DISPATCH_ROLE, haContributorName);
         } else if (haClassName != null) {
-          addDispatchFilterForClass(context, service, resource, haClassName);
+          addDispatchFilterForClass(context, service, resource, haClassName, httpClientFactory);
         } else {
           addDefaultHaDispatchFilter(context, service, resource);
         }
@@ -193,7 +196,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
         } else {
           String className = customDispatch.getClassName();
           if ( className != null ) {
-            addDispatchFilterForClass(context, service, resource, className);
+            addDispatchFilterForClass(context, service, resource, className, httpClientFactory);
           } else {
             //final fallback to the default dispatch
             addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client");
@@ -208,13 +211,16 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   }
 
   private void addDefaultHaDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS);
+    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS, null);
     filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String className) {
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory) {
     FilterDescriptor filter = resource.addFilter().name(getName()).role(DISPATCH_ROLE).impl(GatewayDispatchFilter.class);
-    filter.param().name(DISPATCH_IMPL_PARAM).value(className);
+    filter.param().name(DISPATCH_IMPL_PARAM).value(dispatchClass);
+    if (httpClientFactory != null) {
+      filter.param().name(HTTP_CLIENT_FACTORY_PARAM).value(httpClientFactory);
+    }
     FilterParamDescriptor filterParam = filter.param().name(REPLAY_BUFFER_SIZE_PARAM).value(DEFAULT_REPLAY_BUFFER_SIZE);
     for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
       if ( REPLAY_BUFFER_SIZE_PARAM.equals(serviceParam.getKey()) ) {

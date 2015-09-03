@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.hbase;
+package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.BasicCookieStore;
 
-/**
- * This used to be a specialized dispatch providing HBase specific features to the
- * default dispatch. Now it is just a marker class for backwards compatibility
- */
-@Deprecated
-public class HBaseDispatch extends DefaultDispatch {
+public class HadoopAuthCookieStore extends BasicCookieStore {
 
+  @Override
+  public void addCookie(Cookie cookie) {
+    if (cookie.getName().equals("hadoop.auth")) {
+      super.addCookie(cookie);
+    }
+  }
 }
-

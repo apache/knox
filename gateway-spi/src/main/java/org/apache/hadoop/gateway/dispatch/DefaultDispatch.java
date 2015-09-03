@@ -33,8 +33,6 @@ import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpOptions;
@@ -43,8 +41,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.util.EntityUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,29 +57,20 @@ import java.util.Set;
  */
 public class DefaultDispatch extends AbstractGatewayDispatch {
 
-  // private static final String CT_APP_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded";
-  // private static final String CT_APP_XML = "application/xml";
-  protected static final String Q_DELEGATION_EQ = "?delegation=";
-  protected static final String AMP_DELEGATION_EQ = "&delegation=";
-  protected static final String COOKIE = "Cookie";
   protected static final String SET_COOKIE = "Set-Cookie";
   protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-  protected static final String NEGOTIATE = "Negotiate";
 
   protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
   protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  protected AppCookieManager appCookieManager;
-
   private int replayBufferSize = 0;
   private Set<String> outboundResponseExcludeHeaders;
 
   @Override
   public void init() {
-    setAppCookieManager(new AppCookieManager());
-    outboundResponseExcludeHeaders = new HashSet<String>();
+    outboundResponseExcludeHeaders = new HashSet<>();
     outboundResponseExcludeHeaders.add(SET_COOKIE);
     outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
   }
@@ -91,10 +78,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   @Override
   public void destroy() {
 
-  }
-
-  public void setAppCookieManager(AppCookieManager appCookieManager) {
-    this.appCookieManager = appCookieManager;
   }
 
   protected void executeRequest(
@@ -112,19 +95,12 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
     try {
       auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod( outboundRequest.getMethod() ) );
-      String query = outboundRequest.getURI().getQuery();
       if( !"true".equals( System.getProperty( GatewayConfig.HADOOP_KERBEROS_SECURED ) ) ) {
         // Hadoop cluster not Kerberos enabled
         addCredentialsToRequest( outboundRequest );
-        inboundResponse = client.execute( outboundRequest );
-      } else if( query.contains( Q_DELEGATION_EQ ) ||
-          // query string carries delegation token
-          query.contains( AMP_DELEGATION_EQ ) ) {
-        inboundResponse = client.execute( outboundRequest );
-      } else {
-        // Kerberos secured, no delegation token in query string
-        inboundResponse = executeKerberosDispatch( outboundRequest, client );
       }
+      inboundResponse = client.execute( outboundRequest );
+
       int statusCode = inboundResponse.getStatusLine().getStatusCode();
       if( statusCode != 201 ) {
         LOG.dispatchResponseStatusCode( statusCode );
@@ -205,39 +181,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
    }
 
-   protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
-                                                  HttpClient client) throws IOException {
-      HttpResponse inboundResponse;
-      outboundRequest.removeHeaders(COOKIE);
-      String appCookie = appCookieManager.getCachedAppCookie();
-      if (appCookie != null) {
-         outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
-      }
-      inboundResponse = client.execute(outboundRequest);
-      // if inBoundResponse has status 401 and header WWW-Authenticate: Negoitate
-      // refresh hadoop.auth.cookie and attempt one more time
-      int statusCode = inboundResponse.getStatusLine().getStatusCode();
-      if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-         Header[] wwwAuthHeaders = inboundResponse.getHeaders(WWW_AUTHENTICATE);
-         if (wwwAuthHeaders != null && wwwAuthHeaders.length != 0 &&
-               wwwAuthHeaders[0].getValue().trim().startsWith(NEGOTIATE)) {
-            //need to consume the previous inbound response first
-            EntityUtils.consume(inboundResponse.getEntity());
-
-            appCookie = appCookieManager.getAppCookie(outboundRequest, true);
-            outboundRequest.removeHeaders(COOKIE);
-            outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
-            inboundResponse = client.execute(outboundRequest);
-         } else {
-            // no supported authentication type found
-            // we would let the original response propagate
-         }
-      } else {
-         // not a 401 Unauthorized status code
-         // we would let the original response propagate
-      }
-      return inboundResponse;
-   }
 
    protected HttpEntity createRequestEntity(HttpServletRequest request)
          throws IOException {

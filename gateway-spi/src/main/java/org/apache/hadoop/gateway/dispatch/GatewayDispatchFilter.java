@@ -20,17 +20,8 @@ package org.apache.hadoop.gateway.dispatch;
 import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolException;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.RedirectStrategy;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.cookie.Cookie;
+import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.protocol.HttpContext;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -41,9 +32,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.apache.hadoop.gateway.config.ConfigurationInjectorBuilder.configuration;
@@ -56,10 +45,10 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   private Dispatch dispatch;
 
-  private CloseableHttpClient httpClient;
+  private HttpClient httpClient;
 
   private static Map<String, Adapter> createMethodAdapters() {
-    Map<String, Adapter> map = new HashMap<String, Adapter>();
+    Map<String, Adapter> map = new HashMap<>();
     map.put("GET", new GetAdapter());
     map.put("POST", new PostAdapter());
     map.put("PUT", new PutAdapter());
@@ -73,15 +62,17 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     super.init(filterConfig);
     if (dispatch == null) {
       String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
-      dispatch = newDispatch(dispatchImpl);
+      dispatch = newInstanceFromName(dispatchImpl);
     }
     configuration().target(dispatch).source(filterConfig).inject();
-    httpClient = HttpClients.custom()
-        .setDefaultCookieStore(new NoCookieStore())
-        .setRedirectStrategy(new NeverRedirectStrategy())
-        .setRetryHandler(new NeverRetryHandler())
-        .build();
-    //[sumit] this can perhaps be stashed in the servlet context to increase sharing of the client
+    HttpClientFactory httpClientFactory;
+    String httpClientFactoryClass = filterConfig.getInitParameter("httpClientFactory");
+    if (httpClientFactoryClass != null) {
+      httpClientFactory = newInstanceFromName(httpClientFactoryClass);
+    } else {
+      httpClientFactory = new DefaultHttpClientFactory();
+    }
+    httpClient = httpClientFactory.createHttpClient(filterConfig);
     dispatch.setHttpClient(httpClient);
     dispatch.init();
   }
@@ -90,7 +81,9 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   public void destroy() {
     dispatch.destroy();
     try {
-      httpClient.close();
+      if (httpClient instanceof  CloseableHttpClient) {
+        ((CloseableHttpClient) httpClient).close();
+      }
     } catch ( IOException e ) {
       LOG.errorClosingHttpClient(e);
     }
@@ -170,59 +163,20 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     }
   }
 
-  private Dispatch newDispatch(String dispatchImpl) throws ServletException {
+  private <T> T newInstanceFromName(String dispatchImpl) throws ServletException {
     try {
-      ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      if ( loader == null ) {
-        loader = this.getClass().getClassLoader();
-      }
-      Class<Dispatch> clazz = (Class) loader.loadClass(dispatchImpl);
+      Class<T> clazz = loadClass(dispatchImpl);
       return clazz.newInstance();
     } catch ( Exception e ) {
       throw new ServletException(e);
     }
   }
 
-  private class NoCookieStore implements CookieStore {
-    @Override
-    public void addCookie(Cookie cookie) {
-      //no op
-    }
-
-    @Override
-    public List<Cookie> getCookies() {
-      return Collections.EMPTY_LIST;
-    }
-
-    @Override
-    public boolean clearExpired(Date date) {
-      return true;
-    }
-
-    @Override
-    public void clear() {
-      //no op
-    }
-  }
-
-  private class NeverRedirectStrategy implements RedirectStrategy {
-    @Override
-    public boolean isRedirected( HttpRequest request, HttpResponse response, HttpContext context )
-        throws ProtocolException {
-      return false;
-    }
-
-    @Override
-    public HttpUriRequest getRedirect( HttpRequest request, HttpResponse response, HttpContext context )
-        throws ProtocolException {
-      return null;
-    }
-  }
-
-  private class NeverRetryHandler implements HttpRequestRetryHandler {
-    @Override
-    public boolean retryRequest( IOException exception, int executionCount, HttpContext context ) {
-      return false;
-    }
+  private <T> Class<T> loadClass(String className) throws ClassNotFoundException {
+      ClassLoader loader = Thread.currentThread().getContextClassLoader();
+      if ( loader == null ) {
+        loader = this.getClass().getClassLoader();
+      }
+      return (Class<T>) loader.loadClass(className);
   }
 }

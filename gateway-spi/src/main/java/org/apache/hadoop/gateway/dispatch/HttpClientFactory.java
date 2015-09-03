@@ -15,16 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.hbase;
+package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
+import org.apache.http.client.HttpClient;
 
-/**
- * This used to be a specialized dispatch providing HBase specific features to the
- * default dispatch. Now it is just a marker class for backwards compatibility
- */
-@Deprecated
-public class HBaseDispatch extends DefaultDispatch {
+import javax.servlet.FilterConfig;
 
+public interface HttpClientFactory {
+
+  public HttpClient createHttpClient( FilterConfig filterConfig );
 }
-

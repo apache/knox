@@ -64,7 +64,7 @@ public class URLManager {
       if (pushToBottom) {
          String failed = urls.poll();
          urls.offer(failed);
-         LOG.markedFailedUrl(failed, top);
+         LOG.markedFailedUrl(failed, urls.peek());
       }
    }
 }
