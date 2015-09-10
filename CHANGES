@@ -14,6 +14,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-575] - Adds more logging for ShiroProvider LDAP Authentication.
     * [KNOX-564] - Topology deployment fails for no configured providers
     * [KNOX-590] - CLI sys-user-auth-test and user-auth-test have improved messages and work for more Shiro configs
+    * [KNOX-597] - Improve diagnostic logging of HTTP traffic
 
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
