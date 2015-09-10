@@ -205,6 +205,7 @@ public class GatewayDeployFuncTest {
   @Test( timeout = 30*1000 )
   public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     long sleep = 200;
+    int numFilesInWar = 5;
     String username = "guest";
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -212,7 +213,7 @@ public class GatewayDeployFuncTest {
 
     File topoDir = new File( config.getGatewayTopologyDir() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
-    File warDir = null;
+    File warDir;
 
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
@@ -223,7 +224,7 @@ public class GatewayDeployFuncTest {
 
     warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 1, 0, sleep );
     for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
     }
     waitForAccess( serviceUrl, username, password, sleep );
 
@@ -240,7 +241,7 @@ public class GatewayDeployFuncTest {
     // Check to make sure there are two war directories with the same root.
     warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 2, 1, sleep );
     for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
     }
     waitForAccess( serviceUrl, username, password, sleep );
 
@@ -257,7 +258,7 @@ public class GatewayDeployFuncTest {
     // Check to make sure there are two war directories with the same root.
     warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 3, 2, sleep );
     for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", 4, 0, sleep );
+      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
     }
     waitForAccess( serviceUrl, username, password, sleep );
 

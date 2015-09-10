@@ -332,6 +332,24 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Computed roles/groups: {0} for principal: {1}" )
   void lookedUpUserRoles(Set<String> roleNames, String userName);
 
+  @Message( level = MessageLevel.DEBUG, text = "Initialize provider: {1}/{0}" )
+  void initializeProvider( String name, String role );
+
+  @Message( level = MessageLevel.DEBUG, text = "Initialize service: {1}/{0}" )
+  void initializeService( String name, String role );
+
+  @Message( level = MessageLevel.DEBUG, text = "Contribute provider: {1}/{0}" )
+  void contributeProvider( String name, String role );
+
+  @Message( level = MessageLevel.DEBUG, text = "Contribute service: {1}/{0}" )
+  void contributeService( String name, String role );
+
+  @Message( level = MessageLevel.DEBUG, text = "Finalize provider: {1}/{0}" )
+  void finalizeProvider( String name, String role );
+
+  @Message( level = MessageLevel.DEBUG, text = "Finalize service: {1}/{0}" )
+  void finalizeService( String name, String role );
+
   @Message( level = MessageLevel.INFO, text = "Configured services directory is {0}" )
   void usingServicesDirectory(String path);
 
