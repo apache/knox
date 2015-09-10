@@ -189,10 +189,17 @@ public class GatewayFilter implements Filter {
     Holder holder = new Holder( path, name, clazz, params, resourceRole );
     addHolder( holder );
   }
-  
+
+  // Now creating the correlation context only if required since it may be created upstream in the CorrelationHandler.
   private void assignCorrelationRequestId() {
-    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
-    correlationContext.setRequestId( UUID.randomUUID().toString() );
+    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().getContext();
+    if( correlationContext == null ) {
+      correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
+    }
+    String requestId = correlationContext.getRequestId();
+    if( requestId == null ) {
+      correlationContext.setRequestId( UUID.randomUUID().toString() );
+    }
   }
 
   private class Chain implements FilterChain {

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,29 @@
  */
 package org.apache.hadoop.gateway.filter;
 
-import javax.servlet.FilterChain;
+import org.apache.hadoop.gateway.audit.api.CorrelationContext;
+import org.apache.hadoop.gateway.audit.api.CorrelationServiceFactory;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 
-/**
- *
- */
-//TODO: Implement the trace filter.
-public class TraceFilter extends AbstractGatewayFilter {
+public class CorrelationHandler extends HandlerWrapper {
 
   @Override
-  public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
-    chain.doFilter( request, response );
+  public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException {
+    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
+    correlationContext.setRequestId( UUID.randomUUID().toString() );
+    try {
+      super.handle( target, baseRequest, request, response );
+    } finally {
+      correlationContext.destroy();
+    }
   }
 
 }

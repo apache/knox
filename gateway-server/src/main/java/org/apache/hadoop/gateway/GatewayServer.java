@@ -30,21 +30,27 @@ import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
+import org.apache.hadoop.gateway.filter.CorrelationHandler;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.SSLService;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
+import org.apache.hadoop.gateway.trace.AccessHandler;
+import org.apache.hadoop.gateway.trace.ErrorHandler;
+import org.apache.hadoop.gateway.trace.TraceHandler;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -306,7 +312,21 @@ public class GatewayServer {
       connector.setPort(address.getPort());
       jetty.addConnector(connector);
     }
-    jetty.setHandler( contexts );
+
+    HandlerCollection handlers = new HandlerCollection();
+    RequestLogHandler logHandler = new RequestLogHandler();
+    logHandler.setRequestLog( new AccessHandler() );
+
+    TraceHandler traceHandler = new TraceHandler();
+    traceHandler.setHandler( contexts );
+    traceHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
+
+    CorrelationHandler correlationHandler = new CorrelationHandler();
+    correlationHandler.setHandler( traceHandler );
+
+    handlers.setHandlers( new Handler[]{ correlationHandler, logHandler } );
+
+    jetty.setHandler( handlers );
     try {
     jetty.start();
     }
@@ -357,6 +377,7 @@ public class GatewayServer {
     String warPath = warFile.getAbsolutePath();
     errorHandler = new ErrorHandler();
     errorHandler.setShowStacks(false);
+    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
     WebAppContext context = new WebAppContext();
     context.setDefaultsDescriptor( null );
     if (!name.equals("_default")) {
