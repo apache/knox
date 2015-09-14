@@ -20,6 +20,7 @@ Release Notes - Apache Knox - Version 0.7.0
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
     * [KNOX-581] - Hive dispatch not propagating effective principal name
+    * [KNOX-598] - Concurrent JDBC clients via KNOX to Kerberized HiveServer2 causes HTTP 401 error (due to Kerberos Replay attack error)
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

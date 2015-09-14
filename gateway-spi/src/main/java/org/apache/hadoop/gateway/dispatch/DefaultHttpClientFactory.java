@@ -58,7 +58,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       credentialsProvider.setCredentials(AuthScope.ANY, new UseJaasCredentials());
 
       Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
-          .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true))
+          .register(AuthSchemes.SPNEGO, new KnoxSpnegoAuthSchemeFactory(true))
           .build();
 
       builder = builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
