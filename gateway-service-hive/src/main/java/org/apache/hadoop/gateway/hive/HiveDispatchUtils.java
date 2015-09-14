@@ -17,39 +17,22 @@
  */
 package org.apache.hadoop.gateway.hive;
 
-import org.apache.hadoop.gateway.config.Configure;
-import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.security.SubjectUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.auth.BasicScheme;
 
-/**
- * This specialized dispatch provides Hive specific features to the
- * default HttpClientDispatch.
- */
-public class HiveDispatch extends DefaultDispatch {
-  private boolean basicAuthPreemptive = false;
+public class HiveDispatchUtils {
 
-  @Override
-  public void init() {
-    super.init();
-  }
+  private static final String PASSWORD_PLACEHOLDER = "*";
 
-  protected void addCredentialsToRequest(HttpUriRequest request) {
-    if( isBasicAuthPreemptive() ) {
-      HiveDispatchUtils.addCredentialsToRequest(request);
+  public static void addCredentialsToRequest(HttpUriRequest request) {
+    String principal = SubjectUtils.getCurrentEffectivePrincipalName();
+    if ( principal != null ) {
+      UsernamePasswordCredentials credentials =
+          new UsernamePasswordCredentials(principal, PASSWORD_PLACEHOLDER);
+      request.addHeader(BasicScheme.authenticate(credentials, "US-ASCII", false));
     }
   }
 
-  @Configure
-  public void setBasicAuthPreemptive( boolean basicAuthPreemptive ) {
-    this.basicAuthPreemptive = basicAuthPreemptive;
-  }
-
-  public boolean isBasicAuthPreemptive() {
-    return basicAuthPreemptive;
-  }
-
 }
-

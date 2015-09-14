@@ -21,79 +21,104 @@ import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
 
 public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigConstants {
 
-   private String name;
+  private String name;
 
-   private boolean enabled = DEFAULT_ENABLED;
+  private boolean enabled = DEFAULT_ENABLED;
 
-   private int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
+  private int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
 
-   private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
+  private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
 
-   private int maxRetryAttempts = DEFAULT_MAX_RETRY_ATTEMPTS;
+  private int maxRetryAttempts = DEFAULT_MAX_RETRY_ATTEMPTS;
 
-   private int retrySleep  = DEFAULT_RETRY_SLEEP;
+  private int retrySleep = DEFAULT_RETRY_SLEEP;
 
-   public DefaultHaServiceConfig(String name) {
-      this.name = name;
-   }
-   @Override
+  private String zookeeperEnsemble;
 
-   public String getServiceName() {
-      return name;
-   }
+  private String zookeeperNamespace;
 
-   @Override
-   public void setServiceName(String name) {
-      this.name = name;
-   }
+  public DefaultHaServiceConfig(String name) {
+    this.name = name;
+  }
 
-   @Override
-   public boolean isEnabled() {
-      return enabled;
-   }
+  @Override
 
-   @Override
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-   }
+  public String getServiceName() {
+    return name;
+  }
 
-   @Override
-   public int getMaxFailoverAttempts() {
-      return maxFailoverAttempts;
-   }
+  @Override
+  public void setServiceName(String name) {
+    this.name = name;
+  }
 
-   @Override
-   public void setMaxFailoverAttempts(int maxFailoverAttempts) {
-      this.maxFailoverAttempts = maxFailoverAttempts;
-   }
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
 
-   @Override
-   public int getFailoverSleep() {
-      return failoverSleep;
-   }
+  @Override
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 
-   @Override
-   public void setFailoverSleep(int failoverSleep) {
-      this.failoverSleep = failoverSleep;
-   }
+  @Override
+  public int getMaxFailoverAttempts() {
+    return maxFailoverAttempts;
+  }
 
-   @Override
-   public int getMaxRetryAttempts() {
-      return maxRetryAttempts;
-   }
+  @Override
+  public void setMaxFailoverAttempts(int maxFailoverAttempts) {
+    this.maxFailoverAttempts = maxFailoverAttempts;
+  }
 
-   @Override
-   public void setMaxRetryAttempts(int maxRetryAttempts) {
-      this.maxRetryAttempts = maxRetryAttempts;
-   }
+  @Override
+  public int getFailoverSleep() {
+    return failoverSleep;
+  }
 
-   @Override
-   public int getRetrySleep() {
-      return retrySleep;
-   }
+  @Override
+  public void setFailoverSleep(int failoverSleep) {
+    this.failoverSleep = failoverSleep;
+  }
 
-   @Override
-   public void setRetrySleep(int retrySleep) {
-      this.retrySleep = retrySleep;
-   }
+  @Override
+  public int getMaxRetryAttempts() {
+    return maxRetryAttempts;
+  }
+
+  @Override
+  public void setMaxRetryAttempts(int maxRetryAttempts) {
+    this.maxRetryAttempts = maxRetryAttempts;
+  }
+
+  @Override
+  public int getRetrySleep() {
+    return retrySleep;
+  }
+
+  @Override
+  public void setRetrySleep(int retrySleep) {
+    this.retrySleep = retrySleep;
+  }
+
+  @Override
+  public String getZookeeperEnsemble() {
+    return zookeeperEnsemble;
+  }
+
+  @Override
+  public void setZookeeperEnsemble(String zookeeperEnsemble) {
+    this.zookeeperEnsemble = zookeeperEnsemble;
+  }
+
+  @Override
+  public String getZookeeperNamespace() {
+    return zookeeperNamespace;
+  }
+
+  @Override
+  public void setZookeeperNamespace(String zookeeperNamespace) {
+    this.zookeeperNamespace = zookeeperNamespace;
+  }
 }

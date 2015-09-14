@@ -42,4 +42,8 @@ public interface HaDescriptorConstants {
 
    public static final String ENABLED_ATTRIBUTE = "enabled";
 
+   public static final String ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
+
+   public static final String ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
+
 }

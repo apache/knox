@@ -31,7 +31,7 @@ public class DefaultHaDescriptor implements HaDescriptor {
    private ConcurrentHashMap<String, HaServiceConfig> serviceConfigs;
 
    public DefaultHaDescriptor() {
-      serviceConfigs = new ConcurrentHashMap<String, HaServiceConfig>();
+      serviceConfigs = new ConcurrentHashMap<>();
    }
 
    @Override

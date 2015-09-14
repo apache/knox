@@ -18,38 +18,30 @@
 package org.apache.hadoop.gateway.hive;
 
 import org.apache.hadoop.gateway.config.Configure;
-import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
-import org.apache.hadoop.gateway.security.SubjectUtils;
-import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.hadoop.gateway.ha.dispatch.DefaultHaDispatch;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.auth.BasicScheme;
 
-/**
- * This specialized dispatch provides Hive specific features to the
- * default HttpClientDispatch.
- */
-public class HiveDispatch extends DefaultDispatch {
+
+public class HiveHaDispatch extends DefaultHaDispatch {
+
   private boolean basicAuthPreemptive = false;
 
-  @Override
-  public void init() {
-    super.init();
+  public HiveHaDispatch() {
+    setServiceRole("HIVE");
   }
 
   protected void addCredentialsToRequest(HttpUriRequest request) {
-    if( isBasicAuthPreemptive() ) {
+    if ( isBasicAuthPreemptive() ) {
       HiveDispatchUtils.addCredentialsToRequest(request);
     }
   }
 
   @Configure
-  public void setBasicAuthPreemptive( boolean basicAuthPreemptive ) {
+  public void setBasicAuthPreemptive(boolean basicAuthPreemptive) {
     this.basicAuthPreemptive = basicAuthPreemptive;
   }
 
   public boolean isBasicAuthPreemptive() {
     return basicAuthPreemptive;
   }
-
 }
-

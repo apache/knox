@@ -36,12 +36,17 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       String failoverSleep = configMap.get(CONFIG_PARAM_FAILOVER_SLEEP);
       String maxRetryAttempts = configMap.get(CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
       String retrySleep = configMap.get(CONFIG_PARAM_RETRY_SLEEP);
-      return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts, failoverSleep, maxRetryAttempts, retrySleep);
+      String zookeeperEnsemble = configMap.get(CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
+      String zookeeperNamespace = configMap.get(CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
+      return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts,
+          failoverSleep, maxRetryAttempts, retrySleep,
+          zookeeperEnsemble, zookeeperNamespace);
    }
 
    public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
                                                      String maxFailoverAttemptsValue, String failoverSleepValue,
-                                                     String maxRetryAttemptsValue, String retrySleepValue) {
+                                                     String maxRetryAttemptsValue, String retrySleepValue,
+                                                     String zookeeperEnsemble, String zookeeperNamespace) {
       boolean enabled = DEFAULT_ENABLED;
       int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
       int failoverSleep = DEFAULT_FAILOVER_SLEEP;
@@ -68,6 +73,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       serviceConfig.setFailoverSleep(failoverSleep);
       serviceConfig.setMaxRetryAttempts(maxRetryAttempts);
       serviceConfig.setRetrySleep(retrySleep);
+      serviceConfig.setZookeeperEnsemble(zookeeperEnsemble);
+      serviceConfig.setZookeeperNamespace(zookeeperNamespace);
       return serviceConfig;
    }
 

@@ -33,6 +33,10 @@ public interface HaServiceConfigConstants {
 
    public static final String CONFIG_PARAM_ENABLED = "enabled";
 
+   public static final String CONFIG_PARAM_ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
+
+   public static final String CONFIG_PARAM_ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
+
    public static final int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
 
    public static final int DEFAULT_FAILOVER_SLEEP = 1000;

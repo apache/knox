@@ -40,7 +40,7 @@ public class HaDescriptorFactoryTest {
       assertEquals(1, serviceConfig.getMaxRetryAttempts());
       assertEquals(1000, serviceConfig.getRetrySleep());
 
-      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", "5", "3000");
+      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", "5", "3000", null, null);
       assertNotNull(serviceConfig);
       assertFalse(serviceConfig.isEnabled());
       assertEquals("bar", serviceConfig.getServiceName());

@@ -39,4 +39,7 @@ public interface HaMessages {
    @Message(level = MessageLevel.DEBUG, text = "Moving failed URL to the bottom {0}, new top is {1}")
    void markedFailedUrl(String failedUrl, String top);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to get Zookeeper URLs : {0}")
+  void failedToGetZookeeperUrls(Exception e);
+
 }

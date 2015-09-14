@@ -53,7 +53,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
   public HttpClient createHttpClient(FilterConfig filterConfig) {
     HttpClientBuilder builder = HttpClients.custom();
 
-    if ("true".equals( System.getProperty( GatewayConfig.HADOOP_KERBEROS_SECURED ))) {
+    if ( "true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED)) ) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(AuthScope.ANY, new UseJaasCredentials());
 
@@ -61,7 +61,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true))
           .build();
 
-      builder =  builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
+      builder = builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
           .setDefaultCookieStore(new HadoopAuthCookieStore())
           .setDefaultCredentialsProvider(credentialsProvider);
     } else {

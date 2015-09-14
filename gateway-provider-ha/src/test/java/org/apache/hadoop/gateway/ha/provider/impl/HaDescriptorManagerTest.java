@@ -71,14 +71,14 @@ public class HaDescriptorManagerTest {
    @Test
    public void testDescriptorStoring() throws IOException {
       HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "3", "3000"));
-      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", "5", "8000"));
+      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "3", "3000", "foo:2181,bar:2181", "hiveserver2"));
+      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", "5", "8000", null, null));
       StringWriter writer = new StringWriter();
       HaDescriptorManager.store(descriptor, writer);
       String descriptorXml = writer.toString();
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
             "<ha>\n" +
-            "  <service enabled=\"false\" failoverSleep=\"1000\" maxFailoverAttempts=\"42\" maxRetryAttempts=\"3\" name=\"foo\" retrySleep=\"3000\"/>\n" +
+            "  <service enabled=\"false\" failoverSleep=\"1000\" maxFailoverAttempts=\"42\" maxRetryAttempts=\"3\" name=\"foo\" retrySleep=\"3000\" zookeeperEnsemble=\"foo:2181,bar:2181\" zookeeperNamespace=\"hiveserver2\"/>\n" +
             "  <service enabled=\"true\" failoverSleep=\"5000\" maxFailoverAttempts=\"3\" maxRetryAttempts=\"5\" name=\"bar\" retrySleep=\"8000\"/>\n" +
             "</ha>\n";
       assertThat( the( descriptorXml ), isEquivalentTo( the( xml ) ) );

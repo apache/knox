@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.ha.dispatch;
 
 import org.apache.hadoop.gateway.config.Configure;
+import org.apache.hadoop.gateway.config.Optional;
 import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.ha.dispatch.i18n.HaDispatchMessages;
@@ -50,6 +51,8 @@ public class DefaultHaDispatch extends DefaultDispatch {
 
   private HaProvider haProvider;
 
+  @Optional
+  @Configure
   private String serviceRole;
 
   @Override
@@ -67,7 +70,6 @@ public class DefaultHaDispatch extends DefaultDispatch {
     return serviceRole;
   }
 
-  @Configure
   public void setServiceRole(String serviceRole) {
     this.serviceRole = serviceRole;
   }

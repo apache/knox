@@ -47,7 +47,7 @@ public class WebHdfsHaDispatchTest {
    public void testConnectivityFailover() throws Exception {
       String serviceName = "WEBHDFS";
       HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", "2", "1000"));
+      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", "2", "1000", null, null));
       HaProvider provider = new DefaultHaProvider(descriptor);
       URI uri1 = new URI( "http://unreachable-host" );
       URI uri2 = new URI( "http://reachable-host" );

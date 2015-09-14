@@ -24,16 +24,17 @@ import java.util.ArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class URLManagerTest {
+public class DefaultURLManagerTest {
 
    @Test
    public void testActiveURLManagement() {
-      ArrayList<String> urls = new ArrayList<String>();
+      ArrayList<String> urls = new ArrayList<>();
       String url1 = "http://host1";
       urls.add(url1);
       String url2 = "http://host2";
       urls.add(url2);
-      URLManager manager = new URLManager(urls);
+      DefaultURLManager manager = new DefaultURLManager();
+      manager.setURLs(urls);
       assertTrue(manager.getURLs().containsAll(urls));
       assertEquals(url1, manager.getActiveURL());
       manager.markFailed(url1);
@@ -44,7 +45,7 @@ public class URLManagerTest {
 
    @Test
    public void testMarkingFailedURL() {
-      ArrayList<String> urls = new ArrayList<String>();
+      ArrayList<String> urls = new ArrayList<>();
       String url1 = "http://host1:4555";
       urls.add(url1);
       String url2 = "http://host2:1234";
@@ -53,7 +54,8 @@ public class URLManagerTest {
       urls.add(url3);
       String url4 = "http://host2:4555";
       urls.add(url4);
-      URLManager manager = new URLManager(urls);
+      DefaultURLManager manager = new DefaultURLManager();
+      manager.setURLs(urls);
       assertTrue(manager.getURLs().containsAll(urls));
       assertEquals(url1, manager.getActiveURL());
       manager.markFailed(url1);

@@ -64,6 +64,12 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                serviceElement.setAttribute(MAX_RETRY_ATTEMPTS, Integer.toString(config.getMaxRetryAttempts()));
                serviceElement.setAttribute(RETRY_SLEEP, Integer.toString(config.getRetrySleep()));
                serviceElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(config.isEnabled()));
+               if (config.getZookeeperEnsemble() != null) {
+                 serviceElement.setAttribute(ZOOKEEPER_ENSEMBLE, config.getZookeeperEnsemble());
+               }
+               if (config.getZookeeperNamespace() != null) {
+                 serviceElement.setAttribute(ZOOKEEPER_NAMESPACE, config.getZookeeperNamespace());
+               }
                root.appendChild(serviceElement);
             }
          }
@@ -101,7 +107,9 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                      element.getAttribute(MAX_FAILOVER_ATTEMPTS),
                      element.getAttribute(FAILOVER_SLEEP),
                      element.getAttribute(MAX_RETRY_ATTEMPTS),
-                     element.getAttribute(RETRY_SLEEP));
+                     element.getAttribute(RETRY_SLEEP),
+                     element.getAttribute(ZOOKEEPER_ENSEMBLE),
+                     element.getAttribute(ZOOKEEPER_NAMESPACE));
                descriptor.addServiceConfig(config);
             }
          }

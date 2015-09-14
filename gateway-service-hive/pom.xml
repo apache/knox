@@ -46,6 +46,10 @@
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-ha</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
