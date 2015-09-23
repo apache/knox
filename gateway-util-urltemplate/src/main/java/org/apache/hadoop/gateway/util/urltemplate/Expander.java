@@ -213,8 +213,10 @@ public class Expander {
               builder.append( "&" );
             }
             builder.append( name );
-            builder.append( "=" );
-            builder.append( value );
+            if( value != null ) {
+              builder.append( "=" );
+              builder.append( value );
+            }
           }
         }
       }
@@ -222,6 +224,7 @@ public class Expander {
   }
 
   private static void expandQueryValues( Query segment, String queryName, List<String> values, StringBuilder builder ) {
+    String value;
     if( values == null || values.size() == 0 ) {
       builder.append( queryName );
     } else {
@@ -232,13 +235,19 @@ public class Expander {
             builder.append( "&" );
           }
           builder.append( queryName );
-          builder.append( "=" );
-          builder.append( values.get( i ) );
+          value = values.get( i );
+          if( value != null ) {
+            builder.append( "=" );
+            builder.append( value );
+          }
         }
       } else {
         builder.append( queryName );
-        builder.append( "=" );
-        builder.append( values.get( 0 ) );
+        value = values.get( 0 );
+        if( value != null ) {
+          builder.append( "=" );
+          builder.append( value );
+        }
       }
     }
   }

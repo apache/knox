@@ -335,4 +335,58 @@ public class ExpanderTest {
         equalTo( "schemeA://host/pathA/pathB?server=host&query=queryA&query=queryB&host=hostA&extra=extraA" ) );
   }
 
+
+  @Test
+  public void testBugKnox599() throws Exception {
+    String text;
+    Template template;
+    MockParams params;
+    URI expanded;
+
+    text = "{scheme}://{host}:{port}/{path=**}?{**}";
+    template = Parser.parse( text );
+    params = new MockParams();
+    params.addValue( "scheme", "http" );
+    params.addValue( "host", "hortonworks.com" );
+    params.addValue( "port", "8888" );
+    params.addValue( "path", "top" );
+    params.addValue( "path", "mid" );
+    params.addValue( "path", "bot" );
+    params.addValue( "path", "file" );
+    params.addValue( "name", "value" );
+    params.addValue( "flag", "" );
+    expanded = Expander.expand( template, params, null );
+    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag=&name=value" ) ) ;
+
+    text = "{scheme}://{host}:{port}/{path=**}?{**}";
+    template = Parser.parse( text );
+    params = new MockParams();
+    params.addValue( "scheme", "http" );
+    params.addValue( "host", "hortonworks.com" );
+    params.addValue( "port", "8888" );
+    params.addValue( "path", "top" );
+    params.addValue( "path", "mid" );
+    params.addValue( "path", "bot" );
+    params.addValue( "path", "file" );
+    params.addValue( "name", "value" );
+    params.addValue( "flag", null );
+    expanded = Expander.expand( template, params, null );
+    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag&name=value" ) ) ;
+
+    text = "{scheme}://{host}:{port}/{path=**}?{name=*}&{**}";
+    template = Parser.parse( text );
+    params = new MockParams();
+    params.addValue( "scheme", "http" );
+    params.addValue( "host", "hortonworks.com" );
+    params.addValue( "port", "8888" );
+    params.addValue( "path", "top" );
+    params.addValue( "path", "mid" );
+    params.addValue( "path", "bot" );
+    params.addValue( "path", "file" );
+    params.addValue( "name", null );
+    params.addValue( "flag", "" );
+    expanded = Expander.expand( template, params, null );
+    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?name&flag=" ) ) ;
+  }
+
 }

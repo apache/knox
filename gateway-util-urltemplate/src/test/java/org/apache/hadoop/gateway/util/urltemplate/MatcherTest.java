@@ -24,6 +24,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -942,6 +943,30 @@ public class MatcherTest {
     params = match.getParams();
     assertThat( params, notNullValue() );
     assertThat( params.getNames().size(), equalTo( 0 ) );
+  }
+
+  @Test
+  public void testBugKnox599() throws Exception {
+    Template template;
+    Template input;
+    Matcher<String> matcher;
+    Matcher<?>.Match match;
+
+    matcher = new Matcher<String>();
+    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**}" );
+    matcher.add( template, "test-value" );
+
+    input = Parser.parse( "http://kminder-os-u14-23-knoxha-150922-1352-2.novalocal:1022/gateway/sandbox/webhdfs/v1/user/hrt_qa/knox-ha/knox_webhdfs_client_dir/test_file?op=CREATE&delegation=XXX&namenoderpcaddress=nameservice&createflag=&createparent=true&overwrite=true" );
+
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+    assertThat( (String)match.getValue(), is( "test-value" ) );
+
+    template = Parser.parse( "http://host:42/root/webhdfs/v1/{path=**}?{**}" );
+    URI expanded = Expander.expand( template, match.getParams(), null );
+    assertThat(
+        expanded.toString(),
+        equalTo( "http://host:42/root/webhdfs/v1/user/hrt_qa/knox-ha/knox_webhdfs_client_dir/test_file?delegation=XXX&op=CREATE&namenoderpcaddress=nameservice&createflag=&overwrite=true&createparent=true" ) ) ;
   }
 
 }
