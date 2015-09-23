@@ -25,8 +25,11 @@ import org.junit.experimental.categories.Category;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -387,6 +390,38 @@ public class ExpanderTest {
     params.addValue( "flag", "" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?name&flag=" ) ) ;
+  }
+
+  @Test
+  public void testValuelessQueryParamParsingAndExpansionBugKnox599Knox447() throws Exception {
+    URI inputUri, outputUri;
+    Matcher<Void> matcher;
+    Matcher<Void>.Match match;
+    Template input, pattern, template;
+    Evaluator evaluator;
+
+    inputUri = new URI( "https://knoxHost:8443/gateway/knoxTopo/templeton/v1/?version/hive" );
+
+    input = Parser.parse( inputUri.toString() );
+    pattern = Parser.parse( "*://*:*/**/templeton/v1/?{**}" );
+    template = Parser.parse( "{$serviceUrl[WEBHCAT]}/v1/?{**}" );
+
+    matcher = new Matcher<Void>();
+    matcher.add( pattern, null );
+    match = matcher.match( input );
+
+    evaluator = new Evaluator() {
+      @Override
+      public List<String> evaluate( String function, List<String> parameters ) {
+        return Arrays.asList( "https://webhcatTestHost.com:50111/templeton" );
+      }
+    };
+
+    outputUri = Expander.expand( template, match.getParams(), evaluator );
+    assertThat(
+        outputUri.toString(),
+        equalToIgnoringCase( "https://webhcatTestHost.com:50111/templeton/v1/?version/hive" ) );
+
   }
 
 }
