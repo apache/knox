@@ -50,10 +50,6 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private static final String SERVICE_ROLE_PARAM = "serviceRole";
 
-  private static final String REPLAY_BUFFER_SIZE_PARAM = "replayBufferSize";
-
-  private static final String DEFAULT_REPLAY_BUFFER_SIZE = "8";
-
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
 
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
@@ -221,12 +217,13 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if (httpClientFactory != null) {
       filter.param().name(HTTP_CLIENT_FACTORY_PARAM).value(httpClientFactory);
     }
-    FilterParamDescriptor filterParam = filter.param().name(REPLAY_BUFFER_SIZE_PARAM).value(DEFAULT_REPLAY_BUFFER_SIZE);
-    for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
-      if ( REPLAY_BUFFER_SIZE_PARAM.equals(serviceParam.getKey()) ) {
-        filterParam.value(serviceParam.getValue());
-      }
-    }
+    //TODO: [sumit] make sure we pass all service params to the filter
+//    FilterParamDescriptor filterParam = filter.param().name(REPLAY_BUFFER_SIZE_PARAM).value(DEFAULT_REPLAY_BUFFER_SIZE);
+//    for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
+//      if ( REPLAY_BUFFER_SIZE_PARAM.equals(serviceParam.getKey()) ) {
+//        filterParam.value(serviceParam.getValue());
+//      }
+//    }
     if ( context.getGatewayConfig().isHadoopKerberosSecured() ) {
       filter.param().name("kerberos").value("true");
     } else {

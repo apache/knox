@@ -25,8 +25,6 @@ import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.hadoop.gateway.config.Configure;
-import org.apache.hadoop.gateway.config.Default;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -65,7 +63,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  private int replayBufferSize = 0;
   private Set<String> outboundResponseExcludeHeaders;
 
   @Override
@@ -196,21 +193,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
          entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse(contentType));
       }
 
-
-      if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-
-         //Check if delegation token is supplied in the request
-         boolean delegationTokenPresent = false;
-         String queryString = request.getQueryString();
-         if (queryString != null) {
-            delegationTokenPresent = queryString.startsWith("delegation=") ||
-                  queryString.contains("&delegation=");
-         }
-         if (!delegationTokenPresent && getReplayBufferSize() > 0) {
-            entity = new CappedBufferHttpEntity(entity, getReplayBufferSize() * 1024);
-         }
-      }
-
       return entity;
    }
 
@@ -257,15 +239,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       HttpDelete method = new HttpDelete(url);
       copyRequestHeaderFields(method, request);
       executeRequest(method, request, response);
-   }
-
-   protected int getReplayBufferSize() {
-      return replayBufferSize;
-   }
-
-   @Configure
-   protected void setReplayBufferSize(@Default("8") int size) {
-      replayBufferSize = size;
    }
 
   public Set<String> getOutboundResponseExcludeHeaders() {

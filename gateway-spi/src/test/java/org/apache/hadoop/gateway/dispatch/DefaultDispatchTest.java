@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -89,7 +88,7 @@ public class DefaultDispatchTest {
   }
 
   @Test
-  public void testCallToSecureClusterWithDelegationTpken() throws URISyntaxException, IOException {
+  public void testCallToSecureClusterWithDelegationToken() throws URISyntaxException, IOException {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
     DefaultDispatch defaultDispatch = new DefaultDispatch();
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
@@ -102,22 +101,5 @@ public class DefaultDispatchTest {
     assertFalse("buffering in the presence of delegation token", 
         (httpEntity instanceof CappedBufferHttpEntity));
   }
-  
-  @Test
-  public void testCallToSecureClusterWithoutDelegationTpken() throws URISyntaxException, IOException {
-    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
-    DefaultDispatch defaultDispatch = new DefaultDispatch();
-    defaultDispatch.setReplayBufferSize(10);
-    ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
-    HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
-    EasyMock.expect(inboundRequest.getQueryString()).andReturn( "a=123").anyTimes();
-    EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
-    EasyMock.replay( inboundRequest );
-    HttpEntity httpEntity = defaultDispatch.createRequestEntity(inboundRequest);
-    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
-    assertTrue("not buffering in the absence of delegation token", 
-        (httpEntity instanceof CappedBufferHttpEntity));
-  }
-  
-  
+
 }
