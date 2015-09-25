@@ -379,8 +379,8 @@ public class DeploymentFactoryFuncTest {
       assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener")));
    }
 
-  //disable test but keep around to re-purpose for a generic service level parameter test
-  public void testDeploymentWithReplayBufferSize() throws Exception {
+  @Test
+  public void testDeploymentWithServiceParams() throws Exception {
     GatewayConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
@@ -410,8 +410,8 @@ public class DeploymentFactoryFuncTest {
     service.setRole( "HIVE" );
     service.setUrls( Arrays.asList( new String[]{ "http://hive-host:50001/" } ) );
     param = new Param();
-    param.setName( "replayBufferSize" );
-    param.setValue( "17" );
+    param.setName( "someparam" );
+    param.setValue( "somevalue" );
     service.addParam( param );
     topology.addService( service );
 
@@ -428,7 +428,7 @@ public class DeploymentFactoryFuncTest {
     service.setRole( "OOZIE" );
     service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50003/" } ) );
     param = new Param();
-    param.setName( "replayBufferSize" );
+    param.setName( "otherparam" );
     param.setValue( "65" );
     service.addParam( param );
     topology.addService( service );
@@ -444,9 +444,9 @@ public class DeploymentFactoryFuncTest {
     assertThat( resourceNode, is(not(nullValue())));
     filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
     assertThat( filterNode, is(not(nullValue())));
-    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    paramNode = node( filterNode, "param[name/text()='someparam']" );
     value = value( paramNode, "value/text()" );
-    assertThat( value, is( "17" ) ) ;
+    assertThat( value, is( "somevalue" ) ) ;
 
     resourceNode = node( doc, "gateway/resource[role/text()='WEBHBASE']" );
     assertThat( resourceNode, is(not(nullValue())));
@@ -460,7 +460,7 @@ public class DeploymentFactoryFuncTest {
     assertThat( resourceNode, is(not(nullValue())));
     filterNode = node( resourceNode, "filter[role/text()='dispatch']" );
     assertThat( filterNode, is(not(nullValue())));
-    paramNode = node( filterNode, "param[name/text()='replayBufferSize']" );
+    paramNode = node( filterNode, "param[name/text()='otherparam']" );
     value = value( paramNode, "value/text()" );
     assertThat( value, is( "65" ) ) ;
 

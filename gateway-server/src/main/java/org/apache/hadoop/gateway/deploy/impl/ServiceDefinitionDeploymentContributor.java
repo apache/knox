@@ -217,13 +217,9 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if (httpClientFactory != null) {
       filter.param().name(HTTP_CLIENT_FACTORY_PARAM).value(httpClientFactory);
     }
-    //TODO: [sumit] make sure we pass all service params to the filter
-//    FilterParamDescriptor filterParam = filter.param().name(REPLAY_BUFFER_SIZE_PARAM).value(DEFAULT_REPLAY_BUFFER_SIZE);
-//    for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
-//      if ( REPLAY_BUFFER_SIZE_PARAM.equals(serviceParam.getKey()) ) {
-//        filterParam.value(serviceParam.getValue());
-//      }
-//    }
+    for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
+      filter.param().name(serviceParam.getKey()).value(serviceParam.getValue());
+    }
     if ( context.getGatewayConfig().isHadoopKerberosSecured() ) {
       filter.param().name("kerberos").value("true");
     } else {
