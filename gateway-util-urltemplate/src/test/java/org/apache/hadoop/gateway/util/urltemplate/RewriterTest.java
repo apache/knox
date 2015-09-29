@@ -39,6 +39,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.io.UnsupportedEncodingException;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -285,15 +286,23 @@ public class RewriterTest {
     EasyMock.replay( config );
 
     Template sourcePattern, targetPattern;
-    URI actualInput, actualOutput, expectOutput;
+    URI actualInput, actualOutput;
+    String actualString;
 
     sourcePattern = Parser.parse( "*://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     targetPattern = Parser.parse( "{gateway.url}/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
 
     actualInput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
-    expectOutput = new URI( "http://gw:8888/gateway/cluster/webhdfs/data/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
-    assertThat( actualOutput, equalTo( expectOutput ) );
+    actualString = actualOutput.toString();
+    assertThat( actualString, containsString( "http://gw:8888/gateway/cluster/webhdfs/data/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?" ) );
+    assertThat( actualString, containsString( "host=vm.local" ) );
+    assertThat( actualString, containsString( "port=50075" ) );
+    assertThat( actualString, containsString( "op=CREATE" ) );
+    assertThat( actualString, containsString( "user.name=hdfs" ) );
+    assertThat( actualString, containsString( "overwrite=false" ) );
+    assertThat( actualString, containsString( "permission=700" ) );
+    assertThat( actualString, containsString( "&" ) );
   }
 
   @Test
@@ -306,15 +315,21 @@ public class RewriterTest {
     EasyMock.replay( config );
 
     Template sourcePattern, targetPattern;
-    URI actualInput, actualOutput, expectOutput;
+    URI actualInput, actualOutput;
+    String actualString;
 
     sourcePattern = Parser.parse( "/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
     targetPattern = Parser.parse( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
 
     actualInput = new URI( "/webhdfs/data/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?host=vm.local&port=50075&op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
-    expectOutput = new URI( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?op=CREATE&user.name=hdfs&overwrite=false&permission=700" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );
-    assertThat( actualOutput, equalTo( expectOutput ) );
+    actualString = actualOutput.toString();
+    assertThat( actualString, containsString( "http://vm.local:50075/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/dirA700/fileA700?" ) );
+    assertThat( actualString, containsString( "op=CREATE" ) );
+    assertThat( actualString, containsString( "user.name=hdfs" ) );
+    assertThat( actualString, containsString( "overwrite=false" ) );
+    assertThat( actualString, containsString( "permission=700" ) );
+    assertThat( actualString, containsString( "&" ) );
   }
 
   @Test

@@ -3253,14 +3253,14 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", "http")
         .header("X-Forwarded-Port", Integer.toString(gatewayPort))
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", gatewayHostName)
-        .header("X-Forwarded-For", Matchers.isOneOf(gatewayHostName, gatewayAddrName))
-        .pathInfo(path)
-        .queryParam("user.name", username)
+        .header( "X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .header( "X-Forwarded-For", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .pathInfo( path )
+        .queryParam( "user.name", username )
         .respond()
-        .status(HttpStatus.SC_OK)
-        .content(driver.getResourceBytes(resourceName))
-        .contentType(ContentType.JSON.toString());
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( resourceName ) )
+        .contentType( ContentType.JSON.toString() );
 
     Response response = given()
         .auth().preemptive().basic(username, password)
@@ -3293,6 +3293,7 @@ public class GatewayBasicFuncTest {
 
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     //Test rewriting of body with X-Forwarded headers (using storm)
     String resourceName = "storm/topology-id.json";
@@ -3305,7 +3306,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .pathInfo(path)
         .queryParam("user.name", username)
@@ -3345,7 +3346,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .pathInfo(path)
         .queryParam("user.name", username)
@@ -3388,7 +3389,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", gatewayHostName)
+        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .queryParam("op", "CREATE")
         .queryParam( "user.name", username )

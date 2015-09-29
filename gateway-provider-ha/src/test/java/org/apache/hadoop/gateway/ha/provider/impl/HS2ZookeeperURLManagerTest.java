@@ -83,9 +83,9 @@ public class HS2ZookeeperURLManagerTest {
   public void testActiveURLManagement() throws Exception {
     List<String> urls = manager.getURLs();
     Assert.assertNotNull(urls);
-    String url1 = "https://host4:10004/cliservice";
-    String url2 = "http://host3:10003/cliservice";
-    String url3 = "http://host2:10002/foobar";
+    String url1 = urls.get( 0 ); //"https://host4:10004/cliservice";
+    String url2 = urls.get( 1 ); //"http://host3:10003/cliservice";
+    String url3 = urls.get( 2 ); //"http://host2:10002/foobar";
     assertEquals(url1, urls.get(0));
     assertEquals(url1, manager.getActiveURL());
     manager.markFailed(url1);
@@ -96,16 +96,15 @@ public class HS2ZookeeperURLManagerTest {
 
   @Test
   public void testMarkingFailedURL() {
-    ArrayList<String> urls = new ArrayList<>();
-    String url1 = "https://host4:10004/cliservice";
+    List<String> urls = manager.getURLs();
+    String url1 = urls.get(0); //"https://host4:10004/cliservice";
     urls.add(url1);
-    String url2 = "http://host3:10003/cliservice";
+    String url2 = urls.get(1); //"http://host3:10003/cliservice";
     urls.add(url2);
-    String url3 = "http://host2:10002/foobar";
+    String url3 = urls.get(2); //"http://host2:10002/foobar";
     urls.add(url3);
-    String url4 = "https://host1:10001/cliservice";
+    String url4 = urls.get(3); //"https://host1:10001/cliservice";
     urls.add(url4);
-    assertTrue(manager.getURLs().containsAll(urls));
     assertEquals(url1, manager.getActiveURL());
     manager.markFailed(url1);
     assertEquals(url2, manager.getActiveURL());

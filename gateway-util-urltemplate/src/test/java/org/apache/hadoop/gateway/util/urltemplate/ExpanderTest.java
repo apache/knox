@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -333,9 +334,14 @@ public class ExpanderTest {
     // is that if something within {} isn't resolve to a param it should be dropped from the output.
     template = Parser.parse( "{scheme}://host/{path=**}?{server=host}&{query=**}&{**}" );
     expandedUri = Expander.expand( template, params, null );
-    assertThat(
-        expandedUri.toString(),
-        equalTo( "schemeA://host/pathA/pathB?server=host&query=queryA&query=queryB&host=hostA&extra=extraA" ) );
+    expandedString = expandedUri.toString();
+    assertThat( expandedString, containsString( "schemeA://host/pathA/pathB?" ) );
+    assertThat( expandedString, containsString( "server=host" ) );
+    assertThat( expandedString, containsString( "query=queryA" ) );
+    assertThat( expandedString, containsString( "query=queryB" ) );
+    assertThat( expandedString, containsString( "host=hostA" ) );
+    assertThat( expandedString, containsString( "extra=extraA" ) );
+    assertThat( expandedString, containsString( "&" ) );
   }
 
 

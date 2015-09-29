@@ -70,8 +70,8 @@ public class DefaultURLManager implements URLManager {
     boolean pushToBottom = false;
     URI topUri = URI.create(top);
     URI incomingUri = URI.create(url);
-    String topHostPort = topUri.getHost() + topUri.getPort();
-    String incomingHostPort = incomingUri.getHost() + incomingUri.getPort();
+    String topHostPort = topUri.getHost() + ":" + topUri.getPort();
+    String incomingHostPort = incomingUri.getHost() + ":" + incomingUri.getPort();
     if ( topHostPort.equals(incomingHostPort) ) {
       pushToBottom = true;
     }

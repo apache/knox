@@ -23,19 +23,27 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class JsonUtilsTest extends TestCase {
-  String test = '{' + "\"expires_in\":\"1364487943100\",\"token_type\":\"Bearer\",\"access_token\":\"ksdfh3489tyiodhfjk\"" + '}';
+  String expiresIn = "\"expires_in\":\"1364487943100\"";
+  String tokenType = "\"token_type\":\"Bearer\"";
+  String accessToken = "\"access_token\":\"ksdfh3489tyiodhfjk\"";
+  String test = '{' + expiresIn + "," + tokenType + "," + accessToken + '}';
   
   @Test
   public void testRenderAsJson() throws Exception {
     HashMap map = new HashMap();
     map.put("access_token", "ksdfh3489tyiodhfjk");
     map.put("token_type", "Bearer");
-    map.put("expires_in", "1364487943100");
+    map.put( "expires_in", "1364487943100" );
     
     String result = JsonUtils.renderAsJsonString(map);
-//    System.out.println(result);
-    assertEquals(test, result);
+
+    assertThat( result, containsString( expiresIn ) );
+    assertThat( result, containsString( tokenType ) );
+    assertThat( result, containsString( accessToken ) );
   }
   
   @Test

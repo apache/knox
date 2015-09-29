@@ -20,13 +20,13 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -963,10 +963,16 @@ public class MatcherTest {
     assertThat( (String)match.getValue(), is( "test-value" ) );
 
     template = Parser.parse( "http://host:42/root/webhdfs/v1/{path=**}?{**}" );
-    URI expanded = Expander.expand( template, match.getParams(), null );
-    assertThat(
-        expanded.toString(),
-        equalTo( "http://host:42/root/webhdfs/v1/user/hrt_qa/knox-ha/knox_webhdfs_client_dir/test_file?delegation=XXX&op=CREATE&namenoderpcaddress=nameservice&createflag=&overwrite=true&createparent=true" ) ) ;
+    URI expandedUri = Expander.expand( template, match.getParams(), null );
+    String expandedStr = expandedUri.toString();
+    assertThat( expandedStr, containsString( "http://host:42/root/webhdfs/v1/user/hrt_qa/knox-ha/knox_webhdfs_client_dir/test_file?" ) );
+    assertThat( expandedStr, containsString( "delegation=XXX" ) );
+    assertThat( expandedStr, containsString( "op=CREATE" ) );
+    assertThat( expandedStr, containsString( "namenoderpcaddress=nameservice" ) );
+    assertThat( expandedStr, containsString( "createflag=&" ) );
+    assertThat( expandedStr, containsString( "overwrite=true" ) );
+    assertThat( expandedStr, containsString( "createparent=true" ) );
+    assertThat( expandedStr, containsString( "&" ) );
   }
 
 }

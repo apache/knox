@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,7 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
   private HashSet<String> failedSet;
 
   public HS2ZookeeperURLManager() {
-    failedSet = new HashSet<>();
+    failedSet = new LinkedHashSet<>();
   }
 
   @Override
