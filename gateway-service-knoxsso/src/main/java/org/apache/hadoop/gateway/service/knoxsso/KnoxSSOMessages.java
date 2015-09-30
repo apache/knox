@@ -53,4 +53,10 @@ public interface KnoxSSOMessages {
 
   @Message( level = MessageLevel.WARN, text = "The SSO cookie max age configuration is invalid: {0} - using default.")
   void invalidMaxAgeEncountered(String age);
+
+  @Message( level = MessageLevel.WARN, text = "The SSO token time to live - ttl is invalid: {0} - using default.")
+  void invalidTokenTTLEncountered(String ttl);
+
+  @Message( level = MessageLevel.INFO, text = "The cookie max age is being set to: {0}.")
+  void setMaxAge(String age);
 }

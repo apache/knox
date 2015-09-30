@@ -48,13 +48,15 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 public class WebSSOResource {
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
+  private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
   static final String RESOURCE_PATH = "/knoxsso/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
   private boolean secureOnly = true;
-  private int maxAge = 120;
+  private int maxAge = -1;
+  private long tokenTTL = 30000l;
 
   @Context 
   private HttpServletRequest request;
@@ -70,16 +72,29 @@ public class WebSSOResource {
     String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
     if (secure != null) {
       secureOnly = ("false".equals(secure) ? false : true);
-      log.cookieSecureOnly(secureOnly);
+      if (!secureOnly) {
+        log.cookieSecureOnly(secureOnly);
+      }
     }
 
     String age = context.getInitParameter(SSO_COOKIE_MAX_AGE_INIT_PARAM);
     if (age != null) {
       try {
+        log.setMaxAge(age);
         maxAge = Integer.parseInt(age);
       }
       catch (NumberFormatException nfe) {
         log.invalidMaxAgeEncountered(age);
+      }
+    }
+
+    String ttl = context.getInitParameter(SSO_COOKIE_TOKEN_TTL_PARAM);
+    if (ttl != null) {
+      try {
+        tokenTTL = Long.parseLong(ttl);
+      }
+      catch (NumberFormatException nfe) {
+        log.invalidTokenTTLEncountered(ttl);
       }
     }
   }
@@ -116,7 +131,7 @@ public class WebSSOResource {
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
 
     try {
-      JWT token = ts.issueToken(p, "RS256");
+      JWT token = ts.issueToken(p, "RS256", System.currentTimeMillis() + tokenTTL);
       
       addJWTHadoopCookie(original, token);
       
@@ -150,7 +165,9 @@ public class WebSSOResource {
       if (secureOnly) {
         c.setSecure(true);
       }
-      c.setMaxAge(maxAge);
+      if (maxAge != -1) {
+        c.setMaxAge(maxAge);
+      }
       response.addCookie(c);
       log.addedJWTCookie();
     }

@@ -49,6 +49,14 @@ public class JWTToken implements JWT {
     }
   }
 
+  public JWTToken(String serializedJWT) {
+    try {
+      jwt = SignedJWT.parse(serializedJWT);
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
+  }
+
   public JWTToken(String alg, String[] claimsArray) {
     JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
     JWTClaimsSet claims = new JWTClaimsSet();
@@ -96,7 +104,7 @@ public class JWTToken implements JWT {
   public String toString() {
     return jwt.serialize();
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#setSignaturePayload(byte[])
    */
@@ -104,7 +112,7 @@ public class JWTToken implements JWT {
   public void setSignaturePayload(byte[] payload) {
 //    this.payload = payload;
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getSignaturePayload()
    */
@@ -128,7 +136,7 @@ public class JWTToken implements JWT {
     
     return jwt;
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getClaim(java.lang.String)
    */
@@ -169,18 +177,30 @@ public class JWTToken implements JWT {
   public String getAudience() {
     String[] claim = null;
     String c = null;
-    
+
+    claim = getAudienceClaims();
+    if (claim != null) {
+      c = claim[0];
+    }
+
+    return c;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getAudienceClaims()
+   */
+  @Override
+  public String[] getAudienceClaims() {
+    String[] claims = null;
+
     try {
-      claim = jwt.getJWTClaimsSet().getStringArrayClaim(JWT.AUDIENCE);
-      if (claim != null) {
-        c = claim[0];
-      }
+      claims = jwt.getJWTClaimsSet().getStringArrayClaim(JWT.AUDIENCE);
     } catch (ParseException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    
-    return c;
+
+    return claims;
   }
 
   /* (non-Javadoc)
@@ -191,6 +211,18 @@ public class JWTToken implements JWT {
     return getClaim(JWT.EXPIRES);
   }
 
+  @Override
+  public Date getExpiresDate() {
+    Date date = null;
+    try {
+      date = jwt.getJWTClaimsSet().getExpirationTime();
+    } catch (ParseException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return date;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()
    */
@@ -198,6 +230,7 @@ public class JWTToken implements JWT {
   public String getPrincipal() {
     return getClaim(JWT.PRINCIPAL);
   }
+
   
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()

@@ -21,6 +21,7 @@ import java.security.Principal;
 
 import javax.security.auth.Subject;
 
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 public interface JWTokenAuthority {
@@ -38,4 +39,6 @@ public interface JWTokenAuthority {
 
   JWTToken issueToken(Principal p, String audience, String algorithm,
       long expires) throws TokenServiceException;
+
+  JWT issueToken(Principal p, String audience, long l) throws TokenServiceException;
 }

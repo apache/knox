@@ -7,6 +7,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-548] - KnoxCLI adds a new system-user-auth-test command to test a topology's system username and password
     * [KNOX-549] - New Service-Test API can be added to topology. Accessible via Http call or KnoxCLI
     * [KNOX-579] - Regex based identity assertion provider with static dictionary lookup
+    * [KNOX-602] - JWT/SSO Cookie Based Federation Provider
 
 ** Improvement
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.

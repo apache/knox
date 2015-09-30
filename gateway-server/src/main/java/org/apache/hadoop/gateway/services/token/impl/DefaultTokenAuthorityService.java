@@ -72,6 +72,14 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return issueToken(p, null, algorithm);
   }
   
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long expires)
+   */
+  @Override
+  public JWTToken issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
+    return issueToken(p, null, algorithm, expires);
+  }
+
   public JWTToken issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
     return issueToken(p, audience, algorithm, -1);
