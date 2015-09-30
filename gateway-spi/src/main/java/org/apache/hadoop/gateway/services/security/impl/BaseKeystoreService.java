@@ -94,6 +94,7 @@ public class BaseKeystoreService {
       KeyStore ks = KeyStore.getInstance(keystoreType);  
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
+      out.close();
     } catch (KeyStoreException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
       throw new KeystoreServiceException(e);
