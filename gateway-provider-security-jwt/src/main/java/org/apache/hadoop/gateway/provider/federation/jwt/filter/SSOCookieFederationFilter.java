@@ -216,12 +216,13 @@ public class SSOCookieFederationFilter implements Filter {
     } else {
       // if any of the configured audiences is found then consider it
       // acceptable
-      for (String aud : tokenAudienceList) {
-        if (audiences.contains(aud)) {
-          //log.debug("JWT token audience has been successfully validated");
-          log.jwtAudienceValidated();
-          valid = true;
-          break;
+      if (tokenAudienceList != null) {
+        for (String aud : tokenAudienceList) {
+          if (audiences.contains(aud)) {
+            log.jwtAudienceValidated();
+            valid = true;
+            break;
+          }
         }
       }
     }
