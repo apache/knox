@@ -111,7 +111,7 @@ public class Parser {
     return builder.build();
   }
 
-  private void fixNakedAuthority() {
+  private final void fixNakedAuthority() {
     if( builder.getHashScheme() &&
         !builder.getHasAuthority() &&
         !builder.getIsAbsolute() &&
@@ -119,7 +119,7 @@ public class Parser {
         ( builder.getPath().size() == 1 ) &&
         !builder.getHasQuery() &&
         !builder.getHasFragment() ) {
-      Scheme scheme = builder.getScheme();
+      final Scheme scheme = builder.getScheme();
       builder.setHasScheme( false );
       builder.setHost( makeTokenSingular( scheme.getToken() ) );
       Path path = builder.getPath().remove( 0 );
@@ -128,8 +128,8 @@ public class Parser {
     }
   }
 
-  private Token makeTokenSingular( Token token ) {
-    String effectivePattern = token.getEffectivePattern();
+  private final Token makeTokenSingular( Token token ) {
+    final String effectivePattern = token.getEffectivePattern();
     if( Segment.GLOB_PATTERN.equals( effectivePattern ) ) {
       token = new Token( token.getParameterName(), token.getOriginalPattern(), Segment.STAR_PATTERN );
     }
@@ -205,18 +205,18 @@ public class Parser {
     }
   }
 
-  private void consumePathToken( String token ) {
+  private final void consumePathToken( final String token ) {
     if( token != null ) {
-      StringTokenizer tokenizer = new StringTokenizer( token, "/" );
+      final StringTokenizer tokenizer = new StringTokenizer( token, "/" );
       while( tokenizer.hasMoreTokens() ) {
         consumePathSegment( tokenizer.nextToken() );
       }
     }
   }
 
-  private void consumePathSegment( String token ) {
+  private final void consumePathSegment( final String token ) {
     if( token != null ) {
-      Token t = parseTemplateToken( token, Segment.GLOB_PATTERN );
+      final Token t = parseTemplateToken( token, Segment.GLOB_PATTERN );
       builder.addPath( t );
     }
   }
@@ -281,16 +281,16 @@ public class Parser {
     }
   }
 
-  static Token parseTemplateToken( String s, String defaultEffectivePattern ) {
+  static final Token parseTemplateToken( final String s, final String defaultEffectivePattern ) {
     String paramName, actualPattern, effectivePattern;
-    int l = s.length();
+    final int l = s.length();
     // If the token isn't the empty string, then
     if( l > 0 ) {
-      int b = ( s.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : -1 );
-      int e = ( s.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : -1 );
+      final int b = ( s.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : -1 );
+      final int e = ( s.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : -1 );
       // If this is a parameter template, ie {...}
       if( ( b > 0 ) && ( e > 0 ) && ( e > b ) ) {
-        int i = s.indexOf( NAME_PATTERN_SEPARATOR, b );
+        final int i = s.indexOf( NAME_PATTERN_SEPARATOR, b );
         // If this is an anonymous template
         if( i < 0 ) {
           paramName = s.substring( b, e );
@@ -318,7 +318,7 @@ public class Parser {
       actualPattern = s;
       effectivePattern = actualPattern;
     }
-    Token token = new Token( paramName, actualPattern, effectivePattern );
+    final Token token = new Token( paramName, actualPattern, effectivePattern );
     return token;
   }
 

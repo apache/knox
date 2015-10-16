@@ -64,7 +64,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
-  private static final int STREAM_BUFFER_SIZE = 4096;
+  // An 8K buffer better matches the underlying buffer sizes.
+  // Testing with 16K made no appreciable difference.
+  private static final int STREAM_BUFFER_SIZE = 8 * 1024;
 
   private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<String>();
   static {

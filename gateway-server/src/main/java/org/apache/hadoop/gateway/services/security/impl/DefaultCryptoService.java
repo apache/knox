@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.gateway.GatewayMessages;
@@ -42,6 +43,7 @@ public class DefaultCryptoService implements CryptoService {
 
   private AliasService as = null;
   private KeystoreService ks = null;
+  private HashMap<String,AESEncryptor> encryptorCache = new HashMap<String,AESEncryptor>();
 
   public void setKeystoreService(KeystoreService ks) {
     this.ks = ks;
@@ -91,10 +93,8 @@ public class DefaultCryptoService implements CryptoService {
       e2.printStackTrace();
     }
     if (password != null) {
-      AESEncryptor aes = null;
       try {
-        aes = new AESEncryptor(new String(password));
-        return aes.encrypt(clear);
+        return getEncryptor(clusterName,password).encrypt( clear );
       } catch (NoSuchAlgorithmException e1) {
         LOG.failedToEncryptPasswordForCluster( clusterName, e1 );
       } catch (InvalidKeyException e) {
@@ -118,13 +118,11 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
-    char[] password = null;
     try {
-      password = as.getPasswordFromAliasForCluster(clusterName, alias);
+      final char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
       if (password != null) {
-        AESEncryptor aes = new AESEncryptor(new String(password));
         try {
-          return aes.decrypt(salt, iv, cipherText);
+          return getEncryptor(clusterName,password ).decrypt( salt, iv, cipherText);
         } catch (Exception e) {
           LOG.failedToDecryptPasswordForCluster( clusterName, e );
         }
@@ -187,4 +185,18 @@ public class DefaultCryptoService implements CryptoService {
     }
     return null;
   }
+
+  // The assumption here is that lock contention will be less of a performance issue than the cost of object creation.
+  // We have seen via profiling that AESEncryptor instantiation is very expensive.
+  private final AESEncryptor getEncryptor( final String clusterName, final char[] password ) {
+    synchronized( encryptorCache ) {
+      AESEncryptor encryptor = encryptorCache.get( clusterName );
+      if( encryptor == null ) {
+        encryptor = new AESEncryptor( String.valueOf( password ) );
+        encryptorCache.put( clusterName, encryptor );
+      }
+      return encryptor;
+    }
+  }
+
 }

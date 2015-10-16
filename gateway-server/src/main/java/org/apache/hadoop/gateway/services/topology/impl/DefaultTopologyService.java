@@ -222,7 +222,9 @@ public class DefaultTopologyService
   }
 
   private void initListener(File directory) throws IOException, SAXException {
-    initListener(new FileAlterationMonitor(1000L), directory);
+    // Increasing the monitoring interval to 5 seconds as profiling has shown
+    // this is rather expensive in terms of generated garbage objects.
+    initListener(new FileAlterationMonitor(5000L), directory);
   }
 
   private Map<File, Topology> loadTopologies(File directory) {

@@ -49,17 +49,17 @@ public class ResourcesInvoker implements InvocationHandler {
   }
 
   @Override
-  public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
+  public Object invoke( final Object proxy, final Method method, final Object[] args ) throws Throwable {
     return getText( method, args );
   }
 
-  protected String getText( Method method, Object[] args ) {
+  protected final String getText( final Method method, final Object[] args ) {
     String pattern = getPattern( method );
     String text = MessageFormat.format( pattern, args );
     return text;
   }
 
-  protected String getPattern( Method method ) {
+  protected final String getPattern( final Method method ) {
     String pattern = getBundlePattern( method );
     if( pattern == null ) {
       pattern = getAnnotationPattern( method );
@@ -70,28 +70,28 @@ public class ResourcesInvoker implements InvocationHandler {
     return pattern;
   }
 
-  protected String getAnnotationPattern( Method method ) {
+  protected String getAnnotationPattern( final Method method ) {
     String pattern = null;
-    Resource anno = method.getAnnotation( Resource.class );
+    final Resource anno = method.getAnnotation( Resource.class );
     if( anno != null ) {
       pattern = anno.text();
     }
     return pattern;
   }
 
-  protected String getBundlePattern( final Method method ) {
+  protected final String getBundlePattern( final Method method ) {
     String pattern = null;
-    ResourceBundle bundle = findBundle();
+    final ResourceBundle bundle = findBundle();
     if( bundle != null && bundle.containsKey( method.getName() ) ) {
       pattern = bundle.getString( method.getName() );
     }
     return pattern;
   }
 
-  protected static String getDefaultPattern( Method method ) {
-    String prefix = method.getName();
+  protected final static String getDefaultPattern( final Method method ) {
+    final String prefix = method.getName();
     String suffix;
-    int params = method.getParameterTypes().length;
+    final int params = method.getParameterTypes().length;
     switch( params ) {
       case( 0 )  : suffix = ""; break;
       case( 1 )  : suffix = "(\"{0}\")"; break;
@@ -109,7 +109,7 @@ public class ResourcesInvoker implements InvocationHandler {
     return prefix + suffix;
   }
 
-  private static String createDefaultPatternSuffix( int size ) {
+  private final static String createDefaultPatternSuffix( final int size ) {
     StringBuilder builder = new StringBuilder( 1 + size*7 );
     builder.append( "(" );
     for( int i=0; i<size; i++ ) {
@@ -123,9 +123,9 @@ public class ResourcesInvoker implements InvocationHandler {
 
   }
 
-  private static String calcBundleName( Class<?> clazz ) {
+  private final static String calcBundleName( final Class<?> clazz ) {
     String bundle = null;
-    Resources anno = clazz.getAnnotation( Resources.class );
+    final Resources anno = clazz.getAnnotation( Resources.class );
     if( anno != null ) {
       bundle = anno.bundle();
       if( Resources.DEFAULT_BUNDLE.equals( bundle ) ) {
@@ -143,8 +143,8 @@ public class ResourcesInvoker implements InvocationHandler {
     return bundleName;
   }
 
-  protected ResourceBundle findBundle() {
-    Locale locale = Locale.getDefault();
+  protected final ResourceBundle findBundle() {
+    final Locale locale = Locale.getDefault();
     ResourceBundle bundle = bundles.get( locale );
     if( bundle == MISSING_BUNDLE ) {
       bundle = null;

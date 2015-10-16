@@ -42,7 +42,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
   }
 
   @Override
-  public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
+  public Object invoke( final Object proxy, final Method method, final Object[] args ) throws Throwable {
     String message = null;
     MessageLevel level = getLevel( method );
     if( logger.isLoggable( level ) ) {
@@ -61,7 +61,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return message;
   }
 
-  private String getCode( Method method ) {
+  private final String getCode( final Method method ) {
     String code = null;
     Message anno = method.getAnnotation( Message.class );
     if( anno != null ) {
@@ -73,8 +73,8 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return code;
   }
 
-  private static StackTrace getStackTraceAnno( Method method, int param ) {
-    Annotation[] annos = method.getParameterAnnotations()[ param ];
+  private final static StackTrace getStackTraceAnno( final Method method, final int param ) {
+    final Annotation[] annos = method.getParameterAnnotations()[ param ];
     for( Annotation anno: annos ) {
       if( anno instanceof StackTrace ) {
         return (StackTrace)anno;
@@ -83,7 +83,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return null;
   }
 
-  private static Throwable findLoggableThrowable( MessageLogger logger, Method method, Object[] args ) {
+  private final static Throwable findLoggableThrowable( final MessageLogger logger, final Method method, final Object[] args ) {
     Throwable throwable = null;
     if( args != null ) {
       for( int i=0; i<args.length; i++ ) {
@@ -102,7 +102,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return throwable;
   }
 
-  protected String getAnnotationPattern( Method method ) {
+  protected String getAnnotationPattern( final Method method ) {
     String pattern = null;
     Message anno = method.getAnnotation( Message.class );
     if( anno != null ) {
@@ -111,7 +111,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return pattern;
   }
 
-  private static final MessageLevel getLevel( Method method ) {
+  private static final MessageLevel getLevel( final Method method ) {
     MessageLevel level;
     Message anno = method.getAnnotation( Message.class );
     if( anno == null ) {
@@ -122,7 +122,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return level;
   }
 
-  private static String calcCodePattern( Class<?> clazz, Messages anno ) {
+  private static String calcCodePattern( final Class<?> clazz, final Messages anno ) {
     String pattern = anno.codes();
     if( Messages.DEFAULT_CODES.equals( pattern ) ) {
       pattern = clazz.getCanonicalName().replace( '.', '/' );
@@ -144,7 +144,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return bundle;
   }
 
-  private static String calcLoggerName( Class<?> clazz, Messages anno ) {
+  private final static String calcLoggerName( final Class<?> clazz, final Messages anno ) {
     String logger = null;
     if( anno != null ) {
       logger = anno.logger();
@@ -162,7 +162,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return bundle;
   }
 
-  private static MessageLogger getLogger( Class<?> clazz, Messages anno, MessageLoggerFactory loggers ) {
+  private final static MessageLogger getLogger( final Class<?> clazz, final Messages anno, final MessageLoggerFactory loggers ) {
     return loggers.getLogger( calcLoggerName( clazz, anno ) );
   }
 
