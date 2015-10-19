@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import javax.security.auth.Subject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -49,21 +51,26 @@ import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 public class SSOCookieFederationFilter implements Filter {
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
-  private static final String SSO_COOKIE_NAME = "sso.cookie.name";
-  private static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
-  private static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
+  public static final String SSO_COOKIE_NAME = "sso.cookie.name";
+  public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
+  public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
-  private JWTokenAuthority authority = null;
+  protected JWTokenAuthority authority = null;
   private String cookieName = null;
   private List<String> audiences = null;
   private String authenticationProviderUrl = null;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
-    GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
-
+    ServletContext context = filterConfig.getServletContext();
+    if (context != null) {
+      GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (services != null) {
+        authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+      }
+    }
+    
     // configured cookieName
     cookieName = filterConfig.getInitParameter(SSO_COOKIE_NAME);
     if (cookieName == null) {
@@ -80,6 +87,7 @@ public class SSOCookieFederationFilter implements Filter {
     authenticationProviderUrl = filterConfig.getInitParameter(SSO_AUTHENTICATION_PROVIDER_URL);
     if (authenticationProviderUrl == null) {
       log.missingAuthenticationProviderUrlConfiguration();
+      throw new ServletException("Required authentication provider URL is missing.");
     }
   }
 
@@ -192,7 +200,7 @@ public class SSOCookieFederationFilter implements Filter {
     }
     String loginURL = authenticationProviderUrl + delimiter
         + ORIGINAL_URL_QUERY_PARAM
-        + request.getRequestURL().toString() + getOriginalQueryString(request);
+        + request.getRequestURL().append(getOriginalQueryString(request));
     return loginURL;
   }
 

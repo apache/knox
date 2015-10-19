@@ -21,10 +21,6 @@ import java.util.Date;
 
 import com.nimbusds.jose.JWSSigner;
 
-/**
- * @author larry
- *
- */
 public interface JWT {
 
   public static final String PRINCIPAL = "prn";

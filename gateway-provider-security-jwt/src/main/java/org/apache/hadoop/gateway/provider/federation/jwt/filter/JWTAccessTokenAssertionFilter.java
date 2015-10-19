@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.Principal;
+import java.text.ParseException;
 import java.util.HashMap;
 
 import javax.security.auth.Subject;
@@ -75,7 +76,12 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
-      JWTToken token = JWTToken.parseToken(wireToken);
+      JWTToken token;
+      try {
+        token = JWTToken.parseToken(wireToken);
+      } catch (ParseException e) {
+        throw new ServletException("ParseException encountered while processing the JWT token: ", e);
+      }
       // ensure that there is a valid jwt token available and that there isn't a misconfiguration of filters
       if (token != null) {
         try {

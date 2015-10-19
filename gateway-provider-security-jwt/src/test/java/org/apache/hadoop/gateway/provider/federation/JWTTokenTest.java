@@ -23,33 +23,36 @@ import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
 public class JWTTokenTest extends TestCase {
-  private static final String JWT_TOKEN = "eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE0MjU2NTA1MzksInN1YiI6Imd1ZXN0IiwiYXVkIjoiSFNTTyIsImlzcyI6IkhTU08ifQ.lNLCcDeVpnsksbD_oE4YFKE_0HPLg0Qh0ToQHhzGSUCUNOm_dDRg3mtAHUz4qchwuAnGmZrnOAvY9a1832WMC1qJNjUHv1mxmox3yAneUIyVzZjazZsekdaQWgl7tha1OiE1iUhupXQtCFf7F3J10SsUImiE1F9XAMVIl5ut38c";
+  private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
   private static final String HEADER = "{\"alg\":\"RS256\", \"type\":\"JWT\"}";
   private static final String CLAIMS = "{\"iss\": \"gateway\", \"prn\": \"john.doe@example.com\", \"aud\": \"https://login.example.com\", \"exp\": \"1363360913\"}";
   
-  @Test
-  public void testTokenParsing() throws Exception {
-    JWTToken token = JWTToken.parseToken(JWT_TOKEN);
-    
-    //assertEquals(token.getHeader(), HEADER);
-    //assertEquals(token.getClaims(), CLAIMS);
-    
-//    assertEquals(token.getIssuer(), "gateway");
-//    assertEquals(token.getPrincipal(), "john.doe@example.com");
-//    assertEquals(token.getAudience(), "https://login.example.com");
-//    assertEquals(token.getExpires(), "1363360913");
-  }
+//  public void testTokenParsing() throws Exception {
+//    try {
+//      JWTToken token = JWTToken.parseToken(JWT_TOKEN);
+//      assertEquals(token.getHeader(), HEADER);
+//      assertEquals(token.getClaims(), CLAIMS);
+//      
+//      assertEquals(token.getIssuer(), "gateway");
+//      assertEquals(token.getPrincipal(), "john.doe@example.com");
+//      assertEquals(token.getAudience(), "https://login.example.com");
+//      assertEquals(token.getExpires(), "1363360913");
+//    }
+//    catch (ParseException pe) {
+//      fail("ParseException encountered.");
+//    }
+//  }
   
   @Test 
   public void testTokenCreation() throws Exception {
     String[] claims = new String[4];
-    claims[0] = "3MVG99OxTyEMCQ3gNp2PjkqeZKxnmAiG1xV4oHh9AKL_rSK.BoSVPGZHQukXnVjzRgSuQqGn75NL7yfkQcyy7";
+    claims[0] = "HSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
     JWTToken token = new JWTToken("RS256", claims);
 
-    assertEquals(token.getIssuer(), "3MVG99OxTyEMCQ3gNp2PjkqeZKxnmAiG1xV4oHh9AKL_rSK.BoSVPGZHQukXnVjzRgSuQqGn75NL7yfkQcyy7");
+    assertEquals(token.getIssuer(), "HSSO");
     assertEquals(token.getSubject(), "john.doe@example.com");
     assertEquals(token.getAudience(), "https://login.example.com");
   }
