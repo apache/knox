@@ -122,12 +122,11 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         JWSSigner signer = new RSASSASigner(key);
         token.sign(signer);
       } catch (KeystoreServiceException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        throw new TokenServiceException(e);
       }
     }
     else {
-      // log inappropriate alg
+      throw new TokenServiceException("Cannot issue token - Unsupported algorithm");
     }
     
     return token;
