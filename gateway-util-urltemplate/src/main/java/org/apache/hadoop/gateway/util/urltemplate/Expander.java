@@ -53,8 +53,14 @@ public class Expander {
     expandScheme( template, names, params, evaluator, builder );
     expandAuthority( template, names, params, evaluator, builder );
     expandPath( template, names, params, evaluator, builder );
-    expandQuery( template, names, params, evaluator, builder );
-    expandFragment( template, names, params, evaluator, builder );
+    if( template.hasFragment() ) {
+      StringBuilder fragment = new StringBuilder();
+      expandFragment( template, names, params, evaluator, fragment );
+      expandQuery( template, names, params, evaluator, builder );
+      builder.append( fragment );
+    } else {
+      expandQuery( template, names, params, evaluator, builder );
+    }
     return builder.toString();
   }
 

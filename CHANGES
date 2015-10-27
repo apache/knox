@@ -16,7 +16,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-564] - Topology deployment fails for no configured providers
     * [KNOX-590] - CLI sys-user-auth-test and user-auth-test have improved messages and work for more Shiro configs
     * [KNOX-597] - Improve diagnostic logging of HTTP traffic
-    * [KNOX-596] - Add diagnostics to topology depoloyment
+    * [KNOX-596] - Add diagnostics to topology deployment
 
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
@@ -25,6 +25,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-599] - Template with {**} in queries are expanded with =null for query params without a value
     * [KNOX-601] - Knox test failures on windows
     * [KNOX-603] - Coverity: Potential resource leak in BaseKeystoreService.createKeystore
+    * [KNOX-614] - Incorrect URI template expansion with {**} query params #fragments
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

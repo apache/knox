@@ -28,7 +28,9 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
+import static junit.framework.TestCase.assertNotNull;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.Assert.assertThat;
@@ -428,6 +430,38 @@ public class ExpanderTest {
         outputUri.toString(),
         equalToIgnoringCase( "https://webhcatTestHost.com:50111/templeton/v1/?version/hive" ) );
 
+  }
+
+  @Test
+  public void testRedirectHeaderRewriteKnoxBug614() throws Exception {
+    URI inputUri, outputUri;
+    Matcher<Void> matcher;
+    Matcher<Void>.Match match;
+    Template input, pattern, template;
+    Evaluator evaluator;
+
+    inputUri = new URI("https://internal-host:9443/context/?user.name=admin#/login");
+
+    input = Parser.parse( inputUri.toString() );
+    pattern = Parser.parse( "*://*:*/{contextRoot}/?{**}#{fragment}" );
+    template = Parser.parse( "{$gateway.url}/foo/{contextRoot}/?{**}#{fragment}" );
+
+    matcher = new Matcher<Void>();
+    matcher.add( pattern, null );
+    match = matcher.match( input );
+
+    evaluator = new Evaluator() {
+      @Override
+      public List<String> evaluate( String function, List<String> parameters ) {
+        return Arrays.asList( "https://gateway-host:9443/gateway/default" );
+      }
+    };
+
+    outputUri = Expander.expand( template, match.getParams(), evaluator );
+    assertNotNull(outputUri.toString());
+    assertThat(
+        outputUri.toString(),
+        is( "https://gateway-host:9443/gateway/default/foo/context/?user.name=admin#/login" ) );
   }
 
 }
