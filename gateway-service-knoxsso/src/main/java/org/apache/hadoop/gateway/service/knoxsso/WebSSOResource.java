@@ -40,6 +40,7 @@ import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWT;
+import org.apache.hadoop.gateway.util.Urls;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -184,14 +185,24 @@ public class WebSSOResource {
     response.addCookie(c);
   }
 
-  private String getDomainName(String url) throws URISyntaxException {
+  String getDomainName(String url) throws URISyntaxException {
     URI uri = new URI(url);
     String domain = uri.getHost();
+    // if accessing via ip address do not wildcard the cookie domain
+    if (Urls.isIp(domain)) {
+      return domain;
+    }
+    if (Urls.dotOccurrences(domain) < 2) {
+      if (!domain.startsWith(".")) {
+        domain = "." + domain;
+      }
+      return domain;
+    }
     int idx = domain.indexOf('.');
     if (idx == -1) {
       idx = 0;
     }
-    return domain.startsWith("www.") ? domain.substring(4) : domain.substring(idx);
+    return domain.substring(idx);
   }
 
   private String getCookieValue(HttpServletRequest request, String name) {

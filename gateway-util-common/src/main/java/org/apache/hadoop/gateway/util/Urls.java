@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  *
  */
@@ -54,4 +57,13 @@ public class Urls {
     }
   }
 
+  public static boolean isIp(String domain) {
+    Pattern p = Pattern.compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    Matcher m = p.matcher(domain);
+    return m.find();
+  }
+
+  public static int dotOccurrences(String domain) {
+    return domain.length() - domain.replace(".", "").length();
+  }
 }
