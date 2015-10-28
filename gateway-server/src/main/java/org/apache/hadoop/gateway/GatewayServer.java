@@ -51,6 +51,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -325,8 +326,10 @@ public class GatewayServer {
     correlationHandler.setHandler( traceHandler );
 
     handlers.setHandlers( new Handler[]{ correlationHandler, logHandler } );
-
     jetty.setHandler( handlers );
+
+    jetty.setThreadPool( new QueuedThreadPool( config.getThreadPoolMax() ) );
+
     try {
     jetty.start();
     }

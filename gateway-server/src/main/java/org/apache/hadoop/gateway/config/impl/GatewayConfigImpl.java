@@ -113,6 +113,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
   private static final String HTTP_CLIENT_MAX_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.maxConnections";
+  private static final String THREAD_POOL_MAX = GATEWAY_CONFIG_FILE_PREFIX + ".threadpool.max";
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -453,6 +454,19 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getHttpClientMaxConnections() {
     return getInt( HTTP_CLIENT_MAX_CONNECTION, 32 );
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getThreadPoolMax()
+   */
+  @Override
+  public int getThreadPoolMax() {
+    int i = getInt( THREAD_POOL_MAX, 254 );
+    // Testing has shown that a value lower than 5 prevents Jetty from servicing request.
+    if( i < 5 ) {
+      i = 5;
+    }
+    return i;
   }
 
 }

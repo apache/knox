@@ -264,4 +264,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 8;
   }
 
+  @Override
+  public int getThreadPoolMax() {
+    return 8;
+  }
 }
