@@ -258,4 +258,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public String getEphemeralDHKeySize() {
     return "2048";
   }
+
+  @Override
+  public int getHttpClientMaxConnections() {
+    return 8;
+  }
+
 }

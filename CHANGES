@@ -8,6 +8,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-549] - New Service-Test API can be added to topology. Accessible via Http call or KnoxCLI
     * [KNOX-579] - Regex based identity assertion provider with static dictionary lookup
     * [KNOX-602] - JWT/SSO Cookie Based Federation Provider
+    * [KNOX-604] - Expose configuration of HttpClient's max connections per route setting
 
 ** Improvement
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.

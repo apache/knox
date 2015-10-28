@@ -34,8 +34,10 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
@@ -67,6 +69,13 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     } else {
       builder = builder.setDefaultCookieStore(new NoCookieStore());
     }
+
+    builder.setKeepAliveStrategy( DefaultConnectionKeepAliveStrategy.INSTANCE );
+    builder.setConnectionReuseStrategy( DefaultConnectionReuseStrategy.INSTANCE );
+
+    int maxConnections = getMaxConnections( filterConfig );
+    builder.setMaxConnTotal( maxConnections );
+    builder.setMaxConnPerRoute( maxConnections );
 
     return builder
         .setRedirectStrategy(new NeverRedirectStrategy())
@@ -127,6 +136,24 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       return null;
     }
 
+  }
+
+  private int getMaxConnections( FilterConfig filterConfig ) {
+    int maxConnections = 32;
+    GatewayConfig config =
+        (GatewayConfig)filterConfig.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
+    if( config != null ) {
+      maxConnections = config.getHttpClientMaxConnections();
+    }
+    String str = filterConfig.getInitParameter( "httpclient.maxConnections" );
+    if( str != null ) {
+      try {
+        maxConnections = Integer.parseInt( str );
+      } catch ( NumberFormatException e ) {
+        // Ignore it and use the default.
+      }
+    }
+    return maxConnections;
   }
 
 }
