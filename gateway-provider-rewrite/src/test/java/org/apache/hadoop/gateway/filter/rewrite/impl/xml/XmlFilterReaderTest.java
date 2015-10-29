@@ -906,6 +906,39 @@ public class XmlFilterReaderTest {
     assertThat( the( output ), hasXPath( "/*[namespace-uri()='ns' and name()='root']/*[namespace-uri()='ns' and name()='node']/@attribute", equalTo( "attr" ) ) );
   }
 
+  @Test
+  public void testEscapeCharactersBugKnox616() throws Exception {
+    String input, output;
+    StringReader reader;
+    XmlFilterReader filter;
+
+    // Ideally this should work but currently does not.
+    //input = "<tag/>";
+    //reader = new StringReader( input );
+    //filter = new NoopXmlFilterReader( reader, null );
+    //output = IOUtils.toString( filter );
+    //assertThat( output, containsString( "<tag/>" ) );
+
+    input = "<tag></tag>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( output, containsString( "<tag></tag>" ) );
+
+    input = "<tag>&lt;</tag>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( the( output ), hasXPath( "/tag" ) );
+    assertThat( output, containsString( "<tag>&lt;</tag>" ) );
+
+    input = "<tag>&amp;</tag>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( output, containsString( "<tag>&amp;</tag>" ) );
+  }
+
   private class TestXmlFilterReader extends XmlFilterReader {
 
     protected TestXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor contentConfig ) throws IOException, ParserConfigurationException, XMLStreamException {

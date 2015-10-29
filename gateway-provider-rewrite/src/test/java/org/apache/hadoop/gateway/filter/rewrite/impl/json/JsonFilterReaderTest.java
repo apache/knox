@@ -318,7 +318,7 @@ public class JsonFilterReaderTest {
 
   @Test
   public void testInvalidConfigShouldThrowException() throws Exception {
-    String input = "{ \"test-name\" : \"test-value\" }";
+    String input = "{\"test-name\":\"test-value\"}";
 
     //System.out.println( "INPUT=" + input );
 
@@ -338,6 +338,22 @@ public class JsonFilterReaderTest {
     } catch ( IllegalArgumentException e ) {
       assertThat( e.getMessage(), containsString( "/root/@url" ) );
     }
+  }
+
+  @Test
+  public void testEscapeCharactersBugKnox616() throws Exception {
+    String input, output;
+    JsonFilterReader filter;
+
+    input = "{ \"test-name\" : \"\\\"\" }";
+    filter = new NoopJsonFilterReader( new StringReader( input ), null );
+    output = IOUtils.toString( filter );
+    assertThat( output, is( "{\"test-name\":\"\\\"\"}" ) );
+
+    input = "{\"test-name\":\"\\b\"}";
+    filter = new NoopJsonFilterReader( new StringReader( input ), null );
+    output = IOUtils.toString( filter );
+    assertThat( output, is( "{\"test-name\":\"\\b\"}" ) );
   }
 
 //  private void dump( ObjectMapper mapper, JsonGenerator generator, JsonNode node ) throws IOException {

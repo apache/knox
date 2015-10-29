@@ -28,6 +28,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-601] - Knox test failures on windows
     * [KNOX-603] - Coverity: Potential resource leak in BaseKeystoreService.createKeystore
     * [KNOX-614] - Incorrect URI template expansion with {**} query params #fragments
+    * [KNOX-616] - XmlUrlRewriteStreamFilter unscapes escaped special characters
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

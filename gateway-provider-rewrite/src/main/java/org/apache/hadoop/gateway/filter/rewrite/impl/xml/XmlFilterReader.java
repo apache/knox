@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl.xml;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterBufferDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -34,6 +35,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -98,6 +100,9 @@ public abstract class XmlFilterReader extends Reader {
     document = null;
     stack = new Stack<Level>();
     factory = XMLInputFactory.newFactory();
+    factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
+    factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
+    factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
     parser = factory.createXMLEventReader( reader );
   }
 
@@ -512,7 +517,7 @@ public abstract class XmlFilterReader extends Reader {
           }
         }
       }
-      writer.write( value );
+      writer.write( StringEscapeUtils.escapeXml( value ) );
     }
   }
 
