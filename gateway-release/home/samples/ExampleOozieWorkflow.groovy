@@ -22,13 +22,24 @@ import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 import org.apache.hadoop.gateway.shell.workflow.Workflow
 
 import static java.util.concurrent.TimeUnit.SECONDS
+import org.apache.hadoop.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
 inputFile = "LICENSE"
-jobDir = "/user/" + username + "/test"
 jarFile = "samples/hadoop-examples.jar"
+
+gateway = "https://localhost:8443/gateway/sandbox"
+tableName = "test_table"
+
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+jobDir = "/user/" + username + "/test"
 
 definition = """\
 <workflow-app xmlns="uri:oozie:workflow:0.2" name="wordcount-workflow">
@@ -80,7 +91,7 @@ configuration = """\
 </configuration>
 """
 
-session = Hadoop.login( gateway, username, password )
+session = Hadoop.login( gateway, username, pass )
 
 println "Delete " + jobDir + ": " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
 println "Mkdir " + jobDir + ": " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode

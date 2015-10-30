@@ -20,11 +20,20 @@ import groovy.json.JsonSlurper
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 
-gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
+import org.apache.hadoop.gateway.shell.Credentials
 
-session = Hadoop.login( gateway, username, password )
+gateway = "https://localhost:8443/gateway/sandbox"
+
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+session = Hadoop.login( gateway, username, pass )
+
 text = Hdfs.ls( session ).dir( "/" ).now().string
 json = (new JsonSlurper()).parseText( text )
 println json.FileStatuses.FileStatus.pathSuffix

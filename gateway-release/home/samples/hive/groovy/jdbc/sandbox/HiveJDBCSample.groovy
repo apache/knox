@@ -16,9 +16,8 @@
  * limitations under the License.
  */
 import java.sql.DriverManager
+import org.apache.hadoop.gateway.shell.Credentials
 
-user = "guest";
-password = user + "-password";
 gatewayHost = "localhost";
 gatewayPort = 8443;
 trustStore = "/usr/lib/knox/data/security/keystores/gateway.jks";
@@ -26,11 +25,22 @@ trustStorePassword = "knoxsecret";
 contextPath = "gateway/sandbox/hive";
 connectionString = String.format( "jdbc:hive2://%s:%d/;ssl=true;sslTrustStore=%s;trustStorePassword=%s?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s", gatewayHost, gatewayPort, trustStore, trustStorePassword, contextPath );
 
+gateway = "https://localhost:8443/gateway/sandbox"
+tableName = "test_table"
+
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+user = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
 // Load Hive JDBC Driver
 Class.forName( "org.apache.hive.jdbc.HiveDriver" );
 
 // Configure JDBC connection
-connection = DriverManager.getConnection( connectionString, user, password );
+connection = DriverManager.getConnection( connectionString, user, pass );
 
 statement = connection.createStatement();
 

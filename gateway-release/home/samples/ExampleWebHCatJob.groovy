@@ -22,15 +22,23 @@ import org.apache.hadoop.gateway.shell.hdfs.Hdfs
 import org.apache.hadoop.gateway.shell.job.Job
 
 import static java.util.concurrent.TimeUnit.SECONDS
+import org.apache.hadoop.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
-jobDir = "/user/" + username + "/test"
 dataFile = "LICENSE"
 jarFile = "samples/hadoop-examples.jar"
 
-session = Hadoop.login( gateway, username, password )
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+jobDir = "/user/" + username + "/test"
+
+session = Hadoop.login( gateway, username, pass )
 
 println "Delete " + jobDir + ": " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
 println "Create " + jobDir + ": " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode

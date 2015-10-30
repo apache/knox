@@ -25,6 +25,8 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.hadoop.gateway.shell.Credentials;
+
 public class HiveJDBCSample {
 
   public static void main( String[] args ) {
@@ -33,14 +35,20 @@ public class HiveJDBCSample {
     ResultSet resultSet = null;
 
     try {
-      String user = "guest";
-      String password = user + "-password";
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
       String trustStore = "/usr/lib/knox/data/security/keystores/gateway.jks";
       String trustStorePassword = "knoxsecret";
       String contextPath = "gateway/sandbox-with-knox-inside/hive";
       String connectionString = String.format( "jdbc:hive2://%s:%d/;ssl=true;sslTrustStore=%s;trustStorePassword=%s?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s", gatewayHost, gatewayPort, trustStore, trustStorePassword, contextPath );
+
+      Credentials credentials = new Credentials();
+      credentials.add("ClearInput", "Enter username: ", "user");
+                     .add("HiddenInput", "Enter pas" + "sword: ", "pass");
+      credentials.collect();
+
+      String username = credentials.get("user").string();
+      String pass = credentials.get("pass").string();
 
       // Load Hive JDBC Driver
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );

@@ -16,12 +16,19 @@
 * limitations under the License.
 */
 import org.apache.hadoop.gateway.shell.Hadoop
+import org.apache.hadoop.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
 
-session = Hadoop.login( gateway, username, password )
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+session = Hadoop.login( gateway, username, pass )
 
 println "JSON=" + SampleService.simple( session ).param( "/tmp" ).now().string
 

@@ -21,12 +21,20 @@ import org.apache.hadoop.gateway.shell.Hadoop
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
+import org.apache.hadoop.gateway.shell.Credentials
+
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = "guest-password"
 tableName = "test_table"
 
-session = Hadoop.login(gateway, username, password)
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+session = Hadoop.login(gateway, username, pass)
 
 println "System version : " + HBase.session(session).systemVersion().now().string
 

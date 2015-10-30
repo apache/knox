@@ -17,14 +17,22 @@
  */
 import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.hdfs.Hdfs
+import org.apache.hadoop.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
-dataDir = "/user/" + username + "/example"
 dataFile = "README"
 
-session = Hadoop.login( gateway, username, password )
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+dataDir = "/user/" + username + "/example"
+
+session = Hadoop.login( gateway, username, pass )
 
 Hdfs.rm( session ).file( dataDir ).recursive().now()
 

@@ -19,12 +19,19 @@ import org.apache.hadoop.gateway.shell.Hadoop
 import org.apache.hadoop.gateway.shell.job.Job
 
 import static java.util.concurrent.TimeUnit.SECONDS
+import org.apache.hadoop.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
-username = "guest"
-password = username + "-password"
 
-session = Hadoop.login( gateway, username, password )
+credentials = new Credentials()
+credentials.add("ClearInput", "Enter username: ", "user")
+                .add("HiddenInput", "Enter pas" + "sword: ", "pass")
+credentials.collect()
+
+username = credentials.get("user").string()
+pass = credentials.get("pass").string()
+
+session = Hadoop.login( gateway, username, pass )
 
 println "Queue: " + Job.queryQueue( session ).now().string
 
