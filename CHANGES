@@ -29,6 +29,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-603] - Coverity: Potential resource leak in BaseKeystoreService.createKeystore
     * [KNOX-614] - Incorrect URI template expansion with {**} query params #fragments
     * [KNOX-616] - XmlUrlRewriteStreamFilter unscapes escaped special characters
+    * [KNOX-394] - Request and response URLs must be parsed as literals not templates
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0

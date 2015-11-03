@@ -1,0 +1,14 @@
+<configuration><property><name>oozie.use.system.libpath</name><value>true</value></property>
+    <property><name>examplesRoot</name><value>examples-path</value></property>
+    <property><name>cluster_name</name><value>hdp</value></property>
+    <property><name>knox_truth</name><value>true</value></property>
+    <property><name>oozie_port</name><value>11000</value>
+    </property><property><name>oozie_host</name><value>hostname</value></property>
+    <property><name>jobTracker</name><value>hostname</value></property>
+    <property><name>oozie.wf.application.path</name><value>${nameNode}/user/${user.name}/${examplesRoot}/apps/hive</value></property>
+    <property><name>knox_gateway_port</name><value>8443</value></property>
+    <property><name>knox_gateway_path</name><value>gateway</value></property>
+    <property><name>user.name</name><value>svbigred</value></property>
+    <property><name>ENV</name><value>dev</value></property>
+    <property><name>nameNode</name><value>hdfs://hostname:8020</value></property>
+</configuration>
