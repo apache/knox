@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 public class Username extends Segment {
 
-  public Username( String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern, valuePattern ) );
+  public Username( String paramName, String valuePattern, boolean literal ) {
+    super( new Token( paramName, valuePattern, valuePattern, literal ) );
   }
 
   public Username( Username username ) {

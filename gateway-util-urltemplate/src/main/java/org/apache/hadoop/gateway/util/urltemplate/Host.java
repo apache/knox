@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 public class Host extends Segment {
 
-  public Host( String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern ) );
+  public Host( String paramName, String valuePattern, boolean literal ) {
+    super( new Token( paramName, valuePattern, literal ) );
   }
 
   public Host( Host host ) {

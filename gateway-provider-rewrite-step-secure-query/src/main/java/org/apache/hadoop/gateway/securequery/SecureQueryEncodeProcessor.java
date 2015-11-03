@@ -56,7 +56,7 @@ public class SecureQueryEncodeProcessor
     if( query != null ) {
       query = Base64.encodeBase64String( query.getBytes( "UTF-8" ) );
       query = removeTrailingEquals( query );
-      url = Parser.parse( path + "?" + ENCODED_PARAMETER_NAME +"=" + query );
+      url = Parser.parseLiteral( path + "?" + ENCODED_PARAMETER_NAME +"=" + query );
       context.setCurrentUrl( url );
     }
     return UrlRewriteStepStatus.SUCCESS;

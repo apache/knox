@@ -40,9 +40,9 @@ public class UrlRewriteActionRewriteProcessorExt
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteActionRewriteDescriptorExt descriptor ) throws Exception {
     this.expander = new Expander();
     if ( descriptor.parameter() != null ) {
-      this.template = Parser.parse( descriptor.parameter() );
+      this.template = Parser.parseTemplate( descriptor.parameter() );
     } else {
-      this.template = Parser.parse( "" );
+      this.template = Parser.parseTemplate( "" );
     }
   }
 

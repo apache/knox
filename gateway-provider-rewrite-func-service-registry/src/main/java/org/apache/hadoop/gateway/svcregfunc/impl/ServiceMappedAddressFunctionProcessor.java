@@ -72,7 +72,7 @@ public class ServiceMappedAddressFunctionProcessor
     String addr = parameter;
     String url = lookupServiceUrl( parameter );
     if( url != null ) {
-      Template template = Parser.parse( url );
+      Template template = Parser.parseLiteral( url );
       Host host = template.getHost();
       String hostStr = null;
       if( host != null ) {

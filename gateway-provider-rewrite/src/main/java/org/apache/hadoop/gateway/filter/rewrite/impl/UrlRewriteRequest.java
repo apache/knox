@@ -93,7 +93,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
       urlString.append( queryString );
     }
     try {
-      urlTemplate = Parser.parse( urlString.toString() );
+      urlTemplate = Parser.parseLiteral( urlString.toString() );
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( urlString.toString() );
       // Shouldn't be possible given that the URL is constructed from parts of an existing URL.
@@ -153,7 +153,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   private String rewriteValue( UrlRewriter rewriter, String value, String rule ) {
     try {
-      Template input = Parser.parse( value );
+      Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.IN, rule );
       value = output.getPattern();
     } catch( URISyntaxException e ) {

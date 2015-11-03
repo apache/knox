@@ -80,16 +80,24 @@ public class Parser {
 
   private static Pattern PATTERN = Pattern.compile( "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?" );
 
-  private String template; // Kept this for debugging.
-  private Builder builder;
-
-  public static Template parse( String template ) throws URISyntaxException {
-    return new Parser().parseTemplate( template );
+  @Deprecated
+  public static final Template parse( String template ) throws URISyntaxException {
+    return Parser.parseTemplate( template );
   }
 
-  public Template parseTemplate( String template ) throws URISyntaxException {
-    this.template = template;
-    builder = new Builder( template );
+  public static final Template parseTemplate( final String template ) throws URISyntaxException {
+    Builder builder = new Builder( template );
+    return parseInternal( builder );
+  }
+
+  public static final Template parseLiteral( final String literal ) throws URISyntaxException {
+    Builder builder = new Builder( literal );
+    builder.setLiteral( true );
+    return parseInternal( builder );
+  }
+
+  private static final Template parseInternal( final Builder builder ) throws URISyntaxException {
+    String original = builder.getOriginal();
     builder.setHasScheme( false );
     builder.setHasAuthority( false ); // Assume no until found otherwise.  If true, will cause // in output URL.
     builder.setIsAuthorityOnly( false );
@@ -97,22 +105,22 @@ public class Parser {
     builder.setIsDirectory( false ); // Assume a file path until found otherwise.  If true, will cause trailing / in output URL.
     builder.setHasQuery( false ); // Assume no ? until found otherwise.  If true, will cause ? in output URL.
     builder.setHasFragment( false ); // Assume no # until found otherwise.  If true, will cause # in output URL.
-    Matcher match = PATTERN.matcher( template );
+    Matcher match = PATTERN.matcher( original );
     if( match.matches() ) {
-      consumeSchemeMatch( match );
-      consumeAuthorityMatch( match );
-      consumePathMatch( match );
-      consumeQueryMatch( match );
-      consumeFragmentMatch( match );
-      fixNakedAuthority();
+      consumeSchemeMatch( builder, match );
+      consumeAuthorityMatch( builder, match );
+      consumePathMatch( builder, match );
+      consumeQueryMatch( builder, match );
+      consumeFragmentMatch( builder, match );
+      fixNakedAuthority( builder );
     } else {
-      throw new URISyntaxException( template, RES.parseTemplateFailureReason( template ) );
+      throw new URISyntaxException( original, RES.parseTemplateFailureReason( original ) );
     }
     return builder.build();
   }
 
-  private final void fixNakedAuthority() {
-    if( builder.getHashScheme() &&
+  private static final void fixNakedAuthority( final Builder builder ) {
+    if( builder.getHasScheme() &&
         !builder.getHasAuthority() &&
         !builder.getIsAbsolute() &&
         !builder.getIsDirectory() &&
@@ -128,10 +136,10 @@ public class Parser {
     }
   }
 
-  private final Token makeTokenSingular( Token token ) {
+  private static final Token makeTokenSingular( Token token ) {
     final String effectivePattern = token.getEffectivePattern();
     if( Segment.GLOB_PATTERN.equals( effectivePattern ) ) {
-      token = new Token( token.getParameterName(), token.getOriginalPattern(), Segment.STAR_PATTERN );
+      token = new Token( token.getParameterName(), token.getOriginalPattern(), Segment.STAR_PATTERN, token.isLiteral() );
     }
     return token;
   }
@@ -143,28 +151,28 @@ public class Parser {
 //    return pattern;
 //  }
 
-  private void consumeSchemeMatch( Matcher match ) {
+  private static void consumeSchemeMatch( final Builder builder, final Matcher match ) {
     if( match.group( MATCH_GROUP_SCHEME ) != null ) {
       builder.setHasScheme( true );
-      consumeSchemeToken( match.group( MATCH_GROUP_SCHEME_NAKED ) );
+      consumeSchemeToken( builder, match.group( MATCH_GROUP_SCHEME_NAKED ) );
     }
   }
 
-  private void consumeSchemeToken( String token ) {
+  private static void consumeSchemeToken( final Builder builder, final String token ) {
     if( token != null ) {
-      Token t = parseTemplateToken( token, Segment.STAR_PATTERN );
+      Token t = parseTemplateToken( builder, token, Segment.STAR_PATTERN );
       builder.setScheme( t );
     }
   }
 
-  private void consumeAuthorityMatch( Matcher match ) {
+  private static void consumeAuthorityMatch( final Builder builder, final Matcher match ) {
     if( match.group( MATCH_GROUP_AUTHORITY ) != null ) {
       builder.setHasAuthority( true );
-      consumeAuthorityToken( match.group( MATCH_GROUP_AUTHORITY_NAKED ) );
+      consumeAuthorityToken( builder, match.group( MATCH_GROUP_AUTHORITY_NAKED ) );
     }
   }
 
-  private void consumeAuthorityToken( String token ) {
+  private static void consumeAuthorityToken( final Builder builder, final String token ) {
     if( token != null ) {
       Token paramPattern;
       String[] usernamePassword=null, hostPort;
@@ -177,115 +185,115 @@ public class Parser {
       }
       if( usernamePassword != null ) {
         if( usernamePassword[ 0 ].length() > 0 ) {
-          paramPattern = makeTokenSingular( parseTemplateToken( usernamePassword[ 0 ], Segment.STAR_PATTERN ) );
+          paramPattern = makeTokenSingular( parseTemplateToken( builder, usernamePassword[ 0 ], Segment.STAR_PATTERN ) );
           builder.setUsername( paramPattern );
         }
         if( usernamePassword.length > 1 && usernamePassword[ 1 ].length() > 0 ) {
-          paramPattern = makeTokenSingular( parseTemplateToken( usernamePassword[ 1 ], Segment.STAR_PATTERN ) );
+          paramPattern = makeTokenSingular( parseTemplateToken( builder, usernamePassword[ 1 ], Segment.STAR_PATTERN ) );
           builder.setPassword( paramPattern );
         }
       }
       if( hostPort[ 0 ].length() > 0 ) {
-        paramPattern = makeTokenSingular( parseTemplateToken( hostPort[ 0 ], Segment.STAR_PATTERN ) );
+        paramPattern = makeTokenSingular( parseTemplateToken( builder, hostPort[ 0 ], Segment.STAR_PATTERN ) );
         builder.setHost( paramPattern );
       }
       if( hostPort.length > 1 && hostPort[ 1 ].length() > 0 ) {
-        paramPattern = makeTokenSingular( parseTemplateToken( hostPort[ 1 ], Segment.STAR_PATTERN ) );
+        paramPattern = makeTokenSingular( parseTemplateToken( builder, hostPort[ 1 ], Segment.STAR_PATTERN ) );
         builder.setPort( paramPattern );
       }
     }
   }
 
-  private void consumePathMatch( Matcher match ) {
+  private static void consumePathMatch( final Builder builder, final Matcher match ) {
     String path = match.group( MATCH_GROUP_PATH );
     if( path != null ) {
       builder.setIsAbsolute( path.startsWith( "/" ) );
       builder.setIsDirectory( path.endsWith( "/" ) );
-      consumePathToken( path );
+      consumePathToken( builder, path );
     }
   }
 
-  private final void consumePathToken( final String token ) {
+  private static final void consumePathToken( final Builder builder, final String token ) {
     if( token != null ) {
       final StringTokenizer tokenizer = new StringTokenizer( token, "/" );
       while( tokenizer.hasMoreTokens() ) {
-        consumePathSegment( tokenizer.nextToken() );
+        consumePathSegment( builder, tokenizer.nextToken() );
       }
     }
   }
 
-  private final void consumePathSegment( final String token ) {
+  private static final void consumePathSegment( final Builder builder, final String token ) {
     if( token != null ) {
-      final Token t = parseTemplateToken( token, Segment.GLOB_PATTERN );
+      final Token t = parseTemplateToken( builder, token, Segment.GLOB_PATTERN );
       builder.addPath( t );
     }
   }
 
-  private void consumeQueryMatch( Matcher match ) {
+  private static void consumeQueryMatch( final Builder builder, Matcher match ) {
     if( match.group( MATCH_GROUP_QUERY ) != null ) {
       builder.setHasQuery( true );
-      consumeQueryToken( match.group( MATCH_GROUP_QUERY_NAKED ) );
+      consumeQueryToken( builder, match.group( MATCH_GROUP_QUERY_NAKED ) );
     }
   }
 
-  private void consumeQueryToken( String token ) {
+  private static void consumeQueryToken( final Builder builder, String token ) {
     if( token != null ) {
       StringTokenizer tokenizer = new StringTokenizer( token, "?&" );
       while( tokenizer.hasMoreTokens() ) {
-        consumeQuerySegment( tokenizer.nextToken() );
+        consumeQuerySegment( builder, tokenizer.nextToken() );
       }
     }
   }
 
-  private void consumeQuerySegment( String token ) {
+  private static void consumeQuerySegment( final Builder builder, String token ) {
     if( token != null && token.length() > 0 ) {
       // Shorthand format {queryParam} == queryParam={queryParam=*}
       if( TEMPLATE_OPEN_MARKUP == token.charAt( 0 ) ) {
-        Token paramPattern = parseTemplateToken( token, Segment.GLOB_PATTERN );
+        Token paramPattern = parseTemplateToken( builder, token, Segment.GLOB_PATTERN );
         String paramName = paramPattern.parameterName;
         if( paramPattern.originalPattern == null ) {
-          builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
+          builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN, builder.isLiteral() ) );
 //          if( Segment.STAR_PATTERN.equals( paramName ) || Segment.GLOB_PATTERN.equals( paramName ) ) {
 //            builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
 //          } else {
 //            builder.addQuery( paramName, new Token( paramName, null, Segment.GLOB_PATTERN ) );
 //          }
         } else {
-          builder.addQuery( paramName, new Token( paramName, paramPattern.originalPattern ) );
+          builder.addQuery( paramName, new Token( paramName, paramPattern.originalPattern, builder.isLiteral() ) );
         }
       } else {
         String nameValue[] = split( token, '=' );
         if( nameValue.length == 1 ) {
           String queryName = nameValue[ 0 ];
-          builder.addQuery( queryName, new Token( Segment.ANONYMOUS_PARAM, null ) );
+          builder.addQuery( queryName, new Token( Segment.ANONYMOUS_PARAM, null, builder.isLiteral() ) );
         } else {
           String queryName = nameValue[ 0 ];
-          Token paramPattern = parseTemplateToken( nameValue[ 1 ], Segment.GLOB_PATTERN );
+          Token paramPattern = parseTemplateToken( builder, nameValue[ 1 ], Segment.GLOB_PATTERN );
           builder.addQuery( queryName, paramPattern );
         }
       }
     }
   }
 
-  private void consumeFragmentMatch( Matcher match ) {
+  private static void consumeFragmentMatch( final Builder builder, Matcher match ) {
     if( match.group( MATCH_GROUP_FRAGMENT ) != null ) {
       builder.setHasFragment( true );
-      consumeFragmentToken( match.group( MATCH_GROUP_FRAGMENT_NAKED ) );
+      consumeFragmentToken( builder, match.group( MATCH_GROUP_FRAGMENT_NAKED ) );
     }
   }
 
-  private void consumeFragmentToken( String token ) {
+  private static void consumeFragmentToken( final Builder builder, String token ) {
     if( token != null && token.length() > 0 ) {
-      Token t = parseTemplateToken( token, Segment.STAR_PATTERN );
+      Token t = parseTemplateToken( builder, token, Segment.STAR_PATTERN );
       builder.setFragment( t );
     }
   }
 
-  static final Token parseTemplateToken( final String s, final String defaultEffectivePattern ) {
+  static final Token parseTemplateToken( final Builder builder, final String s, final String defaultEffectivePattern ) {
     String paramName, actualPattern, effectivePattern;
     final int l = s.length();
     // If the token isn't the empty string, then
-    if( l > 0 ) {
+    if( l > 0 && !builder.isLiteral() ) {
       final int b = ( s.charAt( 0 ) == TEMPLATE_OPEN_MARKUP ? 1 : -1 );
       final int e = ( s.charAt( l-1 ) == TEMPLATE_CLOSE_MARKUP ? l-1 : -1 );
       // If this is a parameter template, ie {...}
@@ -318,7 +326,7 @@ public class Parser {
       actualPattern = s;
       effectivePattern = actualPattern;
     }
-    final Token token = new Token( paramName, actualPattern, effectivePattern );
+    final Token token = new Token( paramName, actualPattern, effectivePattern, builder.isLiteral() );
     return token;
   }
 

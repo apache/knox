@@ -102,7 +102,7 @@ public class GatewayFilter implements Filter {
 
     Template pathTemplate;
     try {
-      pathTemplate = Parser.parse( path );
+      pathTemplate = Parser.parseLiteral( path );
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
@@ -253,7 +253,7 @@ public class GatewayFilter implements Filter {
 
     private Holder( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
 //      this.path = path;
-      this.template = Parser.parse( path );
+      this.template = Parser.parseTemplate( path );
       this.name = name;
       this.params = params;
       this.instance = filter;
@@ -274,7 +274,7 @@ public class GatewayFilter implements Filter {
 
     private Holder( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
 //      this.path = path;
-      this.template = Parser.parse( path );
+      this.template = Parser.parseTemplate( path );
       this.name = name;
       this.params = params;
       this.instance = null;

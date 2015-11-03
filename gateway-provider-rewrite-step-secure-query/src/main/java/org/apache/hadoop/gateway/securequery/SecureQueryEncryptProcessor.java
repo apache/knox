@@ -66,7 +66,7 @@ public class SecureQueryEncryptProcessor
     }
     if( query != null ) {
       query = encode( query );
-      url = Parser.parse( path + "?" + ENCRYPTED_PARAMETER_NAME +"=" + query );
+      url = Parser.parseLiteral( path + "?" + ENCRYPTED_PARAMETER_NAME +"=" + query );
       context.setCurrentUrl( url );
     }
     return UrlRewriteStepStatus.SUCCESS;

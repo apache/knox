@@ -59,7 +59,7 @@ public class EncryptUriProcessor
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
     if( param != null && !param.isEmpty() && template != null && !template.isEmpty() ) {
-      Template uri = Parser.parse( template );
+      Template uri = Parser.parseTemplate( template );
       String resolvedTemplate = Expander.expandToString( uri, context.getParameters(), context.getEvaluator() );
       if( resolvedTemplate != null && !resolvedTemplate.isEmpty() ) {
         String endcoedUrl = encode( resolvedTemplate );

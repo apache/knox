@@ -44,7 +44,7 @@ public class ServicePathFunctionProcessor
       for( String parameter : parameters ) {
         String url = lookupServiceUrl( parameter );
         if( url != null ) {
-          Template template = Parser.parse( url );
+          Template template = Parser.parseLiteral( url );
           List<Path> path = template.getPath();
           if( path != null ) {
             parameter = toString( path );

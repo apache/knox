@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 public class Port extends Segment {
 
-  public Port( String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern ) );
+  public Port( String paramName, String valuePattern, boolean literal ) {
+    super( new Token( paramName, valuePattern, literal ) );
   }
 
   public Port( Port port ) {

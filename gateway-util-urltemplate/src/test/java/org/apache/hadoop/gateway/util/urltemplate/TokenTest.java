@@ -27,7 +27,7 @@ public class TokenTest {
   @Test
   public void testConstructorAndGetters() throws Exception {
 
-    Token token = new Token( "test-parameter-name", "test-original-value", "test-effective-value" );
+    Token token = new Token( "test-parameter-name", "test-original-value", "test-effective-value", true );
 
     assertThat( token.parameterName, is( "test-parameter-name" ) );
     assertThat( token.originalPattern, is( "test-original-value" ) );

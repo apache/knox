@@ -58,7 +58,7 @@ public class DecryptUriProcessor
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
     if( param != null && !param.isEmpty() ) {
-      Template template = Parser.parse( "{" + param + "}" );
+      Template template = Parser.parseTemplate( "{" + param + "}" );
       String resolvedTemplate = Expander.expandToString( template, context.getParameters(), context.getEvaluator() );
       String url = decode( resolvedTemplate );
       EncryptStepContextParams params = new EncryptStepContextParams();

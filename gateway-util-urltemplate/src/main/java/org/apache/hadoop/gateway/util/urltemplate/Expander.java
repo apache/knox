@@ -41,7 +41,7 @@ public class Expander {
 
   public static Template expandToTemplate( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
     //TODO: This could be much more efficient if it didn't create and then parse a string.
-    return Parser.parse( expandToString( template, params, evaluator ) );
+    return Parser.parseLiteral( expandToString( template, params, evaluator ) );
   }
 
   public static String expandToString( Template template, Params params, Evaluator evaluator ) {

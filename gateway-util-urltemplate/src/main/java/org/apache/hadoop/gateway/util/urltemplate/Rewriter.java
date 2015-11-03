@@ -41,7 +41,7 @@ public class Rewriter {
       throws URISyntaxException {
     Rewriter rewriter = new Rewriter();
     rewriter.addRule( inputTemplate, outputTemplate );
-    Template inputUriTemplate = Parser.parse( inputUri.toString() );
+    Template inputUriTemplate = Parser.parseLiteral( inputUri.toString() );
     return rewriter.rewrite( inputUriTemplate, resolver, evaluator );
   }
 

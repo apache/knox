@@ -31,6 +31,7 @@ import java.util.List;
 import static junit.framework.TestCase.assertNotNull;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.Assert.assertThat;
@@ -42,7 +43,7 @@ public class ExpanderTest {
   @Test
   public void testHostAndPortOnlyExpansionBugKnox381() throws Exception {
     String text = "{host}:{port}";
-    Template template = Parser.parse( text );
+    Template template = Parser.parseTemplate( text );
     MockParams params = new MockParams();
     params.addValue( "host", "test-host" );
     params.addValue( "port", "777" );
@@ -58,13 +59,13 @@ public class ExpanderTest {
     URI expanded;
 
     text = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
-    template = Parser.parse( text );
+    template = Parser.parseLiteral( text );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( text ) ) ;
 
     text = "{scheme}://{username}:{password}@{host}:{port}/{path=**}?query={queryParam}#{fragment}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     params = new MockParams();
     params.addValue( "scheme", "http" );
     params.addValue( "username", "horton" );
@@ -87,89 +88,89 @@ public class ExpanderTest {
     MockParams params;
     URI expanded;
 
-    template = Parser.parse( "" );
+    template = Parser.parseTemplate( "" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "" ) ) ;
 
-    template = Parser.parse( "/" );
+    template = Parser.parseTemplate( "/" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/" ) ) ;
 
-    template = Parser.parse( "{path-name}" );
+    template = Parser.parseTemplate( "{path-name}" );
     params = new MockParams();
     params.addValue( "path-name", "path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "path-value" ) ) ;
 
-    template = Parser.parse( "/{path-name}" );
+    template = Parser.parseTemplate( "/{path-name}" );
     params = new MockParams();
     params.addValue( "path-name", "path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/path-value" ) ) ;
 
-    template = Parser.parse( "{path-name}/" );
+    template = Parser.parseTemplate( "{path-name}/" );
     params = new MockParams();
     params.addValue( "path-name", "path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "path-value/" ) ) ;
 
-    template = Parser.parse( "/{path-name}/" );
+    template = Parser.parseTemplate( "/{path-name}/" );
     params = new MockParams();
     params.addValue( "path-name", "path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/path-value/" ) ) ;
 
-    template = Parser.parse( "path-name" );
+    template = Parser.parseTemplate( "path-name" );
     params = new MockParams();
     params.addValue( "path-name", "other-path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "path-name" ) ) ;
 
-    template = Parser.parse( "/path-name" );
+    template = Parser.parseTemplate( "/path-name" );
     params = new MockParams();
     params.addValue( "path-name", "other-path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/path-name" ) ) ;
 
-    template = Parser.parse( "path-name/" );
+    template = Parser.parseTemplate( "path-name/" );
     params = new MockParams();
     params.addValue( "path-name", "other-path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "path-name/" ) ) ;
 
-    template = Parser.parse( "/path-name/" );
+    template = Parser.parseTemplate( "/path-name/" );
     params = new MockParams();
     params.addValue( "path-name", "other-path-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/path-name/" ) ) ;
 
-    template = Parser.parse( "?" );
+    template = Parser.parseTemplate( "?" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "" ) ) ;
 
-    template = Parser.parse( "?query-name={queryParam-name}" );
+    template = Parser.parseTemplate( "?query-name={queryParam-name}" );
     params = new MockParams();
     params.addValue( "queryParam-name", "queryParam-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query-name=queryParam-value" ) ) ;
 
-    template = Parser.parse( "?query-name-1={queryParam-name-1}&query-name-2={queryParam-name-2}" );
+    template = Parser.parseTemplate( "?query-name-1={queryParam-name-1}&query-name-2={queryParam-name-2}" );
     params = new MockParams();
     params.addValue( "queryParam-name-1", "queryParam-value-1" );
     params.addValue( "queryParam-name-2", "queryParam-value-2" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" ) ) ;
 
-    template = Parser.parse( "?query-name=queryParam-value" );
+    template = Parser.parseTemplate( "?query-name=queryParam-value" );
     params = new MockParams();
     params.addValue( "queryParam-name", "other-queryParam-value" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query-name=queryParam-value" ) ) ;
 
-    template = Parser.parse( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" );
+    template = Parser.parseTemplate( "?query-name-1=queryParam-value-1&query-name-2=queryParam-value-2" );
     params = new MockParams();
     params.addValue( "queryParam-name-1", "other-queryParam-value-1" );
     params.addValue( "queryParam-name-2", "other-queryParam-value-2" );
@@ -196,22 +197,22 @@ public class ExpanderTest {
     MockParams params;
     URI expanded;
 
-    template = Parser.parse( "//host" );
+    template = Parser.parseTemplate( "//host" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "//host" ) ) ;
 
-    template = Parser.parse( "//:port" );
+    template = Parser.parseTemplate( "//:port" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "//:port" ) ) ;
 
-    template = Parser.parse( "//username@" );
+    template = Parser.parseTemplate( "//username@" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "//username@" ) ) ;
 
-    template = Parser.parse( "//:password@" );
+    template = Parser.parseTemplate( "//:password@" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "//:password@" ) ) ;
@@ -223,26 +224,26 @@ public class ExpanderTest {
     MockParams params;
     URI expanded;
 
-    template = Parser.parse( "/a/b/c" );
+    template = Parser.parseTemplate( "/a/b/c" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/a/b/c" ) ) ;
 
-    template = Parser.parse( "/top/{middle}/bottom" );
+    template = Parser.parseTemplate( "/top/{middle}/bottom" );
     params = new MockParams();
     params.addValue( "middle", "A" );
     params.addValue( "middle", "B" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/top/A/B/bottom" ) ) ;
 
-    template = Parser.parse( "/top/{middle=*}/bottom" );
+    template = Parser.parseTemplate( "/top/{middle=*}/bottom" );
     params = new MockParams();
     params.addValue( "middle", "A" );
     params.addValue( "middle", "B" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "/top/A/bottom" ) ) ;
 
-    template = Parser.parse( "/top/{middle=**}/bottom" );
+    template = Parser.parseTemplate( "/top/{middle=**}/bottom" );
     params = new MockParams();
     params.addValue( "middle", "A" );
     params.addValue( "middle", "B" );
@@ -256,26 +257,26 @@ public class ExpanderTest {
     MockParams params;
     URI expanded;
 
-    template = Parser.parse( "?query" );
+    template = Parser.parseTemplate( "?query" );
     params = new MockParams();
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query" ) ) ;
 
-    template = Parser.parse( "?query={queryParam}" );
+    template = Parser.parseTemplate( "?query={queryParam}" );
     params = new MockParams();
     params.addValue( "queryParam", "A" );
     params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query=A&query=B" ) ) ;
 
-    template = Parser.parse( "?query={queryParam=*}" );
+    template = Parser.parseTemplate( "?query={queryParam=*}" );
     params = new MockParams();
     params.addValue( "queryParam", "A" );
     params.addValue( "queryParam", "B" );
     expanded = Expander.expand( template, params, null );
     assertThat( expanded.toString(), equalTo( "?query=A" ) ) ;
 
-    template = Parser.parse( "?query={queryParam=**}" );
+    template = Parser.parseTemplate( "?query={queryParam=**}" );
     params = new MockParams();
     params.addValue( "queryParam", "A" );
     params.addValue( "queryParam", "B" );
@@ -303,7 +304,7 @@ public class ExpanderTest {
     params.addValue( "extra", "extraA" );
 
     text = "{scheme}://host/{path=*]?{query=*}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     expandedTemplate = Expander.expandToTemplate( template, params, null );
     assertThat( expandedTemplate.toString(), equalTo( "schemeA://host/{path=*]?query=queryA" ) );
     expandedString = Expander.expandToString( template, params, null );
@@ -315,17 +316,17 @@ public class ExpanderTest {
       // Expected.
     }
 
-    template = Parser.parse( "{scheme}://host/{path=**}?{query=**}" );
+    template = Parser.parseTemplate( "{scheme}://host/{path=**}?{query=**}" );
     expandedUri = Expander.expand( template, params, null );
     assertThat( expandedUri.toString(), equalTo( "schemeA://host/pathA/pathB?query=queryA&query=queryB" ) );
 
-    template = Parser.parse( "{scheme}://host/{path=**}?{host}&{query=**}&{**}" );
+    template = Parser.parseTemplate( "{scheme}://host/{path=**}?{host}&{query=**}&{**}" );
     expandedUri = Expander.expand( template, params, null );
     assertThat(
         expandedUri.toString(),
         equalTo( "schemeA://host/pathA/pathB?host=hostA&query=queryA&query=queryB&extra=extraA" ) );
 
-    template = Parser.parse( "{scheme}://host/{path=**}?server={host}&{query=**}&{**}" );
+    template = Parser.parseTemplate( "{scheme}://host/{path=**}?server={host}&{query=**}&{**}" );
     expandedUri = Expander.expand( template, params, null );
     assertThat(
         expandedUri.toString(),
@@ -334,7 +335,7 @@ public class ExpanderTest {
     // In this case "server-host" is treated as a param name and not found in the params so it
     // is copied.  I'm not really sure what the correct behavior should be.  My initial thinking
     // is that if something within {} isn't resolve to a param it should be dropped from the output.
-    template = Parser.parse( "{scheme}://host/{path=**}?{server=host}&{query=**}&{**}" );
+    template = Parser.parseTemplate( "{scheme}://host/{path=**}?{server=host}&{query=**}&{**}" );
     expandedUri = Expander.expand( template, params, null );
     expandedString = expandedUri.toString();
     assertThat( expandedString, containsString( "schemeA://host/pathA/pathB?" ) );
@@ -355,7 +356,7 @@ public class ExpanderTest {
     URI expanded;
 
     text = "{scheme}://{host}:{port}/{path=**}?{**}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     params = new MockParams();
     params.addValue( "scheme", "http" );
     params.addValue( "host", "hortonworks.com" );
@@ -370,7 +371,7 @@ public class ExpanderTest {
     assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag=&name=value" ) ) ;
 
     text = "{scheme}://{host}:{port}/{path=**}?{**}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     params = new MockParams();
     params.addValue( "scheme", "http" );
     params.addValue( "host", "hortonworks.com" );
@@ -385,7 +386,7 @@ public class ExpanderTest {
     assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag&name=value" ) ) ;
 
     text = "{scheme}://{host}:{port}/{path=**}?{name=*}&{**}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     params = new MockParams();
     params.addValue( "scheme", "http" );
     params.addValue( "host", "hortonworks.com" );
@@ -410,9 +411,9 @@ public class ExpanderTest {
 
     inputUri = new URI( "https://knoxHost:8443/gateway/knoxTopo/templeton/v1/?version/hive" );
 
-    input = Parser.parse( inputUri.toString() );
-    pattern = Parser.parse( "*://*:*/**/templeton/v1/?{**}" );
-    template = Parser.parse( "{$serviceUrl[WEBHCAT]}/v1/?{**}" );
+    input = Parser.parseLiteral( inputUri.toString() );
+    pattern = Parser.parseTemplate( "*://*:*/**/templeton/v1/?{**}" );
+    template = Parser.parseTemplate( "{$serviceUrl[WEBHCAT]}/v1/?{**}" );
 
     matcher = new Matcher<Void>();
     matcher.add( pattern, null );
@@ -442,9 +443,9 @@ public class ExpanderTest {
 
     inputUri = new URI("https://internal-host:9443/context/?user.name=admin#/login");
 
-    input = Parser.parse( inputUri.toString() );
-    pattern = Parser.parse( "*://*:*/{contextRoot}/?{**}#{fragment}" );
-    template = Parser.parse( "{$gateway.url}/foo/{contextRoot}/?{**}#{fragment}" );
+    input = Parser.parseLiteral( inputUri.toString() );
+    pattern = Parser.parseTemplate( "*://*:*/{contextRoot}/?{**}#{fragment}" );
+    template = Parser.parseTemplate( "{$gateway.url}/foo/{contextRoot}/?{**}#{fragment}" );
 
     matcher = new Matcher<Void>();
     matcher.add( pattern, null );
@@ -462,6 +463,79 @@ public class ExpanderTest {
     assertThat(
         outputUri.toString(),
         is( "https://gateway-host:9443/gateway/default/foo/context/?user.name=admin#/login" ) );
+  }
+
+  @Test
+  public void testLiteralsAndRegexInTemplates() throws Exception {
+    String output;
+    Matcher<Void> matcher;
+    Matcher<Void>.Match match;
+    Template input, template, rewrite;
+    Evaluator evaluator;
+
+    evaluator = new Evaluator() {
+      @Override
+      public List<String> evaluate( String function, List<String> parameters ) {
+        return Arrays.asList( "https://gateway-host:9443/gateway/default" );
+      }
+    };
+
+    // Check to make sure that you can use constants within the {}
+    template = Parser.parseTemplate( "{root=ROOT}/{path=**}" );
+    rewrite = Parser.parseTemplate( "{root}/{path}" );
+    matcher = new Matcher<Void>();
+    matcher.add( template, null );
+    input = Parser.parseLiteral( "ROOT/child/path" );
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+    output = Expander.expandToString( rewrite, match.getParams(), evaluator );
+    assertThat( output, is( "ROOT/child/path" ) );
+
+    // Check to see what happens when you use the special { character within the {}.
+    template = Parser.parseTemplate( "{root={}/{path=**}" );
+    rewrite = Parser.parseTemplate( "{root}/{path}" );
+    matcher = new Matcher<Void>();
+    matcher.add( template, null );
+    input = Parser.parseLiteral( "{/child/path" );
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+    output = Expander.expandToString( rewrite, match.getParams(), evaluator );
+    assertThat( output, is( "{/child/path" ) );
+
+    // Check to see what happens when you use the special } character within the {}.
+    template = Parser.parseTemplate( "{root=}}/{path=**}" );
+    rewrite = Parser.parseTemplate( "{root}/{path}" );
+    matcher = new Matcher<Void>();
+    matcher.add( template, null );
+    input = Parser.parseLiteral( "}/child/path" );
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+    output = Expander.expandToString( rewrite, match.getParams(), evaluator );
+    assertThat( output, is( "}/child/path" ) );
+
+    // Check to see what happens when you use the special } character within the {}.
+    template = Parser.parseTemplate( "{root={}}/{path=**}" );
+    rewrite = Parser.parseTemplate( "{root}/{path}" );
+    matcher = new Matcher<Void>();
+    matcher.add( template, null );
+    input = Parser.parseLiteral( "{}/child/path" );
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+    output = Expander.expandToString( rewrite, match.getParams(), evaluator );
+    assertThat( output, is( "{}/child/path" ) );
+
+    template = Parser.parseTemplate( "{var=${*}}/{path=**}" );
+    rewrite = Parser.parseTemplate( "{var}/{path}" );
+
+    matcher = new Matcher<Void>();
+    matcher.add( template, null );
+
+    input = Parser.parseLiteral( "${app.dir}/child/path" );
+    match = matcher.match( input );
+    assertThat( match, notNullValue() );
+
+    output = Expander.expandToString( rewrite, match.getParams(), evaluator );
+    assertThat( output, is( "${app.dir}/child/path" ) );
   }
 
 }

@@ -60,7 +60,7 @@ public class SecureQueryDecodeProcessorTest {
     String encQuery = encoder.encode( "test-query".getBytes("utf-8" ) );
     encQuery = encQuery.replaceAll( "\\=", "" );
     String inString = "http://host:0/root/path?_=" + encQuery;
-    Template inTemplate = Parser.parse( inString );
+    Template inTemplate = Parser.parseLiteral( inString );
 
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( context.getCurrentUrl() ).andReturn( inTemplate );
@@ -101,7 +101,7 @@ public class SecureQueryDecodeProcessorTest {
     String encQuery = encoder.encode( inQuery.getBytes( "utf-8" ) );
     encQuery = encQuery.replaceAll( "\\=", "" );
     String inString = "http://host:0/root/path?_=" + encQuery + "&clear-param=clear-value";
-    Template inTemplate = Parser.parse( inString );
+    Template inTemplate = Parser.parseLiteral( inString );
 
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( context.getCurrentUrl() ).andReturn( inTemplate );

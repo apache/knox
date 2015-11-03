@@ -21,8 +21,8 @@ public class Query extends Segment {
 
   private String queryName;
 
-  public Query( String queryName, String paramName, String valuePattern ) {
-    super( new Token( paramName, valuePattern ) );
+  public Query( String queryName, String paramName, String valuePattern, boolean literal ) {
+    super( new Token( paramName, valuePattern, literal ) );
     this.queryName = queryName;
   }
 

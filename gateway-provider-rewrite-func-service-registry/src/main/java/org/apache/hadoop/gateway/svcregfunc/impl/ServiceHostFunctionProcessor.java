@@ -44,7 +44,7 @@ public class ServiceHostFunctionProcessor
       for( String parameter : parameters ) {
         String url = lookupServiceUrl( parameter );
         if( url != null ) {
-          Template template = Parser.parse( url );
+          Template template = Parser.parseLiteral( url );
           Host host = template.getHost();
           if( host != null ) {
             parameter = host.getFirstValue().getPattern();

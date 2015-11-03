@@ -44,7 +44,7 @@ public class ServiceSchemeFunctionProcessor
       for( String parameter : parameters ) {
         String url = lookupServiceUrl( parameter );
         if( url != null && !url.equals( parameter ) ) {
-          Template template = Parser.parse( url );
+          Template template = Parser.parseLiteral( url );
           Scheme scheme = template.getScheme();
           if( scheme != null ) {
             parameter = scheme.getFirstValue().getPattern();

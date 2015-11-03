@@ -41,12 +41,12 @@ public class TemplateTest {
     Template template;
 
     input = "{X}";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "{}";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
@@ -57,52 +57,52 @@ public class TemplateTest {
     // {**}
 
     input = "*,${";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "$";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "$$";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "*,$";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "*.,${";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "{";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "}";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "${X}";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "{$X}";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
     input = "/var/lib/oozie/*.jar,/usr/lib/hadoop/client/*.jar,/usr/lib/oozie/libserver/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar";
-    template = Parser.parse( input );
+    template = Parser.parseTemplate( input );
     output = template.toString();
     assertThat( output, is( input ) );
 
@@ -111,12 +111,17 @@ public class TemplateTest {
   @Test
   public void testToString() throws Exception {
     String text = "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment";
-    Template template = Parser.parse( text );
+    Template template = Parser.parseTemplate( text );
     String actual = template.toString();
     assertThat( actual, equalTo( text ) );
 
+    text = "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment";
+    template = Parser.parseLiteral( text );
+    actual = template.toString();
+    assertThat( actual, equalTo( text ) );
+
     text = "{*}://{host}:{*}/{**}?{**}";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     actual = template.toString();
     assertThat( template.getScheme().getParamName(), is( "*" ) );
     assertThat( template.getScheme().getFirstValue().getOriginalPattern(), nullValue() );
@@ -139,21 +144,21 @@ public class TemplateTest {
     assertThat( actual, is( text ) );
 
     text = "/path/**?**";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     actual = template.toString();
     assertThat( actual, is( text ) );
 
     text = "host:42";
-    template = Parser.parse( text );
+    template = Parser.parseTemplate( text );
     actual = template.toString();
     assertThat( actual, is( text ) );
   }
 
   @Test
   public void testHashCode() throws Exception {
-    Template t1 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
-    Template t2 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
-    Template t3 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment2" );
+    Template t1 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
+    Template t2 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
+    Template t3 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment2" );
 
     assertThat( t1.hashCode(), equalTo( t2.hashCode() ) );
     assertThat( t1.hashCode(), not( equalTo( t3.hashCode() ) ) );
@@ -161,9 +166,9 @@ public class TemplateTest {
 
   @Test
   public void testEquals() throws Exception {
-    Template t1 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
-    Template t2 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
-    Template t3 = Parser.parse( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment2" );
+    Template t1 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
+    Template t2 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment1" );
+    Template t3 = Parser.parseTemplate( "scheme://username:password@host:port/top/mid/bot/file?query=value#fragment2" );
 
     assertThat( t1.equals( t2 ), equalTo( true ) );
     assertThat( t1.equals( t3 ), equalTo( false ) );

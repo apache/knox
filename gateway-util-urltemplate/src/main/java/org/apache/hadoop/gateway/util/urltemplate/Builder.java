@@ -25,6 +25,7 @@ import java.util.Map;
 public class Builder {
 
   private String original;
+  private boolean literal;
   private boolean hasScheme;
   private Scheme scheme;
   private boolean hasAuthority;
@@ -48,6 +49,7 @@ public class Builder {
 
   public Builder( String original ) {
     this.original = original;
+    this.literal = false;
     this.hasScheme = false;
     this.scheme = null;
     this.hasAuthority = false;
@@ -171,7 +173,19 @@ public class Builder {
         fragment, hasFragment );
   }
 
-  public boolean getHashScheme() {
+  public boolean isLiteral() {
+    return literal;
+  }
+
+  public void setLiteral( boolean literal ) {
+    this.literal = literal;
+  }
+
+  public String getOriginal() {
+    return original;
+  }
+
+  public boolean getHasScheme() {
     return this.hasScheme;
   }
 
@@ -186,8 +200,8 @@ public class Builder {
     return this.scheme;
   }
 
-  public void setScheme( String paramName, String valuePattern ) {
-    this.scheme = new Scheme( paramName, valuePattern );
+  public void setScheme( String paramName, String valuePattern, boolean literal ) {
+    this.scheme = new Scheme( paramName, valuePattern, literal );
     setHasScheme( true );
   }
 
@@ -216,9 +230,9 @@ public class Builder {
     return username;
   }
 
-  public void setUsername( String paramName, String valuePattern ) {
+  public void setUsername( String paramName, String valuePattern, boolean literal ) {
     setHasAuthority( true );
-    username = new Username( new Token( paramName, valuePattern ) );
+    username = new Username( new Token( paramName, valuePattern, literal ) );
   }
 
   void setUsername( Token token ) {
@@ -230,9 +244,9 @@ public class Builder {
     return password;
   }
 
-  public void setPassword( String paramName, String valuePattern ) {
+  public void setPassword( String paramName, String valuePattern, boolean literal ) {
     setHasAuthority( true );
-    password = new Password( paramName, valuePattern );
+    password = new Password( paramName, valuePattern, literal );
   }
 
   void setPassword( Token token ) {
@@ -244,8 +258,8 @@ public class Builder {
     return host;
   }
 
-  public void setHost( String paramName, String valuePattern ) {
-    setHost( new Token( paramName, valuePattern ) );
+  public void setHost( String paramName, String valuePattern, boolean literal ) {
+    setHost( new Token( paramName, valuePattern, literal ) );
   }
 
   void setHost( Token token ) {
@@ -257,8 +271,8 @@ public class Builder {
     return port;
   }
 
-  public void setPort( String paramName, String valuePattern ) {
-    setPort( new Token( paramName, valuePattern ) );
+  public void setPort( String paramName, String valuePattern, boolean literal ) {
+    setPort( new Token( paramName, valuePattern, literal ) );
   }
 
   void setPort( Token token ) {
@@ -288,8 +302,8 @@ public class Builder {
     return path;
   }
 
-  public Builder addPath( String paramName, String valuePattern ) {
-    Path segment = new Path( paramName, valuePattern );
+  public Builder addPath( String paramName, String valuePattern, boolean literal ) {
+    Path segment = new Path( paramName, valuePattern, literal );
     path.add( segment );
     return this;
   }
@@ -313,10 +327,10 @@ public class Builder {
     return this.query;
   }
 
-  public Builder addQuery( String queryName, String paramName, String valuePattern ) {
+  public Builder addQuery( String queryName, String paramName, String valuePattern, boolean literal ) {
     if( Segment.STAR_PATTERN.equals( queryName ) || Segment.GLOB_PATTERN.equals( queryName ) ) {
       if( extra == null ) {
-        Query segment = new Query( queryName, paramName, valuePattern );
+        Query segment = new Query( queryName, paramName, valuePattern, literal );
         extra = segment;
       } else {
         // Can't have two extras: ?{*}&{**}
@@ -325,14 +339,14 @@ public class Builder {
     } else {
       Query segment = query.get( queryName );
       if( segment == null ) {
-        segment = new Query( queryName, paramName, valuePattern );
+        segment = new Query( queryName, paramName, valuePattern, literal );
         query.put( queryName, segment );
       } else {
         // Can't have two queryParam names for the same query name: ?query={param1}&query={param2} in a template.
         // Should probably throw an exception in this case.  However, you can have this in a valid URL.
         // This causes a problem with how templates are used for both URLs and Templates.
         // For a template only the first parameter name will be used.
-        segment.addValue( new Token( queryName, valuePattern ) );
+        segment.addValue( new Token( queryName, valuePattern, literal ) );
       }
     }
     return this;
@@ -377,7 +391,7 @@ public class Builder {
 
   public void setFragment( String paramName, String valuePattern ) {
     setHasFragment( true );
-    this.fragment = new Fragment( paramName, valuePattern );
+    this.fragment = new Fragment( paramName, valuePattern, literal );
   }
 
   void setFragment( Token t ) {

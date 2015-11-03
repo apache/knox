@@ -91,7 +91,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template input = Parser.parseLiteral( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
     assertThat( output, notNullValue() );
@@ -117,7 +117,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse(
+    Template input = Parser.parseLiteral(
         "test-scheme://test-external-host:42/test-path/test-file?test-name-1=test-value-1&test-name-2=test-value-2" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.OUT, "test-rule" );
     //System.out.println( output );
@@ -151,7 +151,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse(
+    Template input = Parser.parseLiteral(
         "test-scheme://test-external-host:42/test-path/test-file?qp1=qp1-val&qp2=qp2-val&test-name-1=test-value-1&test-name-2=test-value-2" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.OUT, "test-rule" );
     //System.out.println( output );
@@ -185,7 +185,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse(
+    Template input = Parser.parseLiteral(
         "test-scheme://test-inbound-unmapped-host:42/test-path/test-file?test-name-1=test-value-1&test-name-2=test-value-2" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
@@ -212,7 +212,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template input = Parser.parseLiteral( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
     assertThat( output, notNullValue() );
@@ -238,7 +238,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template input = Parser.parseLiteral( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
     assertThat( output, notNullValue() );
@@ -264,7 +264,7 @@ public class HostmapFunctionProcessorTest {
     UrlRewriteProcessor rewriter = new UrlRewriteProcessor();
     rewriter.initialize( environment, descriptor );
 
-    Template input = Parser.parse( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
+    Template input = Parser.parseLiteral( "test-scheme://test-inbound-host:42/test-path/test-file?test-name=test-value" );
     Template output = rewriter.rewrite( resolver, input, UrlRewriter.Direction.IN, null );
     //System.out.println( output );
     assertThat( output, notNullValue() );

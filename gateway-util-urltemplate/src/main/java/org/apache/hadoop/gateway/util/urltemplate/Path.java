@@ -19,8 +19,8 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 public class Path extends Segment {
 
-  public Path( String paramName, String pathPattern ) {
-    super( new Token( paramName, pathPattern ) );
+  public Path( String paramName, String pathPattern, boolean literal ) {
+    super( new Token( paramName, pathPattern, literal ) );
   }
 
   public Path( Path that ) {

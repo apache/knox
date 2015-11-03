@@ -164,7 +164,9 @@ abstract class Segment {
       this.token = token;
       this.regex = null;
       String effectivePattern = token.effectivePattern;
-      if( DEFAULT_PATTERN.equals( effectivePattern ) ) {
+      if( token.isLiteral() ) {
+        this.type = STATIC;
+      } else if( DEFAULT_PATTERN.equals( effectivePattern ) ) {
         this.type = DEFAULT;
       } else if( STAR_PATTERN.equals( effectivePattern ) ) {
         this.type = STAR;

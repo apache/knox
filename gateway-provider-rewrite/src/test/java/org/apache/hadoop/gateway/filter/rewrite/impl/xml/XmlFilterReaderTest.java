@@ -939,6 +939,17 @@ public class XmlFilterReaderTest {
     assertThat( output, containsString( "<tag>&amp;</tag>" ) );
   }
 
+  @Test
+  public void testSpecialTextNodeBugKnox394() throws IOException, ParserConfigurationException, XMLStreamException {
+    String inputXml = "<tag>${oozieTemplateMarkup}</tag>";
+    StringReader inputReader = new StringReader( inputXml );
+    XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    //System.out.println( "OUTPUT=" + outputXml );
+    assertThat( the( outputXml ), hasXPath( "/tag/text()", equalTo( "${oozieTemplateMarkup}" ) ) );
+  }
+
+
   private class TestXmlFilterReader extends XmlFilterReader {
 
     protected TestXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor contentConfig ) throws IOException, ParserConfigurationException, XMLStreamException {

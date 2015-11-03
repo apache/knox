@@ -48,7 +48,7 @@ public class JavaScriptUrlRewriteFilterReader extends JavaScriptFilterReader {
   @Override
   public String filterValueString( String name, String value, String rule ) {
     try {
-      Template input = Parser.parse( value );
+      Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( resolver, input, direction, rule );
       if( output != null ) {
         value = output.getPattern();

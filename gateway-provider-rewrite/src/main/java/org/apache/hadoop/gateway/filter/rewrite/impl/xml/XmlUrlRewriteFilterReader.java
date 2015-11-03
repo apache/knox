@@ -53,7 +53,7 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   //TODO: Need to limit which values are attempted to be filtered by the name.
   private String filterValueString( String name, String value, String rule ) {
     try {
-      Template input = Parser.parse( value );
+      Template input = Parser.parseLiteral( value );
       if( input != null ) {
         Template output = rewriter.rewrite( resolver, input, direction, rule );
         if( output != null ) {

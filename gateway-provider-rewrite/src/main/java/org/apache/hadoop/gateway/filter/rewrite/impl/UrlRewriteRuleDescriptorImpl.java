@@ -110,7 +110,7 @@ public class UrlRewriteRuleDescriptorImpl extends UrlRewriteFlowDescriptorBase<U
   @Override
   public UrlRewriteRuleDescriptor pattern( String pattern ) throws URISyntaxException {
     this.pattern = pattern;
-    this.template = Parser.parse( pattern );
+    this.template = Parser.parseTemplate( pattern );
     return this;
   }
 

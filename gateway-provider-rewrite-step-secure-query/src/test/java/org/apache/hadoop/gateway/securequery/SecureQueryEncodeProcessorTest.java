@@ -51,7 +51,7 @@ public class SecureQueryEncodeProcessorTest {
     EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
     EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
 
-    Template inTemplate = Parser.parse( "http://host:0/root/path?query" );
+    Template inTemplate = Parser.parseLiteral( "http://host:0/root/path?query" );
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( context.getCurrentUrl() ).andReturn( inTemplate );
     Capture<Template> outTemplate = new Capture<Template>();

@@ -69,7 +69,7 @@ public class UrlRewriteProcessorTest {
         "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
     processor.initialize( environment, config );
 
-    Template inputUrl = Parser.parse( "test-scheme://test-host:1/test-input-path" );
+    Template inputUrl = Parser.parseLiteral( "test-scheme://test-host:1/test-input-path" );
     Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, null );
 
     assertThat( "Expect rewrite to produce a new URL",
@@ -92,7 +92,7 @@ public class UrlRewriteProcessorTest {
         "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
     processor.initialize( environment, config );
 
-    Template inputUrl = Parser.parse( "scheme://input-mock-host:42/test-input-path" );
+    Template inputUrl = Parser.parseLiteral( "scheme://input-mock-host:42/test-input-path" );
     Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, null );
 
     assertThat( "Expect rewrite to produce a new URL",
@@ -102,7 +102,7 @@ public class UrlRewriteProcessorTest {
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "output-mock-scheme-1://output-mock-host-1:42/test-input-path" ) );
 
-    inputUrl = Parser.parse( "mock-scheme://input-mock-host:42/no-query" );
+    inputUrl = Parser.parseLiteral( "mock-scheme://input-mock-host:42/no-query" );
     outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, null );
 
     assertThat(
@@ -130,7 +130,7 @@ public class UrlRewriteProcessorTest {
         "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
     processor.initialize( environment, config );
 
-    Template inputUrl = Parser.parse( "input-mock-scheme-1://input-mock-host-1:42/test-input-path" );
+    Template inputUrl = Parser.parseLiteral( "input-mock-scheme-1://input-mock-host-1:42/test-input-path" );
     Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
 
     assertThat( "Expect rewrite to produce a new URL",
@@ -165,13 +165,13 @@ public class UrlRewriteProcessorTest {
     Template inputUrl;
     Template outputUrl;
 
-    inputUrl = Parser.parse( "test-scheme://test-host:777/test-path" );
+    inputUrl = Parser.parseLiteral( "test-scheme://test-host:777/test-path" );
     outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, "test-rule-with-complex-flow" );
     assertThat(
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "test-scheme-output://test-host-output:42/test-path-output/test-path" ) );
 
-    inputUrl = Parser.parse( "test-scheme://test-host:42/~/test-path" );
+    inputUrl = Parser.parseLiteral( "test-scheme://test-host:42/~/test-path" );
     outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, "test-rule-with-complex-flow" );
     assertThat(
         "Expect rewrite to contain the correct path.",
@@ -195,14 +195,14 @@ public class UrlRewriteProcessorTest {
     Template inputUrl;
     Template outputUrl;
 
-    inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two?test-query-name=test-query-value" );
+    inputUrl = Parser.parseLiteral( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two?test-query-name=test-query-value" );
     outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
 
     assertThat(
         "Expect rewrite to contain the correct path and query.",
         outputUrl.toString(), is( "test-scheme-output://test-host-output:777/test-path-output/test-path-input-one/test-path-input-two?test-query-name=test-query-value" ) );
 
-    inputUrl = Parser.parse( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two" );
+    inputUrl = Parser.parseLiteral( "test-scheme-input://test-host-input:42/test-path-input-one/test-path-input-two" );
     outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "test-rule-2" );
 
     assertThat(

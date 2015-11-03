@@ -94,8 +94,8 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
     String targetPattern = getConfig().getInitParameter( "target" );
 
     //TODO: Some of the compilation should be done at servlet init for performance reasons.
-    Template sourceTemplate = Parser.parse( sourcePattern );
-    Template targetTemplate = Parser.parse( targetPattern );
+    Template sourceTemplate = Parser.parseTemplate( sourcePattern );
+    Template targetTemplate = Parser.parseTemplate( targetPattern );
 
     Resolver resolver = new DispatchParamResolver( getConfig(), request );
     URI sourceUri = new URI( sourcePathInfo );

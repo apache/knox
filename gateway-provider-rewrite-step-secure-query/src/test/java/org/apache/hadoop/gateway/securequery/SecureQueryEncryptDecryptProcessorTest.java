@@ -44,7 +44,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
   @Test
   public void testEncryptDecrypt() throws Exception {
     Query query;
-    Template origTemplate = Parser.parse( "http://host:0/path/file?query-param-name=query-param-value" );
+    Template origTemplate = Parser.parseLiteral( "http://host:0/path/file?query-param-name=query-param-value" );
 
     // Test encryption.  Results are left in encTemplate
 

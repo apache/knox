@@ -113,7 +113,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
   private String rewriteValue( String value, String rule ) {
     try {
-      Template input = Parser.parse( value );
+      Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT, rule );
       if( output != null ) {
         value = output.getPattern();

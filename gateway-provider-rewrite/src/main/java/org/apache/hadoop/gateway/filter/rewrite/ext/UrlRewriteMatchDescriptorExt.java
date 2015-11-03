@@ -74,7 +74,7 @@ public class UrlRewriteMatchDescriptorExt
   @Override
   public UrlRewriteMatchDescriptor pattern( String pattern ) throws URISyntaxException {
     this.pattern = pattern;
-    this.template = Parser.parse( pattern );
+    this.template = Parser.parseTemplate( pattern );
     return this;
   }
 

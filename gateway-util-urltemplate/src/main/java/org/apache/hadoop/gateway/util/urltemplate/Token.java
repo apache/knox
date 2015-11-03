@@ -22,15 +22,17 @@ final class Token {
   String parameterName = null;
   String originalPattern = null;
   String effectivePattern = null;
+  boolean literal = false;
 
-  Token( String parameterName, String originalPattern, String effectivePattern ) {
+  Token( String parameterName, String originalPattern, String effectivePattern, boolean literal ) {
     this.parameterName = parameterName;
     this.originalPattern = originalPattern;
     this.effectivePattern = effectivePattern;
+    this.literal = literal;
   }
 
-  Token( String parameterName, String originalPattern ) {
-    this( parameterName, originalPattern, originalPattern );
+  Token( String parameterName, String originalPattern, boolean literal ) {
+    this( parameterName, originalPattern, originalPattern, literal );
   }
 
   public String getParameterName() {
@@ -43,6 +45,10 @@ final class Token {
 
   public String getEffectivePattern() {
     return effectivePattern;
+  }
+
+  public boolean isLiteral() {
+    return literal;
   }
 
 }

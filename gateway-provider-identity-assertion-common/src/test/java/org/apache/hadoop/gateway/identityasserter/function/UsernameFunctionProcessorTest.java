@@ -223,7 +223,7 @@ public class UsernameFunctionProcessorTest {
       try {
         request.setAttribute(
             AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME,
-            Parser.parse( sourceUrl.toString() ) );
+            Parser.parseLiteral( sourceUrl.toString() ) );
       } catch( URISyntaxException e ) {
         throw new ServletException( e );
       }

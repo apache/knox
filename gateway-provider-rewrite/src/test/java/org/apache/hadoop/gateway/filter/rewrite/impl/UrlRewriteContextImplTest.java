@@ -52,7 +52,7 @@ public class UrlRewriteContextImplTest {
     Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
 
     UrlRewriter.Direction direction = UrlRewriter.Direction.OUT;
-    Template template = Parser.parse( "scheme://host:port/dir/file" );
+    Template template = Parser.parseLiteral( "scheme://host:port/dir/file" );
 
     UrlRewriteContextImpl context = new UrlRewriteContextImpl( environment, resolver, functions, direction, template );
 

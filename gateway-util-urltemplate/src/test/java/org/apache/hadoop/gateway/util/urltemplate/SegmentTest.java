@@ -32,42 +32,42 @@ public class SegmentTest {
   @Test
   public void testEquals() throws Exception {
     Object o = new Object();
-    TestSegment s1 = new TestSegment( "p", "v" );
+    TestSegment s1 = new TestSegment( "p", "v", true );
     assertThat( s1.equals( o ), equalTo( false ) );
     assertThat( s1.equals( s1 ), equalTo( true ) );
 
-    TestSegment s2 = new TestSegment( "p", "v" );
+    TestSegment s2 = new TestSegment( "p", "v", true );
     assertThat( s1.equals( s2 ), equalTo( true ) );
 
-    TestSegment s3 = new TestSegment( "p2", "v" );
+    TestSegment s3 = new TestSegment( "p2", "v", true );
     assertThat( s2.equals( s3 ), equalTo( false ) );
 
-    TestSegment s4 = new TestSegment( "p2", "v2" );
+    TestSegment s4 = new TestSegment( "p2", "v2", true );
     assertThat( s3.equals( s4 ), equalTo( false ) );
 
-    TestSegment s5 = new TestSegment( "p", "*" );
+    TestSegment s5 = new TestSegment( "p", "*", false );
     assertThat( s1.equals( s5 ), equalTo( false ) );
 
   }
 
   @Test
   public void testMatches() throws Exception {
-    TestSegment s1 = new TestSegment( "p", "v" );
-    TestSegment s2 = new TestSegment( "p", "v" );
+    TestSegment s1 = new TestSegment( "p", "v", true );
+    TestSegment s2 = new TestSegment( "p", "v", true );
 
     assertThat( s1.matches( s1 ), equalTo( true ) );
     assertThat( s1.matches( s2 ), equalTo( true ) );
 
-    TestSegment s3 = new TestSegment( "p", "*" );
+    TestSegment s3 = new TestSegment( "p", "*", false );
     assertThat( s3.matches( s1 ), equalTo( true ) );
     assertThat( s1.matches( s3 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
-    TestSegment s4 = new TestSegment( "p", "**" );
+    TestSegment s4 = new TestSegment( "p", "**", false );
     assertThat( s4.matches( s1 ), equalTo( true ) );
     assertThat( s1.matches( s4 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
 
-    TestSegment s5 = new TestSegment( "p", "*.ext" );
-    TestSegment s6 = new TestSegment( "p", "file.ext" );
+    TestSegment s5 = new TestSegment( "p", "*.ext", false );
+    TestSegment s6 = new TestSegment( "p", "file.ext", false );
     assertThat( s5.matches( s5 ), equalTo( true ) );
     assertThat( s5.matches( s6 ), equalTo( true ) );
     assertThat( s6.matches( s5 ), equalTo( false ) ); // Because wildecards no longer supported in "that" segment.
@@ -128,8 +128,8 @@ public class SegmentTest {
 
   private class TestSegment extends Segment {
 
-    public TestSegment( String paramName, String valuePattern ) {
-      super( new Token( paramName, valuePattern ) );
+    public TestSegment( String paramName, String valuePattern, boolean literal ) {
+      super( new Token( paramName, valuePattern, literal ) );
     }
 
   }

@@ -52,7 +52,7 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
 
   protected String filterValueString( String name, String value, String rule ) {
     try {
-      Template input = Parser.parse( value );
+      Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( resolver, input, direction, rule );
       value = output.getPattern();
     } catch( URISyntaxException e ) {

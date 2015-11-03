@@ -47,8 +47,11 @@
         <match pattern="/~/{path=**}">
             <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}/user/{$username}/{path=**}"/>
         </match>
+        <match pattern="{var=${*}}/{path=**}">
+            <rewrite template="{var}/{path=**}"/>
+        </match>
         <match pattern="{path=**}">
-            <rewrite template="hdfs://{$serviceMappedAddr[NAMENODE]}/{path=**}"/>
+            <rewrite template="{$serviceMappedUrl[NAMENODE]}/{path=**}"/>
         </match>
     </rule>
 

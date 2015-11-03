@@ -64,9 +64,9 @@ public class SecureQueryDecodeProcessor implements UrlRewriteStepProcessor<Secur
             // Need to take out any existing query param.
             // If we don't then someone could override something in the encoded param.
             map.remove( paramName );
-            newUrl.addQuery( paramName, "", paramValue );
+            newUrl.addQuery( paramName, "", paramValue, true );
           } else {
-            newUrl.addQuery( paramName, "", null );
+            newUrl.addQuery( paramName, "", null, true );
           }
         }
       }

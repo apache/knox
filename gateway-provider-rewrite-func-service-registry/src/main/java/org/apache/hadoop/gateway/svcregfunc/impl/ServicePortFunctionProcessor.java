@@ -44,7 +44,7 @@ public class ServicePortFunctionProcessor
       for( String parameter : parameters ) {
         String url = lookupServiceUrl( parameter );
         if( url != null ) {
-          Template template = Parser.parse( url );
+          Template template = Parser.parseLiteral( url );
           Port port = template.getPort();
           if( port != null ) {
             parameter = port.getFirstValue().getPattern();

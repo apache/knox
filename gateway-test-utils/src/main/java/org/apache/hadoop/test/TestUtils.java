@@ -19,13 +19,26 @@ package org.apache.hadoop.test;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.UUID;
 
@@ -45,10 +58,28 @@ public class TestUtils {
     return url;
   }
 
+  public static URL getResourceUrl( String name ) throws FileNotFoundException {
+    URL url = ClassLoader.getSystemResource( name );
+    if( url == null ) {
+      throw new FileNotFoundException( name );
+    }
+    return url;
+  }
+
+  public static InputStream getResourceStream( String name ) throws IOException {
+    URL url = ClassLoader.getSystemResource( name );
+    InputStream stream = url.openStream();
+    return stream;
+  }
+
   public static InputStream getResourceStream( Class clazz, String name ) throws IOException {
     URL url = getResourceUrl( clazz, name );
     InputStream stream = url.openStream();
     return stream;
+  }
+
+  public static Reader getResourceReader( String name, String charset ) throws IOException {
+    return new InputStreamReader( getResourceStream( name ), charset );
   }
 
   public static Reader getResourceReader( Class clazz, String name, String charset ) throws IOException {
@@ -64,6 +95,23 @@ public class TestUtils {
     File tempDir = new File( targetDir, prefix + UUID.randomUUID() );
     FileUtils.forceMkdir( tempDir );
     return tempDir;
+  }
+
+  public static Document parseXml( InputStream stream ) throws ParserConfigurationException, IOException, SAXException {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document document = builder.parse( new InputSource( stream ) );
+    return document;
+  }
+
+  public static void dumpXml( Document document ) throws TransformerException {
+    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+    StreamResult result = new StreamResult( new StringWriter() );
+    DOMSource source = new DOMSource( document );
+    transformer.transform( source, result );
+    String xmlString = result.getWriter().toString();
+    System.out.println( xmlString );
   }
 
 }
