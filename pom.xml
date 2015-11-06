@@ -245,7 +245,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <debug>true</debug>
-                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
                 </configuration>
                 <dependencies>
                     <dependency>

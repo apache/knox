@@ -100,8 +100,8 @@ public abstract class XmlFilterReader extends Reader {
     document = null;
     stack = new Stack<Level>();
     factory = XMLInputFactory.newFactory();
-    factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
-    factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
+    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
+    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
     factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
     parser = factory.createXMLEventReader( reader );
   }
