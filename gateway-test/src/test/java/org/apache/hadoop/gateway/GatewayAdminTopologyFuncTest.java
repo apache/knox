@@ -37,7 +37,6 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -266,14 +265,14 @@ public class GatewayAdminTopologyFuncTest {
     return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 
-  @Ignore
-  @Test
+  //@Test
   public void waitForManualTesting() throws IOException {
     System.in.read();
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testTopologyCollection() throws ClassNotFoundException {
+    ENTER( "testTopologyCollection" );
 
     String username = "admin";
     String password = "admin-password";
@@ -330,8 +329,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testTopologyObject() throws ClassNotFoundException {
+    ENTER( "testTopologyObject" );
 
     String username = "admin";
     String password = "admin-password";
@@ -390,9 +390,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testPositiveAuthorization() throws ClassNotFoundException{
-
+    ENTER( "testPositiveAuthorization" );
 
     String adminUser = "admin";
     String adminPass = "admin-password";
@@ -417,8 +417,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testNegativeAuthorization() throws ClassNotFoundException{
+    ENTER( "testNegativeAuthorization" );
 
     String guestUser = "guest";
     String guestPass = "guest-password";
@@ -498,8 +499,9 @@ public class GatewayAdminTopologyFuncTest {
     return topology;
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testDeployTopology() throws ClassNotFoundException {
+    ENTER( "testDeployTopology" );
 
     Topology testTopology = createTestTopology();
 
@@ -549,8 +551,9 @@ public class GatewayAdminTopologyFuncTest {
         .get(url);
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testDeleteTopology() throws ClassNotFoundException {
+    ENTER( "testDeleteTopology" );
 
     Topology test = createTestTopology();
 
@@ -589,8 +592,9 @@ public class GatewayAdminTopologyFuncTest {
         .get(url);
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testPutTopology() throws ClassNotFoundException {
+    ENTER( "testPutTopology" ) ;
 
     String username = "admin";
     String password = "admin-password";
@@ -654,8 +658,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testXForwardedHeaders() {
+    ENTER( "testXForwardedHeaders" );
 
     String username = "admin";
     String password = "admin-password";
@@ -768,9 +773,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test
+  @Test( timeout = 30*1000 )
   public void testGatewayPathChange() throws Exception {
-
+    ENTER( "testGatewayPathChange" );
     String username = "admin";
     String password = "admin-password";
     String url =  clusterUrl + "/api/v1/topologies";
@@ -813,5 +818,12 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
+  private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();
+
+  private static void ENTER( String method ) {
+    String message = String.format( "Running %s#%s ", CLASS, method );
+    System.out.println( message );
+    LOG.info( message );
+  }
 
 }
