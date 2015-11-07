@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -65,6 +67,9 @@ import com.mycila.xmltool.XMLTag;
  */
 public class GatewayLdapDynamicGroupFuncTest {
 
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+
   private static Class RESOURCE_BASE_CLASS = GatewayLdapDynamicGroupFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayLdapDynamicGroupFuncTest.class );
 
@@ -78,17 +83,21 @@ public class GatewayLdapDynamicGroupFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    LOG_ENTER();
     //appenders = NoOpAppender.setUp();
     int port = setupLdap();
     setupGateway(port);
+    LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    LOG_ENTER();
     gateway.stop();
     ldap.stop( true );
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
+    LOG_EXIT();
   }
 
   public static int setupLdap() throws Exception {
@@ -287,14 +296,14 @@ public class GatewayLdapDynamicGroupFuncTest {
     return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 
-  @Ignore
   // @Test
   public void waitForManualTesting() throws IOException {
     System.in.read();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testGroupMember() throws ClassNotFoundException, Exception {
+    LOG_ENTER();
     String username = "bob";
     String password = "bob-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -307,10 +316,12 @@ public class GatewayLdapDynamicGroupFuncTest {
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
         .when().get( serviceUrl );
+    LOG_EXIT();
   }
-  
-  @Test
+
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testNonGroupMember() throws ClassNotFoundException {
+    LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -321,6 +332,7 @@ public class GatewayLdapDynamicGroupFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_FORBIDDEN )
         .when().get( serviceUrl );
+    LOG_EXIT();
   }
   
 }

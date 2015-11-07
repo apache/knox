@@ -39,14 +39,19 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.Reader;
 
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 
 public class OozieServiceDefinitionTest {
 
-  @Test
+  private static final long SHORT_TIMEOUT = 1000L;
+
+  @Test( timeout = SHORT_TIMEOUT )
   public void testOozieRewriteRulesForLiteralTemplateValuesBugKnox394() throws Exception {
+    LOG_ENTER();
 
     // This is a unique part of this test.
     String testResource = "oozie-request-with-var.xml";
@@ -93,10 +98,13 @@ public class OozieServiceDefinitionTest {
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
             equalTo( "${appPath}/workflow.xml" ) ) );
+
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testOozieRewriteRulesForLiteralComplexTemplateValuesBugKnox394() throws Exception {
+    LOG_ENTER();
 
     // This is a unique part of this test.
     String testResource = "oozie-request-with-complex-var.xml";
@@ -143,10 +151,13 @@ public class OozieServiceDefinitionTest {
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
             equalTo( "${nameNode}/user/${user.name}/${examplesRoot}/apps/hive" ) ) );
+
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testOozieRewriteRulesForValuesRelativeToServiceRegistry() throws Exception {
+    LOG_ENTER();
 
     // This is a unique part of this test.
     String testResource = "oozie-request-relative.xml";
@@ -193,6 +204,8 @@ public class OozieServiceDefinitionTest {
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
             equalTo( "test-scheme://test-host:42/workflow.xml" ) ) );
+
+    LOG_EXIT();
   }
 
 }

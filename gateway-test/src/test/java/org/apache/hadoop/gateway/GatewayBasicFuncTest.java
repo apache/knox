@@ -69,6 +69,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -80,6 +82,10 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
+
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -133,6 +139,7 @@ public class GatewayBasicFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     Log.setLog( new NoOpLogger() );
+    LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase(GatewayBasicFuncTest.class);
@@ -150,13 +157,16 @@ public class GatewayBasicFuncTest {
     driver.setupService( "STORM", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupService( "STORM-LOGVIEWER", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
+    LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    LOG_ENTER();
     if( CLEANUP_TEST ) {
       driver.cleanup();
     }
+    LOG_EXIT();
   }
 
   @After
@@ -254,8 +264,9 @@ public class GatewayBasicFuncTest {
     return xml;
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testBasicJsonUseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicJsonUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -296,10 +307,12 @@ public class GatewayBasicFuncTest {
     assertThat( cookie.getPath(), is( "/gateway/cluster" ) );
     assertThat( cookie.getValue().length(), greaterThan( 16 ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testBasicOutboundHeaderUseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -337,10 +350,12 @@ public class GatewayBasicFuncTest {
     }
     MatcherAssert.assertThat(location, not(containsString("host=")));
     MatcherAssert.assertThat(location, not(containsString("port=")));
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHdfsTildeUseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testHdfsTildeUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -392,11 +407,12 @@ public class GatewayBasicFuncTest {
         .content( "boolean", is( true ) )
         .when().put( driver.getUrl( "WEBHDFS" ) + "/v1/~/dir" );
     driver.assertComplete();
-
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testBasicHdfsUseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicHdfsUseCase";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -675,13 +691,15 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1" + root );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
   // User hdfs in groups hadoop, hdfs
   // User mapred in groups hadoop, mapred
   // User hcat in group hcat
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testPmHdfsM1UseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testPmHdfdM1UseCase";
     String userA = "hdfs";
     String passA = "hdfs-password";
@@ -787,10 +805,12 @@ public class GatewayBasicFuncTest {
 
     // Cleanup anything that might have been leftover because the test failed previously.
     driver.deleteFile( userA, passA, root, "true", HttpStatus.SC_OK );
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testJavaMapReduceViaWebHCat() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testJavaMapReduceViaWebHCat";
     String user = "mapred";
     String pass = "mapred-password";
@@ -841,10 +861,12 @@ public class GatewayBasicFuncTest {
       // Cleanup anything that might have been leftover because the test failed previously.
       driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
     }
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testPigViaWebHCat() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayWebHCatFuncTest/testPigViaWebHCat";
     String user = "mapred";
     String pass = "mapred-password";
@@ -870,10 +892,12 @@ public class GatewayBasicFuncTest {
 
     // Cleanup
     driver.deleteFile( user, pass, root, "true", 200 );
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHiveViaWebHCat() throws IOException {
+    LOG_ENTER();
     String user = "hive";
     String pass = "hive-password";
     String group = "hive";
@@ -895,18 +919,12 @@ public class GatewayBasicFuncTest {
 
     // Cleanup
     driver.deleteFile( user, pass, root, "true", 200 );
+    LOG_EXIT();
   }
 
-  @Ignore( "WIP" )
-  @Test
-  public void testOozieGeneralOperations() {
-    String user = "oozie";
-    String pass = "oozie-password";
-//    driver.oozieVersions( user, pass );
-  }
-
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testOozieJobSubmission() throws Exception {
+    LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testOozieJobSubmission";
     String user = "hdfs";
     String pass = "hdfs-password";
@@ -978,10 +996,12 @@ public class GatewayBasicFuncTest {
       // Cleanup anything that might have been leftover because the test failed previously.
       driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
     }
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testBasicHiveJDBCUseCase() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayHiveJDBCFuncTest/testBasicHiveUseCase";
     String username = "hive";
     String password = "hive-password";
@@ -1379,10 +1399,12 @@ public class GatewayBasicFuncTest {
         .when().post( driver.getUrl( "HIVE" ) );
     assertThat( response.body().asByteArray(), is( driver.getResourceBytes( "hive/close-session-result.bin" ) ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseGetTableList() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-list";
@@ -1455,10 +1477,12 @@ public class GatewayBasicFuncTest {
     .content( is( driver.getResourceString( resourceName + ".protobuf", UTF8 ) ) )
     .when().get( driver.getUrl( "WEBHBASE" ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseCreateTableAndVerifySchema() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-schema";
@@ -1524,10 +1548,12 @@ public class GatewayBasicFuncTest {
     .when().put(driver.getUrl("WEBHBASE") + path);
     driver.assertComplete();
 
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseGetTableSchema() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     String resourceName = "hbase/table-metadata";
@@ -1603,10 +1629,12 @@ public class GatewayBasicFuncTest {
     // RestAssured seems to be screwing up the binary comparison so do it explicitly.
     assertThat( driver.getResourceBytes( resourceName + ".protobuf" ), is( response.body().asByteArray() ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseInsertDataIntoTable() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1741,10 +1769,12 @@ public class GatewayBasicFuncTest {
     .statusCode( HttpStatus.SC_OK )
     .when().post(driver.getUrl("WEBHBASE") + multipleRowPath);
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseDeleteDataFromTable() {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1801,10 +1831,12 @@ public class GatewayBasicFuncTest {
     .when().delete(driver.getUrl("WEBHBASE") + "/" + tableId + "/" + rowId + "/" + familyId + ":" + columnId);
     driver.assertComplete();
 
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseQueryTableData() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1910,10 +1942,12 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testHBaseUseScanner() throws IOException {
+    LOG_ENTER();
     String username = "hbase";
     String password = "hbase-password";
     
@@ -1985,10 +2019,12 @@ public class GatewayBasicFuncTest {
     .statusCode( HttpStatus.SC_OK )
     .when().delete(driver.getUrl("WEBHBASE") + scannerPath + "/" + scannerId);
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testCrossSiteRequestForgeryPreventionPUT() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -2005,8 +2041,9 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testCrossSiteRequestForgeryPreventionGET() throws IOException {
+    LOG_ENTER();
     String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
     String username = "hdfs";
     String password = "hdfs-password";
@@ -2030,36 +2067,46 @@ public class GatewayBasicFuncTest {
         .when().get( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" );
 //    driver.reset();
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRmGetClusterInfo() throws Exception {
+    LOG_ENTER();
     getYarnRmResource( "/v1/cluster/", ContentType.JSON, "yarn/cluster-info" );
     getYarnRmResource( "/v1/cluster/", ContentType.XML, "yarn/cluster-info" );
     getYarnRmResource( "/v1/cluster/info/", ContentType.JSON, "yarn/cluster-info" );
     getYarnRmResource("/v1/cluster/info/", ContentType.XML, "yarn/cluster-info");
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRmGetClusterMetrics() throws Exception {
+    LOG_ENTER();
     getYarnRmResource( "/v1/cluster/metrics/", ContentType.JSON, "yarn/cluster-metrics" );
     getYarnRmResource("/v1/cluster/metrics/", ContentType.XML, "yarn/cluster-metrics");
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRnGetScheduler() throws Exception {
+    LOG_ENTER();
     getYarnRmResource( "/v1/cluster/scheduler/", ContentType.JSON, "yarn/scheduler" );
     getYarnRmResource("/v1/cluster/scheduler/", ContentType.XML, "yarn/scheduler");
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void getYarnRmAppstatistics() throws Exception {
+    LOG_ENTER();
     getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.JSON, "yarn/appstatistics" );
     getYarnRmResource("/v1/cluster/appstatistics/", ContentType.XML, "yarn/appstatistics");
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRmGetApplications() throws Exception {
+    LOG_ENTER();
     getYarnRmApps( ContentType.XML, null );
     getYarnRmApps( ContentType.JSON, null );
 
@@ -2078,9 +2125,11 @@ public class GatewayBasicFuncTest {
 
     getYarnRmApps( ContentType.XML, params );
     getYarnRmApps( ContentType.JSON, params );
+    LOG_EXIT();
   }
 
   private void getYarnRmApps( ContentType contentType, Map<String,String> params ) throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/";
@@ -2148,10 +2197,12 @@ public class GatewayBasicFuncTest {
         .get(gatewayPath + gatewayPathQuery);
 
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnApplicationLifecycle() throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/new-application";
@@ -2216,17 +2267,21 @@ public class GatewayBasicFuncTest {
         .contentType("application/json")
         .when().put(driver.getUrl("RESOURCEMANAGER") + path + (driver.isUseGateway() ? "" : "?user.name=" + username));
     assertThat(response.getBody().asString(), Matchers.is("{\"state\":\"KILLING\"}"));
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRmApplication() throws Exception {
+    LOG_ENTER();
     getYarnRmApp( ContentType.JSON, true );
     getYarnRmApp( ContentType.XML, true );
     getYarnRmApp( ContentType.JSON, false );
     getYarnRmApp( ContentType.XML, false );
+    LOG_EXIT();
   }
 
   private void getYarnRmApp( ContentType contentType, boolean running ) throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/application_1399541193872_0033/";
@@ -2299,11 +2354,12 @@ public class GatewayBasicFuncTest {
         .get( gatewayPath );
 
     driver.assertComplete();
+    LOG_EXIT();
   }
 
   private void getYarnRmResource( String path, ContentType contentType, String resource )
       throws Exception {
-
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
 
@@ -2353,15 +2409,19 @@ public class GatewayBasicFuncTest {
       break;
     }
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testYarnRmAppattempts() throws Exception {
+    LOG_ENTER();
     getYarnRmAppattempts( ContentType.JSON );
     getYarnRmAppattempts(ContentType.XML);
+    LOG_EXIT();
   }
 
   private void getYarnRmAppattempts( ContentType contentType ) throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/application_1399541193872_0018/appattempts/";
@@ -2402,10 +2462,12 @@ public class GatewayBasicFuncTest {
         .get( gatewayPath );
 
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmNodes() throws Exception {
+    LOG_ENTER();
     getYarnRmNodes( ContentType.JSON, null );
     getYarnRmNodes( ContentType.XML, null );
 
@@ -2415,9 +2477,11 @@ public class GatewayBasicFuncTest {
 
     getYarnRmNodes( ContentType.JSON, params );
     getYarnRmNodes(ContentType.XML, params);
+    LOG_EXIT();
   }
 
   private void getYarnRmNodes( ContentType contentType, Map<String, String> params ) throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/nodes/";
@@ -2489,10 +2553,12 @@ public class GatewayBasicFuncTest {
         .get( gatewayPath + encryptedNodeId );
 
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmProxy() throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/application_1399541193872_0033/";
@@ -2641,7 +2707,7 @@ public class GatewayBasicFuncTest {
     resource = "yarn/proxy-mapreduce-task-attempt-counters";
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML );
-
+    LOG_EXIT();
   }
 
   private void getYarnRmProxyData( String encryptedQuery, String path, String resource, ContentType contentType ) throws Exception {
@@ -2769,8 +2835,9 @@ public class GatewayBasicFuncTest {
     return file.toURI().toString();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testFalconAdmin() throws Exception {
+    LOG_ENTER();
     String resourceName = "falcon/version";
     String path = "/api/admin/version";
     testGetFalconResource(resourceName, path, ContentType.XML);
@@ -2817,10 +2884,12 @@ public class GatewayBasicFuncTest {
 
     Assert.assertEquals(response.getBody().asString(), driver.getResourceString( resourceName, UTF8 ) );
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testFalconEntities() throws Exception {
+    LOG_ENTER();
     String resourceName = "falcon/entity-status-process";
     String path = "/api/entities/status/process/cleanseEmailProcess";
     testGetFalconResource(resourceName, path, ContentType.XML);
@@ -2870,11 +2939,12 @@ public class GatewayBasicFuncTest {
     responseResource = "falcon/entity-resume-feed.xml";
     path = "/api/entities/resume/feed/rawEmailFeed";
     testPostFalconResource(postResource, responseResource, path, ContentType.XML);
-
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testFalconFeedAndProcess() throws Exception {
+    LOG_ENTER();
     String resourceName = "falcon/instance-running-process";
     String path = "/api/instance/running/process/cleanseEmailProcess";
     testGetFalconResource(resourceName, path, ContentType.JSON);
@@ -2886,10 +2956,12 @@ public class GatewayBasicFuncTest {
     resourceName = "falcon/instance-status-process";
     path = "/api/instance/status/process/cleanseEmailProcess";
     testGetFalconResource(resourceName, path, ContentType.JSON);
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testFalconMetadataLineage() throws Exception {
+    LOG_ENTER();
     String resourceName = "falcon/metadata-lineage-vertices-all";
     String path = "/api/metadata/lineage/vertices/all";
     testGetFalconResource(resourceName, path, ContentType.JSON);
@@ -2938,10 +3010,12 @@ public class GatewayBasicFuncTest {
     MatcherAssert.assertThat(response.getBody().asString(),
         sameJSONAs(driver.getResourceString(resourceName, UTF8)));
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testFalconMetadataDiscovery() throws Exception {
+    LOG_ENTER();
     String resourceName = "falcon/metadata-disc-process-entity";
     String path = "/api/metadata/discovery/process_entity/list";
     testGetFalconResource(resourceName, path, ContentType.JSON);
@@ -2953,6 +3027,7 @@ public class GatewayBasicFuncTest {
     resourceName = "falcon/metadata-disc-cluster-relations";
     path = "/api/metadata/discovery/cluster_entity/primaryCluster/relations";
     testGetFalconResource(resourceName, path, ContentType.JSON);
+    LOG_EXIT();
   }
 
   private void testGetFalconResource(String resourceName, String path, ContentType contentType) throws IOException {
@@ -3074,8 +3149,9 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testStormUiApi() throws Exception {
+    LOG_ENTER();
     String resourceName = "storm/cluster-configuration.json";
     String path = "/api/v1/cluster/configuration";
     testGetStormResource(resourceName, path);
@@ -3173,6 +3249,7 @@ public class GatewayBasicFuncTest {
     path = "/api/v1/topology/WordCount-1-1424792039/kill/20";
     testPostStormResource(path);
 
+    LOG_EXIT();
   }
 
   private void testGetStormResource(String resourceName, String path) throws IOException {
@@ -3233,8 +3310,9 @@ public class GatewayBasicFuncTest {
   }
 
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testXForwardHeadersPopulate() throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
 
@@ -3279,12 +3357,13 @@ public class GatewayBasicFuncTest {
         startsWith("http://" + gatewayAddrName + ":" + gatewayPort + "/")));
     MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
     driver.assertComplete();
-
+    LOG_EXIT();
   }
 
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testXForwardHeadersRewrite() throws Exception {
+    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String host = "whatsinaname";
@@ -3419,10 +3498,12 @@ public class GatewayBasicFuncTest {
     }
     MatcherAssert.assertThat(location, not(containsString("host=")));
     MatcherAssert.assertThat(location, not(containsString("port=")));
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testServiceTestAPI() throws Exception {
+    LOG_ENTER();
 
     String user = "kminder";
     String password = "kminder-password";
@@ -3519,10 +3600,12 @@ public class GatewayBasicFuncTest {
         .get(testUrl + "?username=mapred&password=mapred-password");
 //        .prettyPrint();
     driver.assertComplete();
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testCLIServiceTest() throws Exception {
+    LOG_ENTER();
 
     setupResources();
     //    Now let's make sure we can run this same command from the CLI.
@@ -3582,6 +3665,7 @@ public class GatewayBasicFuncTest {
 
 //    Reset the out content
     System.setOut(out);
+    LOG_EXIT();
   }
 
 

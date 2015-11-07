@@ -45,11 +45,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 public class KnoxCliLdapFuncTestPositive {
+
+  private static final long SHORT_TIMEOUT = 1000L;
 
   private static Class RESOURCE_BASE_CLASS = KnoxCliLdapFuncTestPositive.class;
   private static Logger LOG = LoggerFactory.getLogger( KnoxCliLdapFuncTestPositive.class );
@@ -68,18 +72,22 @@ public class KnoxCliLdapFuncTestPositive {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    LOG_ENTER();
     System.setOut(new PrintStream(outContent));
     System.setErr(new PrintStream(errContent));
     setupLdap();
     setupGateway();
+    LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    LOG_ENTER();
     ldap.stop( true );
 
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
+    LOG_EXIT();
   }
 
   public static void setupLdap( ) throws Exception {
@@ -262,8 +270,9 @@ public class KnoxCliLdapFuncTestPositive {
     return xml;
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testLDAPAuth() throws Exception {
+    LOG_ENTER();
 
 //    Test 1: Make sure authenication is successful and return groups
     outContent.reset();
@@ -324,6 +333,7 @@ public class KnoxCliLdapFuncTestPositive {
     assertThat(outContent.toString(), containsString("LDAP authentication success"));
     assertThat(outContent.toString(), not(containsString("does not belong to any groups")));
 
+    LOG_EXIT();
   }
 
 

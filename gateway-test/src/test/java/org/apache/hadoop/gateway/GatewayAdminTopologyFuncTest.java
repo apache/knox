@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -66,6 +67,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
+
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long LONG_TIMEOUT = 30 * 1000L;
 
   private static Class RESOURCE_BASE_CLASS = GatewayAdminTopologyFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
@@ -270,9 +274,9 @@ public class GatewayAdminTopologyFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testTopologyCollection() throws ClassNotFoundException {
-    ENTER( "testTopologyCollection" );
+    LOG_ENTER();
 
     String username = "admin";
     String password = "admin-password";
@@ -329,9 +333,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testTopologyObject() throws ClassNotFoundException {
-    ENTER( "testTopologyObject" );
+    LOG_ENTER();
 
     String username = "admin";
     String password = "admin-password";
@@ -390,9 +394,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testPositiveAuthorization() throws ClassNotFoundException{
-    ENTER( "testPositiveAuthorization" );
+    LOG_ENTER();
 
     String adminUser = "admin";
     String adminPass = "admin-password";
@@ -417,9 +421,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testNegativeAuthorization() throws ClassNotFoundException{
-    ENTER( "testNegativeAuthorization" );
+    LOG_ENTER();
 
     String guestUser = "guest";
     String guestPass = "guest-password";
@@ -499,9 +503,9 @@ public class GatewayAdminTopologyFuncTest {
     return topology;
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testDeployTopology() throws ClassNotFoundException {
-    ENTER( "testDeployTopology" );
+    LOG_ENTER();
 
     Topology testTopology = createTestTopology();
 
@@ -551,9 +555,9 @@ public class GatewayAdminTopologyFuncTest {
         .get(url);
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testDeleteTopology() throws ClassNotFoundException {
-    ENTER( "testDeleteTopology" );
+    LOG_ENTER();
 
     Topology test = createTestTopology();
 
@@ -592,9 +596,9 @@ public class GatewayAdminTopologyFuncTest {
         .get(url);
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testPutTopology() throws ClassNotFoundException {
-    ENTER( "testPutTopology" ) ;
+    LOG_ENTER() ;
 
     String username = "admin";
     String password = "admin-password";
@@ -658,9 +662,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testXForwardedHeaders() {
-    ENTER( "testXForwardedHeaders" );
+    LOG_ENTER();
 
     String username = "admin";
     String password = "admin-password";
@@ -773,9 +777,9 @@ public class GatewayAdminTopologyFuncTest {
 
   }
 
-  @Test( timeout = 30*1000 )
+  @Test( timeout = LONG_TIMEOUT )
   public void testGatewayPathChange() throws Exception {
-    ENTER( "testGatewayPathChange" );
+    LOG_ENTER();
     String username = "admin";
     String password = "admin-password";
     String url =  clusterUrl + "/api/v1/topologies";
@@ -819,11 +823,5 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();
-
-  private static void ENTER( String method ) {
-    String message = String.format( "Running %s#%s ", CLASS, method );
-    System.out.println( message );
-    LOG.info( message );
-  }
 
 }

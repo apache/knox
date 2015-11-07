@@ -35,10 +35,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 
 @Category({FunctionalTests.class, MediumTests.class})
 public class WebHdfsHaFuncTest {
+
+   private static final long SHORT_TIMEOUT = 1000L;
+   private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
    // Specifies if the test requests should go through the gateway or directly to the services.
    // This is frequently used to verify the behavior of the test both with and without the gateway.
@@ -74,6 +79,7 @@ public class WebHdfsHaFuncTest {
     */
    @Before
    public void setup() throws Exception {
+      LOG_ENTER();
       Log.setLog(new NoOpLogger());
       masterServer = new MockServer("master", true);
       standbyServer = new MockServer("standby", true);
@@ -83,14 +89,17 @@ public class WebHdfsHaFuncTest {
       driver.setupLdap(findFreePort());
       driver.setupService("WEBHDFS", "http://vm.local:50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);
       driver.setupGateway(config, "cluster", createTopology(), USE_GATEWAY);
+      LOG_EXIT();
    }
 
    @After
    public void cleanup() throws Exception {
+      LOG_ENTER();
       driver.cleanup();
       driver.reset();
       masterServer.reset();
       standbyServer.reset();
+      LOG_EXIT();
    }
 
    /**
@@ -157,8 +166,9 @@ public class WebHdfsHaFuncTest {
       return xml;
    }
 
-   @Test
+  @Test( timeout = SHORT_TIMEOUT )
    public void testBasicListOperation() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       masterServer.expect()
@@ -180,11 +190,13 @@ public class WebHdfsHaFuncTest {
             .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    @Ignore( "KNOX-446" )
    public void testFailoverListOperation() throws Exception {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //Shutdown master and expect standby to serve the list response
@@ -209,10 +221,12 @@ public class WebHdfsHaFuncTest {
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       standbyServer.isEmpty();
       masterServer.start();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    public void testFailoverLimit() throws Exception {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //Shutdown master and expect standby to serve the list response
@@ -228,12 +242,14 @@ public class WebHdfsHaFuncTest {
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       standbyServer.start();
       masterServer.start();
+      LOG_EXIT();
    }
 
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    @Ignore( "KNOX-446" )
    public void testServerInStandby() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //make master the server that is in standby
@@ -267,10 +283,12 @@ public class WebHdfsHaFuncTest {
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
       standbyServer.isEmpty();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    public void testServerInStandbyFailoverLimit() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //make master the server that is in standby
@@ -320,10 +338,12 @@ public class WebHdfsHaFuncTest {
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
       standbyServer.isEmpty();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    public void testServerInSafeMode() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //master is in safe mode
@@ -358,10 +378,12 @@ public class WebHdfsHaFuncTest {
             .content("boolean", is(true))
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
       masterServer.isEmpty();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = SHORT_TIMEOUT )
    public void testServerInSafeModeRetriableException() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //master is in safe mode
@@ -393,10 +415,12 @@ public class WebHdfsHaFuncTest {
             .content("boolean", is(true))
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/new");
       masterServer.isEmpty();
+      LOG_EXIT();
    }
 
-   @Test
+   @Test( timeout = MEDIUM_TIMEOUT )
    public void testServerInSafeModeRetryLimit() throws IOException {
+      LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
       //master is in safe mode
@@ -450,5 +474,6 @@ public class WebHdfsHaFuncTest {
             .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
       masterServer.isEmpty();
+      LOG_EXIT();
    }
 }

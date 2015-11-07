@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -51,6 +52,10 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayAdminFuncTest {
 
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
+
   private static Class RESOURCE_BASE_CLASS = GatewayAdminFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
 
@@ -64,17 +69,21 @@ public class GatewayAdminFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    TestUtils.LOG_ENTER();
     //appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();
+    TestUtils.LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    TestUtils.LOG_ENTER();
     gateway.stop();
     ldap.stop( true );
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
+    TestUtils.LOG_EXIT();
   }
 
   public static void setupLdap() throws Exception {
@@ -186,15 +195,15 @@ public class GatewayAdminFuncTest {
     return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 
-  @Ignore
-  @Test
+  //@Test
   public void waitForManualTesting() throws IOException {
     System.out.println( clusterUrl );
     System.in.read();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testAdminService() throws ClassNotFoundException {
+    TestUtils.LOG_ENTER();
 
     String username = "guest";
     String password = "guest-password";
@@ -208,6 +217,8 @@ public class GatewayAdminFuncTest {
         .statusCode(HttpStatus.SC_OK)
         //.body( is( "{\"hash\":\"unknown\",\"version\":\"unknown\"}" ) )
         .when().get( serviceUrl );
+
+    TestUtils.LOG_EXIT();
   }
 
 }

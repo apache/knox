@@ -19,6 +19,7 @@ package org.apache.hadoop.test;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -112,6 +113,16 @@ public class TestUtils {
     transformer.transform( source, result );
     String xmlString = result.getWriter().toString();
     System.out.println( xmlString );
+  }
+
+  public static void LOG_ENTER() {
+    StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
+    System.out.println( String.format( "Running %s#%s", caller.getClassName(), caller.getMethodName() ) );
+  }
+
+  public static void LOG_EXIT() {
+    StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
+    System.out.println( String.format( "Exiting %s#%s", caller.getClassName(), caller.getMethodName() ) );
   }
 
 }

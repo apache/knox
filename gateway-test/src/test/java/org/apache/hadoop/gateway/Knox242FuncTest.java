@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -66,6 +68,8 @@ import com.mycila.xmltool.XMLTag;
  */
 public class Knox242FuncTest {
 
+  private static final long SHORT_TIMEOUT = 1000L;
+
   private static Class RESOURCE_BASE_CLASS = Knox242FuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( Knox242FuncTest.class );
 
@@ -79,17 +83,21 @@ public class Knox242FuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    LOG_ENTER();
     //appenders = NoOpAppender.setUp();
     int port = setupLdap();
     setupGateway(port);
+    LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    LOG_ENTER();
     gateway.stop();
     ldap.stop( true );
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
+    LOG_EXIT();
   }
 
   public static int setupLdap() throws Exception {
@@ -286,8 +294,9 @@ public class Knox242FuncTest {
     System.in.read();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testGroupMember() throws ClassNotFoundException, Exception {
+    LOG_ENTER();
     String username = "joe";
     String password = "joe-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -300,10 +309,12 @@ public class Knox242FuncTest {
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
         .when().get( serviceUrl );
+    LOG_EXIT();
   }
-  
-  @Test
+
+  @Test( timeout = SHORT_TIMEOUT )
   public void testNonGroupMember() throws ClassNotFoundException {
+    LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -314,6 +325,7 @@ public class Knox242FuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_FORBIDDEN )
         .when().get( serviceUrl );
+    LOG_EXIT();
   }
   
 }

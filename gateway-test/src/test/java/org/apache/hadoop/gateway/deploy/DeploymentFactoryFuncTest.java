@@ -58,6 +58,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -68,8 +70,13 @@ import static org.junit.Assert.fail;
 
 public class DeploymentFactoryFuncTest {
 
-  @Test
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * 1000L;
+  private static final long LONG_TIMEOUT = 15 * 1000L;
+
+  @Test( timeout = SHORT_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+    LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -130,10 +137,12 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.opensource.ExistingFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/name", equalTo( "test-param-name" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "test-param-value" ) ) );
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = SHORT_TIMEOUT )
   public void testInvalidGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+    LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -185,10 +194,12 @@ public class DeploymentFactoryFuncTest {
     } finally {
       NoOpAppender.tearDown( appenders );
     }
+    LOG_EXIT();
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+    LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
     //Testing without x-forwarded headers filter
     ((GatewayTestConfig)config).setXForwardedEnabled(false);
@@ -302,11 +313,14 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/name", equalTo( "webhdfs" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter" ) ) );
+
+    LOG_EXIT();
   }
 
 
-   @Test
+   @Test( timeout = LONG_TIMEOUT )
    public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+      LOG_ENTER();
       GatewayConfig config = new GatewayTestConfig();
       File targetDir = new File(System.getProperty("user.dir"), "target");
       File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
@@ -360,9 +374,11 @@ public class DeploymentFactoryFuncTest {
       for (int i = 0; i < 100; i++) {
          createAndTestDeployment(config, topology);
       }
+      LOG_EXIT();
    }
 
    private void createAndTestDeployment(GatewayConfig config, Topology topology) throws IOException, SAXException, ParserConfigurationException {
+
       WebArchive war = DeploymentFactory.createDeployment(config, topology);
 //      File dir = new File( System.getProperty( "user.dir" ) );
 //      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
@@ -379,8 +395,9 @@ public class DeploymentFactoryFuncTest {
       assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener")));
    }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testDeploymentWithServiceParams() throws Exception {
+    LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
@@ -465,6 +482,8 @@ public class DeploymentFactoryFuncTest {
     assertThat( value, is( "65" ) ) ;
 
     FileUtils.deleteQuietly( deployDir );
+
+    LOG_EXIT();
   }
 
   private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {

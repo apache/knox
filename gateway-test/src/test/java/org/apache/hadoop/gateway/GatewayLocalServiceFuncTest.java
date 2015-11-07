@@ -48,11 +48,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
+import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
+
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewayLocalServiceFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayFuncTestDriver.class );
@@ -67,18 +72,22 @@ public class GatewayLocalServiceFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
+    LOG_ENTER();
     appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();
+    LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
+    LOG_ENTER();
     gateway.stop();
     ldap.stop( true );
     FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
     NoOpAppender.tearDown( appenders );
+    LOG_EXIT();
   }
 
   public static void setupLdap() throws Exception {
@@ -165,8 +174,9 @@ public class GatewayLocalServiceFuncTest {
     return xml;
   }
 
-  @Test
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testJerseyService() throws ClassNotFoundException {
+    LOG_ENTER();
     assertThat( ClassLoader.getSystemClassLoader().loadClass( "org.glassfish.jersey.servlet.ServletContainer" ), notNullValue() );
     assertThat( ClassLoader.getSystemClassLoader().loadClass( "org.apache.hadoop.gateway.jersey.JerseyDispatchDeploymentContributor" ), notNullValue() );
     assertThat( ClassLoader.getSystemClassLoader().loadClass( "org.apache.hadoop.gateway.jersey.JerseyServiceDeploymentContributorBase" ), notNullValue() );
@@ -184,6 +194,7 @@ public class GatewayLocalServiceFuncTest {
         .contentType( "text/plain" )
         .body( is( "test-jersey-resource-response" ) )
         .when().get( serviceUrl );
+    LOG_EXIT();
   }
 
   private static int findFreePort() throws IOException {
