@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.util.KnoxCLI;
+import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
@@ -302,7 +303,12 @@ public class KnoxCliSysBindTest {
     String args3[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
     cli = new KnoxCLI();
     cli.setConf(config);
-    cli.run(args3);
+    Enumeration<Appender> before = NoOpAppender.setUp();
+    try {
+      cli.run( args3 );
+    } finally {
+      NoOpAppender.tearDown( before );
+    }
     assertThat(outContent.toString(), containsString("LDAP authentication failed"));
     assertThat(outContent.toString(), containsString("Unable to successfully bind to LDAP server with topology credentials"));
 

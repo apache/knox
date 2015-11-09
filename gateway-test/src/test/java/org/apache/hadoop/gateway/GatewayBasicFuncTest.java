@@ -29,7 +29,6 @@ import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FunctionalTests;
 import org.apache.hadoop.test.category.MediumTests;
-import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.hadoop.test.mock.MockRequestMatcher;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
@@ -37,7 +36,6 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.eclipse.jetty.util.log.Log;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -45,20 +43,19 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
-import java.io.PrintStream;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileFilter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -71,7 +68,11 @@ import java.util.Map.Entry;
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
@@ -375,13 +376,13 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( HttpStatus.SC_OK );
     given()
-        .log().all()
+        //.log().all()
         .auth().preemptive().basic( username, password )
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
-        .log().all()
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1/~" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
     driver.assertComplete();
@@ -402,7 +403,7 @@ public class GatewayBasicFuncTest {
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam( "op", "MKDIRS" )
         .expect()
-            //.log().all();
+        //.log().all();
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
@@ -441,7 +442,7 @@ public class GatewayBasicFuncTest {
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", "true" )
         .expect()
-        .log().all()
+        //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
     driver.assertComplete();

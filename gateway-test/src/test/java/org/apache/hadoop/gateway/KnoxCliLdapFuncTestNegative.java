@@ -19,11 +19,14 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.util.KnoxCLI;;
+import org.apache.hadoop.test.log.NoOpAppender;
+import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.log4j.Appender;
 import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
@@ -54,6 +57,7 @@ import static org.junit.Assert.assertThat;
 public class KnoxCliLdapFuncTestNegative {
 
   private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = KnoxCliLdapFuncTestPositive.class;
   private static Logger LOG = LoggerFactory.getLogger( KnoxCliLdapFuncTestPositive.class );
@@ -280,7 +284,7 @@ public class KnoxCliLdapFuncTestNegative {
     return xml;
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testBadTopology() throws Exception {
     LOG_ENTER();
 
@@ -309,7 +313,12 @@ public class KnoxCliLdapFuncTestNegative {
 
     String args2[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
-    cli.run( args2 );
+    Enumeration<Appender> before = NoOpAppender.setUp();
+    try {
+      cli.run( args2 );
+    } finally {
+      NoOpAppender.tearDown( before );
+    }
 
     assertThat(outContent.toString(), containsString("LDAP authentication failed"));
     assertThat(outContent.toString(), containsString("INVALID_CREDENTIALS"));

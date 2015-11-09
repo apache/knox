@@ -58,6 +58,7 @@ import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
+import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -312,9 +313,6 @@ public class GatewayAdminTopologyFuncTest {
         .when().get(serviceUrl);
 
 
-
-
-
     given()
         //.log().all()
         .auth().preemptive().basic(username, password)
@@ -333,6 +331,7 @@ public class GatewayAdminTopologyFuncTest {
         .body("topology.name", equalTo("test-cluster"))
         .when().get(href1);
 
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -394,6 +393,7 @@ public class GatewayAdminTopologyFuncTest {
         .when()
         .get(hrefXml);
 
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -421,6 +421,7 @@ public class GatewayAdminTopologyFuncTest {
         .body("topologies.topology[1].timestamp", not(nullValue()))
         .get(url);
 
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -439,8 +440,7 @@ public class GatewayAdminTopologyFuncTest {
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .get(url);
 
-
-
+    LOG_EXIT();
   }
 
   private Topology createTestTopology(){
@@ -555,6 +555,8 @@ public class GatewayAdminTopologyFuncTest {
         .statusCode(HttpStatus.SC_NOT_FOUND)
         .when()
         .get(url);
+
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -596,6 +598,8 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .statusCode(HttpStatus.SC_NO_CONTENT)
         .get(url);
+
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -662,6 +666,7 @@ public class GatewayAdminTopologyFuncTest {
         .get(url)
         .getBody().asString();
 
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -695,7 +700,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(newUrl))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url).prettyPrint();
+        .get(url);
 
 
 //     Case 2: add in x-forward headers (host, server, proto, context)
@@ -777,6 +782,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString("admin"))
         .get(url);
 
+    LOG_EXIT();
   }
 
   @Test( timeout = LONG_TIMEOUT )
@@ -822,6 +828,7 @@ public class GatewayAdminTopologyFuncTest {
       setupGateway(new GatewayTestConfig());
     }
 
+    LOG_EXIT();
   }
 
   private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();
