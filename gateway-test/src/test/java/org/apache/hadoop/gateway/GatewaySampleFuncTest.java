@@ -128,6 +128,7 @@ public class GatewaySampleFuncTest {
     } catch ( ServiceLifecycleException e ) {
       e.printStackTrace(); // I18N not required.
     }
+
     gateway = GatewayServer.startGateway( testConfig, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
 

@@ -331,7 +331,7 @@ public class GatewayServer {
     jetty.setThreadPool( new QueuedThreadPool( config.getThreadPoolMax() ) );
 
     try {
-    jetty.start();
+      jetty.start();
     }
     catch (IOException e) {
       log.failedToStartGateway( e );
@@ -476,17 +476,17 @@ public class GatewayServer {
           File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
           internalDeploy( topology, warDir );
-          //log.deployedTopology( topology.getName());
           if (topology.getName().equals(config.getDefaultTopologyName())) {
             topology.setName("_default");
             handleCreateDeployment(topology, deployDir);
             topology.setName(config.getDefaultTopologyName());
           }
+          log.deployedTopology( topology.getName());
         } else {
           auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
           log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
           internalDeploy( topology, warDir );
-          //log.redeployedTopology( topology.getName() );
+          log.redeployedTopology( topology.getName() );
         }
       } catch( Throwable e ) {
         auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );

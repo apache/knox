@@ -80,13 +80,13 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Deploying topology {0} to {1}" )
   void deployingTopology( String clusterName, String warDirName );
 
-  @Message( level = MessageLevel.INFO, text = "Deployed topology {0}." )
+  @Message( level = MessageLevel.DEBUG, text = "Deployed topology {0}." )
   void deployedTopology( String clusterName );
 
   @Message( level = MessageLevel.INFO, text = "Loading topology {0} from {1}" )
   void redeployingTopology( String clusterName, String warDirName );
 
-  @Message( level = MessageLevel.INFO, text = "Redeployed topology {0}." )
+  @Message( level = MessageLevel.DEBUG, text = "Redeployed topology {0}." )
   void redeployedTopology( String clusterName );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
