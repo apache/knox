@@ -261,11 +261,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public int getHttpClientMaxConnections() {
-    return 8;
+    return 16;
   }
 
   @Override
   public int getThreadPoolMax() {
-    return 8;
+    return 16;
   }
 }
