@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.security;
 
+import com.jayway.restassured.RestAssured;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.test.category.ManualTests;
@@ -43,6 +44,8 @@ import java.net.ServerSocket;
 import java.util.EnumSet;
 
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
+import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 // Derrived from this thread
@@ -58,6 +61,7 @@ public class ShiroEmbeddedLdapTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception{
+    RestAssured.config = newConfig().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse());
     int port = findFreePort();
     TcpTransport transport = new TcpTransport( port );
     ldap = new SimpleLdapDirectoryServer(

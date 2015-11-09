@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.RestAssured;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
@@ -47,6 +48,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
+import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
@@ -56,8 +59,8 @@ import static org.junit.Assert.assertThat;
 public class GatewaySampleFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
+  private static final long MEDIUM_TIMEOUT = 20 * 1000L;
+  private static final long LONG_TIMEOUT = 60 * 1000L;
 
   private static Class RESOURCE_BASE_CLASS = GatewaySampleFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
@@ -73,6 +76,7 @@ public class GatewaySampleFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
+    RestAssured.config = newConfig().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse());
     //appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();
