@@ -56,7 +56,8 @@ import static org.junit.Assert.assertThat;
 public class GatewaySampleFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewaySampleFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
