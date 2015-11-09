@@ -253,6 +253,7 @@ public abstract class DeploymentFactory {
       for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
         try {
           injectServices(contributor);
+          log.initializeProvider( contributor.getName(), contributor.getRole() );
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
@@ -264,6 +265,7 @@ public abstract class DeploymentFactory {
       for( ServiceDeploymentContributor contributor : services.get( role ) ) {
         try {
           injectServices(contributor);
+          log.initializeService( contributor.getName(), contributor.getRole() );
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
@@ -326,7 +328,6 @@ public abstract class DeploymentFactory {
               sr.registerService(regCode, topology.getName(), service.getRole(), service.getUrls() );
             }
           }
-          log.initializeProvider( contributor.getName(), contributor.getRole() );
         } catch( Exception e ) {
           // Maybe it makes sense to throw exception
           log.failedToContributeService( service.getName(), service.getRole(), e );
@@ -401,7 +402,6 @@ public abstract class DeploymentFactory {
             log.failedToFinalizeContribution( e );
             throw new DeploymentException("Failed to finalize contribution.", e);
           }
-          log.initializeService( contributor.getName(), contributor.getRole() );
         }
       }
       for( String role : services.keySet() ) {

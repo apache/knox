@@ -56,6 +56,7 @@ import static org.junit.Assert.assertThat;
 public class GatewaySampleFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewaySampleFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
@@ -201,7 +202,7 @@ public class GatewaySampleFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testTestService() throws ClassNotFoundException {
     LOG_ENTER();
     String username = "guest";

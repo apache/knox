@@ -69,7 +69,7 @@ import com.mycila.xmltool.XMLTag;
 public class Knox242FuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = Knox242FuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( Knox242FuncTest.class );

@@ -71,8 +71,8 @@ import static org.junit.Assert.fail;
 public class DeploymentFactoryFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * 1000L;
-  private static final long LONG_TIMEOUT = 15 * 1000L;
+  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
   @Test( timeout = SHORT_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
@@ -140,7 +140,7 @@ public class DeploymentFactoryFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = LONG_TIMEOUT )
   public void testInvalidGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
     LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();

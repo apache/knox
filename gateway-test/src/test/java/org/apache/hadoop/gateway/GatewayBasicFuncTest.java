@@ -83,9 +83,9 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
-  private static final long SHORT_TIMEOUT = 2000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
+  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -138,7 +138,7 @@ public class GatewayBasicFuncTest {
    */
   @BeforeClass
   public static void setupSuite() throws Exception {
-    Log.setLog( new NoOpLogger() );
+    //Log.setLog( new NoOpLogger() );
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
@@ -264,7 +264,7 @@ public class GatewayBasicFuncTest {
     return xml;
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testBasicJsonUseCase() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicJsonUseCase";
@@ -310,7 +310,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testBasicOutboundHeaderUseCase() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
@@ -410,7 +410,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testBasicHdfsUseCase() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicHdfsUseCase";
@@ -808,7 +808,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testJavaMapReduceViaWebHCat() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testJavaMapReduceViaWebHCat";
@@ -864,7 +864,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testPigViaWebHCat() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayWebHCatFuncTest/testPigViaWebHCat";
@@ -895,7 +895,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHiveViaWebHCat() throws IOException {
     LOG_ENTER();
     String user = "hive";
@@ -999,7 +999,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testBasicHiveJDBCUseCase() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayHiveJDBCFuncTest/testBasicHiveUseCase";
@@ -1402,7 +1402,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseGetTableList() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -1480,7 +1480,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseCreateTableAndVerifySchema() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -1551,7 +1551,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseGetTableSchema() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -1632,7 +1632,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseInsertDataIntoTable() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -1772,7 +1772,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseDeleteDataFromTable() {
     LOG_ENTER();
     String username = "hbase";
@@ -1834,7 +1834,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseQueryTableData() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -1945,7 +1945,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testHBaseUseScanner() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -2022,7 +2022,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testCrossSiteRequestForgeryPreventionPUT() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
@@ -2041,7 +2041,7 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testCrossSiteRequestForgeryPreventionGET() throws IOException {
     LOG_ENTER();
     String root = "/tmp/GatewayWebHdfsFuncTest/testCrossSiteRequestForgeryPrevention";
@@ -2070,7 +2070,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmGetClusterInfo() throws Exception {
     LOG_ENTER();
     getYarnRmResource( "/v1/cluster/", ContentType.JSON, "yarn/cluster-info" );
@@ -2080,7 +2080,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmGetClusterMetrics() throws Exception {
     LOG_ENTER();
     getYarnRmResource( "/v1/cluster/metrics/", ContentType.JSON, "yarn/cluster-metrics" );
@@ -2088,7 +2088,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRnGetScheduler() throws Exception {
     LOG_ENTER();
     getYarnRmResource( "/v1/cluster/scheduler/", ContentType.JSON, "yarn/scheduler" );
@@ -2096,7 +2096,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void getYarnRmAppstatistics() throws Exception {
     LOG_ENTER();
     getYarnRmResource( "/v1/cluster/appstatistics/", ContentType.JSON, "yarn/appstatistics" );
@@ -2104,7 +2104,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmGetApplications() throws Exception {
     LOG_ENTER();
     getYarnRmApps( ContentType.XML, null );
@@ -2129,7 +2129,6 @@ public class GatewayBasicFuncTest {
   }
 
   private void getYarnRmApps( ContentType contentType, Map<String,String> params ) throws Exception {
-    LOG_ENTER();
     String username = "hdfs";
     String password = "hdfs-password";
     String path = "/v1/cluster/apps/";
@@ -2197,10 +2196,9 @@ public class GatewayBasicFuncTest {
         .get(gatewayPath + gatewayPathQuery);
 
     driver.assertComplete();
-    LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnApplicationLifecycle() throws Exception {
     LOG_ENTER();
     String username = "hdfs";
@@ -2270,7 +2268,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmApplication() throws Exception {
     LOG_ENTER();
     getYarnRmApp( ContentType.JSON, true );
@@ -2412,7 +2410,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmAppattempts() throws Exception {
     LOG_ENTER();
     getYarnRmAppattempts( ContentType.JSON );
@@ -2835,7 +2833,7 @@ public class GatewayBasicFuncTest {
     return file.toURI().toString();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testFalconAdmin() throws Exception {
     LOG_ENTER();
     String resourceName = "falcon/version";
@@ -2887,7 +2885,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testFalconEntities() throws Exception {
     LOG_ENTER();
     String resourceName = "falcon/entity-status-process";
@@ -2942,7 +2940,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testFalconFeedAndProcess() throws Exception {
     LOG_ENTER();
     String resourceName = "falcon/instance-running-process";
@@ -2959,7 +2957,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testFalconMetadataLineage() throws Exception {
     LOG_ENTER();
     String resourceName = "falcon/metadata-lineage-vertices-all";
@@ -3013,7 +3011,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testFalconMetadataDiscovery() throws Exception {
     LOG_ENTER();
     String resourceName = "falcon/metadata-disc-process-entity";
@@ -3149,7 +3147,7 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
   }
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testStormUiApi() throws Exception {
     LOG_ENTER();
     String resourceName = "storm/cluster-configuration.json";
@@ -3310,7 +3308,7 @@ public class GatewayBasicFuncTest {
   }
 
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testXForwardHeadersPopulate() throws Exception {
     LOG_ENTER();
     String username = "hdfs";
@@ -3361,7 +3359,7 @@ public class GatewayBasicFuncTest {
   }
 
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testXForwardHeadersRewrite() throws Exception {
     LOG_ENTER();
     String username = "hdfs";
