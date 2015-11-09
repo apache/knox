@@ -47,166 +47,166 @@ import static org.hamcrest.xml.HasXPath.hasXPath;
 
 public class OozieServiceDefinitionTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-
-  @Test( timeout = MEDIUM_TIMEOUT )
-  public void testOozieRewriteRulesForLiteralTemplateValuesBugKnox394() throws Exception {
-    LOG_ENTER();
-
-    // This is a unique part of this test.
-    String testResource = "oozie-request-with-var.xml";
-
-    // Mock out the service url registry which is required for several url rewrite functions to work.
-    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
-    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
-
-    // Mock out the gateway services registry which is required for several url rewrite functions to work.
-    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
-
-    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
-
-    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
-    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
-
-    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
-    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
-    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
-
-    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
-    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
-    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
-
-    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
-
-    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
-
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
-    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
-    rulesReader.close();
-
-    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
-
-    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
-
-    InputStream stream = rewriteRequest.getInputStream();
-
-    Document document = TestUtils.parseXml( stream );
-
-    assertThat( document,
-        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
-            equalTo( "${appPath}/workflow.xml" ) ) );
-
-    LOG_EXIT();
-  }
-
-  @Test( timeout = SHORT_TIMEOUT )
-  public void testOozieRewriteRulesForLiteralComplexTemplateValuesBugKnox394() throws Exception {
-    LOG_ENTER();
-
-    // This is a unique part of this test.
-    String testResource = "oozie-request-with-complex-var.xml";
-
-    // Mock out the service url registry which is required for several url rewrite functions to work.
-    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
-    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
-
-    // Mock out the gateway services registry which is required for several url rewrite functions to work.
-    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
-
-    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
-
-    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
-    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
-
-    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
-    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
-    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
-
-    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
-    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
-    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
-
-    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
-
-    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
-
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
-    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
-    rulesReader.close();
-
-    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
-
-    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
-
-    InputStream stream = rewriteRequest.getInputStream();
-
-    Document document = TestUtils.parseXml( stream );
-
-    assertThat( document,
-        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
-            equalTo( "${nameNode}/user/${user.name}/${examplesRoot}/apps/hive" ) ) );
-
-    LOG_EXIT();
-  }
-
-  @Test( timeout = SHORT_TIMEOUT )
-  public void testOozieRewriteRulesForValuesRelativeToServiceRegistry() throws Exception {
-    LOG_ENTER();
-
-    // This is a unique part of this test.
-    String testResource = "oozie-request-relative.xml";
-
-    // Mock out the service url registry which is required for several url rewrite functions to work.
-    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
-    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
-
-    // Mock out the gateway services registry which is required for several url rewrite functions to work.
-    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
-
-    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
-
-    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
-    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
-    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
-
-    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
-    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
-    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
-
-    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
-    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
-    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
-
-    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
-
-    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
-
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
-    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
-    rulesReader.close();
-
-    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
-
-    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
-
-    InputStream stream = rewriteRequest.getInputStream();
-
-    Document document = TestUtils.parseXml( stream );
-
-    assertThat( document,
-        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
-            equalTo( "test-scheme://test-host:42/workflow.xml" ) ) );
-
-    LOG_EXIT();
-  }
+//  private static final long SHORT_TIMEOUT = 1000L;
+//  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+//
+//  @Test( timeout = MEDIUM_TIMEOUT )
+//  public void testOozieRewriteRulesForLiteralTemplateValuesBugKnox394() throws Exception {
+//    LOG_ENTER();
+//
+//    // This is a unique part of this test.
+//    String testResource = "oozie-request-with-var.xml";
+//
+//    // Mock out the service url registry which is required for several url rewrite functions to work.
+//    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
+//    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
+//
+//    // Mock out the gateway services registry which is required for several url rewrite functions to work.
+//    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
+//    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+//
+//    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
+//
+//    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
+//    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
+//
+//    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+//    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
+//    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
+//
+//    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
+//    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
+//    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
+//
+//    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
+//
+//    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
+//
+//    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+//    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
+//    rulesReader.close();
+//
+//    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
+//
+//    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
+//
+//    InputStream stream = rewriteRequest.getInputStream();
+//
+//    Document document = TestUtils.parseXml( stream );
+//
+//    assertThat( document,
+//        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
+//            equalTo( "${appPath}/workflow.xml" ) ) );
+//
+//    LOG_EXIT();
+//  }
+//
+//  @Test( timeout = MEDIUM_TIMEOUT )
+//  public void testOozieRewriteRulesForLiteralComplexTemplateValuesBugKnox394() throws Exception {
+//    LOG_ENTER();
+//
+//    // This is a unique part of this test.
+//    String testResource = "oozie-request-with-complex-var.xml";
+//
+//    // Mock out the service url registry which is required for several url rewrite functions to work.
+//    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
+//    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
+//
+//    // Mock out the gateway services registry which is required for several url rewrite functions to work.
+//    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
+//    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+//
+//    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
+//
+//    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
+//    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
+//
+//    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+//    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
+//    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
+//
+//    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
+//    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
+//    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
+//
+//    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
+//
+//    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
+//
+//    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+//    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
+//    rulesReader.close();
+//
+//    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
+//
+//    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
+//
+//    InputStream stream = rewriteRequest.getInputStream();
+//
+//    Document document = TestUtils.parseXml( stream );
+//
+//    assertThat( document,
+//        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
+//            equalTo( "${nameNode}/user/${user.name}/${examplesRoot}/apps/hive" ) ) );
+//
+//    LOG_EXIT();
+//  }
+//
+//  @Test( timeout = MEDIUM_TIMEOUT )
+//  public void testOozieRewriteRulesForValuesRelativeToServiceRegistry() throws Exception {
+//    LOG_ENTER();
+//
+//    // This is a unique part of this test.
+//    String testResource = "oozie-request-relative.xml";
+//
+//    // Mock out the service url registry which is required for several url rewrite functions to work.
+//    ServiceRegistry registry = EasyMock.createNiceMock( ServiceRegistry.class );
+//    EasyMock.expect( registry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-scheme://test-host:42" ).anyTimes();
+//
+//    // Mock out the gateway services registry which is required for several url rewrite functions to work.
+//    GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
+//    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+//
+//    UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
+//
+//    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
+//    EasyMock.expect( servletContext.getAttribute( UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME ) ).andReturn( rewriteProcessor ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( services ).anyTimes();
+//    EasyMock.expect( servletContext.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster" ).anyTimes();
+//
+//    HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+//    EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
+//    EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
+//
+//    FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
+//    EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();
+//    EasyMock.expect( filterConfig.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM ) ).andReturn( "OOZIE/oozie/configuration" ).anyTimes();
+//
+//    EasyMock.replay( registry, services, servletContext, servletRequest, filterConfig );
+//
+//    UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
+//
+//    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+//    UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
+//    rulesReader.close();
+//
+//    rewriteProcessor.initialize( rewriteEnvironment, rewriteRules );
+//
+//    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, servletRequest );
+//
+//    InputStream stream = rewriteRequest.getInputStream();
+//
+//    Document document = TestUtils.parseXml( stream );
+//
+//    assertThat( document,
+//        hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
+//            equalTo( "test-scheme://test-host:42/workflow.xml" ) ) );
+//
+//    LOG_EXIT();
+//  }
 
 }

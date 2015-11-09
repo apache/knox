@@ -50,176 +50,175 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
-@Ignore
 public class GatewayAdminFuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
-
-  private static Class RESOURCE_BASE_CLASS = GatewayAdminFuncTest.class;
-  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
-
-  //public static Enumeration<Appender> appenders;
-  public static GatewayConfig config;
-  public static GatewayServer gateway;
-  public static String gatewayUrl;
-  public static String clusterUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
-
-  @BeforeClass
-  public static void setupSuite() throws Exception {
-    TestUtils.LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
-    setupLdap();
-    setupGateway();
-    TestUtils.LOG_EXIT();
-  }
-
-  @AfterClass
-  public static void cleanupSuite() throws Exception {
-    TestUtils.LOG_ENTER();
-    gateway.stop();
-    ldap.stop( true );
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
-    TestUtils.LOG_EXIT();
-  }
-
-  public static void setupLdap() throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
-    int port = findFreePort();
-    ldapTransport = new TcpTransport( port );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getPort() );
-  }
-
-  public static void setupGateway() throws Exception {
-
-    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
-    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
-    gatewayDir.mkdirs();
-
-    GatewayTestConfig testConfig = new GatewayTestConfig();
-    config = testConfig;
-    testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-
-    File topoDir = new File( testConfig.getGatewayTopologyDir() );
-    topoDir.mkdirs();
-
-    File deployDir = new File( testConfig.getGatewayDeploymentDir() );
-    deployDir.mkdirs();
-
-    File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
-
-    DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
-    options.put( "persist-master", "false" );
-    options.put( "master", "password" );
-    try {
-      srvcs.init( testConfig, options );
-    } catch ( ServiceLifecycleException e ) {
-      e.printStackTrace(); // I18N not required.
-    }
-    gateway = GatewayServer.startGateway( testConfig, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
-
-    LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
-
-    gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
-    clusterUrl = gatewayUrl + "/test-cluster";
-  }
-
-  private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
-        .addRoot( "topology" )
-        .addTag( "gateway" )
-        .addTag( "provider" )
-        .addTag( "role" ).addText( "authentication" )
-        .addTag( "name" ).addText( "ShiroProvider" )
-        .addTag( "enabled" ).addText( "true" )
-        .addTag( "param" )
-        .addTag( "name" ).addText( "main.ldapRealm" )
-        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
-        .addTag( "param" )
-        .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
-        .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
-        .addTag( "param" )
-        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getPort() ).gotoParent()
-        .addTag( "param" )
-        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
-        .addTag( "value" ).addText( "simple" ).gotoParent()
-        .addTag( "param" )
-        .addTag( "name" ).addText( "urls./**" )
-        .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
-        .addTag( "provider" )
-        .addTag( "role" ).addText( "identity-assertion" )
-        .addTag( "enabled" ).addText( "true" )
-        .addTag( "name" ).addText( "Default" ).gotoParent()
-        .addTag( "provider" )
-        .gotoRoot()
-        .addTag( "service" )
-        .addTag( "role" ).addText( "KNOX" )
-        .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
-  }
-
-  public static InputStream getResourceStream( String resource ) throws IOException {
-    return getResourceUrl( resource ).openStream();
-  }
-
-  public static URL getResourceUrl( String resource ) {
-    URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
-    assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
-    return url;
-  }
-
-  public static String getResourceName( String resource ) {
-    return getResourceBaseName() + resource;
-  }
-
-  public static String getResourceBaseName() {
-    return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
-  }
-
-  //@Test
-  public void waitForManualTesting() throws IOException {
-    System.out.println( clusterUrl );
-    System.in.read();
-  }
-
-  @Test( timeout = MEDIUM_TIMEOUT )
-  public void testAdminService() throws ClassNotFoundException {
-    TestUtils.LOG_ENTER();
-
-    String username = "guest";
-    String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/api/v1/version";
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
-        //.log().all()
-        .statusCode(HttpStatus.SC_OK)
-        //.body( is( "{\"hash\":\"unknown\",\"version\":\"unknown\"}" ) )
-        .when().get( serviceUrl );
-
-    TestUtils.LOG_EXIT();
-  }
+//  private static final long SHORT_TIMEOUT = 1000L;
+//  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+//  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
+//
+//  private static Class RESOURCE_BASE_CLASS = GatewayAdminFuncTest.class;
+//  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
+//
+//  //public static Enumeration<Appender> appenders;
+//  public static GatewayConfig config;
+//  public static GatewayServer gateway;
+//  public static String gatewayUrl;
+//  public static String clusterUrl;
+//  public static SimpleLdapDirectoryServer ldap;
+//  public static TcpTransport ldapTransport;
+//
+//  @BeforeClass
+//  public static void setupSuite() throws Exception {
+//    TestUtils.LOG_ENTER();
+//    //appenders = NoOpAppender.setUp();
+//    setupLdap();
+//    setupGateway();
+//    TestUtils.LOG_EXIT();
+//  }
+//
+//  @AfterClass
+//  public static void cleanupSuite() throws Exception {
+//    TestUtils.LOG_ENTER();
+//    gateway.stop();
+//    ldap.stop( true );
+//    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
+//    //NoOpAppender.tearDown( appenders );
+//    TestUtils.LOG_EXIT();
+//  }
+//
+//  public static void setupLdap() throws Exception {
+//    URL usersUrl = getResourceUrl( "users.ldif" );
+//    int port = findFreePort();
+//    ldapTransport = new TcpTransport( port );
+//    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
+//    ldap.start();
+//    LOG.info( "LDAP port = " + ldapTransport.getPort() );
+//  }
+//
+//  public static void setupGateway() throws Exception {
+//
+//    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+//    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+//    gatewayDir.mkdirs();
+//
+//    GatewayTestConfig testConfig = new GatewayTestConfig();
+//    config = testConfig;
+//    testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+//
+//    File topoDir = new File( testConfig.getGatewayTopologyDir() );
+//    topoDir.mkdirs();
+//
+//    File deployDir = new File( testConfig.getGatewayDeploymentDir() );
+//    deployDir.mkdirs();
+//
+//    File descriptor = new File( topoDir, "test-cluster.xml" );
+//    FileOutputStream stream = new FileOutputStream( descriptor );
+//    createTopology().toStream( stream );
+//    stream.close();
+//
+//    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+//    Map<String,String> options = new HashMap<String,String>();
+//    options.put( "persist-master", "false" );
+//    options.put( "master", "password" );
+//    try {
+//      srvcs.init( testConfig, options );
+//    } catch ( ServiceLifecycleException e ) {
+//      e.printStackTrace(); // I18N not required.
+//    }
+//    gateway = GatewayServer.startGateway( testConfig, srvcs );
+//    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+//
+//    LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
+//
+//    gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
+//    clusterUrl = gatewayUrl + "/test-cluster";
+//  }
+//
+//  private static XMLTag createTopology() {
+//    XMLTag xml = XMLDoc.newDocument( true )
+//        .addRoot( "topology" )
+//        .addTag( "gateway" )
+//        .addTag( "provider" )
+//        .addTag( "role" ).addText( "authentication" )
+//        .addTag( "name" ).addText( "ShiroProvider" )
+//        .addTag( "enabled" ).addText( "true" )
+//        .addTag( "param" )
+//        .addTag( "name" ).addText( "main.ldapRealm" )
+//        .addTag( "value" ).addText( "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+//        .addTag( "param" )
+//        .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+//        .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
+//        .addTag( "param" )
+//        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+//        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getPort() ).gotoParent()
+//        .addTag( "param" )
+//        .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+//        .addTag( "value" ).addText( "simple" ).gotoParent()
+//        .addTag( "param" )
+//        .addTag( "name" ).addText( "urls./**" )
+//        .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+//        .addTag( "provider" )
+//        .addTag( "role" ).addText( "identity-assertion" )
+//        .addTag( "enabled" ).addText( "true" )
+//        .addTag( "name" ).addText( "Default" ).gotoParent()
+//        .addTag( "provider" )
+//        .gotoRoot()
+//        .addTag( "service" )
+//        .addTag( "role" ).addText( "KNOX" )
+//        .gotoRoot();
+//    // System.out.println( "GATEWAY=" + xml.toString() );
+//    return xml;
+//  }
+//
+//  private static int findFreePort() throws IOException {
+//    ServerSocket socket = new ServerSocket(0);
+//    int port = socket.getLocalPort();
+//    socket.close();
+//    return port;
+//  }
+//
+//  public static InputStream getResourceStream( String resource ) throws IOException {
+//    return getResourceUrl( resource ).openStream();
+//  }
+//
+//  public static URL getResourceUrl( String resource ) {
+//    URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
+//    assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
+//    return url;
+//  }
+//
+//  public static String getResourceName( String resource ) {
+//    return getResourceBaseName() + resource;
+//  }
+//
+//  public static String getResourceBaseName() {
+//    return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
+//  }
+//
+//  //@Test
+//  public void waitForManualTesting() throws IOException {
+//    System.out.println( clusterUrl );
+//    System.in.read();
+//  }
+//
+//  @Test( timeout = MEDIUM_TIMEOUT )
+//  public void testAdminService() throws ClassNotFoundException {
+//    TestUtils.LOG_ENTER();
+//
+//    String username = "guest";
+//    String password = "guest-password";
+//    String serviceUrl =  clusterUrl + "/api/v1/version";
+//    given()
+//        //.log().all()
+//        .auth().preemptive().basic( username, password )
+//        .header("Accept", MediaType.APPLICATION_JSON)
+//        .expect()
+//        //.log().all()
+//        .statusCode(HttpStatus.SC_OK)
+//        //.body( is( "{\"hash\":\"unknown\",\"version\":\"unknown\"}" ) )
+//        .when().get( serviceUrl );
+//
+//    TestUtils.LOG_EXIT();
+//  }
 
 }
