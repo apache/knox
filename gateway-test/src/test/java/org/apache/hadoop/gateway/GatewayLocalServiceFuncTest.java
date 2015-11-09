@@ -56,7 +56,7 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long SHORT_TIMEOUT = 2000L;
   private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewayLocalServiceFuncTest.class;

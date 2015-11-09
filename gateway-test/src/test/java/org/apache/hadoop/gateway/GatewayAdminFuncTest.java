@@ -50,6 +50,7 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+@Ignore
 public class GatewayAdminFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;

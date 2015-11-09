@@ -67,7 +67,7 @@ import com.mycila.xmltool.XMLTag;
  */
 public class GatewayLdapGroupFuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long SHORT_TIMEOUT = 2000L;
   private static final long MEDIUM_TIMEOUT = 5 * 1000L;
 
   private static Class RESOURCE_BASE_CLASS = GatewayLdapGroupFuncTest.class;

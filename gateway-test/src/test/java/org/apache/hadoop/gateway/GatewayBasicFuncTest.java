@@ -83,7 +83,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 @Category( { FunctionalTests.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
+  private static final long SHORT_TIMEOUT = 2000L;
   private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
   private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
 

@@ -37,6 +37,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,10 +67,12 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+@Ignore
 public class GatewayAdminTopologyFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long LONG_TIMEOUT = 30 * 1000L;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
+  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewayAdminTopologyFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
