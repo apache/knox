@@ -50,6 +50,7 @@ import static org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil.pickF
 public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
+  private static final String[] EMPTY_STRING_ARRAY = new String[]{};
 
   private UrlRewriter rewriter;
   private String urlRuleName;
@@ -120,8 +121,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   }
 
   private String[] splitTargetUrl( Template url ) {
-    String s = url.toString();
-    return s.split( "\\?" );
+    if( url == null ) {
+      return EMPTY_STRING_ARRAY;
+    } else {
+      String s = url.toString();
+      return s.split( "\\?" );
+    }
   }
 
   @Override
