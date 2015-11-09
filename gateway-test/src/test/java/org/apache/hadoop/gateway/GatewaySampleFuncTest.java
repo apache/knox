@@ -210,10 +210,10 @@ public class GatewaySampleFuncTest {
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
     given()
-        //.log().all()
+        .log().all()
         .auth().preemptive().basic( username, password )
         .expect()
-        //.log().all()
+        .log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )

@@ -53,7 +53,7 @@ public class Shell {
       //setup.println( "set show-last-result false;" );
       Groovysh shell = new Groovysh();
       shell.execute( buffer.toString() );
-      shell.run();
+      //shell.run("");
     }
   }
 
