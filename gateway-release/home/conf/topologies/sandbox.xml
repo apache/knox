@@ -21,7 +21,7 @@
 
         <provider>
             <role>authentication</role>
-            <name>ShiroProvider</name>
+            <name>pac4j</name>
             <enabled>true</enabled>
             <param>
                 <!-- 

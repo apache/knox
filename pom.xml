@@ -58,6 +58,7 @@
         <module>gateway-provider-security-preauth</module>
         <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-shiro</module>
+        <module>gateway-provider-security-pac4j</module>
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
