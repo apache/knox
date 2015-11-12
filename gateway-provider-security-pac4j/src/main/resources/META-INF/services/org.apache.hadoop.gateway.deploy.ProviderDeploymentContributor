@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.org.apache.hadoop.gateway.pac4j.deploy.Pac4jFederationProviderContributor
+org.apache.hadoop.gateway.pac4j.deploy.Pac4jFederationProviderContributor
