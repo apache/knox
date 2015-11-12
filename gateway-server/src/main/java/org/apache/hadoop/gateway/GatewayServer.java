@@ -51,6 +51,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
@@ -66,6 +67,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.security.ProviderException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -263,57 +265,31 @@ public class GatewayServer {
       this.listener = new InternalTopologyListener();
   }
 
-//  private void setupSslExample() throws Exception {
-//    SslContextFactory sslContextFactory = new SslContextFactory( true );
-//    sslContextFactory.setCertAlias( "server" );
-//    sslContextFactory.setKeyStorePath( "target/test-classes/server-keystore.jks" );
-//    sslContextFactory.setKeyStorePassword( "password" );
-//    //sslContextFactory.setKeyManagerPassword( "password" );
-//    sslContextFactory.setTrustStore( "target/test-classes/server-truststore.jks" );
-//    sslContextFactory.setTrustStorePassword( "password" );
-//    sslContextFactory.setNeedClientAuth( false );
-//    sslContextFactory.setTrustAll( true );
-//    SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
-//
-//    ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
-//    context.setContextPath( "/" );
-//    ServletHolder servletHolder = new ServletHolder( new MockServlet() );
-//    context.addServlet( servletHolder, "/*" );
-//
-//    jetty = new Server();
-//    jetty.addConnector( sslConnector );
-//    jetty.setHandler( context );
-//    jetty.start();
-//  }
-
-
-  private synchronized void start() throws Exception {
-
-    // Create the global context handler.
-    contexts = new ContextHandlerCollection();
-     // A map to keep track of current deployments by cluster name.
-    deployments = new ConcurrentHashMap<String, WebAppContext>();
+  private static Connector createConnector( final GatewayConfig config ) throws IOException {
+    Connector connector;
 
     // Determine the socket address and check availability.
     InetSocketAddress address = config.getGatewayAddress();
     checkAddressAvailability( address );
 
-    // Start Jetty.
-    if (config.isSSLEnabled()) {
-      jetty = new Server();
-    }
-    else {
-      jetty = new Server(address);
-    }
     if (config.isSSLEnabled()) {
       SSLService ssl = services.getService("SSLService");
       String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
-      Connector connector = (Connector) ssl.buildSSlConnector(keystoreFileName);
-      connector.setHost(address.getHostName());
-      connector.setPort(address.getPort());
-      jetty.addConnector(connector);
+      connector = (Connector) ssl.buildSSlConnector(keystoreFileName);
+    } else {
+      connector = new SelectChannelConnector();
     }
+    connector.setHost( address.getHostName() );
+    connector.setPort( address.getPort() );
+    connector.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
+    connector.setRequestBufferSize( config.getHttpServerRequestBuffer() );
+    connector.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
+    connector.setResponseBufferSize( config.getHttpServerResponseBuffer() );
 
+    return connector;
+  }
+
+  private static HandlerCollection createHandlers( final GatewayConfig config, final ContextHandlerCollection contexts ) {
     HandlerCollection handlers = new HandlerCollection();
     RequestLogHandler logHandler = new RequestLogHandler();
     logHandler.setRequestLog( new AccessHandler() );
@@ -326,8 +302,20 @@ public class GatewayServer {
     correlationHandler.setHandler( traceHandler );
 
     handlers.setHandlers( new Handler[]{ correlationHandler, logHandler } );
-    jetty.setHandler( handlers );
+    return handlers;
+  }
 
+  private synchronized void start() throws Exception {
+
+    // Create the global context handler.
+    contexts = new ContextHandlerCollection();
+     // A map to keep track of current deployments by cluster name.
+    deployments = new ConcurrentHashMap<String, WebAppContext>();
+
+    // Start Jetty.
+    jetty = new Server();
+    jetty.addConnector( createConnector( config ) );
+    jetty.setHandler( createHandlers( config, contexts ) );
     jetty.setThreadPool( new QueuedThreadPool( config.getThreadPoolMax() ) );
 
     try {

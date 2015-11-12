@@ -10,6 +10,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-602] - JWT/SSO Cookie Based Federation Provider
     * [KNOX-604] - Expose configuration of HttpClient's max connections per route setting
     * [KNOX-611] - Expose configuration for Jetty's thread pool and connection queue
+    * [KNOX-624] - Expose configuration for Jetty's request and response buffer sizes
 
 ** Improvement
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.

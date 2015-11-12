@@ -114,6 +114,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
   private static final String HTTP_CLIENT_MAX_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.maxConnections";
   private static final String THREAD_POOL_MAX = GATEWAY_CONFIG_FILE_PREFIX + ".threadpool.max";
+  public static final String HTTP_SERVER_REQUEST_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + "httpserver.requestBuffer";
+  public static final String HTTP_SERVER_REQUEST_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + "httpserver.requestHeaderBuffer";
+  public static final String HTTP_SERVER_RESPONSE_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + "httpserver.responseBuffer";
+  public static final String HTTP_SERVER_RESPONSE_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + "httpserver.responseHeaderBuffer";
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -466,6 +470,30 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     if( i < 5 ) {
       i = 5;
     }
+    return i;
+  }
+
+  @Override
+  public int getHttpServerRequestBuffer() {
+    int i = getInt( HTTP_SERVER_REQUEST_BUFFER, 16 * 1024 );
+    return i;
+  }
+
+  @Override
+  public int getHttpServerRequestHeaderBuffer() {
+    int i = getInt( HTTP_SERVER_REQUEST_HEADER_BUFFER, 8 * 1024 );
+    return i;
+  }
+
+  @Override
+  public int getHttpServerResponseBuffer() {
+    int i = getInt( HTTP_SERVER_RESPONSE_BUFFER, 32 * 1024 );
+    return i;
+  }
+
+  @Override
+  public int getHttpServerResponseHeaderBuffer() {
+    int i = getInt( HTTP_SERVER_RESPONSE_HEADER_BUFFER, 8 * 1024 );
     return i;
   }
 
