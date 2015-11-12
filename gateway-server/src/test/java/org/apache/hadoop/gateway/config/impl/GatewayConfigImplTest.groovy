@@ -34,6 +34,11 @@ public class GatewayConfigImplTest {
     assertThat( config.getHttpServerResponseBuffer(), is( 32*1024 ) );
     assertThat( config.getHttpServerResponseHeaderBuffer(), is( 8*1024 ) );
 
+    assertThat( GatewayConfigImpl.HTTP_SERVER_REQUEST_BUFFER, is( "gateway.httpserver.requestBuffer" ) );
+    assertThat( GatewayConfigImpl.HTTP_SERVER_REQUEST_HEADER_BUFFER, is( "gateway.httpserver.requestHeaderBuffer" ) );
+    assertThat( GatewayConfigImpl.HTTP_SERVER_RESPONSE_BUFFER, is( "gateway.httpserver.responseBuffer" ) );
+    assertThat( GatewayConfigImpl.HTTP_SERVER_RESPONSE_HEADER_BUFFER, is( "gateway.httpserver.responseHeaderBuffer" ) );
+
     config.setInt( GatewayConfigImpl.HTTP_SERVER_REQUEST_BUFFER, 32*1024 );
     assertThat( config.getHttpServerRequestBuffer(), is( 32*1024 ) );
 
