@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 
 public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteFilterReader {
 
-  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascritp", "text/javascript", "*/javascript",
+  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascript", "text/javascript", "*/javascript",
       "application/x-javascript", "text/x-javascript", "*/x-javascript" } );
   private static final String SCRIPTTAG = "script";
   private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
