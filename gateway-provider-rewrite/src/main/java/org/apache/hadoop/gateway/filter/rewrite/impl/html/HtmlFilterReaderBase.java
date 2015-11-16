@@ -171,23 +171,25 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
   }
 
   private void processAttribute( Attribute attribute ) {
-    String inputValue = attribute.getValue();
-    String outputValue = inputValue;
-    try {
-      Level tag = stack.peek();
-      outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, null );
-      if( outputValue == null ) {
-        outputValue = inputValue;
-      }
-    } catch ( Exception e ) {
-      LOG.failedToFilterAttribute( attribute.getName(), e );
-    }
     writer.write( " " );
     writer.write( attribute.getName() );
-    writer.write( "=" );
-    writer.write( attribute.getQuoteChar() );
-    writer.write( outputValue );
-    writer.write( attribute.getQuoteChar() );
+    if(attribute.hasValue()) {
+      String inputValue = attribute.getValue();
+      String outputValue = inputValue;
+      try {
+        Level tag = stack.peek();
+        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, null );
+        if( outputValue == null ) {
+          outputValue = inputValue;
+        }
+      } catch ( Exception e ) {
+        LOG.failedToFilterAttribute( attribute.getName(), e );
+      }
+      writer.write( "=" );
+      writer.write( attribute.getQuoteChar() );
+      writer.write( outputValue );
+      writer.write( attribute.getQuoteChar() );
+    }
   }
 
   private void processText( Segment segment ) {

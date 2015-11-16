@@ -66,6 +66,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
@@ -203,6 +204,24 @@ public class HtmlFilterReaderBaseTest {
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
     //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
+  }
+
+  @Test
+  public void testSimpleBooleanAttribute() throws IOException, ParserConfigurationException {
+    String inputXml = "<root name/>";
+    StringReader inputReader = new StringReader(inputXml);
+    HtmlFilterReaderBase filterReader = new NoopXmlFilterReader(inputReader);
+    String outputHtml = new String(IOUtils.toCharArray(filterReader));
+    assertEquals(inputXml, outputHtml);
+  }
+
+  @Test
+  public void testComplexBooleanAttribute() throws IOException, ParserConfigurationException {
+    String inputXml = "<root boolean non-boolean='value' empty=''/>";
+    StringReader inputReader = new StringReader(inputXml);
+    HtmlFilterReaderBase filterReader = new NoopXmlFilterReader(inputReader);
+    String outputHtml = new String(IOUtils.toCharArray(filterReader));
+    assertEquals(inputXml, outputHtml);
   }
 
   @Test
