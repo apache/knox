@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-public class Pac4jIdentityAdapter implements Filter {
+public class Pac4jIdentityAdapter extends Pac4jSessionFilter {
   
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -51,9 +51,13 @@ public class Pac4jIdentityAdapter implements Filter {
 
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
       throws IOException, ServletException {
+    logger.info("-> Pac4jIdentityAdapter");
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+    loadSession(request, response);
+
     final J2EContext context = new J2EContext(request, response);
     final ProfileManager manager = new ProfileManager(context);
     final UserProfile profile = manager.get(true);

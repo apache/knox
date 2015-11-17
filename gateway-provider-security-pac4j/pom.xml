@@ -35,6 +35,11 @@
         </license>
     </licenses>
 
+    <properties>
+        <j2e-pac4j.version>1.2.1-SNAPSHOT</j2e-pac4j.version>
+        <pac4j.version>1.8.1-SNAPSHOT</pac4j.version>
+    </properties>
+
     <dependencies>
 
         <dependency>
@@ -63,13 +68,19 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>j2e-pac4j</artifactId>
-            <version>1.2.1-SNAPSHOT</version>
+            <version>${j2e-pac4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-oauth</artifactId>
-            <version>1.8.1-SNAPSHOT</version>
+            <artifactId>pac4j-http</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-cas</artifactId>
+            <version>${pac4j.version}</version>
         </dependency>
 
         <dependency>
