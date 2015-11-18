@@ -23,9 +23,7 @@ import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.context.Pac4jConstants;
-import org.pac4j.core.context.WebContext;
 import org.pac4j.core.profile.ProfileManager;
-import org.pac4j.core.util.CommonHelper;
 import org.pac4j.j2e.filter.CallbackFilter;
 import org.pac4j.j2e.filter.RequiresAuthenticationFilter;
 
@@ -71,10 +69,10 @@ public class Pac4jDispatcherFilter extends Pac4jSessionFilter {
     final J2EContext context = new J2EContext(request, response);
 
     logger.info("Incoming request: {}?{}", request.getRequestURI(), request.getQueryString());
+    // restore the web session from the cookie
+    loadSession(request, response);
     // it's a callback from an identity provider
     if (request.getParameter(Clients.DEFAULT_CLIENT_NAME_PARAMETER) != null) {
-      // restore the web session from the cookie
-      loadSession(request, response);
       // simulate CAS authentication
       final CasProfile profile = new CasProfile();
       profile.setId("jleleu");
@@ -83,6 +81,8 @@ public class Pac4jDispatcherFilter extends Pac4jSessionFilter {
       final String requestedUrl = (String) context.getSessionAttribute(Pac4jConstants.REQUESTED_URL);
       logger.debug("requestedUrl: {}", requestedUrl);
       context.setSessionAttribute(Pac4jConstants.REQUESTED_URL, null);
+      // save the web session into a cookie
+      saveSession(request, response);
       response.sendRedirect("https://127.0.0.1:8443/gateway/idp/knoxsso/api/v1?originalUrl=https://127.0.0.1:8443/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS");
       // apply CallbackFilter
       //callbackFilter.doFilter(servletRequest, servletResponse, filterChain);
@@ -90,9 +90,9 @@ public class Pac4jDispatcherFilter extends Pac4jSessionFilter {
       // otherwise just apply security and requires authentication
       // apply RequiresAuthenticationFilter
       requiresAuthenticationFilter.doFilter(servletRequest, servletResponse, filterChain);
+      // save the web session into a cookie
+      saveSession(request, response);
     }
-    // save the web session into a cookie
-    saveSession(request, response);
   }
 
   @Override
