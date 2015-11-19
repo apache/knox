@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 
 public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteFilterReader {
 
-  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascritp", "text/javascript", "*/javascript",
+  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascript", "text/javascript", "*/javascript",
       "application/x-javascript", "text/x-javascript", "*/x-javascript" } );
   private static final String SCRIPTTAG = "script";
   private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
@@ -171,23 +171,25 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
   }
 
   private void processAttribute( Attribute attribute ) {
-    String inputValue = attribute.getValue();
-    String outputValue = inputValue;
-    try {
-      Level tag = stack.peek();
-      outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, null );
-      if( outputValue == null ) {
-        outputValue = inputValue;
-      }
-    } catch ( Exception e ) {
-      LOG.failedToFilterAttribute( attribute.getName(), e );
-    }
     writer.write( " " );
     writer.write( attribute.getName() );
-    writer.write( "=" );
-    writer.write( attribute.getQuoteChar() );
-    writer.write( outputValue );
-    writer.write( attribute.getQuoteChar() );
+    if(attribute.hasValue()) {
+      String inputValue = attribute.getValue();
+      String outputValue = inputValue;
+      try {
+        Level tag = stack.peek();
+        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, null );
+        if( outputValue == null ) {
+          outputValue = inputValue;
+        }
+      } catch ( Exception e ) {
+        LOG.failedToFilterAttribute( attribute.getName(), e );
+      }
+      writer.write( "=" );
+      writer.write( attribute.getQuoteChar() );
+      writer.write( outputValue );
+      writer.write( attribute.getQuoteChar() );
+    }
   }
 
   private void processText( Segment segment ) {

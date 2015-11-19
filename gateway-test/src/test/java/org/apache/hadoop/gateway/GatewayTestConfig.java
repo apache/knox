@@ -268,4 +268,25 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getThreadPoolMax() {
     return 16;
   }
+
+  @Override
+  public int getHttpServerRequestBuffer() {
+    return 16*1024;
+  }
+
+  @Override
+  public int getHttpServerRequestHeaderBuffer() {
+    return 8*1024;
+  }
+
+  @Override
+  public int getHttpServerResponseBuffer() {
+    return 32*1024;
+  }
+
+  @Override
+  public int getHttpServerResponseHeaderBuffer() {
+    return 8*1024;
+  }
+
 }

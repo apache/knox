@@ -24,4 +24,8 @@ public class DeploymentException extends RuntimeException {
     super(message, e);
   }
 
+  public DeploymentException(String message) {
+    super(message);
+  }
+
 }

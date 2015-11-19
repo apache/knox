@@ -109,8 +109,8 @@ public class DeploymentFactoryFuncTest {
     topology.addService( service );
 
     Provider provider = new Provider();
-    provider.setRole( "authentication" );
-    provider.setName( "generic" );
+    provider.setRole( "federation" );
+    provider.setName( "HeaderPreAuth" );
     provider.setEnabled( true );
     Param param = new Param();
     param.setName( "filter" );
@@ -132,11 +132,13 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/name", equalTo( "XForwardedHeaderFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.hadoop.gateway.filter.XForwardedHeaderFilter" ) ) );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/name", equalTo( "generic" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.opensource.ExistingFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/name", equalTo( "test-param-name" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "test-param-value" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "federation" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/name", equalTo( "HeaderPreAuth" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.hadoop.gateway.preauth.filter.HeaderPreAuthFederationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/name", equalTo( "filter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "org.opensource.ExistingFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[2]/name", equalTo( "test-param-name" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[2]/value", equalTo( "test-param-value" ) ) );
     LOG_EXIT();
   }
 
