@@ -191,6 +191,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       } else {
          entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse(contentType));
       }
+      GatewayConfig config =
+         (GatewayConfig)request.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
+      if( config.isHadoopKerberosSecured() ) {
+         entity = new PartiallyRepeatableHttpEntity( entity, config.getHttpServerRequestBuffer() );
+      }
 
       return entity;
    }
