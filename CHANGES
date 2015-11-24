@@ -10,6 +10,7 @@ Release Notes - Apache Knox - Version 0.6.1
 
 ** Bug
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
+    * [KNOX-633] - Upgrade apache commons-collections
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0
