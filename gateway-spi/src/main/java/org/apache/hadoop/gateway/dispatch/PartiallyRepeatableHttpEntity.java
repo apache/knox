@@ -56,7 +56,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
 
   @Override
   public boolean isRepeatable() {
-    return true;
+    return finalStream == null;
   }
 
   @Override
@@ -83,7 +83,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
       return wrappedEntity.getContent();
     // Else if the buffer has overflowed
     } else if( finalStream != null ) {
-      throw new IOException( "TODO - Existing stream already past replay buffer capacity" );
+      throw new IOException( "Existing stream already past replay buffer capacity." );
     } else {
       if( wrappedStream == null ) {
          wrappedStream = wrappedEntity.getContent();
@@ -111,7 +111,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
     public int read() throws IOException {
       int b;
       if( finalStream != null && finalStream != this ) {
-        throw new IOException( "TODO - Replay stream taken over by another consumer." );
+        throw new IOException( "Replay stream taken over by another consumer." );
       }
       // If we can read from the buffer do so.
       if( replayReadIndex < replayWriteIndex ) {
@@ -134,7 +134,7 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
     public int read( byte buffer[], int offset, int limit ) throws IOException {
       int count = -1;
       if( finalStream != null && finalStream != this ) {
-        throw new IOException( "TODO - Replay stream taken over by another consumer." );
+        throw new IOException( "Replay stream taken over by another consumer." );
       }
       // If we can read from the buffer do so.
       if( replayReadIndex < replayWriteIndex ) {

@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -91,11 +92,14 @@ public class DefaultDispatchTest {
   public void testCallToSecureClusterWithDelegationToken() throws URISyntaxException, IOException {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
     DefaultDispatch defaultDispatch = new DefaultDispatch();
+    ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
+    EasyMock.expect( servletContext.getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE ) ).andReturn( null ).anyTimes();
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect(inboundRequest.getQueryString()).andReturn( "delegation=123").anyTimes();
     EasyMock.expect(inboundRequest.getInputStream()).andReturn( inputStream).anyTimes();
-    EasyMock.replay( inboundRequest );
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn( servletContext ).anyTimes();
+    EasyMock.replay( servletContext, inboundRequest );
     HttpEntity httpEntity = defaultDispatch.createRequestEntity(inboundRequest);
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
     assertFalse("buffering in the presence of delegation token", 
