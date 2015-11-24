@@ -79,7 +79,7 @@
 
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-cas</artifactId>
+            <artifactId>pac4j-config</artifactId>
             <version>${pac4j.version}</version>
         </dependency>
 

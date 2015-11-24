@@ -17,11 +17,11 @@
  */
 package org.apache.hadoop.gateway.pac4j.filter;
 
-import org.apache.hadoop.gateway.audit.api.AuditService;
-import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
-import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.*;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.pac4j.core.config.ConfigSingleton;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
@@ -34,13 +34,12 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-public class Pac4jIdentityAdapter extends Pac4jSessionFilter {
+public class Pac4jIdentityAdapter implements Filter {
   
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
-  
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -51,19 +50,19 @@ public class Pac4jIdentityAdapter extends Pac4jSessionFilter {
 
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
       throws IOException, ServletException {
-    logger.info("-> Pac4jIdentityAdapter");
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-
-    loadSession(request, response);
-
-    final J2EContext context = new J2EContext(request, response);
+    final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
     final ProfileManager manager = new ProfileManager(context);
     final UserProfile profile = manager.get(true);
-    PrimaryPrincipal pp = new PrimaryPrincipal(profile.getId());
+    final String id = profile.getId();
+    PrimaryPrincipal pp = new PrimaryPrincipal(id);
     Subject subject = new Subject();
     subject.getPrincipals().add(pp);
+    auditService.getContext().setUsername(id);
+    String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+    auditor.audit(Action.AUTHENTICATION, sourceUri, ResourceType.URI, ActionOutcome.SUCCESS);
     
     doAs(request, response, chain, subject);
   }
