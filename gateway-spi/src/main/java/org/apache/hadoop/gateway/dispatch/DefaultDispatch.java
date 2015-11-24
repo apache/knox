@@ -213,7 +213,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    protected HttpResponse executeKerberosDispatch(HttpUriRequest outboundRequest,
                                                   HttpClient client) throws IOException {
       HttpResponse inboundResponse;
-      outboundRequest.removeHeaders(COOKIE);
       String appCookie = appCookieManager.getCachedAppCookie();
       if (appCookie != null) {
          outboundRequest.addHeader(new BasicHeader(COOKIE, appCookie));
