@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.config.Configure;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -64,6 +65,8 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   private Set<String> outboundResponseExcludeHeaders;
 
+  private int replayBufferSize = -1;
+
   @Override
   public void init() {
     outboundResponseExcludeHeaders = new HashSet<>();
@@ -74,6 +77,15 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   @Override
   public void destroy() {
 
+  }
+
+  protected int getReplayBufferSize() {
+    return replayBufferSize;
+  }
+
+  @Configure
+  protected void setReplayBufferSize(int size) {
+    replayBufferSize = size;
   }
 
   protected void executeRequest(
@@ -194,7 +206,18 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       GatewayConfig config =
          (GatewayConfig)request.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
       if( config != null && config.isHadoopKerberosSecured() ) {
-         entity = new PartiallyRepeatableHttpEntity( entity, config.getHttpServerRequestBuffer() );
+        //Check if delegation token is supplied in the request
+        boolean delegationTokenPresent = false;
+        String queryString = request.getQueryString();
+        if (queryString != null) {
+          delegationTokenPresent = queryString.startsWith("delegation=") || queryString.contains("&delegation=");
+        }
+        if (replayBufferSize < 0) {
+          replayBufferSize = config.getHttpServerRequestBuffer();
+        }
+        if (!delegationTokenPresent) {
+          entity = new PartiallyRepeatableHttpEntity(entity, replayBufferSize);
+        }
       }
 
       return entity;
@@ -203,7 +226,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    @Override
    public void doGet(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException, URISyntaxException {
-      HttpGet method = new HttpGet(url);
+     HttpGet method = new HttpGet(url);
       // https://issues.apache.org/jira/browse/KNOX-107 - Service URLs not rewritten for WebHDFS GET redirects
       method.getParams().setBooleanParameter("http.protocol.handle-redirects", false);
       copyRequestHeaderFields(method, request);
