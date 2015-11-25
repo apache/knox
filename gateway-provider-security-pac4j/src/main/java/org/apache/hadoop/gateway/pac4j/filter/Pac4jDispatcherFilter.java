@@ -81,7 +81,9 @@ public class Pac4jDispatcherFilter implements Filter {
     final String clientNameParameter = filterConfig.getInitParameter(Pac4jConstants.CLIENT_NAME);
     if (TEST_BASIC_AUTH.equalsIgnoreCase(clientNameParameter)) {
       // test configuration
-      config = new Config(authenticationProviderUrl, new IndirectBasicAuthClient(new SimpleTestUsernamePasswordAuthenticator()));
+      final IndirectBasicAuthClient indirectBasicAuthClient = new IndirectBasicAuthClient(new SimpleTestUsernamePasswordAuthenticator());
+      indirectBasicAuthClient.setRealmName("Knox TEST");
+      config = new Config(authenticationProviderUrl, indirectBasicAuthClient);
       clientName = "IndirectBasicAuthClient";
     } else {
       // get clients from the init parameters

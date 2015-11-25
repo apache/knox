@@ -15,26 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.service.knoxsso;
+package org.apache.hadoop.gateway.util;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
-public class WebSSOResourceTest {
+public class UrlsTest {
   @Test
   public void testDomainNameCreation() throws Exception {
-    WebSSOResource resource = new WebSSOResource();
     // determine parent domain and wildcard the cookie domain with a dot prefix
-    Assert.assertTrue(resource.getDomainName("http://www.local.com").equals(".local.com"));
-    Assert.assertTrue(resource.getDomainName("http://ljm.local.com").equals(".local.com"));
-    Assert.assertTrue(resource.getDomainName("http://local.home").equals(".local.home"));
-    Assert.assertTrue(resource.getDomainName("http://localhost").equals(".localhost")); // chrome may not allow this
-    Assert.assertTrue(resource.getDomainName("http://local.home.test.com").equals(".home.test.com"));
+    Assert.assertTrue(Urls.getDomainName("http://www.local.com").equals(".local.com"));
+    Assert.assertTrue(Urls.getDomainName("http://ljm.local.com").equals(".local.com"));
+    Assert.assertTrue(Urls.getDomainName("http://local.home").equals(".local.home"));
+    Assert.assertTrue(Urls.getDomainName("http://localhost").equals(".localhost")); // chrome may not allow this
+    Assert.assertTrue(Urls.getDomainName("http://local.home.test.com").equals(".home.test.com"));
     
     // ip addresses can not be wildcarded - may be a completely different domain
-    Assert.assertTrue(resource.getDomainName("http://127.0.0.1").equals("127.0.0.1"));
+    Assert.assertTrue(Urls.getDomainName("http://127.0.0.1").equals("127.0.0.1"));
   }
 }
