@@ -40,6 +40,7 @@ import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWT;
+import org.apache.hadoop.gateway.util.RegExUtils;
 import org.apache.hadoop.gateway.util.Urls;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -50,6 +51,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
+  private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
@@ -58,6 +60,7 @@ public class WebSSOResource {
   private boolean secureOnly = true;
   private int maxAge = -1;
   private long tokenTTL = 30000l;
+  private String whitelist = null;
 
   @Context 
   private HttpServletRequest request;
@@ -87,6 +90,12 @@ public class WebSSOResource {
       catch (NumberFormatException nfe) {
         log.invalidMaxAgeEncountered(age);
       }
+    }
+
+    whitelist = context.getInitParameter(SSO_COOKIE_TOKEN_WHITELIST_PARAM);
+    if (whitelist == null) {
+      // default to local/relative targets
+      whitelist = "^/.*$";
     }
 
     String ttl = context.getInitParameter(SSO_COOKIE_TOKEN_TTL_PARAM);
@@ -125,6 +134,12 @@ public class WebSSOResource {
       if (original == null) {
         log.originalURLNotFound();
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
+      }
+      boolean validRedirect = RegExUtils.checkWhitelist(whitelist, original);
+      if (!validRedirect) {
+        log.whiteListMatchFail(original, whitelist);
+        throw new WebApplicationException("Original URL not valid according to the configured whitelist.",
+            Response.Status.BAD_REQUEST);
       }
     }
 
