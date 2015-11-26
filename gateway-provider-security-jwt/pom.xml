@@ -52,11 +52,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.thetransactioncompany</groupId>
-            <artifactId>cors-filter</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>

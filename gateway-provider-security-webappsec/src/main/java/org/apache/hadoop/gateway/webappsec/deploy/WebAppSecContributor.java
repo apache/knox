@@ -36,6 +36,9 @@ public class WebAppSecContributor extends
   private static final String CSRF_SUFFIX = "_CSRF";
   private static final String CSRF_FILTER_CLASSNAME = "org.apache.hadoop.gateway.webappsec.filter.CSRFPreventionFilter";
   private static final String CSRF_ENABLED = "csrf.enabled";
+  private static final String CORS_SUFFIX = "_CORS";
+  private static final String CORS_FILTER_CLASSNAME = "com.thetransactioncompany.cors.CORSFilter";
+  private static final String CORS_ENABLED = "cors.enabled";
 
   @Override
   public String getRole() {
@@ -68,9 +71,18 @@ public class WebAppSecContributor extends
       for(Entry<String, String> entry : providerParams.entrySet()) {
         params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
       }
+
+      // CORS support
+      String corsEnabled = map.get(CORS_ENABLED);
+      if ( corsEnabled != null && corsEnabled.equals("true")) {
+        resource.addFilter().name( getName() + CORS_SUFFIX ).role( getRole() ).impl( CORS_FILTER_CLASSNAME ).params( params );
+      }
+
+      // CRSF
       if ( csrfEnabled != null && csrfEnabled.equals("true")) {
         resource.addFilter().name( getName() + CSRF_SUFFIX ).role( getRole() ).impl( CSRF_FILTER_CLASSNAME ).params( params );
       }
+
     }
   }
 }
