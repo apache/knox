@@ -21,7 +21,9 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.pac4j.Pac4jMessages;
 import org.apache.hadoop.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
+import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.pac4j.config.client.ConfigPropertiesFactory;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
@@ -60,12 +62,27 @@ public class Pac4jDispatcherFilter implements Filter {
   public void init( FilterConfig filterConfig ) throws ServletException {
     // JWT service
     final ServletContext context = filterConfig.getServletContext();
-    JWTokenAuthority authority = null;
+    CryptoService cryptoService = null;
+    AliasService aliasService = null;
+    String clusterName = null;
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      clusterName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
       if (services != null) {
-        authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+        cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+        aliasService = (AliasService) services.getService(GatewayServices.ALIAS_SERVICE);
       }
+    }
+    // crypto service, alias service and cluster name are mandatory
+    if (cryptoService == null || aliasService == null || clusterName == null) {
+      log.cryptoServiceAndAliasServiceAndClusterNameRequired();
+      throw new ServletException("The crypto service, alias service and cluster name are required.");
+    }
+    try {
+      aliasService.getPasswordFromAliasForCluster(clusterName, KnoxSessionStore.PAC4J_PASSWORD, true);
+    } catch (AliasServiceException e) {
+      log.unableToGenerateAPasswordForEncryption(e);
+      throw new ServletException("Unable to generate a password for encryption.");
     }
 
     // url to SSO authentication provider
@@ -112,7 +129,7 @@ public class Pac4jDispatcherFilter implements Filter {
     requiresAuthenticationFilter.setClientName(clientName);
     requiresAuthenticationFilter.setConfig(config);
 
-    config.setSessionStore(new KnoxSessionStore(authority));
+    config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName));
     ConfigSingleton.setConfig(config);
   }
 

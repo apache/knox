@@ -29,4 +29,10 @@ public interface Pac4jMessages {
 
   @Message( level = MessageLevel.ERROR, text = "At least one pac4j client must be defined")
   public void atLeastOnePac4jClientMustBeDefined();
+
+  @Message( level = MessageLevel.ERROR, text = "Crypto service, alias service and cluster name required")
+  public void cryptoServiceAndAliasServiceAndClusterNameRequired();
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to generate a password for encryption")
+  public void unableToGenerateAPasswordForEncryption(Exception e);
 }
