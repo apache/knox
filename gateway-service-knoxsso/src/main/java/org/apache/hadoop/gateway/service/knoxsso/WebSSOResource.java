@@ -54,7 +54,7 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
   // default for the whitelist - open up for development - relative paths and localhost only
-  private static final String DEFAULT_WHITELIST = "^/.*$;^https?://localhost:\\d{0,9}/.*$";
+  private static final String DEFAULT_WHITELIST = "^/.*$;^https?://(localhost|127.0.0.1|0:0:0:0:0:0:0:1|::1):\\d{0,9}/.*$";
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
   private boolean secureOnly = true;

@@ -25,6 +25,8 @@ import org.pac4j.core.config.ConfigSingleton;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.servlet.*;
@@ -35,7 +37,9 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 public class Pac4jIdentityAdapter implements Filter {
-  
+
+  private final static Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
+
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -56,6 +60,7 @@ public class Pac4jIdentityAdapter implements Filter {
     final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
     final ProfileManager manager = new ProfileManager(context);
     final UserProfile profile = manager.get(true);
+    logger.debug("User authenticated as: {}", profile);
     final String id = profile.getId();
     PrimaryPrincipal pp = new PrimaryPrincipal(id);
     Subject subject = new Subject();
