@@ -32,7 +32,6 @@ import java.util.Map.Entry;
 public class SSOCookieFederationContributor extends ProviderDeploymentContributorBase {
 
   private static final String FILTER_CLASSNAME = "org.apache.hadoop.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter";
-  private static final String CORS_FILTER_CLASSNAME = "com.thetransactioncompany.cors.CORSFilter";
 
   @Override
   public String getRole() {
@@ -58,7 +57,6 @@ public class SSOCookieFederationContributor extends ProviderDeploymentContributo
     for(Entry<String, String> entry : providerParams.entrySet()) {
       params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
     }
-    resource.addFilter().name( "CORS" ).role( getRole() ).impl( CORS_FILTER_CLASSNAME ).params( params );
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }
 }

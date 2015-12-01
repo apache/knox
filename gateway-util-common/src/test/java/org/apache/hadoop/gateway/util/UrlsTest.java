@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import org.apache.hadoop.gateway.util.RegExUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,5 +33,48 @@ public class UrlsTest {
     
     // ip addresses can not be wildcarded - may be a completely different domain
     Assert.assertTrue(Urls.getDomainName("http://127.0.0.1").equals("127.0.0.1"));
+  }
+
+  @Test
+  public void testWhitelistMatching() throws Exception {
+    String whitelist = "^https?://.*example.com:8080/.*$;" +
+        "^https?://.*example.com/.*$;" +
+        "^https?://.*example2.com:\\d{0,9}/.*$;" +
+        "^https://.*example3.com:\\d{0,9}/.*$;" +
+        "^https?://localhost:\\d{0,9}/.*$;^/.*$";
+
+    // match on explicit hostname/domain and port
+    Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example.com:8080/"));
+    // match on non-required port
+    Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example.com/"));
+    // match on required but any port
+    Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example2.com:1234/"));
+    // fail on missing port
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example2.com/"));
+    // fail on invalid port
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example.com:8081/"));
+    // fail on alphanumeric port
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example.com:A080/"));
+    // fail on invalid hostname/domain
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example.net:8080/"));
+    // fail on required port
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example2.com/"));
+    // fail on required https
+    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist, 
+        "http://host.example3.com/"));
+    // match on localhost and port
+    Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist, 
+        "http://localhost:8080/"));
+    // match on local/relative path
+    Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist, 
+        "/local/resource/"));
   }
 }

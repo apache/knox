@@ -59,4 +59,8 @@ public interface KnoxSSOMessages {
 
   @Message( level = MessageLevel.INFO, text = "The cookie max age is being set to: {0}.")
   void setMaxAge(String age);
+
+  @Message( level = MessageLevel.ERROR, text = "The original URL: {0} for redirecting back after authentication is " +
+  		"not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
+  void whiteListMatchFail(String original, String whitelist);
 }

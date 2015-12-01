@@ -35,6 +35,10 @@
   <dependencies>
 	  <dependency>
 	    <groupId>${gateway-group}</groupId>
+	    <artifactId>gateway-util-common</artifactId>
+	  </dependency>
+	  <dependency>
+	    <groupId>${gateway-group}</groupId>
 	    <artifactId>gateway-spi</artifactId>
 	  </dependency>
 	  <dependency>
