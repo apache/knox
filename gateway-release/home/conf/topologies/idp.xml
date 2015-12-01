@@ -27,9 +27,13 @@
                 <name>sso.authentication.provider.url</name>
                 <value>https://127.0.0.1:8443/gateway/idp/api/v1/websso</value>
             </param>
-            <param>
+            <!--param>
                 <name>clientName</name>
                 <value>testBasicAuth</value>
+            </param-->
+            <param>
+                <name>cas.loginUrl</name>
+                <value>https://casserverpac4j.herokuapp.com/login</value>
             </param>
         </provider>
 

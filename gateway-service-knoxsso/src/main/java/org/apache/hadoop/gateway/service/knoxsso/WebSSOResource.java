@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.service.knoxsso;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.annotation.PostConstruct;
@@ -160,7 +158,7 @@ public class WebSSOResource {
     Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
     c.setPath("/");
     try {
-      String domain = getDomainName(original);
+      String domain = Urls.getDomainName(original);
       c.setDomain(domain);
       c.setHttpOnly(true);
       if (secureOnly) {
@@ -183,26 +181,6 @@ public class WebSSOResource {
     c.setMaxAge(0);
     c.setPath(RESOURCE_PATH);
     response.addCookie(c);
-  }
-
-  String getDomainName(String url) throws URISyntaxException {
-    URI uri = new URI(url);
-    String domain = uri.getHost();
-    // if accessing via ip address do not wildcard the cookie domain
-    if (Urls.isIp(domain)) {
-      return domain;
-    }
-    if (Urls.dotOccurrences(domain) < 2) {
-      if (!domain.startsWith(".")) {
-        domain = "." + domain;
-      }
-      return domain;
-    }
-    int idx = domain.indexOf('.');
-    if (idx == -1) {
-      idx = 0;
-    }
-    return domain.substring(idx);
   }
 
   private String getCookieValue(HttpServletRequest request, String name) {

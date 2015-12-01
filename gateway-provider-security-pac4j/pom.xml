@@ -81,6 +81,12 @@
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-config</artifactId>
             <version>${pac4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

@@ -64,7 +64,7 @@ public class Pac4jFederationProviderContributor extends ProviderDeploymentContri
     }
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+      params.add( resource.createFilterParam().name( entry.getKey() ).value( entry.getValue() ) );
     }
     resource.addFilter().name( getName() ).role( getRole() ).impl( DISPATCHER_FILTER_CLASSNAME ).params( params );
     resource.addFilter().name( getName() ).role( getRole() ).impl( IDENTITY_ADAPTER_CLASSNAME ).params( params );

@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,5 +67,25 @@ public class Urls {
 
   public static int dotOccurrences(String domain) {
     return domain.length() - domain.replace(".", "").length();
+  }
+
+  public static String getDomainName(String url) throws URISyntaxException {
+    URI uri = new URI(url);
+    String domain = uri.getHost();
+    // if accessing via ip address do not wildcard the cookie domain
+    if (isIp(domain)) {
+      return domain;
+    }
+    if (dotOccurrences(domain) < 2) {
+      if (!domain.startsWith(".")) {
+        domain = "." + domain;
+      }
+      return domain;
+    }
+    int idx = domain.indexOf('.');
+    if (idx == -1) {
+      idx = 0;
+    }
+    return domain.substring(idx);
   }
 }
