@@ -21,6 +21,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.util.HttpUtils;
 
 import javax.servlet.ServletInputStream;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +43,7 @@ import java.util.Map;
 
 public class IdentityAsserterHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-  private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.class );
+private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
@@ -51,6 +53,11 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
     super(request);
     username = principal;
+  }
+
+  @Override
+  public Principal getUserPrincipal() {
+    return new PrimaryPrincipal(username);
   }
 
   @Override
