@@ -30,6 +30,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
+/**
+ * Specific session store where data are saved into cookies (and not in memory).
+ * Each data is encrypted and base64 encoded before being saved as a cookie (for security reasons).
+ *
+ * @author Jerome Leleu
+ * @since 0.7.0
+ */
 public class KnoxSessionStore implements SessionStore {
 
     private final static Logger logger = LoggerFactory.getLogger(KnoxSessionStore.class);

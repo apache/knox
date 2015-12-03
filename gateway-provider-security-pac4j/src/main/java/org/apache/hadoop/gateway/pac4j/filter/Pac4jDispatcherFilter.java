@@ -46,6 +46,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * <p>This is the main filter for the pac4j provider. The pac4j provider module heavily relies on the j2e-pac4j library (https://github.com/pac4j/j2e-pac4j).</p>
+ * <p>This filter dispatches the HTTP calls between the j2e-pac4j filters:</p>
+ * <ul>
+ *     <li>to the {@link CallbackFilter} if the <code>client_name</code> parameter exists: it finishes the authentication process</li>
+ *     <li>to the {@link RequiresAuthenticationFilter} otherwise: it starts the authentication process (redirection to the identity provider) if the user is not authenticated</li>
+ * </ul>
+ * <p>It uses the {@link KnoxSessionStore} to manage session data.</p>
+ * <p>The mechanism used for the authentication is defined via servlet parameters.</p>
+ *
+ * @author Jerome Leleu
+ * @since 0.7.0
+ */
 public class Pac4jDispatcherFilter implements Filter {
 
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);

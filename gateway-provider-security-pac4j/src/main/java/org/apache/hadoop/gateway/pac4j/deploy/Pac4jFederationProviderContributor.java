@@ -29,6 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * Descriptor of the pac4j provider. This module must be deployed for the KnoxSSO service.
+ *
+ * @author Jerome Leleu
+ * @since 0.7.0
+ */
 public class Pac4jFederationProviderContributor extends ProviderDeploymentContributorBase {
 
   private static final String ROLE = "federation";

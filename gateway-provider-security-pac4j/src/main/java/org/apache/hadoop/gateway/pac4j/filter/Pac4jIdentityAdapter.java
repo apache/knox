@@ -20,11 +20,14 @@ package org.apache.hadoop.gateway.pac4j.filter;
 import org.apache.hadoop.gateway.audit.api.*;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
+import org.apache.hadoop.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.pac4j.core.config.ConfigSingleton;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.j2e.filter.CallbackFilter;
+import org.pac4j.j2e.filter.RequiresAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,12 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
+/**
+ * <p>This filter retrieves the authenticated user saved by the pac4j provider and injects it into the J2E HTTP request.</p>
+ *
+ * @author Jerome Leleu
+ * @since 0.7.0
+ */
 public class Pac4jIdentityAdapter implements Filter {
 
   private final static Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);

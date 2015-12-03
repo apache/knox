@@ -21,6 +21,12 @@ import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 
+/**
+ * Logging messages for the pac4j provider.
+ *
+ * @author Jerome Leleu
+ * @since 0.7.0
+ */
 @Messages(logger="org.apache.hadoop.gateway.pac4j")
 public interface Pac4jMessages {
 
