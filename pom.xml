@@ -26,7 +26,7 @@
     </parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.7.0</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -94,7 +94,7 @@
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
-        <gateway-version>0.7.0-SNAPSHOT</gateway-version>
+        <gateway-version>0.7.0</gateway-version>
         <gateway-group>org.apache.knox</gateway-group>
         <hadoop-version>2.2.0</hadoop-version>
         <jetty-version>8.1.14.v20131031</jetty-version>
