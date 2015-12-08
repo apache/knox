@@ -24,7 +24,6 @@ import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
-
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
@@ -294,7 +293,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
           if( name.toLowerCase().startsWith( "xmlns" ) ) {
             int colon = name.indexOf( ":", 5 );
             String prefix;
-            if( colon == 0 ) {
+            if( colon <= 0 ) {
               prefix = "";
             } else {
               prefix = name.substring( colon );
