@@ -23,7 +23,7 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.util.KnoxCLI;;
+import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
 import org.hamcrest.Matchers;
