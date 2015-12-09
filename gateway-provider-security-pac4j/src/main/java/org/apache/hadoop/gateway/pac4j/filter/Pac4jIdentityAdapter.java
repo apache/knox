@@ -43,7 +43,7 @@ import java.security.PrivilegedExceptionAction;
  * <p>This filter retrieves the authenticated user saved by the pac4j provider and injects it into the J2E HTTP request.</p>
  *
  * @author Jerome Leleu
- * @since 0.7.0
+ * @since 0.8.0
  */
 public class Pac4jIdentityAdapter implements Filter {
 

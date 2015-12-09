@@ -35,7 +35,7 @@ import java.io.Serializable;
  * Each data is encrypted and base64 encoded before being saved as a cookie (for security reasons).
  *
  * @author Jerome Leleu
- * @since 0.7.0
+ * @since 0.8.0
  */
 public class KnoxSessionStore implements SessionStore {
 

@@ -33,7 +33,7 @@ import java.util.Map.Entry;
  * Descriptor of the pac4j provider. This module must be deployed for the KnoxSSO service.
  *
  * @author Jerome Leleu
- * @since 0.7.0
+ * @since 0.8.0
  */
 public class Pac4jFederationProviderContributor extends ProviderDeploymentContributorBase {
 

@@ -24,7 +24,7 @@ import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.CryptoService;
-import org.pac4j.config.client.ConfigPropertiesFactory;
+import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
@@ -57,7 +57,7 @@ import java.util.Map;
  * <p>The mechanism used for the authentication is defined via servlet parameters.</p>
  *
  * @author Jerome Leleu
- * @since 0.7.0
+ * @since 0.8.0
  */
 public class Pac4jDispatcherFilter implements Filter {
 
@@ -123,8 +123,8 @@ public class Pac4jDispatcherFilter implements Filter {
         final String key = names.nextElement();
         properties.put(key, filterConfig.getInitParameter(key));
       }
-      final ConfigPropertiesFactory configPropertiesFactory = new ConfigPropertiesFactory(authenticationProviderUrl, properties);
-      config = configPropertiesFactory.build();
+      final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(authenticationProviderUrl, properties);
+      config = propertiesConfigFactory.build();
       final List<Client> clients = config.getClients().getClients();
       if (clients == null || clients.size() ==0) {
         log.atLeastOnePac4jClientMustBeDefined();
