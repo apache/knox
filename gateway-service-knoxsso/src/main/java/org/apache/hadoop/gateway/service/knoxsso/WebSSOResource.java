@@ -50,6 +50,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 public class WebSSOResource {
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
+  private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
@@ -63,6 +64,7 @@ public class WebSSOResource {
   private int maxAge = -1;
   private long tokenTTL = 30000l;
   private String whitelist = null;
+  private String domainSuffix = null;
 
   @Context 
   private HttpServletRequest request;
@@ -93,6 +95,8 @@ public class WebSSOResource {
         log.invalidMaxAgeEncountered(age);
       }
     }
+
+    domainSuffix = context.getInitParameter(SSO_COOKIE_DOMAIN_SUFFIX_PARAM);
 
     whitelist = context.getInitParameter(SSO_COOKIE_TOKEN_WHITELIST_PARAM);
     if (whitelist == null) {
@@ -177,8 +181,10 @@ public class WebSSOResource {
     Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
     c.setPath("/");
     try {
-      String domain = getDomainName(original);
-      c.setDomain(domain);
+      String domain = getDomainName(original, domainSuffix);
+      if (domain != null) {
+        c.setDomain(domain);
+      }
       c.setHttpOnly(true);
       if (secureOnly) {
         c.setSecure(true);
@@ -202,19 +208,31 @@ public class WebSSOResource {
     response.addCookie(c);
   }
 
-  String getDomainName(String url) throws URISyntaxException {
+  String getDomainName(String url, String domainSuffix) throws URISyntaxException {
     URI uri = new URI(url);
     String domain = uri.getHost();
+
+    // if the hostname ends with the domainSuffix the use the domainSuffix as 
+    // the cookie domain
+    if (domainSuffix != null && domain.endsWith(domainSuffix)) {
+      return (domainSuffix.startsWith(".")) ? domainSuffix : "." + domainSuffix;
+    }
+
     // if accessing via ip address do not wildcard the cookie domain
+    // let's use the default domain
     if (Urls.isIp(domain)) {
-      return domain;
+      return null;
     }
+
+    // if there are fewer than 2 dots than this is likely a
+    // specific host and we should use the default domain
     if (Urls.dotOccurrences(domain) < 2) {
-      if (!domain.startsWith(".")) {
-        domain = "." + domain;
-      }
-      return domain;
+      return null;
     }
+
+    // assume any non-ip address with more than
+    // 3 dots will need the first element removed and
+    // all subdmains accepted
     int idx = domain.indexOf('.');
     if (idx == -1) {
       idx = 0;

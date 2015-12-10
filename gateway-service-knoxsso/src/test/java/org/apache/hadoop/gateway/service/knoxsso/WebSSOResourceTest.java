@@ -25,18 +25,38 @@ import org.junit.Test;
  *
  */
 public class WebSSOResourceTest {
+  /**
+   * Domain name creation follows the following algorithm:
+   * 1. if the incoming request hostname endsWith a configured domain suffix return the suffix - with prefixed dot
+   * 2. if the request hostname is an ip address return null for default domain
+   * 3. if the request hostname has less than 3 dots return null for default domain
+   * 4. if request hostname has more than two dots strip the first element and return the remainder as domain 
+   * @throws Exception
+   */
   @Test
   public void testDomainNameCreation() throws Exception {
     WebSSOResource resource = new WebSSOResource();
     // determine parent domain and wildcard the cookie domain with a dot prefix
-    Assert.assertTrue(resource.getDomainName("http://www.local.com").equals(".local.com"));
-    Assert.assertTrue(resource.getDomainName("http://ljm.local.com").equals(".local.com"));
-    Assert.assertTrue(resource.getDomainName("http://local.home").equals(".local.home"));
-    Assert.assertTrue(resource.getDomainName("http://localhost").equals(".localhost")); // chrome may not allow this
-    Assert.assertTrue(resource.getDomainName("http://local.home.test.com").equals(".home.test.com"));
-    
+    Assert.assertTrue(resource.getDomainName("http://www.local.com", null).equals(".local.com"));
+    Assert.assertTrue(resource.getDomainName("http://ljm.local.com", null).equals(".local.com"));
+
+    // test scenarios that will leverage the default cookie domain
+    Assert.assertEquals(resource.getDomainName("http://local.home", null), null);
+    Assert.assertEquals(resource.getDomainName("http://localhost", null), null); // chrome may not allow this
+
+    Assert.assertTrue(resource.getDomainName("http://local.home.test.com", null).equals(".home.test.com"));
+
+    // check the suffix config feature
+    Assert.assertTrue(resource.getDomainName("http://local.home.test.com", ".test.com").equals(".test.com"));
+    Assert.assertEquals(".novalocal", resource.getDomainName("http://34526yewt.novalocal", ".novalocal"));
+
+    // make sure that even if the suffix doesn't start with a dot that the domain does
+    // if we are setting a domain suffix then we want a specific domain for SSO and that
+    // will require all hosts in the domain in order for it to work
+    Assert.assertEquals(".novalocal", resource.getDomainName("http://34526yewt.novalocal", "novalocal"));
+
     // ip addresses can not be wildcarded - may be a completely different domain
-    Assert.assertTrue(resource.getDomainName("http://127.0.0.1").equals("127.0.0.1"));
+    Assert.assertEquals(resource.getDomainName("http://127.0.0.1", null), null);
   }
 
   @Test
