@@ -34,6 +34,7 @@ Release Notes - Apache Knox - Version 0.7.0
     * [KNOX-623] - Gateway provider rewriter doesn't support boolean attributes in HTML.
     * [KNOX-633] - Upgrade apache commons-collections
     * [KNOX-638] - Hive dispatch failing for secure clusters
+    * [KNOX-639] - Knoxcli.sh create-master should not allow empty strings
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.6.0
