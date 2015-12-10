@@ -82,20 +82,22 @@ public class CMFMasterService {
       System.err.println("No console.");
       System.exit(1);
     }
-  
-    boolean noMatch;
+
+    boolean valid = false;
     do {
         char [] newPassword1 = c.readPassword("Enter master secret: ");
         char [] newPassword2 = c.readPassword("Enter master secret again: ");
-        noMatch = ! Arrays.equals(newPassword1, newPassword2);
-        if (noMatch) {
+        if ( newPassword1.length == 0 ) {
+            c.format("Password too short. Try again.%n");
+        } else if (!Arrays.equals(newPassword1, newPassword2) ) {
             c.format("Passwords don't match. Try again.%n");
         } else {
             this.master = Arrays.copyOf(newPassword1, newPassword1.length);
+            valid = true;
         }
         Arrays.fill(newPassword1, ' ');
         Arrays.fill(newPassword2, ' ');
-    } while (noMatch);
+    } while (!valid);
   }
 
   protected void displayWarning(boolean persisting) {
