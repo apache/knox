@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.Configure;
+import org.apache.hadoop.gateway.config.Default;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -84,7 +85,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   }
 
   @Configure
-  protected void setReplayBufferSize(int size) {
+  protected void setReplayBufferSize(@Default("-1")int size) {
     replayBufferSize = size;
   }
 
@@ -215,7 +216,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
         if (replayBufferSize < 0) {
           replayBufferSize = config.getHttpServerRequestBuffer();
         }
-        if (!delegationTokenPresent) {
+        if (!delegationTokenPresent && replayBufferSize > 0 ) {
           entity = new PartiallyRepeatableHttpEntity(entity, replayBufferSize);
         }
       }

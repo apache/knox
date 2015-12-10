@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.hive;
 
 import org.apache.hadoop.gateway.config.Configure;
+import org.apache.hadoop.gateway.config.Default;
 import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.security.SubjectUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -43,7 +44,7 @@ public class HiveDispatch extends DefaultDispatch {
   }
 
   @Configure
-  public void setBasicAuthPreemptive( boolean basicAuthPreemptive ) {
+  public void setBasicAuthPreemptive( @Default("false") boolean basicAuthPreemptive ) {
     this.basicAuthPreemptive = basicAuthPreemptive;
   }
 
