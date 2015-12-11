@@ -101,7 +101,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
             argValue = convertValue( target, argName, strValue, argTypes[i] );
           } else {
             throw new ConfigurationException( String.format(
-                "Failed to find configuration for %s of %s via %s",
+                "Failed to find configuration for %s as %s of %s via %s",
                 bndName, argName, target.getClass().getName(), adapter.getClass().getName() ) );
           }
         }
@@ -141,7 +141,10 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
           "Failed to retrieve configuration for %s bound to %s of %s via %s",
           bind, name, target.getClass().getName(), adapter.getClass().getName() ), e );
     }
-    value = convertValue( target, name, value, type );
+    // Otherwise null sometimes ends up being converted to 0.
+    if( value != null ) {
+      value = convertValue( target, name, value, type );
+    }
     return value;
   }
 
