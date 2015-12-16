@@ -2,37 +2,94 @@
 Release Notes - Apache Knox - Version 0.7.0
 ------------------------------------------------------------------------------
 ** New Feature
-    * [KNOX-560] - Test LDAP Authentication+Authorization from KnoxCLI
+    * [KNOX-476] - implementation for X-Forwarded-* headers support and population
     * [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
     * [KNOX-548] - KnoxCLI adds a new system-user-auth-test command to test a topology's system username and password
+    * [KNOX-549] - Test service connections through Knox with Knox CLI
     * [KNOX-549] - New Service-Test API can be added to topology. Accessible via Http call or KnoxCLI
+    * [KNOX-560] - Test LDAP Authentication+Authorization from KnoxCLI
+    * [KNOX-565] - Supporting All the Quick Links on Ambari Dashboard to Go Through Knox
     * [KNOX-579] - Regex based identity assertion provider with static dictionary lookup
     * [KNOX-602] - JWT/SSO Cookie Based Federation Provider
+    * [KNOX-602] - protect against NPE in audience validation
     * [KNOX-604] - Expose configuration of HttpClient's max connections per route setting
     * [KNOX-611] - Expose configuration for Jetty's thread pool and connection queue
     * [KNOX-624] - Expose configuration for Jetty's request and response buffer sizes
+    * [KNOX-625] - initial template file for topology using ui proxy services
+    * [KNOX-634] - CORS Support as Part of WebAppSec Provider
 
 ** Improvement
+    * [KNOX-394] - Request and response URLs must be parsed as literals not templates. Part 2.
+    * [KNOX-394] - Request and response URLs must be parsed as literals not templates
+    * [KNOX-534] - auditing shiro authentication exceptions
+    * [KNOX-538] - Log some important system properties at startup
+    * [KNOX-539] - add message to identity mapping audit entries
+    * [KNOX-545] - Simplify Keystore Management for Cluster Scaleout
+    * [KNOX-546] - Consuming intermediate response during kerberos request dispatching
+    * [KNOX-566] - Make the Default Ephemeral DH Key Size 2048 for TLS
     * [KNOX-553] - Added topology validation from KnoxCLI to TopologyService deployment.
+    * [KNOX-558] - HttpClient connections are not always returned to the pool for HBase on Windows
+    * [KNOX-559] - renaming service definition files
     * [KNOX-561] - Allow Knox pid directory to be configured via the knox-env.sh file
+    * [KNOX-573] - KNOX-574 make SecureOnly and MaxAge configurable for SSO
     * [KNOX-575] - Adds more logging for ShiroProvider LDAP Authentication.
+    * [KNOX-576] - CLI user-auth-test should print a message when a user successfully authenticates.
     * [KNOX-564] - Topology deployment fails for no configured providers
+    * [KNOX-570] - added zookeeper lookup capability for HS2 HA
+    * [KNOX-580] - Initial refactoring out of default HA dispatch
     * [KNOX-590] - CLI sys-user-auth-test and user-auth-test have improved messages and work for more Shiro configs
-    * [KNOX-597] - Improve diagnostic logging of HTTP traffic
+    * [KNOX-590] - add more ShiroProvider configuration support to KnoxCLI sys-user-auth-test and user-auth-test
+    * [KNOX-593] - removed replayBufferSize and CappedBufferHttpEntity references
+    * [KNOX-593] - Moved SPNEGO code to httpclient
     * [KNOX-596] - Add diagnostics to topology deployment
+    * [KNOX-597] - Improve diagnostic logging of HTTP traffic
+    * [KNOX-600] - setting all service params as filter params for dispatch
+    * [KNOX-607] - Fix SSOCookieProvider to Handle null Query Strings
+    * [KNOX-608] - Improve Knox read and write performance by tuning buffer sizes.
+    * [KNOX-609] - Add unit tests for the SSOCookieFederationProvider.
+    * [KNOX-610] - DefaultTokenService issueToken should never return null
+    * [KNOX-613] - Provide Credential Collector Abstraction to Client Shell
+    * [KNOX-615] - Domain Cookies cannot Wildcard IP Addresses
+    * [KNOX-617] - Add the use of CredentialCollectors to Samples
+    * [KNOX-621] - Simplify KnoxSSO API Resource Path
+    * [KNOX-622] - Misconfigured providers should cause topology deployment to fail
+    * [KNOX-635] - open up default whitelist for dev - localhost
+    * [KNOX-635] - Provide Whitelisting for Redirect Destinations for KnoxSSO
+    * [KNOX-640] - Make Cookie Domain Configurable
 
 ** Bug
+    * [KNOX-394] - Request and response URLs must be parsed as literals not templates
+    * [KNOX-423] - XmlFilterReaderTest failed with IBM JVM JAVA
+    * [KNOX-447] - Incorrect parsing and expansion of valueless query params
+    * [KNOX-460] - UrlRewriteServletFilterTest failed with IBM JAVA
+    * [KNOX-544] - Knox process does not exit if startup fails due to credential store issues
+    * [KNOX-550] - reverting back to original hive kerberos dispatch behavior
     * [KNOX-554] - Fixed support for gateway.path change + added support for X-Forward-* headers in admin topology API.
+    * [KNOX-555] - Prevent dispatch client from attempting retry and redirects
+    * [KNOX-556] - fix extraneous imports
+    * [KNOX-556] - provide better diagnostics for keystore failures
+    * [KNOX-562] - Fix Null pointer exceptions in KnoxCLI LDAP commands
     * [KNOX-581] - Hive dispatch not propagating effective principal name
+    * [KNOX-582] - Query Parameter rewrite does not honor empty string value (jeffreyr via lmccay)
+    * [KNOX-584] - Fix for UT instability in GatewayBasicFuncTest.testCLIServiceTest
     * [KNOX-598] - Concurrent JDBC clients via KNOX to Kerberized HiveServer2 causes HTTP 401 error (due to Kerberos Replay attack error)
+    * [KNOX-598] - Concurrent JDBC clients via KNOX to Kerberized HiveServer2 causes HTTP 401 error (due to Kerberos
     * [KNOX-599] - Template with {**} in queries are expanded with =null for query params without a value
+    * [KNOX-601] - Knox test failures on windows
     * [KNOX-601] - Knox test failures on windows
     * [KNOX-603] - Coverity: Potential resource leak in BaseKeystoreService.createKeystore
     * [KNOX-614] - Incorrect URI template expansion with {**} query params #fragments
     * [KNOX-616] - XmlUrlRewriteStreamFilter unscapes escaped special characters
-    * [KNOX-394] - Request and response URLs must be parsed as literals not templates
+    * [KNOX-616] - XmlUrlRewriteStreamFilter unscapes escaped special characters
+    * [KNOX-620] - Jenkins Knox-master-verify failing since #725 due to JDK version issues
+    * [KNOX-626] - Minor fix to namespace parsing
     * [KNOX-623] - Gateway provider rewriter doesn't support boolean attributes in HTML.
+    * [KNOX-632] - added back configuration for 'replayBufferSize'
+    * [KNOX-632] - Oozie dispatch failing for secure clusters. Fix tests.
+    * [KNOX-632] - Oozie dispatch failing for secure clusters
     * [KNOX-633] - Upgrade apache commons-collections
+    * [KNOX-637] - Compilation Error in gateway-service-admin and gateway-test test projects (arshad.mohammad via lmccay)
+    * [KNOX-636] - IdentityAsserterHttpServletRequestWrapper must override getUserPrincipal
     * [KNOX-638] - Hive dispatch failing for secure clusters
     * [KNOX-639] - Knoxcli.sh create-master should not allow empty strings
 
