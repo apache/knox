@@ -20,10 +20,12 @@ package org.apache.hadoop.gateway.pac4j.session;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
+import org.apache.hadoop.gateway.util.Urls;
 import org.pac4j.core.context.ContextHelper;
 import org.pac4j.core.context.Cookie;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.util.JavaSerializationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,6 @@ import java.io.Serializable;
  * Specific session store where data are saved into cookies (and not in memory).
  * Each data is encrypted and base64 encoded before being saved as a cookie (for security reasons).
  *
- * @author Jerome Leleu
  * @since 0.8.0
  */
 public class KnoxSessionStore implements SessionStore {
@@ -43,7 +44,7 @@ public class KnoxSessionStore implements SessionStore {
 
     public final static String PAC4J_PASSWORD = "pac4j.password";
 
-    private final static String PAC4J_SESSION_PREFIX = "pac4j.session.";
+    public final static String PAC4J_SESSION_PREFIX = "pac4j.session.";
 
     private final JavaSerializationHelper javaSerializationHelper;
 
@@ -51,10 +52,13 @@ public class KnoxSessionStore implements SessionStore {
 
     private final String clusterName;
 
-    public KnoxSessionStore(final CryptoService cryptoService, final String clusterName) {
+    private final String domainSuffix;
+
+    public KnoxSessionStore(final CryptoService cryptoService, final String clusterName, final String domainSuffix) {
         javaSerializationHelper = new JavaSerializationHelper();
         this.cryptoService = cryptoService;
         this.clusterName = clusterName;
+        this.domainSuffix = domainSuffix;
     }
 
     public String getOrCreateSessionId(WebContext context) {
@@ -94,7 +98,15 @@ public class KnoxSessionStore implements SessionStore {
     public void set(WebContext context, String key, Object value) {
         logger.debug("Save in session: {} = {}", key, value);
         final Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + key, encryptBase64(value));
-        cookie.setDomain(context.getServerName());
+        try {
+            String domain = Urls.getDomainName(context.getFullRequestURL(), this.domainSuffix);
+            if (domain == null) {
+                domain = context.getServerName();
+            }
+            cookie.setDomain(domain);
+        } catch (final Exception e) {
+            throw new TechnicalException(e);
+        }
         cookie.setHttpOnly(true);
         cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
         context.addResponseCookie(cookie);

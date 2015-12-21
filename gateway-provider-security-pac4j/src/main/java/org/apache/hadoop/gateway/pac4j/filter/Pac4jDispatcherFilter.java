@@ -53,19 +53,21 @@ import java.util.Map;
  *     <li>to the {@link CallbackFilter} if the <code>client_name</code> parameter exists: it finishes the authentication process</li>
  *     <li>to the {@link RequiresAuthenticationFilter} otherwise: it starts the authentication process (redirection to the identity provider) if the user is not authenticated</li>
  * </ul>
- * <p>It uses the {@link KnoxSessionStore} to manage session data.</p>
- * <p>The mechanism used for the authentication is defined via servlet parameters.</p>
+ * <p>It uses the {@link KnoxSessionStore} to manage session data. The generated cookies are defined on a domain name
+ * which can be configured via the domain suffix parameter: <code>pac4j.cookie.domain.suffix</code>.</p>
+ * <p>The callback url must be defined to the current protected url (KnoxSSO service for example) via the parameter: <code>pac4j.callbackUrl</code>.</p>
  *
- * @author Jerome Leleu
  * @since 0.8.0
  */
 public class Pac4jDispatcherFilter implements Filter {
 
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
 
-  private static final String TEST_BASIC_AUTH = "testBasicAuth";
+  public static final String TEST_BASIC_AUTH = "testBasicAuth";
 
-  private static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
+  public static final String PAC4J_CALLBACK_URL = "pac4j.callbackUrl";
+
+  private static final String PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM = "pac4j.cookie.domain.suffix";
 
   private CallbackFilter callbackFilter;
 
@@ -99,10 +101,10 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     // url to SSO authentication provider
-    final String authenticationProviderUrl = filterConfig.getInitParameter(SSO_AUTHENTICATION_PROVIDER_URL);
-    if (authenticationProviderUrl == null) {
+    final String pac4jCallbackUrl = filterConfig.getInitParameter(PAC4J_CALLBACK_URL);
+    if (pac4jCallbackUrl == null) {
       log.ssoAuthenticationProviderUrlRequired();
-      throw new ServletException("Required authentication provider URL is missing.");
+      throw new ServletException("Required pac4j callback URL is missing.");
     }
 
     final Config config;
@@ -113,7 +115,7 @@ public class Pac4jDispatcherFilter implements Filter {
       // test configuration
       final IndirectBasicAuthClient indirectBasicAuthClient = new IndirectBasicAuthClient(new SimpleTestUsernamePasswordAuthenticator());
       indirectBasicAuthClient.setRealmName("Knox TEST");
-      config = new Config(authenticationProviderUrl, indirectBasicAuthClient);
+      config = new Config(pac4jCallbackUrl, indirectBasicAuthClient);
       clientName = "IndirectBasicAuthClient";
     } else {
       // get clients from the init parameters
@@ -123,7 +125,7 @@ public class Pac4jDispatcherFilter implements Filter {
         final String key = names.nextElement();
         properties.put(key, filterConfig.getInitParameter(key));
       }
-      final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(authenticationProviderUrl, properties);
+      final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(pac4jCallbackUrl, properties);
       config = propertiesConfigFactory.build();
       final List<Client> clients = config.getClients().getClients();
       if (clients == null || clients.size() ==0) {
@@ -142,7 +144,8 @@ public class Pac4jDispatcherFilter implements Filter {
     requiresAuthenticationFilter.setClientName(clientName);
     requiresAuthenticationFilter.setConfig(config);
 
-    config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName));
+    final String domainSuffix = context.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
+    config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
     ConfigSingleton.setConfig(config);
   }
 

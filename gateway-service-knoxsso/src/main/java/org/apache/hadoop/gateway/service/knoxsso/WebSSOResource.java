@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.service.knoxsso;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.annotation.PostConstruct;
@@ -181,7 +179,7 @@ public class WebSSOResource {
     Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
     c.setPath("/");
     try {
-      String domain = getDomainName(original, domainSuffix);
+      String domain = Urls.getDomainName(original, domainSuffix);
       if (domain != null) {
         c.setDomain(domain);
       }
@@ -206,38 +204,6 @@ public class WebSSOResource {
     c.setMaxAge(0);
     c.setPath(RESOURCE_PATH);
     response.addCookie(c);
-  }
-
-  String getDomainName(String url, String domainSuffix) throws URISyntaxException {
-    URI uri = new URI(url);
-    String domain = uri.getHost();
-
-    // if the hostname ends with the domainSuffix the use the domainSuffix as
-    // the cookie domain
-    if (domainSuffix != null && domain.endsWith(domainSuffix)) {
-      return (domainSuffix.startsWith(".")) ? domainSuffix : "." + domainSuffix;
-    }
-
-    // if accessing via ip address do not wildcard the cookie domain
-    // let's use the default domain
-    if (Urls.isIp(domain)) {
-      return null;
-    }
-
-    // if there are fewer than 2 dots than this is likely a
-    // specific host and we should use the default domain
-    if (Urls.dotOccurrences(domain) < 2) {
-      return null;
-    }
-
-    // assume any non-ip address with more than
-    // 3 dots will need the first element removed and
-    // all subdmains accepted
-    int idx = domain.indexOf('.');
-    if (idx == -1) {
-      idx = 0;
-    }
-    return domain.substring(idx);
   }
 
   private String getCookieValue(HttpServletRequest request, String name) {

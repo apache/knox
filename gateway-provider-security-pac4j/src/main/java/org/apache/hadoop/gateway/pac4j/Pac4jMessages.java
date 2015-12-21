@@ -24,13 +24,12 @@ import org.apache.hadoop.gateway.i18n.messages.Messages;
 /**
  * Logging messages for the pac4j provider.
  *
- * @author Jerome Leleu
  * @since 0.8.0
  */
 @Messages(logger="org.apache.hadoop.gateway.pac4j")
 public interface Pac4jMessages {
 
-  @Message( level = MessageLevel.ERROR, text = "SSO authentication provider url required")
+  @Message( level = MessageLevel.ERROR, text = "pac4j callback URL required")
   public void ssoAuthenticationProviderUrlRequired();
 
   @Message( level = MessageLevel.ERROR, text = "At least one pac4j client must be defined")
