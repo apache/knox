@@ -66,15 +66,17 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     private Serializable decryptBase64(final String v) {
-        byte[] bytes = Base64.decodeBase64(v);
-        EncryptionResult result = EncryptionResult.fromByteArray(bytes);
-        byte[] clear = cryptoService.decryptForCluster(this.clusterName,
-                PAC4J_PASSWORD,
-                result.cipher,
-                result.iv,
-                result.salt);
-        if (clear != null) {
-            return javaSerializationHelper.unserializeFromBytes(clear);
+        if (v != null && v.length() > 0) {
+            byte[] bytes = Base64.decodeBase64(v);
+            EncryptionResult result = EncryptionResult.fromByteArray(bytes);
+            byte[] clear = cryptoService.decryptForCluster(this.clusterName,
+                    PAC4J_PASSWORD,
+                    result.cipher,
+                    result.iv,
+                    result.salt);
+            if (clear != null) {
+                return javaSerializationHelper.unserializeFromBytes(clear);
+            }
         }
         return null;
     }
@@ -90,9 +92,13 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     private String encryptBase64(final Object o) {
-        final byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
-        EncryptionResult result = cryptoService.encryptForCluster(this.clusterName, PAC4J_PASSWORD, bytes);
-        return Base64.encodeBase64String(result.toByteAray());
+        if (o == null) {
+            return null;
+        } else {
+            final byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
+            EncryptionResult result = cryptoService.encryptForCluster(this.clusterName, PAC4J_PASSWORD, bytes);
+            return Base64.encodeBase64String(result.toByteAray());
+        }
     }
 
     public void set(WebContext context, String key, Object value) {

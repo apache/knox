@@ -50,6 +50,8 @@ public class Pac4jIdentityAdapter implements Filter {
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
 
+  private String testIdentifier;
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
   }
@@ -66,7 +68,9 @@ public class Pac4jIdentityAdapter implements Filter {
     final ProfileManager manager = new ProfileManager(context);
     final UserProfile profile = manager.get(true);
     logger.debug("User authenticated as: {}", profile);
+    manager.remove(true);
     final String id = profile.getId();
+    testIdentifier = id;
     PrimaryPrincipal pp = new PrimaryPrincipal(id);
     Subject subject = new Subject();
     subject.getPrincipals().add(pp);
@@ -106,16 +110,23 @@ public class Pac4jIdentityAdapter implements Filter {
   }
 
   /**
-   * For tests.
+   * For tests only.
    */
   public static void setAuditService(AuditService auditService) {
     Pac4jIdentityAdapter.auditService = auditService;
   }
 
   /**
-   * For tests.
+   * For tests only.
    */
   public static void setAuditor(Auditor auditor) {
     Pac4jIdentityAdapter.auditor = auditor;
+  }
+
+  /**
+   * For tests only.
+     */
+  public String getTestIdentifier() {
+    return testIdentifier;
   }
 }

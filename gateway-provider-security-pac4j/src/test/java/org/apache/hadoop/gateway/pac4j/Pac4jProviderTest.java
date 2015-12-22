@@ -124,9 +124,9 @@ public class Pac4jProviderTest {
         for (final Cookie cookie : cookies) {
             mapCookies.put(cookie.getName(), cookie.getValue());
         }
-        assertNotNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + CLIENT_CLASS + "$attemptedAuthentication"));
+        assertNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + CLIENT_CLASS + "$attemptedAuthentication"));
         assertNotNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILE));
-        assertNotNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL));
+        assertNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
@@ -138,5 +138,12 @@ public class Pac4jProviderTest {
         dispatcher.doFilter(request, response, filterChain);
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
+        cookies = response.getCookies();
+        assertEquals(1, cookies.size());
+        final Cookie userProfileCookie = cookies.get(0);
+        // the user profile has been cleaned
+        assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILE, userProfileCookie.getName());
+        assertNull(userProfileCookie.getValue());
+        assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 }
