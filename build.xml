@@ -263,6 +263,8 @@ Release build file for the Apache Knox Gateway
             <arg value="${username}" />
             <arg value="--password" />
             <arg value="${password}" />
+            <arg value="--trust-server-cert" />
+            <arg value="--non-interactive" />
         </exec>
     </target>
 
@@ -276,6 +278,8 @@ Release build file for the Apache Knox Gateway
             <arg value="${username}" />
             <arg value="--password" />
             <arg value="${password}" />
+            <arg value="--trust-server-cert" />
+            <arg value="--non-interactive" />
         </exec>
     </target>
 
@@ -290,6 +294,8 @@ Release build file for the Apache Knox Gateway
             <arg value="${username}" />
             <arg value="--password" />
             <arg value="${password}" />
+            <arg value="--trust-server-cert" />
+            <arg value="--non-interactive" />
         </exec>
     </target>
 
