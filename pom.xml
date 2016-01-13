@@ -39,8 +39,8 @@
         <module>gateway-util-configinjector</module>
         <module>gateway-util-launcher</module>
         <module>gateway-util-urltemplate</module>
-        <module>gateway-test-ldap</module>
-        <module>gateway-test-ldap-launcher</module>
+        <module>gateway-demo-ldap</module>
+        <module>gateway-demo-ldap-launcher</module>
         <module>gateway-i18n</module>
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
@@ -986,12 +986,12 @@
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test-ldap</artifactId>
+                <artifactId>gateway-demo-ldap</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test-ldap-launcher</artifactId>
+                <artifactId>gateway-demo-ldap-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

@@ -48,7 +48,7 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-test-ldap</artifactId>
+            <artifactId>gateway-demo-ldap</artifactId>
             <scope>test</scope>
         </dependency>
 

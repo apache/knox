@@ -267,11 +267,11 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-test-ldap</artifactId>
+            <artifactId>gateway-demo-ldap</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-test-ldap-launcher</artifactId>
+            <artifactId>gateway-demo-ldap-launcher</artifactId>
         </dependency>
 
         <dependency>
