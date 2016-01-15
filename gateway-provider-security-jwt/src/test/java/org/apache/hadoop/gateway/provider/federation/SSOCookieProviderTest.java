@@ -394,19 +394,20 @@ public class SSOCookieProviderTest  {
 
   protected SignedJWT getJWT(String sub, Date expires, RSAPrivateKey privateKey)
       throws Exception {
-    JWTClaimsSet claimsSet = new JWTClaimsSet();
-    claimsSet.setSubject(sub);
-    claimsSet.setIssueTime(new Date(new Date().getTime()));
-    claimsSet.setIssuer("https://c2id.com");
-    claimsSet.setCustomClaim("scope", "openid");
-    claimsSet.setExpirationTime(expires);
     List<String> aud = new ArrayList<String>();
     aud.add("bar");
-    claimsSet.setAudience("bar");
+
+    JWTClaimsSet claims = new JWTClaimsSet.Builder()
+    .issuer("https://c2id.com")
+    .subject(sub)
+    .audience(aud)
+    .expirationTime(expires)
+    .claim("scope", "openid")
+    .build();
 
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
 
-    SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+    SignedJWT signedJWT = new SignedJWT(header, claims);
     Base64URL sigInput = Base64URL.encode(signedJWT.getSigningInput());
     JWSSigner signer = new RSASSASigner(privateKey);
 

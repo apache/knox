@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.service.knoxsso;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.annotation.PostConstruct;
@@ -57,7 +55,7 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
   // default for the whitelist - open up for development - relative paths and localhost only
-  private static final String DEFAULT_WHITELIST = "^/.*$;^https?://localhost:\\d{0,9}/.*$";
+  private static final String DEFAULT_WHITELIST = "^/.*$;^https?://(localhost|127.0.0.1|0:0:0:0:0:0:0:1|::1):\\d{0,9}/.*$";
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
   private boolean secureOnly = true;
@@ -66,10 +64,10 @@ public class WebSSOResource {
   private String whitelist = null;
   private String domainSuffix = null;
 
-  @Context 
+  @Context
   private HttpServletRequest request;
 
-  @Context 
+  @Context
   private HttpServletResponse response;
 
   @Context
@@ -129,7 +127,7 @@ public class WebSSOResource {
 
   private Response getAuthenticationToken(int statusCode) {
     GatewayServices services = (GatewayServices) request.getServletContext()
-        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+            .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     boolean removeOriginalUrlCookie = true;
     String original = getCookieValue((HttpServletRequest) request, ORIGINAL_URL_COOKIE_NAME);
     if (original == null) {
@@ -145,7 +143,7 @@ public class WebSSOResource {
       if (!validRedirect) {
         log.whiteListMatchFail(original, whitelist);
         throw new WebApplicationException("Original URL not valid according to the configured whitelist.",
-            Response.Status.BAD_REQUEST);
+                Response.Status.BAD_REQUEST);
       }
     }
 
@@ -154,13 +152,13 @@ public class WebSSOResource {
 
     try {
       JWT token = ts.issueToken(p, "RS256", System.currentTimeMillis() + tokenTTL);
-      
+
       addJWTHadoopCookie(original, token);
-      
+
       if (removeOriginalUrlCookie) {
         removeOriginalUrlCookie(response);
       }
-      
+
       log.aboutToRedirectToOriginal(original);
       response.setStatus(statusCode);
       response.setHeader("Location", original);
@@ -181,7 +179,7 @@ public class WebSSOResource {
     Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
     c.setPath("/");
     try {
-      String domain = getDomainName(original, domainSuffix);
+      String domain = Urls.getDomainName(original, domainSuffix);
       if (domain != null) {
         c.setDomain(domain);
       }
@@ -208,44 +206,12 @@ public class WebSSOResource {
     response.addCookie(c);
   }
 
-  String getDomainName(String url, String domainSuffix) throws URISyntaxException {
-    URI uri = new URI(url);
-    String domain = uri.getHost();
-
-    // if the hostname ends with the domainSuffix the use the domainSuffix as 
-    // the cookie domain
-    if (domainSuffix != null && domain.endsWith(domainSuffix)) {
-      return (domainSuffix.startsWith(".")) ? domainSuffix : "." + domainSuffix;
-    }
-
-    // if accessing via ip address do not wildcard the cookie domain
-    // let's use the default domain
-    if (Urls.isIp(domain)) {
-      return null;
-    }
-
-    // if there are fewer than 2 dots than this is likely a
-    // specific host and we should use the default domain
-    if (Urls.dotOccurrences(domain) < 2) {
-      return null;
-    }
-
-    // assume any non-ip address with more than
-    // 3 dots will need the first element removed and
-    // all subdmains accepted
-    int idx = domain.indexOf('.');
-    if (idx == -1) {
-      idx = 0;
-    }
-    return domain.substring(idx);
-  }
-
   private String getCookieValue(HttpServletRequest request, String name) {
     Cookie[] cookies = request.getCookies();
     String value = null;
     for(Cookie cookie : cookies){
       if(name.equals(cookie.getName())){
-          value = cookie.getValue();
+        value = cookie.getValue();
       }
     }
     if (value == null) {

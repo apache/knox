@@ -58,6 +58,7 @@
         <module>gateway-provider-security-preauth</module>
         <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-shiro</module>
+        <module>gateway-provider-security-pac4j</module>
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
@@ -395,6 +396,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-pac4j</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-webappsec</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -602,7 +608,7 @@
             <dependency>
               <groupId>com.nimbusds</groupId>
               <artifactId>nimbus-jose-jwt</artifactId>
-              <version>3.9</version>
+              <version>4.11</version>
               <scope>compile</scope>
               <exclusions>
                 <exclusion>
@@ -1056,7 +1062,7 @@
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity</artifactId>
                 <version>1.7</version>
-                <scope>test</scope>
+                <!--scope>test</scope-->
             </dependency>
 
             <dependency>
