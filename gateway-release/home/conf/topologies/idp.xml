@@ -31,11 +31,11 @@
                 <name>clientName</name>
                 <value>testBasicAuth</value>
             </param-->
-            <!--param>
+            <param>
                 <name>cas.loginUrl</name>
                 <value>https://casserverpac4j.herokuapp.com/login</value>
-            </param-->
-            <param>
+            </param>
+            <!--param>
                 <name>saml.keystorePath</name>
                 <value>/tmp/samlKeystore.jks</value>
             </param>
@@ -62,7 +62,7 @@
             <param>
                 <name>saml.serviceProviderMetadataPath</name>
                 <value>sp-metadata.xml</value>
-            </param>
+            </param-->
         </provider>
 
         <provider>
