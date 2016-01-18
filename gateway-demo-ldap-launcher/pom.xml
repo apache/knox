@@ -25,9 +25,9 @@
         <groupId>org.apache.knox</groupId>
         <version>0.8.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-test-ldap-launcher</artifactId>
-    <name>gateway-test-ldap-launcher</name>
-    <description>Launcher for the test/demo LDAP server.</description>
+    <artifactId>gateway-demo-ldap-launcher</artifactId>
+    <name>gateway-demo-ldap-launcher</name>
+    <description>Launcher for the demo LDAP server.</description>
 
     <dependencies>
         <dependency>

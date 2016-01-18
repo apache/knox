@@ -57,11 +57,14 @@ public class JWTToken implements JWT {
 
   public JWTToken(String alg, String[] claimsArray) {
     JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
-    JWTClaimsSet claims = new JWTClaimsSet();
-    claims.setIssuer(claimsArray[0]);
-    claims.setSubject(claimsArray[1]);
-    claims.setAudience(claimsArray[2]);
-    claims.setExpirationTime(new Date(Long.parseLong(claimsArray[3])));
+
+    JWTClaimsSet claims = new JWTClaimsSet.Builder()
+    .issuer(claimsArray[0])
+    .subject(claimsArray[1])
+    .audience(claimsArray[2])
+    .expirationTime(new Date(Long.parseLong(claimsArray[3])))
+    .build();
+
     jwt = new SignedJWT(header, claims);
   }
 

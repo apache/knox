@@ -70,7 +70,7 @@
                 <exclude>${gateway-group}:gateway-util-launcher</exclude>
                 <exclude>${gateway-group}:gateway-server-launcher</exclude>
                 <exclude>${gateway-group}:gateway-shell-launcher</exclude>
-                <exclude>${gateway-group}:gateway-test-ldap-launcher</exclude>
+                <exclude>${gateway-group}:gateway-demo-ldap-launcher</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
@@ -91,7 +91,7 @@
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>ldap.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:gateway-test-ldap-launcher</include>
+                <include>${gateway-group}:gateway-demo-ldap-launcher</include>
             </includes>
         </dependencySet>
     </dependencySets>

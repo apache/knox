@@ -39,8 +39,8 @@
         <module>gateway-util-configinjector</module>
         <module>gateway-util-launcher</module>
         <module>gateway-util-urltemplate</module>
-        <module>gateway-test-ldap</module>
-        <module>gateway-test-ldap-launcher</module>
+        <module>gateway-demo-ldap</module>
+        <module>gateway-demo-ldap-launcher</module>
         <module>gateway-i18n</module>
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
@@ -585,16 +585,16 @@
                 <version>${gateway-version}</version>
             </dependency>
 
-        <dependency>
-            <groupId>org.picketlink</groupId>
-            <artifactId>picketlink-federation</artifactId>
-            <version>2.7.0.CR3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>3.2.0.Final</version>
-        </dependency>
+            <dependency>
+                <groupId>org.picketlink</groupId>
+                <artifactId>picketlink-federation</artifactId>
+                <version>2.7.0.CR3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>3.2.0.Final</version>
+            </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet</artifactId>
@@ -606,16 +606,16 @@
                 <version>2.6</version>
             </dependency>
             <dependency>
-              <groupId>com.nimbusds</groupId>
-              <artifactId>nimbus-jose-jwt</artifactId>
-              <version>3.9</version>
-              <scope>compile</scope>
-              <exclusions>
-                <exclusion>
-                  <groupId>org.bouncycastle</groupId>
-                  <artifactId>bcprov-jdk15on</artifactId>
-                </exclusion>
-              </exclusions>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>4.11</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk15on</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
@@ -656,7 +656,7 @@
                 <version>2.5.2</version>
             </dependency>
 
-           <dependency>
+            <dependency>
                 <groupId>com.thetransactioncompany</groupId>
                 <artifactId>cors-filter</artifactId>
                 <version>2.4</version>
@@ -992,12 +992,12 @@
 
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test-ldap</artifactId>
+                <artifactId>gateway-demo-ldap</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-test-ldap-launcher</artifactId>
+                <artifactId>gateway-demo-ldap-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
@@ -1062,6 +1062,7 @@
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity</artifactId>
                 <version>1.7</version>
+                <!--scope>test</scope-->
             </dependency>
 
             <dependency>
