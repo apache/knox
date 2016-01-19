@@ -133,6 +133,8 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
     private final static String  MEMBER_URL = "memberUrl";
 
+    private final static String POSIX_GROUP = "posixGroup";
+
     private static final String HASHING_ALGORITHM = "SHA-1";
 
     static {
@@ -303,6 +305,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
               }
             }
           } else {
+            if (groupObjectClass.equalsIgnoreCase(POSIX_GROUP)){
+              attrValue = memberAttributeValuePrefix + attrValue + memberAttributeValueSuffix;
+            }
             if (userLdapDn.equals(new LdapName(attrValue))) {
               groupNames.add(groupName);
               String roleName = roleNameFor(groupName);

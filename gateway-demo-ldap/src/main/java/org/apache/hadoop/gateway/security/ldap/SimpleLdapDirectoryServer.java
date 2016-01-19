@@ -18,6 +18,10 @@
 package org.apache.hadoop.gateway.security.ldap;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.directory.api.ldap.model.entry.DefaultModification;
+import org.apache.directory.api.ldap.model.entry.ModificationOperation;
+import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.partition.Partition;
@@ -50,6 +54,8 @@ public class SimpleLdapDirectoryServer {
     factory.init( UUID.randomUUID().toString() );
     service = factory.getDirectoryService();
 
+    enabledPosixSchema( service );
+
     Partition partition = factory.getPartitionFactory().createPartition(
         service.getSchemaManager(), "users", rootDn, 500, service.getInstanceLayout().getInstanceDirectory() );
     service.addPartition( partition );
@@ -61,6 +67,14 @@ public class SimpleLdapDirectoryServer {
     server = new LdapServer();
     server.setTransports( transports );
     server.setDirectoryService( service );
+
+  }
+
+  private static void enabledPosixSchema( DirectoryService service ) throws LdapException {
+    service.getSchemaManager().getLoadedSchema( "nis" ).enable();
+    service.getAdminSession().modify(
+        new Dn( "cn=nis,ou=schema" ),
+        new DefaultModification( ModificationOperation.REPLACE_ATTRIBUTE, "m-disabled", "FALSE" ) );
   }
 
   public void start() throws Exception {

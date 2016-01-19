@@ -2,6 +2,14 @@
 Release Notes - Apache Knox - Version 0.7.0
 ------------------------------------------------------------------------------
 ** New Feature
+** Improvement
+    * [KNOX-650] - Add posixGroups support for LDAP groups lookup
+** Bug
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.7.0
+------------------------------------------------------------------------------
+** New Feature
     * [KNOX-476] - implementation for X-Forwarded-* headers support and population
     * [KNOX-547] - KnoxCLI adds new validate-topology and list-topologies commands.
     * [KNOX-548] - KnoxCLI adds a new system-user-auth-test command to test a topology's system username and password
