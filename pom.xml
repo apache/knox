@@ -85,6 +85,7 @@
         <module>hsso-release</module>
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
+        <module>gateway-test-release</module>
     </modules>
 
     <properties>
@@ -171,6 +172,18 @@
                     </plugin>
                 </plugins>
             </build>
+            <properties>
+                <failsafe.group>org.apache.hadoop.test.category.VerifyTest, org.apache.hadoop.test.category.ReleaseTest</failsafe.group>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <failsafe.group>org.apache.hadoop.test.category.VerifyTest</failsafe.group>
+            </properties>
         </profile>
     </profiles>
 
@@ -260,12 +273,31 @@
                 <version>2.16</version>
                 <configuration>
                     <excludedGroups>
-                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.IntegrationTests
+                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest
                     </excludedGroups>
                     <systemPropertyVariables>
                         <gateway-version>${gateway-version}</gateway-version>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <groups>${failsafe.group}</groups>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*.class</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

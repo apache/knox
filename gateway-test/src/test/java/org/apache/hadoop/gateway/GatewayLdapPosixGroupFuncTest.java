@@ -26,7 +26,7 @@ import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
-import org.apache.hadoop.test.category.FunctionalTests;
+import org.apache.hadoop.test.category.VerifyTest;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -63,7 +63,7 @@ import static org.junit.Assert.fail;
  * and using them in acl authorization checks
  *
  */
-@Category(FunctionalTests.class)
+@Category(VerifyTest.class)
 public class GatewayLdapPosixGroupFuncTest {
 
   private static final long SHORT_TIMEOUT = 2000L;

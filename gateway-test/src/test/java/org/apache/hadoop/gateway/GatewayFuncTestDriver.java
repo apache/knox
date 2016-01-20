@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway;
 
+import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
@@ -44,6 +46,7 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.slf4j.Logger;
@@ -63,14 +66,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.path.json.JsonPath.from;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isIn;
-import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -174,7 +169,7 @@ public class GatewayFuncTestDriver {
     }
 
     gateway = GatewayServer.startGateway( config, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+    MatcherAssert.assertThat( "Failed to start gateway.", gateway, CoreMatchers.notNullValue() );
 
     log.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
   }
@@ -242,6 +237,10 @@ public class GatewayFuncTestDriver {
     String localHostName = getLocalHostName();
     url = "http://" + localHostName + ":" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath() + "/" + clusterName;
     return url;
+  }
+
+  public int getGatewayPort() {
+    return gateway.getAddresses()[0].getPort();
   }
 
   public String getRealAddr( String role ) {
@@ -319,7 +318,7 @@ public class GatewayFuncTestDriver {
       if( service.mock ) {
         assertThat(
             "Service " + service.role + " has remaining expected interactions.",
-            service.server.getCount(), is( 0 ) );
+            service.server.getCount(), Matchers.is(0) );
       }
       service.server.reset();
     }
@@ -336,7 +335,7 @@ public class GatewayFuncTestDriver {
       if(service.mock) {
         assertThat(
             "Service " + service.role + " has remaining expected interactions.",
-            service.server.getCount(), not(0));
+            service.server.getCount(), Matchers.not(0));
       }
       service.server.reset();
     } else {
@@ -371,7 +370,7 @@ public class GatewayFuncTestDriver {
           .respond()
           .status( status );
     }
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().headers()
         //.log().parameters()
         .auth().preemptive().basic( user, password )
@@ -412,7 +411,7 @@ public class GatewayFuncTestDriver {
           .respond()
           .status( status );
     }
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -473,7 +472,7 @@ public class GatewayFuncTestDriver {
           .respond()
           .status( status );
     }
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -485,7 +484,7 @@ public class GatewayFuncTestDriver {
     if( response.getStatusCode() == HttpStatus.SC_OK ) {
       String actualContent = response.asString();
       String expectedContent = getResourceString( resource, Charset.forName("UTF-8") );
-      assertThat( actualContent, is( expectedContent ) );
+      assertThat( actualContent, Matchers.is(expectedContent) );
     }
     assertComplete();
   }
@@ -501,7 +500,7 @@ public class GatewayFuncTestDriver {
         .queryParam( "group", group )
         .respond()
         .status( HttpStatus.SC_OK );
-    given()
+    RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -525,7 +524,7 @@ public class GatewayFuncTestDriver {
         .queryParam( "permission", permsOctal )
         .respond()
         .status( HttpStatus.SC_OK );
-    given()
+    RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -570,7 +569,7 @@ public class GatewayFuncTestDriver {
           .respond()
           .status( status );
     }
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -611,7 +610,7 @@ public class GatewayFuncTestDriver {
           .respond()
           .status( status );
     }
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -634,7 +633,7 @@ public class GatewayFuncTestDriver {
         .queryParam( "op", "DELETE" )
         .queryParam( "recursive", recursive )
         .respond().status( status[0] );
-    given()
+    RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -642,7 +641,7 @@ public class GatewayFuncTestDriver {
         .queryParam( "recursive", recursive )
         .expect()
         //.log().all()
-        .statusCode( isIn( ArrayUtils.toObject( status ) ) )
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
         .when()
         .delete( getUrl( "WEBHDFS" ) + "/v1" + file + ( isUseGateway() ? "" : "?user.name=" + user ) );
     assertComplete();
@@ -660,7 +659,7 @@ public class GatewayFuncTestDriver {
         .status( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .content( "{\"boolean\": true}".getBytes() );
-    Response response = given()
+    Response response = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -670,7 +669,7 @@ public class GatewayFuncTestDriver {
         //.log().all()
         .statusCode( status )
         .contentType( "application/json" )
-        .content( "boolean", equalTo( true ) )
+        .content( "boolean", CoreMatchers.equalTo(true) )
         .when()
         .put( getUrl("WEBHDFS") + "/v1" + dir + ( isUseGateway() ? "" : "?user.name=" + user ) );
     String location = response.getHeader( "Location" );
@@ -686,14 +685,14 @@ public class GatewayFuncTestDriver {
   }
 
   public void readDir( String user, String password, String dir, String resource, int status ) {
-    given()
+    RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .queryParam( "op", "LISTSTATUS" )
         .expect()
         //.log().all()
         .statusCode( status )
-        .content( equalTo( "TODO" ) )
+        .content( CoreMatchers.equalTo("TODO") )
         .when()
         .get( getUrl( "WEBHDFS" ) + "/v1" + dir );
   }
@@ -711,7 +710,7 @@ public class GatewayFuncTestDriver {
         .status( status )
         .contentType( "application/json" )
         .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
-    String json = given()
+    String json = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -724,7 +723,7 @@ public class GatewayFuncTestDriver {
         .statusCode( status )
         .when().post( getUrl( "WEBHCAT" ) + "/v1/mapreduce/jar" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.trace( "JSON=" + json );
-    String job = from( json ).getString( "id" );
+    String job = JsonPath.from(json).getString( "id" );
     log.debug( "JOB=" + job );
     assertComplete();
     return job;
@@ -739,7 +738,7 @@ public class GatewayFuncTestDriver {
         .status( status[0] )
         .contentType( "application/json" )
         .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
-    String json = given()
+    String json = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -751,14 +750,14 @@ public class GatewayFuncTestDriver {
         .formParam( "statusdir", statusDir )
         .expect()
         //.log().all();
-        .statusCode( isIn( ArrayUtils.toObject( status ) ) )
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
         .post( getUrl( "WEBHCAT" ) + "/v1/pig" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
-    String job = from( json ).getString( "id" );
+    String job = JsonPath.from(json).getString( "id" );
     log.debug( "JOB=" + job );
     assertComplete();
     return job;
@@ -773,7 +772,7 @@ public class GatewayFuncTestDriver {
         .status( status[ 0 ] )
         .contentType( "application/json" )
         .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
-    String json = given()
+    String json = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
@@ -784,14 +783,14 @@ public class GatewayFuncTestDriver {
         .formParam( "statusdir", statusDir )
         .expect()
         //.log().all()
-        .statusCode( isIn( ArrayUtils.toObject( status ) ) )
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
         .post( getUrl( "WEBHCAT" ) + "/v1/hive" + ( isUseGateway() ? "" : "?user.name=" + user ) )
         .asString();
     log.trace( "JSON=" + json );
-    String job = from( json ).getString( "id" );
+    String job = JsonPath.from(json).getString( "id" );
     log.debug( "JOB=" + job );
     assertComplete();
     return job;
@@ -806,14 +805,14 @@ public class GatewayFuncTestDriver {
           .status( HttpStatus.SC_OK )
           .content( getResourceBytes( "webhcat-job-status.json" ) )
           .contentType( "application/json" );
-    String status = given()
+    String status = RestAssured.given()
         //.log().all()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
         .pathParam( "job", job )
         .expect()
         //.log().all()
-        .content( "status.jobId", equalTo( job ) )
+        .content( "status.jobId", CoreMatchers.equalTo(job) )
         .statusCode( HttpStatus.SC_OK )
         .when().get( getUrl( "WEBHCAT" ) + "/v1/jobs/{job}" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
@@ -829,12 +828,12 @@ public class GatewayFuncTestDriver {
   See: oozie-versions.json
   */
   public void oozieGetVersions( String user, String password ) throws IOException {
-    given()
+    RestAssured.given()
         .auth().preemptive().basic( user, password )
         .header( "X-XSRF-Header", "jksdhfkhdsf" )
         .expect()
         .statusCode( 200 )
-        .body( "", hasItems( 0, 1 ) )
+        .body( "", Matchers.hasItems(0, 1) )
         .when().get( getUrl( "OOZIE" ) + "/versions" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
   }
 
@@ -935,7 +934,7 @@ TODO
     post.setEntity( entity );
     post.setHeader( "X-XSRF-Header", "ksdjfhdsjkfhds" );
     HttpResponse response = client.execute( targetHost, post, localContext );
-    assertThat( response.getStatusLine().getStatusCode(), is( status ) );
+    assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
     String json = EntityUtils.toString( response.getEntity() );
 
 //    String json = given()
@@ -949,7 +948,7 @@ TODO
 //        .statusCode( status )
 //        .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     //System.out.println( "JSON=" + json );
-    String id = from( json ).getString( "id" );
+    String id = JsonPath.from(json).getString( "id" );
     return id;
   }
 
@@ -1022,9 +1021,9 @@ TODO
     HttpGet request = new HttpGet( url.toURI() );
     request.setHeader("X-XSRF-Header", "ksdhfjkhdsjkf");
     HttpResponse response = client.execute( targetHost, request, localContext );
-    assertThat( response.getStatusLine().getStatusCode(), is( status ) );
+    assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
     String json = EntityUtils.toString( response.getEntity() );
-    String jobStatus = from( json ).getString( "status" );
+    String jobStatus = JsonPath.from(json).getString( "status" );
     return jobStatus;
   }
 

@@ -17,5 +17,5 @@
  */
 package org.apache.hadoop.test.category;
 
-public interface FunctionalTests {
+public interface ReleaseTest {
 }
