@@ -40,6 +40,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URL;
 import java.util.UUID;
 
@@ -123,6 +126,44 @@ public class TestUtils {
   public static void LOG_EXIT() {
     StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
     System.out.println( String.format( "Exiting %s#%s", caller.getClassName(), caller.getMethodName() ) );
+  }
+
+  public static void awaitPortOpen( InetSocketAddress address, int timeout, int delay ) throws InterruptedException {
+    long maxTime = System.currentTimeMillis() + timeout;
+    do {
+      try {
+        Socket socket = new Socket();
+        socket.connect( address, delay );
+        socket.close();
+        return;
+      } catch ( IOException e ) {
+        //e.printStackTrace();
+      }
+    } while( System.currentTimeMillis() < maxTime );
+    throw new IllegalStateException( "Timed out " + timeout + " waiting for port " + address );
+  }
+
+  public static void awaitNon404HttpStatus( URL url, int timeout, int delay ) throws InterruptedException {
+    long maxTime = System.currentTimeMillis() + timeout;
+    do {
+      Thread.sleep( delay );
+      HttpURLConnection conn = null;
+      try {
+        conn = (HttpURLConnection)url.openConnection();
+        conn.getInputStream().close();
+        return;
+      } catch ( IOException e ) {
+        //e.printStackTrace();
+        try {
+          if( conn != null && conn.getResponseCode() != 404 ) {
+            return;
+          }
+        } catch ( IOException ee ) {
+          //ee.printStackTrace();
+        }
+      }
+    } while( System.currentTimeMillis() < maxTime );
+    throw new IllegalStateException( "Timed out " + timeout + " waiting for URL " + url );
   }
 
 }

@@ -26,7 +26,8 @@ import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
-import org.apache.hadoop.test.category.VerifyTest;
+import org.apache.hadoop.test.TestUtils;
+import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -43,6 +44,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Enumeration;
@@ -63,7 +66,7 @@ import static org.junit.Assert.fail;
  * and using them in acl authorization checks
  *
  */
-@Category(VerifyTest.class)
+@Category(ReleaseTest.class)
 public class GatewayLdapPosixGroupFuncTest {
 
   private static final long SHORT_TIMEOUT = 2000L;
@@ -77,6 +80,7 @@ public class GatewayLdapPosixGroupFuncTest {
   public static GatewayServer gateway;
   public static String gatewayUrl;
   public static String clusterUrl;
+  public static String serviceUrl;
   public static SimpleLdapDirectoryServer ldap;
   public static TcpTransport ldapTransport;
 
@@ -86,6 +90,8 @@ public class GatewayLdapPosixGroupFuncTest {
     //appenders = NoOpAppender.setUp();
     int port = setupLdap();
     setupGateway(port);
+    TestUtils.awaitPortOpen( new InetSocketAddress( "localhost", port ), 10000, 100 );
+    TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
     LOG_EXIT();
   }
 
@@ -125,11 +131,6 @@ public class GatewayLdapPosixGroupFuncTest {
     File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology(ldapPort).toStream( stream );
-    stream.close();
-
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
     options.put( "persist-master", "true" );
@@ -148,6 +149,7 @@ public class GatewayLdapPosixGroupFuncTest {
 
     gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
     clusterUrl = gatewayUrl + "/test-cluster";
+    serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
 
     GatewayServices services = GatewayServer.getGatewayServices();
     AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
@@ -155,16 +157,11 @@ public class GatewayLdapPosixGroupFuncTest {
 
     char[] password1 = aliasService.getPasswordFromAliasForCluster( "test-cluster", "ldcSystemPassword");
 
-    descriptor = new File( topoDir, "test-cluster.xml" );
-    stream = new FileOutputStream( descriptor );
+    File descriptor = new File( topoDir, "test-cluster.xml" );
+    OutputStream stream = new FileOutputStream( descriptor );
     createTopology(ldapPort).toStream( stream );
     stream.close();
 
-    try {
-      Thread.sleep(5000);
-    } catch (Exception e) {
-
-    }
   }
 
   private static XMLTag createTopology(int ldapPort) {
@@ -282,7 +279,6 @@ public class GatewayLdapPosixGroupFuncTest {
     LOG_ENTER();
     String username = "sam";
     String password = "sam-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -300,7 +296,6 @@ public class GatewayLdapPosixGroupFuncTest {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
