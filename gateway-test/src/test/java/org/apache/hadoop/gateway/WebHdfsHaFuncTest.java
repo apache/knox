@@ -19,8 +19,7 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.hadoop.test.category.VerifyTest;
-import org.apache.hadoop.test.category.MediumTests;
+import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.junit.After;
@@ -37,7 +36,7 @@ import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 
-@Category({VerifyTest.class, MediumTests.class})
+@Category(ReleaseTest.class)
 public class WebHdfsHaFuncTest {
 
    private static final long SHORT_TIMEOUT = 1000L;
