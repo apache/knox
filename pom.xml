@@ -82,7 +82,6 @@
         <module>hadoop-examples</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
-        <module>hsso-release</module>
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
         <module>gateway-test-release</module>
@@ -175,7 +174,7 @@
                 </plugins>
             </build>
             <properties>
-                <failsafe.group>org.apache.hadoop.test.category.VerifyTest, org.apache.hadoop.test.category.ReleaseTest</failsafe.group>
+                <failsafe.group>org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest</failsafe.group>
             </properties>
         </profile>
         <profile>
@@ -613,11 +612,6 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>hsso-release</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 
