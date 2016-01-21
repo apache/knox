@@ -27,7 +27,11 @@
 
     <artifactId>gateway-test-release</artifactId>
     <name>gateway-test-release</name>
-    <description>Gateway Integration tests parent pom</description>
+    <description>Gateway release tests parent pom</description>
+    <packaging>pom</packaging>
+    <modules>
+        <module>webhdfs-kerb-test</module>
+    </modules>
 
     <dependencies>
         <dependency>

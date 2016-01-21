@@ -31,12 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -73,7 +68,7 @@ public class GatewayTestDriver {
    * @throws Exception Thrown if a failure occurs.
    */
   public int setupLdap( int port ) throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
+    URL usersUrl = getResourceUrl("users.ldif");
     ldapTransport = new TcpTransport( port );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
@@ -122,7 +117,7 @@ public class GatewayTestDriver {
     String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
     File stacksSourceDir = new File( targetDir.getParent(), pathToStacksSource);
     if (!stacksSourceDir.exists()) {
-      stacksSourceDir = new File( targetDir.getParentFile().getParent(), pathToStacksSource);
+      stacksSourceDir = new File( targetDir.getParentFile().getParentFile().getParent(), pathToStacksSource);
     }
     if (stacksSourceDir.exists()) {
       FileUtils.copyDirectoryToDirectory(stacksSourceDir, stacksDir);
@@ -142,8 +137,6 @@ public class GatewayTestDriver {
     FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayServicesDir() ) );
-
-
     ldap.stop( true );
   }
 
@@ -160,28 +153,6 @@ public class GatewayTestDriver {
     URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
     assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
     return url;
-  }
-
-  public InputStream getResourceStream( String resource ) throws IOException {
-    InputStream stream = null;
-    if( resource.startsWith( "file:/" ) ) {
-      try {
-        stream = FileUtils.openInputStream( new File( new URI( resource ) ) );
-      } catch( URISyntaxException e ) {
-        throw new IOException( e  );
-      }
-    } else {
-      stream = ClassLoader.getSystemResourceAsStream( getResourceName( resource ) );
-    }
-    assertThat( "Failed to find test resource " + resource, stream, Matchers.notNullValue() );
-    return stream;
-  }
-
-  public static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
   }
 
   public String getLdapUrl() {
