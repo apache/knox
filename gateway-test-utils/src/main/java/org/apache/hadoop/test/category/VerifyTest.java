@@ -17,5 +17,5 @@
  */
 package org.apache.hadoop.test.category;
 
-public interface IntegrationTests {
+public interface VerifyTest {
 }

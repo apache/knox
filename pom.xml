@@ -82,9 +82,9 @@
         <module>hadoop-examples</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
-        <module>hsso-release</module>
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
+        <module>gateway-test-release</module>
     </modules>
 
     <properties>
@@ -99,6 +99,8 @@
         <gateway-group>org.apache.knox</gateway-group>
         <hadoop-version>2.2.0</hadoop-version>
         <jetty-version>8.1.14.v20131031</jetty-version>
+        <surefire-version>2.16</surefire-version>
+        <failsafe-version>2.19.1</failsafe-version>
     </properties>
 
     <licenses>
@@ -171,6 +173,18 @@
                     </plugin>
                 </plugins>
             </build>
+            <properties>
+                <failsafe.group>org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest</failsafe.group>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <failsafe.group>org.apache.hadoop.test.category.VerifyTest</failsafe.group>
+            </properties>
         </profile>
     </profiles>
 
@@ -257,15 +271,36 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
+                <version>${surefire-version}</version>
                 <configuration>
                     <excludedGroups>
-                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.IntegrationTests
+                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest
                     </excludedGroups>
                     <systemPropertyVariables>
                         <gateway-version>${gateway-version}</gateway-version>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${failsafe-version}</version>
+                <configuration>
+                    <groups>${failsafe.group}</groups>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -577,11 +612,6 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>hsso-release</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

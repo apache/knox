@@ -27,7 +27,7 @@ import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.FunctionalTests;
+import org.apache.hadoop.test.category.VerifyTest;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.mock.MockRequestMatcher;
 import org.apache.http.HttpStatus;
@@ -81,7 +81,7 @@ import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
-@Category( { FunctionalTests.class, MediumTests.class } )
+@Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
