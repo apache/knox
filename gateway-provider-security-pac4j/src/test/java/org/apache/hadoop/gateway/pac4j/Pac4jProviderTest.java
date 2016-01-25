@@ -95,9 +95,9 @@ public class Pac4jProviderTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
-        // it should be a redirection to the identity provider
+        // it should be a redirection to the idp topology
         assertEquals(302, response.getStatus());
-        assertEquals(PAC4J_CALLBACK_URL + "?" + Clients.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
+        assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Clients.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
         // we should have one cookie for the saved requested url
         List<Cookie> cookies = response.getCookies();
         assertEquals(1, cookies.size());
@@ -107,7 +107,8 @@ public class Pac4jProviderTest {
         // step 2: send credentials to the callback url (callback from the identity provider)
         request = new MockHttpServletRequest();
         request.setCookies(new Cookie[]{requestedUrlCookie});
-        request.setRequestURL(PAC4J_CALLBACK_URL + "?" + Clients.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS);
+        request.setRequestURL(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Clients.DEFAULT_CLIENT_NAME_PARAMETER + "=" + Clients.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS);
+        request.addParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER, "true");
         request.addParameter(Clients.DEFAULT_CLIENT_NAME_PARAMETER, CLIENT_CLASS);
         request.addHeader("Authorization", "Basic amxlbGV1OmpsZWxldQ==");
         request.setServerName(LOCALHOST);
