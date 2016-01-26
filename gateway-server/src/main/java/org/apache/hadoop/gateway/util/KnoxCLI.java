@@ -623,8 +623,14 @@ public class KnoxCLI extends Configured implements Tool {
         boolean credentialStoreForClusterAvailable =
             keystoreService.isCredentialStoreForClusterAvailable(cluster);
         if (credentialStoreForClusterAvailable) {
-          as.removeAliasForCluster(cluster, name);
-          out.println(name + " has been successfully deleted.");
+          List<String> aliasesForCluster = as.getAliasesForCluster(cluster);
+          if (null == aliasesForCluster || !aliasesForCluster.contains(name)) {
+            out.println("Deletion of Alias: " + name + " from cluster: " + cluster + " Failed. "
+                + "\n" + "No such alias exists in the cluster.");
+          } else {
+            as.removeAliasForCluster(cluster, name);
+            out.println(name + " has been successfully deleted.");
+          }
         } else {
           out.println("Invalid cluster name provided: " + cluster);
         }

@@ -125,6 +125,54 @@ public class KnoxCLITest {
   }
 
   @Test
+  public void testDeleteOfNonExistAliasFromUserDefinedCluster() throws Exception {
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    try {
+      int rc = 0;
+      outContent.reset();
+      String[] args1 =
+          { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
+              "master" };
+      cli.run(args1);
+
+      // Delete invalid alias from the cluster
+      outContent.reset();
+      String[] args2 = { "delete-alias", "alias2", "--cluster", "cluster1", "--master", "master" };
+      rc = cli.run(args2);
+      assertEquals(0, rc);
+      assertTrue(outContent.toString().contains("No such alias exists in the cluster."));
+    } finally {
+      outContent.reset();
+      String[] args1 = { "delete-alias", "alias1", "--cluster", "cluster1", "--master", "master" };
+      cli.run(args1);
+    }
+  }
+
+  @Test
+  public void testDeleteOfNonExistAliasFromDefaultCluster() throws Exception {
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    try {
+      int rc = 0;
+      outContent.reset();
+      String[] args1 = { "create-alias", "alias1", "--value", "testvalue1", "--master", "master" };
+      cli.run(args1);
+
+      // Delete invalid alias from the cluster
+      outContent.reset();
+      String[] args2 = { "delete-alias", "alias2", "--master", "master" };
+      rc = cli.run(args2);
+      assertEquals(0, rc);
+      assertTrue(outContent.toString().contains("No such alias exists in the cluster."));
+    } finally {
+      outContent.reset();
+      String[] args1 = { "delete-alias", "alias1", "--master", "master" };
+      cli.run(args1);
+    }
+  }
+
+  @Test
   public void testForInvalidArgument() throws Exception {
     outContent.reset();
     String[] args1 = { "--value", "testvalue1", "--master", "master" };
