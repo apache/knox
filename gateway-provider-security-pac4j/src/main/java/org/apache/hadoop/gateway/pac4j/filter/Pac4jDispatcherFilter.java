@@ -26,7 +26,6 @@ import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.core.client.Client;
-import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.config.ConfigSingleton;
 import org.pac4j.core.context.J2EContext;
@@ -67,6 +66,8 @@ public class Pac4jDispatcherFilter implements Filter {
 
   public static final String PAC4J_CALLBACK_URL = "pac4j.callbackUrl";
 
+  public static final String PAC4J_CALLBACK_PARAMETER = "pac4jCallback";
+
   private static final String PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM = "pac4j.cookie.domain.suffix";
 
   private CallbackFilter callbackFilter;
@@ -101,11 +102,13 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     // url to SSO authentication provider
-    final String pac4jCallbackUrl = filterConfig.getInitParameter(PAC4J_CALLBACK_URL);
+    String pac4jCallbackUrl = filterConfig.getInitParameter(PAC4J_CALLBACK_URL);
     if (pac4jCallbackUrl == null) {
       log.ssoAuthenticationProviderUrlRequired();
       throw new ServletException("Required pac4j callback URL is missing.");
     }
+    // add the callback parameter to know it's a callback
+    pac4jCallbackUrl = CommonHelper.addParameter(pac4jCallbackUrl, PAC4J_CALLBACK_PARAMETER, "true");
 
     final Config config;
     final String clientName;
@@ -128,7 +131,7 @@ public class Pac4jDispatcherFilter implements Filter {
       final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(pac4jCallbackUrl, properties);
       config = propertiesConfigFactory.build();
       final List<Client> clients = config.getClients().getClients();
-      if (clients == null || clients.size() ==0) {
+      if (clients == null || clients.size() == 0) {
         log.atLeastOnePac4jClientMustBeDefined();
         throw new ServletException("At least one pac4j client must be defined.");
       }
@@ -157,7 +160,7 @@ public class Pac4jDispatcherFilter implements Filter {
     final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
 
     // it's a callback from an identity provider
-    if (request.getParameter(Clients.DEFAULT_CLIENT_NAME_PARAMETER) != null) {
+    if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null) {
       // apply CallbackFilter
       callbackFilter.doFilter(servletRequest, servletResponse, filterChain);
     } else {
