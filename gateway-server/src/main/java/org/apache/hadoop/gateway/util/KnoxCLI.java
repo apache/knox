@@ -540,12 +540,12 @@ public class KnoxCLI extends Configured implements Tool {
 
   public static final String USAGE = "create-alias aliasname [--cluster clustername] " +
                                      "[ (--value v) | (--generate) ]";
-  public static final String DESC = "The create-alias command will create an alias\n" +
-                                    "and secret pair within the credential store for the\n" +
-                                    "indicated --cluster otherwise within the gateway\n" +
-                                    "credential store. The actual secret may be specified via\n" +
-                                    "the --value option or --generate will create a random secret\n" +
-                                    "for you.";
+  public static final String DESC = "The create-alias command will create an alias\n"
+                                       + "and secret pair within the credential store for the\n"
+                                       + "indicated --cluster otherwise within the gateway\n"
+                                       + "credential store. The actual secret may be specified via\n"
+                                       + "the --value option or --generate (will create a random secret\n"
+                                       + "for you) or user will be prompt to provide password.";
 
   private String name = null;
 
@@ -575,8 +575,9 @@ public class KnoxCLI extends Configured implements Tool {
          out.println(name + " has been successfully generated.");
        }
        else {
-         throw new IllegalArgumentException("No value has been set. " +
-         		"Consider setting --generate or --value.");
+          value = new String(promptUserForPassword());
+          as.addAliasForCluster(cluster, name, value);
+          out.println(name + " has been successfully created.");
        }
      }
    }
@@ -588,6 +589,31 @@ public class KnoxCLI extends Configured implements Tool {
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
    }
+
+    protected char[] promptUserForPassword() {
+      char[] password = null;
+      Console c = System.console();
+      if (c == null) {
+        System.err
+            .println("No console to fetch password from user.Consider setting via --generate or --value.");
+        System.exit(1);
+      }
+
+      boolean noMatch;
+      do {
+        char[] newPassword1 = c.readPassword("Enter password: ");
+        char[] newPassword2 = c.readPassword("Enter password again: ");
+        noMatch = !Arrays.equals(newPassword1, newPassword2);
+        if (noMatch) {
+          c.format("Passwords don't match. Try again.%n");
+        } else {
+          password = Arrays.copyOf(newPassword1, newPassword1.length);
+        }
+        Arrays.fill(newPassword1, ' ');
+        Arrays.fill(newPassword2, ' ');
+      } while (noMatch);
+      return password;
+    }
 
  }
 
