@@ -462,21 +462,26 @@ public class GatewayServer {
           File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
           tmp.renameTo( warDir );
           internalDeploy( topology, warDir );
-          if (topology.getName().equals(config.getDefaultTopologyName())) {
-            topology.setName("_default");
-            handleCreateDeployment(topology, deployDir);
-            topology.setName(config.getDefaultTopologyName());
-          }
+          handleDefaultTopology(topology, deployDir);
           log.deployedTopology( topology.getName());
         } else {
           auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
           log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
           internalDeploy( topology, warDir );
+          handleDefaultTopology(topology, deployDir);
           log.redeployedTopology( topology.getName() );
         }
       } catch( Throwable e ) {
         auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
         log.failedToDeployTopology( topology.getName(), e );
+      }
+    }
+
+    public void handleDefaultTopology(Topology topology, File deployDir) {
+      if (topology.getName().equals(config.getDefaultTopologyName())) {
+        topology.setName("_default");
+        handleCreateDeployment(topology, deployDir);
+        topology.setName(config.getDefaultTopologyName());
       }
     }
 
