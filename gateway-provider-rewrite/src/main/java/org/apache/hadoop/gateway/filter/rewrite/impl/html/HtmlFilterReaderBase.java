@@ -39,18 +39,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
 public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteFilterReader {
 
-  private static List<String> JSTYPES = Arrays.asList( new String[] { "application/javascript", "text/javascript", "*/javascript",
-      "application/x-javascript", "text/x-javascript", "*/x-javascript" } );
   private static final String SCRIPTTAG = "script";
   private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
 
@@ -199,9 +195,8 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
         // This can happen for whitespace outside of the root element.
         //outputValue = filterText( null, inputValue );
       } else {
-        String tagType = stack.peek().getTag().getAttributeValue("type");
         String tagName = stack.peek().getTag().getName();
-        if (SCRIPTTAG.equals(tagName) && JSTYPES.contains(tagType) && config != null && !config.getSelectors().isEmpty() ) {
+        if (SCRIPTTAG.equals(tagName) && config != null && !config.getSelectors().isEmpty() ) {
           // embedded javascript content
           outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
         } else {
