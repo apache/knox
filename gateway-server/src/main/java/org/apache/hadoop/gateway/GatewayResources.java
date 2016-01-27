@@ -82,4 +82,7 @@ public interface GatewayResources {
 
   @Resource( text="Request method: {0}" )
   String requestMethod( String method );
+
+  @Resource( text="Forward method: {0} to default context: {1}" )
+  String forwardToDefaultTopology(String method, String context );
 }

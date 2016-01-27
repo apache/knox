@@ -17,6 +17,11 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.hadoop.gateway.audit.api.*;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+
 import java.io.*;
 
 import javax.servlet.*;
@@ -24,7 +29,18 @@ import javax.servlet.http.*;
 
 public class GatewayForwardingServlet extends HttpServlet{
 
-  private static final long serialVersionUID = 1L;  
+  private static final long serialVersionUID = 1L;
+
+  private static final String AUDIT_ACTION = "forward";
+
+  private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
+
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = AuditServiceFactory.getAuditService()
+          .getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
+                  AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
+
   private String redirectToContext = null;
 
   @Override
@@ -68,34 +84,58 @@ public class GatewayForwardingServlet extends HttpServlet{
                     HttpServletResponse response)
             throws ServletException, IOException
   {
-    String path = "";
-    String pathInfo = request.getPathInfo();
-    if (pathInfo != null && pathInfo.length() > 0) {
-      path = path + pathInfo;
-    }
-    String qstr =  request.getQueryString();
-    if (qstr != null && qstr.length() > 0) {
-      path = path + "?" + qstr;
-    }
+    String origPath = getRequestPath( request );
+    try {
+      auditService.createContext();
 
-    // Perform cross context dispatch to the configured topology context
-    ServletContext ctx = getServletContext().getContext(redirectToContext);
-    RequestDispatcher dispatcher = ctx.getRequestDispatcher(path);
-    dispatcher.forward(request, response);    
+      String origRequest = getRequestLine( request );
+
+      auditor.audit(
+              AUDIT_ACTION, origPath, ResourceType.URI,
+              ActionOutcome.UNAVAILABLE, RES.forwardToDefaultTopology( request.getMethod(), redirectToContext ) );
+
+      // Perform cross context dispatch to the configured topology context
+      ServletContext ctx = getServletContext().getContext(redirectToContext);
+      RequestDispatcher dispatcher = ctx.getRequestDispatcher(origRequest);
+
+      dispatcher.forward(request, response);
+
+      auditor.audit(
+              AUDIT_ACTION, origPath, ResourceType.URI,
+              ActionOutcome.SUCCESS, RES.responseStatus( response.getStatus() ) );
+
+    } catch( ServletException | IOException | RuntimeException e ) {
+      auditor.audit(
+              AUDIT_ACTION, origPath, ResourceType.URI,
+              ActionOutcome.FAILURE );
+      throw e;
+    } catch( Throwable e ) {
+      auditor.audit(
+              AUDIT_ACTION, origPath, ResourceType.URI,
+              ActionOutcome.FAILURE );
+      throw new ServletException(e);
+    } finally {
+      auditService.detachContext();
+    }
   }
 
-  public static class MyRequest extends HttpServletRequestWrapper {
-    private String redirectTo = null;
-    
-    public MyRequest(HttpServletRequest request, String redirectTo) {
-        super(request);
+  private static final String getRequestPath( final HttpServletRequest request ) {
+    final String path = request.getPathInfo();
+    if( path == null ) {
+      return "";
+    } else {
+      return path;
     }
-
-    @Override    
-    public String getContextPath() {
-        return redirectTo;
-    }
-
   }
 
-} 
+  private static final String getRequestLine( final HttpServletRequest request ) {
+    final String path = getRequestPath( request );
+    final String query = request.getQueryString();
+    if( query == null ) {
+      return path;
+    } else {
+      return path + "?" + query;
+    }
+  }
+
+}

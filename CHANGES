@@ -4,6 +4,7 @@ Release Notes - Apache Knox - Version 0.8.0
 ** New Feature
 ** Improvement
     * [KNOX-650] - Add posixGroups support for LDAP groups lookup
+    * [KNOX-502] - Invalid requests (404s) should be logged and audited
 ** Bug
 
 ------------------------------------------------------------------------------

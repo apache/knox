@@ -44,9 +44,10 @@ public class GatewayForwardingServletTest {
     EasyMock.expect(config.getServletName()).andStubReturn("default");
     EasyMock.expect(config.getServletContext()).andStubReturn(context);
     EasyMock.expect(config.getInitParameter("redirectTo")).andReturn("/gateway/sandbox");
-    EasyMock.expect(request.getMethod()).andReturn("GET");
-    EasyMock.expect(request.getPathInfo()).andReturn("/webhdfs/v1/tmp");
+    EasyMock.expect(request.getMethod()).andReturn("GET").anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("/webhdfs/v1/tmp").anyTimes();
     EasyMock.expect(request.getQueryString()).andReturn("op=LISTSTATUS");
+    EasyMock.expect(response.getStatus()).andReturn(200).anyTimes();
     EasyMock.expect(context.getContext("/gateway/sandbox")).andReturn(context);
     EasyMock.expect(context.getRequestDispatcher("/webhdfs/v1/tmp?op=LISTSTATUS")).andReturn(dispatcher);
     dispatcher.forward(request, response);
