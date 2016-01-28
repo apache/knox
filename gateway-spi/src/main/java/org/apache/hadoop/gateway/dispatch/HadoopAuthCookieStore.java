@@ -24,7 +24,7 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
 
   @Override
   public void addCookie(Cookie cookie) {
-    if (cookie.getName().equals("hadoop.auth")) {
+    if (cookie.getName().equals("hadoop.auth") || cookie.getName().equals("hive.server2.auth")) {
       super.addCookie(cookie);
     }
   }

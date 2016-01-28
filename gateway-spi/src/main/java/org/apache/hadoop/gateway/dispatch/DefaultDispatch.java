@@ -56,8 +56,8 @@ import java.util.Set;
  */
 public class DefaultDispatch extends AbstractGatewayDispatch {
 
-  protected static final String SET_COOKIE = "Set-Cookie";
-  protected static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+  protected static final String SET_COOKIE = "SET-COOKIE";
+  protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
 
   protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
@@ -142,7 +142,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
     for ( Header header : headers ) {
       String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name)) {
+      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase())) {
         continue;
       }
       String value = header.getValue();
