@@ -274,10 +274,9 @@ downloadPatch () {
 }
 ###############################################################################
 applyPatch() {
-    echo "Applying patch" >> $STDOUT
+    echo "Applying patch ${PATCHFILE} in `pwd`" >> $STDOUT
     echo "" >> $STDOUT
-    patch -f -E --dry-run -p0 < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt \
-        >> $STDOUT
+    patch -f -E --dry-run -p0 --verbose < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt >> $STDOUT
     if [[  ${PIPESTATUS[0]} != 0 ]] ; then
         echo "Patch failed to apply to head of branch"
         echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
@@ -397,7 +396,7 @@ WARNINGS=`grep -c "\}WARNING" ${SUMMARYFILE}`
 if [[ $WARNINGS != 0 ]]; then
     echo "{color:red}.   There is at least one warning, please check{color}" >> ${SUMMARYFILE}
 fi
-echo " " >> ${SUMMARYFILE}
+echo "" >> ${SUMMARYFILE}
 
 if [ ! -z "${JIRAISSUE}" ]; then
     echo "The full output of the test-patch run is available at"  >> ${SUMMARYFILE}
