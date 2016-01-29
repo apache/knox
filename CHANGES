@@ -2,10 +2,31 @@
 Release Notes - Apache Knox - Version 0.8.0
 ------------------------------------------------------------------------------
 ** New Feature
+    * [KNOX-641] - Support CAS / OAuth / OpenID C / SAML protocols using pac4j - (Jérôme Leleu via lmccay)
 ** Improvement
-    * [KNOX-650] - Add posixGroups support for LDAP groups lookup
     * [KNOX-502] - Invalid requests (404s) should be logged and audited
+    * [KNOX-519] - Prompt user to provide password, rather providing as an argument to knoxcli cmd (J.Andreina via lmccay)
+    * [KNOX-647] - Rename LDAP artifacts from test to demo
+    * [KNOX-650] - Add posixGroups support for LDAP groups lookup
+    * [KNOX-651] - getting rid of warning for missing bundle version
+    * [KNOX-651] - Moving some tests to integration-test phase
+    * [KNOX-651] - made the secure tests multi module
+    * [KNOX-652] - Remove hsso-release module from build
+    * [KNOX-651] - Attempt number 2 to fix the jenkins build
+    * [KNOX-651] - Attempt to fix Jenkins build error
+    * [KNOX-651] - Fixed gateway-test-release module id
+    * [KNOX-651] - Initial changes to add a 'release' test project
+    * [KNOX-650] - Add posixGroups support for LDAP groups lookup
+    * [KNOX-655] - Pac4j Provider Client Selection from client_name Query Parameter (Jérôme Leleu via lmccay)
+    * [KNOX-658] - updated hadoop dependencies for jdk8 support
+    * [KNOX-658] - slight change to the way JAXB works in JDK8
+    * [KNOX-659] - Default Keystore Details in Pac4j Provider SAML Config to Gateway Identity
 ** Bug
+    * [KNOX-507] - Deletion of Non existing Alias from a cluster should not be successful (J.Andreina via lmccay)
+    * [KNOX-589] - Fixing Jericho java.lang.IllegalStateException (Jeffrey E Rodriguez via Sumit Gupta)
+    * [KNOX-594] - Stopping HS2 'SET-COOKIE' header to go back and managing 'hive.server2.auth' cookie
+    * [KNOX-656] - Test GatewayLdapPosixGroupFuncTest failing intermittently
+    * [KNOX-657] - _default Topology Must Redeploy After Restart
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.7.0
