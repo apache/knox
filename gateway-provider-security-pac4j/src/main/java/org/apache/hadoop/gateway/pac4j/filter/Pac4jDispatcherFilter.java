@@ -21,6 +21,8 @@ import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.pac4j.Pac4jMessages;
 import org.apache.hadoop.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.AliasServiceException;
 import org.apache.hadoop.gateway.services.security.CryptoService;
@@ -73,20 +75,24 @@ public class Pac4jDispatcherFilter implements Filter {
   private CallbackFilter callbackFilter;
 
   private RequiresAuthenticationFilter requiresAuthenticationFilter;
+  private MasterService masterService = null;
+  private KeystoreService keystoreService = null;
+  private AliasService aliasService = null;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     // JWT service
     final ServletContext context = filterConfig.getServletContext();
     CryptoService cryptoService = null;
-    AliasService aliasService = null;
     String clusterName = null;
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       clusterName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
       if (services != null) {
+        keystoreService = (KeystoreService) services.getService(GatewayServices.KEYSTORE_SERVICE);
         cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
         aliasService = (AliasService) services.getService(GatewayServices.ALIAS_SERVICE);
+        masterService = (MasterService) services.getService("MasterService");
       }
     }
     // crypto service, alias service and cluster name are mandatory
@@ -124,6 +130,7 @@ public class Pac4jDispatcherFilter implements Filter {
       // get clients from the init parameters
       final Map<String, String> properties = new HashMap<>();
       final Enumeration<String> names = filterConfig.getInitParameterNames();
+      addDefaultConfig(clientNameParameter, properties);
       while (names.hasMoreElements()) {
         final String key = names.nextElement();
         properties.put(key, filterConfig.getInitParameter(key));
@@ -150,6 +157,35 @@ public class Pac4jDispatcherFilter implements Filter {
     final String domainSuffix = context.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
     ConfigSingleton.setConfig(config);
+  }
+
+  private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
+    // add default saml params
+    if (clientNameParameter.contains("SAML2Client")) {
+      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PATH,
+          keystoreService.getKeystorePath());
+
+      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PASSWORD,
+          new String(masterService.getMasterSecret()));
+
+      // check for provisioned alias for private key
+      char[] gip = null;
+      try {
+        gip = aliasService.getGatewayIdentityPassphrase();
+      }
+      catch(AliasServiceException ase) {
+        log.noPrivateKeyPasshraseProvisioned(ase);
+      }
+      if (gip != null) {
+        properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD,
+            new String(gip));
+      }
+      else {
+        // no alias provisioned then use the master
+        properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD,
+            new String(masterService.getMasterSecret()));
+      }
+    }
   }
 
   @Override

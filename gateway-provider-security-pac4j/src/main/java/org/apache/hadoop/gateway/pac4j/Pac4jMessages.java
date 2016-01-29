@@ -40,4 +40,8 @@ public interface Pac4jMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to generate a password for encryption")
   public void unableToGenerateAPasswordForEncryption(Exception e);
+
+  @Message( level = MessageLevel.INFO, text = 
+      "No private key passphrase alias found. Defaulting to master. Exception encountered: {0}")
+  public void noPrivateKeyPasshraseProvisioned(Exception e);
 }

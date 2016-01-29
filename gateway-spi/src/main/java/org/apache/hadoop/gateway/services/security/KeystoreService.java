@@ -45,4 +45,6 @@ public interface KeystoreService {
   public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
 
   public char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+
+  public String getKeystorePath();
 }
