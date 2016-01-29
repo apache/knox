@@ -87,7 +87,7 @@ case $OP in
 pre)
     ;;
 post)
-    mvn package assembly:single -DskipTests | tee ${REPORTDIR}/${TASKNAME}.out >> $STDOUT
+    mvn -Prelease clean install -DskipTests | tee ${REPORTDIR}/${TASKNAME}.out >> $STDOUT
     exitCode=${PIPESTATUS[0]}
     echo "$exitCode" >  ${TEMPDIR}/${TASKNAME}.exitCode
     ;;
