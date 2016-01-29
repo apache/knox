@@ -96,12 +96,7 @@ public class ServiceDefinition {
   @XmlElement(name = "testURL")
   @XmlElementWrapper(name = "testURLs")
   public List<String> getTestURLs() {
-
-    if(testURLs != null){
-      return testURLs;
-    } else {
-      return new ArrayList<String>();
-    }
+    return testURLs;
   }
 
   public void setTestURLs(List<String> testURLs) {

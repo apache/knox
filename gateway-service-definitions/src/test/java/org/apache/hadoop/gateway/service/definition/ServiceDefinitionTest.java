@@ -59,6 +59,8 @@ public class ServiceDefinitionTest {
     for (int i=0; i< policyOrder.length; i++ ) {
       assertEquals(policyOrder[i], policies.get(i).getRole());
     }
+    assertNotNull(definition.getTestURLs());
+    assertEquals(2, definition.getTestURLs().size());
   }
 
   @Test
