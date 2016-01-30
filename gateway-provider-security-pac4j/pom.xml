@@ -36,8 +36,8 @@
     </licenses>
 
     <properties>
-        <j2e-pac4j.version>1.2.1</j2e-pac4j.version>
-        <pac4j.version>1.8.3</pac4j.version>
+        <j2e-pac4j.version>1.2.2</j2e-pac4j.version>
+        <pac4j.version>1.8.5</pac4j.version>
     </properties>
 
     <dependencies>
