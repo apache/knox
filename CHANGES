@@ -28,6 +28,7 @@ Release Notes - Apache Knox - Version 0.8.0
     * [KNOX-656] - Test GatewayLdapPosixGroupFuncTest failing intermittently
     * [KNOX-657] - _default Topology Must Redeploy After Restart
     * [KNOX-660] - Incompatible Dependencies in Pac4j Provider
+    * [KNOX-661] - NPE in Pac4j Provider when clientName Parameter is Missing
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.7.0

@@ -118,8 +118,12 @@ public class Pac4jDispatcherFilter implements Filter {
 
     final Config config;
     final String clientName;
-    // client name from servlet parameter (if defined)
+    // client name from servlet parameter (mandatory)
     final String clientNameParameter = filterConfig.getInitParameter(Pac4jConstants.CLIENT_NAME);
+    if (clientNameParameter == null) {
+      log.clientNameParameterRequired();
+      throw new ServletException("Required pac4j clientName parameter is missing.");
+    }
     if (TEST_BASIC_AUTH.equalsIgnoreCase(clientNameParameter)) {
       // test configuration
       final IndirectBasicAuthClient indirectBasicAuthClient = new IndirectBasicAuthClient(new SimpleTestUsernamePasswordAuthenticator());

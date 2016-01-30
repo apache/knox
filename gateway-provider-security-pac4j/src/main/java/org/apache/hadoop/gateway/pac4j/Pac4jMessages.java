@@ -32,6 +32,9 @@ public interface Pac4jMessages {
   @Message( level = MessageLevel.ERROR, text = "pac4j callback URL required")
   public void ssoAuthenticationProviderUrlRequired();
 
+  @Message( level = MessageLevel.ERROR, text = "pac4j clientName parameter required")
+  public void clientNameParameterRequired();
+
   @Message( level = MessageLevel.ERROR, text = "At least one pac4j client must be defined")
   public void atLeastOnePac4jClientMustBeDefined();
 
