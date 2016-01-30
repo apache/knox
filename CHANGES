@@ -29,6 +29,7 @@ Release Notes - Apache Knox - Version 0.8.0
     * [KNOX-657] - _default Topology Must Redeploy After Restart
     * [KNOX-660] - Incompatible Dependencies in Pac4j Provider
     * [KNOX-661] - NPE in Pac4j Provider when clientName Parameter is Missing
+    * [KNOX-662] - Change pac4j-knoxsso.xml Template to Reflect new Requirements
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.7.0

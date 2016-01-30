@@ -16,9 +16,7 @@
   limitations under the License.
 -->
 <topology>
-
     <gateway>
-
         <provider>
             <role>federation</role>
             <name>pac4j</name>
@@ -27,41 +25,21 @@
                 <name>pac4j.callbackUrl</name>
                 <value>https://127.0.0.1:8443/gateway/knoxsso/api/v1/websso</value>
             </param>
-            <!--param>
+            <param>
                 <name>clientName</name>
-                <value>testBasicAuth</value>
-            </param-->
-            <param>
-                <name>cas.loginUrl</name>
-                <value>https://casserverpac4j.herokuapp.com/login</value>
-            </param>
-            <!--param>
-                <name>saml.keystorePath</name>
-                <value>/tmp/samlKeystore.jks</value>
-            </param>
-            <param>
-                <name>saml.keystorePassword</name>
-                <value>pac4j-demo-passwd</value>
-            </param>
-            <param>
-                <name>saml.privateKeyPassword</name>
-                <value>pac4j-demo-passwd</value>
+                <value>SAML2Client</value>
             </param>
             <param>
                 <name>saml.identityProviderMetadataPath</name>
-                <value>/tmp/metadata-okta.xml</value>
-            </param>
-            <param>
-                <name>saml.maximumAuthenticationLifetime</name>
-                <value>3600</value>
+                <value>/tmp/idp-metadata.xml</value>
             </param>
             <param>
                 <name>saml.serviceProviderEntityId</name>
-                <value>https://127.0.0.1:8443/gateway/idp/api/v1/websso?client_name=SAML2Client</value>
+                <value>https://127.0.0.1:8443/gateway/knoxsso/api/v1/websso?pac4jCallback=true&amp;client_name=SAML2Client</value>
             </param>
-            <param>
-                <name>saml.serviceProviderMetadataPath</name>
-                <value>sp-metadata.xml</value>
+            <!--param>
+                <name>cas.loginUrl</name>
+                <value>https://casserverpac4j.herokuapp.com/login</value>
             </param-->
         </provider>
 
@@ -69,6 +47,10 @@
             <role>identity-assertion</role>
             <name>Default</name>
             <enabled>true</enabled>
+            <param>
+              <name>principal.mapping</name>
+              <value>guest@example.com=guest;</value>
+            </param>
         </provider>
 
     </gateway>
