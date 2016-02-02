@@ -35,7 +35,7 @@ public abstract class AbstractJavaConsoleCredentialCollector extends AbstractCre
       System.exit(1);
     }
   
-    String username = c.readLine(prompt + ": ");
+    String username = c.readLine(prompt);
     value = username;
   
     return value;
@@ -49,7 +49,7 @@ public abstract class AbstractJavaConsoleCredentialCollector extends AbstractCre
       System.exit(1);
     }
   
-    response = c.readPassword(prompt + ": ");
+    response = c.readPassword(prompt);
     value = new String(response);
   
     return value;
