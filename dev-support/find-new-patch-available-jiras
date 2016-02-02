@@ -20,7 +20,7 @@ BASEDIR=$(pwd)
 TEMPDIR=${BASEDIR}/tmp
 
 JIRAAVAILPATCHQUERY="https://issues.apache.org/jira/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+in+%28KNOX%29+AND+status+%3D+%22Patch+Available%22+ORDER+BY+updated+DESC&tempMax=1000"
-TESTPATCHJOBURL="https://builds.apache.org/job/PreCommit-Knox-Build"
+TESTPATCHJOBURL="https://builds.apache.org/job/Knox-master-patch-verify"
 TOKEN=""
 SUBMIT="false"
 DELETEHISTORYFILE="false"
