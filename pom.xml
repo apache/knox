@@ -60,6 +60,7 @@
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-pac4j</module>
         <module>gateway-provider-security-authz-acls</module>
+        <module>gateway-provider-security-authc-anon</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
         <module>gateway-provider-identity-assertion-regex</module>
@@ -453,6 +454,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-hadoopauth</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-security-authc-anon</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
