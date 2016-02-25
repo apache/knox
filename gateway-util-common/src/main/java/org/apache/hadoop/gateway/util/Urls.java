@@ -17,10 +17,14 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.URLCodec;
 
 /**
  *
@@ -108,4 +112,56 @@ public class Urls {
     }
     return domain.substring(idx);
   }
+
+  public static String encode( String str ) {
+    URLCodec codec = new URLCodec();
+    try {
+      return codec.encode( str, "UTF-8" );
+    } catch( UnsupportedEncodingException e ) {
+      throw new IllegalArgumentException( e );
+    }
+  }
+
+  public static String decode( String str ) {
+    URLCodec codec = new URLCodec();
+    try {
+      return codec.decode( str, "UTF-8" );
+    } catch( UnsupportedEncodingException e ) {
+      throw new IllegalArgumentException( e );
+    } catch( DecoderException e ) {
+      throw new IllegalArgumentException( e );
+    }
+  }
+
+  public static String trimLeadingAndTrailingSlash( String s ) {
+    if( s == null ) {
+      return "";
+    } else {
+      int b = 0;
+      int e = s.length();
+      while( b < e && s.charAt( b ) == '/' ) { b++; }
+      while( e > b && s.charAt( e-1 ) == '/' ) { e--; }
+      return s.substring( b, e );
+    }
+  }
+
+  public static String trimLeadingAndTrailingSlashJoin( String... parts ) {
+    StringBuilder s = new StringBuilder();
+    if( parts != null ) {
+      String p = "";
+      String n = "";
+      for( int i=0; i<parts.length; i++ ) {
+        n = trimLeadingAndTrailingSlash( parts[i] );
+        if( !n.isEmpty() ) {
+          if( !p.isEmpty() ) {
+            s.append( '/' );
+          }
+          s.append( n );
+          p = n;
+        }
+      }
+    }
+    return s.toString();
+  }
+
 }

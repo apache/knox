@@ -35,8 +35,9 @@ public class Topology {
   public List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
   public List<Service> services = new ArrayList<Service>();
-
   private MultiKeyMap serviceMap;
+  private List<Application> applications = new ArrayList<Application>();
+  private Map<String,Application> applicationMap = new HashMap<String,Application>();
 
   public Topology() {
     serviceMap = MultiKeyMap.decorate(new HashedMap());
@@ -70,13 +71,43 @@ public class Topology {
     return services;
   }
 
-  public Service getService(String role, String name, Version version) {
+  public Service getService( String role, String name, Version version) {
     return (Service)serviceMap.get(role, name, version);
   }
 
   public void addService( Service service ) {
     services.add( service );
     serviceMap.put(service.getRole(), service.getName(), service.getVersion(), service);
+  }
+
+  public Collection<Application> getApplications() {
+    return applications;
+  }
+
+  private static String fixApplicationUrl( String url ) {
+    if( url == null ) {
+      url = "/";
+    }
+    if( !url.startsWith( "/" ) ) {
+      url = "/" + url;
+    }
+    return url;
+  }
+
+  public Application getApplication(String url) {
+    return applicationMap.get( fixApplicationUrl( url ) );
+  }
+
+  public void addApplication( Application application ) {
+    applications.add( application );
+    List<String> urls = application.getUrls();
+    if( urls == null || urls.isEmpty() ) {
+      applicationMap.put( fixApplicationUrl( application.getName() ), application );
+    } else {
+      for( String url : application.getUrls() ) {
+        applicationMap.put( fixApplicationUrl( url ), application );
+      }
+    }
   }
 
   public Collection<Provider> getProviders() {

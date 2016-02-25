@@ -17,6 +17,25 @@
  */
 package org.apache.hadoop.gateway.util;
 
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -29,11 +48,11 @@ import org.apache.hadoop.gateway.services.CLIGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
@@ -58,26 +77,7 @@ import org.apache.shiro.util.Factory;
 import org.apache.shiro.util.ThreadContext;
 import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.Console;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 /**
  *
  */
@@ -1322,10 +1322,10 @@ public class KnoxCLI extends Configured implements Tool {
     protected String getConfig(Topology t){
       File tmpDir = new File(System.getProperty("java.io.tmpdir"));
       DeploymentFactory.setGatewayServices(services);
-      WebArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
+      EnterpriseArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
       File war = archive.as(ExplodedExporter.class).exportExploded(tmpDir, t.getName() + "_deploy.tmp");
       war.deleteOnExit();
-      String config = war.getAbsolutePath() + "/WEB-INF/shiro.ini";
+      String config = war.getAbsolutePath() + "/%2F/WEB-INF/shiro.ini";
       try{
         FileUtils.forceDeleteOnExit(war);
       } catch (IOException e) {

@@ -17,25 +17,19 @@
  */
 package org.apache.hadoop.gateway.descriptor.xml;
 
+import java.io.IOException;
+import java.io.Writer;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorExporter;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
-import java.io.Writer;
 
 public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, XmlGatewayDescriptorTags {
 
@@ -47,10 +41,7 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
   @Override
   public void store( GatewayDescriptor descriptor, Writer writer ) throws IOException {
     try {
-      DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = builderFactory.newDocumentBuilder();
-      Document document = builder.newDocument();
-      document.setXmlStandalone( true );
+      Document document = XmlUtils.createDocument();
 
       Element gateway = document.createElement( GATEWAY );
       document.appendChild( gateway );
@@ -59,16 +50,7 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
         gateway.appendChild( createResource( document, resource ) );
       }
 
-      TransformerFactory transformerFactory = TransformerFactory.newInstance();
-      transformerFactory.setAttribute( "indent-number", 2 );
-      Transformer transformer = transformerFactory.newTransformer();
-      //transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
-      transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-      transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-
-      StreamResult result = new StreamResult( writer );
-      DOMSource source = new DOMSource(document);
-      transformer.transform( source, result );
+      XmlUtils.writeXml( document, writer );
 
     } catch( ParserConfigurationException e ) {
       throw new IOException( e );

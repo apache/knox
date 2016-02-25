@@ -39,7 +39,6 @@ public class DeploymentContextImpl implements DeploymentContext {
   private WebArchive webArchive;
   private WebAppDescriptor webAppDescriptor;
   Map<String,List<ProviderDeploymentContributor>> providers;
-  Map<String,List<ServiceDeploymentContributor>> services;
   private Map<String,Object> descriptors;
 
   public DeploymentContextImpl(
@@ -48,15 +47,13 @@ public class DeploymentContextImpl implements DeploymentContext {
       GatewayDescriptor gatewayDescriptor,
       WebArchive webArchive,
       WebAppDescriptor webAppDescriptor,
-      Map<String,List<ProviderDeploymentContributor>> providers,
-      Map<String,List<ServiceDeploymentContributor>> services ) {
+      Map<String,List<ProviderDeploymentContributor>> providers ) {
     this.gatewayConfig = gatewayConfig;
     this.topology = topology;
     this.gatewayDescriptor = gatewayDescriptor;
     this.webArchive = webArchive;
     this.webAppDescriptor = webAppDescriptor;
     this.providers = providers;
-    this.services = services;
     this.descriptors = new HashMap<String,Object>();
   }
 
@@ -118,9 +115,6 @@ public class DeploymentContextImpl implements DeploymentContext {
       List<FilterParamDescriptor> params ) {
     ProviderDeploymentContributor contributor = DeploymentFactory.getProviderContributor( providers, role, name );
     Provider provider = getTopology().getProvider( role, name );
-//    if( provider != null ) {
-//      System.out.println("=================== provider found by name: " + name + " with actual name of: " + provider.getName());
-//    }
     if( provider == null ) {
       provider = new Provider();
       provider.setRole( role );

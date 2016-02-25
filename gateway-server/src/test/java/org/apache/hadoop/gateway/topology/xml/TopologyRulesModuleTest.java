@@ -19,11 +19,13 @@ package org.apache.hadoop.gateway.topology.xml;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.hadoop.gateway.topology.Application;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.Version;
 import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
+import org.apache.hadoop.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -236,4 +238,25 @@ public class TopologyRulesModuleTest {
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-1" ), is( "test-service-param-value-1" ) ) );
     assertThat( service.getParams(), hasEntry( is( "test-service-param-name-2" ), is( "test-service-param-value-2" ) ) );
   }
+
+  @Test
+  public void testParseTopologyWithApplication() throws IOException, SAXException {
+    Digester digester = loader.newDigester();
+    String name = "topology-with-application.xml";
+    URL url = TestUtils.getResourceUrl( TopologyRulesModuleTest.class, name );
+    assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
+    File file = new File( url.getFile() );
+    TopologyBuilder topologyBuilder = digester.parse( url );
+    Topology topology = topologyBuilder.build();
+    assertThat( "Failed to parse resource " + name, topology, notNullValue() );
+    topology.setTimestamp( file.lastModified() );
+
+    Application app = topology.getApplications().iterator().next();
+    assertThat( "Failed to find application", app, notNullValue() );
+    assertThat( app.getName(), is("test-app-name") );
+    assertThat( app.getUrl(), is("test-app-path") );
+    assertThat( app.getUrls().get( 0 ), is("test-app-path") );
+    assertThat( app.getParams().get( "test-param-name" ), is( "test-param-value" ) );
+  }
+
 }

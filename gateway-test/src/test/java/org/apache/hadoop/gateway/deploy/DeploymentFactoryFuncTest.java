@@ -17,26 +17,17 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.gateway.GatewayTestConfig;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.services.DefaultGatewayServices;
-import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.topology.Param;
-import org.apache.hadoop.gateway.topology.Provider;
-import org.apache.hadoop.gateway.topology.Service;
-import org.apache.hadoop.gateway.topology.Topology;
-import org.apache.hadoop.test.log.NoOpAppender;
-import org.apache.log4j.Appender;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -47,20 +38,35 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.gateway.GatewayTestConfig;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.filter.XForwardedHeaderFilter;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
+import org.apache.hadoop.gateway.services.DefaultGatewayServices;
+import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.topology.Application;
+import org.apache.hadoop.gateway.topology.Param;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.test.TestUtils;
+import org.apache.hadoop.test.log.NoOpAppender;
+import org.apache.log4j.Appender;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ArchivePath;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -71,10 +77,10 @@ import static org.junit.Assert.fail;
 public class DeploymentFactoryFuncTest {
 
   private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
+  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
   private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
-  @Test( timeout = SHORT_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
     LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
@@ -122,9 +128,9 @@ public class DeploymentFactoryFuncTest {
     provider.addParam( param );
     topology.addProvider( provider );
 
-    WebArchive war = DeploymentFactory.createDeployment( config, topology );
+    EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
 
-    Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    Document gateway = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
     //dump( gateway );
 
     //by default the first filter will be the X-Forwarded header filter
@@ -200,7 +206,7 @@ public class DeploymentFactoryFuncTest {
   }
 
   @Test( timeout = MEDIUM_TIMEOUT )
-  public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+  public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
     LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
     //Testing without x-forwarded headers filter
@@ -250,19 +256,23 @@ public class DeploymentFactoryFuncTest {
     authorizer.setEnabled( true );
     topology.addProvider( authorizer );
 
-    WebArchive war = DeploymentFactory.createDeployment( config, topology );
+    EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
 //    File dir = new File( System.getProperty( "user.dir" ) );
 //    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-    Document web = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
-    assertThat( web, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
+    Document web = TestUtils.parseXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+    //TestUtils.dumpXml( web );
+    assertThat( web, hasXPath( "/web-app" ) );
+    assertThat( web, hasXPath( "/web-app/servlet" ) );
+    assertThat( web, hasXPath( "/web-app/servlet/servlet-name" ) );
+    assertThat( web, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster-knox-gateway-servlet" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
-    assertThat( web, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
-    assertThat( web, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "/WEB-INF/gateway.xml" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster-knox-gateway-servlet" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
 
-    Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    Document gateway = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/webhdfs/v1/?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
@@ -373,7 +383,7 @@ public class DeploymentFactoryFuncTest {
       ha.setEnabled(true);
       topology.addProvider(ha);
 
-      for (int i = 0; i < 100; i++) {
+      for (int i = 0; i < 10; i++) {
          createAndTestDeployment(config, topology);
       }
       LOG_EXIT();
@@ -381,15 +391,15 @@ public class DeploymentFactoryFuncTest {
 
    private void createAndTestDeployment(GatewayConfig config, Topology topology) throws IOException, SAXException, ParserConfigurationException {
 
-      WebArchive war = DeploymentFactory.createDeployment(config, topology);
+      EnterpriseArchive war = DeploymentFactory.createDeployment(config, topology);
 //      File dir = new File( System.getProperty( "user.dir" ) );
 //      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-      Document web = parse(war.get("WEB-INF/web.xml").getAsset().openStream());
+      Document web = TestUtils.parseXml(war.get("%2F/WEB-INF/web.xml").getAsset().openStream());
       assertThat(web, hasXPath("/web-app/servlet/servlet-class", equalTo("org.apache.hadoop.gateway.GatewayServlet")));
       assertThat(web, hasXPath("/web-app/servlet/init-param/param-name", equalTo("gatewayDescriptorLocation")));
-      assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("gateway.xml")));
-      assertThat(web, hasXPath("/web-app/servlet-mapping/servlet-name", equalTo("test-cluster")));
+      assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("/WEB-INF/gateway.xml")));
+      assertThat(web, hasXPath("/web-app/servlet-mapping/servlet-name", equalTo("test-cluster-knox-gateway-servlet")));
       assertThat(web, hasXPath("/web-app/servlet-mapping/url-pattern", equalTo("/*")));
       //testing the order of listener classes generated
       assertThat(web, hasXPath("/web-app/listener[2]/listener-class", equalTo("org.apache.hadoop.gateway.services.GatewayServicesContextListener")));
@@ -397,7 +407,7 @@ public class DeploymentFactoryFuncTest {
       assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener")));
    }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = LONG_TIMEOUT )
   public void testDeploymentWithServiceParams() throws Exception {
     LOG_ENTER();
     GatewayConfig config = new GatewayTestConfig();
@@ -452,8 +462,8 @@ public class DeploymentFactoryFuncTest {
     service.addParam( param );
     topology.addService( service );
 
-    WebArchive war = DeploymentFactory.createDeployment( config, topology );
-    Document doc = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
+    EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
+    Document doc = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 //    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
@@ -488,11 +498,145 @@ public class DeploymentFactoryFuncTest {
     LOG_EXIT();
   }
 
-  private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    InputSource source = new InputSource( stream );
-    return builder.parse( source );
+  @Test( timeout = MEDIUM_TIMEOUT )
+  public void testDeploymentWithApplication() throws Exception {
+    LOG_ENTER();
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File(System.getProperty("user.dir"), "target");
+    File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    File deployDir = new File(config.getGatewayDeploymentDir());
+    deployDir.mkdirs();
+    addStacksDir(config, targetDir);
+    URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
+    File serviceFile = new File( serviceUrl.toURI() );
+    File appsDir = serviceFile.getParentFile().getParentFile();
+    ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Topology topology = new Topology();
+    topology.setName( "test-topology" );
+
+    Application app;
+
+    app = new Application();
+    app.setName( "minimal-test-app" );
+    app.addUrl( "/minimal-test-app-path" );
+    topology.addApplication( app );
+
+    EnterpriseArchive archive = DeploymentFactory.createDeployment( config, topology );
+    assertThat( archive, notNullValue() );
+
+    Document doc;
+
+    doc = TestUtils.parseXml( archive.get( "META-INF/topology.xml" ).getAsset().openStream() );
+    assertThat( doc, notNullValue() );
+
+    doc = TestUtils.parseXml( archive.get( "%2Fminimal-test-app-path/WEB-INF/gateway.xml" ).getAsset().openStream() );
+    assertThat( doc, notNullValue() );
+    //dump( doc );
+    assertThat( doc, hasXPath("/gateway/resource/pattern", equalTo("/**?**")));
+    assertThat( doc, hasXPath("/gateway/resource/filter[1]/role", equalTo("xforwardedheaders")));
+    assertThat( doc, hasXPath("/gateway/resource/filter[1]/name", equalTo("XForwardedHeaderFilter")));
+    assertThat( doc, hasXPath("/gateway/resource/filter[1]/class", equalTo(XForwardedHeaderFilter.class.getName())));
+    assertThat( doc, hasXPath("/gateway/resource/filter[2]/role", equalTo("rewrite")));
+    assertThat( doc, hasXPath("/gateway/resource/filter[2]/name", equalTo("url-rewrite")));
+    assertThat( doc, hasXPath("/gateway/resource/filter[2]/class", equalTo(UrlRewriteServletFilter.class.getName())));
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = MEDIUM_TIMEOUT )
+  public void testDeploymentWithServicesAndApplications() throws Exception {
+    LOG_ENTER();
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File(System.getProperty("user.dir"), "target");
+    File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    File deployDir = new File(config.getGatewayDeploymentDir());
+    deployDir.mkdirs();
+    addStacksDir(config, targetDir);
+    URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
+    File serviceFile = new File( serviceUrl.toURI() );
+    File appsDir = serviceFile.getParentFile().getParentFile();
+    ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
+
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    Topology topology = new Topology();
+    topology.setName( "test-topology" );
+
+    Application app;
+
+    topology.setName( "test-cluster" );
+    Service service = new Service();
+    service.setRole( "WEBHDFS" );
+    service.addUrl( "http://localhost:50070/test-service-url" );
+    topology.addService( service );
+
+    app = new Application();
+    app.setName( "minimal-test-app" );
+    app.addUrl( "/minimal-test-app-path-one" );
+    topology.addApplication( app );
+
+    app.setName( "minimal-test-app" );
+    app.addUrl( "/minimal-test-app-path-two" );
+    topology.addApplication( app );
+
+    EnterpriseArchive archive = DeploymentFactory.createDeployment( config, topology );
+    assertThat( archive, notNullValue() );
+
+    Document doc;
+    org.jboss.shrinkwrap.api.Node node;
+
+    node = archive.get( "META-INF/topology.xml" );
+    assertThat( "Find META-INF/topology.xml", node, notNullValue() );
+    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    assertThat( "Parse META-INF/topology.xml", doc, notNullValue() );
+
+    node = archive.get( "%2F" );
+    assertThat( "Find %2F", node, notNullValue() );
+    node = archive.get( "%2F/WEB-INF/gateway.xml" );
+    assertThat( "Find %2F/WEB-INF/gateway.xml", node, notNullValue() );
+    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    assertThat( "Parse %2F/WEB-INF/gateway.xml", doc, notNullValue() );
+
+    WebArchive war = archive.getAsType( WebArchive.class, "%2Fminimal-test-app-path-one" );
+    assertThat( "Find %2Fminimal-test-app-path-one", war, notNullValue() );
+    node = war.get( "/WEB-INF/gateway.xml" );
+    assertThat( "Find %2Fminimal-test-app-path-one/WEB-INF/gateway.xml", node, notNullValue() );
+    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    assertThat( "Parse %2Fminimal-test-app-path-one/WEB-INF/gateway.xml", doc, notNullValue() );
+
+    war = archive.getAsType( WebArchive.class, "%2Fminimal-test-app-path-two" );
+    assertThat( "Find %2Fminimal-test-app-path-two", war, notNullValue() );
+    node = war.get( "/WEB-INF/gateway.xml" );
+    assertThat( "Find %2Fminimal-test-app-path-two/WEB-INF/gateway.xml", node, notNullValue() );
+    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    assertThat( "Parse %2Fminimal-test-app-path-two/WEB-INF/gateway.xml", doc, notNullValue() );
+
+    LOG_EXIT();
   }
 
   private void addStacksDir(GatewayConfig config, File targetDir) {
@@ -530,6 +674,23 @@ public class DeploymentFactoryFuncTest {
 
   private String value( Node scope, String expression ) throws XPathExpressionException {
     return XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope );
+  }
+
+  private static void dump( org.jboss.shrinkwrap.api.Node node, String prefix ) {
+    System.out.println( prefix + ": " + node.getPath() );
+    Set<org.jboss.shrinkwrap.api.Node> children = node.getChildren();
+    if( children != null && !children.isEmpty() ) {
+      for( org.jboss.shrinkwrap.api.Node child : children ) {
+        dump( child, prefix + "    " );
+      }
+    }
+  }
+
+  private static void dump( Archive archive ) {
+    Map<ArchivePath,org.jboss.shrinkwrap.api.Node> content = archive.getContent();
+    for( Map.Entry<ArchivePath,org.jboss.shrinkwrap.api.Node> entry : content.entrySet() ) {
+      dump( entry.getValue(), "    " );
+    }
   }
 
 }

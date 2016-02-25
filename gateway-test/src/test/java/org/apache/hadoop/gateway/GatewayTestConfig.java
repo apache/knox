@@ -38,9 +38,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
   private String frontendUrl = null;
   private boolean xForwardedEnabled = true;
+  private String gatewayApplicationsDir = null;
+  private String gatewayServicesDir;
+  private String defaultTopologyName = "default";
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
+  }
+
+  public String getGatewayHomeDir() {
+    return this.gatewayHomeDir;
   }
 
   @Override
@@ -151,12 +158,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return kerberosLoginConfig;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultTopologyName()
-   */
   @Override
   public String getDefaultTopologyName() {
-    return "default";
+    return defaultTopologyName;
+  }
+
+  public void setDefaultTopologyName( String defaultTopologyName ) {
+    this.defaultTopologyName = defaultTopologyName;
   }
 
   /* (non-Javadoc)
@@ -237,10 +245,31 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 //   this.kerberosLoginConfig = kerberosLoginConfig;
 //  }
 
-   @Override
-   public String getGatewayServicesDir() {
-      return gatewayHomeDir + "/data/services";
-   }
+  @Override
+  public String getGatewayServicesDir() {
+    if( gatewayServicesDir != null ) {
+      return gatewayServicesDir;
+    } else {
+      return getGatewayDataDir() + "/services";
+    }
+  }
+
+  public void setGatewayServicesDir( String gatewayServicesDir ) {
+    this.gatewayServicesDir = gatewayServicesDir;
+  }
+
+  @Override
+  public String getGatewayApplicationsDir() {
+    if( gatewayApplicationsDir != null ) {
+      return gatewayApplicationsDir;
+    } else {
+      return getGatewayConfDir() + "/applications";
+    }
+  }
+
+  public void setGatewayApplicationsDir( String gatewayApplicationsDir ) {
+    this.gatewayApplicationsDir = gatewayApplicationsDir;
+  }
 
   @Override
   public boolean isXForwardedEnabled() {
@@ -287,6 +316,27 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getHttpServerResponseHeaderBuffer() {
     return 8*1024;
+  }
+
+  private int backupVersionLimit = -1;
+
+  public void setGatewayDeploymentsBackupVersionLimit( int newBackupVersionLimit ) {
+    backupVersionLimit = newBackupVersionLimit;
+  }
+
+  public int getGatewayDeploymentsBackupVersionLimit() {
+    return backupVersionLimit;
+  }
+
+  private long backupAgeLimit = -1;
+
+  @Override
+  public long getGatewayDeploymentsBackupAgeLimit() {
+    return backupAgeLimit;
+  }
+
+  public void setGatewayDeploymentsBackupAgeLimit( long newBackupAgeLimit ) {
+    backupAgeLimit = newBackupAgeLimit;
   }
 
 }

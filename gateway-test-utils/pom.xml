@@ -91,11 +91,13 @@
             <artifactId>jetty-servlet</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
             <scope>provided</scope>
         </dependency>
+        -->
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -118,6 +120,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
             <scope>provided</scope>
         </dependency>
 

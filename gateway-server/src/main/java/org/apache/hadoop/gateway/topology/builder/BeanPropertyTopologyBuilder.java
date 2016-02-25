@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.topology.builder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.gateway.topology.Application;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -28,10 +29,12 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
     private String name;
     private List<Provider> providers;
     private List<Service> services;
+    private List<Application> applications;
 
     public BeanPropertyTopologyBuilder() {
         providers = new ArrayList<Provider>();
         services = new ArrayList<Service>();
+        applications = new ArrayList<Application>();
     }
 
     public BeanPropertyTopologyBuilder name(String name) {
@@ -61,6 +64,15 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         return services;
     }
 
+    public BeanPropertyTopologyBuilder addApplication( Application application ) {
+        applications.add(application);
+        return this;
+    }
+
+    public List<Application> applications() {
+        return applications;
+    }
+
     public Topology build() {
         Topology topology = new Topology();
         topology.setName(name);
@@ -71,6 +83,10 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
         for (Service service : services) {
             topology.addService(service);
+        }
+
+        for (Application application : applications) {
+            topology.addApplication(application);
         }
 
         return topology;

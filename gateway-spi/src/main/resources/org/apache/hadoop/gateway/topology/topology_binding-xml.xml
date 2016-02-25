@@ -24,14 +24,16 @@ or more contributor license agreements.  See the NOTICE file
         element-form-default="QUALIFIED"/>
     <java-types>
         <java-type name="Topology" xml-accessor-type="NONE">
-            <xml-type prop-order="providers services"/>
+            <xml-type prop-order="name providers services applications"/>
             <xml-root-element/>
-            <java-attributes prop-order="providers services">
+            <java-attributes>
+                <xml-element java-attribute="name" name="name"/>
                 <xml-elements java-attribute="providers">
                     <xml-element name="provider"/>
                     <xml-element-wrapper name="gateway"/>
                 </xml-elements>
                 <xml-element java-attribute="services" name="service"/>
+                <xml-element java-attribute="applications" name="application"/>
             </java-attributes>
         </java-type>
         <java-type name="Provider" xml-accessor-type="NONE">
@@ -44,11 +46,13 @@ or more contributor license agreements.  See the NOTICE file
         </java-type>
         <java-type name="Service" xml-accessor-type="NONE">
             <java-attributes>
+                <xml-element java-attribute="name" name="name"/>
                 <xml-element java-attribute="role" name="role"/>
                 <xml-element java-attribute="urls" name="url"/>
                 <xml-element java-attribute="paramsList" name="param"/>
             </java-attributes>
         </java-type>
+        <java-type name="Application" xml-accessor-type="NONE"/>
         <java-type name="Param" xml-accessor-type="NONE">
             <java-attributes>
                 <xml-element java-attribute="name"/>

@@ -248,6 +248,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    }
 
   @Override
+  public String getGatewayApplicationsDir() {
+    return gatewayHomeDir + "/conf/applications";
+  }
+
+  @Override
   public boolean isXForwardedEnabled() {
     return xForwardedEnabled;
   }
@@ -292,6 +297,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getHttpServerResponseHeaderBuffer() {
     return 8*1024;
+  }
+
+  @Override
+  public int getGatewayDeploymentsBackupVersionLimit() {
+    return Integer.MAX_VALUE;
+  }
+
+  @Override
+  public long getGatewayDeploymentsBackupAgeLimit() {
+    return Long.MAX_VALUE;
   }
 
 }

@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.topology.xml;
 
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.topology.Application;
 import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
@@ -31,6 +32,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String ROOT_TAG = "topology";
   private static final String NAME_TAG = "name";
   private static final String VERSION_TAG = "version";
+  private static final String APPLICATION_TAG = "application";
   private static final String SERVICE_TAG = "service";
   private static final String ROLE_TAG = "role";
   private static final String URL_TAG = "url";
@@ -46,6 +48,15 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG ).createObject().ofType( BeanPropertyTopologyBuilder.class );
     forPattern( ROOT_TAG + "/" + NAME_TAG ).callMethod("name").usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + VERSION_TAG ).callMethod("version").usingElementBodyAsArgument();
+
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG ).createObject().ofType( Application.class ).then().setNext( "addApplication" );
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + ROLE_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + VERSION_TAG ).createObject().ofType(Version.class).then().setBeanProperty().then().setNext("setVersion");
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + URL_TAG ).callMethod( "addUrl" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
 
     forPattern( ROOT_TAG + "/" + SERVICE_TAG ).createObject().ofType( Service.class ).then().setNext( "addService" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + ROLE_TAG ).setBeanProperty();

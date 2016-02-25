@@ -81,7 +81,7 @@ public class Service {
     return params;
   }
 
-  private Collection<Param> getParamsList(){
+  public Collection<Param> getParamsList(){
 
     ArrayList<Param> paramList = new ArrayList<Param>();
 
@@ -93,6 +93,14 @@ public class Service {
     }
 
     return paramList;
+  }
+
+  public void setParamsList( Collection<Param> params ) {
+    if( params != null ) {
+      for( Param param : params ) {
+        addParam( param );
+      }
+    }
   }
 
   public void setParams(Map<String, String> params) {

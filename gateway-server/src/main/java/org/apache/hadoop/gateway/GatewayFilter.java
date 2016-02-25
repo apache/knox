@@ -89,30 +89,38 @@ public class GatewayFilter implements Filter {
   @Override
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain ) throws IOException, ServletException {
     doFilter( servletRequest, servletResponse );
+    if( filterChain != null ) {
+      filterChain.doFilter( servletRequest, servletResponse );
+    }
   }
 
-  @SuppressWarnings("unckecked")
+  @SuppressWarnings("unchecked")
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
 
     //TODO: The resulting pathInfo + query needs to be added to the servlet context somehow so that filters don't need to rebuild it.  This is done in HttpClientDispatch right now for example.
+    String servlet = httpRequest.getServletPath();
+    String path = httpRequest.getPathInfo();
     String query = httpRequest.getQueryString();
-    String path = httpRequest.getPathInfo() + ( query == null ? "" : "?" + query );
+    String requestPath = ( servlet == null ? "" : servlet ) + ( path == null ? "" : path );
+    String requestPathWithQuery = requestPath + ( query == null ? "" : "?" + query );
 
-    Template pathTemplate;
+    Template pathWithQueryTemplate;
     try {
-      pathTemplate = Parser.parseLiteral( path );
+      pathWithQueryTemplate = Parser.parseLiteral( requestPathWithQuery );
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
-    String pathWithContext = httpRequest.getContextPath() + path;
-    LOG.receivedRequest( httpRequest.getMethod(), pathTemplate );
+    String contextWithPathAndQuery = httpRequest.getContextPath() + requestPathWithQuery;
+    LOG.receivedRequest( httpRequest.getMethod(), requestPath );
 
-    servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME, pathTemplate );
-    servletRequest.setAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME, pathWithContext );
+    servletRequest.setAttribute(
+        AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME, pathWithQueryTemplate );
+    servletRequest.setAttribute(
+        AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME, contextWithPathAndQuery );
 
-    Matcher<Chain>.Match match = chains.match( pathTemplate );
+    Matcher<Chain>.Match match = chains.match( pathWithQueryTemplate );
     
     assignCorrelationRequestId();
     // Populate Audit/correlation parameters
@@ -120,7 +128,9 @@ public class GatewayFilter implements Filter {
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
     auditContext.setRemoteIp( servletRequest.getRemoteAddr() );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
-    auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
+    auditor.audit(
+        Action.ACCESS, contextWithPathAndQuery, ResourceType.URI,
+        ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
     
     if( match != null ) {
       Chain chain = match.getValue();
@@ -129,27 +139,27 @@ public class GatewayFilter implements Filter {
         chain.doFilter( servletRequest, servletResponse );
       } catch( IOException e ) {
         LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
+        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( ServletException e ) {
         LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
+        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( RuntimeException e ) {
         LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
+        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( ThreadDeath e ) {
         LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
+        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
       } catch( Throwable e ) {
         LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, pathWithContext, ResourceType.URI, ActionOutcome.FAILURE );
+        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw new ServletException( e );
       }
     } else {
-      LOG.failedToMatchPath( path );
+      LOG.failedToMatchPath( requestPath );
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
     }
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
@@ -180,7 +190,7 @@ public class GatewayFilter implements Filter {
     addHolder( holder );
   }
 
-//  public void addFilter( String path, String name, Class<WarDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
+//  public void addFilter( String path, String name, Class<RegexDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
 //    Holder holder = new Holder( path, name, clazz, params );
 //    addHolder( holder );
 //  }
@@ -262,7 +272,7 @@ public class GatewayFilter implements Filter {
       this.resourceRole = resourceRole;
     }
 
-//    private Holder( String path, String name, Class<WarDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
+//    private Holder( String path, String name, Class<RegexDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
 //      this.path = path;
 //      this.template = Parser.parse( path );
 //      this.name = name;

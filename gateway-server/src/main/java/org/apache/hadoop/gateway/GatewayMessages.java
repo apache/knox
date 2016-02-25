@@ -89,6 +89,15 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Redeployed topology {0}." )
   void redeployedTopology( String clusterName );
 
+  @Message( level = MessageLevel.INFO, text = "Activating topology {0}" )
+  void activatingTopology( String name );
+
+  @Message( level = MessageLevel.INFO, text = "Activating topology {0} archive {1}" )
+  void activatingTopologyArchive( String topology, String archive );
+
+  @Message( level = MessageLevel.INFO, text = "Deactivating topology {0}" )
+  void deactivatingTopology( String name );
+
   @Message( level = MessageLevel.ERROR, text = "Failed to deploy topology {0}: {1}" )
   void failedToDeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Throwable e );
 
@@ -107,8 +116,17 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to undeploy topology {0}: {1}" )
   void failedToUndeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
 
+  @Message( level = MessageLevel.INFO, text = "Deleting topology {0}" )
+  void deletingTopology( String topologyName );
+
   @Message( level = MessageLevel.INFO, text = "Deleting deployed topology {0}" )
   void deletingDeployment( String warDirName );
+
+  @Message( level = MessageLevel.DEBUG, text = "Purge backups of deployed topology {0}" )
+  void cleanupDeployments( String topologyName );
+
+  @Message( level = MessageLevel.INFO, text = "Deleting backup deployed topology {0}" )
+  void cleanupDeployment( String absolutePath );
 
   @Message( level = MessageLevel.INFO, text = "Creating gateway home directory: {0}" )
   void creatingGatewayHomeDir( File homeDir );
@@ -162,7 +180,7 @@ public interface GatewayMessages {
   void credentialStoreForClusterFoundNotCreating(String clusterName);
 
   @Message( level = MessageLevel.DEBUG, text = "Received request: {0} {1}" )
-  void receivedRequest( String method, Template uri );
+  void receivedRequest( String method, String uri );
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
@@ -350,7 +368,7 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Finalize service: {1}/{0}" )
   void finalizeService( String name, String role );
 
-  @Message( level = MessageLevel.INFO, text = "Configured services directory is {0}" )
+  @Message( level = MessageLevel.DEBUG, text = "Configured services directory is {0}" )
   void usingServicesDirectory(String path);
 
   @Message( level = MessageLevel.ERROR, text = "Failed to unmarshall service definition file {0} file : {1}" )
@@ -376,4 +394,19 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to get password: {0}" )
   void unableToGetPassword(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Initialize application: {0}" )
+  void initializeApplication( String name );
+
+  @Message( level = MessageLevel.DEBUG, text = "Contribute application: {0}" )
+  void contributeApplication( String name );
+
+  @Message( level = MessageLevel.DEBUG, text = "Finalize application: {0}" )
+  void finalizeApplication( String name );
+
+  @Message( level = MessageLevel.INFO, text = "Default topology {0} at {1}" )
+  void defaultTopologySetup( String defaultTopologyName, String redirectContext );
+
+  @Message( level = MessageLevel.DEBUG, text = "Default topology forward from {0} to {1}" )
+  void defaultTopologyForward( String oldTarget, String newTarget );
 }

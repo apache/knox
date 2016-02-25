@@ -17,36 +17,12 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
-import org.apache.hadoop.gateway.GatewayForwardingServlet;
-import org.apache.hadoop.gateway.GatewayMessages;
-import org.apache.hadoop.gateway.GatewayServlet;
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
-import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
-import org.apache.hadoop.gateway.topology.Provider;
-import org.apache.hadoop.gateway.topology.Service;
-import org.apache.hadoop.gateway.topology.Topology;
-import org.apache.hadoop.gateway.topology.Version;
-import org.apache.hadoop.gateway.util.ServiceDefinitionsLoader;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.Asset;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.descriptor.api.Descriptors;
-import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
-import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.beans.Statement;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,10 +32,41 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayServlet;
+import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.deploy.impl.ApplicationDeploymentContributor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
+import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
+import org.apache.hadoop.gateway.topology.Application;
+import org.apache.hadoop.gateway.topology.Provider;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Service;
+import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.topology.Version;
+import org.apache.hadoop.gateway.util.ServiceDefinitionsLoader;
+import org.apache.hadoop.gateway.util.Urls;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.Asset;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.FilterType;
+import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
 public abstract class DeploymentFactory {
 
-  private static final String DEFAULT_APP_REDIRECT_CONTEXT_PATH = "redirectTo";
+  private static final String SERVLET_NAME_SUFFIX = "-knox-gateway-servlet";
+  private static final String FILTER_NAME_SUFFIX = "-knox-gateway-filter";
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
   private static GatewayServices gatewayServices = null;
 
@@ -78,30 +85,120 @@ public abstract class DeploymentFactory {
     DeploymentFactory.gatewayServices = services;
   }
 
-  public static WebArchive createDeployment( GatewayConfig config, Topology topology ) {
-    DeploymentContext context = null;
-     //TODO move the loading of service defs
-    String stacks = config.getGatewayServicesDir();
-    log.usingServicesDirectory(stacks);
-    File stacksDir = new File(stacks);
-    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader.loadServiceDefinitions(stacksDir);
-    addServiceDeploymentContributors(deploymentContributors.iterator());
+  static List<Application> findApplicationsByUrl( Topology topology, String url ) {
+    List<Application> foundApps = new ArrayList<Application>();
+    if( topology != null ) {
+      url = Urls.trimLeadingAndTrailingSlash( url );
+      Collection<Application> searchApps = topology.getApplications();
+      if( searchApps != null ) {
+        for( Application searchApp : searchApps ) {
+          List<String> searchUrls = searchApp.getUrls();
+          if( searchUrls == null || searchUrls.isEmpty() ) {
+            searchUrls = new ArrayList<String>(1);
+            searchUrls.add( searchApp.getName() );
+          }
+          for( String searchUrl : searchUrls ) {
+            if( url.equalsIgnoreCase( Urls.trimLeadingAndTrailingSlash( searchUrl ) ) ) {
+              foundApps.add( searchApp );
+              break;
+            }
+          }
+        }
+      }
+    }
+    return foundApps;
+  }
 
+  // Verify that there are no two apps with duplicate urls.
+  static void validateNoAppsWithDuplicateUrlsInTopology( Topology topology ) {
+    if( topology != null ) {
+      Collection<Application> apps = topology.getApplications();
+      if( apps != null ) {
+        for( Application app : apps ) {
+          List<String> urls = app.getUrls();
+          if( urls == null || urls.isEmpty() ) {
+            urls = new ArrayList<String>(1);
+            urls.add( app.getName() );
+          }
+          for( String url : urls ) {
+            List<Application> dups = findApplicationsByUrl( topology, url );
+            if( dups != null ) {
+              for( Application dup : dups ) {
+                if( dup != app ) {
+                  throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Verify that if there are services that there are no applications with a root url.
+  static void validateNoAppsWithRootUrlsInServicesTopology( Topology topology ) {
+    if( topology != null ) {
+      if( topology.getServices() != null && !topology.getServices().isEmpty() ) {
+        List<Application> dups = findApplicationsByUrl( topology, "/" );
+        if( dups != null && !dups.isEmpty() ) {
+          throw new DeploymentException( "Topology " + topology.getName() + " contains both services and an application " + dups.get( 0 ).getName() + " with a root url." );
+        }
+      }
+    }
+  }
+
+  static void validateTopology( Topology topology ) {
+    validateNoAppsWithRootUrlsInServicesTopology( topology );
+    validateNoAppsWithDuplicateUrlsInTopology( topology );
+  }
+
+  public static EnterpriseArchive createDeployment( GatewayConfig config, Topology topology ) {
+    validateTopology( topology );
+    loadStacksServiceContributors( config );
     Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
     Map<String,List<ServiceDeploymentContributor>> services = selectContextServices( topology );
-    context = createDeploymentContext( config, topology.getName(), topology, providers, services );
-    initialize( context, providers, services );
-    contribute( context, providers, services );
-    finalize( context, providers, services );
-    if (topology.getName().equals("_default")) {
-      // if this is the default topology then add the forwarding webapp as well
-      context = deployDefaultTopology(config, topology);
+    Map<String,ServiceDeploymentContributor> applications = selectContextApplications( config, topology );
+    EnterpriseArchive ear = ShrinkWrap.create( EnterpriseArchive.class, topology.getName() );
+    ear.addAsResource( toStringAsset( topology ), "topology.xml" );
+    if( !services.isEmpty() ) {
+      WebArchive war = createServicesDeployment( config, topology, providers, services );
+      ear.addAsModule( war );
     }
-    storeTopology( context, topology );
+    if( !applications.isEmpty() ) {
+      for( Map.Entry<String, ServiceDeploymentContributor> application : applications.entrySet() ) {
+        WebArchive war = createApplicationDeployment( config, topology, providers, application );
+        ear.addAsModule( war );
+      }
+    }
+    return ear;
+  }
+
+  private static WebArchive createServicesDeployment(
+      GatewayConfig config,
+      Topology topology,
+      Map<String,List<ProviderDeploymentContributor>> providers,
+      Map<String,List<ServiceDeploymentContributor>> services ) {
+    DeploymentContext context = createDeploymentContext( config, "/", topology, providers );
+    initialize( context, providers, services, null );
+    contribute( context, providers, services, null );
+    finalize( context, providers, services, null );
     return context.getWebArchive();
   }
 
-  private static void storeTopology( DeploymentContext context, Topology topology ) {
+  public static WebArchive createApplicationDeployment(
+      GatewayConfig config,
+      Topology topology,
+      Map<String,List<ProviderDeploymentContributor>> providers,
+      Map.Entry<String,ServiceDeploymentContributor> application ) {
+    String appPath = "/" + Urls.trimLeadingAndTrailingSlash( application.getKey() );
+    DeploymentContext context = createDeploymentContext( config, appPath, topology, providers );
+    initialize( context, providers, null, application );
+    contribute( context, providers, null, application );
+    finalize( context, providers, null, application );
+    return context.getWebArchive();
+  }
+
+  private static Asset toStringAsset( Topology topology ) {
     StringWriter writer = new StringWriter();
     String xml;
     try {
@@ -120,41 +217,20 @@ public abstract class DeploymentFactory {
       throw new DeploymentException( "Failed to marshall topology.", e );
     }
     StringAsset asset = new StringAsset( xml );
-    context.getWebArchive().addAsWebInfResource( asset, "topology.xml" );
-  }
-
-  private static DeploymentContext deployDefaultTopology(GatewayConfig config,
-      Topology topology) {
-    // this is the "default" topology which does some specialized
-    // redirects for compatibility with hadoop cli java client use
-    // we do not want the various listeners and providers added or
-    // the usual gateway.xml, etc.
-    DeploymentContext context;
-    Map<String,List<ProviderDeploymentContributor>> providers = new HashMap<String,List<ProviderDeploymentContributor>>();
-    Map<String,List<ServiceDeploymentContributor>> services = new HashMap<String,List<ServiceDeploymentContributor>>();
-    context = createDeploymentContext( config, "forward", topology, providers, services);
-    WebAppDescriptor wad = context.getWebAppDescriptor();
-    String servletName = context.getTopology().getName();
-    String servletClass = GatewayForwardingServlet.class.getName();
-    wad.createServlet().servletName( servletName ).servletClass( servletClass );
-    wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
-    ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
-    servlet.createInitParam()
-      .paramName( DEFAULT_APP_REDIRECT_CONTEXT_PATH )
-      .paramValue( config.getDefaultAppRedirectPath() );
-    writeDeploymentDescriptor(context);
-    return context;
+    return asset;
   }
 
   private static DeploymentContext createDeploymentContext(
-      GatewayConfig config, String archiveName, Topology topology,
-      Map<String,List<ProviderDeploymentContributor>> providers,
-      Map<String,List<ServiceDeploymentContributor>> services ) {
-    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, archiveName );
+      GatewayConfig config,
+      String archivePath,
+      Topology topology,
+      Map<String,List<ProviderDeploymentContributor>> providers ) {
+    archivePath = Urls.encode( archivePath );
+    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, archivePath );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
     GatewayDescriptor gateway = GatewayDescriptorFactory.create();
     DeploymentContext context = new DeploymentContextImpl(
-        config, topology, gateway, webArchive, webAppDesc, providers, services );
+        config, topology, gateway, webArchive, webAppDesc, providers );
     return context;
   }
 
@@ -235,41 +311,108 @@ public abstract class DeploymentFactory {
     return defaults;
   }
 
+  private static Map<String,ServiceDeploymentContributor> selectContextApplications(
+      GatewayConfig config, Topology topology ) {
+    Map<String,ServiceDeploymentContributor> contributors = new HashMap<>();
+    if( topology != null ) {
+      for( Application application : topology.getApplications() ) {
+        String name = application.getName();
+        if( name == null || name.isEmpty() ) {
+          throw new DeploymentException( "Topologies cannot contain an application without a name." );
+        }
+        ApplicationDeploymentContributor contributor = new ApplicationDeploymentContributor( config, application );
+        List<String> urls = application.getUrls();
+        if( urls == null || urls.isEmpty() ) {
+          urls = new ArrayList<String>( 1 );
+          urls.add( "/" + name );
+        }
+        for( String url : urls ) {
+          if( url == null || url.isEmpty() || url.equals( "/" ) ) {
+            if( !topology.getServices().isEmpty() ) {
+              throw new DeploymentException( String.format(
+                  "Topologies with services cannot contain an application (%s) with a root url.", name ) );
+            }
+          }
+          contributors.put( url, contributor );
+        }
+      }
+    }
+    return contributors;
+  }
+
   private static void initialize(
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers,
-      Map<String,List<ServiceDeploymentContributor>> services ) {
+      Map<String,List<ServiceDeploymentContributor>> services,
+      Map.Entry<String,ServiceDeploymentContributor> applications ) {
     WebAppDescriptor wad = context.getWebAppDescriptor();
-    String servletName = context.getTopology().getName();
-    String servletClass = GatewayServlet.class.getName();
-    wad.createServlet().servletName( servletName ).servletClass( servletClass );
-    wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
+    String topoName = context.getTopology().getName();
+    if( applications == null ) {
+      String servletName = topoName + SERVLET_NAME_SUFFIX;
+      wad.createServlet().servletName( servletName ).servletClass( GatewayServlet.class.getName() );
+      wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
+    } else {
+      String filterName = topoName + FILTER_NAME_SUFFIX;
+      wad.createFilter().filterName( filterName ).filterClass( GatewayServlet.class.getName() );
+      wad.createFilterMapping().filterName( filterName ).urlPattern( "/*" );
+    }
     if (gatewayServices != null) {
       gatewayServices.initializeContribution(context);
     } else {
       log.gatewayServicesNotInitialized();
     }
-    for( String role : providers.keySet() ) {
-      for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
-        try {
-          injectServices(contributor);
-          log.initializeProvider( contributor.getName(), contributor.getRole() );
-          contributor.initializeContribution( context );
-        } catch( Exception e ) {
-          log.failedToInitializeContribution( e );
-          throw new DeploymentException("Failed to initialize contribution.", e);
+    initializeProviders( context, providers );
+    initializeServices( context, services );
+    initializeApplications( context, applications );
+  }
+
+  private static void initializeProviders(
+      DeploymentContext context,
+      Map<String,List<ProviderDeploymentContributor>> providers ) {
+    if( providers != null ) {
+      for( String role : providers.keySet() ) {
+        for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
+          try {
+            injectServices( contributor );
+            log.initializeProvider( contributor.getName(), contributor.getRole() );
+            contributor.initializeContribution( context );
+          } catch( Exception e ) {
+            log.failedToInitializeContribution( e );
+            throw new DeploymentException( "Failed to initialize contribution.", e );
+          }
         }
       }
     }
-    for( String role : services.keySet() ) {
-      for( ServiceDeploymentContributor contributor : services.get( role ) ) {
+  }
+
+  private static void initializeServices( DeploymentContext context, Map<String, List<ServiceDeploymentContributor>> services ) {
+    if( services != null ) {
+      for( String role : services.keySet() ) {
+        for( ServiceDeploymentContributor contributor : services.get( role ) ) {
+          try {
+            injectServices( contributor );
+            log.initializeService( contributor.getName(), contributor.getRole() );
+            contributor.initializeContribution( context );
+          } catch( Exception e ) {
+            log.failedToInitializeContribution( e );
+            throw new DeploymentException( "Failed to initialize contribution.", e );
+          }
+        }
+      }
+    }
+  }
+
+  private static void initializeApplications( DeploymentContext context, Map.Entry<String, ServiceDeploymentContributor> application ) {
+    if( application != null ) {
+      ServiceDeploymentContributor contributor = application.getValue();
+      if( contributor != null ) {
         try {
-          injectServices(contributor);
-          log.initializeService( contributor.getName(), contributor.getRole() );
+          injectServices( contributor );
+          log.initializeApplication( contributor.getName() );
           contributor.initializeContribution( context );
         } catch( Exception e ) {
           log.failedToInitializeContribution( e );
-          throw new DeploymentException("Failed to initialize contribution.", e);
+          throw new DeploymentException( "Failed to initialize application contribution.", e );
         }
       }
     }
@@ -300,8 +443,15 @@ public abstract class DeploymentFactory {
   private static void contribute(
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers,
-      Map<String,List<ServiceDeploymentContributor>> services ) {
-      Topology topology = context.getTopology();
+      Map<String,List<ServiceDeploymentContributor>> services,
+      Map.Entry<String,ServiceDeploymentContributor> applications ) {
+    Topology topology = context.getTopology();
+    contributeProviders( context, topology, providers );
+    contributeServices( context, topology, services );
+    contributeApplications( context, topology, applications );
+  }
+
+  private static void contributeProviders( DeploymentContext context, Topology topology, Map<String, List<ProviderDeploymentContributor>> providers ) {
     for( Provider provider : topology.getProviders() ) {
       ProviderDeploymentContributor contributor = getProviderContributor( providers, provider.getRole(), provider.getName() );
       if( contributor != null && provider.isEnabled() ) {
@@ -315,23 +465,44 @@ public abstract class DeploymentFactory {
         }
       }
     }
-    for( Service service : topology.getServices() ) {
-      ServiceDeploymentContributor contributor = getServiceContributor( service.getRole(), service.getName(), service.getVersion() );
+  }
+
+  private static void contributeServices( DeploymentContext context, Topology topology, Map<String, List<ServiceDeploymentContributor>> services ) {
+    if( services != null ) {
+      for( Service service : topology.getServices() ) {
+        ServiceDeploymentContributor contributor = getServiceContributor( service.getRole(), service.getName(), service.getVersion() );
+        if( contributor != null ) {
+          try {
+            log.contributeService( service.getName(), service.getRole() );
+            contributor.contributeService( context, service );
+            if( gatewayServices != null ) {
+              ServiceRegistry sr = gatewayServices.getService( GatewayServices.SERVICE_REGISTRY_SERVICE );
+              if( sr != null ) {
+                String regCode = sr.getRegistrationCode( topology.getName() );
+                sr.registerService( regCode, topology.getName(), service.getRole(), service.getUrls() );
+              }
+            }
+          } catch( Exception e ) {
+            // Maybe it makes sense to throw exception
+            log.failedToContributeService( service.getName(), service.getRole(), e );
+            throw new DeploymentException( "Failed to contribute service.", e );
+          }
+        }
+      }
+    }
+  }
+
+  private static void contributeApplications( DeploymentContext context, Topology topology, Map.Entry<String, ServiceDeploymentContributor> applications ) {
+    if( applications != null ) {
+      ServiceDeploymentContributor contributor = applications.getValue();
       if( contributor != null ) {
         try {
-          log.contributeService( service.getName(), service.getRole() );
-          contributor.contributeService( context, service );
-          if (gatewayServices != null) {
-            ServiceRegistry sr = gatewayServices.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
-            if (sr != null) {
-              String regCode = sr.getRegistrationCode(topology.getName());
-              sr.registerService(regCode, topology.getName(), service.getRole(), service.getUrls() );
-            }
-          }
+          log.contributeApplication( contributor.getName() );
+          Application applicationDesc = topology.getApplication( applications.getKey() );
+          contributor.contributeService( context, applicationDesc );
         } catch( Exception e ) {
-          // Maybe it makes sense to throw exception
-          log.failedToContributeService( service.getName(), service.getRole(), e );
-          throw new DeploymentException("Failed to contribute service.", e);
+          log.failedToInitializeContribution( e );
+          throw new DeploymentException( "Failed to contribution application.", e );
         }
       }
     }
@@ -374,7 +545,8 @@ public abstract class DeploymentFactory {
   private static void finalize(
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers,
-      Map<String,List<ServiceDeploymentContributor>> services ) {
+      Map<String,List<ServiceDeploymentContributor>> services,
+      Map.Entry<String,ServiceDeploymentContributor> application ) {
     try {
       // Write the gateway descriptor (gateway.xml) into the war.
       StringWriter writer = new StringWriter();
@@ -384,14 +556,33 @@ public abstract class DeploymentFactory {
           GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
 
       // Set the location of the gateway descriptor as a servlet init param.
-      ServletType<WebAppDescriptor> servlet = findServlet( context, context.getTopology().getName() );
-      servlet.createInitParam()
-          .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
-          .paramValue( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
-
+      if( application == null ) {
+        String servletName = context.getTopology().getName() + SERVLET_NAME_SUFFIX;
+        ServletType<WebAppDescriptor> servlet = findServlet( context, servletName );
+        servlet.createInitParam()
+            .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
+            .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+      } else {
+        String servletName = context.getTopology().getName() + FILTER_NAME_SUFFIX;
+        FilterType<WebAppDescriptor> filter = findFilter( context, servletName );
+        filter.createInitParam()
+            .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
+            .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+      }
       if (gatewayServices != null) {
         gatewayServices.finalizeContribution(context);
       }
+      finalizeProviders( context, providers );
+      finalizeServices( context, services );
+      finalizeApplications( context, application );
+      writeDeploymentDescriptor( context, application != null );
+    } catch ( IOException e ) {
+      throw new RuntimeException( e );
+    }
+  }
+
+  private static void finalizeProviders( DeploymentContext context, Map<String, List<ProviderDeploymentContributor>> providers ) {
+    if( providers != null ) {
       for( String role : providers.keySet() ) {
         for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
           try {
@@ -400,10 +591,15 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
-            throw new DeploymentException("Failed to finalize contribution.", e);
+            throw new DeploymentException( "Failed to finalize contribution.", e );
           }
         }
       }
+    }
+  }
+
+  private static void finalizeServices( DeploymentContext context, Map<String, List<ServiceDeploymentContributor>> services ) {
+    if( services != null ) {
       for( String role : services.keySet() ) {
         for( ServiceDeploymentContributor contributor : services.get( role ) ) {
           try {
@@ -412,22 +608,36 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
-            throw new DeploymentException("Failed to finalize contribution.", e);
+            throw new DeploymentException( "Failed to finalize contribution.", e );
           }
         }
       }
-
-      writeDeploymentDescriptor(context);
-
-    } catch ( IOException e ) {
-      throw new RuntimeException( e );
     }
   }
 
-  private static void writeDeploymentDescriptor(DeploymentContext context) {
+  private static void finalizeApplications( DeploymentContext context, Map.Entry<String, ServiceDeploymentContributor> application ) {
+    if( application != null ) {
+      ServiceDeploymentContributor contributor = application.getValue();
+      if( contributor != null ) {
+        try {
+          log.finalizeApplication( contributor.getName() );
+          contributor.finalizeContribution( context );
+        } catch( Exception e ) {
+          log.failedToInitializeContribution( e );
+          throw new DeploymentException( "Failed to contribution application.", e );
+        }
+      }
+    }
+  }
+
+  private static void writeDeploymentDescriptor( DeploymentContext context, boolean override ) {
     // Write the web.xml into the war.
     Asset webXmlAsset = new StringAsset( context.getWebAppDescriptor().exportAsString() );
-    context.getWebArchive().setWebXML( webXmlAsset );
+    if( override ) {
+      context.getWebArchive().addAsWebInfResource( webXmlAsset, "override-web.xml" );
+    } else {
+      context.getWebArchive().setWebXML( webXmlAsset );
+    }
   }
 
   public static ServletType<WebAppDescriptor> findServlet( DeploymentContext context, String name ) {
@@ -438,6 +648,24 @@ public abstract class DeploymentFactory {
       }
     }
     return null;
+  }
+
+  public static FilterType<WebAppDescriptor> findFilter( DeploymentContext context, String name ) {
+    List<FilterType<WebAppDescriptor>> filters = context.getWebAppDescriptor().getAllFilter();
+    for( FilterType<WebAppDescriptor> filter : filters ) {
+      if( name.equals( filter.getFilterName() ) ) {
+        return filter;
+      }
+    }
+    return null;
+  }
+
+  private static void loadStacksServiceContributors( GatewayConfig config ) {
+    String stacks = config.getGatewayServicesDir();
+    log.usingServicesDirectory(stacks);
+    File stacksDir = new File(stacks);
+    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader.loadServiceDefinitions(stacksDir);
+    addServiceDeploymentContributors(deploymentContributors.iterator());
   }
 
   private static void loadServiceContributors() {

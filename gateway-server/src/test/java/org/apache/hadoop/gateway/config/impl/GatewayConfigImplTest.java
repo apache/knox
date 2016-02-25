@@ -1,9 +1,10 @@
-package org.apache.hadoop.gateway.config.impl
+package org.apache.hadoop.gateway.config.impl;
 
-import org.junit.Test
+import org.apache.hadoop.test.TestUtils;
+import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -24,7 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat
  */
 public class GatewayConfigImplTest {
 
-  @Test
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testHttpServerSettings() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
@@ -57,5 +58,39 @@ public class GatewayConfigImplTest {
     config.setInt( GatewayConfigImpl.HTTP_SERVER_RESPONSE_BUFFER, 32*1024 );
     config.setInt( GatewayConfigImpl.HTTP_SERVER_RESPONSE_HEADER_BUFFER, 8*1024 );
   }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGetGatewayDeploymentsBackupVersionLimit() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(5) );
+
+    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 3 );
+    assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(3) );
+
+    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, -3 );
+    assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(-1) );
+
+    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 0 );
+    assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(0) );
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGetGatewayDeploymentsBackupAgeLimit() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
+
+    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "1" );
+    assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(86400000L) );
+
+    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "2" );
+    assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(86400000L*2L) );
+
+    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "0" );
+    assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(0L) );
+
+    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "X" );
+    assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
+  }
+
 
 }

@@ -17,6 +17,20 @@
  */
 package org.apache.hadoop.gateway;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import javax.ws.rs.core.MediaType;
+
 import com.jayway.restassured.http.ContentType;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -37,34 +51,19 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -133,7 +132,6 @@ public class GatewayAdminTopologyFuncTest {
     FileOutputStream stream2 = new FileOutputStream( descriptor2 );
     createNormalTopology().toStream( stream2 );
     stream.close();
-
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<String,String>();
@@ -238,7 +236,6 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "role" ).addText( "identity-assertion" )
         .addTag( "enabled" ).addText( "true" )
         .addTag( "name" ).addText( "Default" ).gotoParent()
-        .addTag( "provider" )
         .gotoRoot()
         .addTag( "service" )
         .addTag( "role" ).addText( "KNOX" )
@@ -506,7 +503,7 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   @Test( timeout = LONG_TIMEOUT )
-  public void testDeployTopology() throws ClassNotFoundException {
+  public void testDeployTopology() throws Exception {
     LOG_ENTER();
 
     Topology testTopology = createTestTopology();
@@ -519,42 +516,42 @@ public class GatewayAdminTopologyFuncTest {
     GatewayServices srvs = GatewayServer.getGatewayServices();
 
     TopologyService ts = srvs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    try {
+      ts.stopMonitor();
 
-    assertThat(testTopology, not(nullValue()));
-    assertThat(testTopology.getName(), is("test-topology"));
+      assertThat( testTopology, not( nullValue() ) );
+      assertThat( testTopology.getName(), is( "test-topology" ) );
 
-    given()
-        //.log().all()
-        .auth().preemptive().basic(user, password)
-        .expect()
-        //.log().all()
-        .statusCode(HttpStatus.SC_NOT_FOUND)
-        .when()
-        .get(url);
+      given()
+          //.log().all()
+          .auth().preemptive().basic( "admin", "admin-password" ).header( "Accept", MediaType.APPLICATION_JSON ).expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_OK ).body( containsString( "ServerVersion" ) ).when().get( gatewayUrl + "/admin/api/v1/version" );
 
-    ts.deployTopology(testTopology);
+      given()
+          //.log().all()
+          .auth().preemptive().basic( user, password ).expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_NOT_FOUND ).when().get( url );
 
-    given()
-        //.log().all()
-        .auth().preemptive().basic(user, password)
-        .expect()
-        //.log().all()
-        .statusCode(HttpStatus.SC_OK)
-        .contentType("text/plain")
-        .body(is("test-service-response"))
-        .when()
-        .get(url).getBody();
+      ts.deployTopology( testTopology );
 
-    ts.deleteTopology(testTopology);
+      given()
+          //.log().all()
+          .auth().preemptive().basic( user, password ).expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_OK ).contentType( "text/plain" ).body( is( "test-service-response" ) ).when().get( url ).getBody();
 
-    given()
-        //.log().all()
-        .auth().preemptive().basic(user, password)
-        .expect()
-        //.log().all()
-        .statusCode(HttpStatus.SC_NOT_FOUND)
-        .when()
-        .get(url);
+      ts.deleteTopology( testTopology );
+
+      given()
+          //.log().all()
+          .auth().preemptive().basic( user, password ).expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_NOT_FOUND ).when().get( url );
+    } finally {
+      ts.startMonitor();
+    }
 
     LOG_EXIT();
   }

@@ -114,7 +114,7 @@ public class ServiceDefinitionsLoader {
     return files;
   }
 
-  private static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {
+  public static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {
     File rewriteFile = new File(servicesDir, REWRITE_FILE);
     if ( rewriteFile.exists() ) {
       InputStream stream = null;

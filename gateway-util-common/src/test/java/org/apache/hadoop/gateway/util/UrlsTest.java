@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway.util;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static junit.framework.TestCase.assertEquals;
+
 public class UrlsTest {
 
   /**
@@ -54,4 +56,30 @@ public class UrlsTest {
     // ip addresses can not be wildcarded - may be a completely different domain
     Assert.assertEquals(Urls.getDomainName("http://127.0.0.1", null), null);
   }
+
+  @Test
+  public void testTrimLeadingAndTrailingSlash() {
+    assertEquals( "", Urls.trimLeadingAndTrailingSlash( null ) );
+    assertEquals( "", Urls.trimLeadingAndTrailingSlash( "" ) );
+    assertEquals( "", Urls.trimLeadingAndTrailingSlash( "/" ) );
+    assertEquals( "", Urls.trimLeadingAndTrailingSlash( "//" ) );
+    assertEquals( "x", Urls.trimLeadingAndTrailingSlash( "x" ) );
+    assertEquals( "x/x", Urls.trimLeadingAndTrailingSlash( "x/x" ) );
+    assertEquals( "x", Urls.trimLeadingAndTrailingSlash( "/x/" ) );
+    assertEquals( "x/x", Urls.trimLeadingAndTrailingSlash( "x/x" ) );
+  }
+
+  @Test
+  public void testTrimLeadingAndTrailingSlashJoin() throws Exception {
+    assertEquals( "", Urls.trimLeadingAndTrailingSlashJoin( null ) );
+    assertEquals( "", Urls.trimLeadingAndTrailingSlashJoin( "" ) );
+    assertEquals( "", Urls.trimLeadingAndTrailingSlashJoin( "", "" ) );
+    assertEquals( "x", Urls.trimLeadingAndTrailingSlashJoin( "x" ) );
+    assertEquals( "x", Urls.trimLeadingAndTrailingSlashJoin( "x", "" ) );
+    assertEquals( "x", Urls.trimLeadingAndTrailingSlashJoin( "", "x", "" ) );
+    assertEquals( "x/x", Urls.trimLeadingAndTrailingSlashJoin( "", "x", "", "", "x" ) );
+    assertEquals( "x/x", Urls.trimLeadingAndTrailingSlashJoin( null, "x", null, null, "x" ) );
+    assertEquals( "x/y/z", Urls.trimLeadingAndTrailingSlashJoin( "x", "y", "z" ) );
+  }
+
 }

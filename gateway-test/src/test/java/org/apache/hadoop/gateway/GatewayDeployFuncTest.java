@@ -218,7 +218,7 @@ public class GatewayDeployFuncTest {
   public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     LOG_ENTER();
     long sleep = 200;
-    int numFilesInWar = 5;
+    int numFilesInWebInf = 4; // # files in WEB-INF (ie gateway.xml, rewrite.xml, shiro.ini, web.xml)
     String username = "guest";
     String password = "guest-password";
     String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
@@ -226,7 +226,7 @@ public class GatewayDeployFuncTest {
 
     File topoDir = new File( config.getGatewayTopologyDir() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
-    File warDir;
+    File earDir;
 
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
@@ -235,10 +235,10 @@ public class GatewayDeployFuncTest {
     File descriptor = writeTestTopology( "test-cluster", createTopology() );
     long writeTime = System.currentTimeMillis();
 
-    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 1, 0, sleep );
-    for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
-    }
+    earDir = waitForFiles( deployDir, "test-cluster\\.topo\\.[0-9A-Fa-f]+", 1, 0, sleep );
+    File warDir = new File( earDir, "%2F" );
+    File webInfDir = new File( warDir, "WEB-INF" );
+    waitForFiles( webInfDir, ".*", numFilesInWebInf, 0, sleep );
     waitForAccess( serviceUrl, username, password, sleep );
 
     // Wait to make sure a second has passed to ensure the the file timestamps are different.
@@ -252,10 +252,10 @@ public class GatewayDeployFuncTest {
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
 
     // Check to make sure there are two war directories with the same root.
-    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 2, 1, sleep );
-    for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
-    }
+    earDir = waitForFiles( deployDir, "test-cluster\\.topo\\.[0-9A-Fa-f]+", 2, 1, sleep );
+    warDir = new File( earDir, "%2F" );
+    webInfDir = new File( warDir, "WEB-INF" );
+    waitForFiles( webInfDir, ".*", numFilesInWebInf, 0, sleep );
     waitForAccess( serviceUrl, username, password, sleep );
 
     // Wait to make sure a second has passed to ensure the the file timestamps are different.
@@ -269,10 +269,10 @@ public class GatewayDeployFuncTest {
     assertThat( topoTimestampAfter, greaterThan( topoTimestampBefore ) );
 
     // Check to make sure there are two war directories with the same root.
-    warDir = waitForFiles( deployDir, "test-cluster.war\\.[0-9A-Fa-f]+", 3, 2, sleep );
-    for( File webInfDir : warDir.listFiles() ) {
-      waitForFiles( webInfDir, ".*", numFilesInWar, 0, sleep );
-    }
+    earDir = waitForFiles( deployDir, "test-cluster\\.topo\\.[0-9A-Fa-f]+", 3, 2, sleep );
+    warDir = new File( earDir, "%2F" );
+    webInfDir = new File( warDir, "WEB-INF" );
+    waitForFiles( webInfDir, ".*", numFilesInWebInf, 0, sleep );
     waitForAccess( serviceUrl, username, password, sleep );
 
     // Delete the test topology.

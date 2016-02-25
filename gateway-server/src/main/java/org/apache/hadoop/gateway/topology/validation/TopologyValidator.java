@@ -18,23 +18,22 @@
 
 package org.apache.hadoop.gateway.topology.validation;
 
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.topology.Topology;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-import javax.xml.XMLConstants;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+
+import org.apache.hadoop.gateway.topology.Topology;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 public class TopologyValidator {
 
@@ -56,11 +55,10 @@ public class TopologyValidator {
   public boolean validateTopology() {
     errors = new LinkedList<String>();
     try {
-      File xml = new File(filePath);
-
       SchemaFactory fact = SchemaFactory
           .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema s = fact.newSchema( this.getClass().getClassLoader().getResource( "conf/topology-v1.xsd" ) );
+      URL schemaUrl = ClassLoader.getSystemResource( "conf/topology-v1.xsd" );
+      Schema s = fact.newSchema( schemaUrl );
       Validator validator = s.newValidator();
       final List<SAXParseException> exceptions = new LinkedList<>();
       validator.setErrorHandler(new ErrorHandler() {
@@ -77,6 +75,7 @@ public class TopologyValidator {
         }
       });
 
+      File xml = new File(filePath);
       validator.validate(new StreamSource(xml));
       if(exceptions.size() > 0) {
         for (SAXParseException e : exceptions) {

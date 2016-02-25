@@ -17,6 +17,22 @@
  */
 package org.apache.hadoop.gateway;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.util.Enumeration;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditService;
@@ -29,25 +45,8 @@ import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
-import org.apache.hadoop.gateway.services.GatewayServices;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-
-public class GatewayServlet implements Servlet {
+public class GatewayServlet implements Servlet, Filter {
 
   public static final String GATEWAY_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
@@ -107,6 +106,24 @@ public class GatewayServlet implements Servlet {
   }
 
   @Override
+  public void init( FilterConfig filterConfig ) throws ServletException {
+    try {
+      if( filter == null ) {
+        filter = createFilter( filterConfig );
+      }
+      if( filter != null ) {
+        filter.init( filterConfig );
+      }
+    } catch( ServletException e ) {
+      LOG.failedToInitializeServletInstace( e );
+      throw e;
+    } catch( RuntimeException e ) {
+      LOG.failedToInitializeServletInstace( e );
+      throw e;
+    }
+  }
+
+  @Override
   public ServletConfig getServletConfig() {
     return filterConfig.getServletConfig();
   }
@@ -118,7 +135,38 @@ public class GatewayServlet implements Servlet {
       GatewayFilter f = filter;
       if( f != null ) {
         try {
+          f.doFilter( servletRequest, servletResponse, null );
+        } catch( IOException e ) {
+          LOG.failedToExecuteFilter( e );
+          throw e;
+        } catch( ServletException e ) {
+          LOG.failedToExecuteFilter( e );
+          throw e;
+        } catch( RuntimeException e ) {
+          LOG.failedToExecuteFilter( e );
+          throw e;
+        }
+      } else {
+        ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
+      }
+      String requestUri = (String)servletRequest.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+      int status = ((HttpServletResponse)servletResponse).getStatus();
+      auditor.audit( Action.ACCESS, requestUri, ResourceType.URI, ActionOutcome.SUCCESS, res.responseStatus( status ) );
+    } finally {
+      auditService.detachContext();
+    }
+  }
+
+  @Override
+  public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain ) throws IOException, ServletException {
+    try {
+      auditService.createContext();
+      GatewayFilter f = filter;
+      if( f != null ) {
+        try {
           f.doFilter( servletRequest, servletResponse );
+          //TODO: This should really happen naturally somehow as part of being a filter.  This way will cause problems eventually.
+          chain.doFilter( servletRequest, servletResponse );
         } catch( IOException e ) {
           LOG.failedToExecuteFilter( e );
           throw e;
@@ -153,19 +201,9 @@ public class GatewayServlet implements Servlet {
     filter = null;
   }
 
-  private static GatewayFilter createFilter( ServletConfig servletConfig ) throws ServletException {
-    GatewayFilter filter = null;
+  private static GatewayFilter createFilter( InputStream stream ) throws ServletException {
     try {
-      InputStream stream = null;
-      String location = servletConfig.getInitParameter( GATEWAY_DESCRIPTOR_LOCATION_PARAM );
-      if( location != null ) {
-        stream = servletConfig.getServletContext().getResourceAsStream( location );
-        if( stream == null ) {
-          stream = servletConfig.getServletContext().getResourceAsStream( "/WEB-INF/" + location );
-        }
-      } else {
-        stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
-      }
+      GatewayFilter filter = null;
       if( stream != null ) {
         try {
           GatewayDescriptor descriptor = GatewayDescriptorFactory.load( "xml", new InputStreamReader( stream ) );
@@ -174,11 +212,43 @@ public class GatewayServlet implements Servlet {
           stream.close();
         }
       }
+      return filter;
     } catch( IOException e ) {
       throw new ServletException( e );
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
+  }
+
+  private static GatewayFilter createFilter( FilterConfig filterConfig ) throws ServletException {
+    GatewayFilter filter;
+    InputStream stream;
+    String location = filterConfig.getInitParameter( GATEWAY_DESCRIPTOR_LOCATION_PARAM );
+    if( location != null ) {
+      stream = filterConfig.getServletContext().getResourceAsStream( location );
+      if( stream == null ) {
+        stream = filterConfig.getServletContext().getResourceAsStream( "/WEB-INF/" + location );
+      }
+    } else {
+      stream = filterConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+    }
+    filter = createFilter( stream );
+    return filter;
+  }
+
+  private static GatewayFilter createFilter( ServletConfig servletConfig ) throws ServletException {
+    GatewayFilter filter;
+    InputStream stream;
+    String location = servletConfig.getInitParameter( GATEWAY_DESCRIPTOR_LOCATION_PARAM );
+    if( location != null ) {
+      stream = servletConfig.getServletContext().getResourceAsStream( location );
+      if( stream == null ) {
+        stream = servletConfig.getServletContext().getResourceAsStream( "/WEB-INF/" + location );
+      }
+    } else {
+      stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+    }
+    filter = createFilter( stream );
     return filter;
   }
 

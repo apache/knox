@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.apache.hadoop.test.TestUtils;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
@@ -26,6 +27,7 @@ import java.io.File;
 import java.net.URL;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.*;
 
 public class GatewayGlobalConfigTest {
@@ -76,16 +78,22 @@ public class GatewayGlobalConfigTest {
     //assertThat( config.getShiroConfigFile(), is( "shiro.ini") );
   }
 
-  @Test
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultTopologyName() {
     GatewayConfig config = new GatewayConfigImpl();
-    assertThat( config.getDefaultTopologyName(), is( "sandbox" ) );
+    assertThat( config.getDefaultTopologyName(), is( nullValue() ) );
+
+    ((GatewayConfigImpl)config).set("default.app.topology.name", "test-topo-name" );
+    assertThat( config.getDefaultTopologyName(), is( "test-topo-name" ) );
   }
 
-  @Test
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultAppRedirectPath() {
     GatewayConfig config = new GatewayConfigImpl();
-    assertThat( config.getDefaultAppRedirectPath(), is( "/gateway/sandbox" ) );
+    assertThat( config.getDefaultAppRedirectPath(), nullValue() );
+
+    ((GatewayConfigImpl)config).set("default.app.topology.name", "test-topo-name" );
+    assertThat( config.getDefaultAppRedirectPath(), is("/gateway/test-topo-name") );
   }
 
   @Test

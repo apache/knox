@@ -17,10 +17,34 @@
  */
 package org.apache.hadoop.gateway;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -29,20 +53,25 @@ import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.apache.hadoop.gateway.deploy.DeploymentException;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.filter.CorrelationHandler;
+import org.apache.hadoop.gateway.filter.DefaultTopologyHandler;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
+import org.apache.hadoop.gateway.topology.Application;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.trace.AccessHandler;
 import org.apache.hadoop.gateway.trace.ErrorHandler;
 import org.apache.hadoop.gateway.trace.TraceHandler;
+import org.apache.hadoop.gateway.util.Urls;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -54,27 +83,12 @@ import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.ProviderException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class GatewayServer {
   private static GatewayResources res = ResourcesFactory.get(GatewayResources.class);
@@ -220,19 +234,37 @@ public class GatewayServer {
     return properties;
   }
 
-  private static void extractToFile( String resource, File file ) throws IOException {
-    InputStream input = ClassLoader.getSystemResourceAsStream( resource );
-    OutputStream output = new FileOutputStream( file );
-    IOUtils.copy( input, output );
-    output.close();
-    input.close();
-  }
-
-
   public static void redeployTopologies( String topologyName  ) {
     TopologyService ts = getGatewayServices().getService(GatewayServices.TOPOLOGY_SERVICE);
     ts.reloadTopologies();
     ts.redeployTopologies(topologyName);
+  }
+
+  private void cleanupTopologyDeployments() {
+    File deployDir = new File( config.getGatewayDeploymentDir() );
+    TopologyService ts = getGatewayServices().getService(GatewayServices.TOPOLOGY_SERVICE);
+    for( Topology topology : ts.getTopologies() ) {
+      cleanupTopologyDeployments( deployDir, topology );
+    }
+  }
+
+  private void cleanupTopologyDeployments( File deployDir, Topology topology ) {
+    log.cleanupDeployments( topology.getName() );
+    File[] files = deployDir.listFiles( new RegexDirFilter( topology.getName() + "\\.(war|topo)\\.[0-9A-Fa-f]+" ) );
+    if( files != null ) {
+      Arrays.sort( files, new FileModificationTimeDescendingComparator() );
+      int verLimit = config.getGatewayDeploymentsBackupVersionLimit();
+      long ageLimit = config.getGatewayDeploymentsBackupAgeLimit();
+      long keepTime = System.currentTimeMillis() - ageLimit;
+      for( int i=1; i<files.length; i++ ) {
+        File file = files[i];
+        if( ( ( verLimit >= 0 ) && ( i > verLimit ) ) ||
+            ( ( ageLimit >= 0 ) && ( file.lastModified() < keepTime ) ) ) {
+          log.cleanupDeployment( file.getAbsolutePath() );
+          FileUtils.deleteQuietly( file );
+        }
+      }
+    }
   }
 
   public static GatewayServer startGateway( GatewayConfig config, GatewayServices svcs ) throws Exception {
@@ -287,7 +319,10 @@ public class GatewayServer {
     return connector;
   }
 
-  private static HandlerCollection createHandlers( final GatewayConfig config, final ContextHandlerCollection contexts ) {
+  private static HandlerCollection createHandlers(
+      final GatewayConfig config,
+      final GatewayServices services,
+      final ContextHandlerCollection contexts ) {
     HandlerCollection handlers = new HandlerCollection();
     RequestLogHandler logHandler = new RequestLogHandler();
     logHandler.setRequestLog( new AccessHandler() );
@@ -299,11 +334,16 @@ public class GatewayServer {
     CorrelationHandler correlationHandler = new CorrelationHandler();
     correlationHandler.setHandler( traceHandler );
 
-    handlers.setHandlers( new Handler[]{ correlationHandler, logHandler } );
+    DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler( config, services, contexts );
+
+    handlers.setHandlers( new Handler[]{ correlationHandler, defaultTopoHandler, logHandler } );
     return handlers;
   }
 
   private synchronized void start() throws Exception {
+    errorHandler = new ErrorHandler();
+    errorHandler.setShowStacks( false );
+    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
 
     // Create the global context handler.
     contexts = new ContextHandlerCollection();
@@ -313,8 +353,15 @@ public class GatewayServer {
     // Start Jetty.
     jetty = new Server();
     jetty.addConnector( createConnector( config ) );
-    jetty.setHandler( createHandlers( config, contexts ) );
+    jetty.setHandler( createHandlers( config, services, contexts ) );
     jetty.setThreadPool( new QueuedThreadPool( config.getThreadPoolMax() ) );
+
+    // Load the current topologies.
+    File topologiesDir = calculateAbsoluteTopologiesDir();
+    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
+    monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    monitor.addTopologyChangeListener(listener);
+    monitor.reloadTopologies();
 
     try {
       jetty.start();
@@ -324,14 +371,7 @@ public class GatewayServer {
       throw e;
     }
 
-    // Create a dir/file based cluster topology provider.
-    File topologiesDir = calculateAbsoluteTopologiesDir();
-    monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
-    monitor.addTopologyChangeListener(listener);
-
-    // Load the current topologies.
-    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
-    monitor.reloadTopologies();
+    cleanupTopologyDeployments();
 
     // Start the topology monitor.
     log.monitoringTopologyChangesInDirectory(topologiesDir.getAbsolutePath());
@@ -361,53 +401,158 @@ public class GatewayServer {
     return addresses;
   }
 
-  private synchronized void internalDeploy( Topology topology, File warFile ) {
-    String name = topology.getName();
-    String warPath = warFile.getAbsolutePath();
-    errorHandler = new ErrorHandler();
-    errorHandler.setShowStacks(false);
-    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
+  private WebAppContext createWebAppContext( Topology topology, File warFile, String warPath ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
+    String topoName = topology.getName();
     WebAppContext context = new WebAppContext();
-    context.setDefaultsDescriptor( null );
-    if (!name.equals("_default")) {
-      context.setContextPath( "/" + config.getGatewayPath() + "/" + name );
-    }
-    else {
-      context.setContextPath( "/" );
-    }
-    context.setWar( warPath );
-    context.setErrorHandler(errorHandler);
-    // internalUndeploy( topology ); KNOX-152
-    context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, name );
+    String contextPath;
+    contextPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName, warPath );
+    context.setContextPath( contextPath );
+    context.setWar( warFile.getAbsolutePath() );
+    context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
     context.setAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config );
-    deployments.put( name, context );
-    contexts.addHandler( context );
-    try {
-      context.start();
-    } catch( Exception e ) {
-      auditor
-          .audit(Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-      log.failedToDeployTopology( name, e );
+    context.setTempDirectory( warFile );
+    context.setErrorHandler( errorHandler );
+    return context;
+  }
+
+  private static void explodeWar( File source, File target ) throws IOException, ZipException {
+    if( source.isDirectory() ) {
+      FileUtils.copyDirectory( source, target );
+    } else {
+      ZipFile zip = new ZipFile( source );
+      zip.extractAll( target.getAbsolutePath() );
     }
   }
 
-  private synchronized void internalUndeploy( Topology topology ) {
-    WebAppContext context = deployments.remove( topology.getName() );
-    if( context != null ) {
-      ServiceRegistry sr = getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
-      if (sr != null) {
-        sr.removeClusterServices(topology.getName());
+  private void mergeWebXmlOverrides( File webInfDir ) throws IOException, SAXException, ParserConfigurationException, TransformerException {
+    File webXmlFile = new File( webInfDir, "web.xml" );
+    Document webXmlDoc;
+    if( webXmlFile.exists() ) {
+      // Backup original web.xml file.
+      File originalWebXmlFile = new File( webInfDir, "original-web.xml" );
+      FileUtils.copyFile( webXmlFile, originalWebXmlFile );
+      webXmlDoc = XmlUtils.readXml( webXmlFile );
+    } else {
+      webXmlDoc = XmlUtils.createDocument();
+      webXmlDoc.appendChild( webXmlDoc.createElement( "web-app" ) );
+    }
+    File overrideWebXmlFile = new File( webInfDir, "override-web.xml" );
+    if( overrideWebXmlFile.exists() ) {
+      Document overrideWebXmlDoc = XmlUtils.readXml( overrideWebXmlFile );
+      Element originalRoot = webXmlDoc.getDocumentElement();
+      Element overrideRoot = overrideWebXmlDoc.getDocumentElement();
+      NodeList overrideNodes = overrideRoot.getChildNodes();
+      for( int i = 0, n = overrideNodes.getLength(); i < n; i++ ) {
+        Node overrideNode = overrideNodes.item( i );
+        if( overrideNode.getNodeType() == Node.ELEMENT_NODE ) {
+          Node importedNode = webXmlDoc.importNode( overrideNode, true );
+          originalRoot.appendChild( importedNode );
+        }
       }
-      contexts.removeHandler( context ) ;
+      XmlUtils.writeXml( webXmlDoc, webXmlFile );
+    }
+  }
+
+  private synchronized void internalDeployApplications( Topology topology, File topoDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+    if( topology != null ) {
+      Collection<Application> applications = topology.getApplications();
+      if( applications != null ) {
+        for( Application application : applications ) {
+          List<String> urls = application.getUrls();
+          if( urls == null || urls.isEmpty() ) {
+            internalDeployApplication( topology, topoDir, application, application.getName() );
+          } else {
+            for( String url : urls ) {
+              internalDeployApplication( topology, topoDir, application, url );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private synchronized void internalDeployApplication( Topology topology, File topoDir, Application application, String url ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
+    File appsDir = new File( config.getGatewayApplicationsDir() );
+    File appDir = new File( appsDir, application.getName() );
+    if( !appDir.exists() ) {
+      appDir = new File( appsDir, application.getName() + ".war" );
+    }
+    if( !appDir.exists() ) {
+      throw new DeploymentException( "Application archive does not exist: " + appDir.getAbsolutePath() );
+    }
+    File warFile = new File( topoDir, Urls.encode( "/" + Urls.trimLeadingAndTrailingSlash( url ) ) );
+    File webInfDir = new File( warFile, "WEB-INF" );
+    explodeWar( appDir, warFile );
+    mergeWebXmlOverrides( webInfDir );
+  }
+
+  private synchronized void internalActivateTopology( Topology topology, File topoDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+    log.activatingTopology( topology.getName() );
+    File[] files = topoDir.listFiles( new RegexDirFilter( "%.*" ) );
+    if( files != null ) {
+      for( File file : files ) {
+        internalActivateArchive( topology, file );
+      }
+    }
+  }
+
+  private synchronized void internalActivateArchive( Topology topology, File warDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+    log.activatingTopologyArchive( topology.getName(), warDir.getName() );
+    WebAppContext newContext = createWebAppContext( topology, warDir, Urls.decode( warDir.getName() ) );
+    WebAppContext oldContext = deployments.get( newContext.getContextPath() );
+    deployments.put( newContext.getContextPath(), newContext );
+    if( oldContext != null ) {
+      contexts.removeHandler( oldContext );
+    }
+    contexts.addHandler( newContext );
+    if( contexts.isRunning() ) {
+      try {
+        newContext.start();
+      } catch( Exception e ) {
+        auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
+        log.failedToDeployTopology( topology.getName(), e );
+      }
+    }
+  }
+
+  private synchronized void internalDeactivateTopology( Topology topology ) {
+
+    log.deactivatingTopology( topology.getName() );
+
+    String topoName = topology.getName();
+    String topoPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName );
+    String topoPathSlash = topoPath + "/";
+
+    ServiceRegistry sr = getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+    if (sr != null) {
+      sr.removeClusterServices( topoName );
+    }
+
+    // Find all the deployed contexts we need to deactivate.
+    List<WebAppContext> deactivate = new ArrayList<WebAppContext>();
+    if( deployments != null ) {
+      for( WebAppContext app : deployments.values() ) {
+        String appPath = app.getContextPath();
+        if( appPath.equals( topoPath ) || appPath.startsWith( topoPathSlash ) ) {
+          deactivate.add( app );
+        }
+      }
+    }
+    // Deactivate the required deployed contexts.
+    for( WebAppContext context : deactivate ) {
+      String contextPath = context.getContextPath();
+      deployments.remove( contextPath );
+      contexts.removeHandler( context );
       try {
         context.stop();
       } catch( Exception e ) {
-        auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-          ActionOutcome.FAILURE);
+        auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
         log.failedToUndeployTopology( topology.getName(), e );
       }
     }
+    deactivate.clear();
+
   }
 
   // Using an inner class to hide the handleTopologyEvent method from consumers of GatewayServer.
@@ -429,13 +574,14 @@ public class GatewayServer {
     }
 
     private void handleDeleteDeployment(Topology topology, File deployDir) {
-      File[] files = deployDir.listFiles( new WarDirFilter( topology.getName() + "\\.war\\.[0-9A-Fa-f]+" ) );
+      log.deletingTopology( topology.getName() );
+      File[] files = deployDir.listFiles( new RegexDirFilter( topology.getName() + "\\.(war|topo)\\.[0-9A-Fa-f]+" ) );
       if( files != null ) {
         auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
           ActionOutcome.UNAVAILABLE);
+        internalDeactivateTopology( topology );
         for( File file : files ) {
           log.deletingDeployment( file.getAbsolutePath() );
-          internalUndeploy( topology );
           FileUtils.deleteQuietly( file );
         }
       }
@@ -443,45 +589,44 @@ public class GatewayServer {
 
     private void handleCreateDeployment(Topology topology, File deployDir) {
       try {
-        File warDir = calculateDeploymentDir( topology );
-        if( !warDir.exists() ) {
+        File topoDir = calculateDeploymentDir( topology );
+        if( !topoDir.exists() ) {
           auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
 
 //          KNOX-564 - Topology should fail to deploy with no providers configured.
+//TODO:APPS:This should only fail if there are services in the topology.
           if(topology.getProviders().isEmpty()) {
-            throw new ProviderException("No providers found inside topology.");
+            throw new DeploymentException("No providers found inside topology.");
           }
 
-          log.deployingTopology( topology.getName(), warDir.getAbsolutePath() );
-          internalUndeploy( topology ); // KNOX-152
-          WebArchive war = null;
-          war = DeploymentFactory.createDeployment( config, topology );
+          log.deployingTopology( topology.getName(), topoDir.getAbsolutePath() );
+          internalDeactivateTopology( topology ); // KNOX-152
+
+          EnterpriseArchive ear = DeploymentFactory.createDeployment( config, topology );
           if( !deployDir.exists() ) {
             deployDir.mkdirs();
+            if( !deployDir.exists() ) {
+              throw new DeploymentException( "Failed to create topology deployment temporary directory: " + deployDir.getAbsolutePath() );
+            }
           }
-          File tmp = war.as( ExplodedExporter.class ).exportExploded( deployDir, warDir.getName() + ".tmp" );
-          tmp.renameTo( warDir );
-          internalDeploy( topology, warDir );
-          handleDefaultTopology(topology, deployDir);
+          File tmp = ear.as( ExplodedExporter.class ).exportExploded( deployDir, topoDir.getName() + ".tmp" );
+          if( !tmp.renameTo( topoDir ) ) {
+            FileUtils.deleteQuietly( tmp );
+            throw new DeploymentException( "Failed to create topology deployment directory: " + topoDir.getAbsolutePath() );
+          }
+          internalDeployApplications( topology, topoDir );
+          internalActivateTopology( topology, topoDir );
           log.deployedTopology( topology.getName());
         } else {
           auditor.audit( Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.UNAVAILABLE );
-          log.redeployingTopology( topology.getName(), warDir.getAbsolutePath() );
-          internalDeploy( topology, warDir );
-          handleDefaultTopology(topology, deployDir);
+          log.redeployingTopology( topology.getName(), topoDir.getAbsolutePath() );
+          internalActivateTopology( topology, topoDir );
           log.redeployedTopology( topology.getName() );
         }
+        cleanupTopologyDeployments( deployDir, topology );
       } catch( Throwable e ) {
         auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
         log.failedToDeployTopology( topology.getName(), e );
-      }
-    }
-
-    public void handleDefaultTopology(Topology topology, File deployDir) {
-      if (topology.getName().equals(config.getDefaultTopologyName())) {
-        topology.setName("_default");
-        handleCreateDeployment(topology, deployDir);
-        topology.setName(config.getDefaultTopologyName());
       }
     }
 
@@ -508,12 +653,16 @@ public class GatewayServer {
   }
 
   private File calculateDeploymentDir( Topology topology ) {
-    File warDir = new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
-    return warDir;
+    File dir = new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
+    return dir;
+  }
+
+  private String calculateDeploymentExtension( Topology topology ) {
+    return ".topo.";
   }
 
   private String calculateDeploymentName( Topology topology ) {
-    String name = topology.getName() + ".war." + Long.toHexString( topology.getTimestamp() );
+    String name = topology.getName() + calculateDeploymentExtension( topology ) + Long.toHexString( topology.getTimestamp() );
     return name;
   }
 
@@ -523,11 +672,11 @@ public class GatewayServer {
     socket.close();
   }
 
-  private class WarDirFilter implements FilenameFilter {
+  private class RegexDirFilter implements FilenameFilter {
 
     Pattern pattern;
 
-    WarDirFilter( String regex ) {
+    RegexDirFilter( String regex ) {
       pattern = Pattern.compile( regex );
     }
 
@@ -554,6 +703,21 @@ public class GatewayServer {
       }
     }
     return frontendUri;
+  }
+
+  private static class FileModificationTimeDescendingComparator implements Comparator<File> {
+    @Override
+    public int compare( File left, File right ) {
+      long leftTime = ( left == null ? Long.MIN_VALUE : left.lastModified() );
+      long rightTime = ( right == null ? Long.MIN_VALUE : right.lastModified() );
+      if( leftTime > rightTime ) {
+        return -1;
+      } else if ( leftTime < rightTime ) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
   }
 
 }

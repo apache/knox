@@ -60,10 +60,12 @@
             <artifactId>gateway-spi</artifactId>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
         </dependency>
+        -->
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -149,6 +151,11 @@
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -24,12 +24,13 @@ or more contributor license agreements.  See the NOTICE file
         element-form-default="QUALIFIED"/>
     <java-types>
         <java-type name="Topology" xml-accessor-type="NONE">
-            <xml-type prop-order="name providers services timestamp"/>
+            <xml-type prop-order="name providers services applications timestamp"/>
             <xml-root-element/>
-            <java-attributes prop-order="providers services">
+            <java-attributes prop-order="providers services applications">
+                <xml-element java-attribute="name" name="name"/>
                 <xml-element java-attribute="providers" name="providers"/>
                 <xml-element java-attribute="services" name="services"/>
-                <xml-element java-attribute="name" name="name"/>
+                <xml-element java-attribute="applications" name="applications"/>
                 <xml-element java-attribute="timestamp" name="timestamp"/>
             </java-attributes>
         </java-type>
@@ -46,6 +47,7 @@ or more contributor license agreements.  See the NOTICE file
         </java-type>
         <java-type name="Service" xml-accessor-type="NONE">
             <java-attributes>
+                <xml-element java-attribute="name" name="name"/>
                 <xml-element java-attribute="role" name="role"/>
                 <xml-element java-attribute="urls" name="urls"/>
                 <xml-variable-node java-attribute="paramsList" java-variable-attribute="name">
@@ -53,6 +55,7 @@ or more contributor license agreements.  See the NOTICE file
                 </xml-variable-node>
             </java-attributes>
         </java-type>
+        <java-type name="Application" xml-accessor-type="NONE"/>
         <java-type name="Param" xml-accessor-type="NONE">
             <java-attributes>
                 <xml-value java-attribute="value"/>

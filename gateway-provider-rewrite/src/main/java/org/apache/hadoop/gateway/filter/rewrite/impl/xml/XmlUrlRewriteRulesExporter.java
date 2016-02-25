@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.*;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteRulesExporter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -86,16 +87,7 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
         }
       }
 
-      TransformerFactory transformerFactory = TransformerFactory.newInstance();
-      transformerFactory.setAttribute( "indent-number", 2 );
-      Transformer transformer = transformerFactory.newTransformer();
-      //transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
-      transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-      transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-
-      StreamResult result = new StreamResult( writer );
-      DOMSource source = new DOMSource(document);
-      transformer.transform( source, result );
+      XmlUtils.writeXml( document, writer );
 
     } catch( ParserConfigurationException e ) {
       throw new IOException( e );

@@ -17,55 +17,308 @@
  */
 package org.apache.hadoop.gateway.deploy;
 
+import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
+import org.apache.hadoop.gateway.topology.Application;
+import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.apache.hadoop.test.TestUtils;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 
 public class DeploymentFactoryTest {
 
-  @Test
-  public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException {
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException, TransformerException {
     GatewayConfig config = new GatewayConfigImpl();
 
     Topology topology = new Topology();
-    topology.setName( "test-cluster" );
+    topology.setName( "test-topology" );
 
-    WebArchive war = DeploymentFactory.createDeployment( config, topology );
-    //File dir = new File( System.getProperty( "user.dir" ) );
-    //File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+    EnterpriseArchive archive = DeploymentFactory.createDeployment( config, topology );
 
-    Document wad = parse( war.get( "WEB-INF/web.xml" ).getAsset().openStream() );
-    assertThat( wad, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.hadoop.gateway.GatewayServlet" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "gateway.xml" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster" ) ) );
-    assertThat( wad, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
-
-    Document gateway = parse( war.get( "WEB-INF/gateway.xml" ).getAsset().openStream() );
-    assertThat( gateway, hasXPath( "/gateway" ) );
+    Document xml = TestUtils.parseXml( archive.get( "/META-INF/topology.xml" ).getAsset().openStream() );
+    //TestUtils.dumpXml( xml );
+    assertThat( xml, hasXPath( "/topology/gateway" ) );
+    assertThat( xml, hasXPath( "/topology/name", equalTo( "test-topology" ) ) );
   }
 
-  private Document parse( InputStream stream ) throws IOException, SAXException, ParserConfigurationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    InputSource source = new InputSource( stream );
-    return builder.parse( source );
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void test_validateNoAppsWithRootUrlsInServicesTopology() {
+    DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( null );
+
+    Topology topology = new Topology();
+    topology.setName( "test-topology" );
+    DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( topology );
+
+    Service service;
+    Application application;
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    service = new Service();
+    service.setName( "test-service" );
+    service.setRole( "test-service" );
+    topology.addService( service );
+    application = new Application();
+    application.setName( "test-application" );
+    topology.addApplication( application );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    service = new Service();
+    service.setName( "test-service" );
+    service.setRole( "test-service" );
+    topology.addService( service );
+    application = new Application();
+    application.setName( "test-application" );
+    application.addUrl( "" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    service = new Service();
+    service.setName( "test-service" );
+    service.setRole( "test-service" );
+    topology.addService( service );
+    application = new Application();
+    application.setName( "test-application" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    service = new Service();
+    service.setName( "test-service" );
+    service.setRole( "test-service" );
+    topology.addService( service );
+    application = new Application();
+    application.setName( "test-application" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    service = new Service();
+    service.setName( "test-service" );
+    service.setRole( "test-service" );
+    topology.addService( service );
+    application = new Application();
+    application.setName( "test-application" );
+    application.addUrl( "/test-application" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithRootUrlsInServicesTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void test_validateNoAppsWithDuplicateUrlsInTopology() {
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( null );
+
+    Topology topology = new Topology();
+    topology.setName( "test-topology" );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    Application application;
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/test-application-2" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    application.addUrl( "/test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/test-application-2" );
+    topology.addApplication( application );
+    DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    application.addUrl( "/test-application-dup" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/test-application-dup" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    application.addUrl( "" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/test-application-1" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-1" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
+    topology = new Topology();
+    topology.setName( "test-topology" );
+    application = new Application();
+    application.setName( "test-application-1" );
+    application.addUrl( "/test-application-1" );
+    application.addUrl( "/test-application-3" );
+    topology.addApplication( application );
+    application = new Application();
+    application.setName( "test-application-2" );
+    application.addUrl( "/test-application-2" );
+    application.addUrl( "/test-application-3" );
+    topology.addApplication( application );
+    try {
+      DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( topology );
+      fail( "Expected DeploymentException" );
+    } catch ( DeploymentException e ) {
+      // Expected.
+    }
+
   }
 
 }

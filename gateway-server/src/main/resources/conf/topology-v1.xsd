@@ -18,9 +18,11 @@ limitations under the License.
 <h:schema xmlns:h="http://www.w3.org/2001/XMLSchema">
     <h:element name="topology">
         <h:complexType>
-            <h:choice maxOccurs="unbounded">
+            <h:sequence maxOccurs="1">
 
-                <h:element name="gateway" maxOccurs="1">
+                <h:element name="name" minOccurs="0" maxOccurs="1"/>
+
+                <h:element name="gateway" minOccurs="0" maxOccurs="1">
                     <h:complexType>
                         <h:choice minOccurs="1" maxOccurs="unbounded">
 
@@ -47,24 +49,49 @@ limitations under the License.
                                 </h:complexType>
                             </h:element>
 
-
                         </h:choice>
                     </h:complexType>
                 </h:element>
 
-                <h:element name="service" maxOccurs="unbounded">
+                <h:element name="service" minOccurs="0" maxOccurs="unbounded">
                     <h:complexType>
                         <h:sequence>
                             <h:element name="role" type="h:string" minOccurs="1" maxOccurs="1"/>
-                            <h:element name="url" type="h:string" minOccurs="0"
-                                       maxOccurs="unbounded" />
+                            <h:element name="url" type="h:string" minOccurs="0" maxOccurs="unbounded" />
+                            <h:element name="param" minOccurs="0" maxOccurs="unbounded">
+                                <h:complexType>
+                                    <h:sequence minOccurs="0">
+                                        <h:element name="name" type="h:string" />
+                                        <h:element name="value" type="h:string" />
+                                    </h:sequence>
+                                    <h:attribute name="name" type="h:string" use="optional" />
+                                    <h:attribute name="value" type="h:string" use="optional" />
+                                </h:complexType>
+                            </h:element>
                         </h:sequence>
                     </h:complexType>
-
                 </h:element>
 
+                <h:element name="application" minOccurs="0" maxOccurs="unbounded">
+                    <h:complexType>
+                        <h:sequence>
+                            <h:element name="name" type="h:string" minOccurs="1" maxOccurs="1"/>
+                            <h:element name="url" type="h:string" minOccurs="0" maxOccurs="unbounded" />
+                            <h:element name="param" minOccurs="0" maxOccurs="unbounded">
+                                <h:complexType>
+                                    <h:sequence minOccurs="0">
+                                        <h:element name="name" type="h:string" />
+                                        <h:element name="value" type="h:string" />
+                                    </h:sequence>
+                                    <h:attribute name="name" type="h:string" use="optional" />
+                                    <h:attribute name="value" type="h:string" use="optional" />
+                                </h:complexType>
+                            </h:element>
+                        </h:sequence>
+                    </h:complexType>
+                </h:element>
 
-            </h:choice>
+            </h:sequence>
         </h:complexType>
     </h:element>
 </h:schema>

@@ -17,33 +17,51 @@
  */
 package org.apache.hadoop.gateway.jetty;
 
-import org.apache.hadoop.test.category.UnitTests;
-import org.apache.hadoop.test.category.FastTests;
 import org.eclipse.jetty.http.PathMap;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 /**
  *
  */
-@Category( { UnitTests.class, FastTests.class } )
+//@Category( { UnitTests.class, FastTests.class } )
 public class JettyPathMapTest {
 
-  @Ignore( "This doesn't work like I expected." )
-  @Test
+  //@Ignore( "This doesn't work like I expected." )
+  //@Test
   public void testPathMatching() {
-    PathMap map = new PathMap();
-    map.put( "/webhdfs", "/webhdfs" );
-    map.put( "/webhdfs/dfshealth.jsp", "/webhdfs/dfshealth.jsp" );
-    map.put( "/webhdfs/*", "/webhdfs/*" );
+    PathMap map;
 
-    assertThat( (String)map.match( "/webhdfs" ), equalTo( "/webhdfs" ) );
-    assertThat( (String)map.match( "/webhdfs/dfshealth.jsp" ), equalTo( "/webhdfs/dfshealth.jsp" ) );
-    assertThat( (String)map.match( "/webhdfs/v1" ), equalTo( "/webhdfs/*" ) );
+    map = new PathMap();
+    map.put( "/path", "/path" );
+    assertThat( (String)map.match("/path"), is("/path") );
+
+    map = new PathMap();
+    map.put( "/path", "/path" );
+    map.put( "/path/", "/path/" );
+    assertThat( (String)map.match("/path"), is("/path") );
+    assertThat( (String)map.match("/path/"), is("/path/") );
+
+    map = new PathMap();
+    map.put( "/path/*", "/path/*" );
+    map.put( "/path", "/path" );
+    map.put( "/path/", "/path/" );
+    assertThat( (String)map.match("/path"), is("/path") );
+    assertThat( (String)map.match("/path/"), is("/path/") );
+    assertThat( (String)map.match("/path/sub"), is("/path/*") );
+
+    map = new PathMap();
+    map.put( "/path", "/path" );
+    map.put( "/path/", "/path/" );
+    map.put( "/path/*", "/path/*" );
+    assertThat( (String)map.match( "/path/sub" ), is("/path/*") );
+
+    // Here the addition of the * path "overwrites" the exact matches.
+    // Above this worked if the /path and /path/ were added after /path/*.
+    assertThat( (String)map.match("/path"), is("/path") );
+    assertThat( (String)map.match("/path/"), is("/path/") );
+
   }
 
 }

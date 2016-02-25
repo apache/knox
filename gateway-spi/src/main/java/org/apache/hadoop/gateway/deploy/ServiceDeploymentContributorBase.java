@@ -74,11 +74,14 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
   }
 
-  protected void addIdentityAssertionFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    context.contributeFilter( service, resource, "identity-assertion", null, null );
+  protected void addIdentityAssertionFilter( DeploymentContext context, Service service, ResourceDescriptor resource) {
+    if( topologyContainsProviderType( context, "authentication" ) ||
+        topologyContainsProviderType( context, "federation"  ) ) {
+      context.contributeFilter( service, resource, "identity-assertion", null, null );
+    }
   }
 
-  protected void addAuthorizationFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+  protected void addAuthorizationFilter( DeploymentContext context, Service service, ResourceDescriptor resource) {
     if (topologyContainsProviderType(context, "authorization")) {
       context.contributeFilter( service, resource, "authorization", null, null );
     }
