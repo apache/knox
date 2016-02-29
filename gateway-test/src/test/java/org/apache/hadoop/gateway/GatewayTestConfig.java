@@ -41,6 +41,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String gatewayApplicationsDir = null;
   private String gatewayServicesDir;
   private String defaultTopologyName = "default";
+  private List<String> includedSSLCiphers = null;
+  private List<String> excludedSSLCiphers = null;
+  private boolean sslEnabled = false;
+  private String truststoreType = "jks";
+  private String keystoreType = "jks";
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -122,8 +127,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isSSLEnabled() {
-    // TODO Auto-generated method stub
-    return false;
+    return sslEnabled;
+  }
+
+  public void setSSLEnabled( boolean sslEnabled ) {
+    this.sslEnabled = sslEnabled;
   }
 
   @Override
@@ -182,6 +190,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public String getFrontendUrl() { return frontendUrl; }
 
+  public void setFrontendUrl( String frontendUrl ) {
+    this.frontendUrl = frontendUrl;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getExcludedSSLProtocols()
    */
@@ -192,8 +204,22 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return protocols;
   }
 
-  public void setFrontendUrl( String frontendUrl ) {
-    this.frontendUrl = frontendUrl;
+  @Override
+  public List getIncludedSSLCiphers() {
+    return includedSSLCiphers;
+  }
+
+  public void setIncludedSSLCiphers( List<String> list ) {
+    includedSSLCiphers = list;
+  }
+
+  @Override
+  public List getExcludedSSLCiphers() {
+    return excludedSSLCiphers;
+  }
+
+  public void setExcludedSSLCiphers( List<String> list ) {
+    excludedSSLCiphers = list;
   }
 
   /* (non-Javadoc)
@@ -228,25 +254,31 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getTruststoreType() {
-    // TODO Auto-generated method stub
-    return null;
+    return truststoreType;
   }
-  
+
+  public void setTruststoreType( String truststoreType ) {
+    this.truststoreType = truststoreType;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getKeystoreType()
    */
   @Override
   public String getKeystoreType() {
-    // TODO Auto-generated method stub
-    return null;
+    return keystoreType;
+  }
+
+  public void setKeystoreType( String keystoreType ) {
+    this.keystoreType = keystoreType;
   }
 
 //  public void setKerberosLoginConfig(String kerberosLoginConfig) {
 //   this.kerberosLoginConfig = kerberosLoginConfig;
 //  }
 
-  @Override
-  public String getGatewayServicesDir() {
+   @Override
+   public String getGatewayServicesDir() {
     if( gatewayServicesDir != null ) {
       return gatewayServicesDir;
     } else {
@@ -269,7 +301,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   public void setGatewayApplicationsDir( String gatewayApplicationsDir ) {
     this.gatewayApplicationsDir = gatewayApplicationsDir;
-  }
+   }
 
   @Override
   public boolean isXForwardedEnabled() {

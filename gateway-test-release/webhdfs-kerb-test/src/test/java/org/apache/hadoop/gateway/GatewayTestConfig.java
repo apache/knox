@@ -189,6 +189,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return protocols;
   }
 
+  @Override
+  public List getIncludedSSLCiphers() {
+    return null;
+  }
+
+  @Override
+  public List getExcludedSSLCiphers() {
+    return null;
+  }
+
   public void setFrontendUrl( String frontendUrl ) {
     this.frontendUrl = frontendUrl;
   }

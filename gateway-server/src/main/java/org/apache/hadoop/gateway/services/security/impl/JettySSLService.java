@@ -24,7 +24,6 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.hadoop.gateway.GatewayMessages;
@@ -51,6 +50,8 @@ public class JettySSLService implements SSLService {
   private MasterService ms;
   private KeystoreService ks;
   private AliasService as;
+  private List<String> sslIncludeCiphers = null;
+  private List<String> sslExcludeCiphers = null;
   private List<String> sslExcludeProtocols = null;
   private boolean clientAuthNeeded;
   private boolean trustAllCerts;
@@ -116,6 +117,8 @@ public class JettySSLService implements SSLService {
     }
 
     keystoreType = config.getKeystoreType();
+    sslIncludeCiphers = config.getIncludedSSLCiphers();
+    sslExcludeCiphers = config.getExcludedSSLCiphers();
     sslExcludeProtocols = config.getExcludedSSLProtocols();
     clientAuthNeeded = config.isClientAuthNeeded();
     truststorePath = config.getTruststorePath();
@@ -206,8 +209,14 @@ public class JettySSLService implements SSLService {
     }
     sslContextFactory.setNeedClientAuth( clientAuthNeeded );
     sslContextFactory.setTrustAll( trustAllCerts );
-    if (sslExcludeProtocols != null) {
-      sslContextFactory.setExcludeProtocols((String[]) sslExcludeProtocols.toArray());
+    if (sslIncludeCiphers != null && !sslIncludeCiphers.isEmpty()) {
+      sslContextFactory.setIncludeCipherSuites( sslIncludeCiphers.toArray(new String[sslIncludeCiphers.size()]) );
+    }
+    if (sslExcludeCiphers != null && !sslExcludeCiphers.isEmpty()) {
+      sslContextFactory.setExcludeCipherSuites( sslExcludeCiphers.toArray(new String[sslExcludeCiphers.size()]) );
+    }
+    if (sslExcludeProtocols != null && !sslExcludeProtocols.isEmpty()) {
+      sslContextFactory.setExcludeProtocols( sslExcludeProtocols.toArray(new String[sslExcludeProtocols.size()]) );
     }
     SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
 

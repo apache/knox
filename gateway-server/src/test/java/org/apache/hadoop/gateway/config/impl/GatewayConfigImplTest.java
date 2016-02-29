@@ -1,10 +1,14 @@
 package org.apache.hadoop.gateway.config.impl;
 
+import java.util.List;
+
 import org.apache.hadoop.test.TestUtils;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -92,5 +96,59 @@ public class GatewayConfigImplTest {
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
   }
 
+
+  @Test
+  public void testSSLCiphers() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    List<String> list;
+
+    list = config.getIncludedSSLCiphers();
+    assertThat( list, is(nullValue()) );
+
+    config.set( "ssl.include.ciphers", "none" );
+    assertThat( config.getIncludedSSLCiphers(), is(nullValue()) );
+
+    config.set( "ssl.include.ciphers", "" );
+    assertThat( config.getIncludedSSLCiphers(), is(nullValue()) );
+
+    config.set( "ssl.include.ciphers", "ONE" );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE")) );
+
+    config.set( "ssl.include.ciphers", " ONE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE")) );
+
+    config.set( "ssl.include.ciphers", "ONE,TWO" );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO")) );
+
+    config.set( "ssl.include.ciphers", "ONE,TWO,THREE" );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE , TWO , THREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    list = config.getExcludedSSLCiphers();
+    assertThat( list, is(nullValue()) );
+
+    config.set( "ssl.exclude.ciphers", "none" );
+    assertThat( config.getExcludedSSLCiphers(), is(nullValue()) );
+
+    config.set( "ssl.exclude.ciphers", "" );
+    assertThat( config.getExcludedSSLCiphers(), is(nullValue()) );
+
+    config.set( "ssl.exclude.ciphers", "ONE" );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE")) );
+
+    config.set( "ssl.exclude.ciphers", "ONE,TWO" );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO")) );
+
+    config.set( "ssl.exclude.ciphers", "ONE,TWO,THREE" );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE , TWO , THREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+  }
 
 }

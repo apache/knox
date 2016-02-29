@@ -133,6 +133,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
   private static final String SSL_ENABLED = "ssl.enabled";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
+  private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
+  private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
   // END BACKWARD COMPATIBLE BLOCK
   
   public static final String DEFAULT_HTTP_PORT = "8888";
@@ -412,6 +414,26 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       protocols = Arrays.asList(value.split("\\s*,\\s*"));
     }
     return protocols;
+  }
+
+  @Override
+  public List<String> getIncludedSSLCiphers() {
+    List<String> list = null;
+    String value = get(SSL_INCLUDE_CIPHERS);
+    if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
+      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
+    }
+    return list;
+  }
+
+  @Override
+  public List<String> getExcludedSSLCiphers() {
+    List<String> list = null;
+    String value = get(SSL_EXCLUDE_CIPHERS);
+    if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
+      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
+    }
+    return list;
   }
 
   /* (non-Javadoc)

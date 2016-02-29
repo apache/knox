@@ -85,6 +85,10 @@ public interface GatewayConfig {
   
   List<String> getExcludedSSLProtocols();
 
+  List<String> getIncludedSSLCiphers();
+
+  List<String> getExcludedSSLCiphers();
+
   boolean isHadoopKerberosSecured();
 
   String getKerberosConfig();
