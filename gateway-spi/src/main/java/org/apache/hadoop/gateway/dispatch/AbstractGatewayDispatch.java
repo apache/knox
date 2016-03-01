@@ -52,6 +52,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       } else {
         OutputStream output = response.getOutputStream();
         IOUtils.copyBytes( stream, output, STREAM_COPY_BUFFER_SIZE );
+        output.flush();
         output.close();
       }
 //    }

@@ -3302,7 +3302,7 @@ public class GatewayBasicFuncTest {
   }
 
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test//( timeout = MEDIUM_TIMEOUT )
   public void testXForwardHeadersPopulate() throws Exception {
     LOG_ENTER();
     String username = "hdfs";
