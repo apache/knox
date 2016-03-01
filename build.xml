@@ -36,7 +36,6 @@ Release build file for the Apache Knox Gateway
 
 <property name="svn.release.path" value="https://dist.apache.org/repos/dist/release/${gateway-project}" />
 <property name="svn.staging.path" value="https://dist.apache.org/repos/dist/dev/${gateway-project}" />
-
 <condition property="isUnix">
 <os family="unix"/>
 </condition>
@@ -108,11 +107,26 @@ Release build file for the Apache Knox Gateway
 </exec>
 </target>
 
-<target name="verify" depends="package" description="Perform the verification build."/>
+<target name="verify" depends="_init" description="Perform the verification build.">
+    <exec executable="${mvn.cmd}">
+        <arg value="clean"/>
+        <arg value="verify"/>
+    </exec>
+</target>
 <target name="package" depends="_init" description="Build and package the product (aka verify).">
 <exec executable="${mvn.cmd}">
-    <arg value="-Prelease"/>
+    <arg value="-Ppackage"/>
     <arg value="clean"/>
+    <arg value="install"/>
+</exec>
+<copy todir="target/${gateway-version}">
+    <fileset file="CHANGES"/>
+</copy>
+</target>
+<target name="quick-package" depends="_init" description="Build and package the product (aka verify).">
+<exec executable="${mvn.cmd}">
+    <arg value="-DskipTests"/>
+    <arg value="-Ppackage"/>
     <arg value="install"/>
 </exec>
 <copy todir="target/${gateway-version}">
@@ -250,7 +264,16 @@ Release build file for the Apache Knox Gateway
         <echo message="${stage-message}"/>
     </target>
 
-    <target name="release" depends="package" description="Build release artifacts and sign."/>
+    <target name="release" depends="_init">
+        <exec executable="${mvn.cmd}">
+            <arg value="-Ppackage,release"/>
+            <arg value="clean"/>
+            <arg value="install"/>
+        </exec>
+        <copy todir="target/${gateway-version}">
+            <fileset file="CHANGES"/>
+        </copy>
+    </target>
 
     <target name="stage-candidate" depends="_username,_password,unstage-candidate" description="Stage release artifacts.">
         <exec executable="svn">
