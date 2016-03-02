@@ -18,6 +18,11 @@
 package org.apache.hadoop.gateway.shell;
 
 import groovy.ui.GroovyMain;
+import org.apache.hadoop.gateway.shell.hbase.HBase;
+import org.apache.hadoop.gateway.shell.hdfs.Hdfs;
+import org.apache.hadoop.gateway.shell.job.Job;
+import org.apache.hadoop.gateway.shell.workflow.Workflow;
+import org.apache.hadoop.gateway.shell.yarn.Yarn;
 import org.apache.log4j.PropertyConfigurator;
 import org.codehaus.groovy.tools.shell.AnsiDetector;
 import org.codehaus.groovy.tools.shell.Groovysh;
@@ -25,10 +30,19 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 public class Shell {
+
+  private static String[] IMPORTS = new String[] {
+      Hadoop.class.getName(),
+      HBase.class.getName(),
+      Hdfs.class.getName(),
+      Job.class.getName(),
+      Workflow.class.getName(),
+      Yarn.class.getName(),
+      TimeUnit.class.getName()
+  };
 
   static {
     AnsiConsole.systemInstall();
@@ -41,19 +55,11 @@ public class Shell {
     if( args.length > 0 ) {
       GroovyMain.main( args );
     } else {
-      StringWriter buffer = new StringWriter();
-      PrintWriter setup = new PrintWriter( buffer );
-      setup.println( "import org.apache.hadoop.gateway.shell.Hadoop;" );
-      setup.println( "import org.apache.hadoop.gateway.shell.hdfs.Hdfs;" );
-      setup.println( "import org.apache.hadoop.gateway.shell.job.Job;" );
-      setup.println( "import org.apache.hadoop.gateway.shell.workflow.Workflow;" );
-      setup.println( "import org.apache.hadoop.gateway.shell.yarn.Yarn;" );
-      setup.println( "import java.util.concurrent.TimeUnit;" );
-      //setup.println( "set verbosity QUIET;" );
-      //setup.println( "set show-last-result false;" );
       Groovysh shell = new Groovysh();
-      shell.execute( buffer.toString() );
-      shell.run();
+      for( String name : IMPORTS ) {
+        shell.execute( "import " + name );
+      }
+      shell.run( null );
     }
   }
 

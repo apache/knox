@@ -5,6 +5,7 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-670] - Knox should be able to sost simple web apps
     * [KNOX-674] - Expose Jetty's SSL cipher suite configuration via gateway-site.xml
 ** Improvement
+    * [KNOX-677] - Upgrade to latest Groovy
 ** Bug
 
 ------------------------------------------------------------------------------
