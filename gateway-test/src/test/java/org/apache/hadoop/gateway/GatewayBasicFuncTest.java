@@ -3333,15 +3333,15 @@ public class GatewayBasicFuncTest {
         .contentType( ContentType.JSON.toString() );
 
     Response response = given()
+        .log().all()
         .auth().preemptive().basic(username, password)
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .header("Accept", ContentType.JSON.toString())
         .expect()
-//        .log().all()
+        .log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType( ContentType.JSON.toString() )
         .when().get( gatewayPath );
-
 
     String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
     MatcherAssert.assertThat(link, anyOf(
