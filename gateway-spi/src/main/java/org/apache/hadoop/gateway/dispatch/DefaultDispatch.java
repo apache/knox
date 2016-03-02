@@ -165,12 +165,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       InputStream stream = entity.getContent();
       try {
         writeResponse( inboundRequest, outboundResponse, stream );
-      } catch ( IOException e ) {
-        e.printStackTrace(System.out);
-        throw e;
-      } catch ( RuntimeException e ) {
-        e.printStackTrace(System.out);
-        throw e;
       } finally {
         closeInboundResponse( inboundResponse, stream );
       }

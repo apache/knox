@@ -17,6 +17,24 @@
  */
 package org.apache.hadoop.gateway;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.ws.rs.core.MediaType;
+
+import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Cookie;
 import com.jayway.restassured.response.Header;
@@ -27,8 +45,8 @@ import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.VerifyTest;
 import org.apache.hadoop.test.category.MediumTests;
+import org.apache.hadoop.test.category.VerifyTest;
 import org.apache.hadoop.test.mock.MockRequestMatcher;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
@@ -48,24 +66,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
+import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.anyOf;
@@ -141,6 +144,7 @@ public class GatewayBasicFuncTest {
   public static void setupSuite() throws Exception {
     //Log.setLog( new NoOpLogger() );
     LOG_ENTER();
+    RestAssured.config = newConfig().connectionConfig(connectionConfig().dontCloseIdleConnectionsAfterEachResponse() );
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase(GatewayBasicFuncTest.class);
@@ -3333,12 +3337,12 @@ public class GatewayBasicFuncTest {
         .contentType( ContentType.JSON.toString() );
 
     Response response = given()
-        .log().all()
+        //.log().all()
         .auth().preemptive().basic(username, password)
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .header("Accept", ContentType.JSON.toString())
         .expect()
-        .log().all()
+        //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType( ContentType.JSON.toString() )
         .when().get( gatewayPath );

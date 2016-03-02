@@ -30,7 +30,7 @@ import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
-import org.apache.hadoop.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import javax.activation.MimeType;
 import javax.servlet.FilterConfig;
@@ -174,7 +174,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     InputStream filteredInput = UrlRewriteStreamFilterFactory.create(
         mimeType, null, inStream, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
     outStream = (isGzip) ? new GZIPOutputStream(output) : output;
-    IOUtils.copyBytes( filteredInput, outStream, STREAM_BUFFER_SIZE );
+    IOUtils.copyLarge( filteredInput, outStream, new byte[STREAM_BUFFER_SIZE] );
     outStream.flush();
     outStream.close();
   }
