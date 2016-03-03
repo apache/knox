@@ -25,6 +25,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,11 +78,16 @@ import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.NetworkConnector;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
@@ -101,7 +109,6 @@ public class GatewayServer {
   private static Properties buildProperties;
 
   private Server jetty;
-  private ErrorHandler errorHandler;
   private GatewayConfig config;
   private ContextHandlerCollection contexts;
   private TopologyService monitor;
@@ -281,7 +288,7 @@ public class GatewayServer {
       services.start();
       DeploymentFactory.setGatewayServices(services);
       server.start();
-      log.startedGateway( server.jetty.getConnectors()[ 0 ].getLocalPort() );
+      log.startedGateway( server.jetty.getURI().getPort() );
       return server;
     }
   }
@@ -295,26 +302,33 @@ public class GatewayServer {
       this.listener = new InternalTopologyListener();
   }
 
-  private static Connector createConnector( final GatewayConfig config ) throws IOException {
-    Connector connector;
+  private static Connector createConnector( final Server server, final GatewayConfig config ) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
+    ServerConnector connector;
 
     // Determine the socket address and check availability.
     InetSocketAddress address = config.getGatewayAddress();
     checkAddressAvailability( address );
 
+    HttpConfiguration httpConfig = new HttpConfiguration();
+    httpConfig.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
+    //httpConfig.setRequestBufferSize( config.getHttpServerRequestBuffer() );
+    httpConfig.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
+    httpConfig.setOutputBufferSize( config.getHttpServerResponseBuffer() );
+
     if (config.isSSLEnabled()) {
+      HttpConfiguration httpsConfig = new HttpConfiguration( httpConfig );
+      httpsConfig.setSecureScheme( "https" );
+      httpsConfig.setSecurePort( address.getPort() );
+      httpsConfig.addCustomizer( new SecureRequestCustomizer() );
       SSLService ssl = services.getService("SSLService");
       String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
-      connector = (Connector) ssl.buildSSlConnector(keystoreFileName);
+      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( keystoreFileName );
+      connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
     } else {
-      connector = new SelectChannelConnector();
+      connector = new ServerConnector( server );
     }
     connector.setHost( address.getHostName() );
     connector.setPort( address.getPort() );
-    connector.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
-    connector.setRequestBufferSize( config.getHttpServerRequestBuffer() );
-    connector.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
-    connector.setResponseBufferSize( config.getHttpServerResponseBuffer() );
 
     return connector;
   }
@@ -341,20 +355,15 @@ public class GatewayServer {
   }
 
   private synchronized void start() throws Exception {
-    errorHandler = new ErrorHandler();
-    errorHandler.setShowStacks( false );
-    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
-
     // Create the global context handler.
     contexts = new ContextHandlerCollection();
      // A map to keep track of current deployments by cluster name.
     deployments = new ConcurrentHashMap<String, WebAppContext>();
 
     // Start Jetty.
-    jetty = new Server();
-    jetty.addConnector( createConnector( config ) );
+    jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
+    jetty.addConnector( createConnector( jetty, config ) );
     jetty.setHandler( createHandlers( config, services, contexts ) );
-    jetty.setThreadPool( new QueuedThreadPool( config.getThreadPoolMax() ) );
 
     // Load the current topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
@@ -387,10 +396,14 @@ public class GatewayServer {
     log.stoppedGateway();
   }
 
+  public URI getURI() {
+    return jetty.getURI();
+  }
+
   public InetSocketAddress[] getAddresses() {
     InetSocketAddress[] addresses = new InetSocketAddress[ jetty.getConnectors().length ];
     for( int i=0, n=addresses.length; i<n; i++ ) {
-      Connector connector = jetty.getConnectors()[ i ];
+      NetworkConnector connector = (NetworkConnector)jetty.getConnectors()[ i ];
       String host = connector.getHost();
       if( host == null ) {
         addresses[ i ] = new InetSocketAddress( connector.getLocalPort() );
@@ -399,6 +412,13 @@ public class GatewayServer {
       }
     }
     return addresses;
+  }
+
+  private ErrorHandler createErrorHandler() {
+    ErrorHandler errorHandler = new ErrorHandler();
+    errorHandler.setShowStacks( false );
+    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
+    return errorHandler;
   }
 
   private WebAppContext createWebAppContext( Topology topology, File warFile, String warPath ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
@@ -411,8 +431,8 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
     context.setAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config );
-    context.setTempDirectory( warFile );
-    context.setErrorHandler( errorHandler );
+    context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
+    context.setErrorHandler( createErrorHandler() );
     return context;
   }
 
@@ -481,10 +501,11 @@ public class GatewayServer {
     if( !appDir.exists() ) {
       throw new DeploymentException( "Application archive does not exist: " + appDir.getAbsolutePath() );
     }
-    File warFile = new File( topoDir, Urls.encode( "/" + Urls.trimLeadingAndTrailingSlash( url ) ) );
-    File webInfDir = new File( warFile, "WEB-INF" );
-    explodeWar( appDir, warFile );
+    File warDir = new File( topoDir, Urls.encode( "/" + Urls.trimLeadingAndTrailingSlash( url ) ) );
+    File webInfDir = new File( warDir, "WEB-INF" );
+    explodeWar( appDir, warDir );
     mergeWebXmlOverrides( webInfDir );
+    createArchiveTempDir( warDir );
   }
 
   private synchronized void internalActivateTopology( Topology topology, File topoDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
@@ -499,20 +520,20 @@ public class GatewayServer {
 
   private synchronized void internalActivateArchive( Topology topology, File warDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
     log.activatingTopologyArchive( topology.getName(), warDir.getName() );
-    WebAppContext newContext = createWebAppContext( topology, warDir, Urls.decode( warDir.getName() ) );
-    WebAppContext oldContext = deployments.get( newContext.getContextPath() );
-    deployments.put( newContext.getContextPath(), newContext );
-    if( oldContext != null ) {
-      contexts.removeHandler( oldContext );
-    }
-    contexts.addHandler( newContext );
-    if( contexts.isRunning() ) {
-      try {
-        newContext.start();
-      } catch( Exception e ) {
-        auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
-        log.failedToDeployTopology( topology.getName(), e );
+    try {
+      WebAppContext newContext = createWebAppContext( topology, warDir, Urls.decode( warDir.getName() ) );
+      WebAppContext oldContext = deployments.get( newContext.getContextPath() );
+      deployments.put( newContext.getContextPath(), newContext );
+      if( oldContext != null ) {
+        contexts.removeHandler( oldContext );
       }
+      contexts.addHandler( newContext );
+      if( contexts.isRunning() && !newContext.isRunning() ) {
+          newContext.start();
+      }
+    } catch( Exception e ) {
+      auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
+      log.failedToDeployTopology( topology.getName(), e );
     }
   }
 
@@ -630,6 +651,17 @@ public class GatewayServer {
       }
     }
 
+  }
+
+  private File createArchiveTempDir( File warDir ) {
+    File tempDir = FileUtils.getFile( warDir, "META-INF", "temp" );
+    if( !tempDir.exists() ) {
+      tempDir.mkdirs();
+      if( !tempDir.exists() ) {
+        throw new DeploymentException( "Failed to create archive temporary directory: " + tempDir.getAbsolutePath() );
+      }
+    }
+    return tempDir;
   }
 
   private static File calculateAbsoluteTopologiesDir( GatewayConfig config ) {

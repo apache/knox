@@ -75,11 +75,14 @@
             <artifactId>velocity</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
-            <artifactId>test-jetty-servlet</artifactId>
+            <artifactId>jetty-servlet</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
         <dependency>

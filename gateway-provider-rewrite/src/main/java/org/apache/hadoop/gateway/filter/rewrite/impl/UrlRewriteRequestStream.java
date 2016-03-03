@@ -17,12 +17,13 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
-import javax.servlet.ServletInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.hadoop.gateway.servlet.SynchronousServletInputStreamAdapter;
+
 //TODO: This needs to be coded much more efficiently!
-public class UrlRewriteRequestStream extends ServletInputStream {
+public class UrlRewriteRequestStream extends SynchronousServletInputStreamAdapter {
 
   private InputStream stream;
 

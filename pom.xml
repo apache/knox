@@ -100,7 +100,7 @@
         <gateway-group>org.apache.knox</gateway-group>
         <groovy-version>2.4.6</groovy-version>
         <hadoop-version>2.2.0</hadoop-version>
-        <jetty-version>8.1.18.v20150929</jetty-version>
+        <jetty-version>9.2.15.v20160210</jetty-version>
         <surefire-version>2.16</surefire-version>
         <failsafe-version>2.19.1</failsafe-version>
     </properties>
@@ -668,6 +668,11 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${jetty-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
                 <version>${jetty-version}</version>
             </dependency>
@@ -679,16 +684,9 @@
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.0</version>
             </dependency>
 
-            <!--
-            <dependency>
-                <groupId>org.eclipse.jetty.orbit</groupId>
-                <artifactId>javax.servlet</artifactId>
-                <version>3.0.0.v201112011016</version>
-            </dependency>
-            -->
             <!--
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
@@ -696,12 +694,6 @@
                 <version>${jetty-version}</version>
             </dependency>
             -->
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>test-jetty-servlet</artifactId>
-                <version>${jetty-version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>

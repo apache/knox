@@ -18,15 +18,15 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.GatewayResponse;
+import org.apache.hadoop.gateway.servlet.SynchronousServletOutputStreamAdapter;
 
-import javax.servlet.ServletOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 //TODO: This needs to be coded much more efficiently!
-public class UrlRewriteResponseStream extends ServletOutputStream {
+public class UrlRewriteResponseStream extends SynchronousServletOutputStreamAdapter {
 
   private static int DEFAULT_BUFFER_SIZE = 1024;
 

@@ -35,8 +35,8 @@ import org.apache.http.auth.BasicUserPrincipal;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.testing.HttpTester;
-import org.eclipse.jetty.testing.ServletTester;
+import org.eclipse.jetty.http.HttpTester;
+import org.eclipse.jetty.servlet.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.eclipse.jetty.util.Attributes;
 import org.eclipse.jetty.util.AttributesMap;
@@ -67,14 +67,15 @@ import java.util.ServiceLoader;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 public class FrontendFunctionProcessorTest {
 
   private ServletTester server;
-  private HttpTester request;
-  private HttpTester response;
+  private HttpTester.Request request;
+  private HttpTester.Response response;
   private ArrayQueue<MockInteraction> interactions;
   private MockInteraction interaction;
 
@@ -165,8 +166,8 @@ public class FrontendFunctionProcessorTest {
     server.start();
 
     interaction = new MockInteraction();
-    request = new HttpTester();
-    response = new HttpTester();
+    request = HttpTester.newRequest();
+    response = null;
   }
 
   @Test
@@ -191,19 +192,19 @@ public class FrontendFunctionProcessorTest {
     request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
-    response.parse( server.getResponses( request.generate() ) );
+    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
 
     assertThat( response.getStatus(), Is.is( 200 ) );
 
     String json = response.getContent();
 
     // Note: The Jetty ServletTester/HttpTester doesn't return very good values.
-    JsonAssert.with( json ).assertThat( "$.url", is( "http://localhost:0" ) );
+    JsonAssert.with( json ).assertThat( "$.url", anyOf( is( "http://localhost:0" ), is( "http://0.0.0.0:0" ) ) );
     JsonAssert.with( json ).assertThat( "$.scheme", is( "http" ) );
-    JsonAssert.with( json ).assertThat( "$.host", is( "localhost" ) );
+    JsonAssert.with( json ).assertThat( "$.host", anyOf( is( "localhost" ), is( "0.0.0.0" ) ) );
     JsonAssert.with( json ).assertThat( "$.port", is( "0" ) );
-    JsonAssert.with( json ).assertThat( "$.addr", is( "localhost:0" ) );
-    JsonAssert.with( json ).assertThat( "$.address", is( "localhost:0" ) );
+    JsonAssert.with( json ).assertThat( "$.addr", anyOf( is( "localhost:0" ), is( "0.0.0.0:0" ) ) );
+    JsonAssert.with( json ).assertThat( "$.address", anyOf( is( "localhost:0" ), is( "0.0.0.0:0" ) ) );
     JsonAssert.with( json ).assertThat( "$.path", is( "" ) );
   }
 
@@ -236,7 +237,7 @@ public class FrontendFunctionProcessorTest {
     request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
-    response.parse( server.getResponses( request.generate() ) );
+    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
 
     assertThat( response.getStatus(), Is.is( 200 ) );
 

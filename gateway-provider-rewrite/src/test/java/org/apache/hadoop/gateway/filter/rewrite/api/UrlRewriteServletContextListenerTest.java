@@ -21,8 +21,8 @@ import org.apache.hadoop.test.mock.MockInteraction;
 import org.apache.hadoop.test.mock.MockServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.testing.HttpTester;
-import org.eclipse.jetty.testing.ServletTester;
+import org.eclipse.jetty.http.HttpTester;
+import org.eclipse.jetty.servlet.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.junit.After;
 import org.junit.Before;
@@ -38,8 +38,8 @@ import static org.junit.Assert.fail;
 public class UrlRewriteServletContextListenerTest {
 
   private ServletTester server;
-  private HttpTester request;
-  private HttpTester response;
+  private HttpTester.Request request;
+  private HttpTester.Response response;
   private ArrayQueue<MockInteraction> interactions;
   private MockInteraction interaction;
 
@@ -73,8 +73,8 @@ public class UrlRewriteServletContextListenerTest {
     server.start();
 
     interaction = new MockInteraction();
-    request = new HttpTester();
-    response = new HttpTester();
+    request = HttpTester.newRequest();
+    response = null;
   }
 
   @After

@@ -17,12 +17,13 @@
  */
 package org.apache.hadoop.gateway.trace;
 
+import org.apache.hadoop.gateway.servlet.SynchronousServletInputStreamAdapter;
 import org.apache.log4j.Logger;
 
 import javax.servlet.ServletInputStream;
 import java.io.IOException;
 
-class TraceInput extends ServletInputStream {
+class TraceInput extends SynchronousServletInputStreamAdapter {
 
   private static Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
   private static Logger bodyLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_BODY_LOGGER );

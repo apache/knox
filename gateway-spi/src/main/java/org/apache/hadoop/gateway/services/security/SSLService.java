@@ -17,8 +17,13 @@
  */
 package org.apache.hadoop.gateway.services.security;
 
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+
 import org.apache.hadoop.gateway.services.Service;
 
 public interface SSLService extends Service {
-  public Object buildSSlConnector(String gatewayHomeDir);
+  Object buildSslContextFactory(String gatewayHomeDir) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException;
 }

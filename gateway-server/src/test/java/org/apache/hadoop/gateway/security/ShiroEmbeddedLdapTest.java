@@ -104,7 +104,7 @@ public class ShiroEmbeddedLdapTest {
 
   @Test
   public void testShiro() throws Exception {
-    String url = "http://localhost:" + jetty.getConnectors()[0].getPort() + "/";
+    String url = "http://localhost:" + jetty.getURI().getPort() + "/";
 
     given()
         .expect().statusCode( 401 )

@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.apache.hadoop.gateway.servlet.SynchronousServletInputStreamAdapter;
 import org.apache.hadoop.gateway.util.HttpUtils;
 
 import javax.servlet.ServletInputStream;
@@ -221,7 +222,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return sb.toString();
   }
 
-  private class ServletInputStreamWrapper extends ServletInputStream {
+  private class ServletInputStreamWrapper extends SynchronousServletInputStreamAdapter {
 
     private InputStream stream;
 

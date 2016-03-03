@@ -90,7 +90,7 @@ public class MockServer {
   }
 
   public int getPort() {
-    return jetty.getConnectors()[0].getLocalPort();
+    return jetty.getURI().getPort();
   }
 
   public MockRequestMatcher expect() {

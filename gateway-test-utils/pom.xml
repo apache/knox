@@ -50,6 +50,11 @@
     <dependencies>
 
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-util-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <scope>provided</scope>
@@ -91,14 +96,6 @@
             <artifactId>jetty-servlet</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.servlet</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>

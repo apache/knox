@@ -64,6 +64,10 @@ public class NoOpLogger implements Logger {
   }
 
   @Override
+  public void debug( String msg, long arg ) {
+  }
+
+  @Override
   public void debug( Throwable thrown ) {
   }
 

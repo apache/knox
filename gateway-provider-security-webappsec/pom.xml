@@ -50,13 +50,6 @@
             <artifactId>cors-filter</artifactId>
         </dependency>
 
-        <!--
-        <dependency>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.servlet</artifactId>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

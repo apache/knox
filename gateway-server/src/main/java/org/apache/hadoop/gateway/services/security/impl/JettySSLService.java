@@ -17,7 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
@@ -37,8 +44,6 @@ import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.services.security.SSLService;
 import org.apache.hadoop.gateway.util.X500PrincipalParser;
-import org.eclipse.jetty.server.ssl.SslConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class JettySSLService implements SSLService {
@@ -160,8 +165,8 @@ public class JettySSLService implements SSLService {
       throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of X509Certificate. Something is wrong with the gateway keystore.");
     }
   }
-  
-  public Object buildSSlConnector( String keystoreFileName ) {
+
+  public Object buildSslContextFactory( String keystoreFileName ) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
     SslContextFactory sslContextFactory = new SslContextFactory( true );
     sslContextFactory.setCertAlias( "gateway-identity" );
     sslContextFactory.setKeyStoreType(keystoreType);
@@ -183,7 +188,7 @@ public class JettySSLService implements SSLService {
     String truststorePassword = null;
     if (clientAuthNeeded) {
       if (truststorePath != null) {
-        sslContextFactory.setTrustStore(truststorePath);
+        sslContextFactory.setTrustStore(loadKeyStore(keystoreFileName, keystoreType, master));
         char[] truststorePwd = null;
         try {
           truststorePwd = as.getPasswordFromAliasForGateway(GATEWAY_TRUSTSTORE_PASSWORD);
@@ -202,7 +207,7 @@ public class JettySSLService implements SSLService {
       else {
         // when clientAuthIsNeeded but no truststore provided
         // default to the server's keystore and details
-        sslContextFactory.setTrustStore(keystoreFileName);
+        sslContextFactory.setTrustStore(loadKeyStore(keystoreFileName, keystoreType, master));
         sslContextFactory.setTrustStorePassword(new String(master));
         sslContextFactory.setTrustStoreType(keystoreType);
       }
@@ -218,9 +223,7 @@ public class JettySSLService implements SSLService {
     if (sslExcludeProtocols != null && !sslExcludeProtocols.isEmpty()) {
       sslContextFactory.setExcludeProtocols( sslExcludeProtocols.toArray(new String[sslExcludeProtocols.size()]) );
     }
-    SslConnector sslConnector = new SslSelectChannelConnector( sslContextFactory );
-
-    return sslConnector;
+    return sslContextFactory;
   }
   
   @Override
@@ -234,4 +237,12 @@ public class JettySSLService implements SSLService {
     // TODO Auto-generated method stub
     
   }
+
+  private static KeyStore loadKeyStore( String fileName, String storeType, char[] storePass ) throws CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException {
+    KeyStore keystore = KeyStore.getInstance(storeType);
+    InputStream is = new FileInputStream(fileName);
+    keystore.load( is, storePass );
+    return keystore;
+  }
+
 }

@@ -22,6 +22,7 @@ import org.apache.hadoop.gateway.ha.provider.HaProvider;
 import org.apache.hadoop.gateway.ha.provider.HaServletContextListener;
 import org.apache.hadoop.gateway.ha.provider.impl.DefaultHaProvider;
 import org.apache.hadoop.gateway.ha.provider.impl.HaDescriptorFactory;
+import org.apache.hadoop.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -33,7 +34,6 @@ import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -74,10 +74,10 @@ public class WebHdfsHaDispatchTest {
       EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
 
       HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<ServletOutputStream>() {
+      EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
          @Override
-         public ServletOutputStream answer() throws Throwable {
-            return new ServletOutputStream() {
+         public SynchronousServletOutputStreamAdapter answer() throws Throwable {
+            return new SynchronousServletOutputStreamAdapter() {
                @Override
                public void write( int b ) throws IOException {
                   throw new IOException( "unreachable-host" );

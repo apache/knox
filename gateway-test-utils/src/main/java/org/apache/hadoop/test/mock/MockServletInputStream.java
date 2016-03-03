@@ -17,11 +17,12 @@
  */
 package org.apache.hadoop.test.mock;
 
-import javax.servlet.ServletInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MockServletInputStream extends ServletInputStream {
+import org.apache.hadoop.gateway.servlet.SynchronousServletInputStreamAdapter;
+
+public class MockServletInputStream extends SynchronousServletInputStreamAdapter {
 
   private InputStream stream;
 
