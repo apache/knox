@@ -40,7 +40,7 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>package</id>
             <build>
                 <plugins>
                     <plugin>
