@@ -81,7 +81,6 @@ public class GatewayMultiFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    RestAssured.config = newConfig().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse());
     //appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();
