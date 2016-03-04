@@ -50,11 +50,6 @@
     <dependencies>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-util-common</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <scope>provided</scope>
