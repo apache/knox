@@ -211,14 +211,11 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public ServletInputStream getInputStream() throws IOException {
-    ServletInputStream input = super.getInputStream();
-    if( getContentLength() != 0 ) {
-      MimeType mimeType = getMimeType();
-      UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
-      InputStream stream = UrlRewriteStreamFilterFactory.create( mimeType, null, input, rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
-      input = new UrlRewriteRequestStream( stream );
-    }
-    return input;
+    MimeType mimeType = getMimeType();
+    UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
+    InputStream stream = UrlRewriteStreamFilterFactory.create(
+        mimeType, null, super.getInputStream(), rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
+    return new UrlRewriteRequestStream( stream );
   }
 
   @Override
@@ -229,11 +226,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   @Override
   public int getContentLength() {
     // The rewrite might change the content length so return the default of -1 to indicate the length is unknown.
-    int contentLength = super.getContentLength();
-    if( contentLength > 0 ) {
-      contentLength = -1;
-    }
-    return contentLength;
+    return -1;
   }
 
   private UrlRewriteFilterContentDescriptor getRewriteFilterConfig( String filterName, MimeType mimeType ) {
