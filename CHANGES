@@ -10,6 +10,7 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-678] - Malformed UTF-8 characters in JSON Response
     * [KNOX-680] - Update Knox's HttpClient dependency to latest version
 ** Bug
+    * [KNOX-681] - A PUT with Content-Type application/xml but no body causes NullPointerException
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.8.0

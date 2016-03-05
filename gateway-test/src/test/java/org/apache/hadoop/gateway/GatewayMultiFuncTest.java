@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.jayway.restassured.RestAssured;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
@@ -37,7 +37,20 @@ import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
@@ -49,14 +62,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
-import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.xmlmatchers.XmlMatchers.hasXPath;
+import static org.xmlmatchers.transform.XmlConverters.the;
 
 @Category(ReleaseTest.class)
 public class GatewayMultiFuncTest {
@@ -225,4 +239,86 @@ public class GatewayMultiFuncTest {
     LOG_EXIT();
   }
 
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testPostWithContentTypeKnox681() throws Exception {
+    LOG_ENTER();
+
+    MockServer mock = new MockServer( "REPEAT", true );
+
+    params.put( "MOCK_SERVER_PORT", mock.getPort() );
+
+    String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
+    File topoFile = new File( config.getGatewayTopologyDir(), "topology.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+
+    topos.reloadTopologies();
+
+    mock
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/repeat-context/" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( "{\"name\":\"value\"}".getBytes() )
+        .contentType( "application/json; charset=UTF-8" )
+        .header( "Location", gatewayUrl + "/topology/repeat" );
+
+    String uname = "guest";
+    String pword = uname + "-password";
+
+    HttpHost targetHost = new HttpHost( "localhost", gatewayPort, "http" );
+    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    credsProvider.setCredentials(
+        new AuthScope( targetHost.getHostName(), targetHost.getPort() ),
+        new UsernamePasswordCredentials( uname, pword ) );
+
+    AuthCache authCache = new BasicAuthCache();
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+
+    HttpClientContext context = HttpClientContext.create();
+    context.setCredentialsProvider( credsProvider );
+    context.setAuthCache( authCache );
+
+    CloseableHttpClient client = HttpClients.createDefault();
+    HttpPut request = new HttpPut( gatewayUrl + "/topology/repeat" );
+    request.addHeader( "X-XSRF-Header", "jksdhfkhdsf" );
+    request.addHeader( "Content-Type", "application/json" );
+    CloseableHttpResponse response = client.execute( request, context );
+    assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
+    assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/topology/repeat" ) );
+    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/json; charset=UTF-8") );
+    String body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    assertThat( body, is( "{\"name\":\"value\"}" ) );
+    response.close();
+    client.close();
+
+    mock
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/repeat-context/" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( "<test-xml/>".getBytes() )
+        .contentType( "application/xml; charset=UTF-8" )
+        .header( "Location", gatewayUrl + "/topology/repeat" );
+
+    client = HttpClients.createDefault();
+    request = new HttpPut( gatewayUrl + "/topology/repeat" );
+    request.addHeader( "X-XSRF-Header", "jksdhfkhdsf" );
+    request.addHeader( "Content-Type", "application/xml" );
+    response = client.execute( request, context );
+    assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
+    assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/topology/repeat" ) );
+    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/xml; charset=UTF-8") );
+    body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    assertThat( the(body), hasXPath( "/test-xml" ) );
+    response.close();
+    client.close();
+
+    LOG_EXIT();
+  }
+
 }
+
+

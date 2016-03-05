@@ -120,10 +120,12 @@ public abstract class XmlFilterReader extends Reader {
         try {
           XMLEvent event = parser.nextEvent();
           processEvent( event );
+        } catch( IOException e ) {
+          throw e;
         } catch( RuntimeException e ) {
           throw e;
-        } catch( Exception e ) {
-          throw e instanceof IOException ? (IOException)e : new IOException( e );
+        } catch ( Exception e ) {
+          throw new RuntimeException( e );
         }
         available = buffer.length() - offset;
       } else {

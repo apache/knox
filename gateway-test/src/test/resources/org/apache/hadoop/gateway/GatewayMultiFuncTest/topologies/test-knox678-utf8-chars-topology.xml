@@ -49,6 +49,6 @@
     </gateway>
     <service>
         <role>REPEAT</role>
-        <url>http://localhost:${MOCK_SERVER_PORT}/repeat-context</url>
+        <url>http://localhost:$MOCK_SERVER_PORT/repeat-context</url>
     </service>
 </topology>
