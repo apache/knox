@@ -48,9 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -67,7 +65,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
   private Set<String> outboundResponseExcludeHeaders;
-  private Map<String,String> outboundResponseCharsetDefaults;
 
   private int replayBufferSize = -1;
 
@@ -76,13 +73,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     outboundResponseExcludeHeaders = new HashSet<>();
     outboundResponseExcludeHeaders.add(SET_COOKIE);
     outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
-
-    String utf8 = "UTF-8";
-    outboundResponseCharsetDefaults = new HashMap<>();
-    outboundResponseCharsetDefaults.put( "text/xml", utf8 );
-    outboundResponseCharsetDefaults.put( "text/json", utf8 );
-    outboundResponseCharsetDefaults.put( "application/xml", utf8 );
-    outboundResponseCharsetDefaults.put( "application/json", utf8 );
   }
 
   @Override
@@ -160,8 +150,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
 
     HttpEntity entity = inboundResponse.getEntity();
-    if( entity != null ) {
-      outboundResponse.setContentType( getResponseContentType( entity ) );
+    if ( entity != null ) {
+      Header contentType = entity.getContentType();
+      if ( contentType != null ) {
+        outboundResponse.setContentType(contentType.getValue());
+      }
       //KM[ If this is set here it ends up setting the content length to the content returned from the server.
       // This length might not match if the the content is rewritten.
       //      long contentLength = entity.getContentLength();
@@ -176,23 +169,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
         closeInboundResponse( inboundResponse, stream );
       }
     }
-  }
-
-  private String getResponseContentType( HttpEntity entity ) {
-    String name = null;
-    if( entity != null ) {
-      ContentType type = ContentType.get( entity );
-      if( type != null ) {
-        if( type.getCharset() == null ) {
-          String charset = getOutboundResponseCharacterEncoding( type.getMimeType() );
-          if( charset != null ) {
-            type = type.withCharset( charset );
-          }
-        }
-        name = type.toString();
-      }
-    }
-    return name;
   }
 
   protected void closeInboundResponse( HttpResponse response, InputStream stream ) throws IOException {
@@ -296,13 +272,4 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   public Set<String> getOutboundResponseExcludeHeaders() {
     return outboundResponseExcludeHeaders;
   }
-
-  protected String getOutboundResponseCharacterEncoding( String mimeType ) {
-    String charset = null;
-    if( mimeType != null ) {
-      charset = outboundResponseCharsetDefaults.get( mimeType.trim().toLowerCase() );
-    }
-    return charset;
-  }
-
 }

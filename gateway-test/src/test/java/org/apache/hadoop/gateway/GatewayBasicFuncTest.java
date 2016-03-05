@@ -2274,7 +2274,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test//( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = MEDIUM_TIMEOUT )
   public void testYarnRmApplication() throws Exception {
     LOG_ENTER();
     getYarnRmApp( ContentType.JSON, true );
