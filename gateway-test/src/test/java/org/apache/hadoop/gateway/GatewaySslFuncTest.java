@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -32,10 +33,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.UUID;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.transform.stream.StreamSource;
@@ -60,6 +62,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -233,11 +236,14 @@ public class GatewaySslFuncTest {
     context.setAuthCache( authCache );
 
     CloseableHttpClient client = HttpClients.custom()
+        .setHostnameVerifier( new TrustAllHosts() )
+        .setSslcontext( createInsecureSslContext() )
         .setSSLSocketFactory(
             new SSLConnectionSocketFactory(
                 createInsecureSslContext(),
                 new String[]{"TLSv1.2"},
                 new String[]{"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"},
+
                 new TrustAllHosts() ) )
         .build();
     HttpGet request = new HttpGet( serviceUrl );
@@ -255,6 +261,8 @@ public class GatewaySslFuncTest {
 
     try {
       client = HttpClients.custom()
+          .setHostnameVerifier( new TrustAllHosts() )
+          .setSslcontext( createInsecureSslContext() )
           .setSSLSocketFactory(
               new SSLConnectionSocketFactory(
                   createInsecureSslContext(),
@@ -270,6 +278,8 @@ public class GatewaySslFuncTest {
     }
 
     client = HttpClients.custom()
+        .setHostnameVerifier( new TrustAllHosts() )
+        .setSslcontext( createInsecureSslContext() )
         .setSSLSocketFactory(
             new SSLConnectionSocketFactory(
                 createInsecureSslContext(),
@@ -285,11 +295,26 @@ public class GatewaySslFuncTest {
     LOG_EXIT();
   }
 
-  public static class TrustAllHosts implements HostnameVerifier {
+  public static class TrustAllHosts implements X509HostnameVerifier {
+    @Override
+    public void verify( String host, SSLSocket ssl ) throws IOException {
+      // Trust all hostnames.
+    }
+
+    @Override
+    public void verify( String host, X509Certificate cert ) throws SSLException {
+      // Trust all hostnames.
+    }
+
+    @Override
+    public void verify( String host, String[] cns, String[] subjectAlts ) throws SSLException {
+      // Trust all hostnames.
+    }
+
     @Override
     public boolean verify( String host, SSLSession sslSession ) {
       // Trust all hostnames.
-      return true;
+      return false;
     }
   }
 
