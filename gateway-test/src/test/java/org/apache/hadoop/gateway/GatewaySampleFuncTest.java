@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -57,10 +58,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class GatewaySampleFuncTest {
-
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 20 * 1000L;
-  private static final long LONG_TIMEOUT = 60 * 1000L;
 
   private static Class RESOURCE_BASE_CLASS = GatewaySampleFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
@@ -200,7 +197,7 @@ public class GatewaySampleFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testTestService() throws ClassNotFoundException {
     LOG_ENTER();
     String username = "guest";

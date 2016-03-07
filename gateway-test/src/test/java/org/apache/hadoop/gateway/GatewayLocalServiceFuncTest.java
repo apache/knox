@@ -25,6 +25,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
@@ -55,9 +56,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
-
-  private static final long SHORT_TIMEOUT = 2000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewayLocalServiceFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayFuncTestDriver.class );
@@ -173,7 +171,7 @@ public class GatewayLocalServiceFuncTest {
     return xml;
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testJerseyService() throws ClassNotFoundException {
     LOG_ENTER();
     assertThat( ClassLoader.getSystemClassLoader().loadClass( "org.glassfish.jersey.servlet.ServletContainer" ), notNullValue() );

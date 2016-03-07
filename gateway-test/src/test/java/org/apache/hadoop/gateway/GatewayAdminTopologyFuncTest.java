@@ -45,6 +45,7 @@ import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -68,10 +69,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
-
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
 
   private static Class RESOURCE_BASE_CLASS = GatewayAdminTopologyFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
@@ -266,7 +263,7 @@ public class GatewayAdminTopologyFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testTopologyCollection() throws ClassNotFoundException {
     LOG_ENTER();
 
@@ -323,7 +320,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testTopologyObject() throws ClassNotFoundException {
     LOG_ENTER();
 
@@ -385,7 +382,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPositiveAuthorization() throws ClassNotFoundException{
     LOG_ENTER();
 
@@ -413,7 +410,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testNegativeAuthorization() throws ClassNotFoundException{
     LOG_ENTER();
 
@@ -494,7 +491,7 @@ public class GatewayAdminTopologyFuncTest {
     return topology;
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeployTopology() throws Exception {
     LOG_ENTER();
 
@@ -548,7 +545,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeleteTopology() throws ClassNotFoundException {
     LOG_ENTER();
 
@@ -591,7 +588,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutTopology() throws ClassNotFoundException {
     LOG_ENTER() ;
 
@@ -658,7 +655,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testXForwardedHeaders() {
     LOG_ENTER();
 
@@ -774,7 +771,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testGatewayPathChange() throws Exception {
     LOG_ENTER();
     String username = "admin";

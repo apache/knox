@@ -69,9 +69,6 @@ import static org.junit.Assert.fail;
 @Category(ReleaseTest.class)
 public class GatewayLdapPosixGroupFuncTest {
 
-  private static final long SHORT_TIMEOUT = 2000L;
-  private static final long MEDIUM_TIMEOUT = 5 * 1000L;
-
   private static Class RESOURCE_BASE_CLASS = GatewayLdapPosixGroupFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayLdapPosixGroupFuncTest.class );
 
@@ -266,7 +263,7 @@ public class GatewayLdapPosixGroupFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testGroupMember() throws ClassNotFoundException, Exception {
     LOG_ENTER();
     String username = "sam";
@@ -283,7 +280,7 @@ public class GatewayLdapPosixGroupFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testNonGroupMember() throws ClassNotFoundException {
     LOG_ENTER();
     String username = "guest";

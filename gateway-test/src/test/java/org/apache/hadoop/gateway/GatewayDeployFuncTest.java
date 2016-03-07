@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
@@ -64,9 +65,6 @@ import static org.junit.Assert.assertThat;
 
 @Category(ReleaseTest.class)
 public class GatewayDeployFuncTest {
-
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long LONG_TIMEOUT = 30 * 1000L;
 
   private static Class RESOURCE_BASE_CLASS = GatewayDeployFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayDeployFuncTest.class );
@@ -206,7 +204,7 @@ public class GatewayDeployFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = LONG_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     LOG_ENTER();
     long sleep = 200;

@@ -70,9 +70,6 @@ import com.mycila.xmltool.XMLTag;
  */
 public class Knox242FuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
-
   private static Class RESOURCE_BASE_CLASS = Knox242FuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( Knox242FuncTest.class );
 
@@ -282,7 +279,7 @@ public class Knox242FuncTest {
     System.in.read();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testGroupMember() throws ClassNotFoundException, Exception {
     LOG_ENTER();
     String username = "joe";
@@ -300,7 +297,7 @@ public class Knox242FuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testNonGroupMember() throws ClassNotFoundException {
     LOG_ENTER();
     String username = "guest";

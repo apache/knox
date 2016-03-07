@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
@@ -38,9 +39,6 @@ import static org.hamcrest.CoreMatchers.is;
 
 @Category(ReleaseTest.class)
 public class WebHdfsHaFuncTest {
-
-   private static final long SHORT_TIMEOUT = 1000L;
-   private static final long MEDIUM_TIMEOUT = 10 * SHORT_TIMEOUT;
 
    // Specifies if the test requests should go through the gateway or directly to the services.
    // This is frequently used to verify the behavior of the test both with and without the gateway.
@@ -156,7 +154,7 @@ public class WebHdfsHaFuncTest {
       return xml;
    }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testBasicListOperation() throws IOException {
       LOG_ENTER();
       String username = "hdfs";
@@ -183,7 +181,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    @Ignore( "KNOX-446" )
    public void testFailoverListOperation() throws Exception {
       LOG_ENTER();
@@ -214,7 +212,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testFailoverLimit() throws Exception {
       LOG_ENTER();
       String username = "hdfs";
@@ -236,7 +234,7 @@ public class WebHdfsHaFuncTest {
    }
 
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    @Ignore( "KNOX-446" )
    public void testServerInStandby() throws IOException {
       LOG_ENTER();
@@ -276,7 +274,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testServerInStandbyFailoverLimit() throws IOException {
       LOG_ENTER();
       String username = "hdfs";
@@ -331,7 +329,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testServerInSafeMode() throws IOException {
       LOG_ENTER();
       String username = "hdfs";
@@ -371,7 +369,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testServerInSafeModeRetriableException() throws IOException {
       LOG_ENTER();
       String username = "hdfs";
@@ -408,7 +406,7 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = MEDIUM_TIMEOUT )
+   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
    public void testServerInSafeModeRetryLimit() throws IOException {
       LOG_ENTER();
       String username = "hdfs";

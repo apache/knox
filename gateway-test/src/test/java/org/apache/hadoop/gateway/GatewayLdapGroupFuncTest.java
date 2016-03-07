@@ -69,9 +69,6 @@ import com.mycila.xmltool.XMLTag;
  */
 public class GatewayLdapGroupFuncTest {
 
-  private static final long SHORT_TIMEOUT = 2000L;
-  private static final long MEDIUM_TIMEOUT = 5 * 1000L;
-
   private static Class RESOURCE_BASE_CLASS = GatewayLdapGroupFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayLdapGroupFuncTest.class );
 
@@ -288,7 +285,7 @@ public class GatewayLdapGroupFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testGroupMember() throws ClassNotFoundException, Exception {
     LOG_ENTER();
     String username = "sam";
@@ -306,7 +303,7 @@ public class GatewayLdapGroupFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testNonGroupMember() throws ClassNotFoundException {
     LOG_ENTER();
     String username = "guest";
