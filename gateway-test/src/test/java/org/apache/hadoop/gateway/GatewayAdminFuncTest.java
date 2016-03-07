@@ -52,10 +52,6 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayAdminFuncTest {
 
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 5 * MEDIUM_TIMEOUT;
-
   private static Class RESOURCE_BASE_CLASS = GatewayAdminFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
 
@@ -193,7 +189,7 @@ public class GatewayAdminFuncTest {
     System.in.read();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testAdminService() throws ClassNotFoundException {
     TestUtils.LOG_ENTER();
 
