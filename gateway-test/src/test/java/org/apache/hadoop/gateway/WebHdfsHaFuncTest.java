@@ -56,13 +56,6 @@ public class WebHdfsHaFuncTest {
 
    private static MockServer standbyServer;
 
-   private static int findFreePort() throws IOException {
-      ServerSocket socket = new ServerSocket(0);
-      int port = socket.getLocalPort();
-      socket.close();
-      return port;
-   }
-
    /**
     * Creates a deployment of a gateway instance that all test methods will share.  This method also creates a
     * registry of sorts for all of the services that will be used by the test methods.
@@ -83,7 +76,7 @@ public class WebHdfsHaFuncTest {
       GatewayTestConfig config = new GatewayTestConfig();
       config.setGatewayPath("gateway");
       driver.setResourceBase(WebHdfsHaFuncTest.class);
-      driver.setupLdap(findFreePort());
+      driver.setupLdap(0);
       driver.setupService("WEBHDFS", "http://vm.local:50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);
       driver.setupGateway(config, "cluster", createTopology(), USE_GATEWAY);
       LOG_EXIT();

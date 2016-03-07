@@ -17,6 +17,12 @@
  */
 package org.apache.hadoop.gateway;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.Properties;
+
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.hadoop.fs.Path;
@@ -27,6 +33,7 @@ import org.apache.hadoop.minikdc.MiniKdc;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.ssl.KeyStoreTestUtil;
+import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -46,14 +53,23 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.security.Principal;
-import java.util.Properties;
-
-import static org.apache.hadoop.hdfs.DFSConfigKeys.*;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_BLOCK_ACCESS_TOKEN_ENABLE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_HTTPS_KEYSTORE_RESOURCE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATA_ENCRYPTION_ALGORITHM_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_HTTP_POLICY_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KERBEROS_INTERNAL_SPNEGO_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_SERVER_HTTPS_KEYSTORE_RESOURCE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_WEB_AUTHENTICATION_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.IPC_CLIENT_CONNECT_MAX_RETRIES_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -72,7 +88,7 @@ public class SecureClusterTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-    nameNodeHttpPort = findFreePort();
+    nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(SecureClusterTest.class));
     System.setProperty(MiniDFSCluster.PROP_TEST_BUILD_DATA, baseDir.getAbsolutePath());
@@ -151,7 +167,7 @@ public class SecureClusterTest {
     config.setKerberosConfig(kdc.getKrb5conf().getAbsolutePath());
     config.setKerberosLoginConfig(jaasConf.getAbsolutePath());
     driver.setResourceBase(SecureClusterTest.class);
-    driver.setupLdap(findFreePort());
+    driver.setupLdap(0);
     driver.setupGateway(config, "cluster", createTopology(), true);
   }
 
@@ -279,13 +295,6 @@ public class SecureClusterTest {
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
   }
 
 }

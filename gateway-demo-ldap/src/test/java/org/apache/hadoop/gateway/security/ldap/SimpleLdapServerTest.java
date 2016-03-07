@@ -38,14 +38,16 @@ public class SimpleLdapServerTest {
 
   private static int port;
   private static File ldifFile;
+  private static TcpTransport ldapTransport;
   private static SimpleLdapDirectoryServer ldap;
 
   @BeforeClass
   public static void setup() throws Exception {
-    port = findFreePort();
     ldifFile = new File( ClassLoader.getSystemResource( "users.ldif" ).toURI() );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", ldifFile, new Transport[]{ new TcpTransport( port ) } );
+    ldapTransport = new TcpTransport( 0 );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", ldifFile, ldapTransport );
     ldap.start();
+    port = ldapTransport.getAcceptor().getLocalAddress().getPort();
   }
 
   @AfterClass
@@ -53,13 +55,6 @@ public class SimpleLdapServerTest {
     if( ldap != null ) {
       ldap.stop( true );
     }
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
   }
 
   @Test

@@ -109,7 +109,7 @@ public class GatewayFuncTestDriver {
     ldapTransport = new TcpTransport( port );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    log.info( "LDAP port = " + port );
+    log.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
     return port;
   }
 
@@ -256,7 +256,7 @@ public class GatewayFuncTestDriver {
   }
 
   public String getLdapUrl() {
-    return "ldap://localhost:" + ldapTransport.getPort();
+    return "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort();
   }
 
   private static class Service {

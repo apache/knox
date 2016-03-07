@@ -106,11 +106,10 @@ public class GatewayMultiFuncTest {
 
   public static void setupLdap() throws Exception {
     URL usersUrl = TestUtils.getResourceUrl( DAT, "users.ldif" );
-    ldapPort = TestUtils.findFreePort();
-    ldapTransport = new TcpTransport( ldapPort );
+    ldapTransport = new TcpTransport( 0 );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getPort() );
+    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -168,7 +167,7 @@ public class GatewayMultiFuncTest {
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getPort() );
+    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
     params.put( "WEBHDFS_URL", "http://localhost:" + mockWebHdfs.getPort() );
   }
 

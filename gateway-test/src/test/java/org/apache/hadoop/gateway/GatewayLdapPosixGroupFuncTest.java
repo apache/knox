@@ -107,12 +107,11 @@ public class GatewayLdapPosixGroupFuncTest {
 
   public static int setupLdap() throws Exception {
     URL usersUrl = getResourceUrl( "users.ldif" );
-    int port = findFreePort();
-    ldapTransport = new TcpTransport( port );
+    ldapTransport = new TcpTransport( 0 );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getPort() );
-    return port;
+    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    return ldapTransport.getAcceptor().getLocalAddress().getPort();
   }
 
   public static void setupGateway(int ldapPort) throws Exception {
@@ -241,13 +240,6 @@ public class GatewayLdapPosixGroupFuncTest {
         .gotoRoot();
 
     return xml;
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
   }
 
   public static InputStream getResourceStream( String resource ) throws IOException {

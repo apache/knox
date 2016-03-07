@@ -126,13 +126,6 @@ public class GatewayBasicFuncTest {
 //  private static final boolean USE_MOCK_SERVICES = false;
 //  private static final boolean CLEANUP_TEST = false;
 
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
-  }
-
   /**
    * Creates a deployment of a gateway instance that all test methods will share.  This method also creates a
    * registry of sorts for all of the services that will be used by the test methods.
@@ -148,7 +141,7 @@ public class GatewayBasicFuncTest {
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase(GatewayBasicFuncTest.class);
-    driver.setupLdap(findFreePort());
+    driver.setupLdap(0);
     driver.setupService("WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);
     driver.setupService( "DATANODE", "http://" + TEST_HOST + ":50075/webhdfs", "/cluster/webhdfs/data", USE_MOCK_SERVICES );
     driver.setupService( "WEBHCAT", "http://" + TEST_HOST + ":50111/templeton", "/cluster/templeton", USE_MOCK_SERVICES );

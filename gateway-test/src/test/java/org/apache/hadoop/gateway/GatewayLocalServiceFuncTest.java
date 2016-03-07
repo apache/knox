@@ -92,11 +92,10 @@ public class GatewayLocalServiceFuncTest {
 
   public static void setupLdap() throws Exception {
     URL usersUrl = getResourceUrl( "users.ldif" );
-    int port = findFreePort();
-    ldapTransport = new TcpTransport( port );
+    ldapTransport = new TcpTransport( 0 );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
     ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getPort() );
+    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -154,7 +153,7 @@ public class GatewayLocalServiceFuncTest {
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getPort() ).gotoParent()
+        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
         .addTag( "value" ).addText( "simple" ).gotoParent()
@@ -195,13 +194,6 @@ public class GatewayLocalServiceFuncTest {
         .body( is( "test-jersey-resource-response" ) )
         .when().get( serviceUrl );
     LOG_EXIT();
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
   }
 
   public static InputStream getResourceStream( String resource ) throws IOException {
