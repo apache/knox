@@ -1,0 +1,250 @@
+{
+  "href" : "http://c6401.ambari.apache.org:8080/api/v1/clusters/test/hosts/c6401.ambari.apache.org/host_components/HISTORYSERVER",
+  "HostRoles" : {
+    "cluster_name" : "test",
+    "component_name" : "HISTORYSERVER",
+    "desired_stack_id" : "HDP-2.3",
+    "desired_state" : "STARTED",
+    "hdp_version" : "HDP-2.3.4.0-3485",
+    "host_name" : "c6401.ambari.apache.org",
+    "maintenance_state" : "OFF",
+    "service_name" : "MAPREDUCE2",
+    "stack_id" : "HDP-2.3",
+    "stale_configs" : false,
+    "state" : "UNKNOWN",
+    "upgrade_state" : "NONE",
+    "actual_configs" : {
+      "admin-properties" : {
+        "default" : "version1454604858144"
+      },
+      "capacity-scheduler" : {
+        "default" : "version1455118418013"
+      },
+      "cluster-env" : {
+        "default" : "version1455118418522"
+      },
+      "core-site" : {
+        "default" : "version1455118418648"
+      },
+      "gateway-log4j" : {
+        "default" : "version1"
+      },
+      "gateway-site" : {
+        "default" : "version1455118418151"
+      },
+      "hadoop-env" : {
+        "default" : "version1453930080957"
+      },
+      "hadoop-policy" : {
+        "default" : "version1"
+      },
+      "hbase-env" : {
+        "default" : "version1454359592877"
+      },
+      "hbase-log4j" : {
+        "default" : "version1454359591233"
+      },
+      "hbase-policy" : {
+        "default" : "version1454359591233"
+      },
+      "hbase-site" : {
+        "default" : "version1455118418258"
+      },
+      "hcat-env" : {
+        "default" : "version1"
+      },
+      "hdfs-log4j" : {
+        "default" : "version1"
+      },
+      "hdfs-site" : {
+        "default" : "version1455118417916"
+      },
+      "hive-env" : {
+        "default" : "version1"
+      },
+      "hive-exec-log4j" : {
+        "default" : "version1"
+      },
+      "hive-log4j" : {
+        "default" : "version1"
+      },
+      "hive-site" : {
+        "default" : "version1455118418323"
+      },
+      "hiveserver2-site" : {
+        "default" : "version1453995823280"
+      },
+      "kerberos-env" : {
+        "default" : "version1453929906086"
+      },
+      "knox-env" : {
+        "default" : "version1453930080890"
+      },
+      "krb5-conf" : {
+        "default" : "version1453929906086"
+      },
+      "ldap-log4j" : {
+        "default" : "version1"
+      },
+      "mapred-env" : {
+        "default" : "version1"
+      },
+      "mapred-site" : {
+        "default" : "version1453930080915"
+      },
+      "oozie-env" : {
+        "default" : "version1454359591233"
+      },
+      "oozie-log4j" : {
+        "default" : "version1454359591233"
+      },
+      "oozie-site" : {
+        "default" : "version1455118418401"
+      },
+      "pig-env" : {
+        "default" : "version1"
+      },
+      "pig-log4j" : {
+        "default" : "version1"
+      },
+      "pig-properties" : {
+        "default" : "version1"
+      },
+      "ranger-admin-site" : {
+        "default" : "version1454619167059"
+      },
+      "ranger-env" : {
+        "default" : "version1454606224810"
+      },
+      "ranger-hbase-audit" : {
+        "default" : "version1454604858137"
+      },
+      "ranger-hbase-plugin-properties" : {
+        "default" : "version1454604858136"
+      },
+      "ranger-hbase-policymgr-ssl" : {
+        "default" : "version1454604858137"
+      },
+      "ranger-hbase-security" : {
+        "default" : "version1454604858136"
+      },
+      "ranger-hdfs-audit" : {
+        "default" : "version1454604858129"
+      },
+      "ranger-hdfs-plugin-properties" : {
+        "default" : "version1454606224830"
+      },
+      "ranger-hdfs-policymgr-ssl" : {
+        "default" : "version1454604858132"
+      },
+      "ranger-hdfs-security" : {
+        "default" : "version1454604858129"
+      },
+      "ranger-hive-audit" : {
+        "default" : "version1454604858135"
+      },
+      "ranger-hive-plugin-properties" : {
+        "default" : "version1454604858135"
+      },
+      "ranger-hive-policymgr-ssl" : {
+        "default" : "version1454604858136"
+      },
+      "ranger-hive-security" : {
+        "default" : "version1454604858135"
+      },
+      "ranger-knox-audit" : {
+        "default" : "version1454604858138"
+      },
+      "ranger-knox-plugin-properties" : {
+        "default" : "version1454606224851"
+      },
+      "ranger-knox-policymgr-ssl" : {
+        "default" : "version1454604858138"
+      },
+      "ranger-knox-security" : {
+        "default" : "version1454604858138"
+      },
+      "ranger-site" : {
+        "default" : "version1454604858144"
+      },
+      "ranger-ugsync-site" : {
+        "default" : "version1454604858144"
+      },
+      "ranger-yarn-audit" : {
+        "default" : "version1454604858134"
+      },
+      "ranger-yarn-plugin-properties" : {
+        "default" : "version1454604858133"
+      },
+      "ranger-yarn-policymgr-ssl" : {
+        "default" : "version1454604858134"
+      },
+      "ranger-yarn-security" : {
+        "default" : "version1454604858133"
+      },
+      "ssl-client" : {
+        "default" : "version1"
+      },
+      "ssl-server" : {
+        "default" : "version1"
+      },
+      "tez-env" : {
+        "default" : "version1"
+      },
+      "tez-site" : {
+        "default" : "version1455118418459"
+      },
+      "topology" : {
+        "default" : "version1454606224851"
+      },
+      "users-ldif" : {
+        "default" : "version1"
+      },
+      "usersync-properties" : {
+        "default" : "version1454604858144"
+      },
+      "webhcat-env" : {
+        "default" : "version1"
+      },
+      "webhcat-log4j" : {
+        "default" : "version1"
+      },
+      "webhcat-site" : {
+        "default" : "version1455118418562"
+      },
+      "yarn-env" : {
+        "default" : "version1"
+      },
+      "yarn-log4j" : {
+        "default" : "version1"
+      },
+      "yarn-site" : {
+        "default" : "version1455118418065"
+      },
+      "zoo.cfg" : {
+        "default" : "version1"
+      },
+      "zookeeper-env" : {
+        "default" : "version1453930081017"
+      },
+      "zookeeper-log4j" : {
+        "default" : "version1"
+      }
+    }
+  },
+  "host" : {
+    "href" : "http://c6401.ambari.apache.org:8080/api/v1/clusters/test/hosts/c6401.ambari.apache.org"
+  },
+  "component" : [
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/clusters/test/services/MAPREDUCE2/components/HISTORYSERVER",
+      "ServiceComponentInfo" : {
+        "cluster_name" : "test",
+        "component_name" : "HISTORYSERVER",
+        "service_name" : "MAPREDUCE2"
+      }
+    }
+  ],
+  "processes" : [ ]
+}
+

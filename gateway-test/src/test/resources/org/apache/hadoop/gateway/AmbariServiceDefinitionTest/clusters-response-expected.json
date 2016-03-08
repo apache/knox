@@ -1,0 +1,13 @@
+{
+  "href": "$cluster_url/ambari/api/v1/clusters",
+  "items": [
+    {
+      "href": "$cluster_url/ambari/api/v1/clusters/test",
+      "Clusters": {
+        "cluster_name": "test",
+        "version": "HDP-2.3"
+      }
+    }
+  ]
+}
+

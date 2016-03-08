@@ -15,18 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.filter.rewrite.api;
+package org.apache.hadoop.gateway.dispatch;
 
-public interface UrlRewriteFilterContentDescriptor extends UrlRewriteFilterGroupDescriptor {
+import java.util.Collections;
+import java.util.Set;
 
-  String type();
+public class PassAllHeadersDispatch extends DefaultDispatch {
 
-  String asType();
+  @Override
+  public Set<String> getOutboundResponseExcludeHeaders() {
+    return Collections.EMPTY_SET;
+  }
 
-  UrlRewriteFilterContentDescriptor type( String type );
-
-  UrlRewriteFilterContentDescriptor asType( String type );
-
-  UrlRewriteFilterBufferDescriptor addBuffer( String path );
-
+  @Override
+  public Set<String> getOutboundRequestExcludeHeaders() {
+    return Collections.EMPTY_SET;
+  }
 }

@@ -29,18 +29,27 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
 
   private static int STREAM_COPY_BUFFER_SIZE = 4096;
-  private static final List<String> EXCLUDE_HEADERS = Arrays.asList( "Host", "Authorization", "Content-Length", "Transfer-Encoding" );
+  private static Set<String> REQUEST_EXCLUDE_HEADERS;
 
   protected  HttpClient client;
 
-  protected void writeResponse( HttpServletRequest request, HttpServletResponse response, InputStream stream )
+  @Override
+  public void init() {
+    REQUEST_EXCLUDE_HEADERS = new HashSet<>();
+    REQUEST_EXCLUDE_HEADERS.add("Host");
+    REQUEST_EXCLUDE_HEADERS.add("Authorization");
+    REQUEST_EXCLUDE_HEADERS.add("Content-Length");
+    REQUEST_EXCLUDE_HEADERS.add("Transfer-Encoding");
+  }
+
+  protected void writeResponse(HttpServletRequest request, HttpServletResponse response, InputStream stream )
       throws IOException {
 //    ResponseStreamer streamer =
 //        (ResponseStreamer)request.getAttribute( RESPONSE_STREAMER_ATTRIBUTE_NAME );
@@ -93,17 +102,21 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
   
-  public static void copyRequestHeaderFields(HttpUriRequest outboundRequest,
+  public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();
     while( headerNames.hasMoreElements() ) {
       String name = headerNames.nextElement();
       if ( !outboundRequest.containsHeader( name )
-          && !EXCLUDE_HEADERS.contains( name ) ) {
+          && !getOutboundRequestExcludeHeaders().contains( name ) ) {
         String value = inboundRequest.getHeader( name );
         outboundRequest.addHeader( name, value );
       }
     }
+  }
+
+  public Set<String> getOutboundRequestExcludeHeaders() {
+    return REQUEST_EXCLUDE_HEADERS;
   }
 
 }

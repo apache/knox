@@ -73,6 +73,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   @Override
   public void init() {
+    super.init();
     outboundResponseExcludeHeaders = new HashSet<>();
     outboundResponseExcludeHeaders.add(SET_COOKIE);
     outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);

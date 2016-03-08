@@ -21,6 +21,7 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.SetPropertiesRule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterGroupDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
@@ -135,7 +136,11 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterDescriptor parent = getDigester().peek();
-      return parent.addContent( attributes.getValue( "type" ) );
+      UrlRewriteFilterContentDescriptor descriptor = parent.addContent( attributes.getValue( "type" ) );
+      if (attributes.getValue( "asType" ) != null) {
+        descriptor = descriptor.asType(attributes.getValue( "asType" ));
+      }
+      return descriptor;
     }
   }
 

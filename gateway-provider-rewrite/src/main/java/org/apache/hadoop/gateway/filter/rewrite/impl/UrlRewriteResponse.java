@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactor
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -171,6 +172,12 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     MimeType mimeType = getMimeType();
     UrlRewriteFilterContentDescriptor filterContentConfig =
         getRewriteFilterConfig( rewriter.getConfig(), bodyFilterName, mimeType );
+    if (filterContentConfig != null) {
+      String asType = filterContentConfig.asType();
+      if ( asType != null && asType.trim().length() > 0 ) {
+        mimeType = MimeTypes.create(asType, getCharacterEncoding());
+      }
+    }
     InputStream filteredInput = UrlRewriteStreamFilterFactory.create(
         mimeType, null, inStream, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
     outStream = (isGzip) ? new GZIPOutputStream(output) : output;

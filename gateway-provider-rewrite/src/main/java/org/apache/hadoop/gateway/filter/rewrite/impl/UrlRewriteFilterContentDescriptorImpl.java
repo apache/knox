@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
-import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterBufferDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 
@@ -26,6 +25,8 @@ public class UrlRewriteFilterContentDescriptorImpl
     implements UrlRewriteFilterContentDescriptor {
 
   private String type;
+
+  private String asType;
 
   public UrlRewriteFilterContentDescriptorImpl() {
   }
@@ -36,17 +37,36 @@ public class UrlRewriteFilterContentDescriptorImpl
   }
 
   @Override
+  public String asType() {
+    return asType;
+  }
+
+  @Override
   public UrlRewriteFilterContentDescriptor type( String type ) {
     this.type = type;
     return this;
   }
 
-  public void setType( String type ) {
+  @Override
+  public UrlRewriteFilterContentDescriptor asType( String type ) {
+    asType = type;
+    return this;
+  }
+
+  public void setType(String type ) {
     type( type );
   }
 
   public String getType() {
     return type;
+  }
+
+  public String getAsType() {
+    return asType;
+  }
+
+  public void setAsType(String asType) {
+    this.asType = asType;
   }
 
   @Override
