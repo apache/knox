@@ -133,7 +133,7 @@ public class ServiceRegistryFunctionsTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
@@ -165,7 +165,7 @@ public class ServiceRegistryFunctionsTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
     request.setHeader( "Content-Type", "application/json; charset=UTF-8" );
     request.setContent( input );

@@ -189,7 +189,7 @@ public class FrontendFunctionProcessorTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
     response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
@@ -234,7 +234,7 @@ public class FrontendFunctionProcessorTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
     response = HttpTester.parseResponse( server.getResponses( request.generate() ) );

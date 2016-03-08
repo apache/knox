@@ -126,7 +126,7 @@ public class UrlRewriteServletFilterTest {
     // Create the client request.
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     // Execute the request.
     response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
@@ -150,7 +150,7 @@ public class UrlRewriteServletFilterTest {
     // Create the client request.
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Location", "http://mock-host:1/test-input-path" );
     // Execute the request.
@@ -174,7 +174,7 @@ public class UrlRewriteServletFilterTest {
     // Create the client request.
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     // Execute the request.
     response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
@@ -199,7 +199,7 @@ public class UrlRewriteServletFilterTest {
     // Create the client request.
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
 
@@ -226,7 +226,7 @@ public class UrlRewriteServletFilterTest {
     // Create the client request.
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
 
     // Execute the request.
@@ -255,7 +255,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Content-Type", "application/json; charset=UTF-8" );
     request.setContent( inputJson );
@@ -287,7 +287,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Content-Type", "application/xml; charset=UTF-8" );
     request.setContent( input );
@@ -318,7 +318,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
 
     // Execute the request.
@@ -346,7 +346,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Content-Type", "application/html; charset=UTF-8" );
     request.setContent( input );
@@ -375,7 +375,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8" );
     request.setContent( input );
@@ -408,7 +408,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
@@ -442,7 +442,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
     request.setHeader( "Location", "http://mock-host:42/test-input-path-1" );
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
@@ -483,7 +483,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
     request.setHeader( "Content-Type", "application/json; charset=UTF-8" );
     request.setContent( inputJson );
@@ -516,7 +516,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
@@ -552,7 +552,7 @@ public class UrlRewriteServletFilterTest {
       interactions.add( interaction );
       request.setMethod( "PUT" );
       request.setURI( "/test-input-path" );
-      request.setVersion( "HTTP/1.1" );
+      //request.setVersion( "HTTP/1.1" );
       request.setHeader( "Host", "mock-host:42" );
       request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
       request.setContent( input );
@@ -587,7 +587,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8" );
     request.setContent( input );
@@ -619,7 +619,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-input-path-1" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
 
     // Execute the request.
@@ -662,7 +662,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
     request.setHeader( "Content-Type", "application/json; charset=UTF-8" );
     request.setContent( responseJson );
@@ -693,7 +693,7 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:42" );
 
     // Execute the request.

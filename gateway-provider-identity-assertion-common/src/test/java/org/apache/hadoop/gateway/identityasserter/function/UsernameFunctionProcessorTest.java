@@ -188,7 +188,7 @@ public class UsernameFunctionProcessorTest {
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path?test-query-input-name=test-query-input-value" );
-    request.setVersion( "HTTP/1.1" );
+    //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-input-host:777" );
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
