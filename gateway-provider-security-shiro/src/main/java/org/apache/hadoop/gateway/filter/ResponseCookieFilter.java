@@ -19,6 +19,7 @@
 package org.apache.hadoop.gateway.filter;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -29,8 +30,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class ResponseCookieFilter extends AbstractGatewayFilter {
+  public static final String RESTRICTED_COOKIES = "restrictedCookies";
+
+  protected static List<String> restrictedCookies = new ArrayList<String>();
+
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {
+    super.init(filterConfig);
+    String cookies = filterConfig.getInitParameter(RESTRICTED_COOKIES);
+    if (cookies != null) {
+      restrictedCookies = Arrays.asList(cookies.split(","));
+    }
+  }
 
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
@@ -40,32 +52,31 @@ public class ResponseCookieFilter extends AbstractGatewayFilter {
 
   // inner class wraps response to prevent adding of not allowed headers
   private class ResponseWrapper extends HttpServletResponseWrapper {
-
     public ResponseWrapper( HttpServletResponse response ) {
       super( response );
     }
 
     public void addCookie( Cookie cookie ) {
-      if( cookie != null && isAllowedHeaderValue( cookie.getValue() ) ) {
+      if( cookie != null && isAllowedHeader( cookie.getName() ) ) {
         super.addCookie( cookie );
       }
     }
 
     public void setHeader( String name, String value ) {
-      if( isAllowedHeaderValue( value ) ) {
+      if( isAllowedHeader( name ) ) {
         super.setHeader( name, value );
       }
     }
 
     public void addHeader( String name, String value ) {
-      if( isAllowedHeaderValue( value ) ) {
+      if( isAllowedHeader( name ) ) {
         super.addHeader( name, value );
       }
     }
 
-    private boolean isAllowedHeaderValue( String value ) {
+    private boolean isAllowedHeader( String value ) {
       if( value != null ) {
-        for( String v : restrictedCookieValues ) {
+        for( String v : restrictedCookies ) {
           if( value.contains( v ) ) {
             return false;
           }
@@ -74,9 +85,4 @@ public class ResponseCookieFilter extends AbstractGatewayFilter {
       return true;
     }
   }
-
-  private final static List<String> restrictedCookieValues = new ArrayList<String>(
-      Arrays.asList( "rememberMe" )
-  );
-
 }
