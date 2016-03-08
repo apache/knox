@@ -98,7 +98,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   public ApplicationDeploymentContributor( GatewayConfig config, Application application ) throws DeploymentException {
     try {
       File appsDir = new File( config.getGatewayApplicationsDir() );
-      File appDir = new File( appsDir, application.getName() + ".war" );
+      File appDir = new File( appsDir, application.getName() );
       File serviceFile = new File( appDir, SERVICE_DEFINITION_FILE_NAME );
       File rewriteFile = new File( appDir, REWRITE_RULES_FILE_NAME );
       serviceDefinition = loadServiceDefinition( application, serviceFile );
