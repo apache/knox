@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.service.knoxsso;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.annotation.PostConstruct;
@@ -51,6 +53,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
+  private static final String SSO_ENABLE_SESSION_PARAM = "knoxsso.enable.session";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String JWT_COOKIE_NAME = "hadoop-jwt";
@@ -63,6 +66,7 @@ public class WebSSOResource {
   private long tokenTTL = 30000l;
   private String whitelist = null;
   private String domainSuffix = null;
+  private boolean enableSession = false;
 
   @Context
   private HttpServletRequest request;
@@ -111,6 +115,9 @@ public class WebSSOResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+
+    String enableSession = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
+    this.enableSession = ("true".equals(enableSession));
   }
 
   @GET
@@ -171,7 +178,20 @@ public class WebSSOResource {
     catch (TokenServiceException e) {
       log.unableToIssueToken(e);
     }
-    return null;
+    URI location = null;
+    try {
+      location = new URI(original);
+    }
+    catch(URISyntaxException urise) {
+      // todo log return error response
+    }
+
+    if (!enableSession) {
+      // invalidate the session to avoid autologin
+      request.getSession(false).invalidate();
+    }
+
+    return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
   }
 
   private void addJWTHadoopCookie(String original, JWT token) {
