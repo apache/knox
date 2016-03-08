@@ -178,6 +178,7 @@ public class OozieServiceDefinitionTest {
     HttpServletRequest servletRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect( servletRequest.getInputStream() ).andReturn( new MockServletInputStream( TestUtils.getResourceStream( OozieServiceDefinitionTest.class, testResource ) ) ).anyTimes();
     EasyMock.expect( servletRequest.getContentType() ).andReturn( "text/xml" ).anyTimes();
+    EasyMock.expect( servletRequest.getContentLength() ).andReturn( -1 ).anyTimes();
 
     FilterConfig filterConfig = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect( filterConfig.getServletContext() ).andReturn( servletContext ).anyTimes();

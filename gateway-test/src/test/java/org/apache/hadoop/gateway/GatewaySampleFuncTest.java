@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.jayway.restassured.RestAssured;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
@@ -41,7 +40,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -49,8 +47,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
-import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
@@ -73,7 +69,6 @@ public class GatewaySampleFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    RestAssured.config = newConfig().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse());
     //appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();

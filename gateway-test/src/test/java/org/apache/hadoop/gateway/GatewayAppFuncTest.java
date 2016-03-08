@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.jayway.restassured.RestAssured;
 import org.apache.commons.io.FileUtils;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
@@ -50,8 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
-import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -87,7 +84,6 @@ public class GatewayAppFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    RestAssured.config = newConfig().connectionConfig(connectionConfig().closeIdleConnectionsAfterEachResponse());
     //appenders = NoOpAppender.setUp();
     setupLdap();
     setupGateway();

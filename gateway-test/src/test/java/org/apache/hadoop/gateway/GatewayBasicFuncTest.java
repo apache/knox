@@ -26,7 +26,6 @@ import java.io.PrintStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.core.MediaType;
 
-import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Cookie;
 import com.jayway.restassured.response.Header;
@@ -67,8 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
-import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.anyOf;
@@ -133,7 +129,6 @@ public class GatewayBasicFuncTest {
   public static void setupSuite() throws Exception {
     //Log.setLog( new NoOpLogger() );
     LOG_ENTER();
-    RestAssured.config = newConfig().connectionConfig(connectionConfig().dontCloseIdleConnectionsAfterEachResponse() );
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     driver.setResourceBase(GatewayBasicFuncTest.class);

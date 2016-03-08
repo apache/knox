@@ -115,6 +115,8 @@ public class MockResponseProvider {
   public void apply( HttpServletResponse response ) throws IOException {
     if( statusCode != null ) {
       response.setStatus( statusCode );
+    } else {
+      response.setStatus( HttpServletResponse.SC_OK );
     }
     if( errorCode != null ) {
       if( errorMsg != null ) {
@@ -148,8 +150,10 @@ public class MockResponseProvider {
     if( contentLength != null ) {
       response.setContentLength( contentLength );
     }
+    response.flushBuffer();
     if( entity != null ) {
       response.getOutputStream().write( entity );
+      response.getOutputStream().flush();
       response.getOutputStream().close();
     }
   }

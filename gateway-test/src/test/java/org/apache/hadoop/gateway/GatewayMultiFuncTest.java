@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.jayway.restassured.RestAssured;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
@@ -37,10 +37,22 @@ import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,14 +61,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.config.ConnectionConfig.connectionConfig;
-import static com.jayway.restassured.config.RestAssuredConfig.newConfig;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.xmlmatchers.XmlMatchers.hasXPath;
+import static org.xmlmatchers.transform.XmlConverters.the;
 
 @Category(ReleaseTest.class)
 public class GatewayMultiFuncTest {
@@ -70,13 +83,10 @@ public class GatewayMultiFuncTest {
   private static GatewayServer gateway;
   private static int gatewayPort;
   private static String gatewayUrl;
-  private static String clusterUrl;
   private static SimpleLdapDirectoryServer ldap;
   private static TcpTransport ldapTransport;
-  private static int ldapPort;
   private static Properties params;
   private static TopologyService topos;
-  private static MockServer mockWebHdfs;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -95,12 +105,6 @@ public class GatewayMultiFuncTest {
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
-  }
-
-  @After
-  public void cleanupTest() throws Exception {
-    FileUtils.cleanDirectory( new File( config.getGatewayTopologyDir() ) );
-    FileUtils.cleanDirectory( new File( config.getGatewayDeploymentDir() ) );
   }
 
   public static void setupLdap() throws Exception {
@@ -136,12 +140,7 @@ public class GatewayMultiFuncTest {
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-    setupMockServers();
     startGatewayServer();
-  }
-
-  public static void setupMockServers() throws Exception {
-    mockWebHdfs = new MockServer( "WEBHDFS", true );
   }
 
   public static void startGatewayServer() throws Exception {
@@ -161,13 +160,11 @@ public class GatewayMultiFuncTest {
 
     gatewayPort = gateway.getAddresses()[0].getPort();
     gatewayUrl = "http://localhost:" + gatewayPort + "/" + config.getGatewayPath();
-    clusterUrl = gatewayUrl + "/test-topology";
 
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     params = new Properties();
     params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
-    params.put( "WEBHDFS_URL", "http://localhost:" + mockWebHdfs.getPort() );
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
@@ -176,10 +173,12 @@ public class GatewayMultiFuncTest {
 
     MockServer mock = new MockServer( "REPEAT", true );
 
+    params = new Properties();
+    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
     params.put( "MOCK_SERVER_PORT", mock.getPort() );
 
     String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
-    File topoFile = new File( config.getGatewayTopologyDir(), "topology.xml" );
+    File topoFile = new File( config.getGatewayTopologyDir(), "knox678.xml" );
     FileUtils.writeStringToFile( topoFile, topoStr );
 
     topos.reloadTopologies();
@@ -187,7 +186,8 @@ public class GatewayMultiFuncTest {
     String uname = "guest";
     String pword = uname + "-password";
 
-    mock.expect().respond().contentType( "application/json" ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
+    mock.expect().method( "GET" )
+        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -195,10 +195,11 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( "msg", is( "H\u00eallo" ) )
-        .when().get( gatewayUrl + "/topology/repeat" );
+        .when().get( gatewayUrl + "/knox678/repeat" );
     assertThat( mock.isEmpty(), is(true) );
 
-    mock.expect().respond().contentType( "application/json" ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
+    mock.expect().method( "GET" )
+        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -206,10 +207,11 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( "msg", is( "H\u00eallo" ) )
-        .when().get( gatewayUrl + "/topology/repeat" );
+        .when().get( gatewayUrl + "/knox678/repeat" );
     assertThat( mock.isEmpty(), is(true) );
 
-    mock.expect().respond().contentType( "application/octet-stream" ).content( "H\u00eallo".getBytes() );
+    mock.expect().method( "GET" )
+        .respond().contentType( "application/octet-stream" ).contentLength( -1 ).content( "H\u00eallo".getBytes() );
     byte[] body = given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -217,11 +219,100 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         //.contentType( "application/octet-stream" )
-        .when().get( gatewayUrl + "/topology/repeat" ).andReturn().asByteArray();
+        .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
     assertThat( body, is(equalTo("H\u00eallo".getBytes())) );
     assertThat( mock.isEmpty(), is(true) );
+
+    mock.stop();
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testPostWithContentTypeKnox681() throws Exception {
+    LOG_ENTER();
+
+    MockServer mock = new MockServer( "REPEAT", true );
+
+    params = new Properties();
+    params.put( "MOCK_SERVER_PORT", mock.getPort() );
+    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+
+    String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
+    File topoFile = new File( config.getGatewayTopologyDir(), "knox681.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+
+    topos.reloadTopologies();
+
+    mock
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/repeat-context/" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( "{\"name\":\"value\"}".getBytes() )
+        .contentLength( -1 )
+        .contentType( "application/json; charset=UTF-8" )
+        .header( "Location", gatewayUrl + "/knox681/repeat" );
+
+    String uname = "guest";
+    String pword = uname + "-password";
+
+    HttpHost targetHost = new HttpHost( "localhost", gatewayPort, "http" );
+    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    credsProvider.setCredentials(
+        new AuthScope( targetHost.getHostName(), targetHost.getPort() ),
+        new UsernamePasswordCredentials( uname, pword ) );
+
+    AuthCache authCache = new BasicAuthCache();
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+
+    HttpClientContext context = HttpClientContext.create();
+    context.setCredentialsProvider( credsProvider );
+    context.setAuthCache( authCache );
+
+    CloseableHttpClient client = HttpClients.createDefault();
+    HttpPut request = new HttpPut( gatewayUrl + "/knox681/repeat" );
+    request.addHeader( "X-XSRF-Header", "jksdhfkhdsf" );
+    request.addHeader( "Content-Type", "application/json" );
+    CloseableHttpResponse response = client.execute( request, context );
+    assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
+    assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/knox681/repeat" ) );
+    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/json; charset=UTF-8") );
+    String body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    assertThat( body, is( "{\"name\":\"value\"}" ) );
+    response.close();
+    client.close();
+
+    mock
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/repeat-context/" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( "<test-xml/>".getBytes() )
+        .contentType( "application/xml; charset=UTF-8" )
+        .header( "Location", gatewayUrl + "/knox681/repeat" );
+
+    client = HttpClients.createDefault();
+    request = new HttpPut( gatewayUrl + "/knox681/repeat" );
+    request.addHeader( "X-XSRF-Header", "jksdhfkhdsf" );
+    request.addHeader( "Content-Type", "application/xml" );
+    response = client.execute( request, context );
+    assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
+    assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/knox681/repeat" ) );
+    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/xml; charset=UTF-8") );
+    body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    assertThat( the(body), hasXPath( "/test-xml" ) );
+    response.close();
+    client.close();
+
+    mock.stop();
 
     LOG_EXIT();
   }
 
 }
+
+
