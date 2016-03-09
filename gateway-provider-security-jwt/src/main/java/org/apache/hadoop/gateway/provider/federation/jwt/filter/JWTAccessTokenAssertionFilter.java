@@ -124,7 +124,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       jsonResponse = JsonUtils.renderAsJsonString(map);
       
       response.getWriter().write(jsonResponse);
-      response.getWriter().flush();
+      //KNOX-685: response.getWriter().flush();
       return; // break filter chain
     }
     else {

@@ -64,7 +64,7 @@ public class DefaultTopologyServiceTest {
     InputStream input = ClassLoader.getSystemResourceAsStream(resource);
     OutputStream output = FileUtils.openOutputStream(file);
     IOUtils.copy(input, output);
-    output.flush();
+    //KNOX-685: output.flush();
     input.close();
     output.close();
     file.setLastModified(timestamp);

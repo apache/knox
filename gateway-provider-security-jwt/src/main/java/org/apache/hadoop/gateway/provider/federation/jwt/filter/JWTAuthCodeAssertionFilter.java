@@ -87,7 +87,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
         String jsonResponse = JsonUtils.renderAsJsonString(map);
         
         response.getWriter().write(jsonResponse);
-        response.getWriter().flush();
+        //KNOX-685: response.getWriter().flush();
       } catch (TokenServiceException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();

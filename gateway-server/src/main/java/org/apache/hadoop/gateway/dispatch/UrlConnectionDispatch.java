@@ -143,7 +143,7 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
         try {
           IOUtils.copy( input, output );
         } finally {
-          output.flush();
+          //KNOX-685: output.flush();
           input.close();
         }
       }

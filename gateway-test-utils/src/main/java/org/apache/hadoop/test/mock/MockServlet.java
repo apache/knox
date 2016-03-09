@@ -24,9 +24,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Queue;
 
+import org.apache.log4j.Logger;
+
 import static org.junit.Assert.fail;
 
 public class MockServlet extends HttpServlet {
+
+  Logger LOG = Logger.getLogger(MockServlet.class.getName());
 
   public String name;
   public Queue<MockInteraction> interactions;
@@ -38,7 +42,7 @@ public class MockServlet extends HttpServlet {
 
   @Override
   protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
-    System.out.println( "MOCK-SERLVET-REQUEST: " + request.getMethod() + " " + request.getRequestURL() + "?" + request.getQueryString() );
+    LOG.debug( "MOCK-SERLVET-REQUEST: " + request.getMethod() + " " + request.getRequestURL() + "?" + request.getQueryString() );
     try {
       if( interactions.isEmpty() ) {
         fail( "Mock servlet " + name + " received a request but the expected interaction queue is empty." );
@@ -46,7 +50,7 @@ public class MockServlet extends HttpServlet {
       MockInteraction interaction = interactions.remove();
       interaction.expect().match( request );
       interaction.respond().apply( response );
-      System.out.println( "MOCK-SERVLET-RESPONSE: " + response.getStatus() );
+      LOG.debug( "MOCK-SERVLET-RESPONSE: " + response.getStatus() );
     } catch( AssertionError e ) {
       e.printStackTrace(); // I18N not required.
       throw new ServletException( e );

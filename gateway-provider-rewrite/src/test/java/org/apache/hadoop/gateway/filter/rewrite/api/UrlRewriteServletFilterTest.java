@@ -25,6 +25,7 @@ import org.apache.hadoop.test.log.NoOpLogger;
 import org.apache.hadoop.test.mock.MockInteraction;
 import org.apache.hadoop.test.mock.MockServlet;
 import org.apache.log4j.Appender;
+import org.apache.log4j.Logger;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -63,6 +64,8 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class UrlRewriteServletFilterTest {
 
+  Logger LOG = Logger.getLogger(UrlRewriteServletFilterTest.class);
+
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
@@ -100,7 +103,6 @@ public class UrlRewriteServletFilterTest {
     servlet.setServlet( new MockServlet( "mock-servlet", interactions ) );
 
     server.start();
-    server.getConnector().setIdleTimeout( 30 * 1000 );
 
     interaction = new MockInteraction();
     request = HttpTester.newRequest();
@@ -115,13 +117,13 @@ public class UrlRewriteServletFilterTest {
   }
 
   private void execute() throws Exception {
-    System.out.println( "REQUEST=" + request );
+    LOG.debug( "REQUEST=" + request );
     ByteBuffer requestBuffer = request.generate();
-    System.out.println( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
+    LOG.debug( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
     ByteBuffer responseBuffer = server.getResponses( requestBuffer );
     response = HttpTester.parseResponse( responseBuffer );
-    System.out.println( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
-    System.out.println( "RESPONSE=" + response );
+    LOG.debug( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
+    LOG.debug( "RESPONSE=" + response );
   }
 
   @Test

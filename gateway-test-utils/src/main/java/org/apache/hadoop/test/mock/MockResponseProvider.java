@@ -153,7 +153,7 @@ public class MockResponseProvider {
     response.flushBuffer();
     if( entity != null ) {
       response.getOutputStream().write( entity );
-      response.getOutputStream().flush();
+      //KNOX-685: response.getOutputStream().flush();
       response.getOutputStream().close();
     }
   }

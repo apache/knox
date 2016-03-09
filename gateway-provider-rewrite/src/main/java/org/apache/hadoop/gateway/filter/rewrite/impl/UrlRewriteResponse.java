@@ -182,7 +182,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
         mimeType, null, inStream, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
     outStream = (isGzip) ? new GZIPOutputStream(output) : output;
     IOUtils.copyLarge( filteredInput, outStream, new byte[STREAM_BUFFER_SIZE] );
-    outStream.flush();
+    //KNOX-685: outStream.flush();
     outStream.close();
   }
 
