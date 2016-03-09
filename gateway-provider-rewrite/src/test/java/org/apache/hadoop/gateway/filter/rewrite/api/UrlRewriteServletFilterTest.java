@@ -100,6 +100,7 @@ public class UrlRewriteServletFilterTest {
     servlet.setServlet( new MockServlet( "mock-servlet", interactions ) );
 
     server.start();
+    server.getConnector().setIdleTimeout( 30 * 1000 );
 
     interaction = new MockInteraction();
     request = HttpTester.newRequest();
