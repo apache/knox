@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -112,6 +113,16 @@ public class ServiceRegistryFunctionsTest {
     response = null;
   }
 
+  private void execute() throws Exception {
+    System.out.println( "REQUEST=" + request );
+    ByteBuffer requestBuffer = request.generate();
+    System.out.println( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
+    ByteBuffer responseBuffer = server.getResponses( requestBuffer );
+    response = HttpTester.parseResponse( responseBuffer );
+    System.out.println( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
+    System.out.println( "RESPONSE=" + response );
+  }
+
   @Test
   public void testServiceRegistryFunctionsOnXmlRequestBody() throws Exception {
     Map<String,String> initParams = new HashMap<String,String>();
@@ -138,7 +149,7 @@ public class ServiceRegistryFunctionsTest {
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
 
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), Is.is( 200 ) );
@@ -170,7 +181,7 @@ public class ServiceRegistryFunctionsTest {
     request.setHeader( "Content-Type", "application/json; charset=UTF-8" );
     request.setContent( input );
 
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), Is.is( 200 ) );

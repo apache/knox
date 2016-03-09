@@ -65,6 +65,7 @@ import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -187,7 +188,7 @@ public class GatewayMultiFuncTest {
     String pword = uname + "-password";
 
     mock.expect().method( "GET" )
-        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
+        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF-8" ) );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -195,19 +196,7 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .body( "msg", is( "H\u00eallo" ) )
-        .when().get( gatewayUrl + "/knox678/repeat" );
-    assertThat( mock.isEmpty(), is(true) );
-
-    mock.expect().method( "GET" )
-        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF8" ) );
-    given()
-        //.log().all()
-        .auth().preemptive().basic( uname, pword )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .body( "msg", is( "H\u00eallo" ) )
-        .when().get( gatewayUrl + "/knox678/repeat" );
+        .when().log().ifError().get( gatewayUrl + "/knox678/repeat" );
     assertThat( mock.isEmpty(), is(true) );
 
     mock.expect().method( "GET" )
@@ -218,8 +207,7 @@ public class GatewayMultiFuncTest {
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        //.contentType( "application/octet-stream" )
-        .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
+        .when().log().ifError().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
     assertThat( body, is(equalTo("H\u00eallo".getBytes())) );
     assertThat( mock.isEmpty(), is(true) );
 

@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -119,6 +120,16 @@ public class UsernameFunctionProcessorTest {
     }
   }
 
+  private void execute() throws Exception {
+    System.out.println( "REQUEST=" + request );
+    ByteBuffer requestBuffer = request.generate();
+    System.out.println( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
+    ByteBuffer responseBuffer = server.getResponses( requestBuffer );
+    response = HttpTester.parseResponse( responseBuffer );
+    System.out.println( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
+    System.out.println( "RESPONSE=" + response );
+  }
+
   @Test
   public void testInitialize() throws Exception {
     UsernameFunctionProcessor processor = new UsernameFunctionProcessor();
@@ -181,10 +192,8 @@ public class UsernameFunctionProcessorTest {
         .queryParam( "test-query-input-name", "test-query-input-value" )
         .queryParam( "test-query-output-name", "test-query-output-value" )
         .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
         .content( expect, Charset.forName( "UTF-8" ) );
-    interaction.respond()
-        .status( 200 );
+    interaction.respond().status( 200 );
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path?test-query-input-name=test-query-input-value" );
@@ -193,7 +202,7 @@ public class UsernameFunctionProcessorTest {
     request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
     request.setContent( input );
 
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), Is.is( 200 ) );

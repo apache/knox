@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -114,6 +115,16 @@ public class UrlRewriteServletFilterTest {
     }
   }
 
+  private void execute() throws Exception {
+    System.out.println( "REQUEST=" + request );
+    ByteBuffer requestBuffer = request.generate();
+    System.out.println( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
+    ByteBuffer responseBuffer = server.getResponses( requestBuffer );
+    response = HttpTester.parseResponse( responseBuffer );
+    System.out.println( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
+    System.out.println( "RESPONSE=" + response );
+  }
+
   @Test
   public void testInboundRequestUrlRewrite() throws Exception {
     setUp( null );
@@ -129,7 +140,7 @@ public class UrlRewriteServletFilterTest {
     //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -154,7 +165,7 @@ public class UrlRewriteServletFilterTest {
     request.setHeader( "Host", "mock-host:1" );
     request.setHeader( "Location", "http://mock-host:1/test-input-path" );
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -177,7 +188,7 @@ public class UrlRewriteServletFilterTest {
     //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "mock-host:1" );
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 201 ) );
@@ -204,7 +215,7 @@ public class UrlRewriteServletFilterTest {
     request.setHeader( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 201 ) );
@@ -230,7 +241,7 @@ public class UrlRewriteServletFilterTest {
     request.setHeader( "Host", "mock-host:1" );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -261,7 +272,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( inputJson );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -293,7 +304,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -322,7 +333,7 @@ public class UrlRewriteServletFilterTest {
     request.setHeader( "Host", "mock-host:1" );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -352,7 +363,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -381,7 +392,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -414,7 +425,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -449,7 +460,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -489,7 +500,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( inputJson );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -522,7 +533,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -558,7 +569,7 @@ public class UrlRewriteServletFilterTest {
       request.setContent( input );
 
       // Execute the request.
-      response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+      execute();
 
       // Test the results.
       assertThat( response.getStatus(), is( 500 ) );
@@ -593,7 +604,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( input );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
@@ -623,7 +634,7 @@ public class UrlRewriteServletFilterTest {
     request.setHeader( "Host", "mock-host:42" );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 307 ) );
@@ -668,7 +679,7 @@ public class UrlRewriteServletFilterTest {
     request.setContent( responseJson );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     assertThat( response.getStatus(), is( 200 ) );
     JsonAssert.with( response.getContent() ).assertThat( "$.url", is( "http://mock-host:42/test-output-path-2" ) );
@@ -693,11 +704,11 @@ public class UrlRewriteServletFilterTest {
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-input-path" );
-    //request.setVersion( "HTTP/1.1" );
+    request.setVersion( "HTTP/1.0" );
     request.setHeader( "Host", "mock-host:42" );
 
     // Execute the request.
-    response = HttpTester.parseResponse( server.getResponses( request.generate() ) );
+    execute();
 
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
