@@ -78,8 +78,6 @@ public class UrlRewriteServletFilterTest {
   public void setUp( Map<String,String> initParams ) throws Exception {
     String descriptorUrl = getTestResource( "rewrite.xml" ).toExternalForm();
 
-    Log.setLog( new NoOpLogger() );
-
     server = new ServletTester();
     server.setContextPath( "/" );
     server.getContext().addEventListener( new UrlRewriteServletContextListener() );
