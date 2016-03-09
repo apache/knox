@@ -32,6 +32,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
 import javax.activation.MimeType;
 import javax.servlet.FilterConfig;
@@ -62,6 +63,8 @@ import static org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil.pickF
  *
  */
 public class UrlRewriteResponse extends GatewayResponseWrapper implements Params, ResponseStreamer {
+
+  private static Logger LOGGER = Logger.getLogger( UrlRewriteResponse.class );
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
@@ -222,9 +225,13 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private String getRequestLocalHostName() {
     String hostName = request.getLocalName();
     try {
+      LOGGER.debug( "LOOKUP HOSTNAME FOR " + hostName );
       hostName = InetAddress.getByName( hostName ).getHostName();
+      LOGGER.debug( "FOUND HOSTNAME " + hostName );
     } catch( UnknownHostException e ) {
       // Ignore it and use the original hostname.
+      LOGGER.debug( "FAILED TO RESOLVE " + hostName );
+      e.printStackTrace();
     }
     return hostName;
   }

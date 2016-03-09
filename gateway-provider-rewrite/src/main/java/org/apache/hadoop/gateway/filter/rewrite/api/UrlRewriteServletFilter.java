@@ -61,6 +61,7 @@ public class UrlRewriteServletFilter extends AbstractGatewayFilter {
     FilterConfig config = getConfig();
     UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( config, request );
     UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, rewriteRequest, response );
+    LOG.debug("URL-REWRITE-SERVLET-FILTER:DO-FILTER: FILTER");
     chain.doFilter( rewriteRequest, rewriteResponse );
     LOG.debug("URL-REWRITE-SERVLET-FILTER:DO-FILTER: END");
   }
