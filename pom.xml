@@ -86,6 +86,7 @@
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
         <module>gateway-test-release</module>
+        <module>gateway-applications</module>
     </modules>
 
     <properties>
@@ -238,6 +239,10 @@
                         <exclude>**/home/samples/*.jar</exclude>
                         <exclude>**/.externalToolBuilders/*</exclude>
                         <exclude>*.patch</exclude>
+                        <exclude>**/applications/**/jquery.**</exclude>
+                        <exclude>**/applications/**/bootstrap.min.**</exclude>
+                        <exclude>**/applications/**/fonts/**</exclude>
+                        <exclude>**/applications/**/libs/**</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                     </excludes>
                 </configuration>
@@ -626,6 +631,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-applications</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

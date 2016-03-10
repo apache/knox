@@ -107,7 +107,7 @@
                         <version>2.8</version>
                         <executions>
                             <execution>
-                                <id>unpack</id>
+                                <id>unpack-services</id>
                                 <phase>generate-resources</phase>
                                 <goals>
                                     <goal>unpack</goal>
@@ -121,6 +121,14 @@
                                             <overWrite>true</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
                                             <includes>services/**/*</includes>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>${gateway-group}</groupId>
+                                            <artifactId>gateway-applications</artifactId>
+                                            <type>jar</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}</outputDirectory>
+                                            <includes>applications/**/*</includes>
                                         </artifactItem>
                                     </artifactItems>
                                 </configuration>
@@ -280,6 +288,10 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-demo-ldap-launcher</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-applications</artifactId>
         </dependency>
 
         <dependency>
