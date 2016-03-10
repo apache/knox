@@ -197,6 +197,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
         fullContentType = entityContentType.toString();
       }
     }
+    if( fullContentType == null ) {
+      LOG.unknownResponseEntityContentType();
+    } else {
+      LOG.inboundResponseEntityContentType( fullContentType );
+    }
     return fullContentType;
   }
 

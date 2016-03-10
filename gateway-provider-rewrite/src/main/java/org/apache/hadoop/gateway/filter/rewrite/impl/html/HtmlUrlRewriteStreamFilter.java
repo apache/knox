@@ -55,7 +55,7 @@ public class HtmlUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
     try {
       return new ReaderInputStream(
           new HtmlUrlRewriteFilterReader(
-              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ), encoding );
     } catch( ParserConfigurationException e ) {
       throw new IOException( e );
     }

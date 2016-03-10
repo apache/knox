@@ -61,4 +61,10 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Using explicit character set {1} for entity of type {0}" )
   void usingExplicitCharsetForEntity( String mimeType, Charset charset );
+
+  @Message( level = MessageLevel.DEBUG, text = "Inbound response entity content type not provided." )
+  void unknownResponseEntityContentType();
+
+  @Message( level = MessageLevel.DEBUG, text = "Inbound response entity content type: {0}" )
+  void inboundResponseEntityContentType( String fullContentType );
 }

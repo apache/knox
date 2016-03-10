@@ -55,7 +55,7 @@ public class JavaScriptUrlRewriteStreamFilter implements UrlRewriteStreamFilter 
     if ( config != null ) {
       return new ReaderInputStream(
           new JavaScriptUrlRewriteFilterReader(
-              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ), encoding );
     } else {
       return stream;
     }

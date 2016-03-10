@@ -56,7 +56,7 @@ public class XmlUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
     try {
       return new ReaderInputStream(
           new XmlUrlRewriteFilterReader(
-              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+              new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ), encoding );
     } catch( ParserConfigurationException e ) {
       throw new IOException( e );
     } catch( XMLStreamException e ) {

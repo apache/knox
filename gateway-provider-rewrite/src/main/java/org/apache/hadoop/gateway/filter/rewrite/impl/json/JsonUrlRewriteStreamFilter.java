@@ -53,7 +53,7 @@ public class JsonUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
           throws IOException {
     return new ReaderInputStream(
         new JsonUrlRewriteFilterReader(
-            new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+            new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ), encoding );
   }
 
 }

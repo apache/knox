@@ -53,7 +53,7 @@ public class FormUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
           throws IOException {
     return new ReaderInputStream(
         new FormUrlRewriteFilterReader(
-            new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ) );
+            new InputStreamReader( stream, encoding ), rewriter, resolver, direction, config ), encoding );
   }
 
 }
