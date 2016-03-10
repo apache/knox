@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 
 
 /**
@@ -55,4 +56,9 @@ public interface SpiGatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Skipping unencodable parameter {0}={1}, {2}: {3}" )
   void skippingUnencodableParameter( String name, String value, String encoding, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
+  @Message( level = MessageLevel.DEBUG, text = "Using default character set {1} for entity of type {0}" )
+  void usingDefaultCharsetForEntity( String entityMimeType, String defaultCharset );
+
+  @Message( level = MessageLevel.DEBUG, text = "Using explicit character set {1} for entity of type {0}" )
+  void usingExplicitCharsetForEntity( String mimeType, Charset charset );
 }

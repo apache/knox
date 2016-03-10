@@ -52,6 +52,7 @@ public class MockServlet extends HttpServlet {
       interaction.respond().apply( response );
       LOG.debug( "MOCK-SERVLET-RESPONSE: " + response.getStatus() );
     } catch( AssertionError e ) {
+      LOG.debug( "MOCK-SERVLET-FAILURE: " + e.getMessage() );
       e.printStackTrace(); // I18N not required.
       throw new ServletException( e );
     }

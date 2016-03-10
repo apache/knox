@@ -67,7 +67,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
   private Set<String> outboundResponseExcludeHeaders;
-  private Map<String,String> inboundResponseCharsetDefaults;
+  private Map<String,String> defaultCharsetforMimeTypes;
 
   private int replayBufferSize = -1;
 
@@ -79,11 +79,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
 
     String utf8 = "UTF-8";
-    inboundResponseCharsetDefaults = new HashMap<>();
-    inboundResponseCharsetDefaults.put( "text/xml", utf8 );
-    inboundResponseCharsetDefaults.put( "text/json", utf8 );
-    inboundResponseCharsetDefaults.put( "application/xml", utf8 );
-    inboundResponseCharsetDefaults.put( "application/json", utf8 );
+    defaultCharsetforMimeTypes = new HashMap<>();
+    defaultCharsetforMimeTypes.put( "text/xml", utf8 );
+    defaultCharsetforMimeTypes.put( "text/json", utf8 );
+    defaultCharsetforMimeTypes.put( "application/xml", utf8 );
+    defaultCharsetforMimeTypes.put( "application/json", utf8 );
   }
 
   @Override
@@ -179,21 +179,25 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
   }
 
-  private String getInboundResponseContentType( HttpEntity entity ) {
-    String name = null;
+  private String getInboundResponseContentType( final HttpEntity entity ) {
+    String fullContentType = null;
     if( entity != null ) {
-      ContentType type = ContentType.get( entity );
-      if( type != null ) {
-        if( type.getCharset() == null ) {
-          String charset = getInboundResponseCharacterEncoding( type.getMimeType() );
-          if( charset != null ) {
-            type = type.withCharset( charset );
+      ContentType entityContentType = ContentType.get( entity );
+      if( entityContentType != null ) {
+        if( entityContentType.getCharset() == null ) {
+          final String entityMimeType = entityContentType.getMimeType();
+          final String defaultCharset = getDefaultCharsetForMimeType( entityMimeType );
+          if( defaultCharset != null ) {
+            LOG.usingDefaultCharsetForEntity( entityMimeType, defaultCharset );
+            entityContentType = entityContentType.withCharset( defaultCharset );
           }
+        } else {
+          LOG.usingExplicitCharsetForEntity( entityContentType.getMimeType(), entityContentType.getCharset() );
         }
-        name = type.toString();
+        fullContentType = entityContentType.toString();
       }
     }
-    return name;
+    return fullContentType;
   }
 
   protected void closeInboundResponse( HttpResponse response, InputStream stream ) throws IOException {
@@ -298,10 +302,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     return outboundResponseExcludeHeaders;
   }
 
-  protected String getInboundResponseCharacterEncoding( String mimeType ) {
+  protected String getDefaultCharsetForMimeType( String mimeType ) {
     String charset = null;
     if( mimeType != null ) {
-      charset = inboundResponseCharsetDefaults.get( mimeType.trim().toLowerCase() );
+      charset = defaultCharsetforMimeTypes.get( mimeType.trim().toLowerCase() );
     }
     return charset;
   }
