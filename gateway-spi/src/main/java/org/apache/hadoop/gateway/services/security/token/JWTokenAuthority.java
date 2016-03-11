@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.services.security.token;
 
 import java.security.Principal;
+import java.util.List;
 
 import javax.security.auth.Subject;
 
@@ -41,4 +42,7 @@ public interface JWTokenAuthority {
       long expires) throws TokenServiceException;
 
   JWT issueToken(Principal p, String audience, long l) throws TokenServiceException;
+
+  JWTToken issueToken(Principal p, List<String> audience, String algorithm,
+      long expires) throws TokenServiceException;
 }

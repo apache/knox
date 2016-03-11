@@ -23,6 +23,8 @@ import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import javax.security.auth.Subject;
 
@@ -77,27 +79,35 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    */
   @Override
   public JWTToken issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
-    return issueToken(p, null, algorithm, expires);
+    return issueToken(p, (String)null, algorithm, expires);
   }
 
   public JWTToken issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
     return issueToken(p, audience, algorithm, -1);
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
    */
   @Override
   public JWTToken issueToken(Principal p, String audience, String algorithm, long expires)
       throws TokenServiceException {
-    String[] claimArray = new String[4];
-    claimArray[0] = "HSSO";
-    claimArray[1] = p.getName();
-    if (audience == null) {
-      audience = "HSSO";
+    ArrayList<String> audiences = null;
+    if (audience != null) {
+      audiences = new ArrayList<String>();
+      audiences.add(audience);
     }
-    claimArray[2] = audience;
+    return issueToken(p, audiences, algorithm, expires);
+  }
+
+  @Override
+  public JWTToken issueToken(Principal p, List<String> audiences, String algorithm, long expires)
+      throws TokenServiceException {
+    String[] claimArray = new String[4];
+    claimArray[0] = "KNOXSSO";
+    claimArray[1] = p.getName();
+    claimArray[2] = null;
     // TODO: make the validity period configurable
     if (expires == -1) {
       claimArray[3] = Long.toString( ( System.currentTimeMillis() ) + 30000);
@@ -108,7 +118,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
     JWTToken token = null;
     if ("RS256".equals(algorithm)) {
-      token = new JWTToken("RS256", claimArray);
+      token = new JWTToken("RS256", claimArray, audiences);
       RSAPrivateKey key;
       char[] passphrase = null;
       try {

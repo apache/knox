@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway.services.security.token.impl;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
@@ -56,12 +58,22 @@ public class JWTToken implements JWT {
   }
 
   public JWTToken(String alg, String[] claimsArray) {
+    this(alg, claimsArray, null);
+  }
+
+  public JWTToken(String alg, String[] claimsArray, List<String> audiences) {
     JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
 
+    if (claimsArray[2] != null) {
+      if (audiences == null) {
+        audiences = new ArrayList<String>();
+      }
+      audiences.add(claimsArray[2]);
+    }
     JWTClaimsSet claims = new JWTClaimsSet.Builder()
     .issuer(claimsArray[0])
     .subject(claimsArray[1])
-    .audience(claimsArray[2])
+    .audience(audiences)
     .expirationTime(new Date(Long.parseLong(claimsArray[3])))
     .build();
 

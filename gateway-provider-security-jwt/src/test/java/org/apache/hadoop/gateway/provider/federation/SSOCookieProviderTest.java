@@ -521,6 +521,12 @@ public class SSOCookieProviderTest  {
       return null;
     }
 
+    @Override
+    public JWTToken issueToken(Principal p, List<String> audiences, String algorithm,
+        long expires) throws TokenServiceException {
+      return null;
+    }
+
     /* (non-Javadoc)
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long)
      */

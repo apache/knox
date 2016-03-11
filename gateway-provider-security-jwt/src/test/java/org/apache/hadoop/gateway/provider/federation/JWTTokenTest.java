@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.provider.federation;
 
+import java.util.ArrayList;
 import junit.framework.TestCase;
 
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
@@ -43,17 +44,90 @@ public class JWTTokenTest extends TestCase {
 //    }
 //  }
   
-  @Test 
+  @Test
   public void testTokenCreation() throws Exception {
     String[] claims = new String[4];
-    claims[0] = "HSSO";
+    claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
     JWTToken token = new JWTToken("RS256", claims);
 
-    assertEquals(token.getIssuer(), "HSSO");
-    assertEquals(token.getSubject(), "john.doe@example.com");
-    assertEquals(token.getAudience(), "https://login.example.com");
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals("https://login.example.com", token.getAudience());
+  }
+
+  @Test
+  public void testTokenCreationWithAudienceListSingle() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = null;
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    ArrayList<String> audiences = new ArrayList<String>();
+    audiences.add("https://login.example.com");
+
+    JWTToken token = new JWTToken("RS256", claims, audiences);
+
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals("https://login.example.com", token.getAudience());
+    assertEquals(1, token.getAudienceClaims().length);
+  }
+
+  @Test
+  public void testTokenCreationWithAudienceListMultiple() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = null;
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    ArrayList<String> audiences = new ArrayList<String>();
+    audiences.add("https://login.example.com");
+    audiences.add("KNOXSSO");
+
+    JWTToken token = new JWTToken("RS256", claims, audiences);
+
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals("https://login.example.com", token.getAudience());
+    assertEquals(2, token.getAudienceClaims().length);
+  }
+
+  @Test
+  public void testTokenCreationWithAudienceListCombined() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "LJM";
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    ArrayList<String> audiences = new ArrayList<String>();
+    audiences.add("https://login.example.com");
+    audiences.add("KNOXSSO");
+
+    JWTToken token = new JWTToken("RS256", claims, audiences);
+
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals("https://login.example.com", token.getAudience());
+    assertEquals(3, token.getAudienceClaims().length);
+  }
+
+  @Test
+  public void testTokenCreationWithNullAudienceList() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = null;
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    ArrayList<String> audiences = null;
+
+    JWTToken token = new JWTToken("RS256", claims, audiences);
+
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals(null, token.getAudience());
+    assertEquals(null, token.getAudienceClaims());
   }
 }

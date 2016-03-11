@@ -52,6 +52,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
+  private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
   private static final String SSO_ENABLE_SESSION_PARAM = "knoxsso.enable.session";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
@@ -66,6 +67,7 @@ public class WebSSOResource {
   private long tokenTTL = 30000l;
   private String whitelist = null;
   private String domainSuffix = null;
+  private String[] targetAudiences = null;
   private boolean enableSession = false;
 
   @Context
@@ -104,6 +106,11 @@ public class WebSSOResource {
     if (whitelist == null) {
       // default to local/relative targets
       whitelist = DEFAULT_WHITELIST;
+    }
+
+    String audiences = context.getInitParameter(SSO_COOKIE_TOKEN_AUDIENCES_PARAM);
+    if (audiences != null) {
+      targetAudiences = audiences.split(",");
     }
 
     String ttl = context.getInitParameter(SSO_COOKIE_TOKEN_TTL_PARAM);
