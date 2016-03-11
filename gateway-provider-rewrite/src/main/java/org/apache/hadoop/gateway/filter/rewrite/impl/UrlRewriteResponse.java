@@ -32,7 +32,6 @@ import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 
 import javax.activation.MimeType;
 import javax.servlet.FilterConfig;
@@ -52,13 +51,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipException;
@@ -71,11 +63,7 @@ import static org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil.pickF
  */
 public class UrlRewriteResponse extends GatewayResponseWrapper implements Params, ResponseStreamer {
 
-  private static Logger LOGGER = Logger.getLogger( UrlRewriteResponse.class );
-
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
-
-  private static final ExecutorService DNS_LOOKUP_THREAD_POOL = Executors.newCachedThreadPool();
 
   // An 8K buffer better matches the underlying buffer sizes.
   // Testing with 16K made no appreciable difference.
@@ -227,45 +215,16 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     }
   }
 
-  private static class AsyncDnsRequest implements Callable<String> {
-    private String hostName;
-    public AsyncDnsRequest( String hostName ) {
-      this.hostName = hostName;
-    }
-    @Override
-    public String call() throws Exception {
-      String resolvedHostName = hostName;
-      try {
-        LOGGER.debug( "LOOKUP HOSTNAME FOR " + hostName );
-        resolvedHostName = InetAddress.getByName( hostName ).getHostName();
-        LOGGER.debug( "FOUND HOSTNAME " + resolvedHostName );
-      } catch( UnknownHostException e ) {
-        // Ignore it and use the original hostname.
-        LOGGER.debug( "FAILED TO RESOLVE " + hostName );
-        e.printStackTrace();
-      }
-      return resolvedHostName;
-    }
-  }
-
   // KNOX-464: Doing this because Jetty only returns the string version of the IP address for request.getLocalName().
   // Hopefully the local hostname will be cached so this will not be a significant performance hit.
   // Previously this was an inline request.getServerName() but this ended up mixing the hostname from the Host header
   // and the local port which was making load balancer configuration difficult if not impossible.
   private String getRequestLocalHostName() {
     String hostName = request.getLocalName();
-    Future<String> future = DNS_LOOKUP_THREAD_POOL.submit( new AsyncDnsRequest( hostName ) );
     try {
-      hostName = future.get( 100, TimeUnit.MILLISECONDS );
-    } catch( TimeoutException e ) {
-      LOGGER.debug( "TIMEOUT RESOLVING " + hostName );
-      e.printStackTrace();
-    } catch( InterruptedException e ) {
-      LOGGER.debug( "INTERRUPTED RESOLVING " + hostName );
-      e.printStackTrace();
-    } catch( ExecutionException e ) {
-      LOGGER.debug( "ERROR RESOLVING " + hostName );
-      e.printStackTrace();
+      hostName = InetAddress.getByName( hostName ).getHostName();
+    } catch( UnknownHostException e ) {
+      // Ignore it and use the original hostname.
     }
     return hostName;
   }

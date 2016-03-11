@@ -30,6 +30,7 @@ import org.apache.hadoop.gateway.config.Default;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -67,7 +68,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
   private Set<String> outboundResponseExcludeHeaders;
-  private Map<String,String> defaultCharsetforMimeTypes;
 
   private int replayBufferSize = -1;
 
@@ -77,13 +77,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     outboundResponseExcludeHeaders = new HashSet<>();
     outboundResponseExcludeHeaders.add(SET_COOKIE);
     outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
-
-    String utf8 = "UTF-8";
-    defaultCharsetforMimeTypes = new HashMap<>();
-    defaultCharsetforMimeTypes.put( "text/xml", utf8 );
-    defaultCharsetforMimeTypes.put( "text/json", utf8 );
-    defaultCharsetforMimeTypes.put( "application/xml", utf8 );
-    defaultCharsetforMimeTypes.put( "application/json", utf8 );
   }
 
   @Override
@@ -186,7 +179,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       if( entityContentType != null ) {
         if( entityContentType.getCharset() == null ) {
           final String entityMimeType = entityContentType.getMimeType();
-          final String defaultCharset = getDefaultCharsetForMimeType( entityMimeType );
+          final String defaultCharset = MimeTypes.getDefaultCharsetForMimeType( entityMimeType );
           if( defaultCharset != null ) {
             LOG.usingDefaultCharsetForEntity( entityMimeType, defaultCharset );
             entityContentType = entityContentType.withCharset( defaultCharset );
@@ -305,14 +298,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   public Set<String> getOutboundResponseExcludeHeaders() {
     return outboundResponseExcludeHeaders;
-  }
-
-  protected String getDefaultCharsetForMimeType( String mimeType ) {
-    String charset = null;
-    if( mimeType != null ) {
-      charset = defaultCharsetforMimeTypes.get( mimeType.trim().toLowerCase() );
-    }
-    return charset;
   }
 
 }

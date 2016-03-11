@@ -80,16 +80,6 @@ public class FrontendFunctionProcessorTest {
   private ArrayQueue<MockInteraction> interactions;
   private MockInteraction interaction;
 
-  private void execute() throws Exception {
-    System.out.println( "REQUEST=" + request );
-    ByteBuffer requestBuffer = request.generate();
-    System.out.println( "REQUEST-BUFFER=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
-    ByteBuffer responseBuffer = server.getResponses( requestBuffer );
-    response = HttpTester.parseResponse( responseBuffer );
-    System.out.println( "RESPONSE-BUFFER=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
-    System.out.println( "RESPONSE=" + response );
-  }
-
   @SuppressWarnings("rawtypes")
   @Test
   public void testServiceLoader() throws Exception {
@@ -203,7 +193,7 @@ public class FrontendFunctionProcessorTest {
     //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
-    execute();
+    response = TestUtils.execute( server, request );
 
     assertThat( response.getStatus(), Is.is( 200 ) );
 
@@ -248,7 +238,7 @@ public class FrontendFunctionProcessorTest {
     //request.setVersion( "HTTP/1.1" );
     request.setHeader( "Host", "test-host:42" );
 
-    execute();
+    response = TestUtils.execute( server, request );
 
     assertThat( response.getStatus(), Is.is( 200 ) );
 

@@ -21,7 +21,6 @@ import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteResponse;
 import org.apache.hadoop.gateway.util.MimeTypes;
-import org.apache.log4j.Logger;
 
 import javax.activation.MimeType;
 import javax.servlet.FilterChain;
@@ -35,8 +34,6 @@ import java.io.IOException;
  *
  */
 public class UrlRewriteServletFilter extends AbstractGatewayFilter {
-
-  Logger LOG = Logger.getLogger(UrlRewriteServletFilter.class.getName());
 
   public static final String REQUEST_URL_RULE_PARAM = "request.url";
   public static final String REQUEST_HEADERS_FILTER_PARAM = "request.headers";
@@ -57,13 +54,10 @@ public class UrlRewriteServletFilter extends AbstractGatewayFilter {
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain )
       throws IOException, ServletException {
-    LOG.debug("URL-REWRITE-SERVLET-FILTER:DO-FILTER: BEGIN");
     FilterConfig config = getConfig();
     UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( config, request );
     UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, rewriteRequest, response );
-    LOG.debug("URL-REWRITE-SERVLET-FILTER:DO-FILTER: FILTER");
     chain.doFilter( rewriteRequest, rewriteResponse );
-    LOG.debug("URL-REWRITE-SERVLET-FILTER:DO-FILTER: END");
   }
 
 }
