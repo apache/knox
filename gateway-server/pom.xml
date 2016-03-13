@@ -192,6 +192,22 @@
             <artifactId>joda-time</artifactId>
         </dependency>
 
+        <!--
+        These dependencies (jetty-annotations, apache-jsp, apache-jstl) are required for JSP support.
+        The need to be late in the classpath for some reason otherwise class loading issues occur.
+        -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>apache-jsp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>apache-jstl</artifactId>
+        </dependency>
 
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->

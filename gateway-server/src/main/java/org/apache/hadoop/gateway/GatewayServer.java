@@ -89,6 +89,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -365,6 +366,12 @@ public class GatewayServer {
     jetty.addConnector( createConnector( jetty, config ) );
     jetty.setHandler( createHandlers( config, services, contexts ) );
 
+    // Add Annotations processing into the Jetty server to support JSPs
+    Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
+    classlist.addBefore(
+        "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
+        "org.eclipse.jetty.annotations.AnnotationConfiguration" );
+
     // Load the current topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
@@ -431,6 +438,10 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
     context.setAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config );
+    // Add support for JSPs.
+    context.setAttribute(
+        "org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
+        ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
     return context;
