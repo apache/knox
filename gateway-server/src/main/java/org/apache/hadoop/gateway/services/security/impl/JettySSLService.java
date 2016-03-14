@@ -240,8 +240,15 @@ public class JettySSLService implements SSLService {
 
   private static KeyStore loadKeyStore( String fileName, String storeType, char[] storePass ) throws CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException {
     KeyStore keystore = KeyStore.getInstance(storeType);
+    //Coverity CID 1352655
     InputStream is = new FileInputStream(fileName);
-    keystore.load( is, storePass );
+    try {
+      keystore.load( is, storePass );
+    } finally {
+      if( is != null ) {
+        is.close();
+      }
+    }
     return keystore;
   }
 

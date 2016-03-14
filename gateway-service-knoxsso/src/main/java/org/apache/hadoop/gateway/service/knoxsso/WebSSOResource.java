@@ -27,6 +27,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -166,8 +167,10 @@ public class WebSSOResource {
 
     try {
       JWT token = ts.issueToken(p, "RS256", System.currentTimeMillis() + tokenTTL);
-
-      addJWTHadoopCookie(original, token);
+      // Coverity CID 1327959
+      if( token != null ) {
+        addJWTHadoopCookie( original, token );
+      }
 
       if (removeOriginalUrlCookie) {
         removeOriginalUrlCookie(response);
@@ -195,7 +198,11 @@ public class WebSSOResource {
 
     if (!enableSession) {
       // invalidate the session to avoid autologin
-      request.getSession(false).invalidate();
+      // Coverity CID 1352857
+      HttpSession session = request.getSession(false);
+      if( session != null ) {
+        session.invalidate();
+      }
     }
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();

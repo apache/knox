@@ -559,15 +559,25 @@ public abstract class DeploymentFactory {
       if( application == null ) {
         String servletName = context.getTopology().getName() + SERVLET_NAME_SUFFIX;
         ServletType<WebAppDescriptor> servlet = findServlet( context, servletName );
-        servlet.createInitParam()
-            .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
-            .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+        // Coverity CID 1352314
+        if( servlet == null ) {
+          throw new DeploymentException( "Missing servlet " + servletName );
+        } else {
+          servlet.createInitParam()
+              .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
+              .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+        }
       } else {
         String servletName = context.getTopology().getName() + FILTER_NAME_SUFFIX;
         FilterType<WebAppDescriptor> filter = findFilter( context, servletName );
-        filter.createInitParam()
-            .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
-            .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+        // Coverity CID 1352313
+        if( filter == null ) {
+          throw new DeploymentException( "Missing filter " + servletName );
+        } else {
+          filter.createInitParam()
+              .paramName( GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_PARAM )
+              .paramValue( "/WEB-INF/" + GatewayServlet.GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
+        }
       }
       if (gatewayServices != null) {
         gatewayServices.finalizeContribution(context);

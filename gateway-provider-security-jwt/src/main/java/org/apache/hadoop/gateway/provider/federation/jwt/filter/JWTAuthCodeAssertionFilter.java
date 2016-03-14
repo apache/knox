@@ -75,11 +75,14 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
         
         HashMap<String, Object> map = new HashMap<String, Object>();
         // TODO: populate map from JWT authorization code
-        map.put("iss", authCode.getIssuer());
-        map.put("sub", authCode.getPrincipal());
-        map.put("aud", authCode.getAudience());
-        map.put("exp", authCode.getExpires());
-        map.put("code", authCode.toString());
+        // Coverity CID 1327960
+        if( authCode != null ) {
+          map.put( "iss", authCode.getIssuer() );
+          map.put( "sub", authCode.getPrincipal() );
+          map.put( "aud", authCode.getAudience() );
+          map.put( "exp", authCode.getExpires() );
+          map.put( "code", authCode.toString() );
+        }
         if (url != null) {
           map.put("tke", url);
         }

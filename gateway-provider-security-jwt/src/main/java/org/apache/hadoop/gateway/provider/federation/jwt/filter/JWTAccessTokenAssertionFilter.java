@@ -150,11 +150,14 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     JWTToken token = null;
     try {
       token = authority.issueToken(p, serviceName, "RS256", expires);
+      // Coverity CID 1327961
+      if( token != null ) {
+        accessToken = token.toString();
+      }
     } catch (TokenServiceException e) {
       log.unableToIssueToken(e);
     }
-    accessToken = token.toString();
-    
+
     return accessToken;
   }
 

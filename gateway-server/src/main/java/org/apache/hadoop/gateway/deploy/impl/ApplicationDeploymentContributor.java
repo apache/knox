@@ -134,7 +134,10 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   private void contributeRewriteRules(DeploymentContext context, Service service) {
     if ( serviceRules != null ) {
       UrlRewriteRulesDescriptor clusterRules = context.getDescriptor("rewrite");
-      clusterRules.addRules(serviceRules);
+      // Coverity CID 1352312
+      if( clusterRules != null ) {
+        clusterRules.addRules( serviceRules );
+      }
     }
   }
 
