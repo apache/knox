@@ -27,5 +27,4 @@ public class ServiceLifecycleException extends Exception {
   public ServiceLifecycleException(String message, Exception e) {
     super(message, e);
   }
-
 }

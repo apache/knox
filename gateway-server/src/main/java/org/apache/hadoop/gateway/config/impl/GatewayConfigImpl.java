@@ -563,4 +563,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return d;
   }
 
+  @Override
+  public String getSigningKeystoreName() {
+    return get(SIGNING_KEYSTORE_NAME);
+  }
+
+  @Override
+  public String getSigningKeyAlias() {
+    return get(SIGNING_KEY_ALIAS);
+  }
 }

@@ -371,4 +371,20 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     backupAgeLimit = newBackupAgeLimit;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getSigningKeystoreName()
+   */
+  @Override
+  public String getSigningKeystoreName() {
+    return null;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getSigningKeyAlias()
+   */
+  @Override
+  public String getSigningKeyAlias() {
+    return null;
+  }
+
 }

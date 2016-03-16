@@ -55,6 +55,9 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
 
+  private String signingKeystoreName = null;
+  private String signingKeyAlias = null;
+
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
@@ -63,6 +66,32 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     if (!ksd.exists()) {
       if( !ksd.mkdirs() ) {
         throw new ServiceLifecycleException( RES.failedToCreateKeyStoreDirectory( ksd.getAbsolutePath() ) );
+      }
+    }
+
+    signingKeystoreName = config.getSigningKeystoreName();
+    // ensure that the keystore actually exists and fail to start if not
+    if (signingKeystoreName != null) {
+      File sks = new File(this.keyStoreDir, signingKeystoreName);
+      if (!sks.exists()) {
+        throw new ServiceLifecycleException("Configured signing keystore does not exist.");
+      }
+      signingKeyAlias = config.getSigningKeyAlias();
+      if (signingKeyAlias != null) {
+        // ensure that the signing key alias exists in the configured keystore
+        KeyStore ks;
+        try {
+          ks = getSigningKeystore();
+          if (ks != null) {
+            if (!ks.containsAlias(signingKeyAlias)) {
+              throw new ServiceLifecycleException("Configured signing key alias does not exist.");
+            }
+          }
+        } catch (KeystoreServiceException e) {
+          throw new ServiceLifecycleException("Unable to get the configured signing keystore.", e);
+        } catch (KeyStoreException e) {
+          throw new ServiceLifecycleException("Signing keystore has not been loaded.", e);
+        }
       }
     }
   }
@@ -86,7 +115,24 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
     return getKeystore(keyStoreFile, "JKS");
   }
-  
+
+  @Override
+  public KeyStore getSigningKeystore() throws KeystoreServiceException {
+    File  keyStoreFile = null;
+
+    if (signingKeystoreName == null) {
+      keyStoreFile = new File(keyStoreDir + GATEWAY_KEYSTORE);
+    }
+    else {
+      keyStoreFile = new File(keyStoreDir + signingKeystoreName);
+      // make sure the keystore exists
+      if (!keyStoreFile.exists()) {
+        throw new KeystoreServiceException("Configured signing keystore does not exist.");
+      }
+    }
+    return getKeystore(keyStoreFile, "JKS");
+  }
+
   @Override
   public void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException {
     addSelfSignedCertForGateway(alias, passphrase, null);
@@ -196,7 +242,29 @@ public class DefaultKeystoreService extends BaseKeystoreService implements Keyst
     }
     return key;
   }  
-  
+
+  @Override
+  public Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException {
+    Key key = null;
+    KeyStore ks = getSigningKeystore();
+    if (passphrase == null) {
+      passphrase = masterService.getMasterSecret();
+      LOG.assumingKeyPassphraseIsMaster();
+    }
+    if (ks != null) {
+      try {
+        key = ks.getKey(alias, passphrase);
+      } catch (UnrecoverableKeyException e) {
+        LOG.failedToGetKeyForGateway( alias, e );
+      } catch (KeyStoreException e) {
+        LOG.failedToGetKeyForGateway( alias, e );
+      } catch (NoSuchAlgorithmException e) {
+        LOG.failedToGetKeyForGateway( alias, e );
+      }
+    }
+    return key;
+  }
+
   public KeyStore getCredentialStoreForCluster(String clusterName) 
       throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );

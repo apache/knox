@@ -38,6 +38,8 @@ public interface GatewayConfig {
   public static final String KRB5_DEBUG = "sun.security.krb5.debug";
   public static final String KRB5_LOGIN_CONFIG = "java.security.auth.login.config";
   public static final String KRB5_USE_SUBJECT_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
+  public static final String SIGNING_KEYSTORE_NAME = "gateway.signing.keystore.name";
+  public static final String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
 
   /**
    * The location of the gateway configuration.
@@ -132,5 +134,9 @@ public interface GatewayConfig {
   int getGatewayDeploymentsBackupVersionLimit();
 
   long getGatewayDeploymentsBackupAgeLimit();
+
+  String getSigningKeystoreName();
+
+  String getSigningKeyAlias();
 
 }

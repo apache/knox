@@ -319,4 +319,20 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Long.MAX_VALUE;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getSigningKeystoreName()
+   */
+  @Override
+  public String getSigningKeystoreName() {
+    return null;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getSigningKeyAlias()
+   */
+  @Override
+  public String getSigningKeyAlias() {
+    return null;
+  }
+
 }

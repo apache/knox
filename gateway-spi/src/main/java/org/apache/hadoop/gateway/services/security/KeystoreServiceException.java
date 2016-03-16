@@ -24,4 +24,7 @@ public class KeystoreServiceException extends Exception {
     super(e);
   }
 
+  public KeystoreServiceException(String message) {
+    super(message);
+  }
 }
