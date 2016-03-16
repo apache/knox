@@ -166,7 +166,7 @@ public class WebSSOResource {
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
 
     try {
-      JWT token = ts.issueToken(p, "RS256", System.currentTimeMillis() + tokenTTL);
+      JWT token = ts.issueToken(p, "RS256", getExpiry());
       // Coverity CID 1327959
       if( token != null ) {
         addJWTHadoopCookie( original, token );
@@ -206,6 +206,17 @@ public class WebSSOResource {
     }
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
+  }
+
+  private long getExpiry() {
+    long expiry = 0l;
+    if (tokenTTL == -1) {
+      expiry = -1;
+    }
+    else {
+      expiry = System.currentTimeMillis() + tokenTTL;
+    }
+    return expiry;
   }
 
   private void addJWTHadoopCookie(String original, JWT token) {

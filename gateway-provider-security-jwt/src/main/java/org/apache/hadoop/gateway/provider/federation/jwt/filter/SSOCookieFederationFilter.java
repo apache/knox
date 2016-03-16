@@ -136,7 +136,10 @@ public class SSOCookieFederationFilter implements Filter {
         verified = authority.verifyToken(token);
         if (verified) {
           Date expires = token.getExpiresDate();
-          if (expires != null && new Date().before(expires)) {
+          // if there is no expiration data then the lifecycle is tied entirely to
+          // the cookie validity - otherwise ensure that the current time is before
+          // the designated expiration time
+          if (expires == null || expires != null && new Date().before(expires)) {
             boolean audValid = validateAudiences(token);
             if (audValid) {
               Subject subject = createSubjectFromToken(token);

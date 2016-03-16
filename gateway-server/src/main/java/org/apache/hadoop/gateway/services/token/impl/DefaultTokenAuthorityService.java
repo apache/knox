@@ -111,7 +111,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     claimArray[1] = p.getName();
     claimArray[2] = null;
     if (expires == -1) {
-      claimArray[3] = Long.toString( ( System.currentTimeMillis() ) + 30000);
+      claimArray[3] = null;
     }
     else {
       claimArray[3] = String.valueOf(expires);

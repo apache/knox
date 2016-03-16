@@ -17,10 +17,14 @@
  */
 package org.apache.hadoop.gateway.services.security.token.impl;
 
+import java.text.ParseException;
+
 import org.apache.hadoop.gateway.i18n.messages.Message;
 import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
 import org.apache.hadoop.gateway.i18n.messages.Messages;
 import org.apache.hadoop.gateway.i18n.messages.StackTrace;
+
+import com.nimbusds.jose.JOSEException;
 
 /**
  *
@@ -45,4 +49,13 @@ public interface JWTProviderMessages {
 
   @Message( level = MessageLevel.FATAL, text = "Unsupported encoding: {0}" )
   void unsupportedEncoding( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to parse JWT token: {0}" )
+  void unableToParseToken(ParseException e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to sign JWT token: {0}" )
+  void unableToSignToken(JOSEException e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to verify JWT token: {0}" )
+  void unableToVerifyToken(JOSEException e);
 }
