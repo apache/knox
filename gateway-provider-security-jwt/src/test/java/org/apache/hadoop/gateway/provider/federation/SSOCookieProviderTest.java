@@ -336,6 +336,41 @@ public class SSOCookieProviderTest  {
   }
 
   @Test
+  public void testValidJWTNoExpiration() throws Exception {
+    try {
+      ((TestSSOCookieFederationProvider) handler).setPublicKey(publicKey);
+
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("alice", null,
+          privateKey);
+
+      Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL));
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority());
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
+//      Assert.assertEquals("alice", token.getUserName());
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
   public void testOrigURLWithQueryString() throws Exception {
     Properties props = getProperties();
     handler.init(new TestFilterConfig(props));
