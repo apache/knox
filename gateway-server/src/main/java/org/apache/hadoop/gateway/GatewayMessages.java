@@ -344,6 +344,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using dnTemplate for principal: {1}" )
   void computedUserDn(String userDn, String principal);
 
+  @Message( level = MessageLevel.DEBUG, text = "Searching from {0} where {1} scope {2}" )
+  void searchBaseFilterScope( String searchBase, String searchFilter, String searchScope );
+
   @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using ldapSearch for principal: {1}" )
   void searchedAndFoundUserDn(String userDn, String principal);
 

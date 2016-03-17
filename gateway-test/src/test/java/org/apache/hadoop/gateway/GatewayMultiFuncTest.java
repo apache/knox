@@ -303,6 +303,150 @@ public class GatewayMultiFuncTest {
     LOG_EXIT();
   }
 
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testLdapSearchConfigEnhancementsKnox694() throws Exception {
+    LOG_ENTER();
+
+    String topoStr;
+    File topoFile;
+
+    String adminUName = "uid=admin,ou=people,dc=hadoop,dc=apache,dc=org";
+    String adminPWord = "admin-password";
+    String uname = "people\\guest";
+    String pword = "guest-password";
+    String invalidPword = "invalid-guest-password";
+
+    params = new Properties();
+    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_SYSTEM_USERNAME", adminUName );
+    params.put( "LDAP_SYSTEM_PASSWORD", adminPWord );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-user-dn-template.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-1.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .body( is( "test-service-response" ) )
+        .when().log().ifError().get( gatewayUrl + "/knox694-1/test-service-path/test-resource-path" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, invalidPword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-1/test-service-path/test-resource-path" );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-attribute.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-2.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .body( is( "test-service-response" ) )
+        .when().log().ifError().get( gatewayUrl + "/knox694-2/test-service-path/test-resource-path" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, invalidPword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-2/test-service-path/test-resource-path" );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-filter.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-3.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .body( is( "test-service-response" ) )
+        .when().log().ifError().get( gatewayUrl + "/knox694-3/test-service-path/test-resource-path" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, invalidPword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-3/test-service-path/test-resource-path" );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-object.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-4.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .body( is( "test-service-response" ) )
+        .when().log().ifError().get( gatewayUrl + "/knox694-4/test-service-path/test-resource-path" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, invalidPword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-4/test-service-path/test-resource-path" );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-onelevel-positive.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-5.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .body( is( "test-service-response" ) )
+        .when().log().ifError().get( gatewayUrl + "/knox694-5/test-service-path/test-resource-path" );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, invalidPword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-5/test-service-path/test-resource-path" );
+
+    topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-onelevel-negative.xml", params );
+    topoFile = new File( config.getGatewayTopologyDir(), "knox694-6.xml" );
+    FileUtils.writeStringToFile( topoFile, topoStr );
+    topos.reloadTopologies();
+
+    given()
+        //.log().all()
+        .auth().preemptive().basic( uname, pword )
+        .expect()
+        //.log().all()
+        .statusCode( HttpStatus.SC_UNAUTHORIZED )
+        .when().get( gatewayUrl + "/knox694-6/test-service-path/test-resource-path" );
+
+    LOG_EXIT();
+  }
+
 }
 
 

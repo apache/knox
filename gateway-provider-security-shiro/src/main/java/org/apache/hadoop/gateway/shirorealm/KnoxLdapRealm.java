@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.AuthenticationException;
 import javax.naming.NamingEnumeration;
@@ -124,10 +126,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
         AuditConstants.KNOX_COMPONENT_NAME );
 
+    private static Pattern TEMPLATE_PATTERN = Pattern.compile( "\\{(\\d+?)\\}" );
+    private static String DEFAULT_PRINCIPAL_REGEX = "(.*)";
     private static final String MEMBER_SUBSTITUTION_TOKEN = "{0}";
+
     private final static SearchControls SUBTREE_SCOPE = new SearchControls();
     private final static SearchControls ONELEVEL_SCOPE = new SearchControls();
-    
+    private final static SearchControls OBJECT_SCOPE = new SearchControls();
+
     private final static String  SUBJECT_USER_ROLES = "subject.userRoles";
     private final static String  SUBJECT_USER_GROUPS = "subject.userGroups";
 
@@ -140,11 +146,19 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
           ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+          OBJECT_SCOPE.setSearchScope( SearchControls.OBJECT_SCOPE );
       }
 
  
     private String searchBase;
     private String userSearchBase;
+    private String principalRegex = DEFAULT_PRINCIPAL_REGEX;
+    private Pattern principalPattern = Pattern.compile( DEFAULT_PRINCIPAL_REGEX );
+    private String userDnTemplate = "{0}";
+    private String userSearchFilter = null;
+    private String userSearchAttributeTemplate = "{0}";
+    private String userSearchScope = "subtree";
+
     private String groupSearchBase;
 
     private String groupObjectClass = "groupOfNames";
@@ -537,8 +551,71 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
     return member;
   }
-   
-    /**
+
+  public String getPrincipalRegex() {
+    return principalRegex;
+  }
+
+  public void setPrincipalRegex( String regex ) {
+    if( regex == null || regex.trim().isEmpty() ) {
+      principalPattern = Pattern.compile( DEFAULT_PRINCIPAL_REGEX );
+      principalRegex = DEFAULT_PRINCIPAL_REGEX;
+    } else {
+      regex = regex.trim();
+      Pattern pattern = Pattern.compile( regex );
+      principalPattern = pattern;
+      principalRegex = regex;
+    }
+  }
+
+  public String getUserSearchAttributeTemplate() {
+    return userSearchAttributeTemplate;
+  }
+
+  public void setUserSearchAttributeTemplate( final String template ) {
+    this.userSearchAttributeTemplate = ( template == null ? null : template.trim() );
+  }
+
+  public String getUserSearchFilter() {
+    return userSearchFilter;
+  }
+
+  public void setUserSearchFilter( final String filter ) {
+    this.userSearchFilter = ( filter == null ? null : filter.trim() );
+  }
+
+  public String getUserSearchScope() {
+    return userSearchScope;
+  }
+
+  public void setUserSearchScope( final String scope ) {
+    this.userSearchScope = ( scope == null ? null : scope.trim().toLowerCase() );
+  }
+
+  private SearchControls getUserSearchControls() {
+    SearchControls searchControls = SUBTREE_SCOPE;
+    if ( "onelevel".equalsIgnoreCase( userSearchScope ) ) {
+      searchControls = ONELEVEL_SCOPE;
+    } else if ( "object".equalsIgnoreCase( userSearchScope ) ) {
+      searchControls = OBJECT_SCOPE;
+    }
+    return searchControls;
+  }
+
+  @Override
+  public void setUserDnTemplate( final String template ) throws IllegalArgumentException {
+    userDnTemplate = template;
+  }
+
+  private Matcher matchPrincipal( final String principal ) {
+    Matcher matchedPrincipal = principalPattern.matcher( principal );
+    if( !matchedPrincipal.matches() ) {
+      throw new IllegalArgumentException( "Principal " + principal + " does not match " + principalRegex );
+    }
+    return matchedPrincipal;
+  }
+
+  /**
      * Returns the LDAP User Distinguished Name (DN) to use when acquiring an
      * {@link javax.naming.ldap.LdapContext LdapContext} from the {@link LdapContextFactory}.
      * <p/>
@@ -554,27 +631,50 @@ public class KnoxLdapRealm extends JndiLdapRealm {
      * @see LdapContextFactory#getLdapContext(Object, Object)
      */
     @Override
-    protected String getUserDn(String principal) throws IllegalArgumentException, IllegalStateException {
-      String userDn = null;
-      if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
-        userDn = super.getUserDn(principal);
-        LOG.computedUserDn(userDn, principal);
+    protected String getUserDn( final String principal ) throws IllegalArgumentException, IllegalStateException {
+      String userDn;
+      Matcher matchedPrincipal = matchPrincipal( principal );
+      String userSearchBase = getUserSearchBase();
+      String userSearchAttributeName = getUserSearchAttributeName();
+
+      // If not searching use the userDnTemplate and return.
+      if ( ( userSearchBase == null || userSearchBase.isEmpty() ) ||
+          ( userSearchAttributeName == null &&
+              userSearchFilter == null &&
+              !"object".equalsIgnoreCase( userSearchScope ) ) ) {
+        userDn = expandTemplate( userDnTemplate, matchedPrincipal );
+        LOG.computedUserDn( userDn, principal );
         return userDn;
       }
 
-      // search for userDn and return
+      // Create the searchBase and searchFilter from config.
+      String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal );
+      String searchFilter = null;
+      if ( userSearchFilter == null ) {
+        if ( userSearchAttributeName == null ) {
+          searchFilter = String.format( "(objectclass=%1$s)", getUserObjectClass() );
+        } else {
+          searchFilter = String.format(
+              "(&(objectclass=%1$s)(%2$s=%3$s))",
+              getUserObjectClass(),
+              userSearchAttributeName,
+              expandTemplate( getUserSearchAttributeTemplate(), matchedPrincipal ) );
+        }
+      } else {
+        searchFilter = expandTemplate( userSearchFilter, matchedPrincipal );
+      }
+      SearchControls searchControls = getUserSearchControls();
+
+      // Search for userDn and return.
       LdapContext systemLdapCtx = null;
       NamingEnumeration<SearchResult> searchResultEnum = null;
       try {
         systemLdapCtx = getContextFactory().getSystemLdapContext();
-        String searchFilter = String.format("(&(objectclass=%1$s)(%2$s=%3$s))",
-            userObjectClass, userSearchAttributeName, principal);
-        searchResultEnum = systemLdapCtx.search(
-            getUserSearchBase(),
-            searchFilter,
-            SUBTREE_SCOPE);
-        if (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
-          SearchResult searchResult =  searchResultEnum.next();
+        LOG.searchBaseFilterScope(searchBase, searchFilter, userSearchScope);
+        searchResultEnum = systemLdapCtx.search( searchBase, searchFilter, searchControls );
+        // SearchResults contains all the entries in search scope
+        if (searchResultEnum.hasMore()) {
+          SearchResult searchResult = searchResultEnum.next();
           userDn = searchResult.getNameInNamespace();
           LOG.searchedAndFoundUserDn(userDn, principal);
           return userDn;
@@ -592,6 +692,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
             searchResultEnum.close();
           }
         } catch (NamingException e) {
+          // Ignore exception on close.
         }
         finally {
           LdapUtils.closeContext(systemLdapCtx);
@@ -605,4 +706,18 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       Hash credentialsHash = hashService.computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
       return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
     }
+
+  private static final String expandTemplate( final String template, final Matcher input ) {
+    String output = template;
+    Matcher matcher = TEMPLATE_PATTERN.matcher( output );
+    while( matcher.find() ) {
+      String lookupStr = matcher.group( 1 );
+      int lookupIndex = Integer.parseInt( lookupStr );
+      String lookupValue = input.group( lookupIndex );
+      output = matcher.replaceFirst( lookupValue == null ? "" : lookupValue );
+      matcher = TEMPLATE_PATTERN.matcher( output );
+    }
+    return output;
+  }
+
 }
