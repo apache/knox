@@ -16,7 +16,6 @@
  */
 
 var loginURL = "/gateway/knoxsso/api/v1/websso?originalUrl=";
-var logoutURL = "/WebServices/LogOff";
 var userAgent = navigator.userAgent.toLowerCase();
 var firstLogIn = true;
 
@@ -42,15 +41,10 @@ var login = function() {
         request.onreadystatechange = function(){
             if (request.readyState == 4) {
                 if (request.status==200 || request.status==204 || request.status==307 || request.status==303) {
-                  // window.location.replace(originalUrl);
-                  // window.location = originalUrl;
                   try { window.location.replace(originalUrl); } 
                   catch(e) { window.location = originalUrl; }
                 }
                 else {
-                    // if (navigator.userAgent.toLowerCase().indexOf("firefox") != -1){
-                    //     logoff();
-                    // }
                   if (request.status==401) {
                     $('#errorBox').show();
                     $('#signInLoading').hide();
@@ -62,7 +56,6 @@ var login = function() {
         }
     }
 
-    var userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.indexOf("firefox") != -1){ //TODO: check version number
         if (firstLogIn) _login();
         else logoff(_login);
@@ -72,39 +65,4 @@ var login = function() {
     }
 
     if (firstLogIn) firstLogIn = false;
-}
-
-var logoff = function(callback){
-
-    if (userAgent.indexOf("msie") != -1) {
-        document.execCommand("ClearAuthenticationCache");
-    }
-    else if (userAgent.indexOf("firefox") != -1){ //TODO: check version number
-
-        var request1 = new XMLHttpRequest();
-        var request2 = new XMLHttpRequest();
-
-      //Logout. Tell the server not to return the "WWW-Authenticate" header
-        request1.open("GET", logoutURL + "?prompt=false", true);
-        request1.send("");
-        request1.onreadystatechange = function(){
-            if (request1.readyState == 4) {
-
-              //Login with dummy credentials to clear the auth cache
-                request2.open("GET", logoutURL, true, "logout", "logout");
-                request2.send("");
-
-                request2.onreadystatechange = function(){
-                    if (request2.readyState == 4) {
-                        if (callback!=null) callback.call();
-                    }
-                }
-            }
-        }
-    }
-    else {
-        var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
-        request.open("GET", logoutURL, true, "logout", "logout");
-        request.send("");
-    }
 }

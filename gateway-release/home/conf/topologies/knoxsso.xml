@@ -109,15 +109,15 @@
         <role>KNOXSSO</role>
         <param>
             <name>knoxsso.cookie.secure.only</name>
-            <value>false</value>
+            <value>true</value>
         </param>
         <param>
             <name>knoxsso.token.ttl</name>
-            <value>36000000</value>
+            <value>-1</value>
         </param>
         <param>
            <name>knoxsso.redirect.whitelist.regex</name>
-           <value>^https?:\/\/(www\.local\.com|localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
+           <value>^https?:\/\/(localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
         </param>
     </service>
 
