@@ -119,6 +119,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
   private static final String HTTP_CLIENT_MAX_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.maxConnections";
+  private static final String HTTP_CLIENT_CONNECTION_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.connectionTimeout";
+  private static final String HTTP_CLIENT_SOCKET_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.socketTimeout";
   private static final String THREAD_POOL_MAX = GATEWAY_CONFIG_FILE_PREFIX + ".threadpool.max";
   public static final String HTTP_SERVER_REQUEST_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestBuffer";
   public static final String HTTP_SERVER_REQUEST_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestHeaderBuffer";
@@ -500,6 +502,34 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getInt( HTTP_CLIENT_MAX_CONNECTION, 32 );
   }
 
+  @Override
+  public int getHttpClientConnectionTimeout() {
+    int t = -1;
+    String s = get( HTTP_CLIENT_CONNECTION_TIMEOUT, null );
+    if ( s != null ) {
+      try {
+        t = (int)parseNetworkTimeout( s );
+      } catch ( Exception e ) {
+        // Ignore it and use the default.
+      }
+    }
+    return t;
+  }
+
+  @Override
+  public int getHttpClientSocketTimeout() {
+    int t = -1;
+    String s = get( HTTP_CLIENT_SOCKET_TIMEOUT, null );
+    if ( s != null ) {
+      try {
+        t = (int)parseNetworkTimeout( s );
+      } catch ( Exception e ) {
+        // Ignore it and use the default.
+      }
+    }
+    return t;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getThreadPoolMax()
    */
@@ -572,4 +602,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public String getSigningKeyAlias() {
     return get(SIGNING_KEY_ALIAS);
   }
+
+  private static long parseNetworkTimeout( String s ) {
+    PeriodFormatter f = new PeriodFormatterBuilder()
+        .appendMinutes().appendSuffix("m"," min")
+        .appendSeconds().appendSuffix("s"," sec")
+        .appendMillis().toFormatter();
+    Period p = Period.parse( s, f );
+    return p.toStandardDuration().getMillis();
+  }
+
 }

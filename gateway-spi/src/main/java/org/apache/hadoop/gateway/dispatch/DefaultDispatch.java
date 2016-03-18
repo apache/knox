@@ -254,9 +254,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    @Override
    public void doGet(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException, URISyntaxException {
-     HttpGet method = new HttpGet(url);
+      HttpGet method = new HttpGet(url);
       // https://issues.apache.org/jira/browse/KNOX-107 - Service URLs not rewritten for WebHDFS GET redirects
-      method.getParams().setBooleanParameter("http.protocol.handle-redirects", false);
+      // This is now taken care of in DefaultHttpClientFactory.createHttpClient
+      // and setting params here causes configuration setup there to be ignored there.
+      // method.getParams().setBooleanParameter("http.protocol.handle-redirects", false);
       copyRequestHeaderFields(method, request);
       executeRequest(method, request, response);
    }

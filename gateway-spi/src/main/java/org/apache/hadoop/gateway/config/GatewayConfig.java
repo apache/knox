@@ -121,6 +121,10 @@ public interface GatewayConfig {
 
   int getHttpClientMaxConnections();
 
+  int getHttpClientConnectionTimeout();
+
+  int getHttpClientSocketTimeout();
+
   int getThreadPoolMax();
 
   int getHttpServerRequestBuffer();

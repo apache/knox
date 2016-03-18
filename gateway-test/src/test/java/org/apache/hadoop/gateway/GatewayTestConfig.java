@@ -326,6 +326,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getHttpClientConnectionTimeout() {
+    return -1;
+  }
+
+  @Override
+  public int getHttpClientSocketTimeout() {
+    return -1;
+  }
+
+  @Override
   public int getThreadPoolMax() {
     return 16;
   }

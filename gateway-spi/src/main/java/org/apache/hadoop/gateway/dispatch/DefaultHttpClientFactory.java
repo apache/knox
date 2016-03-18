@@ -30,17 +30,20 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 import javax.servlet.FilterConfig;
 import java.io.IOException;
@@ -72,15 +75,31 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
     builder.setKeepAliveStrategy( DefaultConnectionKeepAliveStrategy.INSTANCE );
     builder.setConnectionReuseStrategy( DefaultConnectionReuseStrategy.INSTANCE );
+    builder.setRedirectStrategy( new NeverRedirectStrategy() );
+    builder.setRetryHandler( new NeverRetryHandler() );
 
     int maxConnections = getMaxConnections( filterConfig );
     builder.setMaxConnTotal( maxConnections );
     builder.setMaxConnPerRoute( maxConnections );
 
-    return builder
-        .setRedirectStrategy(new NeverRedirectStrategy())
-        .setRetryHandler(new NeverRetryHandler())
-        .build();
+    builder.setDefaultRequestConfig( getRequestConfig( filterConfig ) );
+
+    HttpClient client = builder.build();
+    return client;
+  }
+
+  private static RequestConfig getRequestConfig( FilterConfig config ) {
+    RequestConfig.Builder builder = RequestConfig.custom();
+    int connectionTimeout = getConnectionTimeout( config );
+    if ( connectionTimeout != -1 ) {
+      builder.setConnectTimeout( connectionTimeout );
+      builder.setConnectionRequestTimeout( connectionTimeout );
+    }
+    int socketTimeout = getSocketTimeout( config );
+    if( socketTimeout != -1 ) {
+      builder.setSocketTimeout( socketTimeout );
+    }
+    return builder.build();
   }
 
   private class NoCookieStore implements CookieStore {
@@ -154,6 +173,51 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       }
     }
     return maxConnections;
+  }
+
+  private static int getConnectionTimeout( FilterConfig filterConfig ) {
+    int timeout = -1;
+    GatewayConfig globalConfig =
+        (GatewayConfig)filterConfig.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
+    if( globalConfig != null ) {
+      timeout = globalConfig.getHttpClientConnectionTimeout();
+    }
+    String str = filterConfig.getInitParameter( "httpclient.connectionTimeout" );
+    if( str != null ) {
+      try {
+        timeout = (int)parseTimeout( str );
+      } catch ( Exception e ) {
+        // Ignore it and use the default.
+      }
+    }
+    return timeout;
+  }
+
+  private static int getSocketTimeout( FilterConfig filterConfig ) {
+    int timeout = -1;
+    GatewayConfig globalConfig =
+        (GatewayConfig)filterConfig.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
+    if( globalConfig != null ) {
+      timeout = globalConfig.getHttpClientSocketTimeout();
+    }
+    String str = filterConfig.getInitParameter( "httpclient.socketTimeout" );
+    if( str != null ) {
+      try {
+        timeout = (int)parseTimeout( str );
+      } catch ( Exception e ) {
+        // Ignore it and use the default.
+      }
+    }
+    return timeout;
+  }
+
+  private static long parseTimeout( String s ) {
+    PeriodFormatter f = new PeriodFormatterBuilder()
+        .appendMinutes().appendSuffix("m"," min")
+        .appendSeconds().appendSuffix("s"," sec")
+        .appendMillis().toFormatter();
+    Period p = Period.parse( s, f );
+    return p.toStandardDuration().getMillis();
   }
 
 }
