@@ -1,0 +1,410 @@
+{
+  "items": [
+    {
+      "ServiceComponentInfo": {
+        "component_name": "HBASE_MASTER",
+        "service_name": "HBASE"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "HBASE_MASTER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "INSTALLED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "NAMENODE",
+        "service_name": "HDFS"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "NAMENODE",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          },
+          "metrics": {
+            "dfs": {
+              "FSNamesystem": {
+                "BlockCapacity": 2097152,
+                "BlocksTotal": 54,
+                "CapacityNonDFSUsed": 35660591104,
+                "CapacityRemaining": 488078696448,
+                "CapacityRemainingGB": 455.0,
+                "CapacityTotal": 524208947200,
+                "CapacityTotalGB": 488.0,
+                "CapacityUsed": 469659648,
+                "CapacityUsedGB": 0.0,
+                "CorruptBlocks": 0,
+                "ExcessBlocks": 0,
+                "ExpiredHeartbeats": 0,
+                "FilesTotal": 163,
+                "HAState": "active",
+                "LastCheckpointTime": 1458249036957,
+                "LastWrittenTransactionId": 8188,
+                "MillisSinceLastLoadedEdits": 0,
+                "MissingBlocks": 0,
+                "MissingReplOneBlocks": 0,
+                "PendingDataNodeMessageCount": 0,
+                "PendingDeletionBlocks": 0,
+                "PendingReplicationBlocks": 0,
+                "PostponedMisreplicatedBlocks": 0,
+                "ScheduledReplicationBlocks": 0,
+                "Snapshots": 0,
+                "SnapshottableDirectories": 0,
+                "StaleDataNodes": 0,
+                "TotalFiles": 163,
+                "TotalLoad": 2,
+                "TransactionsSinceLastCheckpoint": 593,
+                "TransactionsSinceLastLogRoll": 593,
+                "UnderReplicatedBlocks": 54
+              },
+              "namenode": {
+                "DeadNodes": "{}",
+                "DecomNodes": "{}",
+                "LiveNodes": "{\"c6401.ambari.apache.org:50010\":{\"infoAddr\":\"192.168.64.101:50075\",\"infoSecureAddr\":\"192.168.64.101:0\",\"xferaddr\":\"192.168.64.101:50010\",\"lastContact\":1,\"usedSpace\":469659648,\"adminState\":\"In Service\",\"nonDfsUsedSpace\":35660591104,\"capacity\":524208947200,\"numBlocks\":54,\"version\":\"2.7.1.2.3.4.0-3485\",\"used\":469659648,\"remaining\":488078696448,\"blockScheduled\":0,\"blockPoolUsed\":469659648,\"blockPoolUsedPercent\":0.08959398,\"volfails\":0}}",
+                "Safemode": "",
+                "TotalFiles": 163,
+                "UpgradeFinalized": true,
+                "Version": "2.7.1.2.3.4.0-3485, ref0582ca14b8177a3cbb6376807545272677d730"
+              }
+            },
+            "jvm": {
+              "HeapMemoryMax": 1060372480,
+              "HeapMemoryUsed": 76247256,
+              "memHeapCommittedM": 1011.25,
+              "memHeapUsedM": 72.30267
+            },
+            "rpc": {
+              "RpcQueueTime_avg_time": 0.0
+            },
+            "runtime": {
+              "StartTime": 1458141632197
+            }
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "SECONDARY_NAMENODE",
+        "service_name": "HDFS"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "SECONDARY_NAMENODE",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "HIVE_METASTORE",
+        "service_name": "HIVE"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "HIVE_METASTORE",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "HIVE_SERVER",
+        "service_name": "HIVE"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "HIVE_SERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "MYSQL_SERVER",
+        "service_name": "HIVE"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "MYSQL_SERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "WEBHCAT_SERVER",
+        "service_name": "HIVE"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "WEBHCAT_SERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "KNOX_GATEWAY",
+        "service_name": "KNOX"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "KNOX_GATEWAY",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "HISTORYSERVER",
+        "service_name": "MAPREDUCE2"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "HISTORYSERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "RANGER_ADMIN",
+        "service_name": "RANGER"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "RANGER_ADMIN",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "RANGER_USERSYNC",
+        "service_name": "RANGER"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "RANGER_USERSYNC",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "SPARK_JOBHISTORYSERVER",
+        "service_name": "SPARK"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "SPARK_JOBHISTORYSERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "APP_TIMELINE_SERVER",
+        "service_name": "YARN"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "APP_TIMELINE_SERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "RESOURCEMANAGER",
+        "service_name": "YARN"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "RESOURCEMANAGER",
+            "ha_state": "ACTIVE",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          },
+          "metrics": {
+            "jvm": {
+              "HeapMemoryMax": 1037959168,
+              "HeapMemoryUsed": 35935488,
+              "memHeapCommittedM": 44.6875,
+              "memHeapUsedM": 33.870148
+            },
+            "rpc": {
+              "RpcQueueTime_avg_time": 0.14285714285714285
+            },
+            "runtime": {
+              "StartTime": 1458074932210
+            },
+            "yarn": {
+              "ClusterMetrics": {
+                "NumActiveNMs": 1,
+                "NumDecommissionedNMs": 0,
+                "NumLostNMs": 0,
+                "NumRebootedNMs": 0,
+                "NumUnhealthyNMs": 0
+              },
+              "Queue": {
+                "root": {
+                  "AMResourceLimitMB": 0,
+                  "AMResourceLimitVCores": 0,
+                  "ActiveApplications": 0,
+                  "ActiveUsers": 0,
+                  "AggregateContainersAllocated": 19,
+                  "AggregateContainersReleased": 19,
+                  "AllocatedContainers": 0,
+                  "AllocatedMB": 0,
+                  "AllocatedVCores": 0,
+                  "AppAttemptFirstContainerAllocationDelayAvgTime": 0.0,
+                  "AppAttemptFirstContainerAllocationDelayNumOps": 0,
+                  "AppsCompleted": 6,
+                  "AppsFailed": 0,
+                  "AppsKilled": 0,
+                  "AppsPending": 0,
+                  "AppsRunning": 0,
+                  "AppsSubmitted": 6,
+                  "AvailableMB": 512,
+                  "AvailableVCores": 1,
+                  "PendingContainers": 0,
+                  "PendingMB": 0,
+                  "PendingVCores": 0,
+                  "ReservedContainers": 0,
+                  "ReservedMB": 0,
+                  "ReservedVCores": 0,
+                  "UsedAMResourceMB": 0,
+                  "UsedAMResourceVCores": 0,
+                  "running_0": 0,
+                  "running_1440": 0,
+                  "running_300": 0,
+                  "running_60": 0,
+                  "default": {
+                    "AMResourceLimitMB": 170,
+                    "AMResourceLimitVCores": 1,
+                    "ActiveApplications": 0,
+                    "ActiveUsers": 0,
+                    "AggregateContainersAllocated": 19,
+                    "AggregateContainersReleased": 19,
+                    "AllocatedContainers": 0,
+                    "AllocatedMB": 0,
+                    "AllocatedVCores": 0,
+                    "AppAttemptFirstContainerAllocationDelayAvgTime": 0.0,
+                    "AppAttemptFirstContainerAllocationDelayNumOps": 0,
+                    "AppsCompleted": 6,
+                    "AppsFailed": 0,
+                    "AppsKilled": 0,
+                    "AppsPending": 0,
+                    "AppsRunning": 0,
+                    "AppsSubmitted": 6,
+                    "AvailableMB": 512,
+                    "AvailableVCores": 1,
+                    "PendingContainers": 0,
+                    "PendingMB": 0,
+                    "PendingVCores": 0,
+                    "ReservedContainers": 0,
+                    "ReservedMB": 0,
+                    "ReservedVCores": 0,
+                    "UsedAMResourceMB": 0,
+                    "UsedAMResourceVCores": 0,
+                    "running_0": 0,
+                    "running_1440": 0,
+                    "running_300": 0,
+                    "running_60": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "ServiceComponentInfo": {
+        "component_name": "ZOOKEEPER_SERVER",
+        "service_name": "ZOOKEEPER"
+      },
+      "host_components": [
+        {
+          "HostRoles": {
+            "component_name": "ZOOKEEPER_SERVER",
+            "host_name": "c6401.ambari.apache.org",
+            "maintenance_state": "OFF",
+            "stale_configs": false,
+            "state": "STARTED"
+          }
+        }
+      ]
+    }
+  ]
+}

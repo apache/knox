@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway.util.urltemplate;
 
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -29,9 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertNotNull;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.junit.Assert.assertThat;
@@ -429,7 +426,7 @@ public class ExpanderTest {
     outputUri = Expander.expand( template, match.getParams(), evaluator );
     assertThat(
         outputUri.toString(),
-        equalToIgnoringCase( "https://webhcatTestHost.com:50111/templeton/v1/?version/hive" ) );
+        equalToIgnoringCase( "https://webhcatTestHost.com:50111/templeton/v1/?version%2Fhive" ) );
 
   }
 

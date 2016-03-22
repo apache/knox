@@ -19,6 +19,9 @@ package org.apache.hadoop.test.mock;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -35,9 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
@@ -264,34 +265,24 @@ public class MockRequestMatcher {
     // body and we don't want that to happen.
     if( queryParams != null ) {
       String queryString = request.getQueryString();
-      Map<String,String[]> requestParams = parseQueryString( queryString == null ? "" : queryString );
+      List<NameValuePair> requestParams = parseQueryString( queryString == null ? "" : queryString );
       for( String name: queryParams.keySet() ) {
-        String[] values = requestParams.get( name );
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
                 " query string " + queryString + " is missing parameter '" + name + "'",
-            values, notNullValue() );
-        assertThat(
-            "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " query string " + queryString + " is missing a value for parameter '" + name + "'",
-            Arrays.asList( values ), hasItem( queryParams.get( name ) ) );
+            requestParams, hasItem( new BasicNameValuePair(name, queryParams.get(name))) );
       }
     }
     if( formParams != null ) {
       String paramString = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
-      Map<String,String[]> requestParams = parseQueryString( paramString == null ? "" : paramString );
+      List<NameValuePair> requestParams = parseQueryString( paramString == null ? "" : paramString );
       for( String name: formParams.keySet() ) {
-        String[] actualValues = requestParams.get( name );
-        assertThat(
-            "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " form params " + paramString + " is missing parameter '" + name + "'",
-            actualValues, notNullValue() );
         String[] expectedValues = formParams.get( name );
         for( String expectedValue : expectedValues ) {
           assertThat(
               "Request " + request.getMethod() + " " + request.getRequestURL() +
                   " form params " + paramString + " is missing a value " + expectedValue + " for parameter '" + name + "'",
-              Arrays.asList( actualValues ), hasItem( expectedValue ) );
+              requestParams, hasItem( new BasicNameValuePair(name, expectedValue ) ));
         }
       }
     }
@@ -331,10 +322,8 @@ public class MockRequestMatcher {
     return "from=" + from + ", pathInfo=" + pathInfo;
   }
 
-  // Separate method to minimally scope the depreciation suppression.
-  @SuppressWarnings("deprecation")
-  private static Map<String,String[]> parseQueryString( String queryString ) {
-    return javax.servlet.http.HttpUtils.parseQueryString( queryString );
+  private static List<NameValuePair> parseQueryString( String queryString ) {
+    return URLEncodedUtils.parse(queryString, Charset.defaultCharset());
   }
 
 }

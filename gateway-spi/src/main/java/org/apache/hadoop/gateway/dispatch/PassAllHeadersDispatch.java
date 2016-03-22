@@ -18,9 +18,19 @@
 package org.apache.hadoop.gateway.dispatch;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PassAllHeadersDispatch extends DefaultDispatch {
+
+  private static Set<String> REQUEST_EXCLUDE_HEADERS;
+
+  @Override
+  public void init() {
+    super.init();
+    REQUEST_EXCLUDE_HEADERS = new HashSet<>();
+    REQUEST_EXCLUDE_HEADERS.add("Content-Length");
+  }
 
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {
@@ -29,6 +39,6 @@ public class PassAllHeadersDispatch extends DefaultDispatch {
 
   @Override
   public Set<String> getOutboundRequestExcludeHeaders() {
-    return Collections.EMPTY_SET;
+    return REQUEST_EXCLUDE_HEADERS;
   }
 }

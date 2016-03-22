@@ -82,4 +82,6 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.TRACE, text = "No rule matching URL: {0}, direction: {1}" )
   void noRuleMatchingUrl( Template inputUri, UrlRewriter.Direction direction );
 
+  @Message( level = MessageLevel.TRACE, text = "Failed to decode query string: {0}" )
+  void failedToDecodeQueryString( String queryString, @StackTrace(level = MessageLevel.TRACE) Exception exception );
 }

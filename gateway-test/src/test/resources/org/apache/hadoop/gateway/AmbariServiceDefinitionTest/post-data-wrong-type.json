@@ -1,0 +1,421 @@
+{
+  "recommend": "configurations",
+  "hosts": [
+    "c6401.ambari.apache.org"
+  ],
+  "services": [
+    "HBASE",
+    "HDFS",
+    "HIVE",
+    "KNOX",
+    "MAPREDUCE2",
+    "PIG",
+    "RANGER",
+    "SPARK",
+    "TEZ",
+    "YARN",
+    "ZOOKEEPER"
+  ],
+  "recommendations": {
+    "blueprint": {
+      "host_groups": [
+        {
+          "name": "host-group-1",
+          "components": [
+            {
+              "name": "HBASE_CLIENT"
+            },
+            {
+              "name": "HDFS_CLIENT"
+            },
+            {
+              "name": "HCAT"
+            },
+            {
+              "name": "HIVE_CLIENT"
+            },
+            {
+              "name": "MAPREDUCE2_CLIENT"
+            },
+            {
+              "name": "PIG"
+            },
+            {
+              "name": "SPARK_CLIENT"
+            },
+            {
+              "name": "TEZ_CLIENT"
+            },
+            {
+              "name": "YARN_CLIENT"
+            },
+            {
+              "name": "ZOOKEEPER_CLIENT"
+            },
+            {
+              "name": "HBASE_REGIONSERVER"
+            },
+            {
+              "name": "DATANODE"
+            },
+            {
+              "name": "NODEMANAGER"
+            },
+            {
+              "name": "HBASE_MASTER"
+            },
+            {
+              "name": "NAMENODE"
+            },
+            {
+              "name": "SECONDARY_NAMENODE"
+            },
+            {
+              "name": "HIVE_METASTORE"
+            },
+            {
+              "name": "HIVE_SERVER"
+            },
+            {
+              "name": "MYSQL_SERVER"
+            },
+            {
+              "name": "WEBHCAT_SERVER"
+            },
+            {
+              "name": "KNOX_GATEWAY"
+            },
+            {
+              "name": "HISTORYSERVER"
+            },
+            {
+              "name": "RANGER_ADMIN"
+            },
+            {
+              "name": "RANGER_USERSYNC"
+            },
+            {
+              "name": "SPARK_JOBHISTORYSERVER"
+            },
+            {
+              "name": "APP_TIMELINE_SERVER"
+            },
+            {
+              "name": "RESOURCEMANAGER"
+            },
+            {
+              "name": "ZOOKEEPER_SERVER"
+            }
+          ]
+        }
+      ],
+      "configurations": {
+        "hbase-env": {
+          "properties": {
+            "hbase_regionserver_heapsize": "1024",
+            "hbase_master_heapsize": "1024",
+            "hbase_user": "hbase",
+            "hbase_regionserver_xmn_max": "512",
+            "hbase_regionserver_xmn_ratio": "0.2",
+            "hbase_log_dir": "/var/log/hbase",
+            "hbase_user_nofile_limit": "32000",
+            "hbase_user_nproc_limit": "16000",
+            "phoenix_sql_enabled": "false",
+            "content": "\n# Set environment variables here.\n\n# The java implementation to use. Java 1.6 required.\nexport JAVA_HOME={{java64_home}}\n\n# HBase Configuration directory\nexport HBASE_CONF_DIR=${HBASE_CONF_DIR:-{{hbase_conf_dir}}}\n\n# Extra Java CLASSPATH elements. Optional.\nexport HBASE_CLASSPATH=${HBASE_CLASSPATH}\n\n\n# The maximum amount of heap to use, in MB. Default is 1000.\n# export HBASE_HEAPSIZE=1000\n\n# Extra Java runtime options.\n# Below are what we set by default. May only work with SUN JVM.\n# For more on why as well as other possible settings,\n# see http://wiki.apache.org/hadoop/PerformanceTuning\nexport SERVER_GC_OPTS=\"-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:{{log_dir}}/gc.log-`date +'%Y%m%d%H%M'`\"\n# Uncomment below to enable java garbage collection logging.\n# export HBASE_OPTS=\"$HBASE_OPTS -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:$HBASE_HOME/logs/gc-hbase.log\"\n\n# Uncomment and adjust to enable JMX exporting\n# See jmxremote.password and jmxremote.access in $JRE_HOME/lib/management to configure remote password access.\n# More details at: http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html\n#\n# export HBASE_JMX_BASE=\"-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false\"\n# If you want to configure BucketCache, specify '-XX: MaxDirectMemorySize=' with proper direct memory size\n# export HBASE_THRIFT_OPTS=\"$HBASE_JMX_BASE -Dcom.sun.management.jmxremote.port=10103\"\n# export HBASE_ZOOKEEPER_OPTS=\"$HBASE_JMX_BASE -Dcom.sun.management.jmxremote.port=10104\"\n\n# File naming hosts on which HRegionServers will run. $HBASE_HOME/conf/regionservers by default.\nexport HBASE_REGIONSERVERS=${HBASE_CONF_DIR}/regionservers\n\n# Extra ssh options. Empty by default.\n# export HBASE_SSH_OPTS=\"-o ConnectTimeout=1 -o SendEnv=HBASE_CONF_DIR\"\n\n# Where log files are stored. $HBASE_HOME/logs by default.\nexport HBASE_LOG_DIR={{log_dir}}\n\n# A string representing this instance of hbase. $USER by default.\n# export HBASE_IDENT_STRING=$USER\n\n# The scheduling priority for daemon processes. See 'man nice'.\n# export HBASE_NICENESS=10\n\n# The directory where pid files are stored. /tmp by default.\nexport HBASE_PID_DIR={{pid_dir}}\n\n# Seconds to sleep between slave commands. Unset by default. This\n# can be useful in large clusters, where, e.g., slave rsyncs can\n# otherwise arrive faster than the master can service them.\n# export HBASE_SLAVE_SLEEP=0.1\n\n# Tell HBase whether it should manage it's own instance of Zookeeper or not.\nexport HBASE_MANAGES_ZK=false\n\n{% if java_version < 8 %}\nJDK_DEPENDED_OPTS=\"-XX:PermSize=128m -XX:MaxPermSize=128m\"\n{% endif %}\n      \n{% if security_enabled %}\nexport HBASE_OPTS=\"$HBASE_OPTS -XX:+UseConcMarkSweepGC -XX:ErrorFile={{log_dir}}/hs_err_pid%p.log -Djava.security.auth.login.config={{client_jaas_config_file}} -Djava.io.tmpdir={{java_io_tmpdir}}\"\nexport HBASE_MASTER_OPTS=\"$HBASE_MASTER_OPTS -Xmx{{master_heapsize}} -Djava.security.auth.login.config={{master_jaas_config_file}} $JDK_DEPENDED_OPTS\"\nexport HBASE_REGIONSERVER_OPTS=\"$HBASE_REGIONSERVER_OPTS -Xmn{{regionserver_xmn_size}} -XX:CMSInitiatingOccupancyFraction=70  -Xms{{regionserver_heapsize}} -Xmx{{regionserver_heapsize}} -Djava.security.auth.login.config={{regionserver_jaas_config_file}} $JDK_DEPENDED_OPTS\"\nexport PHOENIX_QUERYSERVER_OPTS=\"$PHOENIX_QUERYSERVER_OPTS -Djava.security.auth.login.config={{queryserver_jaas_config_file}}\"\n{% else %}\nexport HBASE_OPTS=\"$HBASE_OPTS -XX:+UseConcMarkSweepGC -XX:ErrorFile={{log_dir}}/hs_err_pid%p.log -Djava.io.tmpdir={{java_io_tmpdir}}\"\nexport HBASE_MASTER_OPTS=\"$HBASE_MASTER_OPTS -Xmx{{master_heapsize}} $JDK_DEPENDED_OPTS\"\nexport HBASE_REGIONSERVER_OPTS=\"$HBASE_REGIONSERVER_OPTS -Xmn{{regionserver_xmn_size}} -XX:CMSInitiatingOccupancyFraction=70  -Xms{{regionserver_heapsize}} -Xmx{{regionserver_heapsize}} $JDK_DEPENDED_OPTS\"\n{% endif %}\n\n# HBase off-heap MaxDirectMemorySize\nexport HBASE_REGIONSERVER_OPTS=\"$HBASE_REGIONSERVER_OPTS {% if hbase_max_direct_memory_size %} -XX:MaxDirectMemorySize={{hbase_max_direct_memory_size}}m {% endif %}\"",
+            "hbase_pid_dir": "/var/run/hbase",
+            "hbase_java_io_tmpdir": "/tmp"
+          }
+        },
+        "hbase-log4j": {
+          "properties": {
+            "content": "\n# Licensed to the Apache Software Foundation (ASF) under one\n# or more contributor license agreements.  See the NOTICE file\n# distributed with this work for additional information\n# regarding copyright ownership.  The ASF licenses this file\n# to you under the Apache License, Version 2.0 (the\n# \"License\"); you may not use this file except in compliance\n# with the License.  You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n\n# Define some default values that can be overridden by system properties\nhbase.root.logger=INFO,console\nhbase.security.logger=INFO,console\nhbase.log.dir=.\nhbase.log.file=hbase.log\n\n# Define the root logger to the system property \"hbase.root.logger\".\nlog4j.rootLogger=${hbase.root.logger}\n\n# Logging Threshold\nlog4j.threshold=ALL\n\n#\n# Daily Rolling File Appender\n#\nlog4j.appender.DRFA=org.apache.log4j.DailyRollingFileAppender\nlog4j.appender.DRFA.File=${hbase.log.dir}/${hbase.log.file}\n\n# Rollver at midnight\nlog4j.appender.DRFA.DatePattern=.yyyy-MM-dd\n\n# 30-day backup\n#log4j.appender.DRFA.MaxBackupIndex=30\nlog4j.appender.DRFA.layout=org.apache.log4j.PatternLayout\n\n# Pattern format: Date LogLevel LoggerName LogMessage\nlog4j.appender.DRFA.layout.ConversionPattern=%d{ISO8601} %-5p [%t] %c{2}: %m%n\n\n# Rolling File Appender properties\nhbase.log.maxfilesize=256MB\nhbase.log.maxbackupindex=20\n\n# Rolling File Appender\nlog4j.appender.RFA=org.apache.log4j.RollingFileAppender\nlog4j.appender.RFA.File=${hbase.log.dir}/${hbase.log.file}\n\nlog4j.appender.RFA.MaxFileSize=${hbase.log.maxfilesize}\nlog4j.appender.RFA.MaxBackupIndex=${hbase.log.maxbackupindex}\n\nlog4j.appender.RFA.layout=org.apache.log4j.PatternLayout\nlog4j.appender.RFA.layout.ConversionPattern=%d{ISO8601} %-5p [%t] %c{2}: %m%n\n\n#\n# Security audit appender\n#\nhbase.security.log.file=SecurityAuth.audit\nhbase.security.log.maxfilesize=256MB\nhbase.security.log.maxbackupindex=20\nlog4j.appender.RFAS=org.apache.log4j.RollingFileAppender\nlog4j.appender.RFAS.File=${hbase.log.dir}/${hbase.security.log.file}\nlog4j.appender.RFAS.MaxFileSize=${hbase.security.log.maxfilesize}\nlog4j.appender.RFAS.MaxBackupIndex=${hbase.security.log.maxbackupindex}\nlog4j.appender.RFAS.layout=org.apache.log4j.PatternLayout\nlog4j.appender.RFAS.layout.ConversionPattern=%d{ISO8601} %p %c: %m%n\nlog4j.category.SecurityLogger=${hbase.security.logger}\nlog4j.additivity.SecurityLogger=false\n#log4j.logger.SecurityLogger.org.apache.hadoop.hbase.security.access.AccessController=TRACE\n\n#\n# Null Appender\n#\nlog4j.appender.NullAppender=org.apache.log4j.varia.NullAppender\n\n#\n# console\n# Add \"console\" to rootlogger above if you want to use this\n#\nlog4j.appender.console=org.apache.log4j.ConsoleAppender\nlog4j.appender.console.target=System.err\nlog4j.appender.console.layout=org.apache.log4j.PatternLayout\nlog4j.appender.console.layout.ConversionPattern=%d{ISO8601} %-5p [%t] %c{2}: %m%n\n\n# Custom Logging levels\n\nlog4j.logger.org.apache.zookeeper=INFO\n#log4j.logger.org.apache.hadoop.fs.FSNamesystem=DEBUG\nlog4j.logger.org.apache.hadoop.hbase=INFO\n# Make these two classes INFO-level. Make them DEBUG to see more zk debug.\nlog4j.logger.org.apache.hadoop.hbase.zookeeper.ZKUtil=INFO\nlog4j.logger.org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher=INFO\n#log4j.logger.org.apache.hadoop.dfs=DEBUG\n# Set this class to log INFO only otherwise its OTT\n# Enable this to get detailed connection error/retry logging.\n# log4j.logger.org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation=TRACE\n\n\n# Uncomment this line to enable tracing on _every_ RPC call (this can be a lot of output)\n#log4j.logger.org.apache.hadoop.ipc.HBaseServer.trace=DEBUG\n\n# Uncomment the below if you want to remove logging of client region caching'\n# and scan of .META. messages\n# log4j.logger.org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation=INFO\n# log4j.logger.org.apache.hadoop.hbase.client.MetaScanner=INFO"
+          }
+        },
+        "hbase-policy": {
+          "properties": {
+            "security.admin.protocol.acl": "*",
+            "security.client.protocol.acl": "*",
+            "security.masterregion.protocol.acl": "*"
+          }
+        },
+        "hbase-site": {
+          "properties": {
+            "hbase.hstore.compactionThreshold": "3",
+            "hfile.block.cache.size": "0.4",
+            "hbase.hregion.max.filesize": "10737418240",
+            "hbase.regionserver.handler.count": "30",
+            "hbase.hregion.majorcompaction": "604800000",
+            "hbase.client.scanner.caching": "100",
+            "hbase.hregion.memstore.block.multiplier": "4",
+            "zookeeper.session.timeout": "90000",
+            "hbase.client.keyvalue.maxsize": "1048576",
+            "hbase.hregion.memstore.flush.size": "134217728",
+            "hbase.coprocessor.master.classes": "",
+            "hbase.coprocessor.region.classes": "org.apache.hadoop.hbase.security.access.SecureBulkLoadEndpoint",
+            "hbase.defaults.for.version.skip": "true",
+            "hbase.hregion.majorcompaction.jitter": "0.50",
+            "hbase.hregion.memstore.mslab.enabled": "true",
+            "hbase.hstore.blockingStoreFiles": "10",
+            "hbase.hstore.compaction.max": "10",
+            "hbase.local.dir": "${hbase.tmp.dir}/local",
+            "hbase.master.info.bindAddress": "0.0.0.0",
+            "hbase.master.info.port": "16010",
+            "hbase.master.port": "16000",
+            "hbase.regionserver.global.memstore.size": "0.4",
+            "hbase.regionserver.info.port": "16030",
+            "hbase.regionserver.port": "16020",
+            "hbase.regionserver.wal.codec": "org.apache.hadoop.hbase.regionserver.wal.WALCellCodec",
+            "hbase.rootdir": "hdfs://c6401.ambari.apache.org:8020/apps/hbase/data",
+            "hbase.rpc.protection": "authentication",
+            "hbase.rpc.timeout": "90000",
+            "hbase.security.authentication": "simple",
+            "hbase.security.authorization": "false",
+            "hbase.superuser": "hbase",
+            "hbase.tmp.dir": "/tmp/hbase-${user.name}",
+            "hbase.zookeeper.property.clientPort": "2181",
+            "hbase.zookeeper.quorum": "c6401.ambari.apache.org",
+            "hbase.zookeeper.useMulti": "true",
+            "phoenix.query.timeoutMs": "60000",
+            "zookeeper.znode.parent": "/hbase-unsecure",
+            "dfs.domain.socket.path": "/var/lib/hadoop-hdfs/dn_socket",
+            "hbase.bulkload.staging.dir": "/apps/hbase/staging",
+            "hbase.client.retries.number": "35",
+            "hbase.cluster.distributed": "true",
+            "hbase_master_hosts": [
+              "c6401.ambari.apache.org"
+            ],
+            "hbase_regionserver_hosts": [
+              "c6401.ambari.apache.org"
+            ]
+          }
+        },
+        "ranger-hbase-audit": {
+          "properties": {
+            "xasecure.audit.credential.provider.file": "jceks://file{{credential_file}}",
+            "xasecure.audit.destination.db": "false",
+            "xasecure.audit.destination.db.batch.filespool.dir": "/var/log/hbase/audit/db/spool",
+            "xasecure.audit.destination.db.jdbc.driver": "{{jdbc_driver}}",
+            "xasecure.audit.destination.db.jdbc.url": "{{audit_jdbc_url}}",
+            "xasecure.audit.destination.db.password": "SECRET:ranger-hbase-audit:2:xasecure.audit.destination.db.password",
+            "xasecure.audit.destination.db.user": "{{xa_audit_db_user}}",
+            "xasecure.audit.destination.hdfs": "true",
+            "xasecure.audit.destination.hdfs.batch.filespool.dir": "/var/log/hbase/audit/hdfs/spool",
+            "xasecure.audit.destination.hdfs.dir": "hdfs://c6401.ambari.apache.org:8020/ranger/audit",
+            "xasecure.audit.destination.solr": "false",
+            "xasecure.audit.destination.solr.batch.filespool.dir": "/var/log/hbase/audit/solr/spool",
+            "xasecure.audit.destination.solr.urls": "",
+            "xasecure.audit.destination.solr.zookeepers": "NONE",
+            "xasecure.audit.is.enabled": "true",
+            "xasecure.audit.provider.summary.enabled": "true"
+          }
+        },
+        "ranger-hbase-plugin-properties": {
+          "properties": {
+            "ranger-hbase-plugin-enabled": "No",
+            "REPOSITORY_CONFIG_PASSWORD": "SECRET:ranger-hbase-plugin-properties:2:REPOSITORY_CONFIG_PASSWORD",
+            "REPOSITORY_CONFIG_USERNAME": "hbase",
+            "common.name.for.certificate": "",
+            "policy_user": "ambari-qa"
+          }
+        },
+        "ranger-hbase-policymgr-ssl": {
+          "properties": {
+            "xasecure.policymgr.clientssl.keystore": "/usr/hdp/current/hbase-client/conf/ranger-plugin-keystore.jks",
+            "xasecure.policymgr.clientssl.keystore.credential.file": "jceks://file{{credential_file}}",
+            "xasecure.policymgr.clientssl.keystore.password": "SECRET:ranger-hbase-policymgr-ssl:2:xasecure.policymgr.clientssl.keystore.password",
+            "xasecure.policymgr.clientssl.truststore": "/usr/hdp/current/hbase-client/conf/ranger-plugin-truststore.jks",
+            "xasecure.policymgr.clientssl.truststore.credential.file": "jceks://file{{credential_file}}",
+            "xasecure.policymgr.clientssl.truststore.password": "SECRET:ranger-hbase-policymgr-ssl:2:xasecure.policymgr.clientssl.truststore.password"
+          }
+        },
+        "ranger-hbase-security": {
+          "properties": {
+            "ranger.plugin.hbase.policy.cache.dir": "/etc/ranger/{{repo_name}}/policycache",
+            "ranger.plugin.hbase.policy.pollIntervalMs": "30000",
+            "ranger.plugin.hbase.policy.rest.ssl.config.file": "/etc/hbase/conf/ranger-policymgr-ssl.xml",
+            "ranger.plugin.hbase.policy.rest.url": "{{policymgr_mgr_url}}",
+            "ranger.plugin.hbase.policy.source.impl": "org.apache.ranger.admin.client.RangerAdminRESTClient",
+            "ranger.plugin.hbase.service.name": "{{repo_name}}",
+            "xasecure.hbase.update.xapolicies.on.grant.revoke": "true"
+          }
+        },
+        "admin-properties": {
+          "properties": {
+            "SQL_CONNECTOR_JAR": "/usr/share/java/mysql-connector-java.jar",
+            "DB_FLAVOR": "MYSQL",
+            "audit_db_name": "ranger_audit",
+            "audit_db_password": "SECRET:admin-properties:1:audit_db_password",
+            "audit_db_user": "rangerlogger",
+            "db_host": "c6401.ambari.apache.org",
+            "db_name": "ranger",
+            "db_password": "SECRET:admin-properties:1:db_password",
+            "db_root_password": "SECRET:admin-properties:1:db_root_password",
+            "db_root_user": "root",
+            "db_user": "rangeradmin",
+            "policymgr_external_url": "http://c6401.ambari.apache.org:6080"
+          }
+        },
+        "ranger-admin-site": {
+          "properties": {
+            "ranger.audit.solr.password": "SECRET:ranger-admin-site:1:ranger.audit.solr.password",
+            "ranger.audit.solr.urls": "",
+            "ranger.audit.solr.username": "ranger_solr",
+            "ranger.audit.solr.zookeepers": "NONE",
+            "ranger.audit.source.type": "solr",
+            "ranger.authentication.method": "UNIX",
+            "ranger.credential.provider.path": "/etc/ranger/admin/rangeradmin.jceks",
+            "ranger.externalurl": "{{ranger_external_url}}",
+            "ranger.https.attrib.keystore.file": "/etc/ranger/admin/conf/ranger-admin-keystore.jks",
+            "ranger.jpa.audit.jdbc.credential.alias": "rangeraudit",
+            "ranger.jpa.audit.jdbc.dialect": "{{jdbc_dialect}}",
+            "ranger.jpa.audit.jdbc.driver": "{{ranger_jdbc_driver}}",
+            "ranger.jpa.audit.jdbc.password": "SECRET:ranger-admin-site:1:ranger.jpa.audit.jdbc.password",
+            "ranger.jpa.audit.jdbc.url": "{{audit_jdbc_url}}",
+            "ranger.jpa.audit.jdbc.user": "{{ranger_audit_db_user}}",
+            "ranger.jpa.jdbc.credential.alias": "rangeradmin",
+            "ranger.jpa.jdbc.dialect": "{{jdbc_dialect}}",
+            "ranger.jpa.jdbc.driver": "com.mysql.jdbc.Driver",
+            "ranger.jpa.jdbc.password": "SECRET:ranger-admin-site:1:ranger.jpa.jdbc.password",
+            "ranger.jpa.jdbc.url": "jdbc:mysql://c6401.ambari.apache.org/ranger",
+            "ranger.jpa.jdbc.user": "{{ranger_db_user}}",
+            "ranger.ldap.ad.base.dn": "dc=example,dc=com",
+            "ranger.ldap.ad.bind.dn": "{{ranger_ug_ldap_bind_dn}}",
+            "ranger.ldap.ad.bind.password": "SECRET:ranger-admin-site:1:ranger.ldap.ad.bind.password",
+            "ranger.ldap.ad.domain": "",
+            "ranger.ldap.ad.referral": "ignore",
+            "ranger.ldap.ad.url": "{{ranger_ug_ldap_url}}",
+            "ranger.ldap.ad.user.searchfilter": "{{ranger_ug_ldap_user_searchfilter}}",
+            "ranger.ldap.base.dn": "dc=example,dc=com",
+            "ranger.ldap.bind.dn": "{{ranger_ug_ldap_bind_dn}}",
+            "ranger.ldap.bind.password": "SECRET:ranger-admin-site:1:ranger.ldap.bind.password",
+            "ranger.ldap.group.roleattribute": "cn",
+            "ranger.ldap.group.searchbase": "{{ranger_ug_ldap_group_searchbase}}",
+            "ranger.ldap.group.searchfilter": "{{ranger_ug_ldap_group_searchfilter}}",
+            "ranger.ldap.referral": "ignore",
+            "ranger.ldap.url": "{{ranger_ug_ldap_url}}",
+            "ranger.ldap.user.dnpattern": "uid={0},ou=users,dc=xasecure,dc=net",
+            "ranger.ldap.user.searchfilter": "{{ranger_ug_ldap_user_searchfilter}}",
+            "ranger.service.host": "{{ranger_host}}",
+            "ranger.service.http.enabled": "true",
+            "ranger.service.http.port": "6080",
+            "ranger.service.https.attrib.clientAuth": "want",
+            "ranger.service.https.attrib.keystore.keyalias": "rangeradmin",
+            "ranger.service.https.attrib.keystore.pass": "SECRET:ranger-admin-site:1:ranger.service.https.attrib.keystore.pass",
+            "ranger.service.https.attrib.ssl.enabled": "false",
+            "ranger.service.https.port": "6182",
+            "ranger.sso.browser.useragent": "Mozilla,chrome",
+            "ranger.sso.cookiename": "hadoop-jwt",
+            "ranger.sso.enabled": "false",
+            "ranger.sso.providerurl": "",
+            "ranger.sso.publicKey": "",
+            "ranger.sso.query.param.originalurl": "originalUrl",
+            "ranger.unixauth.remote.login.enabled": "true",
+            "ranger.unixauth.service.hostname": "{{ugsync_host}}",
+            "ranger.unixauth.service.port": "5151"
+          }
+        },
+        "ranger-env": {
+          "properties": {
+            "ranger_admin_username": "amb_ranger_admin",
+            "ranger_admin_password": "SECRET:ranger-env:1:ranger_admin_password",
+            "ranger_group": "ranger",
+            "ranger_user": "ranger",
+            "xasecure.audit.destination.solr": "false",
+            "admin_password": "SECRET:ranger-env:1:admin_password",
+            "admin_username": "admin",
+            "bind_anonymous": "false",
+            "create_db_dbuser": "true",
+            "is_solrCloud_enabled": "false",
+            "ranger-hbase-plugin-enabled": "No",
+            "ranger-hdfs-plugin-enabled": "No",
+            "ranger-hive-plugin-enabled": "No",
+            "ranger-kafka-plugin-enabled": "No",
+            "ranger-knox-plugin-enabled": "No",
+            "ranger-storm-plugin-enabled": "No",
+            "ranger-yarn-plugin-enabled": "No",
+            "ranger_admin_log_dir": "/var/log/ranger/admin",
+            "ranger_pid_dir": "/var/run/ranger",
+            "ranger_privelege_user_jdbc_url": "jdbc:mysql://c6401.ambari.apache.org",
+            "ranger_usersync_log_dir": "/var/log/ranger/usersync",
+            "xasecure.audit.destination.db": "false",
+            "xasecure.audit.destination.hdfs": "true",
+            "xasecure.audit.destination.hdfs.dir": "hdfs://c6401.ambari.apache.org:8020/ranger/audit",
+            "xml_configurations_supported": "true"
+          }
+        },
+        "ranger-site": {
+          "properties": {
+            "ranger_admin_hosts": [
+              "c6401.ambari.apache.org"
+            ]
+          }
+        },
+        "ranger-ugsync-site": {
+          "properties": {
+            "ranger.usersync.credstore.filename": "/usr/hdp/current/ranger-usersync/conf/ugsync.jceks",
+            "ranger.usersync.enabled": "true",
+            "ranger.usersync.filesource.file": "/tmp/usergroup.txt",
+            "ranger.usersync.filesource.text.delimiter": ",",
+            "ranger.usersync.group.memberattributename": "",
+            "ranger.usersync.group.nameattribute": "",
+            "ranger.usersync.group.objectclass": "",
+            "ranger.usersync.group.searchbase": "",
+            "ranger.usersync.group.searchenabled": "false",
+            "ranger.usersync.group.searchfilter": "",
+            "ranger.usersync.group.searchscope": "",
+            "ranger.usersync.group.usermapsyncenabled": "true",
+            "ranger.usersync.keystore.file": "/usr/hdp/current/ranger-usersync/conf/unixauthservice.jks",
+            "ranger.usersync.keystore.password": "SECRET:ranger-ugsync-site:1:ranger.usersync.keystore.password",
+            "ranger.usersync.ldap.bindalias": "testldapalias",
+            "ranger.usersync.ldap.binddn": "",
+            "ranger.usersync.ldap.bindkeystore": "",
+            "ranger.usersync.ldap.groupname.caseconversion": "lower",
+            "ranger.usersync.ldap.ldapbindpassword": "",
+            "ranger.usersync.ldap.referral": "ignore",
+            "ranger.usersync.ldap.searchBase": "dc=hadoop,dc=apache,dc=org",
+            "ranger.usersync.ldap.url": "",
+            "ranger.usersync.ldap.user.groupnameattribute": "memberof, ismemberof",
+            "ranger.usersync.ldap.user.nameattribute": "",
+            "ranger.usersync.ldap.user.objectclass": "person",
+            "ranger.usersync.ldap.user.searchbase": "",
+            "ranger.usersync.ldap.user.searchfilter": "",
+            "ranger.usersync.ldap.user.searchscope": "sub",
+            "ranger.usersync.ldap.username.caseconversion": "lower",
+            "ranger.usersync.logdir": "/var/log/ranger/usersync",
+            "ranger.usersync.pagedresultsenabled": "true",
+            "ranger.usersync.pagedresultssize": "500",
+            "ranger.usersync.passwordvalidator.path": "./native/credValidator.uexe",
+            "ranger.usersync.policymanager.baseURL": "{{ranger_external_url}}",
+            "ranger.usersync.policymanager.maxrecordsperapicall": "1000",
+            "ranger.usersync.policymanager.mockrun": "false",
+            "ranger.usersync.port": "5151",
+            "ranger.usersync.sink.impl.class": "org.apache.ranger.unixusersync.process.PolicyMgrUserGroupBuilder",
+            "ranger.usersync.sleeptimeinmillisbetweensynccycle": "60000",
+            "ranger.usersync.source.impl.class": "org.apache.ranger.unixusersync.process.UnixUserGroupBuilder",
+            "ranger.usersync.ssl": "true",
+            "ranger.usersync.truststore.file": "/usr/hdp/current/ranger-usersync/conf/mytruststore.jks",
+            "ranger.usersync.truststore.password": "SECRET:ranger-ugsync-site:1:ranger.usersync.truststore.password",
+            "ranger.usersync.unix.group.file": "/etc/group",
+            "ranger.usersync.unix.minUserId": "500",
+            "ranger.usersync.unix.password.file": "/etc/passwd"
+          }
+        },
+        "usersync-properties": {
+          "properties": {}
+        }
+      }
+    },
+    "blueprint_cluster_binding": {
+      "host_groups": [
+        {
+          "name": "host-group-1",
+          "hosts": [
+            {
+              "fqdn": "c6401.ambari.apache.org"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -33,6 +34,7 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -49,7 +51,7 @@ import java.util.UUID;
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class AmbariServiceDefinitionTest {
@@ -233,6 +235,90 @@ public class AmbariServiceDefinitionTest {
     String expected = sw.toString();
 
     MatcherAssert.assertThat(body, sameJSONAs(expected));
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void unwiseCharacterRequest() throws Exception {
+    String username = "guest";
+    String password = "guest-password";
+    String serviceUrl =  clusterUrl + "/ambari/api/v1/clusters/test/components";
+
+    mockAmbari.expect()
+        .method( "GET" )
+        .pathInfo( "/api/v1/clusters/test/components" )
+        .queryParam("ServiceComponentInfo/component_name", "APP_TIMELINE_SERVER|ServiceComponentInfo/category=MASTER")
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( TestUtils.getResourceStream( DAT, "unwise-character-response.json" ) )
+        .contentType( "text/plain" );
+    //only assertion here is to make sure the request can be made successfully with the unwise characters present
+    //in the request url
+     given()
+        .auth().preemptive().basic( username, password )
+        .queryParam("ServiceComponentInfo/component_name", "APP_TIMELINE_SERVER|ServiceComponentInfo/category=MASTER")
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .when().get( serviceUrl ).asString();
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void encryptedResponse() throws Exception {
+    LOG_ENTER();
+
+    String username = "guest";
+    String password = "guest-password";
+    String serviceUrl =  clusterUrl + "/ambari/api/v1/persist/CLUSTER_CURRENT_STATUS?_=1457977721091";
+
+    mockAmbari.expect()
+        .method( "GET" )
+        .pathInfo( "/api/v1/persist/CLUSTER_CURRENT_STATUS" )
+        .queryParam("_","1457977721091")
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( TestUtils.getResourceStream( DAT, "encrypted-response.txt" ) )
+        .contentType( "text/plain" );
+
+    String body = given()
+        .auth().preemptive().basic( username, password )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .when().get( serviceUrl ).asString();
+
+    Assert.assertNotNull(body);
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void postDataWithWrongContentType() throws Exception {
+    LOG_ENTER();
+
+    String username = "guest";
+    String password = "guest-password";
+    String serviceUrl =  clusterUrl + "/ambari/api/v1/stacks/HDP/versions/2.3/recommendations";
+
+    mockAmbari.expect()
+        .method( "POST" )
+        .pathInfo( "/api/v1/stacks/HDP/versions/2.3/recommendations" )
+        .content( TestUtils.getResourceStream( DAT, "post-data-wrong-type.json" ) )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .contentType( "application/x-www-form-urlencoded" );
+
+
+    String body = given()
+        .auth().preemptive().basic( username, password )
+        .content(IOUtils.toByteArray(TestUtils.getResourceStream( DAT, "post-data-wrong-type.json")))
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "application/x-www-form-urlencoded" )
+        .when().post( serviceUrl ).asString();
+
+    Assert.assertNotNull(body);
     LOG_EXIT();
   }
 

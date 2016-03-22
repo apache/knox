@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -218,10 +220,10 @@ public class Expander {
             } else {
               builder.append( "&" );
             }
-            builder.append( name );
+            appendQueryPart(name, builder);
             if( value != null ) {
               builder.append( "=" );
-              builder.append( value );
+              appendQueryPart(value, builder);
             }
           }
         }
@@ -240,21 +242,29 @@ public class Expander {
           if( i > 0 ) {
             builder.append( "&" );
           }
-          builder.append( queryName );
+          appendQueryPart(queryName, builder);
           value = values.get( i );
           if( value != null ) {
             builder.append( "=" );
-            builder.append( value );
+            appendQueryPart(value, builder);
           }
         }
       } else {
-        builder.append( queryName );
+        appendQueryPart(queryName, builder);
         value = values.get( 0 );
         if( value != null ) {
           builder.append( "=" );
-          builder.append( value );
+          appendQueryPart(value, builder);
         }
       }
+    }
+  }
+
+  private static void appendQueryPart(String part, StringBuilder builder) {
+    try {
+      builder.append(URLEncoder.encode(part, "UTF-8"));
+    } catch ( UnsupportedEncodingException e ) {
+      builder.append(part);
     }
   }
 

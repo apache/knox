@@ -28,6 +28,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactor
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.MimeTypes;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Resolver;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -40,7 +41,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -150,7 +153,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   public String getQueryString() {
     String[] split = splitTargetUrl( getTargetUrl() );
     if( split.length > 1 ) {
-      return split[1];
+      try {
+        return URLDecoder.decode(split[1], "UTF-8");
+      } catch ( UnsupportedEncodingException e ) {
+        LOG.failedToDecodeQueryString(split[1], e);
+        return split[1];
+      }
     } else {
       return null;
     }
@@ -215,6 +223,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     if( getContentLength() != 0 ) {
       MimeType mimeType = getMimeType();
       UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
+      if (filterContentConfig != null) {
+        String asType = filterContentConfig.asType();
+        if ( asType != null && asType.trim().length() > 0 ) {
+          mimeType = MimeTypes.create(asType, getCharacterEncoding());
+        }
+      }
       InputStream stream = UrlRewriteStreamFilterFactory.create( mimeType, null, input, rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
       input = new UrlRewriteRequestStream( stream );
     }

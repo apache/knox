@@ -14,10 +14,14 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="AMBARI" name="ambari" version="2.7.0">
+<service role="AMBARI" name="ambari" version="2.2.0">
     <routes>
         <route path="/ambari/api/v1/**">
             <rewrite apply="AMBARI/ambari/api/outbound" to="response.body"/>
+            <rewrite apply="AMBARI/ambari/api/inbound" to="request.body"/>
+        </route>
+        <route path="/ambari/api/v1/persist/*?*">
+            <rewrite apply="AMBARI/ambari/api/inbound" to="request.body"/>
         </route>
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
