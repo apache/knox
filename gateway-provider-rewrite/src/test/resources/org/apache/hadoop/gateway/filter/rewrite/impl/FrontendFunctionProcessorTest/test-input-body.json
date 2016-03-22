@@ -5,5 +5,6 @@
     "port":"test-input-port",
     "addr":"test-input-addr",
     "address":"test-input-address",
-    "path":"test-input-path"
+    "path":"test-input-path",
+    "topology":"test-input-topology"
 }

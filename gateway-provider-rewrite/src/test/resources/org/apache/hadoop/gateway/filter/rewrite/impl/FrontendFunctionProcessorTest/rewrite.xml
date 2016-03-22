@@ -44,6 +44,10 @@
         <rewrite template="{$frontend[path]}"/>
     </rule>
 
+    <rule name="test-rule-frontend-topology">
+        <rewrite template="{$frontend[topology]}"/>
+    </rule>
+
     <filter name="test-filter">
         <content type="application/json">
             <apply path="$.url" rule="test-rule-frontend-url"/>
@@ -53,6 +57,7 @@
             <apply path="$.addr" rule="test-rule-frontend-addr"/>
             <apply path="$.address" rule="test-rule-frontend-address"/>
             <apply path="$.path" rule="test-rule-frontend-path"/>
+            <apply path="$.topology" rule="test-rule-frontend-topology"/>
         </content>
     </filter>
 

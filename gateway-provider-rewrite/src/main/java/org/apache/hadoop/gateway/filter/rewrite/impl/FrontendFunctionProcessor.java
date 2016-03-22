@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteResolver;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -64,6 +65,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
       resolvers.put( "port", new FixedResolver( Integer.toString( frontend.getPort() ) ) );
       resolvers.put( "path", new FixedResolver( frontend.getPath() ) );
     }
+    resolvers.put( "topology", new FixedResolver( (String)environment.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) ) );
     resolvers.put( "address", resolvers.get( "addr" ) );
   }
 
