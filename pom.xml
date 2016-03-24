@@ -64,6 +64,7 @@
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
         <module>gateway-provider-identity-assertion-regex</module>
+        <module>gateway-provider-identity-assertion-switchcase</module>
         <module>gateway-provider-security-picketlink</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-provider-jersey</module>
@@ -501,6 +502,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-identity-assertion-regex</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
