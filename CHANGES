@@ -13,6 +13,7 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-680] - Update Knox's HttpClient dependency to latest version
     * [KNOX-694] - Enhance LDAP user search configurability
     * [KNOX-695] - Expose configuration of HttpClient's connection and socket timeout settings
+    * [KNOX-699] - External meta-data for simple hosted web apps
 ** Bug
     * [KNOX-681] - A PUT with Content-Type application/xml but no body causes NullPointerException
 

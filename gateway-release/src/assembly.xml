@@ -66,7 +66,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/applications/</directory>
+            <directory>${project.build.directory}/applications</directory>
             <outputDirectory>data/applications</outputDirectory>
             <includes>
                 <include>**/*</include>
