@@ -15,11 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.provider.federation;
+package org.apache.hadoop.gateway.webappsec;
 
 import junit.framework.TestCase;
 
-import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
 public class CSRFTest extends TestCase {
