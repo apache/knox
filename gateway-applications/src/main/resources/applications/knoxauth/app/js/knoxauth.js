@@ -24,13 +24,28 @@ function get(name){
       return decodeURIComponent(name[1]);
 }
 
+function testSameOrigin(url) {
+    var loc = window.location,
+        a = document.createElement('a');
+    a.href = url;
+    return a.hostname == loc.hostname &&
+           a.port == loc.port &&
+           a.protocol == loc.protocol;
+}
+
+function redirect(redirectUrl) {
+  try { window.location.replace(redirectUrl); } 
+  catch(e) { window.location = redirectUrl; }
+}
+
 var login = function() {
     var form = document.forms[0];
     var username = form.username.value;
     var password = form.password.value;
-    var _login = function(){
+    var _login = function() {
     var originalUrl = get("originalUrl");
     var idpUrl = loginURL + originalUrl;
+    var redirectUrl = originalUrl;
       //Instantiate HTTP Request
         var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
         request.open("POST", loginURL + originalUrl, true);
@@ -40,9 +55,11 @@ var login = function() {
       //Process Response
         request.onreadystatechange = function(){
             if (request.readyState == 4) {
-                if (request.status==200 || request.status==204 || request.status==307 || request.status==303) {
-                  try { window.location.replace(originalUrl); } 
-                  catch(e) { window.location = originalUrl; }
+                if (request.status==0 || request.status==200 || request.status==204 || request.status==307 || request.status==303) {
+                  if (testSameOrigin(originalUrl) == false) {
+                    redirectUrl = "redirecting.html?originalUrl=" + originalUrl;
+                  }
+                  redirect(redirectUrl);
                 }
                 else {
                   if (request.status==401) {

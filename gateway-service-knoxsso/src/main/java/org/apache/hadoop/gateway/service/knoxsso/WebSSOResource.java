@@ -254,9 +254,11 @@ public class WebSSOResource {
   private String getCookieValue(HttpServletRequest request, String name) {
     Cookie[] cookies = request.getCookies();
     String value = null;
-    for(Cookie cookie : cookies){
-      if(name.equals(cookie.getName())){
-        value = cookie.getValue();
+    if (cookies != null) {
+      for(Cookie cookie : cookies){
+        if(name.equals(cookie.getName())){
+          value = cookie.getValue();
+        }
       }
     }
     if (value == null) {
