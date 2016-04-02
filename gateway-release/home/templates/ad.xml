@@ -18,52 +18,33 @@
 <topology>
 
     <gateway>
-
         <provider>
             <role>authentication</role>
             <name>ShiroProvider</name>
             <enabled>true</enabled>
-            <param>
-                <!-- 
-                session timeout in minutes,  this is really idle timeout,
-                defaults to 30mins, if the property value is not defined,, 
-                current client authentication would expire if client idles contiuosly for more than this value
-                -->
-                <name>sessionTimeout</name>
-                <value>30</value>
-            </param>
-            <param>
-                <name>main.ldapRealm</name>
-                <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
-            </param>
-            <param>
-                <name>main.ldapContextFactory</name>
-                <value>org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory</value>
-            </param>
-            <param>
-                <name>main.ldapRealm.contextFactory</name>
-                <value>$ldapContextFactory</value>
-            </param>
-            <param>
-                <name>main.ldapRealm.userDnTemplate</name>
-                <!-- If your AD is configured to authenticate based on just the cn and password and does not require user DN, 
-                    you do not have to specify value for  main.ldapRealm.userDnTemplate. -->
-                <!-- ADJUST template for your AD DIT model -->
-                <value>cn={0},cn=users,dc=sample,dc=example,dc=com</value>
-            </param>
-            <param>
-                <name>main.ldapRealm.contextFactory.url</name>
-                <!-- ADJUST host, port for your AD setup-->
-                <value>ldap://ad.example.com:389</value>
-            </param>
-            <param>
-                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>
-                <value>simple</value>
-            </param>
-            <param>
-                <name>urls./**</name>
-                <value>authcBasic</value>
-            </param>
+            <param name="main.ldapRealm" value="org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm"/>
+            <param name="main.ldapContextFactory" value="org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory"/>
+            <param name="main.ldapRealm.contextFactory" value="$ldapContextFactory"/>
+
+            <param name="main.ldapRealm.contextFactory.url" value="ldap://ad.qa.your-domain.com:389"/>
+            <param name="main.ldapRealm.contextFactory.systemUsername" value="CN=sam,CN=Users,DC=hwqe,DC=hortonworks,DC=com"/>
+            <param name="main.ldapRealm.contextFactory.systemPassword" value="********"/>
+
+            <param name="main.ldapRealm.userSearchBase" value="CN=Users,DC=hwqe,DC=hortonworks,DC=com"/>
+            <param name="main.ldapRealm.userSearchAttributeName" value="sAMAccountName"/>
+            <param name="main.ldapRealm.userObjectClass" value="person"/>
+
+            <param name="main.ldapRealm.authorizationEnabled" value="true"/>
+            <param name="main.ldapRealm.groupSearchBase" value="OU=groups,DC=hwqe,DC=hortonworks,DC=com"/>
+            <param name="main.ldapRealm.groupObjectClass" value="group"/>
+            <param name="main.ldapRealm.groupIdAttribute" value="sAMAccountName"/>
+            <param name="main.ldapRealm.memberAttribute" value="member"/>
+
+            <param name="main.cacheManager" value="org.apache.shiro.cache.ehcache.EhCacheManager"/>
+            <param name="main.securityManager.cacheManager" value="$cacheManager"/>
+            <param name="main.ldapRealm.authenticationCachingEnabled" value="true"/>
+
+            <param name="urls./**" value="authcBasic"/>
         </provider>
 
         <provider>
