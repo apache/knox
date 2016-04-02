@@ -38,7 +38,6 @@
     document.addEventListener("load", redirectOnLoad());
     
     function redirectOnLoad() {
-    	sleep(1);
       var originalUrl = get("originalUrl");
       if (originalUrl != null) {
       	redirect(originalUrl);
