@@ -22,11 +22,11 @@
   <parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.10.0-SNAPSHOT</version>
   </parent>
   <groupId>org.apache.knox</groupId>
   <artifactId>gateway-service-admin</artifactId>
-  <version>0.9.0-SNAPSHOT</version>
+  <version>0.10.0-SNAPSHOT</version>
   <name>gateway-service-admin</name>
   <url>http://maven.apache.org</url>
   <properties>
