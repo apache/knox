@@ -2,20 +2,64 @@
 Release Notes - Apache Knox - Version 0.9.0
 ------------------------------------------------------------------------------
 ** New Feature
+    * [KNOX-66] - Ambari REST API support
+    * [KNOX-668] - Ranger UI proxy support with related REST API support changes
+    * [KNOX-669] - Adding support for anonymous authentication
     * [KNOX-670] - Knox should be able to host simple web apps
+    * [KNOX-673] - Ambari UI proxy support with related REST API support changes
     * [KNOX-674] - Expose Jetty's SSL cipher suite configuration via gateway-site.xml
     * [KNOX-692] - Enable Jetty's JSP support in Knox hosted applications.
+    * [KNOX-686] - Default Form based SSO IDP as an Application
     * [KNOX-697] - Identity asserter provider that supports case mapping for users and groups
+    * [KNOX-700] - Add Clickjacking Protection to WebAppSec Provider
+
 ** Improvement
+    * [KNOX-630] - KnoxSSO Needs to Populate Configured Audiences
+    * [KNOX-631] - Config Driven Keystore for Signing and Validation Certs in KnoxSSO
+    * [KNOX-662] - Change pac4j-knoxsso.xml Template to Reflect new Requirements
+    * [KNOX-667] - Added maven profile and updated ant targets
+    * [KNOX-667] - changed nested release profile to match 'package' profile
     * [KNOX-677] - Upgrade to latest Groovy
     * [KNOX-675] - Upgrade Knox's Jetty dependency to latest 9.x
+    * [KNOX-674] - Expose Jetty's SSL cipher suite configuration via gateway-site.xml
+    * [KNOX-675] - Upgrade Knox's Jetty dependency to latest 9.x
+    * [KNOX-675] - Upgrade Knox's Jetty dependency to latest 9.x. Fix circular dependency.
+    * [KNOX-676] - Knox build failures. Attempt 1.
+    * [KNOX-676] - Knox build failures. Attempt 2.
+    * [KNOX-676] - Knox build failures. Attempt 3.
+    * [KNOX-677] - Upgrade to latest Groovy. (via Colm O hEigeartaigh)
     * [KNOX-678] - Malformed UTF-8 characters in JSON Response
+    * [KNOX-679] - Make ResponseCookieFilter Configurable
     * [KNOX-680] - Update Knox's HttpClient dependency to latest version
+    * [KNOX-680] - Revert - Update Knox's HttpClient dependency to latest version"
+    * [KNOX-688] - KnoxSSO Authentication should not result in a valid JSESSIONID
+    * [KNOX-692] - Enable Jetty's JSP support in Knox hosted applications.
+    * [KNOX-693] - KnoxSSO Token Expiration should be Optional
+    * [KNOX-693] - added test for SSOCookieProvider and no expiry time
     * [KNOX-694] - Enhance LDAP user search configurability
     * [KNOX-695] - Expose configuration of HttpClient's connection and socket timeout settings
+    * [KNOX-697] - Identity asserter provider that supports case mapping for users and groups
     * [KNOX-699] - External meta-data for simple hosted web apps
+    * [KNOX-701] - KnoxSSO Redirect Back to External App has CORS Problem for Form IDP
+    * [KNOX-702] - Templates for AD and Application Hosting Topologies
+
 ** Bug
+    * [KNOX-169] - Test issue for patch test automation via PreCommit-Knox-Build job
+    * [KNOX-658] - adding additional dependency as provided
+    * [KNOX-660] - Incompatible Dependencies in Pac4j Provider
+    * [KNOX-660] - Revert j2e-pac4j upgrade
+    * [KNOX-661] - NPE in Pac4j Provider when clientName Parameter is Missing
+    * [KNOX-665] - Credential Collectors and Samples Prompting with Double Colons
     * [KNOX-681] - A PUT with Content-Type application/xml but no body causes NullPointerException
+    * [KNOX-681] - Revert - A PUT with Content-Type application/xml but no body causes NullPointerException"
+    * [KNOX-683] - Test failing due to port conflicts
+    * [KNOX-684] - Increase test timeouts for failing tests
+    * [KNOX-684] - Increase test timeouts for failing tests. Part 2.
+    * [KNOX-685] - Knox tests cleanup after Jetty 9 upgrade
+    * [KNOX-687] - Address new Coverity Scan issues    
+    * [KNOX-689] - Applications Deployment Contributor can't find service.xml
+    * [KNOX-689] - Revert - Applications Deployment Contributor can't find service.xml    
+    * [KNOX-704] - Remove bogus sleep() from knoxauth redirecting.html
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.8.0
