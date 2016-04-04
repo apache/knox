@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
+import org.apache.hadoop.gateway.filter.RedirectToUrlFilter;
 import org.apache.hadoop.gateway.filter.ResponseCookieFilter;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
@@ -38,6 +39,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   private static final String SHIRO_FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
   private static final String POST_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ShiroSubjectIdentityAdapter";
   private static final String COOKIE_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.ResponseCookieFilter";
+  private static final String REDIRECT_FILTER_CLASSNAME = "org.apache.hadoop.gateway.filter.RedirectToUrlFilter";
   private static final String SESSION_TIMEOUT = "sessionTimeout";
   private static final String REMEMBER_ME = "rememberme";
   private static final String SHRIO_CONFIG_FILE_NAME = "shiro.ini";
@@ -105,6 +107,16 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
       params = new ArrayList<FilterParamDescriptor>();
     }
     Map<String, String> providerParams = provider.getParams();
+    String redirectToUrl = providerParams.get(RedirectToUrlFilter.REDIRECT_TO_URL);
+    if (redirectToUrl != null) {
+      params.add( resource.createFilterParam()
+          .name(RedirectToUrlFilter.REDIRECT_TO_URL)
+          .value(redirectToUrl));
+      resource.addFilter().name( "Redirect" + getName() ).role(
+          getRole() ).impl( REDIRECT_FILTER_CLASSNAME ).params( params );
+      params.clear();
+    }
+
     String cookies = providerParams.get( ResponseCookieFilter.RESTRICTED_COOKIES );
     if (cookies == null) {
       params.add( resource.createFilterParam()
