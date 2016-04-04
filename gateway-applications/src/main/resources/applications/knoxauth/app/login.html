@@ -47,9 +47,6 @@
 
 	</head>
 	<body class="login" style="">
-		<!--%
-			response.setHeader("X-Frame-Options", "DENY");
-		%-->
 		<!-- Page content
 		================================================== -->
 		<section id="signin-container" style="margin-top: 4.5px;">
@@ -60,17 +57,14 @@
 				<fieldset>
 					<div class="fields">
 						<label><i class="icon-user"></i> Username:</label>
-						<input type="text" name="username" id="username" tabindex="1" autofocus>
+						<input type="text" name="username" id="username" tabindex="1" onkeypress=keypressed(event) autofocus>
 						<label><i class="icon-lock"></i> Password:</label>	
-						<input type="password" name="password" id="password" tabindex="2" autocomplete="off">
+						<input type="password" name="password" id="password" tabindex="2" autocomplete="off" onkeypress=keypressed(event)>
 					</div>
 					<span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
 						<i class="icon-warning-sign" style="color:#ae2817;"></i>
 					</span>
-					<span id="errorBoxUnsynced" class="help-inline" style="color:white;display:none;">User is not available in HDP Admin Tool. Please contact your Administrator.
-						<i class="icon-warning-sign" style="color:#ae2817;"></i>
-					</span>
-					<button type="button" class="btn btn-primary btn-block" id="signIn" tabindex="4" onkeypress="return login()" onclick="login();">
+					<button type="button" class="btn btn-primary btn-block" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();">
 						Sign In
 						<i id="signInLoading" class="icon-spinner icon-spin pull-right icon-sign-in"></i>
 					</button>

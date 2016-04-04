@@ -38,6 +38,12 @@ function redirect(redirectUrl) {
   catch(e) { window.location = redirectUrl; }
 }
 
+var keypressed = function(event) {
+    if (event.keyCode == 13) {
+        login();
+    }
+}
+
 var login = function() {
     var form = document.forms[0];
     var username = form.username.value;
