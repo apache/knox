@@ -60,6 +60,8 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-689] - Applications Deployment Contributor can't find service.xml
     * [KNOX-689] - Revert - Applications Deployment Contributor can't find service.xml    
     * [KNOX-704] - Remove bogus sleep() from knoxauth redirecting.html
+    * [KNOX-706] - KnoxSSO Default IDP must not require specific URL
+    * [KNOX-707] - Enter Key within KnoxSSO Default IDP Form does not Submit
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.8.0
