@@ -49,6 +49,12 @@
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
         </content>
+        <content type="application/javascript">
+            <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+            <apply path="/img/logo-white.png" rule="AMBARIUI/ambari/outbound/whitelogo"/>
+            <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
+            <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
+        </content>
         <content type="*/html">
         </content>
     </filter>
