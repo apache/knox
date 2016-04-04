@@ -2,3 +2,4 @@
 Known Issues
 ------------------------------------------------------------------------------
 
+* [KNOX-705] - Views in Ambari UI don't render when proxied by the AMBARIUI service
