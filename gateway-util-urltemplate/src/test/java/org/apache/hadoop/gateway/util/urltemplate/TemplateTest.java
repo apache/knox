@@ -23,11 +23,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.URISyntaxException;
-import java.util.regex.Pattern;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
@@ -172,6 +169,17 @@ public class TemplateTest {
 
     assertThat( t1.equals( t2 ), equalTo( true ) );
     assertThat( t1.equals( t3 ), equalTo( false ) );
+  }
+
+  @Test
+  public void encodedToString() throws Exception {
+    String url = "scheme://username:password@host:port/top/mid/bot/file|?query|=value|#|fragment1";
+    Template t = Parser.parseLiteral(url);
+    assertThat( t.toString().equals( url ), equalTo(true));
+    assertThat( t.toEncodedString()
+        .equals( "scheme://username:password@host:port/top/mid/bot/file%7C?query%7C=value%7C#%7Cfragment1")
+        , equalTo(true));
+
   }
 
 }
