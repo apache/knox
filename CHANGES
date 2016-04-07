@@ -58,7 +58,9 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-685] - Knox tests cleanup after Jetty 9 upgrade
     * [KNOX-687] - Address new Coverity Scan issues    
     * [KNOX-689] - Applications Deployment Contributor can't find service.xml
-    * [KNOX-689] - Revert - Applications Deployment Contributor can't find service.xml    
+    * [KNOX-689] - Revert - Applications Deployment Contributor can't find service.xml
+    * [KNOX-690] - fixing the encoding/decoding in the parser and template
+    * [KNOX-690] - quick unit test for toEncodedString method
     * [KNOX-704] - Remove bogus sleep() from knoxauth redirecting.html
     * [KNOX-706] - KnoxSSO Default IDP must not require specific URL
     * [KNOX-707] - Enter Key within KnoxSSO Default IDP Form does not Submit
