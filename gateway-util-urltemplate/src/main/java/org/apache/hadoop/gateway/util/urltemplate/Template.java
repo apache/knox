@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.util.urltemplate;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -151,57 +153,69 @@ public class Template {
     return hasFragment;
   }
 
-  private void buildScheme( StringBuilder b ) {
+  private void buildScheme( StringBuilder b, boolean encode ) {
     if( hasScheme ) {
       if( scheme != null ) {
-        buildSegmentValue( b, scheme, scheme.getFirstValue() );
+        buildSegmentValue( b, scheme, scheme.getFirstValue(), encode );
       }
       b.append( ':' );
     }
   }
 
-  private void buildAuthority( StringBuilder b ) {
+  private void buildAuthority( StringBuilder b, boolean encode ) {
     if( hasAuthority ) {
       if( !isAuthorityOnly ) {
         b.append( "//" );
       }
       if( username != null || password != null ) {
         if( username != null ) {
-          buildSegmentValue( b, username, username.getFirstValue() );
+          buildSegmentValue( b, username, username.getFirstValue(), encode );
         }
         if( password != null ) {
           b.append( ':' );
-          buildSegmentValue( b, password, password.getFirstValue() );
+          buildSegmentValue( b, password, password.getFirstValue(), encode );
         }
         b.append( "@" );
       }
       if( host != null ) {
-        buildSegmentValue( b, host, host.getFirstValue() );
+        buildSegmentValue( b, host, host.getFirstValue(), encode );
       }
       if( port != null ) {
         b.append( ':' );
-        buildSegmentValue( b, port, port.getFirstValue() );
+        buildSegmentValue( b, port, port.getFirstValue(), encode );
       }
     }
   }
 
-  private void buildSegmentValue( StringBuilder b, Segment s, Segment.Value v ) {
+  private void buildSegmentValue( StringBuilder b, Segment s, Segment.Value v, boolean encode ) {
     String paramName = s.getParamName();
     if( paramName != null && paramName.length() > 0 ) {
       b.append( "{" );
-      b.append( s.getParamName() );
+      if ( encode ) {
+        b.append( encodeValue( s.getParamName() ));
+      } else {
+        b.append( s.getParamName() );
+      }
       String actualPattern = v.getToken().originalPattern;
       if( ( actualPattern != null ) && ( v.getType() != Segment.DEFAULT ) )  {
         b.append( '=' );
-        b.append( v.getOriginalPattern() );
+        if ( encode ) {
+          b.append( encodeValue( v.getOriginalPattern() ));
+        } else {
+          b.append( v.getOriginalPattern() );
+        }
       }
       b.append( '}' );
     } else {
-      b.append( s.getFirstValue().getOriginalPattern() );
+      if ( encode ) {
+        b.append( encodeValue( s.getFirstValue().getOriginalPattern() ));
+      } else {
+        b.append( s.getFirstValue().getOriginalPattern() );
+      }
     }
   }
 
-  private void buildPath( StringBuilder b ) {
+  private void buildPath( StringBuilder b, boolean encode ) {
     if( isAbsolute ) {
       b.append( '/' );
     }
@@ -216,7 +230,11 @@ public class Template {
       Segment.Value firstValue = segment.getFirstValue();
       if( paramName != null && paramName.length() > 0 ) {
         b.append( "{" );
-        b.append( segment.getParamName() );
+        if ( encode ) {
+          b.append( encodeValue(segment.getParamName()) );
+        } else {
+          b.append( segment.getParamName() );
+        }
         String pattern = firstValue.getOriginalPattern();
         if( pattern != null && !pattern.isEmpty() ) {
           b.append( '=' );
@@ -224,7 +242,11 @@ public class Template {
         }
         b.append( '}' );
       } else {
-        b.append( firstValue.getOriginalPattern() );
+        if ( encode ) {
+          b.append( encodeValue(firstValue.getOriginalPattern()) );
+        } else {
+          b.append( firstValue.getOriginalPattern() );
+        }
       }
     }
     if( isDirectory && ( !isAbsolute || path.size() > 0 ) ) {
@@ -232,7 +254,7 @@ public class Template {
     }
   }
 
-  private void buildQuery( StringBuilder b ) {
+  private void buildQuery( StringBuilder b , boolean encode ) {
     if( hasQuery ) {
       int count = 0;
       for( Query segment: query.values() ) {
@@ -244,7 +266,7 @@ public class Template {
           } else {
             b.append( '&' );
           }
-          buildQuerySegment( b, segment, value );
+          buildQuerySegment( b, segment, value, encode );
 //          String valuePattern = value.getPattern();
 //          if( paramName != null && paramName.length() > 0 ) {
 //            b.append( segment.getQueryName() );
@@ -271,7 +293,7 @@ public class Template {
         } else {
           b.append( '&' );
         }
-        buildQuerySegment( b, extra, extra.getFirstValue() );
+        buildQuerySegment( b, extra, extra.getFirstValue(), encode );
       }
       if( count == 0 ) {
         b.append( '?' );
@@ -279,17 +301,25 @@ public class Template {
     }
   }
 
-  private void buildQuerySegment( StringBuilder b, Query segment, Segment.Value value ) {
+  private void buildQuerySegment( StringBuilder b, Query segment, Segment.Value value, boolean encode ) {
     String paramName = segment.getParamName();
     String queryName = segment.getQueryName();
     String valuePattern = value.getOriginalPattern();
+    if (encode) {
+      queryName = encodeValue(queryName);
+      valuePattern = encodeValue(valuePattern);
+    }
     if( paramName != null && paramName.length() > 0 ) {
       if( !Segment.GLOB_PATTERN.equals( queryName ) && !Segment.STAR_PATTERN.equals( queryName ) ) {
         b.append( segment.getQueryName() );
         b.append( "=" );
       }
       b.append( "{" );
-      b.append( segment.getParamName() );
+      if (encode) {
+        b.append( encodeValue(segment.getParamName()) );
+      } else {
+        b.append( segment.getParamName() );
+      }
       if( valuePattern != null ) {
         b.append( '=' );
         b.append( valuePattern );
@@ -304,28 +334,51 @@ public class Template {
     }
   }
 
-  private void buildFragment( StringBuilder b ) {
+  private void buildFragment( StringBuilder b, boolean encode ) {
     if( hasFragment ) {
       b.append( '#' );
       if( fragment != null ) {
-        b.append( fragment.getFirstValue().getOriginalPattern() );
+        String value = fragment.getFirstValue().getOriginalPattern();
+        if (encode) {
+          value = encodeValue( value );
+        }
+        b.append( value );
       }
     }
   }
 
+  private String encodeValue(String value) {
+    if ( value != null ) {
+      try {
+        return URLEncoder.encode( value, "UTF-8" );
+      } catch ( UnsupportedEncodingException e ) {
+        //log
+      }
+    }
+    return value;
+  }
+
   public String toString() {
+    return toString( false );
+  }
+
+  private String toString( boolean encoded ) {
     String s = image;
     if( s == null ) {
       StringBuilder b = new StringBuilder();
-      buildScheme( b );
-      buildAuthority( b );
-      buildPath( b );
-      buildQuery( b );
-      buildFragment( b );
+      buildScheme( b, encoded );
+      buildAuthority( b, encoded );
+      buildPath( b, encoded );
+      buildQuery( b, encoded );
+      buildFragment( b , encoded);
       s = b.toString();
       //image = s;
     }
     return s;
+  }
+
+ public String toEncodedString() {
+    return toString(true);
   }
 
   public int hashCode() {

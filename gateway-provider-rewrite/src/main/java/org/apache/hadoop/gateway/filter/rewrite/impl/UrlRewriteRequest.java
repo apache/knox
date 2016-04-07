@@ -41,9 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -127,7 +125,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     if( url == null ) {
       return EMPTY_STRING_ARRAY;
     } else {
-      String s = url.toString();
+      String s = url.toEncodedString();
       return s.split( "\\?" );
     }
   }
@@ -153,12 +151,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   public String getQueryString() {
     String[] split = splitTargetUrl( getTargetUrl() );
     if( split.length > 1 ) {
-      try {
-        return URLDecoder.decode(split[1], "UTF-8");
-      } catch ( UnsupportedEncodingException e ) {
-        LOG.failedToDecodeQueryString(split[1], e);
-        return split[1];
-      }
+      return split[1];
     } else {
       return null;
     }
