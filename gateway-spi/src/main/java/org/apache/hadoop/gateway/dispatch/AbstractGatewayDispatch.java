@@ -77,6 +77,18 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     this.client = client;
   }
 
+  @Override
+  public URI getDispatchUrl(HttpServletRequest request) {
+    StringBuffer str = request.getRequestURL();
+    String query = request.getQueryString();
+    if ( query != null ) {
+      str.append('?');
+      str.append(query);
+    }
+    URI url = URI.create(str.toString());
+    return url;
+  }
+
   public void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );

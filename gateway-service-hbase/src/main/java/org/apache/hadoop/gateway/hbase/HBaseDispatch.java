@@ -17,6 +17,11 @@
  */
 package org.apache.hadoop.gateway.hbase;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 
 /**
@@ -25,6 +30,23 @@ import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
  */
 @Deprecated
 public class HBaseDispatch extends DefaultDispatch {
+
+  // KNOX-709: HBase can't handle URL encoded paths.
+  public URI getDispatchUrl( HttpServletRequest request) {
+    String base = request.getRequestURI();
+    StringBuffer str = new StringBuffer();
+    try {
+      str.append( URLDecoder.decode( base, "UTF-8" ) );
+    } catch( UnsupportedEncodingException e ) {
+      str.append( base );
+    } String query = request.getQueryString();
+    if ( query != null ) {
+      str.append( '?' );
+      str.append( query );
+    }
+    URI uri = URI.create( str.toString() );
+    return uri;
+  }
 
 }
 

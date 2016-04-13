@@ -36,6 +36,8 @@ public interface Dispatch {
 
   void setHttpClient(HttpClient httpClient);
 
+  URI getDispatchUrl( HttpServletRequest request );
+
   void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
 

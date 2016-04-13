@@ -63,6 +63,7 @@ Release Notes - Apache Knox - Version 0.9.0
     * [KNOX-706] - KnoxSSO Default IDP must not require specific URL
     * [KNOX-707] - Enter Key within KnoxSSO Default IDP Form does not Submit
     * [KNOX-708] - Wrong CSS link in KnoxAuth Application's redirecting.html
+    * [KNOX-709] - HBase request URLs must not be URL encoded
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.8.0

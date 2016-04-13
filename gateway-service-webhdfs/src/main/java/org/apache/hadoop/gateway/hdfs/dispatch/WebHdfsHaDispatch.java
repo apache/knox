@@ -181,15 +181,4 @@ public class WebHdfsHaDispatch extends HdfsHttpClientDispatch {
       }
    }
 
-  private static URI getDispatchUrl(HttpServletRequest request) {
-    StringBuffer str = request.getRequestURL();
-    String query = request.getQueryString();
-    if ( query != null ) {
-      str.append('?');
-      str.append(query);
-    }
-    URI url = URI.create(str.toString());
-    return url;
-  }
-
 }

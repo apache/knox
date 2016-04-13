@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
@@ -39,6 +40,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.servlet.SynchronousServletOutputStreamAdapter;
+import org.apache.hadoop.test.TestUtils;
+import org.apache.hadoop.test.category.FastTests;
+import org.apache.hadoop.test.category.UnitTests;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -46,7 +50,9 @@ import org.apache.http.params.BasicHttpParams;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category( { UnitTests.class, FastTests.class } )
 public class DefaultDispatchTest {
 
   // Make sure Hadoop cluster topology isn't exposed to client when there is a connectivity issue.
@@ -163,6 +169,55 @@ public class DefaultDispatchTest {
     assertTrue("not buffering in the absence of delegation token",
         (httpEntity instanceof PartiallyRepeatableHttpEntity));
     assertEquals(defaultDispatch.getReplayBufferSize(), 16);
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGetDispatchUrl() throws Exception {
+    HttpServletRequest request;
+    Dispatch dispatch;
+    String path;
+    String query;
+    URI uri;
+
+    dispatch = new DefaultDispatch();
+
+    path = "http://test-host:42/test-path";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( null ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test-path" ) );
+
+    path = "http://test-host:42/test,path";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( null ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test,path" ) );
+
+    path = "http://test-host:42/test%2Cpath";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( null ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath" ) );
+
+    path = "http://test-host:42/test%2Cpath";
+    query = "test%26name=test%3Dvalue";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath?test%26name=test%3Dvalue" ) );
+
   }
 
 }
