@@ -112,17 +112,6 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     }
   }
 
-  protected static URI getDispatchUrl(HttpServletRequest request) {
-    StringBuffer str = request.getRequestURL();
-    String query = request.getQueryString();
-    if ( query != null ) {
-      str.append('?');
-      str.append(query);
-    }
-    URI url = URI.create(str.toString());
-    return url;
-  }
-
   private interface Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException;
@@ -131,35 +120,35 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   private static class GetAdapter implements Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
-      dispatch.doGet(getDispatchUrl(request), request, response);
+      dispatch.doGet( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
   private static class PostAdapter implements Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
-      dispatch.doPost(getDispatchUrl(request), request, response);
+      dispatch.doPost( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
   private static class PutAdapter implements Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
-      dispatch.doPut(getDispatchUrl(request), request, response);
+      dispatch.doPut( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
   private static class DeleteAdapter implements Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
-      dispatch.doDelete(getDispatchUrl(request), request, response);
+      dispatch.doDelete( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
   private static class OptionsAdapter implements Adapter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
-      dispatch.doOptions(getDispatchUrl(request), request, response);
+      dispatch.doOptions( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
