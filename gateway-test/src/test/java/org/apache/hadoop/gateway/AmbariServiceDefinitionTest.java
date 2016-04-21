@@ -65,6 +65,7 @@ public class AmbariServiceDefinitionTest {
   private static int gatewayPort;
   private static String gatewayUrl;
   private static String clusterUrl;
+  private static String clusterPath;
   private static Properties params;
   private static TopologyService topos;
   private static MockServer mockAmbari;
@@ -150,7 +151,9 @@ public class AmbariServiceDefinitionTest {
 
     gatewayPort = gateway.getAddresses()[0].getPort();
     gatewayUrl = "http://localhost:" + gatewayPort + "/" + config.getGatewayPath();
-    clusterUrl = gatewayUrl + "/test-topology";
+    String topologyPath = "/test-topology";
+    clusterPath = "/" + config.getGatewayPath() + topologyPath;
+    clusterUrl = gatewayUrl + topologyPath;
 
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
@@ -165,7 +168,7 @@ public class AmbariServiceDefinitionTest {
 
     context = new VelocityContext();
     context.put( "cluster_url", clusterUrl );
-
+    context.put( "cluster_path", clusterPath );
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
@@ -319,6 +322,45 @@ public class AmbariServiceDefinitionTest {
         .when().post( serviceUrl ).asString();
 
     Assert.assertNotNull(body);
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void contextPathInViewsResponse() throws Exception {
+    LOG_ENTER();
+
+    String username = "guest";
+    String password = "guest-password";
+
+    String serviceUrl =  clusterUrl + "/ambari/api/v1/views?fields=versions/instances/ViewInstanceInfo,versions/" +
+        "ViewVersionInfo/label&versions/ViewVersionInfo/system=false&_=1461186937589";
+
+    mockAmbari.expect()
+        .method( "GET" )
+        .pathInfo( "/api/v1/views" )
+        .queryParam("_", "1461186937589")
+        .queryParam("versions/ViewVersionInfo/system", "false")
+        .queryParam("fields", "versions/instances/ViewInstanceInfo,versions/ViewVersionInfo/label")
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( TestUtils.getResourceStream( DAT, "views-response.json" ) )
+        .contentType( "text/plain" );
+
+    String body = given()
+        .auth().preemptive().basic( username, password )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .contentType( "text/plain" )
+        .when().get( serviceUrl ).asString();
+
+
+    String name = TestUtils.getResourceName( this.getClass(), "views-response-expected.json" );
+    Template template = velocity.getTemplate( name );
+    StringWriter sw = new StringWriter();
+    template.merge( context, sw );
+    String expected = sw.toString();
+
+    MatcherAssert.assertThat(body, sameJSONAs(expected));
     LOG_EXIT();
   }
 

@@ -1,0 +1,328 @@
+{
+  "href" : "http://c6401.ambari.apache.org:8080/api/v1/views?_=1461186937589",
+  "items" : [
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/CAPACITY-SCHEDULER",
+      "ViewInfo" : {
+        "view_name" : "CAPACITY-SCHEDULER"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/CAPACITY-SCHEDULER/versions/1.0.0",
+          "ViewVersionInfo" : {
+            "label" : "Capacity Scheduler",
+            "system" : false,
+            "version" : "1.0.0",
+            "view_name" : "CAPACITY-SCHEDULER"
+          },
+          "instances" : [
+            {
+              "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/CAPACITY-SCHEDULER/versions/1.0.0/instances/AUTO_CS_INSTANCE",
+              "ViewInstanceInfo" : {
+                "cluster_handle" : "test",
+                "context_path" : "/views/CAPACITY-SCHEDULER/1.0.0/AUTO_CS_INSTANCE",
+                "description" : "Manage YARN Capacity Scheduler Queues",
+                "icon64_path" : null,
+                "icon_path" : null,
+                "instance_name" : "AUTO_CS_INSTANCE",
+                "label" : "YARN Queue Manager",
+                "static" : false,
+                "validation_result" : {
+                  "valid" : true,
+                  "detail" : "OK"
+                },
+                "version" : "1.0.0",
+                "view_name" : "CAPACITY-SCHEDULER",
+                "visible" : true,
+                "instance_data" : { },
+                "properties" : {
+                  "ambari.server.password" : null,
+                  "ambari.server.url" : null,
+                  "ambari.server.username" : null
+                },
+                "property_validation_results" : {
+                  "ambari.server.password" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "ambari.server.url" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "ambari.server.username" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/FILES",
+      "ViewInfo" : {
+        "view_name" : "FILES"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/FILES/versions/1.0.0",
+          "ViewVersionInfo" : {
+            "label" : "Files",
+            "system" : false,
+            "version" : "1.0.0",
+            "view_name" : "FILES"
+          },
+          "instances" : [ ]
+        }
+      ]
+    },
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/HIVE",
+      "ViewInfo" : {
+        "view_name" : "HIVE"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/HIVE/versions/1.0.0",
+          "ViewVersionInfo" : {
+            "label" : "Hive",
+            "system" : false,
+            "version" : "1.0.0",
+            "view_name" : "HIVE"
+          },
+          "instances" : [
+            {
+              "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/HIVE/versions/1.0.0/instances/AUTO_HIVE_INSTANCE",
+              "ViewInstanceInfo" : {
+                "cluster_handle" : "test",
+                "context_path" : "/views/HIVE/1.0.0/AUTO_HIVE_INSTANCE",
+                "description" : "This view instance is auto created when the Hive service is added to a cluster.",
+                "icon64_path" : null,
+                "icon_path" : null,
+                "instance_name" : "AUTO_HIVE_INSTANCE",
+                "label" : "Hive View",
+                "static" : false,
+                "validation_result" : {
+                  "valid" : true,
+                  "detail" : "OK"
+                },
+                "version" : "1.0.0",
+                "view_name" : "HIVE",
+                "visible" : true,
+                "instance_data" : { },
+                "properties" : {
+                  "hdfs.auth_to_local" : null,
+                  "hdfs.umask-mode" : "022",
+                  "hive.auth" : "auth=NONE",
+                  "hive.host" : null,
+                  "hive.http.path" : "cliservice",
+                  "hive.http.port" : "10001",
+                  "hive.metastore.warehouse.dir" : "/apps/hive/warehouse",
+                  "hive.port" : "10000",
+                  "hive.transport.mode" : "binary",
+                  "jobs.dir" : "/user/${username}/hive/jobs",
+                  "scripts.dir" : "/user/${username}/hive/scripts",
+                  "scripts.settings.defaults-file" : "/user/${username}/.${instanceName}.defaultSettings",
+                  "views.tez.instance" : null,
+                  "webhdfs.auth" : null,
+                  "webhdfs.client.failover.proxy.provider" : null,
+                  "webhdfs.ha.namenode.http-address.nn1" : null,
+                  "webhdfs.ha.namenode.http-address.nn2" : null,
+                  "webhdfs.ha.namenode.rpc-address.nn1" : null,
+                  "webhdfs.ha.namenode.rpc-address.nn2" : null,
+                  "webhdfs.ha.namenodes.list" : null,
+                  "webhdfs.nameservices" : null,
+                  "webhdfs.url" : null,
+                  "webhdfs.username" : "${username}",
+                  "yarn.ats.url" : null,
+                  "yarn.resourcemanager.url" : null
+                },
+                "property_validation_results" : {
+                  "hdfs.auth_to_local" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hdfs.umask-mode" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.auth" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.host" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.http.path" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.http.port" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.metastore.warehouse.dir" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.port" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "hive.transport.mode" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "jobs.dir" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "scripts.dir" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "scripts.settings.defaults-file" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "views.tez.instance" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.auth" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.client.failover.proxy.provider" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.ha.namenode.http-address.nn1" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.ha.namenode.http-address.nn2" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.ha.namenode.rpc-address.nn1" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.ha.namenode.rpc-address.nn2" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.ha.namenodes.list" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.nameservices" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.url" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "webhdfs.username" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "yarn.ats.url" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  },
+                  "yarn.resourcemanager.url" : {
+                    "valid" : true,
+                    "detail" : "OK"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/PIG",
+      "ViewInfo" : {
+        "view_name" : "PIG"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/PIG/versions/1.0.0",
+          "ViewVersionInfo" : {
+            "label" : "Pig",
+            "system" : false,
+            "version" : "1.0.0",
+            "view_name" : "PIG"
+          },
+          "instances" : [ ]
+        }
+      ]
+    },
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/SLIDER",
+      "ViewInfo" : {
+        "view_name" : "SLIDER"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/SLIDER/versions/2.0.0",
+          "ViewVersionInfo" : {
+            "label" : "Slider Apps View",
+            "system" : false,
+            "version" : "2.0.0",
+            "view_name" : "SLIDER"
+          },
+          "instances" : [ ]
+        }
+      ]
+    },
+    {
+      "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/TEZ",
+      "ViewInfo" : {
+        "view_name" : "TEZ"
+      },
+      "versions" : [
+        {
+          "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/TEZ/versions/0.7.0.2.3.4.0-4740",
+          "ViewVersionInfo" : {
+            "label" : "Tez View",
+            "system" : false,
+            "version" : "0.7.0.2.3.4.0-4740",
+            "view_name" : "TEZ"
+          },
+          "instances" : [
+            {
+              "href" : "http://c6401.ambari.apache.org:8080/api/v1/views/TEZ/versions/0.7.0.2.3.4.0-4740/instances/TEZ_CLUSTER_INSTANCE",
+              "ViewInstanceInfo" : {
+                "cluster_handle" : "test",
+                "context_path" : "/views/TEZ/0.7.0.2.3.4.0-4740/TEZ_CLUSTER_INSTANCE",
+                "description" : "Monitor and debug all Tez jobs, submitted by Hive queries and Pig scripts (auto-created)",
+                "icon64_path" : null,
+                "icon_path" : null,
+                "instance_name" : "TEZ_CLUSTER_INSTANCE",
+                "label" : "Tez View",
+                "static" : false,
+                "version" : "0.7.0.2.3.4.0-4740",
+                "view_name" : "TEZ",
+                "visible" : true,
+                "instance_data" : { },
+                "properties" : {
+                  "hdfs.auth_to_local" : null,
+                  "yarn.resourcemanager.url" : null,
+                  "yarn.timeline-server.url" : null
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
