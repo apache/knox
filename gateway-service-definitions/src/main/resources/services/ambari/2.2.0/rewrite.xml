@@ -19,12 +19,17 @@
         <rewrite template="{$serviceUrl[AMBARI]}/api/v1/{path=**}?{**}"/>
     </rule>
     <rule dir="OUT" name="AMBARI/ambari/href/outbound">
-        <match pattern="*://*:*/api/{**}"/>
-        <rewrite template="{$frontend[url]}/ambari/api/{**}"/>
+        <match pattern="*://*:*/api/{path=**}?{**}"/>
+        <rewrite template="{$frontend[url]}/ambari/api/{path=**}?{**}"/>
+    </rule>
+    <rule dir="OUT" name="AMBARI/ambari/context_path/outbound">
+        <match pattern="/{**}"/>
+        <rewrite template="{$frontend[path]}/ambari/{**}"/>
     </rule>
     <filter name="AMBARI/ambari/api/outbound">
         <content type="text/plain" asType="application/json">
             <apply path="$.**.href" rule="AMBARI/ambari/href/outbound"/>
+            <apply path="$.**.context_path" rule="AMBARI/ambari/context_path/outbound"/>
         </content>
     </filter>
     <filter name="AMBARI/ambari/api/inbound">
