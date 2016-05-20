@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 
 public class Hive {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     private String group;
     private String file;

@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 
 public class SubmitApp {
 
-    static class Request extends AbstractRequest<Response> {
+    public static class Request extends AbstractRequest<Response> {
 
         private String text;
         private String file;

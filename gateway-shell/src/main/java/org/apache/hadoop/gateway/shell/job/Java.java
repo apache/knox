@@ -35,7 +35,7 @@ import java.util.concurrent.Callable;
 
 class Java {
   
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     String jar;
     String app;

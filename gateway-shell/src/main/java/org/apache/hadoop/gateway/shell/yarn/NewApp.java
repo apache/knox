@@ -30,7 +30,7 @@ import java.util.concurrent.Callable;
 
 public class NewApp {
 
-    static class Request extends AbstractRequest<Response> {
+    public static class Request extends AbstractRequest<Response> {
 
         protected Request(Hadoop session) {
             super(session);

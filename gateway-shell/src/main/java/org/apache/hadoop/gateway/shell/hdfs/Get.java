@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 
 public class Get {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     private String from;
     private String to;
