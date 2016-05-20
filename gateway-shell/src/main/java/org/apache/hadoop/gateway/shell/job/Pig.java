@@ -38,8 +38,8 @@ public class Pig {
 
     private String group;
     private String file;
-    private String arg;
     private String statusDir;
+    List<NameValuePair> params = new ArrayList<NameValuePair>();
 
     public Request( Hadoop session ) {
       super( session );
@@ -55,8 +55,8 @@ public class Pig {
       return this;
     }
 
-    public Request arg( String arg ) {
-      this.arg = arg;
+    public Request arg( String value ) {
+      addParam( params, "arg", value );
       return this;
     }
 
@@ -70,10 +70,8 @@ public class Pig {
         @Override
         public Response call() throws Exception {
           URIBuilder uri = uri( Job.SERVICE_PATH, "/pig" );
-          List<NameValuePair> params = new ArrayList<NameValuePair>();
           addParam( params, "group", group );
           addParam( params, "file", file );
-          addParam( params, "arg", arg );
           addParam( params, "statusdir", statusDir );
           UrlEncodedFormEntity form = new UrlEncodedFormEntity( params );
           HttpPost request = new HttpPost( uri.build() );
