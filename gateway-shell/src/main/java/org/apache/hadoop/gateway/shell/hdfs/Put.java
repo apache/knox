@@ -36,7 +36,7 @@ import java.util.concurrent.Callable;
 
 class Put {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     private String text;
     private String file;

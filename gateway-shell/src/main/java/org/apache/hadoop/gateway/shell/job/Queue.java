@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 class Queue {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     public Request( Hadoop session ) {
       super( session );

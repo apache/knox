@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 class Ls {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     String dir;
 

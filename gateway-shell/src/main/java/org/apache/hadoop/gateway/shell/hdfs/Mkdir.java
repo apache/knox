@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 class Mkdir {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     String dir = null;
     String perm = null;

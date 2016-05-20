@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 
 class Rm {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     String file;
     Boolean recursive;
