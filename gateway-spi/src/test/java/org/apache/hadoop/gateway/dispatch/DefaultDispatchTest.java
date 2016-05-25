@@ -157,7 +157,7 @@ public class DefaultDispatchTest {
     ServletContext servletContext = EasyMock.createNiceMock( ServletContext.class );
     GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
     EasyMock.expect(gatewayConfig.isHadoopKerberosSecured()).andReturn( Boolean.TRUE ).anyTimes();
-    EasyMock.expect(gatewayConfig.getHttpServerRequestBuffer()).andReturn( 16 ).anyTimes();
+    EasyMock.expect(gatewayConfig.getHttpServerRequestBuffer()).andReturn( 16384 ).anyTimes();
     EasyMock.expect( servletContext.getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE ) ).andReturn( gatewayConfig ).anyTimes();
     ServletInputStream inputStream = EasyMock.createNiceMock( ServletInputStream.class );
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -169,6 +169,17 @@ public class DefaultDispatchTest {
     assertTrue("not buffering in the absence of delegation token",
         (httpEntity instanceof PartiallyRepeatableHttpEntity));
     assertEquals(defaultDispatch.getReplayBufferSize(), 16);
+    assertEquals(defaultDispatch.getReplayBufferSizeInBytes(), 16384);
+
+    //also test normal setter and getters
+    defaultDispatch.setReplayBufferSize(-1);
+    assertEquals(defaultDispatch.getReplayBufferSizeInBytes(), -1);
+    assertEquals(defaultDispatch.getReplayBufferSize(), -1);
+
+    defaultDispatch.setReplayBufferSize(16);
+    assertEquals(defaultDispatch.getReplayBufferSizeInBytes(), 16384);
+    assertEquals(defaultDispatch.getReplayBufferSize(), 16);
+
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
