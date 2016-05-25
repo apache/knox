@@ -49,9 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -69,6 +67,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   private Set<String> outboundResponseExcludeHeaders;
 
+  //Buffer size in bytes
   private int replayBufferSize = -1;
 
   @Override
@@ -85,13 +84,28 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   }
 
   protected int getReplayBufferSize() {
+    if (replayBufferSize > 0) {
+      return Math.abs(replayBufferSize/1024);
+    }
     return replayBufferSize;
   }
 
   @Configure
   protected void setReplayBufferSize(@Default("-1")int size) {
+    setReplayBufferSizeInBytes(size);
+  }
+
+  protected int getReplayBufferSizeInBytes() {
+    return replayBufferSize;
+  }
+
+  protected void setReplayBufferSizeInBytes(int size) {
+    if (size > 0) {
+      size *= 1024;
+    }
     replayBufferSize = size;
   }
+
 
   protected void executeRequest(
          HttpUriRequest outboundRequest,
