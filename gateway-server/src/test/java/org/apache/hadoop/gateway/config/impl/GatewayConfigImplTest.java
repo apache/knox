@@ -1,11 +1,13 @@
 package org.apache.hadoop.gateway.config.impl;
 
-import java.util.List;
-
 import org.apache.hadoop.test.TestUtils;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.nullValue;
@@ -149,6 +151,33 @@ public class GatewayConfigImplTest {
 
     config.set( "ssl.exclude.ciphers", " ONE , TWO , THREE " );
     assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGlobalRulesServices() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    List<String> list;
+
+    list = config.getGlobalRulesServices();
+    assertThat( list, is(notNullValue()) );
+
+    assertThat( list, is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")));
+
+
+    config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "none" );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+
+    config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "" );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+
+    config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "ONE" );
+    assertThat( config.getGlobalRulesServices(), is(hasItems("ONE")) );
+
+    config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "ONE,TWO,THREE" );
+    assertThat( config.getGlobalRulesServices(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, " ONE , TWO , THREE " );
+    assertThat( config.getGlobalRulesServices(), is(hasItems("ONE","TWO","THREE")) );
   }
 
 }

@@ -143,4 +143,6 @@ public interface GatewayConfig {
 
   String getSigningKeyAlias();
 
+  List<String> getGlobalRulesServices();
+
 }

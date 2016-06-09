@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ProviderDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
@@ -39,6 +40,7 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
 
   private static final String PROVIDER_ROLE_NAME = "rewrite";
   private static final String PROVIDER_IMPL_NAME = "url-rewrite";
+  private static final String PARAM_SERVICE_ROLE = "service.role";
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   @Override
@@ -90,7 +92,9 @@ public class UrlRewriteDeploymentContributor extends ProviderDeploymentContribut
       Service service,
       ResourceDescriptor resource,
       List<FilterParamDescriptor> params ) {
-    resource.addFilter().role( getRole() ).name( getName() ).impl( UrlRewriteServletFilter.class ).params( params );
+    FilterDescriptor filterDescriptor = resource.addFilter();
+    filterDescriptor.role( getRole() ).name( getName() ).impl( UrlRewriteServletFilter.class ).params( params );
+    filterDescriptor.param().name(PARAM_SERVICE_ROLE).value(service.getRole());
   }
 
 }

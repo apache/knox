@@ -51,7 +51,7 @@ public class XmlUrlRewriteRulesExporterTest {
   @Test
   public void testSingleNamedRule() throws IOException {
     UrlRewriteRulesDescriptor rules = UrlRewriteRulesDescriptorFactory.create();
-    rules.addRule( "first" );
+    rules.addRule( "first" ).scope( "test-scope" );
 
     StringWriter writer = new StringWriter();
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
@@ -63,6 +63,7 @@ public class XmlUrlRewriteRulesExporterTest {
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
     assertThat( xml, XmlMatchers.hasXPath( "count(/rules/rule)", is( "1" ) ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule/@name", is( "first" ) ) );
+    assertThat( xml, XmlMatchers.hasXPath( "/rules/rule/@scope", is( "test-scope" ) ) );
   }
 
   @Test

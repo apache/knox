@@ -397,4 +397,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  @Override
+  public List<String> getGlobalRulesServices() {
+    ArrayList<String> services = new ArrayList<>();
+    services.add("WEBHDFS");
+    services.add("HBASE");
+    services.add("HIVE");
+    services.add("OOZIE");
+    services.add("RESOURCEMANAGER");
+    services.add("STORM");
+    return services;
+  }
 }

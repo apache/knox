@@ -31,6 +31,10 @@ public interface UrlRewriteRuleDescriptor extends UrlRewriteFlowDescriptor<UrlRe
 
   UrlRewriteStepDescriptor name( String name );
 
+  String scope();
+
+  UrlRewriteStepDescriptor scope( String scope );
+
   EnumSet<UrlRewriter.Direction> directions();
 
   UrlRewriteRuleDescriptor directions( String directions );

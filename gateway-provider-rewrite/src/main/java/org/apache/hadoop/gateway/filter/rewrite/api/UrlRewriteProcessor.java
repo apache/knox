@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
+import org.apache.hadoop.gateway.filter.rewrite.ext.ScopedMatcher;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFactory;
@@ -32,6 +33,7 @@ import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter.Direction.IN;
@@ -44,8 +46,8 @@ public class UrlRewriteProcessor implements UrlRewriter {
   UrlRewriteEnvironment environment;
   UrlRewriteRulesDescriptor descriptor;
   Map<String,UrlRewriteRuleProcessorHolder> rules = new HashMap<String,UrlRewriteRuleProcessorHolder>();
-  Matcher<UrlRewriteRuleProcessorHolder> inbound = new Matcher<UrlRewriteRuleProcessorHolder>();
-  Matcher<UrlRewriteRuleProcessorHolder> outbound = new Matcher<UrlRewriteRuleProcessorHolder>();
+  ScopedMatcher inbound = new ScopedMatcher();
+  ScopedMatcher outbound = new ScopedMatcher();
   Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
 
   public UrlRewriteProcessor() {
@@ -124,6 +126,13 @@ public class UrlRewriteProcessor implements UrlRewriter {
   @Override
   public Template rewrite( Resolver resolver, Template inputUri, Direction direction, String ruleName ) {
     Template outputUri = inputUri;
+    String serviceRole = null;
+    if (resolver != null) {
+      List<String> serviceRoles = resolver.resolve("service.role");
+      if ( serviceRoles != null && !serviceRoles.isEmpty() ) {
+        serviceRole = serviceRoles.get(0);
+      }
+    }
     UrlRewriteStepProcessorHolder stepHolder = null;
     String effectiveRuleName = null;
     if( ruleName == null || "*".equals( ruleName ) ) {
@@ -131,10 +140,10 @@ public class UrlRewriteProcessor implements UrlRewriter {
       Matcher<UrlRewriteRuleProcessorHolder>.Match match = null;
       switch( direction ) {
         case IN:
-          match = inbound.match( outputUri );
+          match = inbound.match( outputUri, serviceRole );
           break;
         case OUT:
-          match = outbound.match( outputUri );
+          match = outbound.match( outputUri, serviceRole );
           break;
       }
       if( match != null ) {
