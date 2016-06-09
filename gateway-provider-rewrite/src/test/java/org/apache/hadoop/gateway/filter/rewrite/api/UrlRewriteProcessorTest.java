@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -114,6 +115,66 @@ public class UrlRewriteProcessorTest {
     assertThat(
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "mock-scheme://output-mock-host-4:42/no-query" ) );
+
+    processor.destroy();
+  }
+
+  @Test
+  public void testIdenticalRewriteOutputRulesWithScopes() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    ArrayList<String> roles = new ArrayList<>();
+    roles.add("service-1");
+    EasyMock.expect(environment.resolve("service.role")).andReturn(roles).anyTimes();
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite-with-same-rules-different-scope.xml", "UTF-8" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl = Parser.parseLiteral( "scheme://input-mock-host:42/test-input-path" );
+    Template outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.OUT, null );
+
+    assertThat( "Expect rewrite to produce a new URL",
+        outputUrl, notNullValue() );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "output-mock-scheme-2://output-mock-host-2:42/test-input-path" ) );
+
+    inputUrl = Parser.parseLiteral( "mock-scheme://input-mock-host:42/no-query" );
+    outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.OUT, null );
+
+    roles.remove(0);
+    roles.add("service-2");
+
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "mock-scheme://output-mock-host-5:42/no-query" ) );
+
+    outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.OUT, "service-2/test-rule-4" );
+
+    //no scope information should pick the first one
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "mock-scheme://output-mock-host-4:42/no-query" ) );
+
+    outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.OUT, "service-2/test-rule-4" );
+
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "mock-scheme://output-mock-host-4:42/no-query" ) );
+
+    //Test the IN direction
+    inputUrl = Parser.parseLiteral( "scheme://input-mock-host:42/test-input-path" );
+    outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.IN, null );
+
+    assertThat( "Expect rewrite to produce a new URL",
+        outputUrl, notNullValue() );
+    assertThat(
+        "Expect rewrite to contain the correct path.",
+        outputUrl.toString(), is( "input-mock-scheme-2://input-mock-host-2:42/test-input-path" ) );
 
     processor.destroy();
   }

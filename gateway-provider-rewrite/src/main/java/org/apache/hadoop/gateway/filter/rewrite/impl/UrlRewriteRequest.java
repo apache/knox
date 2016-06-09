@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -53,6 +53,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
   private static final String[] EMPTY_STRING_ARRAY = new String[]{};
 
+  private FilterConfig config;
   private UrlRewriter rewriter;
   private String urlRuleName;
   private String bodyFilterName;
@@ -68,6 +69,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
    */
   public UrlRewriteRequest( FilterConfig config, HttpServletRequest request ) throws IOException {
     super( request );
+    this.config = config;
     this.rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );
     this.urlRuleName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_URL_RULE_PARAM );
     this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM );
@@ -184,7 +186,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public List<String> resolve( String name ) {
-    return Collections.emptyList();
+    return Arrays.asList( config.getInitParameter( name ) );
   }
 
   private class EnumerationRewriter implements Enumeration<String> {

@@ -1,0 +1,54 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<rules>
+
+    <rule name="test-rule-1" dir="OUT" pattern="*://*:*/**?**">
+        <match pattern="*://{host}:{port}/{path=**}?{**}" />
+        <rewrite template="output-mock-scheme-1://output-mock-host-1:{port}/{path=**}" />
+    </rule>
+
+    <rule name="service-1/test-rule-2" dir="OUT" pattern="*://*:*/**?**">
+        <match pattern="*://{host}:{port}/{path=**}?{**}" />
+        <rewrite template="output-mock-scheme-2://output-mock-host-2:{port}/{path=**}" />
+    </rule>
+
+    <rule name="test-rule-3" dir="OUT" pattern="*://*:*/no-query">
+        <match pattern="{scheme}://{host}:{port}/{path=**}" />
+        <rewrite template="{scheme}://output-mock-host-3:{port}/{path=**}" />
+    </rule>
+
+    <rule name="service-2/test-rule-4" dir="OUT" pattern="*://*:*/no-query">
+        <match pattern="{scheme}://{host}:{port}/{path=**}" />
+        <rewrite template="{scheme}://output-mock-host-4:{port}/{path=**}" />
+    </rule>
+
+    <rule name="service-1/test-rule-5" dir="OUT" pattern="*://*:*/no-query">
+        <match pattern="{scheme}://{host}:{port}/{path=**}" />
+        <rewrite template="{scheme}://output-mock-host-5:{port}/{path=**}" />
+    </rule>
+
+    <rule name="test-rule-6" dir="IN" pattern="*://*:*/**?**">
+        <match pattern="*://{host}:{port}/{path=**}?{**}" />
+        <rewrite template="input-mock-scheme-1://input-mock-host-1:{port}/{path=**}" />
+    </rule>
+
+    <rule name="service-2/test-rule-7" dir="IN" pattern="*://*:*/**?**">
+        <match pattern="*://{host}:{port}/{path=**}?{**}" />
+        <rewrite template="input-mock-scheme-2://input-mock-host-2:{port}/{path=**}" />
+    </rule>
+
+</rules>

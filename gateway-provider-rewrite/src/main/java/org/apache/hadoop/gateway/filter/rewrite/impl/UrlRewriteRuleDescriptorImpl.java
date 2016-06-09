@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteFlowDescriptorBase;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
@@ -32,6 +33,7 @@ import java.util.StringTokenizer;
 public class UrlRewriteRuleDescriptorImpl extends UrlRewriteFlowDescriptorBase<UrlRewriteRuleDescriptor> implements UrlRewriteRuleDescriptor {
 
   private String name;
+  private String scope;
   private String pattern;
   private Template template;
   private EnumSet<UrlRewriter.Direction> directions;
@@ -57,6 +59,25 @@ public class UrlRewriteRuleDescriptorImpl extends UrlRewriteFlowDescriptorBase<U
 
   public String getName() {
     return name;
+  }
+
+  public String getScope() {
+    return scope;
+  }
+
+  public void setScope(String scope) {
+    scope( scope );
+  }
+
+  @Override
+  public String scope() {
+    return scope;
+  }
+
+  @Override
+  public UrlRewriteStepDescriptor scope( String scope ) {
+    this.scope = scope;
+    return this;
   }
 
   @Override

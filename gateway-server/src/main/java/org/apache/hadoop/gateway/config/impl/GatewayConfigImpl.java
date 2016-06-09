@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -108,6 +109,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String SECURITY_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".security.dir";
   public static final String DATA_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".data.dir";
   public static final String STACKS_SERVICES_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".services.dir";
+  public static final String GLOBAL_RULES_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".global.rules.services";
   public static final String APPLICATIONS_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".applications.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
@@ -144,7 +146,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   public static final String DEFAULT_SECURITY_DIR = "security";
   public static final String DEFAULT_DATA_DIR = "data";
-  
+  private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
+
 
   public GatewayConfigImpl() {
     init();
@@ -225,7 +228,22 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     for( String fileName : GATEWAY_CONFIG_FILENAMES ) {
       lastFileUrl = loadConfig( fileName, lastFileUrl );
     }
+    //set default services list
+    setDefaultGlobalRulesServices();
+
     initGatewayHomeDir( lastFileUrl );
+  }
+
+  private void setDefaultGlobalRulesServices() {
+    DEFAULT_GLOBAL_RULES_SERVICES = new ArrayList<>();
+    DEFAULT_GLOBAL_RULES_SERVICES.add("NAMENODE");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("JOBTRACKER");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHDFS");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHCAT");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("OOZIE");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHBASE");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("HIVE");
+    DEFAULT_GLOBAL_RULES_SERVICES.add("RESOURCEMANAGER");
   }
 
   private void initGatewayHomeDir( URL lastFileUrl ) {
@@ -601,6 +619,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getSigningKeyAlias() {
     return get(SIGNING_KEY_ALIAS);
+  }
+
+  @Override
+  public List<String> getGlobalRulesServices() {
+    String value = get( GLOBAL_RULES_SERVICES );
+    if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
+      return Arrays.asList( value.trim().split("\\s*,\\s*") );
+    }
+    return DEFAULT_GLOBAL_RULES_SERVICES;
   }
 
   private static long parseNetworkTimeout( String s ) {

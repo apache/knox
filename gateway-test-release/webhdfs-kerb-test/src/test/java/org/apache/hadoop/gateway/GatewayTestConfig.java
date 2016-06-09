@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
@@ -345,4 +346,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  @Override
+  public List<String> getGlobalRulesServices() {
+    return Collections.EMPTY_LIST;
+  }
 }

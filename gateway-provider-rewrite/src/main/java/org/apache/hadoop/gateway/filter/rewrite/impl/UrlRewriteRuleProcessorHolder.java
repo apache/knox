@@ -17,20 +17,49 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.impl;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
+import org.apache.hadoop.gateway.filter.rewrite.ext.ScopedMatcher;
+
+import java.util.List;
 
 public class UrlRewriteRuleProcessorHolder extends UrlRewriteStepProcessorHolder {
 
   private String ruleName;
 
+  private String scope;
+
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteRuleDescriptor descriptor ) throws Exception {
     super.initialize( environment, descriptor );
     ruleName = descriptor.name();
+    //if a scope is set in the rewrite file, use that
+    if (descriptor.scope() != null) {
+      scope = descriptor.scope();
+    } else {
+      //by convention the name of the rules start with ROLENAME/servicename/direction
+      //use the first part of the name to determine the scope, therefore setting the scope of a rule to
+      //be local to that service
+      int slashIndex = ruleName.indexOf('/');
+      if (slashIndex > 0) {
+        scope = ruleName.substring( 0, slashIndex );
+      }
+      //check config to see if the is an override configuration for a given service to have all its rules set to global
+      GatewayConfig gatewayConfig = environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      if (gatewayConfig != null) {
+        List<String> globalRulesServices = gatewayConfig.getGlobalRulesServices();
+        if ( globalRulesServices.contains(scope) ) {
+          scope = ScopedMatcher.GLOBAL_SCOPE;
+        }
+      }
+    }
   }
 
   public String getRuleName() {
     return ruleName;
   }
 
+  public String getScope() {
+    return scope;
+  }
 }
