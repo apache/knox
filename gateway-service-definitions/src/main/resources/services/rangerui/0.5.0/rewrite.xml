@@ -30,8 +30,8 @@
     </rule>
 
     <rule dir="OUT" name="RANGERUI/rangerui/outbound/login/headers/location">
-        <match pattern="{scheme}://{host}:{port}/{**}"/>
-        <rewrite template="{$frontend[url]}/ranger/{**}"/>
+        <match pattern="{scheme}://{host}:{port}/login.jsp{**}"/>
+        <rewrite template="{$frontend[url]}/ranger/login.jsp{**}"/>
     </rule>
 
     <filter name="RANGERUI/rangerui/outbound/links">
