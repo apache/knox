@@ -28,6 +28,36 @@
         <route path="/ambari/**/app.js">
             <rewrite apply="AMBARIUI/ambari/outbound/links" to="response.body"/>
         </route>
+
+        <!-- Admin View route -->
+        <route path="/ambari/views/ADMIN_VIEW/**/INSTANCE/**/main.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/proxyroot" to="response.body"/>
+        </route>
+
+        <!-- Files view -->
+        <route path="/ambari/views/FILES/**/assets/files-view*.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
+        </route>
+
+        <!-- Capacity Scheduler view -->
+        <route path="/ambari/views/CAPACITY-SCHEDULER/**/javascripts/app.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
+        </route>
+
+        <!-- Hive view route -->
+        <route path="/ambari/views/HIVE/**/assets/hive.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
+        </route>
+
+        <!-- Storm View -->
+        <route path="/ambari/views/Storm_Monitoring/**/scripts/models/*.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
+        </route>
+
+        <route path="/ambari/views/ZEPPELIN/*/*/">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/html" to="response.body"/>
+        </route>
+        <!-- No need to rewrite Slider View -->
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
 </service>
