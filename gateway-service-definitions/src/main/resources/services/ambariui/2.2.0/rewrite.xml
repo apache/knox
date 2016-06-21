@@ -25,6 +25,10 @@
         <rewrite template="{$serviceUrl[AMBARIUI]}/{**}?{**}"/>
     </rule>
 
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/sitepath">
+        <rewrite template="{$frontend[path]}/ambari"/>
+    </rule>
+
     <rule dir="OUT" name="AMBARIUI/ambari/outbound/extrapath">
         <rewrite template="{$frontend[path]}/ambari/api/v1"/>
     </rule>
@@ -42,15 +46,52 @@
         <rewrite template="{$frontend[url]}/ambari/img/{**}"/>
     </rule>
 
+    <filter name="AMBARIUI/ambari/outbound/proxyroot">
+        <content type="*/x-javascript">
+            <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
+        </content>
+        <content type="application/javascript">
+            <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
+        </content>
+    </filter>
+
+    <!-- filter to rewrite api prefix defined in .js from root -->
+    <!-- e.g. /api/v1 -->
+    <filter name="AMBARIUI/ambari/outbound/apiendpoint">
+        <content type="*/x-javascript">
+            <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+        </content>
+        <content type="application/javascript">
+            <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+        </content>
+    </filter>
+
+    <filter name="AMBARIUI/ambari/outbound/apiendpoint/html">
+        <content type="text/html">
+            <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+        </content>
+    </filter>
+
+    <filter name="AMBARIUI/ambari/outbound/apiendpoint/noroot">
+        <content type="*/x-javascript">
+            <apply path="api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+        </content>
+        <content type="application/javascript">
+            <apply path="api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+        </content>
+    </filter>
+
     <filter name="AMBARIUI/ambari/outbound/links">
         <content type="*/x-javascript">
             <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+            <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/img/logo-white.png" rule="AMBARIUI/ambari/outbound/whitelogo"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
         </content>
         <content type="application/javascript">
             <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
+            <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/img/logo-white.png" rule="AMBARIUI/ambari/outbound/whitelogo"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
