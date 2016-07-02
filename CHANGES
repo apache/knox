@@ -1,4 +1,20 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.9.1
+------------------------------------------------------------------------------
+** New Feature
+** Improvement
+    * [KNOX-711] Added the ability to scope rewrite rules
+** Bug
+    * [KNOX-705] - Views in Ambari UI don't render when proxied by the AMBARIUI service
+    * [KNOX-705] - Improvement on 404 error messages with ambari views
+    * [KNOX-712] - submitPig does not allow multiple argument via arg() (Pierre Regazzoni via lmccay)
+    * [KNOX-713] - Knox Shell HDFS.get.Request is Package Private (Chris Snow via lmccay)
+    * [KNOX-714] - Remove Permissive MIT License from NOTICE File
+    * [KNOX-715] - submitJava should allow multiple argument via arg() (Pierre Regazzoni via lmccay)
+    * [KNOX-716] - replayBufferSize is kept in bytes
+    * [KNOX-717] - changed the location header in RANGERUI rewrite to be more specific
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.9.0
 ------------------------------------------------------------------------------
 ** New Feature
