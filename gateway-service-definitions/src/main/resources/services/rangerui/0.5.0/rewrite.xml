@@ -28,7 +28,24 @@
     <rule dir="OUT" name="RANGERUI/rangerui/outbound/extrapath">
         <rewrite template="{$frontend[topology]}/ranger/j_spring_security_check"/>
     </rule>
-
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/index">
+        <rewrite template="{$frontend[path]}/ranger/index.html"/>
+    </rule>
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/links" pattern="libs/{**}">
+        <rewrite template="{$frontend[path]}/ranger/libs/{**}"/>
+    </rule>
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/styles" pattern="styles/{**}">
+        <rewrite template="{$frontend[path]}/ranger/styles/{**}"/>
+    </rule>
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/styles" pattern="images/{**}">
+        <rewrite template="{$frontend[path]}/ranger/images/{**}"/>
+    </rule>
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/init" pattern="scripts/Init.js?ver=build.version">
+        <rewrite template="{$frontend[path]}/ranger/scripts/Init.js?ver=build.version"/>
+    </rule>
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/links" pattern="scripts/{**}">
+        <rewrite template="{$frontend[path]}/ranger/scripts/{**}"/>
+    </rule>
     <rule dir="OUT" name="RANGERUI/rangerui/outbound/login/headers/location">
         <match pattern="*://*:*/login.jsp"/>
         <rewrite template="{$frontend[url]}/ranger/login.jsp"/>
@@ -37,6 +54,7 @@
     <filter name="RANGERUI/rangerui/outbound/links">
         <content type="application/javascript">
             <apply path="j_spring_security_check" rule="RANGERUI/rangerui/outbound/extrapath"/>
+            <apply path="index.html" rule="RANGERUI/rangerui/outbound/index"/>
         </content>
         <content type="*/html">
         </content>
