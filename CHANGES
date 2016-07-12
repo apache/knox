@@ -13,6 +13,7 @@ Release Notes - Apache Knox - Version 0.9.1
     * [KNOX-715] - submitJava should allow multiple argument via arg() (Pierre Regazzoni via lmccay)
     * [KNOX-716] - replayBufferSize is kept in bytes
     * [KNOX-717] - changed the location header in RANGERUI rewrite to be more specific
+    * [KNOX-721] - added rewrite rules to take care of no slash url
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.9.0
