@@ -36,8 +36,8 @@
     </licenses>
 
     <properties>
-        <j2e-pac4j.version>1.2.1</j2e-pac4j.version>
-        <pac4j.version>1.8.5</pac4j.version>
+        <j2e-pac4j.version>1.2.2</j2e-pac4j.version>
+        <pac4j.version>1.8.9</pac4j.version>
     </properties>
 
     <dependencies>
@@ -51,11 +51,23 @@
             <groupId>org.pac4j</groupId>
             <artifactId>j2e-pac4j</artifactId>
             <version>${j2e-pac4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.pac4j</groupId>
+                    <artifactId>pac4j-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-http</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-core</artifactId>
             <version>${pac4j.version}</version>
         </dependency>
 
