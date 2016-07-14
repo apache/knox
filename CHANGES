@@ -14,6 +14,7 @@ Release Notes - Apache Knox - Version 0.9.1
     * [KNOX-716] - replayBufferSize is kept in bytes
     * [KNOX-717] - changed the location header in RANGERUI rewrite to be more specific
     * [KNOX-721] - added rewrite rules to take care of no slash url
+    * [KNOX-722] - Null Pointer Exception while Knox SSO configured for OKTA/SAML v2
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.9.0
