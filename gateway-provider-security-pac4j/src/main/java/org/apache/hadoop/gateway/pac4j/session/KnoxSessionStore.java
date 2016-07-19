@@ -92,7 +92,7 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     private String encryptBase64(final Object o) {
-        if (o == null) {
+        if (o == null || o.equals("")) {
             return null;
         } else {
             final byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
