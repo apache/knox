@@ -35,8 +35,8 @@
         </route>
 
         <!-- Files view -->
-        <route path="/ambari/views/FILES/**/assets/files-view*.js">
-            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
+        <route path="/ambari/views/FILES/**/assets/files-view.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
         </route>
 
         <!-- Capacity Scheduler view -->
@@ -57,6 +57,12 @@
         <route path="/ambari/views/ZEPPELIN/*/*/">
             <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/html" to="response.body"/>
         </route>
+
+        <!-- Tez View -->
+        <route path="/ambari/views/TEZ/*/*/ambari-scripts/init-view.js">
+          <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
+        </route>
+
         <!-- No need to rewrite Slider View -->
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
