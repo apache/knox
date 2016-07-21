@@ -82,10 +82,10 @@ public class UrlRewriteServletContextListenerTest {
     server.stop();
   }
 
-  @Test
-  @Ignore("TODO")
-  public void testProvider() throws Exception {
-    fail( "TODO" );
-  }
+//  @Test
+//  @Ignore("TODO")
+//  public void testProvider() throws Exception {
+//    fail( "TODO" );
+//  }
 
 }

@@ -184,59 +184,59 @@ public class UrlRewriteServletFilterTest {
     assertThat( response.get( HttpHeader.LOCATION ), is( "http://mock-host:1/test-output-path-1" ) );
   }
 
-  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
-  @Test
-  public void testRequestCookieRewrite() throws Exception {
-    setUp( null );
-    // Setup the server side request/response interaction.
-    interaction.expect()
-        .method( "GET" )
-        .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .header( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
-    interaction.respond()
-        .status( 201 );
-    interactions.add( interaction );
-    // Create the client request.
-    request.setMethod( "GET" );
-    request.setURI( "/test-input-path" );
-    //request.setVersion( "HTTP/1.1" );
-    request.setHeader( "Host", "mock-host:1" );
-    request.setHeader( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
+//  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
+//  @Test
+//  public void testRequestCookieRewrite() throws Exception {
+//    setUp( null );
+//    // Setup the server side request/response interaction.
+//    interaction.expect()
+//        .method( "GET" )
+//        .requestUrl( "http://mock-host:1/test-output-path-1" )
+//        .header( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
+//    interaction.respond()
+//        .status( 201 );
+//    interactions.add( interaction );
+//    // Create the client request.
+//    request.setMethod( "GET" );
+//    request.setURI( "/test-input-path" );
+//    //request.setVersion( "HTTP/1.1" );
+//    request.setHeader( "Host", "mock-host:1" );
+//    request.setHeader( "Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
+//
+//    // Execute the request.
+//    response = TestUtils.execute( server, request );
+//
+//    // Test the results.
+//    assertThat( response.getStatus(), is( 201 ) );
+//    fail( "TODO" );
+//  }
 
-    // Execute the request.
-    response = TestUtils.execute( server, request );
-
-    // Test the results.
-    assertThat( response.getStatus(), is( 201 ) );
-    fail( "TODO" );
-  }
-
-  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
-  @Test
-  public void testResponseCookieRewrite() throws Exception {
-    setUp( null );
-    // Setup the server side request/response interaction.
-    interaction.expect()
-        .method( "GET" )
-        .requestUrl( "http://mock-host:1/test-output-path-1" );
-    interaction.respond()
-        .status( 200 )
-        .header( "Set-Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
-    interactions.add( interaction );
-    // Create the client request.
-    request.setMethod( "GET" );
-    request.setURI( "/test-input-path" );
-    //request.setVersion( "HTTP/1.1" );
-    request.setHeader( "Host", "mock-host:1" );
-
-    // Execute the request.
-    response = TestUtils.execute( server, request );
-
-    // Test the results.
-    assertThat( response.getStatus(), is( 200 ) );
-    assertThat( response.get( HttpHeader.SET_COOKIE ), is( "TODO" ) );
-    fail( "TODO" );
-  }
+//  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
+//  @Test
+//  public void testResponseCookieRewrite() throws Exception {
+//    setUp( null );
+//    // Setup the server side request/response interaction.
+//    interaction.expect()
+//        .method( "GET" )
+//        .requestUrl( "http://mock-host:1/test-output-path-1" );
+//    interaction.respond()
+//        .status( 200 )
+//        .header( "Set-Cookie", "cookie-name=cookie-value; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly" );
+//    interactions.add( interaction );
+//    // Create the client request.
+//    request.setMethod( "GET" );
+//    request.setURI( "/test-input-path" );
+//    //request.setVersion( "HTTP/1.1" );
+//    request.setHeader( "Host", "mock-host:1" );
+//
+//    // Execute the request.
+//    response = TestUtils.execute( server, request );
+//
+//    // Test the results.
+//    assertThat( response.getStatus(), is( 200 ) );
+//    assertThat( response.get( HttpHeader.SET_COOKIE ), is( "TODO" ) );
+//    fail( "TODO" );
+//  }
 
   @Test
   public void testInboundJsonBodyRewrite() throws Exception {
@@ -455,11 +455,11 @@ public class UrlRewriteServletFilterTest {
     assertThat( response.getStatus(), is( 200 ) );
   }
 
-  @Ignore( "Not Implemented Yet" )
-  @Test
-  public void testRequestCookieRewriteWithFilterInitParam() {
-    fail( "TODO" );
-  }
+//  @Ignore( "Not Implemented Yet" )
+//  @Test
+//  public void testRequestCookieRewriteWithFilterInitParam() {
+//    fail( "TODO" );
+//  }
 
   @Test
   public void testRequestJsonBodyRewriteWithFilterInitParam() throws Exception {
@@ -635,11 +635,11 @@ public class UrlRewriteServletFilterTest {
     assertThat( the( actual ), hasXPath( "/root/url/text()", equalTo( "http://mock-host:42/test-output-path-1" ) ) );
   }
 
-  @Ignore( "Not Implemented Yet" )
-  @Test
-  public void testResponseCookieRewriteWithFilterInitParam() {
-    fail( "TODO" );
-  }
+//  @Ignore( "Not Implemented Yet" )
+//  @Test
+//  public void testResponseCookieRewriteWithFilterInitParam() {
+//    fail( "TODO" );
+//  }
 
   @Test
   public void testResponseJsonBodyRewriteWithFilterInitParam() throws Exception {
