@@ -48,57 +48,57 @@ import static org.junit.Assert.assertTrue;
 @Category( { UnitTests.class, FastTests.class } )
 public class RewriterTest {
 
-  @Ignore( "Not implemented yet." )
-  @Test
-  public void testParamIndirectionRewrite() throws Exception {
-    URI inputUri, outputUri;
-    Template inputTemplate, outputTemplate;
-    MockParams resolver = new MockParams();
-    resolver.addValue( "some-known-host", "some-other-host" );
-
-    // This is how it works now.
-    // This is the URI like we would get from say a Location HTTP header.
-    inputUri = new URI( "http://some-host:80" );
-    // This will be used to extract the three values from input URI: scheme='http', host='some-known-host', port='80'
-    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
-    // The template to build a new URI.  The match those in the input template.
-    outputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
-    // Copies the values extracted from the input URI via the inputTemplate and inserts them into the outputTemplate.
-    // The resolver isn't used in this case.
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
-    assertThat( outputUri.toString(), equalTo( "http://some-host:80" ) );
-
-    // Need a syntax for the URL rewriter to tell it to take the value extracted from the inputUri
-    // and lookup it up via the resolver to populate the output template.  So from the input template
-    // the values of 'some-host' is extracted for the 'host' parameter.  The '$' in the output template below
-    // would tell the rewriter to look the value 'some-host' up in the resolver and place that in the
-    // output URI.
-    // I want to discuss the '$' syntax hoping you have a better suggestion.
-    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
-    inputUri = new URI( "http://some-known-host:80" );
-    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
-    outputTemplate = Parser.parseTemplate( "{scheme}://{$host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
-    assertThat( outputUri.toString(), equalTo( "http://some-other-host:80" ) );
-
-    // What should happen if the param value cannot be resolved to something else?
-    // Right now it uses the empty string.
-    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
-    inputUri = new URI( "http://some-unknown-host:80" );
-    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
-    outputTemplate = Parser.parseTemplate( "{scheme}://{$host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
-    assertThat( outputUri.toString(), equalTo( "http://:80" ) );
-
-    // Should there be another syntax that uses the original value if it cannot resolve the extracted value?
-    // Should this be the default and only behavior?
-    // See the '?' in the output template below.
-    inputUri = new URI( "http://some-unknown-host:80" );
-    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
-    outputTemplate = Parser.parseTemplate( "{scheme}://{?host}:{port}" );
-    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
-    assertThat( outputUri.toString(), equalTo( "http://some-unknown-host:80" ) );
-  }
+//  @Ignore( "Not implemented yet." )
+//  @Test
+//  public void testParamIndirectionRewrite() throws Exception {
+//    URI inputUri, outputUri;
+//    Template inputTemplate, outputTemplate;
+//    MockParams resolver = new MockParams();
+//    resolver.addValue( "some-known-host", "some-other-host" );
+//
+//    // This is how it works now.
+//    // This is the URI like we would get from say a Location HTTP header.
+//    inputUri = new URI( "http://some-host:80" );
+//    // This will be used to extract the three values from input URI: scheme='http', host='some-known-host', port='80'
+//    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
+//    // The template to build a new URI.  The match those in the input template.
+//    outputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
+//    // Copies the values extracted from the input URI via the inputTemplate and inserts them into the outputTemplate.
+//    // The resolver isn't used in this case.
+//    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
+//    assertThat( outputUri.toString(), equalTo( "http://some-host:80" ) );
+//
+//    // Need a syntax for the URL rewriter to tell it to take the value extracted from the inputUri
+//    // and lookup it up via the resolver to populate the output template.  So from the input template
+//    // the values of 'some-host' is extracted for the 'host' parameter.  The '$' in the output template below
+//    // would tell the rewriter to look the value 'some-host' up in the resolver and place that in the
+//    // output URI.
+//    // I want to discuss the '$' syntax hoping you have a better suggestion.
+//    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
+//    inputUri = new URI( "http://some-known-host:80" );
+//    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
+//    outputTemplate = Parser.parseTemplate( "{scheme}://{$host}:{port}" );
+//    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
+//    assertThat( outputUri.toString(), equalTo( "http://some-other-host:80" ) );
+//
+//    // What should happen if the param value cannot be resolved to something else?
+//    // Right now it uses the empty string.
+//    // IMPORTANT: The $ ended up being used for function so the syntax below cannot be used.  Consider ^ or something else.
+//    inputUri = new URI( "http://some-unknown-host:80" );
+//    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
+//    outputTemplate = Parser.parseTemplate( "{scheme}://{$host}:{port}" );
+//    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
+//    assertThat( outputUri.toString(), equalTo( "http://:80" ) );
+//
+//    // Should there be another syntax that uses the original value if it cannot resolve the extracted value?
+//    // Should this be the default and only behavior?
+//    // See the '?' in the output template below.
+//    inputUri = new URI( "http://some-unknown-host:80" );
+//    inputTemplate = Parser.parseTemplate( "{scheme}://{host}:{port}" );
+//    outputTemplate = Parser.parseTemplate( "{scheme}://{?host}:{port}" );
+//    outputUri = Rewriter.rewrite( inputUri, inputTemplate, outputTemplate, resolver, null );
+//    assertThat( outputUri.toString(), equalTo( "http://some-unknown-host:80" ) );
+//  }
 
   @Test
   public void testServiceRegistryHostmapUserCase() throws Exception {

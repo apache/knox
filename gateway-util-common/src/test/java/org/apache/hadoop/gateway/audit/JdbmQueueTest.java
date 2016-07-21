@@ -95,74 +95,74 @@ public class JdbmQueueTest {
     assertThat( counter.get(), is( 1 ) );
   }
 
-  @Ignore
-  @Test
-  public void testPerformanceAndStorageFootprint() throws IOException, InterruptedException {
-    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
+//  @Ignore
+//  @Test
+//  public void testPerformanceAndStorageFootprint() throws IOException, InterruptedException {
+//    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
+//
+//    String fill = createFillString( 100 );
+//    File dbFile = new File( file.getAbsolutePath() + ".db" );
+//    File lgFile = new File( file.getAbsolutePath() + ".lg" );
+//
+//    String s = null;
+//    long writeCount = 0;
+//    long writeTime = 0;
+//    long before;
+//
+//    int iterations = 10000;
+//
+//    for( int i=0; i<iterations; i++ ) {
+//      s = UUID.randomUUID().toString() + ":" + fill;
+//      before = System.currentTimeMillis();
+//      queue.enqueue( s );
+//      writeTime += ( System.currentTimeMillis() - before );
+//      writeCount++;
+//    }
+//
+//    System.out.println( String.format( "Line: len=%d", s.length() ) );
+//    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
+//    System.out.println( String.format(
+//        "File: db=%s, lg=%s, tot=%s, per=%s",
+//        humanReadableSize( dbFile.length() ),
+//        humanReadableSize( lgFile.length() ),
+//        humanReadableSize( dbFile.length() + lgFile.length() ),
+//        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
+//  }
 
-    String fill = createFillString( 100 );
-    File dbFile = new File( file.getAbsolutePath() + ".db" );
-    File lgFile = new File( file.getAbsolutePath() + ".lg" );
-
-    String s = null;
-    long writeCount = 0;
-    long writeTime = 0;
-    long before;
-
-    int iterations = 10000;
-
-    for( int i=0; i<iterations; i++ ) {
-      s = UUID.randomUUID().toString() + ":" + fill;
-      before = System.currentTimeMillis();
-      queue.enqueue( s );
-      writeTime += ( System.currentTimeMillis() - before );
-      writeCount++;
-    }
-
-    System.out.println( String.format( "Line: len=%d", s.length() ) );
-    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
-    System.out.println( String.format(
-        "File: db=%s, lg=%s, tot=%s, per=%s",
-        humanReadableSize( dbFile.length() ),
-        humanReadableSize( lgFile.length() ),
-        humanReadableSize( dbFile.length() + lgFile.length() ),
-        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
-  }
-
-  @Ignore
-  @Test
-  public void testFileGrowth() throws IOException, InterruptedException {
-    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
-
-    String fill = createFillString( 100 );
-    File dbFile = new File( file.getAbsolutePath() + ".db" );
-    File lgFile = new File( file.getAbsolutePath() + ".lg" );
-
-    String s = null;
-    long writeCount = 0;
-    long writeTime = 0;
-    long before;
-
-    int iterations = 10000;
-
-    for( int i=0; i<iterations; i++ ) {
-      s = UUID.randomUUID().toString() + ":" + fill;
-      before = System.currentTimeMillis();
-      queue.enqueue( s );
-      assertThat( queue.dequeue(), is( s ) );
-      writeTime += ( System.currentTimeMillis() - before );
-      writeCount++;
-    }
-
-    System.out.println( String.format( "Line: len=%d", s.length() ) );
-    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
-    System.out.println( String.format(
-        "File: db=%s, lg=%s, tot=%s, per=%s",
-        humanReadableSize( dbFile.length() ),
-        humanReadableSize( lgFile.length() ),
-        humanReadableSize( dbFile.length() + lgFile.length() ),
-        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
-  }
+//  @Ignore
+//  @Test
+//  public void testFileGrowth() throws IOException, InterruptedException {
+//    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
+//
+//    String fill = createFillString( 100 );
+//    File dbFile = new File( file.getAbsolutePath() + ".db" );
+//    File lgFile = new File( file.getAbsolutePath() + ".lg" );
+//
+//    String s = null;
+//    long writeCount = 0;
+//    long writeTime = 0;
+//    long before;
+//
+//    int iterations = 10000;
+//
+//    for( int i=0; i<iterations; i++ ) {
+//      s = UUID.randomUUID().toString() + ":" + fill;
+//      before = System.currentTimeMillis();
+//      queue.enqueue( s );
+//      assertThat( queue.dequeue(), is( s ) );
+//      writeTime += ( System.currentTimeMillis() - before );
+//      writeCount++;
+//    }
+//
+//    System.out.println( String.format( "Line: len=%d", s.length() ) );
+//    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
+//    System.out.println( String.format(
+//        "File: db=%s, lg=%s, tot=%s, per=%s",
+//        humanReadableSize( dbFile.length() ),
+//        humanReadableSize( lgFile.length() ),
+//        humanReadableSize( dbFile.length() + lgFile.length() ),
+//        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
+//  }
 
   @Test( timeout = 120000 )
   public void testConcurrentConsumer() throws InterruptedException, IOException {
