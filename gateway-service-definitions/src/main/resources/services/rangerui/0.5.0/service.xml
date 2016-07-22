@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="RANGERUI" name="rangerui" version="0.5.0">
+    <policies>
+        <policy role="webappsec"/>
+        <policy role="authentication" name="Anonymous"/>
+        <policy role="rewrite"/>
+        <policy role="authorization"/>
+    </policies>
     <routes>
         <route path="/ranger">
             <rewrite apply="RANGERUI/rangerui/inbound/root" to="request.url"/>
