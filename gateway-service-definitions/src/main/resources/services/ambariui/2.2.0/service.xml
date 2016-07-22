@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="AMBARIUI" name="ambariui" version="2.2.0">
+    <policies>
+        <policy role="webappsec"/>
+        <policy role="authentication" name="Anonymous"/>
+        <policy role="rewrite"/>
+        <policy role="authorization"/>
+    </policies>
     <routes>
         <route path="/ambari">
             <rewrite apply="AMBARIUI/ambari/inbound/root" to="request.url"/>
