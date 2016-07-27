@@ -46,19 +46,6 @@
         <rewrite template="{$frontend[url]}/ambari/img/{**}"/>
     </rule>
 
-    <rule dir="OUT" name="AMBARIUI/ambari/outbound/img" pattern="stylesheets/vendor.css">
-        <rewrite template="{$frontend[path]}/ambari/stylesheets/vendor.css"/>
-    </rule>
-    <rule dir="OUT" name="AMBARIUI/ambari/outbound/img" pattern="stylesheets/app.css">
-        <rewrite template="{$frontend[path]}/ambari/stylesheets/app.css"/>
-    </rule>
-    <rule dir="OUT" name="AMBARIUI/ambari/outbound/img" pattern="javascripts/vendor.js">
-        <rewrite template="{$frontend[path]}/ambari/javascripts/vendor.js"/>
-    </rule>
-    <rule dir="OUT" name="AMBARIUI/ambari/outbound/img" pattern="javascripts/app.js">
-        <rewrite template="{$frontend[path]}/ambari/javascripts/app.js"/>
-    </rule>
-
     <filter name="AMBARIUI/ambari/outbound/proxyroot">
         <content type="*/x-javascript">
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
