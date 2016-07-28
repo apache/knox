@@ -15,12 +15,12 @@
    limitations under the License.
 -->
 <rules>
-    <rule dir="IN" name="AMBARI/ambari/inbound" pattern="*://*:*/**/ambari/api/v1/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[AMBARI]}/api/v1/{path=**}?{**}"/>
+    <rule dir="IN" name="AMBARI/ambari/inbound" pattern="*://*:*/**/ambari/api/v1/{**}?{**}">
+        <rewrite template="{$serviceUrl[AMBARI]}/api/v1/{**}?{**}"/>
     </rule>
     <rule dir="OUT" name="AMBARI/ambari/href/outbound">
-        <match pattern="*://*:*/api/{path=**}?{**}"/>
-        <rewrite template="{$frontend[url]}/ambari/api/{path=**}?{**}"/>
+        <match pattern="*://*:*/api/{**}?{**}"/>
+        <rewrite template="{$frontend[url]}/ambari/api/{**}?{**}"/>
     </rule>
     <rule dir="OUT" name="AMBARI/ambari/context_path/outbound">
         <match pattern="/{**}"/>
