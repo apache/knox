@@ -138,4 +138,24 @@
         <url>http://localhost:18080/</url>
     </service>
 
+    <service>
+        <role>AMBARI</role>
+        <url>http://localhost:8080</url>
+    </service>
+
+    <service>
+        <role>AMBARIUI</role>
+        <url>http://localhost:8080</url>
+    </service>
+
+    <service>
+        <role>RANGER</role>
+        <url>http://localhost:6080</url>
+    </service>
+
+    <service>
+        <role>RANGERUI</role>
+        <url>http://localhost:6080</url>
+    </service>
+
 </topology>
