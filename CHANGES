@@ -24,6 +24,7 @@ Release Notes - Apache Knox - Version 0.9.1
     * [KNOX-724] - ambari view fixes
     * [KNOX-725] - defining policy chain for ambari and ranger services
     * [KNOX-726] - Clean up Skipped Unit Tests
+    * [KNOX-731] - added ranger and ambari services to topology
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.9.0
