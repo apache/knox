@@ -68,7 +68,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
     // we use shiro authorization realm to look up groups
     subject.hasRole("authenticatedUser");
     
-    final String principalName = (String) subject.getPrincipal();
+    final String principalName = (String) subject.getPrincipal().toString();
 
     CallableChain callableChain = new CallableChain(request, response, chain);
     SecurityUtils.getSubject().execute(callableChain);
@@ -95,7 +95,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         }
       };
       Subject shiroSubject = SecurityUtils.getSubject();
-      final String principal = (String) shiroSubject.getPrincipal();
+      final String principal = (String) shiroSubject.getPrincipal().toString();
       HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<Principal>();
       Principal p = new PrimaryPrincipal(principal);
@@ -108,9 +108,20 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       // map ldap groups saved in session to Java Subject GroupPrincipal(s)
       if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
         userGroups = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
-      } else {
-        userGroups = new HashSet<String>(shiroSubject.getPrincipals().asSet());
-        userGroups.remove(principal);
+      } else { // KnoxLdapRealm case
+        if(  shiroSubject.getPrincipal() instanceof String ) { 
+           userGroups = new HashSet<String>(shiroSubject.getPrincipals().asSet());
+           userGroups.remove(principal);
+        } else { // KnoxPamRealm case
+           Set<Principal> shiroPrincipals = new HashSet<Principal>(shiroSubject.getPrincipals().asSet());
+           userGroups = new HashSet<String>(); // Here we are creating a new UserGroup
+                                               // so we don't need to remove a Principal
+                                               // In the case of LDAP the userGroup may have already Principal
+                                               // added to the list of groups, so it is not needed.
+           for( Principal shiroPrincipal: shiroPrincipals ) {
+                userGroups.add(shiroPrincipal.toString() );
+           }
+        }
       }
       for (String userGroup : userGroups) {
         Principal gp = new GroupPrincipal(userGroup);

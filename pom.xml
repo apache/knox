@@ -1053,6 +1053,18 @@
             </dependency>
 
             <dependency>
+                <groupId>org.kohsuke</groupId>
+                <artifactId>libpam4j</artifactId>
+                <version>1.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>4.1.0</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>3.4.6</version>
