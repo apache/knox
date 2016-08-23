@@ -20,12 +20,15 @@ package org.apache.hadoop.gateway.util;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +55,7 @@ import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.MasterService;
+import org.apache.hadoop.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Topology;
@@ -89,6 +93,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + VersionCommand.USAGE + "]\n" +
       "   [" + MasterCreateCommand.USAGE + "]\n" +
       "   [" + CertCreateCommand.USAGE + "]\n" +
+      "   [" + CertExportCommand.USAGE + "]\n" +
       "   [" + AliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
@@ -121,6 +126,7 @@ public class KnoxCLI extends Configured implements Tool {
 
   // For testing only
   private String master = null;
+  private String type = null;
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
@@ -226,6 +232,12 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equals("export-cert")) {
+        command = new CertExportCommand();
+        if ((args.length > i + 1) && args[i + 1].equals("--help")) {
+          printKnoxShellUsage();
+          return -1;
+        }
       }else if(args[i].equals("user-auth-test")) {
         if(i + 1 >= args.length) {
           printKnoxShellUsage();
@@ -240,7 +252,6 @@ public class KnoxCLI extends Configured implements Tool {
         } else {
           command = new LDAPSysBindCommand();
         }
-
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
       } else if (args[i].equals("--value")) {
@@ -284,6 +295,12 @@ public class KnoxCLI extends Configured implements Tool {
         } else {
           this.generate = "true";
         }
+      } else if(args[i].equals("--type")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.type = args[++i];
       } else if(args[i].equals("--path")) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
@@ -358,6 +375,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println( CertCreateCommand.USAGE + "\n\n" + CertCreateCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( CertExportCommand.USAGE + "\n\n" + CertExportCommand.DESC );
       out.println();
       out.println( div );
       out.println( AliasCreateCommand.USAGE + "\n\n" + AliasCreateCommand.DESC );
@@ -463,6 +483,82 @@ public class KnoxCLI extends Configured implements Tool {
      return USAGE + ":\n\n" + DESC;
    }
  }
+
+ public class CertExportCommand extends Command {
+
+   public static final String USAGE = "export-cert";
+   public static final String DESC = "The export-cert command exports the public certificate\n" +
+                                     "from the a gateway.jks keystore with the alias of gateway-identity.";
+   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
+   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
+
+    public CertExportCommand() {
+    }
+
+    private GatewayConfig getGatewayConfig() {
+      GatewayConfig result;
+      Configuration conf = getConf();
+      if( conf != null && conf instanceof GatewayConfig ) {
+        result = (GatewayConfig)conf;
+      } else {
+        result = new GatewayConfigImpl();
+      }
+      return result;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     */
+    @Override
+    public void execute() throws Exception {
+      KeystoreService ks = getKeystoreService();
+
+      AliasService as = getAliasService();
+
+      if (ks != null) {
+        try {
+          if (!ks.isKeystoreForGatewayAvailable()) {
+            out.println("No keystore has been created for the gateway. Please use the create-cert command or populate with a CA signed cert of your own.");
+          }
+          char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
+          if (passphrase == null) {
+            MasterService ms = services.getService("MasterService");
+            passphrase = ms.getMasterSecret();
+          }
+          Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
+          String keyStoreDir = getGatewayConfig().getGatewaySecurityDir() + File.separator + "keystores" + File.separator;
+          File ksd = new File(keyStoreDir);
+          if (!ksd.exists()) {
+            if( !ksd.mkdirs() ) {
+              // certainly should not happen if the keystore is known to be available
+              throw new ServiceLifecycleException("Unable to create keystores directory" + ksd.getAbsolutePath());
+            }
+          }
+          if ("PEM".equals(type) || type == null) {
+            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-identity.pem"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-identity.pem");
+          }
+          else if ("JKS".equals(type)) {
+            X509CertificateUtil.writeCertificateToJKS(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jks");
+          }
+          else {
+            out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS] default value is PEM.");
+          }
+        } catch (KeystoreServiceException e) {
+          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+        }
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     */
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
 
  public class CertCreateCommand extends Command {
 

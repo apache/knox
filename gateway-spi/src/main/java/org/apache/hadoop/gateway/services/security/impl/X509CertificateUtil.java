@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.gateway.services.security.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -25,13 +27,20 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 
 public class X509CertificateUtil {
@@ -262,6 +271,33 @@ public class X509CertificateUtil {
     privateStringField.setAccessible(true);
     String fieldValue = (String) privateStringField.get(obj);
     return fieldValue;
+  }
+
+  public static void writeCertificateToFile(Certificate cert, final File file)
+       throws CertificateEncodingException, IOException {
+    byte[] bytes = cert.getEncoded();
+    final FileOutputStream out = new FileOutputStream( file );
+    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+    try {
+      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
+      out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
+      out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
+    } finally {
+      out.close();
+    }
+  }
+
+  public static void writeCertificateToJKS(Certificate cert, final File file)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+
+    char[] password = "changeme".toCharArray();
+    ks.load(null, password);
+    ks.setCertificateEntry("gateway-identity", cert);
+
+    FileOutputStream fos = new FileOutputStream(file);
+    ks.store(fos, password);
+    fos.close();
   }
 }
 

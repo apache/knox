@@ -312,6 +312,53 @@ public class KnoxCLITest {
   }
 
   @Test
+  public void testExportCert() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
+    createTestMaster();
+    outContent.reset();
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf( config );
+    String[] gwCreateArgs = {"create-cert", "--hostname", "hostname1", "--master", "master"};
+    int rc = 0;
+    rc = cli.run(gwCreateArgs);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity has been successfully " +
+        "created."));
+
+    outContent.reset();
+    String[] gwCreateArgs2 = {"export-cert", "--type", "PEM"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs2);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity.pem"));
+
+    outContent.reset();
+    String[] gwCreateArgs2_5 = {"export-cert"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs2_5);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity.pem"));
+
+    outContent.reset();
+    String[] gwCreateArgs3 = {"export-cert", "--type", "JKS"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs3);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(), outContent.toString().contains("gateway-client-trust.jks"));
+
+    outContent.reset();
+    String[] gwCreateArgs4 = {"export-cert", "--type", "invalid"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs4);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("Invalid type for export file provided."));
+  }
+
+  @Test
   public void testCreateMaster() throws Exception {
     GatewayConfigImpl config = new GatewayConfigImpl();
     FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
