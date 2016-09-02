@@ -68,7 +68,7 @@ import org.jvnet.libpam.UnixUser;
  * for this propery.
  * <p>
  * For example, defining this realm in Shiro .ini:
- * 
+ *
  * <pre>
  * [main]
  * pamRealm = org.apache.shiro.realm.libpam4j.KnoxPamRealm
@@ -76,69 +76,88 @@ import org.jvnet.libpam.UnixUser;
  * [urls]
  * **=authcBasic
  * </pre>
- * 
+ *
  */
 
 public class KnoxPamRealm extends AuthorizingRealm {
-	private static final String HASHING_ALGORITHM = "SHA-1";
-	private final static String  SUBJECT_USER_ROLES = "subject.userRoles";
-	private final static String  SUBJECT_USER_GROUPS = "subject.userGroups";
-	private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-	private HashService hashService = new DefaultHashService();
-	KnoxShiroMessages ShiroLog = MessagesFactory.get(KnoxShiroMessages.class);
-	GatewayMessages GatewayLog = MessagesFactory.get(GatewayMessages.class);
-	private static AuditService auditService = AuditServiceFactory.getAuditService();
-	private static Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-			AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+  private static final String HASHING_ALGORITHM = "SHA-1";
+  private final static String SUBJECT_USER_ROLES = "subject.userRoles";
+  private final static String SUBJECT_USER_GROUPS = "subject.userGroups";
+  private HashService hashService = new DefaultHashService();
+  KnoxShiroMessages ShiroLog = MessagesFactory.get(KnoxShiroMessages.class);
+  GatewayMessages GatewayLog = MessagesFactory.get(GatewayMessages.class);
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+      AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-	private String service;
+  private String service;
 
-	public KnoxPamRealm() {
-		HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
-		setCredentialsMatcher(credentialsMatcher);
-	}
+  public KnoxPamRealm() {
+    HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
+    setCredentialsMatcher(credentialsMatcher);
+  }
 
-	public void setService(String service) {
-		this.service = service;
-	}
+  public void setService(String service) {
+    this.service = service;
+  }
 
-	public String getService() {
-		return this.service;
-	}
+  public String getService() {
+    return this.service;
+  }
 
-	@Override
-	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-		Set<String> roles = new LinkedHashSet<String>();
+  @Override
+  protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+    Set<String> roles = new LinkedHashSet<String>();
 
-		UnixUserPrincipal user = principals.oneByType(UnixUserPrincipal.class);
-		if (user != null) {
-			roles.addAll(user.getUnixUser().getGroups());
-		}
-		SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roles);
-		SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, roles);
-		GatewayLog.lookedUpUserRoles(roles, user.getName());
-		return new SimpleAuthorizationInfo(roles);
-	}
+    UnixUserPrincipal user = principals.oneByType(UnixUserPrincipal.class);
+    if (user != null) {
+      roles.addAll(user.getUnixUser().getGroups());
+    }
+    SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roles);
+    SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, roles);
 
-	@Override
-	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-		UsernamePasswordToken upToken = (UsernamePasswordToken) token;
-		UnixUser user=null;
-		try {
-            user = (new PAM(this.getService())).authenticate(upToken.getUsername(), 
-            		new String(upToken.getPassword()));
-		} catch (PAMException e) {
-			auditor.audit(Action.AUTHENTICATION, token.getPrincipal().toString(), ResourceType.PRINCIPAL,
-					ActionOutcome.FAILURE, e.getMessage());
-			ShiroLog.failedLoginInfo(token);
-			ShiroLog.failedLoginAttempt(e.getCause());
-			throw new AuthenticationException(e);
-		}
-		HashRequest.Builder builder = new HashRequest.Builder();
-		Hash credentialsHash = hashService
-				.computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
-		return new SimpleAuthenticationInfo(new UnixUserPrincipal(user) , credentialsHash.toHex(), credentialsHash.getSalt(),
-				getName());
-	}
+    /* Coverity Scan CID 1361682 */
+    String userName = null;
+
+    if (user != null) {
+      userName = user.getName();
+    }
+
+    GatewayLog.lookedUpUserRoles(roles, userName);
+    return new SimpleAuthorizationInfo(roles);
+  }
+
+  @Override
+  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+    UsernamePasswordToken upToken = (UsernamePasswordToken) token;
+    UnixUser user = null;
+    try {
+      user = (new PAM(this.getService())).authenticate(upToken.getUsername(), new String(upToken.getPassword()));
+    } catch (PAMException e) {
+      handleAuthFailure(token, e.getMessage(), e);
+    }
+    HashRequest.Builder builder = new HashRequest.Builder();
+    Hash credentialsHash = hashService
+        .computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
+    /* Coverity Scan CID 1361684 */
+    if (credentialsHash == null) {
+      handleAuthFailure(token, "Failed to compute hash", null);
+    }
+    return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(), credentialsHash.getSalt(),
+        getName());
+  }
+
+  private void handleAuthFailure(AuthenticationToken token, String errorMessage, Exception e) {
+    auditor.audit(Action.AUTHENTICATION, token.getPrincipal().toString(), ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
+        errorMessage);
+    ShiroLog.failedLoginInfo(token);
+
+    if (e != null) {
+      ShiroLog.failedLoginAttempt(e.getCause());
+      throw new AuthenticationException(e);
+    }
+
+    throw new AuthenticationException(errorMessage);
+  }
 
 }

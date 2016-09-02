@@ -67,8 +67,6 @@ public class ShiroSubjectIdentityAdapter implements Filter {
     // trigger call to shiro authorization realm
     // we use shiro authorization realm to look up groups
     subject.hasRole("authenticatedUser");
-    
-    final String principalName = (String) subject.getPrincipal().toString();
 
     CallableChain callableChain = new CallableChain(request, response, chain);
     SecurityUtils.getSubject().execute(callableChain);
