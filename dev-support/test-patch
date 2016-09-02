@@ -278,18 +278,24 @@ applyPatch() {
     echo "" >> $STDOUT
     patch -f -E --dry-run -p0 --verbose < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt >> $STDOUT
     if [[  ${PIPESTATUS[0]} != 0 ]] ; then
-        echo "Patch failed to apply to head of branch"
-        echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
-        echo "" >> ${SUMMARYFILE}
-        echo "----------------------------" >> ${SUMMARYFILE}
-        echo
-        cleanupAndExit 1
+        patch -f -E --dry-run -p1 --verbose < ${PATCHFILE} | tee ${REPORTDIR}/APPLY-PATCH.txt >> $STDOUT
+        if [[  ${PIPESTATUS[0]} != 0 ]] ; then
+          echo "Patch failed to apply to head of branch"
+          echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
+          echo "" >> ${SUMMARYFILE}
+          echo "----------------------------" >> ${SUMMARYFILE}
+          echo
+          cleanupAndExit 1
+        fi
     fi
     patch -f -E -p0 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
     if [[ $? != 0 ]] ; then
-        echo "ODD!, dry run passed, but patch failed to apply to head of branch"
-        echo
-        cleanupAndExit 1
+        patch -f -E -p1 < ${PATCHFILE} > ${REPORTDIR}/APPLY-PATCH.txt
+        if [[ $? != 0 ]] ; then
+          echo "ODD!, dry run passed, but patch failed to apply to head of branch"
+          echo
+          cleanupAndExit 1
+        fi
     fi
     echo "" >> $STDOUT
     echo "Patch applied"
