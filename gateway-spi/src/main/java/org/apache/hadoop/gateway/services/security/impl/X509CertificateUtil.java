@@ -294,10 +294,13 @@ public class X509CertificateUtil {
     char[] password = "changeme".toCharArray();
     ks.load(null, password);
     ks.setCertificateEntry("gateway-identity", cert);
-
     FileOutputStream fos = new FileOutputStream(file);
-    ks.store(fos, password);
-    fos.close();
+    /* Coverity Scan CID 1361992 */
+    try {
+      ks.store(fos, password);
+    } finally {
+      fos.close();
+    }
   }
 }
 
