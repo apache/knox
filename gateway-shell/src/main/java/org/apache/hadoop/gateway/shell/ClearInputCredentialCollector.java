@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.shell;
 
 
 public class ClearInputCredentialCollector extends AbstractJavaConsoleCredentialCollector {
-  public static String COLLECTOR_TYPE = "ClearInput";
+  public static final String COLLECTOR_TYPE = "ClearInput";
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.shell.CredentialCollector#collect()
    */

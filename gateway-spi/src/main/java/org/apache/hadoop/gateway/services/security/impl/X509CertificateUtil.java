@@ -291,7 +291,7 @@ public class X509CertificateUtil {
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-    char[] password = "changeme".toCharArray();
+    char[] password = "changeit".toCharArray();
     ks.load(null, password);
     ks.setCertificateEntry("gateway-identity", cert);
     FileOutputStream fos = new FileOutputStream(file);

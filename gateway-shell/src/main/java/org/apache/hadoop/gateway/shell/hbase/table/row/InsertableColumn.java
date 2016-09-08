@@ -45,9 +45,6 @@ public class InsertableColumn extends Column {
 
   public String encodedValue() throws UnsupportedEncodingException {
     String stringValue = value.toString();
-    if( stringValue == null ) {
-      stringValue = "";
-    }
     return Base64.encodeBase64String( stringValue.getBytes( "UTF-8" ) );
   }
 }

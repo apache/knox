@@ -19,7 +19,7 @@ package org.apache.hadoop.gateway.shell;
 
 
 public class HiddenInputCredentialCollector extends AbstractJavaConsoleCredentialCollector {
-  public static String COLLECTOR_TYPE = "HiddenInput";
+  public static final String COLLECTOR_TYPE = "HiddenInput";
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.shell.CredentialCollector#collect()
    */
