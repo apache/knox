@@ -87,6 +87,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.servlets.gzip.GzipHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.Configuration;
@@ -351,9 +352,23 @@ public class GatewayServer {
     CorrelationHandler correlationHandler = new CorrelationHandler();
     correlationHandler.setHandler( traceHandler );
 
-    DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler( config, services, contexts );
+    /* KNOX-732: Handler for GZip compression */
+    GzipHandler gzipHandler = new GzipHandler();
+    gzipHandler.addIncludedMimeTypes("text/html", "text/plain", "text/xml",
+        "text/css", "application/javascript", "text/javascript");
+    gzipHandler.setHandler(correlationHandler);
 
-    handlers.setHandlers( new Handler[]{ correlationHandler, defaultTopoHandler, logHandler } );
+    DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler(
+        config, services, contexts);
+
+    /*
+     * Chaining the gzipHandler to correlationHandler. The expected flow here is
+     * defaultTopoHandler -> logHandler -> gzipHandler -> correlationHandler ->
+     * traceHandler
+     */
+    handlers.setHandlers(
+        new Handler[] { defaultTopoHandler, logHandler, gzipHandler });
+
     return handlers;
   }
 
