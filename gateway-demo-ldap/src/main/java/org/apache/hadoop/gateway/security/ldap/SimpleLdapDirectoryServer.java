@@ -57,7 +57,8 @@ public class SimpleLdapDirectoryServer {
     enabledPosixSchema( service );
 
     Partition partition = factory.getPartitionFactory().createPartition(
-        service.getSchemaManager(), "users", rootDn, 500, service.getInstanceLayout().getInstanceDirectory() );
+        service.getSchemaManager(), service.getDnFactory(), "users", rootDn, 500,
+        service.getInstanceLayout().getInstanceDirectory() );
     service.addPartition( partition );
 
     CoreSession session = service.getAdminSession();
@@ -67,7 +68,6 @@ public class SimpleLdapDirectoryServer {
     server = new LdapServer();
     server.setTransports( transports );
     server.setDirectoryService( service );
-
   }
 
   private static void enabledPosixSchema( DirectoryService service ) throws LdapException {

@@ -412,4 +412,13 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Default topology forward from {0} to {1}" )
   void defaultTopologyForward( String oldTarget, String newTarget );
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to setup PagedResults" )
+  void unableToSetupPagedResults();
+
+  @Message( level = MessageLevel.INFO, text = "Ignoring PartialResultException" )
+  void ignoringPartialResultException();
+
+  @Message( level = MessageLevel.WARN, text = "Only retrieved first {0} groups due to SizeLimitExceededException." )
+  void sizeLimitExceededOnlyRetrieved(int numResults);
 }
