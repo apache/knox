@@ -19,6 +19,7 @@
 
 package org.apache.hadoop.gateway.shirorealm;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,13 +34,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.naming.AuthenticationException;
+import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.PartialResultException;
+import javax.naming.SizeLimitExceededException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.audit.api.Action;
@@ -245,43 +252,81 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
     private Set<String> rolesFor(PrincipalCollection principals, final String userName, final LdapContext ldapCtx,
         final LdapContextFactory ldapContextFactory) throws NamingException {
-        final Set<String> roleNames = new HashSet();
-        final Set<String> groupNames = new HashSet();
-        NamingEnumeration<SearchResult> searchResultEnum = null;
-        try {
+      final Set<String> roleNames = new HashSet<>();
+      final Set<String> groupNames = new HashSet<>();
+
+      String userDn;
+      if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
+        // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
+        userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+      } else {
+        userDn = getUserDn(userName);
+      }
+
+      // Activate paged results
+      int pageSize = 100;
+      int numResults = 0;
+      byte[] cookie = null;
+      try {
+        ldapCtx.addToEnvironment(Context.REFERRAL, "ignore");
+
+        ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, Control.NONCRITICAL)});
+
+        do {
           // ldapsearch -h localhost -p 33389 -D uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w  guest-password
           //       -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
-          searchResultEnum = ldapCtx.search(
-              getGroupSearchBase(),
-              "objectClass=" + groupObjectClass,
-              SUBTREE_SCOPE);
-          
-          String userDn = null;
-          if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
-            // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
-            userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
-          } else {
-            userDn = getUserDn(userName);
-          }
-          while (searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
+
+          NamingEnumeration<SearchResult> searchResultEnum = null;
+          try {
+            searchResultEnum = ldapCtx.search(
+                getGroupSearchBase(),
+                "objectClass=" + groupObjectClass,
+                SUBTREE_SCOPE);
+
+            while (searchResultEnum != null && searchResultEnum.hasMore()) { // searchResults contains all the groups in search scope
+              numResults++;
               final SearchResult group = searchResultEnum.next();
               addRoleIfMember(userDn, group, roleNames, groupNames, ldapContextFactory);
+            }
+          } catch (PartialResultException e) {
+            LOG.ignoringPartialResultException();
+          } finally {
+            if (searchResultEnum != null) {
+              searchResultEnum.close();
+            }
           }
 
-          // save role names and group names in session so that they can be easily looked up outside of this object
-          SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
-          SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
-          if (!groupNames.isEmpty() && (principals instanceof MutablePrincipalCollection)) {
-            ((MutablePrincipalCollection)principals).addAll(groupNames, getName());
+          // Examine the paged results control response
+          Control[] controls = ldapCtx.getResponseControls();
+          if (controls != null) {
+            for (Control control : controls) {
+              if (control instanceof PagedResultsResponseControl) {
+                PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
+                cookie = prrc.getCookie();
+              }
+            }
           }
-          LOG.lookedUpUserRoles(roleNames, userName);
-        }
-        finally {
-          if (searchResultEnum != null) {
-            searchResultEnum.close();
-          }
-        }
-        return roleNames;
+
+          // Re-activate paged results
+          ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
+        } while (cookie != null);
+      } catch (SizeLimitExceededException e) {
+        LOG.sizeLimitExceededOnlyRetrieved(numResults);
+//        System.out.println("Only retrieved first " + numResults + " groups due to SizeLimitExceededException.");
+      } catch(IOException e) {
+        LOG.unableToSetupPagedResults();
+//        System.out.println("Unabled to setup paged results");
+      }
+
+      // save role names and group names in session so that they can be easily looked up outside of this object
+      SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_ROLES, roleNames);
+      SecurityUtils.getSubject().getSession().setAttribute(SUBJECT_USER_GROUPS, groupNames);
+      if (!groupNames.isEmpty() && (principals instanceof MutablePrincipalCollection)) {
+        ((MutablePrincipalCollection)principals).addAll(groupNames, getName());
+      }
+      LOG.lookedUpUserRoles(roleNames, userName);
+
+      return roleNames;
     }
 
   private void addRoleIfMember(final String userDn, final SearchResult group,
