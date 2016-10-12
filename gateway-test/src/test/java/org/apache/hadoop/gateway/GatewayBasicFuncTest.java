@@ -67,11 +67,7 @@ import org.slf4j.LoggerFactory;
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.either;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
@@ -339,6 +335,44 @@ public class GatewayBasicFuncTest {
     }
     MatcherAssert.assertThat(location, not(containsString("host=")));
     MatcherAssert.assertThat(location, not(containsString("port=")));
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testBasicOutboundEncodedHeaderUseCase() throws IOException {
+    LOG_ENTER();
+    String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
+    String username = "hdfs";
+    String password = "hdfs-password";
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayHostName = gatewayAddress.getHostName();
+    String gatewayAddrName = InetAddress.getByName(gatewayHostName).getHostAddress();
+
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/v1" + root + "/dir/fileレポー" )
+        .header( "Host", driver.getRealAddr( "WEBHDFS" ) )
+        .queryParam( "op", "CREATE" )
+        .queryParam( "user.name", username )
+        .respond()
+        .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .header("Location", driver.getRealUrl("DATANODE") + "/v1" + root + "/dir/file%E3%83%AC%E3%83%9D%E3%83%BC?op=CREATE&user.name=hdfs");
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .queryParam( "op", "CREATE" )
+        .expect()
+        //.log().ifError()
+        .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file%E3%83%AC%E3%83%9D%E3%83%BC" );
+    String location = response.getHeader( "Location" );
+    //System.out.println( location );
+    log.debug( "Redirect location: " + response.getHeader( "Location" ) );
+    if( driver.isUseGateway() ) {
+      MatcherAssert.assertThat( location, containsString("/dir/file%E3%83%AC%E3%83%9D%E3%83%BC") );
+    }
     LOG_EXIT();
   }
 
