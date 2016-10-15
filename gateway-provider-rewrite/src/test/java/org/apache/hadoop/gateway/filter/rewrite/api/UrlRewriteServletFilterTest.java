@@ -675,6 +675,57 @@ public class UrlRewriteServletFilterTest {
   }
 
   @Test
+  public void testResponseHtmlBodyRewriteWithFilterInitParam() throws Exception {
+    Map<String,String> initParams = new HashMap<String,String>();
+    //initParams.put( "url, "" );
+    initParams.put( "response.body", "test-filter-4" );
+    //initParams.put( "response", "" );
+    setUp( initParams );
+
+    String responseHtml = "<!DOCTYPE html>\n" +
+        "<html>\n" +
+        "  <head>\n" +
+        "    <meta charset=\"UTF-8\">\n" +
+        "    <link rel=\"stylesheet\" href=\"pretty.css\">\n" +
+        "    <script src=\"script.js\"></script>\n" +
+        "  </head>\n" +
+        "  <body>\n" +
+        "  </body>\n" +
+        "</html>";
+    String rewrittenResponseHtml = "<!DOCTYPE html>\n" +
+        "<html>\n" +
+        "  <head>\n" +
+        "    <meta charset=\"UTF-8\">\n" +
+        "    <link rel=\"stylesheet\" href=\"http://someotherhost/stylesheets/pretty.css\">\n" +
+        "    <script src=\"script.js\"></script>\n" +
+        "  </head>\n" +
+        "  <body>\n" +
+        "  </body>\n" +
+        "</html>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "application/html" )
+        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Content-Type", "application/html" );
+
+    // Execute the request.
+    response = TestUtils.execute( server, request );
+
+    assertThat( response.getStatus(), is( 200 ) );
+    String content = response.getContent();
+    assertThat(content, is(rewrittenResponseHtml));
+  }
+
+  @Test
   public void testResponseXmlBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<String,String>();
     initParams.put( "response.body", "test-filter-2" );

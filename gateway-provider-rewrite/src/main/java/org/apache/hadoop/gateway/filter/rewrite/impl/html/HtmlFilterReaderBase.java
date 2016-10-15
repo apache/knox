@@ -24,6 +24,7 @@ import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
+import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteFilterReader {
@@ -173,7 +175,8 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
       String outputValue = inputValue;
       try {
         Level tag = stack.peek();
-        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, null );
+        String name = getRuleName(inputValue);
+        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, name );
         if( outputValue == null ) {
           outputValue = inputValue;
         }
@@ -186,6 +189,21 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
       writer.write( attribute.getQuoteChar() );
     }
   }
+
+  private String getRuleName(String inputValue) {
+    if( config != null && !config.getSelectors().isEmpty() ) {
+      for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
+        if ( selector instanceof UrlRewriteFilterApplyDescriptor ) {
+          UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          Matcher matcher = apply.compiledPath( REGEX_COMPILER ).matcher( inputValue );
+            if (matcher.matches()) {
+              return apply.rule();
+            }
+          }
+        }
+      }
+      return null;
+    }
 
   private void processText( Segment segment ) {
     String inputValue = segment.toString();

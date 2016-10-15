@@ -49,6 +49,10 @@
         <rewrite template="test-protocol://{$serviceAddr[NAMENODE]}/test-path"/>
     </rule>
 
+    <rule name="test-rule-html-attribute">
+        <rewrite template="http://someotherhost/stylesheets/pretty.css"/>
+    </rule>
+
     <filter name="test-filter-1">
         <content type="application/json">
             <apply path="$.url" rule="test-rule-1"/>
@@ -80,5 +84,12 @@
             <apply path="$.url" rule="test-rule-2"/>
         </content>
     </filter>
+
+    <filter name="test-filter-4">
+        <content type="*/html">
+            <apply path="pretty.css" rule="test-rule-html-attribute"/>
+        </content>
+    </filter>
+
 
 </rules>
