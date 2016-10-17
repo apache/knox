@@ -112,12 +112,16 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     return IGNORE_HEADER_NAMES.contains( name );
   }
 
-  private String rewriteValue( String value, String rule ) {
+  private String rewriteValue(String value, String rule, boolean encode ) {
     try {
       Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT, rule );
       if( output != null ) {
-        value = output.toEncodedString();
+        if (encode) {
+          value = output.toEncodedString();
+        } else {
+          value = output.getPattern();
+        }
       }
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );
@@ -129,7 +133,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   @Override
   public void setHeader( String name, String value ) {
     if( !ignoreHeader( name) ) {
-      value = rewriteValue( value, pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
+      value = rewriteValue( value, pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ), needsEncoding(name) );
       super.setHeader( name, value );
     }
   }
@@ -139,9 +143,16 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   public void addHeader( String name, String value ) {
     if( !ignoreHeader( name ) ) {
       String rule = pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name );
-      value = rewriteValue( value, rule );
+      value = rewriteValue( value, rule, needsEncoding(name) );
       super.addHeader( name, value );
     }
+  }
+
+  private boolean needsEncoding( String name ) {
+    if ( name.equalsIgnoreCase("Location") ) {
+      return true;
+    }
+    return false;
   }
 
   @Override
