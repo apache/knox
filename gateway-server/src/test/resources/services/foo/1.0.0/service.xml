@@ -19,5 +19,8 @@
         <route path="/foo/?**">
             <rewrite apply="FOO/foo/inbound" to="request.url"/>
         </route>
+        <route path="/foo/**">
+            <rewrite apply="FOO/foo/inbound" to="request.url"/>
+        </route>
     </routes>
 </service>

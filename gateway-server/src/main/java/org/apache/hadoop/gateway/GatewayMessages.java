@@ -421,4 +421,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Only retrieved first {0} groups due to SizeLimitExceededException." )
   void sizeLimitExceededOnlyRetrieved(int numResults);
+
+  @Message( level = MessageLevel.DEBUG, text = "Failed to parse path into Template: {0} : {1}" )
+  void failedToParsePath( String path, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 }
