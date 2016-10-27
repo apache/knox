@@ -29,27 +29,9 @@ http://www.bouncycastle.org/ feedback-crypto@bouncycastle.org.
 ------------------------------------------------------------------------------
 Description
 ------------------------------------------------------------------------------
-The charter for the Gateway project is to simplify and normalize the
-deployment and implementation of secure Hadoop clusters as well as be
-a centralized access point for the service specific REST APIs exposed from
-within the cluster.
+Please see the Apache Knox site for detailed description.
 
-The current state of this project provides the ability to dynamically
-provision reverse proxy capabilities with filter chains that meet the cluster
-specific needs for authentication.
-
-HTTP BASIC authentication with identity being asserted to the rest of the
-cluster via Pseudo/Simple authentication will be demonstrated for security.
-In addition to Pseudo identity assertion Knox now provides trusted proxy user
-identity assertion for providing access to Kerberos secured Hadoop clusters.
-
-For API aggregation, the Gateway provides a central endpoint for access to
-WebHDFS, WebHCat/Templeton, Hive, Starbase/HBase and Oozie APIs for
-each cluster.
-
-Future releases will extend these capabilities with additional
-authentication, identity assertion, API aggregation and eventually management
-capabilities.
+http://knox.apache.org/
 
 ------------------------------------------------------------------------------
 Changes
@@ -64,13 +46,12 @@ Please see the ISSUES file.
 ------------------------------------------------------------------------------
 Installation & Usage
 ------------------------------------------------------------------------------
-Please see the Apache Knox Gateway User's Guide for details.
-http://knox.apache.org/books/knox-0-6-0/user-guide.html#Quick+Start
-http://knox.apache.org/books/knox-0-6-0/user-guide.html#Service+Details
+Please see the Apache Knox Gateway User's Guide - available on the Knox site.
+http://knox.apache.org/
 
 ------------------------------------------------------------------------------
 Troubleshooting & Filing bugs
 ------------------------------------------------------------------------------
 Please see the Apache Knox Gateway User's Guide for detailed information.
-http://knox.apache.org/books/knox-0-6-0/user-guide.html#Troubleshooting
+http://knox.apache.org
 
