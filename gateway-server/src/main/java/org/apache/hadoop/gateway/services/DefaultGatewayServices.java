@@ -23,6 +23,7 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
@@ -105,6 +106,10 @@ public class DefaultGatewayServices implements GatewayServices {
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.init(  config, options  );
     services.put(  TOPOLOGY_SERVICE, tops  );
+
+    DefaultServiceDefinitionRegistry sdr = new DefaultServiceDefinitionRegistry();
+    sdr.init( config, options );
+    services.put( SERVICE_DEFINITION_REGISTRY, sdr );
   }
   
   public void start() throws ServiceLifecycleException {

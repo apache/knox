@@ -1108,27 +1108,34 @@ public class KnoxCLI extends Configured implements Tool {
 
           if(hasParam(params, authorizationEnabled, false)) {
             int errors = 0;
+            int searchBaseErrors = 0;
             errors += hasParam(params, systemUsername, true) ? 0 : 1;
             errors += hasParam(params, systemPassword, true) ? 0 : 1;
-            errors += hasParam(params, searchBase, true) ? 0 : 1;
+            searchBaseErrors += hasParam(params, searchBase, false) ? 0 : hasParam(params, userSearchBase, false) ? 0 : 1;
+            if (searchBaseErrors > 0) {
+              out.println("Warn: Both " + searchBase + " and " + userSearchBase + " are missing from the topology");
+            }
+            errors += searchBaseErrors;
             errs += errors;
           }
 
 //        If any one of these is present they must all be present
           if( hasParam(params, userSearchAttributeName, false) ||
               hasParam(params, userObjectClass, false) ||
-              hasParam(params, searchBase, false)) {
+              hasParam(params, searchBase, false) ||
+              hasParam(params, userSearchBase, false)) {
 
             int errors = 0;
             errors += hasParam(params, userSearchAttributeName, true) ? 0 : 1;
             errors += hasParam(params, userObjectClass, true) ? 0 : 1;
-            errors += hasParam(params, searchBase, true) ? 0 : 1;
+            errors += hasParam(params, searchBase, false) ? 0 : hasParam(params, userSearchBase, false) ? 0 : 1;
             errors += hasParam(params, systemUsername, true) ? 0 : 1;
             errors += hasParam(params, systemPassword, true) ? 0 : 1;
 
             if(errors > 0) {
-              out.println(userSearchAttributeName + " or " + userObjectClass + " or " + searchBase + " was found in the topology");
-              out.println("If any one of the above params is present, all must be present.");
+              out.println(userSearchAttributeName + " or " + userObjectClass + " or " + searchBase + " or " + userSearchBase + " was found in the topology");
+              out.println("If any one of the above params is present then " + userSearchAttributeName + 
+                  " and " + userObjectClass + " must both be present and either " + searchBase + " or " + userSearchBase + " must also be present.");
             }
             errs += errors;
           } else {
