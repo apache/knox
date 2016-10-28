@@ -46,6 +46,19 @@
         <rewrite template="{$frontend[url]}/ambari/img/{**}"/>
     </rule>
 
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/vendorcss">
+        <rewrite template="{$frontend[path]}/ambari/stylesheets/vendor.css"/>
+    </rule>
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/appcss">
+        <rewrite template="{$frontend[path]}/ambari/stylesheets/app.css"/>
+    </rule>
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/vendorjs">
+        <rewrite template="{$frontend[path]}/ambari/javascripts/vendor.js"/>
+    </rule>
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/appjs">
+        <rewrite template="{$frontend[path]}/ambari/javascripts/app.js"/>
+    </rule>
+
     <filter name="AMBARIUI/ambari/outbound/proxyroot">
         <content type="*/x-javascript">
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
@@ -97,6 +110,14 @@
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
         </content>
         <content type="*/html">
+        </content>
+    </filter>
+    <filter name="AMBARIUI/ambari/outbound/mainpage">
+        <content type="*/html">
+            <apply path="stylesheets/vendor.css" rule="AMBARIUI/ambari/outbound/vendorcss" />
+            <apply path="stylesheets/app.css" rule="AMBARIUI/ambari/outbound/appcss" />
+            <apply path="javascripts/vendor.js" rule="AMBARIUI/ambari/outbound/vendorjs" />
+            <apply path="javascripts/app.js" rule="AMBARIUI/ambari/outbound/appjs" />
         </content>
     </filter>
 </rules>
