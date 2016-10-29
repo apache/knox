@@ -29,11 +29,20 @@
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/bootstrapcss" pattern="/static/{bootstrap=bootstrap*}/css/{**}">
     <rewrite template="{$frontend[url]}/hdfs/static/{bootstrap}/css/{**}"/>
   </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datatablescss" pattern="/static/dataTables.bootstrap.css">
+    <rewrite template="{$frontend[url]}/hdfs/static/dataTables.bootstrap.css"/>
+  </rule>
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/hadoopcss" pattern="/static/hadoop.css">
     <rewrite template="{$frontend[url]}/hdfs/static/hadoop.css"/>
   </rule>
-  <rule dir="OUT" name="HDFSUI/hdfs/outbound/jquery" pattern="/static/jquery-1.10.2.min.js">
-    <rewrite template="{$frontend[url]}/hdfs/static/jquery-1.10.2.min.js"/>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/jqueryjs" pattern="/static/{jquery=jquery*js}">
+    <rewrite template="{$frontend[url]}/hdfs/static/{jquery}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datatablejs" pattern="/static/dataTables.bootstrap.js">
+    <rewrite template="{$frontend[url]}/hdfs/static/dataTables.bootstrap.js"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/momentjs" pattern="/static/moment.min.js">
+    <rewrite template="{$frontend[url]}/hdfs/static/moment.min.js"/>
   </rule>
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/dust" pattern="/static/{dust=*dust*js}">
     <rewrite template="{$frontend[url]}/hdfs/static/{dust}"/>
