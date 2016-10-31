@@ -60,4 +60,11 @@ limitations under the License.
         <description>Boolean flag indicating whether to enable debug messages for krb5 authentication</description>
     </property>
 
+    <!-- @since 0.10 Websocket configs -->
+    <property>
+        <name>gateway.websocket.feature.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable websocket feature.</description>
+    </property>
+
 </configuration>

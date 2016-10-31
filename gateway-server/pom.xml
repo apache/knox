@@ -213,6 +213,34 @@
             <artifactId>apache-jstl</artifactId>
         </dependency>
 
+        <!-- Websocket support -->
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-server</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.eclipse.jetty.websocket</groupId>
+           <artifactId>websocket-servlet</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>javax.websocket</groupId>
+           <artifactId>javax.websocket-api</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.eclipse.jetty.websocket</groupId>
+           <artifactId>javax-websocket-server-impl</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.eclipse.jetty.websocket</groupId>
+           <artifactId>javax-websocket-client-impl</artifactId>
+        </dependency>
+
+
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
