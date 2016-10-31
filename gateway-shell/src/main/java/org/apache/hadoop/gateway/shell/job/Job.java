@@ -27,6 +27,10 @@ public class Job {
     return new Java.Request( session );
   }
 
+  public static Sqoop.Request submitSqoop( Hadoop session ) {
+    return new Sqoop.Request( session );
+  }
+
   public static Pig.Request submitPig( Hadoop session ) {
     return new Pig.Request( session );
   }
