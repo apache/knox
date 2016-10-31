@@ -24,6 +24,7 @@
     <routes>
         <route path="/ambari">
             <rewrite apply="AMBARIUI/ambari/inbound/root" to="request.url"/>
+            <rewrite apply="AMBARIUI/ambari/outbound/mainpage" to="response.body"/>
         </route>
         <route path="/ambari/**">
             <rewrite apply="AMBARIUI/ambari/inbound/path" to="request.url"/>
