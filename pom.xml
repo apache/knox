@@ -26,7 +26,7 @@
     </parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>0.10.0-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -98,7 +98,7 @@
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
-        <gateway-version>0.10.0-SNAPSHOT</gateway-version>
+        <gateway-version>0.11.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.knox</gateway-group>
         <groovy-version>2.4.6</groovy-version>
         <hadoop-version>2.2.0</hadoop-version>
@@ -106,6 +106,7 @@
         <surefire-version>2.16</surefire-version>
         <failsafe-version>2.19.1</failsafe-version>
         <apacheds-version>2.0.0-M16</apacheds-version>
+        <javax-websocket-version>1.1</javax-websocket-version>
     </properties>
 
     <licenses>
@@ -1117,6 +1118,37 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jstl</artifactId>
+                <version>${jetty-version}</version>
+            </dependency>
+
+             <!-- Websocket support -->
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-server</artifactId>
+                <version>${jetty-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-servlet</artifactId>
+                <version>${jetty-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.websocket</groupId>
+                <artifactId>javax.websocket-api</artifactId>
+                <version>${javax-websocket-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>javax-websocket-server-impl</artifactId>
+                <version>${jetty-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>javax-websocket-client-impl</artifactId>
                 <version>${jetty-version}</version>
             </dependency>
 

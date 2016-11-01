@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * 1. gateway-default.xml - All the configuration variables that the
  *    Gateway needs.  These are the defaults that ship with the app
- *    and should only be changed be the app developers.
+ *    and should only be changed by the app developers.
  *
  * 2. gateway-site.xml - The (possibly empty) configuration that the
  *    system administrator can set variables for their Hadoop cluster.
@@ -131,6 +131,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
   public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
 
+  /* @since 0.10 Websocket config variables */
+  public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.size";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.buffer.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.buffer.size";
+  public static final String WEBSOCKET_INPUT_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
+  public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
+  public static final String WEBSOCKET_IDLE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
   // backward compatibility. 
@@ -146,6 +156,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   public static final String DEFAULT_SECURITY_DIR = "security";
   public static final String DEFAULT_DATA_DIR = "data";
+
+  /* Websocket defaults */
+  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED =  false;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  32768;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  32768;
+  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
+  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
+  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
 
@@ -628,6 +649,71 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       return Arrays.asList( value.trim().split("\\s*,\\s*") );
     }
     return DEFAULT_GLOBAL_RULES_SERVICES;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#isWebsocketEnabled()
+   */
+  @Override
+  public boolean isWebsocketEnabled() {
+    final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
+    return Boolean.parseBoolean(result);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketMaxTextMessageSize()
+   */
+  @Override
+  public int getWebsocketMaxTextMessageSize() {
+    return getInt( WEBSOCKET_MAX_TEXT_MESSAGE_SIZE, DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketMaxBinaryMessageSize()
+   */
+  @Override
+  public int getWebsocketMaxBinaryMessageSize() {
+    return getInt( WEBSOCKET_MAX_BINARY_MESSAGE_SIZE, DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketMaxTextMessageBufferSize()
+   */
+  @Override
+  public int getWebsocketMaxTextMessageBufferSize() {
+    return getInt( WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE, DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketMaxBinaryMessageBufferSize()
+   */
+  @Override
+  public int getWebsocketMaxBinaryMessageBufferSize() {
+    return getInt( WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE, DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketInputBufferSize()
+   */
+  @Override
+  public int getWebsocketInputBufferSize() {
+    return getInt( WEBSOCKET_INPUT_BUFFER_SIZE, DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketAsyncWriteTimeout()
+   */
+  @Override
+  public int getWebsocketAsyncWriteTimeout() {
+    return getInt( WEBSOCKET_ASYNC_WRITE_TIMEOUT, DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#websocketIdleTimeout()
+   */
+  @Override
+  public int getWebsocketIdleTimeout() {
+    return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
   }
 
   private static long parseNetworkTimeout( String s ) {

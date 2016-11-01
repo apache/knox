@@ -145,4 +145,61 @@ public interface GatewayConfig {
 
   List<String> getGlobalRulesServices();
 
+  /**
+   * Returns true if websocket feature enabled else false.
+   * Default is false.
+   * @since 0.10
+   * @return
+   */
+  boolean isWebsocketEnabled();
+
+  /**
+   * Websocket connection max text message size.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketMaxTextMessageSize();
+
+  /**
+   * Websocket connection max binary message size.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketMaxBinaryMessageSize();
+
+  /**
+   * Websocket connection max text message buffer size.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketMaxTextMessageBufferSize();
+
+  /**
+   * Websocket connection max binary message buffer size.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketMaxBinaryMessageBufferSize();
+
+  /**
+   * Websocket connection input buffer size.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketInputBufferSize();
+
+  /**
+   * Websocket connection async write timeout.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketAsyncWriteTimeout();
+
+  /**
+   * Websocket connection idle timeout.
+   * @since 0.10
+   * @return
+   */
+  int getWebsocketIdleTimeout();
+
 }

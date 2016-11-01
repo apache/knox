@@ -75,6 +75,7 @@ import org.apache.hadoop.gateway.trace.ErrorHandler;
 import org.apache.hadoop.gateway.trace.TraceHandler;
 import org.apache.hadoop.gateway.util.Urls;
 import org.apache.hadoop.gateway.util.XmlUtils;
+import org.apache.hadoop.gateway.websockets.GatewayWebsocketHandler;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -361,13 +362,27 @@ public class GatewayServer {
     DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler(
         config, services, contexts);
 
-    /*
-     * Chaining the gzipHandler to correlationHandler. The expected flow here is
-     * defaultTopoHandler -> logHandler -> gzipHandler -> correlationHandler ->
-     * traceHandler
-     */
-    handlers.setHandlers(
-        new Handler[] { defaultTopoHandler, logHandler, gzipHandler });
+    if (config.isWebsocketEnabled()) {      
+      GatewayWebsocketHandler websockethandler = new GatewayWebsocketHandler(
+          config, services);
+      websockethandler.setHandler(gzipHandler);
+
+      /*
+       * Chaining the gzipHandler to correlationHandler. The expected flow here
+       * is defaultTopoHandler -> logHandler -> gzipHandler ->
+       * correlationHandler -> traceHandler -> websockethandler
+       */
+      handlers.setHandlers(
+          new Handler[] { defaultTopoHandler, logHandler, websockethandler });
+    } else {
+      /*
+       * Chaining the gzipHandler to correlationHandler. The expected flow here
+       * is defaultTopoHandler -> logHandler -> gzipHandler ->
+       * correlationHandler -> traceHandler
+       */
+      handlers.setHandlers(
+          new Handler[] { defaultTopoHandler, logHandler, gzipHandler });
+    }
 
     return handlers;
   }
