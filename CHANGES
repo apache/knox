@@ -1,4 +1,33 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.10.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-752] - Implementation of initial websocket support (Sandeep More via Sumit Gupta)
+    * [KNOX-537] - Linux PAM Authentication Provider (jeffreyr97/hkropp via lmccay)
+** Improvement
+    * [KNOX-743] - Add submitSqoop via knox shell api
+    * [KNOX-729] - added filter apply capability to html content
+    * [KNOX-764] - initial service definition registry service
+    * [KNOX-644] - Limit/page results of LDAP group membership search (Kevin Risden via lmccay)
+    * [KNOX-733] - Add support for custom truststore to Knox shell client
+** Bug
+    * [KNOX-723] - Adding html content based filter for main page trailing slash issue
+    * [KNOX-765] - Namenode UI fails to download few js and css (Mohammad Kamrul Islam via lmccay)
+    * [KNOX-629] - Misleading output for system-user-auth-test when userSearchBase used
+    * [KNOX-753] - Update References to Docs in README for Latest Release
+    * [KNOX-762] - Remove dependency on httpcomponents httpclient 4.5.2
+    * [KNOX-756] - Build failure with "ant release"
+    * [KNOX-754] - encoding response headers
+    * [KNOX-732] - Knox does not recompress javascript resources (Sandeep More via lmccay)
+    * [KNOX-748] - Fix Resource Leak in X509CertificateUtil.writeCertificateToJKS (Sandeep More via lmccay)
+    * [KNOX-750] - Change test-patch to attempt -p0 and -p1 patches before failing
+    * [KNOX-740] - Address new coverity scan issues (Sandeep More via lmccay)
+    * [KNOX-742] - Export Commands in KnoxCLI for the gateway-identity Public Cert
+    * [KNOX-690] - quick unit test for toEncodedString method
+    * [KNOX-690] - fixing the encoding/decoding in the parser and template
+    * [KNOX-508] - knox to uptake Apache DS 2.0.0-M16 or later
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.9.1
 ------------------------------------------------------------------------------
 ** New Feature
