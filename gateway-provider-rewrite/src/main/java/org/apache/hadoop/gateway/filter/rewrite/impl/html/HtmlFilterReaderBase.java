@@ -218,7 +218,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
           // embedded javascript content
           outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
         } else {
-          outputValue = filterText( stack.peek().getQName(), inputValue, null );
+          outputValue = filterText( stack.peek().getQName(), inputValue, getRuleName(inputValue) );
         }
       }
       if( outputValue == null ) {
