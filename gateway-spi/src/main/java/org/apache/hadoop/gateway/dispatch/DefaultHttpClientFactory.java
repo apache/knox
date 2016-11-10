@@ -18,6 +18,8 @@
 package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.metrics.MetricsService;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
@@ -56,8 +58,16 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
   @Override
   public HttpClient createHttpClient(FilterConfig filterConfig) {
-    HttpClientBuilder builder = HttpClients.custom();
-
+    HttpClientBuilder builder = null;
+    GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (gatewayConfig != null && gatewayConfig.isMetricsEnabled()) {
+      GatewayServices services = (GatewayServices) filterConfig.getServletContext()
+          .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      MetricsService metricsService = services.getService(GatewayServices.METRICS_SERVICE);
+      builder = metricsService.getInstrumented(HttpClientBuilder.class);
+    } else {
+      builder = HttpClients.custom();
+    }
     if ( "true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED)) ) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(AuthScope.ANY, new UseJaasCredentials());

@@ -424,4 +424,34 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getWebsocketIdleTimeout() {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
   }
+
+  @Override
+  public boolean isMetricsEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isJmxMetricsReportingEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isGraphiteMetricsReportingEnabled() {
+    return false;
+  }
+
+  @Override
+  public String getGraphiteHost() {
+    return null;
+  }
+
+  @Override
+  public int getGraphitePort() {
+    return 0;
+  }
+
+  @Override
+  public int getGraphiteReportingFrequency() {
+    return 0;
+  }
 }

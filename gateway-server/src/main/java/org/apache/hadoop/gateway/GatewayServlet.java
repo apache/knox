@@ -40,11 +40,14 @@ import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.metrics.MetricsService;
 
 public class GatewayServlet implements Servlet, Filter {
 
@@ -201,7 +204,7 @@ public class GatewayServlet implements Servlet, Filter {
     filter = null;
   }
 
-  private static GatewayFilter createFilter( InputStream stream ) throws ServletException {
+  private static GatewayFilter createFilter( InputStream stream, ServletContext servletContext ) throws ServletException {
     try {
       GatewayFilter filter = null;
       if( stream != null ) {
@@ -210,6 +213,17 @@ public class GatewayServlet implements Servlet, Filter {
           filter = GatewayFactory.create( descriptor );
         } finally {
           stream.close();
+        }
+      }
+      GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      if (gatewayConfig.isMetricsEnabled()) {
+        GatewayServices gatewayServices = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+        MetricsService metricsService = gatewayServices.getService(GatewayServices.METRICS_SERVICE);
+        if (metricsService != null) {
+          GatewayFilter instrumentedFilter = metricsService.getInstrumented(filter);
+          if (instrumentedFilter != null) {
+            filter = instrumentedFilter;
+          }
         }
       }
       return filter;
@@ -232,7 +246,7 @@ public class GatewayServlet implements Servlet, Filter {
     } else {
       stream = filterConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
     }
-    filter = createFilter( stream );
+    filter = createFilter( stream, filterConfig.getServletContext());
     return filter;
   }
 
@@ -248,7 +262,7 @@ public class GatewayServlet implements Servlet, Filter {
     } else {
       stream = servletConfig.getServletContext().getResourceAsStream( GATEWAY_DESCRIPTOR_LOCATION_DEFAULT );
     }
-    filter = createFilter( stream );
+    filter = createFilter( stream, servletConfig.getServletContext());
     return filter;
   }
 

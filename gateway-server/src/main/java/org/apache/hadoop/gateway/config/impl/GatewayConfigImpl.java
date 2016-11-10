@@ -130,6 +130,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_SERVER_RESPONSE_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseHeaderBuffer";
   public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
   public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
+  public static final String METRICS_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".metrics.enabled";
+  public static final String JMX_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".jmx.metrics.reporting.enabled";
+  public static final String GRAPHITE_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.enabled";
+  public static final String GRAPHITE_METRICS_REPORTING_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.host";
+  public static final String GRAPHITE_METRICS_REPORTING_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.port";
+  public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
 
   /* @since 0.10 Websocket config variables */
   public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
@@ -651,6 +657,42 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return DEFAULT_GLOBAL_RULES_SERVICES;
   }
 
+  @Override
+  public boolean isMetricsEnabled() {
+    String metricsEnabled = get( METRICS_ENABLED, "true" );
+    return "true".equals(metricsEnabled);
+  }
+
+  @Override
+  public boolean isJmxMetricsReportingEnabled() {
+    String enabled = get( JMX_METRICS_REPORTING_ENABLED, "true" );
+    return "true".equals(enabled);
+  }
+
+  @Override
+  public boolean isGraphiteMetricsReportingEnabled() {
+    String enabled = get( GRAPHITE_METRICS_REPORTING_ENABLED, "false" );
+    return "true".equals(enabled);
+  }
+
+  @Override
+  public String getGraphiteHost() {
+    String host = get( GRAPHITE_METRICS_REPORTING_HOST, "localhost" );
+    return host;
+  }
+
+  @Override
+  public int getGraphitePort() {
+    int i = getInt( GRAPHITE_METRICS_REPORTING_PORT, 32772 );
+    return i;
+  }
+
+  @Override
+  public int getGraphiteReportingFrequency() {
+    int i = getInt( GRAPHITE_METRICS_REPORTING_FREQUENCY, 1 );
+    return i;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#isWebsocketEnabled()
    */
@@ -716,7 +758,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
   }
 
-  private static long parseNetworkTimeout( String s ) {
+  private static long parseNetworkTimeout(String s ) {
     PeriodFormatter f = new PeriodFormatterBuilder()
         .appendMinutes().appendSuffix("m"," min")
         .appendSeconds().appendSuffix("s"," sec")

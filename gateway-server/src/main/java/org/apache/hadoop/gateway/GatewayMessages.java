@@ -424,4 +424,13 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Failed to parse path into Template: {0} : {1}" )
   void failedToParsePath( String path, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.DEBUG, text = "Failed to initialize metrics reporter {0}  : {1}" )
+  void failedToInitializeReporter( String name,  @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Failed to start metrics reporter {0}  : {1}" )
+  void failedToStartReporter( String name,  @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Failed to stop metrics reporter {0}  : {1}" )
+  void failedToStopReporter( String name,  @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 }

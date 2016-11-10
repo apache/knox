@@ -202,4 +202,16 @@ public interface GatewayConfig {
    */
   int getWebsocketIdleTimeout();
 
+  boolean isMetricsEnabled();
+
+  boolean isJmxMetricsReportingEnabled();
+
+  boolean isGraphiteMetricsReportingEnabled();
+
+  String getGraphiteHost();
+
+  int getGraphitePort();
+
+  int getGraphiteReportingFrequency();
+
 }
