@@ -39,7 +39,7 @@ public class InstrHttpClientBuilderProvider implements InstrumentationProvider<H
   public HttpClientBuilder getInstrumented(MetricsContext metricsContext) {
     MetricRegistry registry = (MetricRegistry) metricsContext.getProperty(DefaultMetricsService.METRICS_REGISTRY);
     return  HttpClientBuilder.create().setRequestExecutor(new InstrumentedHttpRequestExecutor(registry, TOPOLOGY_URL_AND_METHOD)).
-        setConnectionManager(new InstrumentedHttpClientConnectionManager(registry));
+        setConnectionManager(new PoolingHttpClientConnectionManager());
   }
 
   @Override
