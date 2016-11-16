@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
@@ -767,26 +768,21 @@ public class UrlRewriteServletFilterTest {
     //initParams.put( "response", "" );
     setUp( initParams );
 
-    String responseHtml = "<!DOCTYPE html>\n" +
-                          "<html>\n" +
-                          "  <head>\n" +
-                          "    <meta charset=\"UTF-8\">\n" +
+    String responseHtml = "<html>" +
+                          "  <head>" +
                           "    <style type=\"text/css\">@import \"pretty.css\";</style>" +
-                          "    <script src=\"script.js\"></script>\n" +
-                          "  </head>\n" +
-                          "  <body>\n" +
-                          "  </body>\n" +
+                          "  </head>" +
                           "</html>";
-    String rewrittenResponseHtml = "<!DOCTYPE html>\n" +
-                                   "<html>\n" +
-                                   "  <head>\n" +
-                                   "    <meta charset=\"UTF-8\">\n" +
-                                   "    <style type=\"text/css\">@import \"http://someotherhost/stylesheets/pretty.css\";</style>" +
-                                   "    <script src=\"script.js\"></script>\n" +
-                                   "  </head>\n" +
-                                   "  <body>\n" +
-                                   "  </body>\n" +
-                                   "</html>";
+    String responseHtmlOne = "<html>" +
+                          "  <head>" +
+                          "    <style type=\"text/css\">@import \"http://0.0.0.0:0/stylesheets/pretty.css\";</style>" +
+                          "  </head>" +
+                          "</html>";
+    String responseHtmlTwo = "<html>" +
+                          "  <head>" +
+                          "    <style type=\"text/css\">@import \"http://localhost:0/stylesheets/pretty.css\";</style>" +
+                          "  </head>" +
+                          "</html>";
 
     // Setup the server side request/response interaction.
     interaction.expect()
@@ -807,7 +803,8 @@ public class UrlRewriteServletFilterTest {
 
     assertThat( response.getStatus(), is( 200 ) );
     String content = response.getContent();
-    assertThat(content, is(rewrittenResponseHtml));
+//    assertThat( the( content ), hasXPath( "//style/text()", equalTo( "@import \\\"http://0.0.0.0:0/stylesheets/pretty.css\\\";" ) ) );
+    assertThat(content, anyOf( is(responseHtmlOne), is(responseHtmlTwo)));
   }
 
   private static class SetupFilter implements Filter {

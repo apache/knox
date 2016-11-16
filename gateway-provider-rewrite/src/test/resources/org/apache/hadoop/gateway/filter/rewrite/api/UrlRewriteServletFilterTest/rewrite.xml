@@ -54,7 +54,7 @@
     </rule>
 
     <rule name="test-rule-html-import-attribute">
-        <rewrite template="@import &quot;http://someotherhost/stylesheets/pretty.css&quot;;"/>
+        <rewrite template="{$import[&quot;, url]}/stylesheets/pretty.css&quot;;"/>
     </rule>
 
     <filter name="test-filter-1">

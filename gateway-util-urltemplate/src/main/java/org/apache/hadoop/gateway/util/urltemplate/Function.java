@@ -79,7 +79,7 @@ class Function {
               if( "$".equals( token ) || "(".equals( token ) || ")".equals( token ) || "[".equals( token ) || "]".equals( token ) ) {
                 // Ignore it.
               } else {
-                paramValue = Arrays.asList( token );
+                paramValue = Arrays.asList(token.split(","));
               }
               return;
           }

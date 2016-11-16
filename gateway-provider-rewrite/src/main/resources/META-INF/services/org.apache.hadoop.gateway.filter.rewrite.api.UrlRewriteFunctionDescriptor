@@ -17,3 +17,4 @@
 ##########################################################################
 
 org.apache.hadoop.gateway.filter.rewrite.api.FrontendFunctionDescriptor
+org.apache.hadoop.gateway.filter.rewrite.impl.html.HtmlImportFunctionDescriptor
