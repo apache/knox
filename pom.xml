@@ -74,6 +74,7 @@
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
         <module>gateway-service-knoxsso</module>
+        <module>gateway-service-knoxssout</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
         <module>gateway-service-storm</module>
@@ -555,6 +556,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-vault</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-knoxssout</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
