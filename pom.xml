@@ -109,6 +109,7 @@
         <apacheds-version>2.0.0-M16</apacheds-version>
         <javax-websocket-version>1.1</javax-websocket-version>
         <metrics-version>3.1.2</metrics-version>
+        <shiro.version>1.2.6</shiro.version>
     </properties>
 
     <licenses>
@@ -1052,13 +1053,13 @@
             <dependency>
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-web</artifactId>
-                <version>1.2.3</version>
+                <version>${shiro.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-ehcache</artifactId>
-                <version>1.2.3</version>
+                <version>${shiro.version}</version>
             </dependency>
 
             <dependency>
