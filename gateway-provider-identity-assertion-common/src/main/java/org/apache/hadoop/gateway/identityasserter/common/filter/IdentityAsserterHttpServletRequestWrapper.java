@@ -203,18 +203,18 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
         } else {
           for( int i = 0; i < values.length; i++ ) {
             String value = values[ i ];
-            if( value != null ) {
               if( sb.length() > 0 ) {
                 sb.append( "&" );
               }
               try {
                 sb.append( urlEncode( name, encoding ) );
-                sb.append( "=" );
-                sb.append( urlEncode( value, encoding ) );
+                if( value != null ) {
+                  sb.append("=");
+                  sb.append(urlEncode(value, encoding));
+                }
               } catch( IllegalArgumentException e ) {
                 log.skippingUnencodableParameter( name, value, encoding, e );
               }
-            }
           }
         }
       }

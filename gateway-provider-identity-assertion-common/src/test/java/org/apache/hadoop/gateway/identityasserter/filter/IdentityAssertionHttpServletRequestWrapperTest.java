@@ -206,6 +206,23 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
   }
 
   @Test
+  public void testParameterWithNullValueInQueryString() {
+    String input = "paramWithNullValue&param2=abc";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setQueryString( input );
+
+    IdentityAsserterHttpServletRequestWrapper wrapper
+      = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
+
+    String output = wrapper.getQueryString();
+
+    assertThat( output, containsString( "user.name=output-user" ) );
+    assertThat( output, containsString( "paramWithNullValue" ) );
+    assertThat( output, containsString( "param2=abc" ) );
+  }
+
+  @Test
   public void testUrlEncode() {
     String s;
     HashMap<String,String[]> m;
