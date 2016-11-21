@@ -35,7 +35,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
-import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -63,7 +62,6 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -90,6 +88,7 @@ public abstract class XmlFilterReader extends Reader {
   private XMLEventReader parser;
   private Document document;
   private Stack<Level> stack;
+  private boolean isEmptyElement;
 
   protected XmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, XMLStreamException {
     this.reader = reader;
@@ -99,10 +98,13 @@ public abstract class XmlFilterReader extends Reader {
     offset = 0;
     document = null;
     stack = new Stack<Level>();
+    isEmptyElement = false;
     factory = XMLInputFactory.newFactory();
     //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
     //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
     factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
+    factory.setProperty("http://java.sun.com/xml/stream/"
+                + "properties/report-cdata-event", Boolean.TRUE);
     parser = factory.createXMLEventReader( reader );
   }
 
@@ -145,7 +147,7 @@ public abstract class XmlFilterReader extends Reader {
     return count;
   }
 
-  private void processEvent( XMLEvent event ) throws ParserConfigurationException, XPathExpressionException, IOException {
+  private void processEvent( XMLEvent event ) throws ParserConfigurationException, XPathExpressionException, IOException, XMLStreamException {
     int type = event.getEventType();
     switch( type ) {
       case XMLEvent.START_DOCUMENT:
@@ -155,10 +157,13 @@ public abstract class XmlFilterReader extends Reader {
         processEndDocument();
         break;
       case XMLEvent.START_ELEMENT:
-        processStartElement( event.asStartElement() );
+        if( parser.peek().getEventType() == XMLEvent.END_ELEMENT )
+          isEmptyElement = true;
+        processStartElement( event.asStartElement());
         break;
       case XMLEvent.END_ELEMENT:
         processEndElement( event.asEndElement() );
+        isEmptyElement = false;
         break;
       case XMLEvent.CHARACTERS:
       case XMLEvent.CDATA:
@@ -267,15 +272,17 @@ public abstract class XmlFilterReader extends Reader {
         processBufferedElement( child );
       }
     } else {
-      QName n = event.getName();
-      writer.write( "</" );
-      String p = n.getPrefix();
-      if( p != null && !p.isEmpty() ) {
-        writer.write( p );
-        writer.write( ":" );
+      if( ! isEmptyElement ) {
+        QName n = event.getName();
+        writer.write( "</" );
+        String p = n.getPrefix();
+        if( p != null && !p.isEmpty() ) {
+          writer.write( p );
+          writer.write( ":" );
+        }
+        writer.write( n.getLocalPart() );
+        writer.write( ">" );
       }
-      writer.write( n.getLocalPart() );
-      writer.write( ">" );
       child.node.getParentNode().removeChild( child.node );
     }
   }
@@ -322,7 +329,11 @@ public abstract class XmlFilterReader extends Reader {
     writer.write( qname.getLocalPart() );
     streamNamespaces( event );
     streamAttributes( event, element );
-    writer.write( ">" );
+    if( isEmptyElement ) {
+      writer.write("/>");
+    } else {
+      writer.write(">");
+    }
   }
 
   private void processBufferedElement( Level level, UrlRewriteFilterGroupDescriptor config ) throws XPathExpressionException {
@@ -519,7 +530,13 @@ public abstract class XmlFilterReader extends Reader {
           }
         }
       }
-      writer.write( StringEscapeUtils.escapeXml( value ) );
+      if( event.isCData() ) {
+        writer.write( "<![CDATA[" );
+        writer.write( value );
+        writer.write( "]]>" );
+      } else {
+        writer.write( StringEscapeUtils.escapeXml( value ) );
+      }  
     }
   }
 

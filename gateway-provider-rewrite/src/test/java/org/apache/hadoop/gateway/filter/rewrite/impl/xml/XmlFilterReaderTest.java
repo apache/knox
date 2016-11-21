@@ -931,18 +931,17 @@ public class XmlFilterReaderTest {
     StringReader reader;
     XmlFilterReader filter;
 
-    // Ideally this should work but currently does not.
-    //input = "<tag/>";
-    //reader = new StringReader( input );
-    //filter = new NoopXmlFilterReader( reader, null );
-    //output = IOUtils.toString( filter );
-    //assertThat( output, containsString( "<tag/>" ) );
+    input = "<tag/>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( output, containsString( "<tag/>" ) );
 
     input = "<tag></tag>";
     reader = new StringReader( input );
     filter = new NoopXmlFilterReader( reader, null );
     output = IOUtils.toString( filter );
-    assertThat( output, containsString( "<tag></tag>" ) );
+    assertThat( output, containsString( "<tag/>" ) );
 
     input = "<tag>&lt;</tag>";
     reader = new StringReader( input );
@@ -956,6 +955,29 @@ public class XmlFilterReaderTest {
     filter = new NoopXmlFilterReader( reader, null );
     output = IOUtils.toString( filter );
     assertThat( output, containsString( "<tag>&amp;</tag>" ) );
+
+    input = "<document><empty/><![CDATA[<xyz>wibble</xyz>]]></document>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( output, containsString( "<?xml version=\"1.0\" standalone=\"no\"?><document><empty/><![CDATA[<xyz>wibble</xyz>]]></document>" ));
+
+    input="<?xml version=\"1.0\" standalone=\"no\"?>"+
+"<document>" +
+"   <noempty test=\"a\"> </noempty>"+
+"  <!-- This is the first comment -->"+
+"   <empty/>"+
+"   <![CDATA[<xyz>wibble</xyz>]]>"+
+"   <here>"+
+"      <moreempty/>"+
+"       <!-- This is the second comment -->"+
+"      <![CDATA[<xyz>noop</xyz>]]>"+
+"   </here>"+
+"</document>";
+    reader = new StringReader( input );
+    filter = new NoopXmlFilterReader( reader, null );
+    output = IOUtils.toString( filter );
+    assertThat( output, containsString( "<?xml version=\"1.0\" standalone=\"no\"?><document>   <noempty test=\"a\"> </noempty>  <!-- This is the first comment -->   <empty/>   <![CDATA[<xyz>wibble</xyz>]]>   <here>      <moreempty/>       <!-- This is the second comment -->      <![CDATA[<xyz>noop</xyz>]]>   </here></document>"));
   }
 
   @Test
