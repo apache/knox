@@ -133,4 +133,34 @@
         <url>http://localhost:8088/ws</url>
     </service>
 
+    <service>
+        <role>DRUID-COORDINATOR-UI</role>
+        <url>http://localhost:8081</url>
+    </service>
+
+    <service>
+        <role>DRUID-COORDINATOR</role>
+        <url>http://localhost:8081</url>
+    </service>
+
+    <service>
+        <role>DRUID-BROKER</role>
+        <url>http://localhost:8082</url>
+    </service>
+
+    <service>
+        <role>DRUID-ROUTER</role>
+        <url>http://localhost:8082</url>
+    </service>
+    
+    <service>
+        <role>DRUID-OVERLORD</role>
+        <url>http://localhost:8090</url>
+    </service>
+
+    <service>
+        <role>DRUID-OVERLORD-UI</role>
+        <url>http://localhost:8090</url>
+    </service>
+
 </topology>

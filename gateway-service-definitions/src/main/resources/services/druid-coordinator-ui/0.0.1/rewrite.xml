@@ -1,0 +1,78 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/inbound/root" pattern="*://*:*/**/druid-coordinator-ui">
+    <rewrite template="{$serviceUrl[DRUID-COORDINATOR-UI]}"/>
+  </rule>
+
+  <rule dir="IN" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/inbound/path" pattern="*://*:*/**/druid-coordinator-ui/{**}">
+    <rewrite template="{$serviceUrl[DRUID-COORDINATOR-UI]}/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/inbound/query" pattern="*://*:*/**/druid-coordinator-ui/{**}?{**}">
+    <rewrite template="{$serviceUrl[DRUID-COORDINATOR-UI]}/{**}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/css" pattern="/css/{**}">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/css/{**}"/>
+  </rule>
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/druidcss" pattern="/druid.css">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/druid.css"/>
+  </rule>
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/druidjs" pattern="/druid.js">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/druid.js"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api">
+    <rewrite template="{$frontend[url]}/druid-coordinator/druid/coordinator/v1"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api-indexer">
+    <rewrite template="{$frontend[url]}/druid-coordinator/druid/indexer/v1"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/pages">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/pages"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/console" pattern="/old-console/">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/old-console/index.html"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/console" pattern="/old-console/{**}">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/old-console/{**}"/>
+  </rule>
+
+  <filter name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/links">
+    <content type="*/x-javascript">
+      <apply path="/pages" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/pages"/>
+      <apply path="/druid/coordinator/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api-indexer"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="/pages" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/pages"/>
+      <apply path="/druid/coordinator/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api-indexer"/>
+    </content>
+    <content type="text/html">
+      <apply path="/pages" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/pages"/>
+      <apply path="/druid/coordinator/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api-indexer"/>
+    </content>
+  </filter>
+
+</rules>

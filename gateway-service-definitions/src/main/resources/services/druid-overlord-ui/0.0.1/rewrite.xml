@@ -1,0 +1,71 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="DRUID-OVERLORD-UI/druid-overlord-ui/inbound/root" pattern="*://*:*/**/druid-overlord-ui">
+    <rewrite template="{$serviceUrl[DRUID-OVERLORD-UI]}/console.html"/>
+  </rule>
+
+  <rule dir="IN" name="DRUID-OVERLORD-UI/druid-overlord-ui/inbound/path" pattern="*://*:*/**/druid-overlord-ui/{**}">
+    <rewrite template="{$serviceUrl[DRUID-OVERLORD-UI]}/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="DRUID-OVERLORD-UI/druid-overlord-ui/inbound/query" pattern="*://*:*/**/druid-overlord-ui/{**}?{**}">
+    <rewrite template="{$serviceUrl[DRUID-OVERLORD-UI]}/{**}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/old-console-js" pattern="old-console/js/{**}">
+    <rewrite template="{$frontend[url]}/druid-overlord-ui/old-console/js/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/js" pattern="/js/{**}">
+    <rewrite template="{$frontend[url]}/druid-overlord-ui/js/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/api">
+    <rewrite template="{$frontend[url]}/druid-overlord/druid/indexer/v1"/>
+  </rule>
+
+  <rule dir="OUT" name="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/pages">
+    <rewrite template="{$frontend[url]}/druid-overlord-ui/pages"/>
+  </rule>
+
+  <rule name="DRUID-OVERLORD-UI/druid-overlord-ui/html-import-attribute-style-css">
+    <rewrite template="{$import[&quot;, url]}/druid-overlord-ui/old-console/css/style.css&quot;;"/>
+  </rule>
+
+  <rule name="DRUID-OVERLORD-UI/druid-overlord-ui/html-import-attribute-demo-table-css">
+    <rewrite template="{$import[&quot;, url]}/druid-overlord-ui/old-console/css/demo_table.css&quot;;"/>
+  </rule>
+
+  <filter name="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/links">
+    <content type="*/x-javascript">
+      <apply path="/pages" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/pages"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/api"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="/pages" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/pages"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/api"/>
+    </content>
+    <content type="*/html">
+      <apply path="/pages" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/pages"/>
+      <apply path="/druid/indexer/v1" rule="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/api"/>
+      <apply path="(@import)+ .*style.css.*" rule="DRUID-OVERLORD-UI/druid-overlord-ui/html-import-attribute-style-css"/>
+      <apply path="(@import)+ .*demo_table.css.*" rule="DRUID-OVERLORD-UI/druid-overlord-ui/html-import-attribute-demo-table-css"/>
+    </content>
+  </filter>
+
+</rules>
