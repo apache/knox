@@ -65,7 +65,7 @@ public class Get {
 
   }
 
-  static class Response extends BasicResponse {
+  public static class Response extends BasicResponse {
 
     Response( HttpResponse response, String to ) throws IOException {
       super( response );

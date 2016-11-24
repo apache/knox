@@ -67,7 +67,7 @@ class Rm {
 
   }
 
-  static class Response extends EmptyResponse {
+  public static class Response extends EmptyResponse {
 
     Response( HttpResponse response ) throws IOException {
       super( response );

@@ -91,7 +91,7 @@ class Java {
 
   }
 
-  static class Response extends BasicResponse {
+  public static class Response extends BasicResponse {
 
     public Response( HttpResponse response ) {
       super( response );

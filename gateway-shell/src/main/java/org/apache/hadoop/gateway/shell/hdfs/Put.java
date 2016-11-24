@@ -93,7 +93,7 @@ class Put {
 
   }
 
-  static class Response extends EmptyResponse {
+  public static class Response extends EmptyResponse {
 
     Response( HttpResponse response ) {
       super( response );

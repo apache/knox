@@ -47,7 +47,7 @@ class Queue {
 
   }
 
-  static class Response extends BasicResponse {
+  public static class Response extends BasicResponse {
 
     protected Response( HttpResponse response ) {
       super( response );

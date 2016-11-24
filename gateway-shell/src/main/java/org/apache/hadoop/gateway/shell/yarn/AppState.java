@@ -56,7 +56,7 @@ public class AppState {
         }
     }
 
-    static class Response extends BasicResponse {
+    public static class Response extends BasicResponse {
 
         Response( HttpResponse response ) {
             super( response );
