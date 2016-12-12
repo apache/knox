@@ -264,6 +264,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-identity-assertion-hadoop-groups</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-identity-assertion-regex</artifactId>
         </dependency>
         <dependency>

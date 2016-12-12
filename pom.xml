@@ -63,6 +63,7 @@
         <module>gateway-provider-security-authc-anon</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
+        <module>gateway-provider-identity-assertion-hadoop-groups</module>
         <module>gateway-provider-identity-assertion-regex</module>
         <module>gateway-provider-identity-assertion-switchcase</module>
         <module>gateway-provider-security-picketlink</module>
@@ -502,6 +503,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-identity-assertion-hadoop-groups</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
