@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class MockResponseProvider {
@@ -129,8 +130,8 @@ public class MockResponseProvider {
       response.sendRedirect( redirectUrl );
     }
     if( headers != null ) {
-      for( String name: headers.keySet() ) {
-        response.addHeader( name, headers.get( name ) );
+      for( Entry<String, String> entry : headers.entrySet() ) {
+        response.addHeader( entry.getKey(), entry.getValue() );
       }
     }
     if( cookies != null ) {

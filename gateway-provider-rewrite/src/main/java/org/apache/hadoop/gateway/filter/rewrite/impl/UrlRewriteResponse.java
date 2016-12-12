@@ -87,7 +87,6 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private String headersFilterName;
   private UrlRewriteFilterContentDescriptor headersFilterConfig;
   private String cookiesFilterName;
-  private UrlRewriteFilterContentDescriptor cookiesFilterConfig;
   private String xForwardedHostname;
   private String xForwardedPort;
   private String xForwardedScheme;
@@ -105,7 +104,6 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_HEADERS_FILTER_PARAM );
     this.headersFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
     this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_COOKIES_FILTER_PARAM );
-    this.cookiesFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), cookiesFilterName, UrlRewriteServletFilter.COOKIES_MIME_TYPE );
   }
 
   protected boolean ignoreHeader( String name ) {

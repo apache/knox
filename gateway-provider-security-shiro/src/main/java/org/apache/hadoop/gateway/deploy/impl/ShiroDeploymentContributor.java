@@ -74,7 +74,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     Map<String, String> params = provider.getParams();
     String sts = params.get( SESSION_TIMEOUT );
     if( sts != null && sts.trim().length() != 0 ) {
-      st = Integer.valueOf( sts.trim() );
+      st = Integer.parseInt( sts.trim() );
     }
     if( st <= 0 ) {
       // user default session timeout

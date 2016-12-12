@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -214,11 +215,11 @@ public class MockRequestMatcher {
           request.getRequestURL().toString(), is( requestURL ) );
     }
     if( headers != null ) {
-      for( String name: headers.keySet() ) {
+      for( Entry<String, Matcher> entry : headers.entrySet() ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " does not have the expected value for header " + name,
-            request.getHeader( name ),  headers.get(name) );
+                " does not have the expected value for header " + entry.getKey(),
+            request.getHeader( entry.getKey() ),  entry.getValue() );
       }
     }
     if( cookies != null ) {
@@ -266,23 +267,23 @@ public class MockRequestMatcher {
     if( queryParams != null ) {
       String queryString = request.getQueryString();
       List<NameValuePair> requestParams = parseQueryString( queryString == null ? "" : queryString );
-      for( String name: queryParams.keySet() ) {
+      for( Entry<String, String> entry : queryParams.entrySet() ) {
         assertThat(
             "Request " + request.getMethod() + " " + request.getRequestURL() +
-                " query string " + queryString + " is missing parameter '" + name + "'",
-            requestParams, hasItem( new BasicNameValuePair(name, queryParams.get(name))) );
+                " query string " + queryString + " is missing parameter '" + entry.getKey() + "'",
+            requestParams, hasItem( new BasicNameValuePair(entry.getKey(), entry.getValue())) );
       }
     }
     if( formParams != null ) {
       String paramString = IOUtils.toString( request.getInputStream(), request.getCharacterEncoding() );
       List<NameValuePair> requestParams = parseQueryString( paramString == null ? "" : paramString );
-      for( String name: formParams.keySet() ) {
-        String[] expectedValues = formParams.get( name );
+      for( Entry<String, String[]> entry : formParams.entrySet() ) {
+        String[] expectedValues = entry.getValue();
         for( String expectedValue : expectedValues ) {
           assertThat(
               "Request " + request.getMethod() + " " + request.getRequestURL() +
-                  " form params " + paramString + " is missing a value " + expectedValue + " for parameter '" + name + "'",
-              requestParams, hasItem( new BasicNameValuePair(name, expectedValue ) ));
+                  " form params " + paramString + " is missing a value " + expectedValue + " for parameter '" + entry.getKey() + "'",
+              requestParams, hasItem( new BasicNameValuePair(entry.getKey(), expectedValue ) ));
         }
       }
     }

@@ -44,7 +44,6 @@ class Command {
   private static int ENV_PREFIX_LENGTH = ENV_PREFIX.length();
 
   File base;
-  Properties config;
   String mainClass;
   String mainMethod = "main";
   String[] mainArgs;
@@ -57,7 +56,6 @@ class Command {
 
   Command( File base, Properties config, String[] args ) throws MalformedURLException {
     this.base = base;
-    this.config = config;
     this.mainArgs = args ;
     consumeConfig( config );
   }

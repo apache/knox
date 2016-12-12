@@ -62,7 +62,7 @@ public class TraceUtil {
   private static final void addParsedIntegerToSet( Set<Integer> set, String str ) {
     if( str != null && !str.trim().isEmpty() ) {
       try {
-        set.add( new Integer( str.trim() ) );
+        set.add( Integer.valueOf( str.trim() ) );
       } catch( NumberFormatException e ) {
         // Ignore it.
       }

@@ -111,11 +111,12 @@ public class TopologyValidator {
   }
 
   public String getErrorString(){
-    String out = "";
+    StringBuilder out = new StringBuilder();
+    out.append("");
     for(String s : getTopologyErrors()){
-      out += s + "\n";
+      out.append(s + "\n");
     }
-    return out;
+    return out.toString();
   }
 
 }

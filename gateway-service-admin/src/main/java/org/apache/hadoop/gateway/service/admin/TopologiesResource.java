@@ -236,11 +236,6 @@ public class TopologiesResource {
     return baseURL;
   }
 
-//  Uses member request variable
-  private String buildXForwardBaseURL(){
-    return buildXForwardBaseURL(request);
-  }
-
   @XmlAccessorType(XmlAccessType.NONE)
   public static class SimpleTopology {
 

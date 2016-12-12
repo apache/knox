@@ -60,7 +60,6 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   private String headersFilterName;
   private UrlRewriteFilterContentDescriptor headersFilterConfig;
   private String cookiesFilterName;
-  private UrlRewriteFilterContentDescriptor cookiesFilterConfig;
 
   /**
    * Constructs a request object wrapping the given request.
@@ -76,7 +75,6 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_HEADERS_FILTER_PARAM );
     this.headersFilterConfig = getRewriteFilterConfig( headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
     this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_COOKIES_FILTER_PARAM );
-    this.cookiesFilterConfig = getRewriteFilterConfig( cookiesFilterName, UrlRewriteServletFilter.COOKIES_MIME_TYPE );
   }
 
   private Template getSourceUrl() {
