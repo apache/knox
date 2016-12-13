@@ -49,6 +49,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
+  private static final String SSO_COOKIE_NAME = "knoxsso.cookie.name";
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
@@ -58,11 +59,12 @@ public class WebSSOResource {
   private static final String SSO_ENABLE_SESSION_PARAM = "knoxsso.enable.session";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
-  private static final String JWT_COOKIE_NAME = "hadoop-jwt";
+  private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
   // default for the whitelist - open up for development - relative paths and localhost only
   private static final String DEFAULT_WHITELIST = "^/.*$;^https?://(localhost|127.0.0.1|0:0:0:0:0:0:0:1|::1):\\d{0,9}/.*$";
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
+  private String cookieName = null;
   private boolean secureOnly = true;
   private int maxAge = -1;
   private long tokenTTL = 30000l;
@@ -82,6 +84,13 @@ public class WebSSOResource {
 
   @PostConstruct
   public void init() {
+
+    // configured cookieName
+    cookieName = context.getInitParameter(SSO_COOKIE_NAME);
+    if (cookieName == null) {
+      cookieName = DEFAULT_SSO_COOKIE_NAME;
+    }
+
     String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
     if (secure != null) {
       secureOnly = ("false".equals(secure) ? false : true);
@@ -221,7 +230,7 @@ public class WebSSOResource {
 
   private void addJWTHadoopCookie(String original, JWT token) {
     log.addingJWTCookie(token.toString());
-    Cookie c = new Cookie(JWT_COOKIE_NAME,  token.toString());
+    Cookie c = new Cookie(cookieName,  token.toString());
     c.setPath("/");
     try {
       String domain = Urls.getDomainName(original, domainSuffix);
