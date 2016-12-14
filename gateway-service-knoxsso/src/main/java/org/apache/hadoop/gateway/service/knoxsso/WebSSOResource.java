@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.ArrayList;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -175,7 +176,17 @@ public class WebSSOResource {
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
 
     try {
-      JWT token = ts.issueToken(p, "RS256", getExpiry());
+      JWT token = null;
+      if (targetAudiences == null || targetAudiences.length == 0) {
+        token = ts.issueToken(p, "RS256", getExpiry());
+      } else {
+        ArrayList<String> aud = new ArrayList<String>();
+        for (int i = 0; i < targetAudiences.length; i++) {
+          aud.add(targetAudiences[i]);
+        }
+        token = ts.issueToken(p, aud, "RS256", getExpiry());
+      }
+
       // Coverity CID 1327959
       if( token != null ) {
         addJWTHadoopCookie( original, token );
