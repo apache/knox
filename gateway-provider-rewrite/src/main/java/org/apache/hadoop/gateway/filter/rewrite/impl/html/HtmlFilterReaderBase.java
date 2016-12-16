@@ -171,7 +171,11 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
     writer.write( " " );
     writer.write( attribute.getName() );
     if(attribute.hasValue()) {
-      String inputValue = attribute.getValue();
+      /*
+       * non decoded value, return the raw value of the attribute as it appears
+       * in the source document, without decoding, see KNOX-791.
+       */
+      String inputValue = attribute.getValueSegment().toString();
       String outputValue = inputValue;
       try {
         Level tag = stack.peek();
