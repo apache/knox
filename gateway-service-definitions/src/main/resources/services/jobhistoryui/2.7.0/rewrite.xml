@@ -28,6 +28,12 @@
   <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/static" pattern="*://*:*/**/jobhistory/static/{**}">
     <rewrite template="{$serviceUrl[JOBHISTORYUI]}/static/{**}"/>
   </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/jobhistory" pattern="*://*:*/**/jobhistory/jobhistory/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/{**}"/>
+  </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/jobhistory/params" pattern="*://*:*/**/jobhistory/jobhistory/{**}?{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jobhistory/{**}?{**}"/>
+  </rule>
   <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/conf" pattern="*://*:*/**/jobhistory/conf">
     <rewrite template="{$serviceUrl[JOBHISTORYUI]}/conf"/>
   </rule>
@@ -61,14 +67,24 @@
   <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/jmx/query" pattern="*://*:*/**/jobhistory/jmx?{**}">
     <rewrite template="{$serviceUrl[JOBHISTORYUI]}/jmx?{**}"/>
   </rule>
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/logs" pattern="*://*:*/**/jobhistory/logs?{scheme}?{host}?{port}?{**}">
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
 
-  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/headers/location">
-    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
-    <rewrite template="{$frontend[url]}/jobhistory/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  <rule dir="IN" name="JOBHISTORYUI/nodelink/inbound" pattern="*://*:*/**/jobhistory/node?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/node?{scheme}?{host}?{port}"/>
   </rule>
-  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/logs/files" pattern="/logs/{**}">
-    <rewrite template="{$frontend[url]}/jobhistory/logs/{**}"/>
+
+
+  <!-- request out web content rewrite rules -->
+
+  <!-- rewrite map reduce node manager request -->
+  <!-- This maps to Nodemanager           -->
+  <rule dir="OUT" name="JOBHISTORYUI/nodelink" pattern="{scheme}://{host}:{port}">
+    <rewrite template="{$frontend[scheme]}://{$frontend[address]}/gateway/nodemanagerui/node?{host}"/>
   </rule>
+
+  <!-- static web resources (css, js, jpeg, etc). -->
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/static" pattern="/static/{**}">
     <rewrite template="{$frontend[url]}/jobhistory/static/{**}"/>
   </rule>
@@ -77,6 +93,11 @@
   </rule>
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobhistory/query" pattern="/jobhistory/{**}?{**}">
     <rewrite template="{$frontend[url]}/jobhistory/{**}?{**}"/>
+  </rule>
+
+  <!-- tab content rewrite e.g. /conf, /logs, /stacks, /metrics,/jmx, etc -->
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/logs/files" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/jobhistory/logs/{**}"/>
   </rule>
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobhistory/logs" pattern="/jobhistory/logs/{**}/?{**}">
     <rewrite template="{$frontend[url]}/jobhistory/joblogs/{**}/?{**}"/>
@@ -96,6 +117,37 @@
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jmx" pattern="/jmx?{**}">
     <rewrite template="{$frontend[url]}/jobhistory/jmx?{**}"/>
   </rule>
+
+
+  <!-- 302 redirection for jobs, tasks, logs -->
+  <filter name="JOBHISTORYUI/jobhistory/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="JOBHISTORYUI/jobhistory/outbound/headers/location"/>
+    </content>
+  </filter>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/headers/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{$frontend[url]}/jobhistory/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+
+  <!-- xml content rewrite  -->
+  <filter name="JOBHISTORYUI/jobhistory/outbound/configuration">
+    <content type="*/xml">
+      <buffer path="/configuration/property"/>
+    </content>
+  </filter>
+
+  <!-- embedded javascript content rewrite -->
+  <filter name="JOBHISTORYUI/jobhistory/outbound/jobs">
+    <content type="*/html">
+      <apply path="https?://[^/':,]+:[\d]+" rule="JOBHISTORYUI/jobhistory/outbound/jobs/node"/>
+      <apply path="/jobhistory/job" rule="JOBHISTORYUI/jobhistory/outbound/jobs/job"/>
+      <apply path="/jobhistory/task" rule="JOBHISTORYUI/jobhistory/outbound/jobs/task"/>
+      <apply path="/jobhistory/logs" rule="JOBHISTORYUI/jobhistory/outbound/jobs/logs"/>
+    </content>
+  </filter>
+
+  <!-- rules for embedded js rewrite   -->
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/job">
     <rewrite template="{$frontend[url]}/jobhistory/job"/>
   </rule>
@@ -105,21 +157,9 @@
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/logs">
     <rewrite template="{$frontend[url]}/jobhistory/joblogs"/>
   </rule>
-  <filter name="JOBHISTORYUI/jobhistory/outbound/headers">
-    <content type="application/x-http-headers">
-      <apply path="Location" rule="JOBHISTORYUI/jobhistory/outbound/headers/location"/>
-    </content>
-  </filter>
-  <filter name="JOBHISTORYUI/jobhistory/outbound/configuration">
-    <content type="*/xml">
-      <buffer path="/configuration/property"/>
-    </content>
-  </filter>
-  <filter name="JOBHISTORYUI/jobhistory/outbound/jobs">
-    <content type="*/html">
-      <apply path="/jobhistory/job" rule="JOBHISTORYUI/jobhistory/outbound/jobs/job"/>
-      <apply path="/jobhistory/task" rule="JOBHISTORYUI/jobhistory/outbound/jobs/task"/>
-      <apply path="/jobhistory/logs" rule="JOBHISTORYUI/jobhistory/outbound/jobs/logs"/>
-    </content>
-  </filter>
+  <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/node">
+    <match pattern="{scheme}://{host}:{port}"/>
+    <rewrite template="{$frontend[scheme]}://{$frontend[address]}/gateway/nodemanagerui/node?host={host}"/>
+  </rule>
+
 </rules>

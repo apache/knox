@@ -350,6 +350,36 @@ public class HtmlFilterReaderBaseTest {
     assertThat( outputXml, is( expectedOutput ) );
   }
 
+  @Test
+  public void testMRJobHistoryUIJavaScriptText() throws IOException, ParserConfigurationException {
+    Map<String, Map<String, String>> rules = new HashMap<String, Map<String, String>>();
+    Map<String, String> map = new HashMap<String, String>();
+    map.put( "https?://[^/':,]+:[\\d]+", "https://knoxhost:8443/gateway/nodemanagerui/node?host=knoxhost" );
+    rules.put( "test-rule", map );
+    String inputXml =
+        "<root>\n" +
+        "  <script type=\"text/javascript\">\n" +
+        "    var appsTableData=[\n" +
+        "      [\"<a href='http://testhost:8042'>/default-rack/node</a>\",\"<a href='http://testhost:8042'>testhost:8042</a>\"],\n" +
+        "    ]\n" +
+        "  </script>\n" +
+        "</root>\n";
+    StringReader inputReader = new StringReader( inputXml );
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply("https?://[^/':,]+:[\\d]+", "test-rule");
+    HtmlFilterReaderBase filterReader = new MatchRuleXmlFilterReader( inputReader, rules, config );
+    String outputXml = new String( IOUtils.toCharArray( filterReader ) );
+    String expectedOutput =
+        "<root>\n" +
+        "  <script type=\"text/javascript\">\n" +
+        "    var appsTableData=[\n" +
+        "      [\"<a href='https://knoxhost:8443/gateway/nodemanagerui/node?host=knoxhost'>/default-rack/node</a>\",\"<a href='https://knoxhost:8443/gateway/nodemanagerui/node?host=knoxhost'>testhost:8042</a>\"],\n" +
+        "    ]\n" +
+        "  </script>\n" +
+        "</root>\n";
+    assertThat( outputXml, is( expectedOutput ) );
+  }
+
   public static class XmlRewriteRulesDescriptorDigesterTest {
 
     private static DigesterLoader loader = DigesterLoader.newLoader( new XmlRewriteRulesDigester() );
