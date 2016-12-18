@@ -82,4 +82,11 @@ public class UrlsTest {
     assertEquals( "x/y/z", Urls.trimLeadingAndTrailingSlashJoin( "x", "y", "z" ) );
   }
 
+  @Test
+  public void testURLEncoding() throws Exception {
+    assertEquals( "%26", Urls.encode( "&" ) );
+    assertEquals( "&query=hive_table", Urls.decode( "%26query=hive_table" ) );
+    assertEquals( "%3F", Urls.encode( "?" ) );
+  }
+
 }

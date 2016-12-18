@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -159,7 +160,7 @@ public class WebSSOResource {
       // in the case where there are no SAML redirects done before here
       // we need to get it from the request parameters
       removeOriginalUrlCookie = false;
-      original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
+      original = getOriginalUrlFromQueryParams();
       if (original == null) {
         log.originalURLNotFound();
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
@@ -226,6 +227,36 @@ public class WebSSOResource {
     }
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
+  }
+
+  private String getOriginalUrlFromQueryParams() {
+    String original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
+    StringBuffer buf = new StringBuffer(original);
+
+    // Add any other query params.
+    // Probably not ideal but will not break existing integrations by requiring
+    // some encoding.
+    Map<String, String[]> params = request.getParameterMap();
+    for (String name : params.keySet()) {
+      if (!ORIGINAL_URL_REQUEST_PARAM.equals(name)
+          && !original.contains(name + "=")) {
+        buf.append("&").append(name);
+        String[] values = params.get(name);
+        if (values.length > 0 && values[0] != null) {
+          buf.append("=");
+        }
+        for (int i = 0; i < values.length; i++) {
+          if (values[0] != null) {
+            buf.append(values[i]);
+            if (i < values.length-1) {
+              buf.append("&").append(name).append("=");
+            }
+          }
+        }
+      }
+    }
+
+    return buf.toString();
   }
 
   private long getExpiry() {
