@@ -17,25 +17,33 @@
  */
 package org.apache.hadoop.gateway.filter.rewrite.api;
 
-import org.apache.hadoop.gateway.util.urltemplate.Parser;
-import org.apache.hadoop.gateway.util.urltemplate.Template;
-import org.easymock.EasyMock;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.hadoop.gateway.util.urltemplate.Expander;
+import org.apache.hadoop.gateway.util.urltemplate.Matcher;
+import org.apache.hadoop.gateway.util.urltemplate.Parser;
+import org.apache.hadoop.gateway.util.urltemplate.Template;
+import org.easymock.EasyMock;
+import org.junit.Test;
 
 public class UrlRewriteProcessorTest {
 
@@ -273,4 +281,88 @@ public class UrlRewriteProcessorTest {
     processor.destroy();
   }
 
+  /**
+   * Tests the rewrite pattern used for re-writing Solr urls passed through Knox.
+   * 
+   * @throws Exception
+   */
+  @Test
+  public void testSolrRewrite() throws Exception {
+    URI inputUri, outputUri;
+    Matcher<Void> matcher;
+    Matcher<Void>.Match match;
+    Template input, pattern, template;
+
+    inputUri = new URI(
+        "https://hortonworks.sandbox.hdp.24.test:8443/gateway/sandbox/solr/TestCollection/select?q=*.*&wt=json&indent=true");
+
+    input = Parser.parseLiteral(inputUri.toString());
+    pattern = Parser.parseTemplate("*://*:*/**/solr/{collection=**}/{query=**}?{**}");
+    template = Parser.parseTemplate("http://sandbox.hortonworks.com/solr/{collection=**}/{query=**}?{**}");
+
+    matcher = new Matcher<Void>();
+    matcher.add(pattern, null);
+    match = matcher.match(input);
+
+    outputUri = Expander.expand(template, match.getParams(), null);
+
+    final String reWrittenScheme = outputUri.getScheme();
+    assertEquals("http", reWrittenScheme);
+
+    final String reWrittenHost = outputUri.getHost();
+    assertEquals("sandbox.hortonworks.com", reWrittenHost);
+
+    final String reWrittenPath = outputUri.getPath();
+    assertEquals("/solr/TestCollection/select", reWrittenPath);
+
+    // Whole thing is (non-deterministicly ordered around the &s):
+    // "q=*.*&wt=json&indent=true"
+    final String reWrittenQuery = outputUri.getQuery();
+
+    // Check individual parameters are present, and have the right value.
+    final Map<String, String> reWrittenParams = mapUrlParameters(reWrittenQuery);
+    assertTrue(reWrittenParams.containsKey("q"));
+    assertEquals("*.*", reWrittenParams.get("q"));
+    assertTrue(reWrittenParams.containsKey("wt"));
+    assertEquals("json", reWrittenParams.get("wt"));
+    assertEquals("true", reWrittenParams.get("indent"));
+  }
+
+  /**
+   * Turn a string containing URL parameters, e.g.
+   * 
+   * <pre>
+   * a=b&c=d&e=f
+   * </pre>
+   * 
+   * into a map such as
+   * <table>
+   * <tr>
+   * <th>Key</th>
+   * <th>Value</th>
+   * </tr>
+   * <tr>
+   * <td>a</td>
+   * <td>b</td>
+   * </tr>
+   * <tr>
+   * <td>c</td>
+   * <td>d</td>
+   * </tr>
+   * </table>
+   * 
+   * @param urlParameters the URL parameter string. Expected to contain something of the form
+   *        "a=b&c=d" etc (i.e. Key=Value separated by &).
+   * @return a map, with the key-values pairs representing the URL parameters.
+   */
+  private Map<String, String> mapUrlParameters(String urlParameters) {
+    final Map<String, String> map = new HashMap<String, String>();
+    for (String pair : urlParameters.split("&")) {
+      String[] kv = pair.split("=");
+      map.put(kv[0], kv[1]);
+    }
+    return map;
+  }
+
+  
 }
