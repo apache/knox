@@ -103,8 +103,8 @@
 
             -->
             <param>
-              <name>main.cacheManager</name>
-              <value>org.apache.shiro.cache.ehcache.EhCacheManager</value>
+                <name>main.cacheManager</name>
+                <value>org.apache.hadoop.gateway.shirorealm.KnoxCacheManager</value>
             </param>
             <param>
               <name>main.securityManager.cacheManager</name>
