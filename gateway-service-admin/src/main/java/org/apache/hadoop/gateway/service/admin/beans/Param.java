@@ -6,28 +6,52 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.hadoop.gateway.service.admin.beans;
 
-package org.apache.hadoop.gateway.service.admin;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.ext.Provider;
+@XmlAccessorType(XmlAccessType.NONE)
+public class Param {
 
-@Provider
-@Produces( MediaType.APPLICATION_JSON )
-public class TopologyContextResolverJSON extends TopologyContextResolver {
+  @XmlElement
+  private String name;
+  @XmlElement
+  private String value;
 
-  public TopologyContextResolverJSON(){
-    super("org/apache/hadoop/gateway/topology/topology_binding-json.xml");
-
+  public Param() {
   }
+
+  public Param(String name, String value) {
+    this.name = name;
+    this.value = value;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
+
+
 }

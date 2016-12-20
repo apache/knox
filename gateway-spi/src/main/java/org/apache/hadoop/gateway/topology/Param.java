@@ -21,7 +21,15 @@ public class Param {
 
   private String name;
   private String value;
-  
+
+  public Param() {
+  }
+
+  public Param(String name, String value) {
+    this.name = name;
+    this.value = value;
+  }
+
   public String getName() {
     return name;
   }

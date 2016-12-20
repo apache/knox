@@ -6,32 +6,38 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.topology;
+package org.apache.hadoop.gateway.service.admin.beans;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
+@XmlAccessorType(XmlAccessType.NONE)
 public class Provider {
-
+  @XmlElement
   private String role;
+  @XmlElement
   private String name;
+  @XmlElement
   private boolean enabled;
-  private Map<String, String> params = new LinkedHashMap<String, String>();
+  @XmlElement(name="param")
+  private List<Param> params;
 
   public Provider() {
   }
-  
+
   public String getName() {
     return name;
   }
@@ -48,32 +54,6 @@ public class Provider {
     this.enabled = enabled;
   }
 
-  public Map<String, String> getParams() {
-    return params;
-  }
-
-  public void setParams(Map<String, String> params) {
-    this.params = params;
-  }
-
-  public void addParam(Param param) {
-    params.put(param.getName(), param.getValue());
-  }
-
-  public Collection<Param> getParamsList(){
-
-    ArrayList<Param> paramList = new ArrayList<Param>();
-
-    for(Map.Entry<String, String> entry : params.entrySet()){
-      Param p = new Param();
-      p.setName(entry.getKey());
-      p.setValue(entry.getValue());
-      paramList.add(p);
-    }
-
-    return paramList;
-  }
-
   public String getRole() {
     return role;
   }
@@ -82,4 +62,14 @@ public class Provider {
     this.role = role;
   }
 
+  public List<Param> getParams() {
+    if (params == null) {
+      params = new ArrayList<>();
+    }
+    return params;
+  }
+
+  public void setParams(List<Param> params) {
+    this.params = params;
+  }
 }

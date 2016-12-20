@@ -17,10 +17,11 @@
  */
 package org.apache.hadoop.gateway.service.admin;
 
+import org.apache.hadoop.gateway.service.admin.beans.BeanConverter;
+import org.apache.hadoop.gateway.service.admin.beans.Topology;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
-import org.apache.hadoop.gateway.topology.Topology;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -62,14 +63,14 @@ public class TopologiesResource {
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    for (Topology t : ts.getTopologies()) {
+    for (org.apache.hadoop.gateway.topology.Topology t : ts.getTopologies()) {
       if(t.getName().equals(id)) {
         try {
           t.setUri(new URI( buildURI(t, config, request) ));
         } catch (URISyntaxException se) {
           t.setUri(null);
         }
-        return t;
+        return BeanConverter.getTopology(t);
       }
     }
     return null;
@@ -88,7 +89,7 @@ public class TopologiesResource {
     ArrayList<SimpleTopology> st = new ArrayList<SimpleTopology>();
     GatewayConfig conf = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
-    for (Topology t : ts.getTopologies()) {
+    for (org.apache.hadoop.gateway.topology.Topology t : ts.getTopologies()) {
       st.add(getSimpleTopology(t, conf));
     }
 
@@ -114,7 +115,7 @@ public class TopologiesResource {
     t.setName(id);
     TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    ts.deployTopology(t);
+    ts.deployTopology(BeanConverter.getTopology(t));
 
     return getTopology(id);
   }
@@ -130,7 +131,7 @@ public class TopologiesResource {
 
       TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-      for (Topology t : ts.getTopologies()) {
+      for (org.apache.hadoop.gateway.topology.Topology t : ts.getTopologies()) {
         if(t.getName().equals(id)) {
           ts.deleteTopology(t);
           deleted = true;
@@ -150,7 +151,7 @@ public class TopologiesResource {
     }
   }
 
-   String buildURI(Topology topology, GatewayConfig config, HttpServletRequest req){
+   String buildURI(org.apache.hadoop.gateway.topology.Topology topology, GatewayConfig config, HttpServletRequest req){
     String uri = buildXForwardBaseURL(req);
 
 //    Strip extra context
@@ -169,7 +170,7 @@ public class TopologiesResource {
     return uri;
   }
 
-   String buildHref(Topology t, HttpServletRequest req) {
+   String buildHref(org.apache.hadoop.gateway.topology.Topology t, HttpServletRequest req) {
     String href = buildXForwardBaseURL(req);
 //    Make sure that the pathInfo doesn't have any '/' chars at the end.
     String pathInfo = req.getPathInfo();
@@ -183,7 +184,7 @@ public class TopologiesResource {
     return href;
   }
 
-  private SimpleTopology getSimpleTopology(Topology t, GatewayConfig config) {
+  private SimpleTopology getSimpleTopology(org.apache.hadoop.gateway.topology.Topology t, GatewayConfig config) {
     String uri = buildURI(t, config, request);
     String href = buildHref(t, request);
     return new SimpleTopology(t, uri, href);
@@ -250,7 +251,7 @@ public class TopologiesResource {
 
     public SimpleTopology() {}
 
-    public SimpleTopology(Topology t, String uri, String href) {
+    public SimpleTopology(org.apache.hadoop.gateway.topology.Topology t, String uri, String href) {
       this.name = t.getName();
       this.timestamp = Long.toString(t.getTimestamp());
       this.uri = uri;
@@ -306,9 +307,5 @@ public class TopologiesResource {
     }
 
   }
-
-
-
-
 }
 
