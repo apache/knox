@@ -36,3 +36,34 @@ velocity.log
 *.pyc
 *.py~
 *.patch
+
+# ui compiled output
+dist
+tmp
+
+# ui dependencies
+node_modules
+bower_components
+
+# other IDEs and editors
+.vscode
+.c9/
+*.launch
+
+# ui misc
+.sass-cache
+connect.lock
+coverage/*
+libpeerconnection.log
+npm-debug.log
+testem.log
+typings
+
+# e2e and app
+e2e/*.js
+e2e/*.map
+gateway-admin-ui/src/app/**/*.js
+gateway-admin-ui/src/app/**/*.map
+
+#System Files
+Thumbs.db

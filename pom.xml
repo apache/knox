@@ -250,6 +250,11 @@
                         <exclude>**/applications/**/bootstrap.min.**</exclude>
                         <exclude>**/applications/**/fonts/**</exclude>
                         <exclude>**/applications/**/libs/**</exclude>
+                        <exclude>**/applications/**/assets/**</exclude>
+                        <exclude>**/applications/**/*.bundle.*</exclude>
+                        <exclude>**/node_modules/**</exclude>
+                        <exclude>**/dist/**</exclude>
+                        <exclude>gateway-admin-ui/**</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                     </excludes>
                 </configuration>
