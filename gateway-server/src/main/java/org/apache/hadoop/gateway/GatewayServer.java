@@ -476,6 +476,7 @@ public class GatewayServer {
         ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
+    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
     return context;
   }
 
