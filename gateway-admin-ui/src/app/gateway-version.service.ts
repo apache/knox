@@ -24,7 +24,7 @@ import { GatewayVersion } from './gateway-version';
 @Injectable()
 export class GatewayVersionService {
 
-    private apiUrl = '/gateway/admin/api/v1/version';
+    private apiUrl = '/gateway/manager/api/v1/version';
 
     constructor(private http: Http) { }
 

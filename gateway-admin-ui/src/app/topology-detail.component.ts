@@ -63,7 +63,7 @@ import { ModalComponent } from 'ng2-bs3-modal/ng2-bs3-modal';
     </modal>
     <modal (onClose)="deleteTopology()" #deleteConfirmModal>
         <modal-header [show-close]="true">
-            <h4 class="modal-title">Deleting Topology</h4>
+            <h4 class="modal-title">Deleting Topology {{titleSuffix}}</h4>
         </modal-header>
         <modal-body>
             Are you sure you want to delete the topology?

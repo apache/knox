@@ -20,16 +20,6 @@
     <gateway>
 
         <provider>
-            <role>webappsec</role>
-            <name>WebAppSec</name>
-            <enabled>true</enabled>
-            <param><name>csrf.enabled</name><value>true</value></param>
-            <param><name>csrf.customHeader</name><value>X-XSRF-Header</value></param>
-            <param><name>csrf.methodsToIgnore</name><value>GET,OPTIONS,HEAD</value></param>
-            <param><name>xframe-options.enabled</name><value>true</value></param>
-        </provider>
-
-        <provider>
             <role>authentication</role>
             <name>ShiroProvider</name>
             <enabled>true</enabled>
@@ -112,10 +102,6 @@
         </provider>
 
     </gateway>
-
-    <application>
-        <role>admin-ui</role>
-    </application>
 
     <service>
         <role>KNOX</role>
