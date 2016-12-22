@@ -3,9 +3,9 @@ Release Notes - Apache Knox - Version 0.11.0
 ------------------------------------------------------------------------------
 ** New Feature
     * [KNOX-643] - Initial metrics api and implementation
-    * [KNOX-237] - Hadoop Group Mapping as a Knox Provider
+    * [KNOX-237] - Hadoop Group Mapping as a Knox Provider (Sandeep More via lmccay)
     * [KNOX-817] - Gateway service definition for Avatica (Josh Elser via lmccay)
-    * [KNOX-528] - Support for Apache SOLR REST APIs (John McParland via lmccay)
+    * [KNOX-528] - Support for Apache SOLR REST APIs (Kevin Risden, John McParland via lmccay)
     * [KNOX-758] - Druid services (Nishant Bangarwa via Sumit Gupta)
     * [KNOX-749] - Initial admin UI source project and productized distribution
 ** Improvement
