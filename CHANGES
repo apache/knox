@@ -1,4 +1,42 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.11.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-643] - Initial metrics api and implementation
+    * [KNOX-237] - Hadoop Group Mapping as a Knox Provider
+    * [KNOX-817] - Gateway service definition for Avatica (Josh Elser via lmccay)
+    * [KNOX-528] - Support for Apache SOLR REST APIs (John McParland via lmccay)
+    * [KNOX-758] - Druid services (Nishant Bangarwa via Sumit Gupta)
+    * [KNOX-749] - Initial admin UI source project and productized distribution
+** Improvement
+    * [KNOX-744] - Logout for KnoxSSO WebSSO API
+    * [KNOX-795] - Make KnoxSSO Cookie Name Configurable
+    * [KNOX-763] - Added rewrite filter apply capability to text values in html content
+** Bug
+    * [KNOX-779] - Exclude older org.codehaus.jackson dependencies from build cycle
+    * [KNOX-785] - Update Apache Shiro dependency (Colm O hEigeartaigh via lmccay)
+    * [KNOX-780] - Remove dependency on SNAPSHOT version of hadoop-common-test jar
+    * [KNOX-790] - URL parameters with empty/null value are ignored (Nishant Bangarwa via lmccay)
+    * [KNOX-713] - Knox Shell HDFS.get.Response is Package Private
+    * [KNOX-792] - Fix FindBugs "performance" issues - Colm O hEigeartaigh via lmccay
+    * [KNOX-812] - WebSSOResource doesn't make use of target audiences
+    * [KNOX-803] - Adding rewrite rules for Map Reduce History Server UI (Shi Wang via lmccay)
+    * [KNOX-820] - Knox query processing: If the originalUrl value has "ampersand"(&) in it, the value after ampersand is ignored.
+    * [KNOX-826] - Need favicon icon for Admin UI
+    * [KNOX-757] - shiro related log4j properties (John McParland via Sumit Gupta)
+    * [KNOX-784] - Fix for httpclientconnection metric naming conflict
+    * [KNOX-763] - Added import rewrite function for html content containing @import
+    * [KNOX-763] - Missing function files
+    * [KNOX-767] - Fix for CDATA handling (Jeffrey E Rodriguez via Sumit Gupta)
+    * [KNOX-791] - XML attribute special character fix and unit test (Sandeep More via Sumit Gupta)
+    * [KNOX-818] - created new jaxb beans for REST API
+    * [KNOX-804] - custom cache manager class
+    * [KNOX-824] - Added WebAppSec provider capability to Jersey service deployments
+    * [KNOX-825] - setting to turn off directory browsing
+    * [KNOX-826] - added the icon to the source project as well
+    * [KNOX-827] - added manager topology
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.10.0
 ------------------------------------------------------------------------------
 ** New Feature
