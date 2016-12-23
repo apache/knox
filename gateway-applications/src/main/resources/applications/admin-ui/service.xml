@@ -19,30 +19,30 @@
     <policies>
         <policy role="webappsec"/>
         <policy role="authentication"/>
+        <policy role="federation"/>
         <policy role="rewrite"/>
         <policy role="identity-assertion"/>
         <policy role="authorization"/>
-		<policy role="federation"/>
     </policies>
     <routes>
         <route path="/?**">
             <policies>
                 <policy role="webappsec"/>
-                <policy role="authentication" name="Anonymous"/>
+                <policy role="authentication"/>
+                <policy role="federation"/>
                 <policy role="identity-assertion"/>
                 <policy role="authorization"/>
                 <policy role="rewrite"/>
-				<policy role="federation"/>
             </policies>
         </route>
         <route path="/**?**">
             <policies>
                 <policy role="webappsec"/>
-                <policy role="authentication" name="Anonymous"/>
+                <policy role="authentication"/>
+                <policy role="federation"/>
                 <policy role="identity-assertion"/>
                 <policy role="authorization"/>
                 <policy role="rewrite"/>
-				<policy role="federation"/>
             </policies>
         </route>
     </routes>
