@@ -35,6 +35,7 @@ Release Notes - Apache Knox - Version 0.11.0
     * [KNOX-825] - setting to turn off directory browsing
     * [KNOX-826] - added the icon to the source project as well
     * [KNOX-827] - added manager topology
+    * [KNOX-830] - Admin UI Fails to Authenticate with KnoxSSO
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.10.0
