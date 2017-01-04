@@ -63,7 +63,7 @@ public class ProxyInboundSocket {
     callback.onError(cause);
   }
 
-  @OnMessage
+  @OnMessage(maxMessageSize = Integer.MAX_VALUE)
   public void onBackendMessage(final String message,
       final javax.websocket.Session session) {
 
@@ -71,7 +71,7 @@ public class ProxyInboundSocket {
 
   }
 
-  @OnMessage
+  @OnMessage(maxMessageSize = Integer.MAX_VALUE)
   public void onBackendMessageBinary(final byte[] message, final boolean last,
       final javax.websocket.Session session) {
 
