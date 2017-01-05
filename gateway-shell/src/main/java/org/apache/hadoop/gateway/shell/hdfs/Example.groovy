@@ -32,6 +32,8 @@ hadoop = Hadoop.login( gateway, username, password )
 
 println Hdfs.ls(hadoop).dir( "/" ).now().string
 
+println Hdfs.status(hadoop).file( "/" ).now().string
+
 Hdfs.rm(hadoop).file( "/tmp/test" ).recursive().now()
 
 Hdfs.mkdir(hadoop).dir( "/tmp/test").now()

@@ -27,6 +27,10 @@ public class Hdfs {
     return new Rename.Request( session );
   }
 
+  public static Status.Request status(Hadoop session ) {
+    return new Status.Request( session );
+  }
+
   public static Ls.Request ls( Hadoop session ) {
     return new Ls.Request( session );
   }
