@@ -23,6 +23,10 @@ public class Hdfs {
 
   static String SERVICE_PATH = "/webhdfs/v1";
 
+  public static Rename.Request rename( Hadoop session ) {
+    return new Rename.Request( session );
+  }
+
   public static Ls.Request ls( Hadoop session ) {
     return new Ls.Request( session );
   }
