@@ -41,6 +41,11 @@ class Put {
     private String text;
     private String file;
     private String to;
+    private boolean overwrite = false;
+    private int permission = 755;
+    private Integer blocksize;
+    private Integer buffersize;
+    private Short replication;
 
     Request( Hadoop session ) {
       super( session );
@@ -61,12 +66,42 @@ class Put {
       return this;
     }
 
+    public Request overwrite( boolean overwrite ) {
+      this.overwrite = overwrite;
+      return this;
+    }
+
+    public Request permission( int permission ) {
+      this.permission = permission;
+      return this;
+    }
+
+    public Request blocksize( Integer blocksize ) {
+      this.blocksize = blocksize;
+      return this;
+    }
+
+    public Request replication( Short replication ) {
+      this.replication = replication;
+      return this;
+    }
+
+    public Request buffersize( Integer buffersize ) {
+      this.buffersize = buffersize;
+      return this;
+    }
+
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override
         public Response call() throws Exception {
           URIBuilder uri = uri( Hdfs.SERVICE_PATH, to );
           addQueryParam( uri, "op", "CREATE" );
+          addQueryParam( uri, "overwrite", overwrite );
+          addQueryParam( uri, "permission", permission );
+          addQueryParam( uri, "blocksize", blocksize );
+          addQueryParam( uri, "replication", replication );
+          addQueryParam( uri, "buffersize", buffersize );
           HttpPut nn = new HttpPut( uri.build() );
           HttpResponse r = execute( nn );
           if( r.getStatusLine().getStatusCode() != HttpStatus.SC_TEMPORARY_REDIRECT ) {

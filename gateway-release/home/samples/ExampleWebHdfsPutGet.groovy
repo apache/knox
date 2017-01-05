@@ -38,6 +38,8 @@ Hdfs.rm( session ).file( dataDir ).recursive().now()
 
 Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).now()
 
+Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).overwrite( true ).permission( 777 ).now()
+
 println Hdfs.get( session ).from( dataDir + "/" + dataFile ).now().string
 
 session.shutdown()
