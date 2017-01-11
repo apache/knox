@@ -24,19 +24,28 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
-import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.ssl.SSLContexts;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -57,8 +66,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.net.ssl.SSLContext;
-
 public class Hadoop {
 
   private static final String GATEWAY_CLIENT_TRUST_DEFAULT_PASS = "changeit";
@@ -69,69 +76,91 @@ public class Hadoop {
 
   String base;
   HttpHost host;
-  DefaultHttpClient client;
+  CloseableHttpClient client;
   BasicHttpContext context;
-  String username;
-  String password;
   ExecutorService executor;
 
   public static Hadoop login( String url, String username, String password ) throws URISyntaxException {
-    return new Hadoop( url, username, password, true );
+    return new Hadoop(ClientContext.with(username, password, url));
   }
 
-  public static Hadoop loginInsecure( String url, String username, String password ) throws URISyntaxException {
-    System.out.println("**************** WARNING ******************\n"
-        + "This is an insecure client instance and may\n"
-        + "leave the interactions subject to a man in\n"
-        + "the middle attack. Please use the login()\n"
-        + "method instead of loginInsecure() for any\n"
-        + "sensitive or production usecases.\n"
-        + "*******************************************");
-    return new Hadoop( url, username, password );
+  public static Hadoop loginInsecure(String url, String username, String password) throws URISyntaxException {
+    return new Hadoop(ClientContext.with(username, password, url)
+            .connection().secure(false).end());
   }
 
-  private Hadoop( String url, String username, String password ) throws HadoopException, URISyntaxException {
-    this(url, username, password, false);
-  }
-
-  private Hadoop( String url, String username, String password, boolean secure ) throws HadoopException, URISyntaxException {
+  public Hadoop( ClientContext clientContext) throws HadoopException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
-    this.base = url;
-    this.username = username;
-    this.password = password;
-
-    URI uri = new URI( url );
-    host = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
+    this.base = clientContext.url();
 
     try {
-      if (!secure) {
-        client = createInsecureClient();
-      }
-      else {
-        client = createClient();
-      }
-      client.getCredentialsProvider().setCredentials(
-          new AuthScope( host.getHostName(), host.getPort() ),
-          new UsernamePasswordCredentials( username, password ) );
-      AuthCache authCache = new BasicAuthCache();
-      BasicScheme authScheme = new BasicScheme();
-      authCache.put( host, authScheme );
-      context = new BasicHttpContext();
-      context.setAttribute( ClientContext.AUTH_CACHE, authCache );
-    } catch( GeneralSecurityException e ) {
-      throw new HadoopException( "Failed to create HTTP client.", e );
+      client = createClient(clientContext);
+    } catch (GeneralSecurityException e) {
+      throw new HadoopException("Failed to create HTTP client.", e);
     }
   }
 
-  private static DefaultHttpClient createClient() throws GeneralSecurityException {
-    SchemeRegistry registry = new SchemeRegistry();
+  private CloseableHttpClient createClient(ClientContext clientContext) throws GeneralSecurityException {
+
+    // SSL
+    HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
+    TrustStrategy trustStrategy = TrustSelfSignedStrategy.INSTANCE;
+    if (clientContext.connection().secure()) {
+      hostnameVerifier = SSLConnectionSocketFactory.getDefaultHostnameVerifier();
+    } else {
+      System.out.println("**************** WARNING ******************\n"
+              + "This is an insecure client instance and may\n"
+              + "leave the interactions subject to a man in\n"
+              + "the middle attack. Please use the login()\n"
+              + "method instead of loginInsecure() for any\n"
+              + "sensitive or production usecases.\n"
+              + "*******************************************");
+    }
+
     KeyStore trustStore = getTrustStore();
-    SSLSocketFactory socketFactory = new SSLSocketFactory(trustStore);
-    registry.register( new Scheme( "https", 443, socketFactory ) );
-    registry.register( new Scheme( "http", 80, new PlainSocketFactory() ) );
-    PoolingClientConnectionManager mgr = new PoolingClientConnectionManager( registry );
-    DefaultHttpClient client = new DefaultHttpClient( mgr, new DefaultHttpClient().getParams() );
-    return client;
+    SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, trustStrategy).build();
+    Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+            .register("http", PlainConnectionSocketFactory.getSocketFactory())
+            .register("https", new SSLConnectionSocketFactory(sslContext, hostnameVerifier)).build();
+
+    // Pool
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
+    connectionManager.setMaxTotal(clientContext.pool().maxTotal());
+    connectionManager.setDefaultMaxPerRoute(clientContext.pool().defaultMaxPerRoute());
+
+    ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setBufferSize(clientContext.connection().bufferSize())
+            .build();
+    connectionManager.setDefaultConnectionConfig(connectionConfig);
+
+    SocketConfig socketConfig = SocketConfig.custom()
+            .setSoKeepAlive(clientContext.socket().keepalive())
+            .setSoLinger(clientContext.socket().linger())
+            .setSoReuseAddress(clientContext.socket().reuseAddress())
+            .setSoTimeout(clientContext.socket().timeout())
+            .setTcpNoDelay(clientContext.socket().tcpNoDelay())
+            .build();
+    connectionManager.setDefaultSocketConfig(socketConfig);
+
+    // Auth
+    URI uri = URI.create(clientContext.url());
+    host = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
+
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    credentialsProvider.setCredentials(
+            new AuthScope(host.getHostName(), host.getPort()),
+            new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
+
+    AuthCache authCache = new BasicAuthCache();
+    BasicScheme authScheme = new BasicScheme();
+    authCache.put(host, authScheme);
+    context = new BasicHttpContext();
+    context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+
+    return HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .setDefaultCredentialsProvider(credentialsProvider)
+            .build();
   }
 
   private static KeyStore getTrustStore() throws GeneralSecurityException {
@@ -197,18 +226,6 @@ public class Hadoop {
     return ks;
   }
 
-  private static DefaultHttpClient createInsecureClient() throws GeneralSecurityException {
-    SchemeRegistry registry = new SchemeRegistry();
-    SSLSocketFactory socketFactory = new SSLSocketFactory(
-        new TrustSelfSignedStrategy(),
-        SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER );
-    registry.register( new Scheme( "https", 443, socketFactory ) );
-    registry.register( new Scheme( "http", 80, new PlainSocketFactory() ) );
-    PoolingClientConnectionManager mgr = new PoolingClientConnectionManager( registry );
-    DefaultHttpClient client = new DefaultHttpClient( mgr, new DefaultHttpClient().getParams() );
-    return client;
-  }
-
   public String base() {
     return base;
   }
@@ -254,5 +271,4 @@ public class Hadoop {
     executor.shutdown();
     return executor.awaitTermination( timeout, unit );
   }
-
 }
