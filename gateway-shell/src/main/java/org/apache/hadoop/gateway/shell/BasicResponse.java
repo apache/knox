@@ -1,12 +1,3 @@
-package org.apache.hadoop.gateway.shell;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.ContentType;
-import org.apache.http.util.EntityUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -24,7 +15,17 @@ import java.io.InputStream;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class BasicResponse {
+package org.apache.hadoop.gateway.shell;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.entity.ContentType;
+import org.apache.http.util.EntityUtils;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class BasicResponse implements Closeable {
 
   private HttpResponse response;
   private boolean consumed = false;

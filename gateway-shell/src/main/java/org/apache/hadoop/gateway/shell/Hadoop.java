@@ -46,6 +46,7 @@ import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -66,7 +67,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class Hadoop {
+public class Hadoop implements Closeable {
 
   private static final String GATEWAY_CLIENT_TRUST_DEFAULT_PASS = "changeit";
   private static final String KNOX_CLIENT_TRUSTSTORE_PASS = "KNOX_CLIENT_TRUSTSTORE_PASS";
@@ -270,5 +271,14 @@ public class Hadoop {
   public boolean shutdown( long timeout, TimeUnit unit ) throws InterruptedException {
     executor.shutdown();
     return executor.awaitTermination( timeout, unit );
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      shutdown();
+    } catch (InterruptedException e) {
+      throw new HadoopException("Can not shutdown underlying resources", e);
+    }
   }
 }
