@@ -73,7 +73,6 @@ import static org.apache.hadoop.hdfs.DFSConfigKeys.IPC_CLIENT_CONNECT_MAX_RETRIE
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
 @Category(ReleaseTest.class)
 public class SecureClusterTest {
 
@@ -189,7 +188,7 @@ public class SecureClusterTest {
     CloseableHttpResponse response = client.execute(target, request);
     String json = EntityUtils.toString(response.getEntity());
     response.close();
-    System.out.println(json);
+//    System.out.println(json);
     assertEquals("{\"Path\":\"/user/" + userName + "\"}", json);
   }
 
@@ -257,7 +256,7 @@ public class SecureClusterTest {
         .addTag("enabled").addText("true")
         .addTag( "param" )
         .addTag("name").addText("csrf.enabled")
-        .addTag("value").addText("true").gotoParent().gotoParent()
+        .addTag("value").addText("false").gotoParent().gotoParent()
         .addTag("provider")
         .addTag("role").addText("authentication")
         .addTag("name").addText("ShiroProvider")
