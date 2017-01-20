@@ -20,6 +20,10 @@
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/"/>
   </rule>
 
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/rootAppScript" pattern="*://*:*/**/zeppelin/{path=app**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{path=app**}"/>
+  </rule>
+
 
   <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/notebook" pattern="*://*:*/**/zeppelin/{**}/notebook/{**}">
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/notebook/{**}"/>
@@ -63,6 +67,18 @@
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/scripts/{**}"/>
   </rule>
 
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/extensions" pattern="*://*:*/**/zeppelin/extensions/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/extensions/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/jax" pattern="*://*:*/**/zeppelin/jax/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/jax/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/components" pattern="*://*:*/**/zeppelin/components/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/components/{**}"/>
+  </rule>
+
   <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/assets" pattern="*://*:*/**/zeppelin/assets/{**}">
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/assets/{**}"/>
   </rule>
@@ -86,6 +102,22 @@
 
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="scripts/{**}">
     <rewrite template="{$frontend[path]}/zeppelin/scripts/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="extensions/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/extensions/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="jax/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/jax/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="components/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/components/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="{path=app**}">
+    <rewrite template="{$frontend[path]}/zeppelin/{path=app**}"/>
   </rule>
 
 </rules>

@@ -27,6 +27,10 @@
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/root" to="request.url"/>
     </route>
 
+    <route path="/zeppelin/app.*.js">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
 
     <route path="/zeppelin/api/**">
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/api" to="request.url"/>
@@ -51,6 +55,18 @@
 
     <route path="/zeppelin/scripts/**">
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/scripts" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/extensions/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/extensions" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/jax/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/jax" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/components/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/components" to="request.url"/>
     </route>
 
     <route path="/zeppelin/assets/**">
