@@ -425,6 +425,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
+   */
+  @Override
+  public List<String> getMimeTypesToCompress() {
+    return new ArrayList<String>();
+  }
+
   @Override
   public boolean isMetricsEnabled() {
     return false;

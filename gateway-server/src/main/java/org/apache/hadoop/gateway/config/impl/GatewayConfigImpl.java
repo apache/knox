@@ -147,6 +147,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
   public static final String WEBSOCKET_IDLE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
 
+  /**
+   * Comma seperated list of MIME Types to be compressed by Knox on the way out.
+   *
+   * @since 0.12
+   */
+  public static final String MIME_TYPES_TO_COMPRESS = GATEWAY_CONFIG_FILE_PREFIX
+      + ".gzip.compress.mime.types";
+
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
   // backward compatibility. 
@@ -172,6 +180,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+
+  /**
+   * Default list of MIME Type to be compressed.
+   * @since 0.12
+   */
+  public static final String DEFAULT_MIME_TYPES_TO_COMPRESS = "text/html, text/plain, text/xml, text/css, "
+      + "application/javascript, application/x-javascript, text/javascript";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -758,6 +773,22 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see
+   * org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
+   */
+  @Override
+  public List<String> getMimeTypesToCompress() {
+    List<String> mimeTypes = null;
+    String value = get(MIME_TYPES_TO_COMPRESS, DEFAULT_MIME_TYPES_TO_COMPRESS);
+    if (value != null && !value.isEmpty()) {
+      mimeTypes = Arrays.asList(value.trim().split("\\s*,\\s*"));
+    }
+    return mimeTypes;
+  }
+
   private static long parseNetworkTimeout(String s ) {
     PeriodFormatter f = new PeriodFormatterBuilder()
         .appendMinutes().appendSuffix("m"," min")
@@ -766,5 +797,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     Period p = Period.parse( s, f );
     return p.toStandardDuration().getMillis();
   }
+
 
 }

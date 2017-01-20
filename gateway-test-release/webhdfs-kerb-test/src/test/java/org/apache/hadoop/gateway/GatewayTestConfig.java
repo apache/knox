@@ -424,6 +424,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getWebsocketIdleTimeout() {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
   }
+  
 
   @Override
   public boolean isMetricsEnabled() {
@@ -453,5 +454,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getGraphiteReportingFrequency() {
     return 0;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
+   */
+  @Override
+  public List<String> getMimeTypesToCompress() {
+    return new ArrayList<String>();
   }
 }

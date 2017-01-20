@@ -512,4 +512,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getGraphiteReportingFrequency() {
     return 0;
   }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
+   */
+  @Override
+  public List<String> getMimeTypesToCompress() {
+    return new ArrayList<String>();
+  }
 }

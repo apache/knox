@@ -25,6 +25,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -185,6 +187,28 @@ public class GatewayGlobalConfigTest {
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     config = new GatewayConfigImpl();
     assertEquals("target/test", config.getGatewayServicesDir());
+  }
+
+  /**
+   * Test for the default Mime Types for Gzip compression.
+   *
+   * @since 0.12
+   */
+  @Test
+  public void testDefaultCompressGzipMimeTypes() {
+
+    final List<String> expected = Arrays.asList("text/javascript", "text/html",
+        "text/plain", "text/xml", "text/css", "application/javascript",
+        "application/x-javascript");
+
+    String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
+    System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    GatewayConfig config = new GatewayConfigImpl();
+
+    assertTrue("Default MIME Types for Gzip compression failed to match",
+        config.getMimeTypesToCompress().containsAll(expected));
+
   }
 
 }

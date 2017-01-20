@@ -355,8 +355,12 @@ public class GatewayServer {
 
     /* KNOX-732: Handler for GZip compression */
     GzipHandler gzipHandler = new GzipHandler();
-    gzipHandler.addIncludedMimeTypes("text/html", "text/plain", "text/xml",
-        "text/css", "application/javascript", "text/javascript");
+    String[] mimeTypes = {};
+    if (config.getMimeTypesToCompress() != null
+        && !config.getMimeTypesToCompress().isEmpty()) {
+      mimeTypes = (String[]) config.getMimeTypesToCompress().toArray();
+    }
+    gzipHandler.addIncludedMimeTypes(mimeTypes);
     gzipHandler.setHandler(correlationHandler);
 
     DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler(
