@@ -66,6 +66,10 @@ public class Table {
     return new DeleteTable.Request( session, name );
   }
 
+  public TruncateTable.Request truncate() {
+    return new TruncateTable.Request( session, name );
+  }
+
   public Row row( String id ) {
     return new Row( id ).table( this );
   }

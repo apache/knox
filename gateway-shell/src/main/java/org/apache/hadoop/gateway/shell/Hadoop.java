@@ -20,11 +20,11 @@ package org.apache.hadoop.gateway.shell;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -231,8 +231,8 @@ public class Hadoop implements Closeable {
     return base;
   }
 
-  public HttpResponse executeNow( HttpRequest request ) throws IOException {
-    HttpResponse response = client.execute( host, request, context );
+  public CloseableHttpResponse executeNow(HttpRequest request ) throws IOException {
+    CloseableHttpResponse response = client.execute( host, request, context );
     if( response.getStatusLine().getStatusCode() < 400 ) {
       return response;
     } else {
@@ -279,6 +279,8 @@ public class Hadoop implements Closeable {
       shutdown();
     } catch (InterruptedException e) {
       throw new HadoopException("Can not shutdown underlying resources", e);
+    } finally {
+      client.close();
     }
   }
 }

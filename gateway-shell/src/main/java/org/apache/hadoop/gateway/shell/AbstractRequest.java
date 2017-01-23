@@ -20,8 +20,8 @@ package org.apache.hadoop.gateway.shell;
 import groovy.lang.Closure;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicNameValuePair;
 
@@ -43,7 +43,7 @@ public abstract class AbstractRequest<T> {
     return session;
   }
 
-  protected HttpResponse execute( HttpRequest request ) throws IOException {
+  protected CloseableHttpResponse execute(HttpRequest request ) throws IOException {
     return session.executeNow( request );
   }
 
