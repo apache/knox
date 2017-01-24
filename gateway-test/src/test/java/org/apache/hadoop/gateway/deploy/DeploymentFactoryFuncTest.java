@@ -51,6 +51,7 @@ import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
@@ -130,7 +131,7 @@ public class DeploymentFactoryFuncTest {
 
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
 
-    Document gateway = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
+    Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
     //dump( gateway );
 
     //by default the first filter will be the X-Forwarded header filter
@@ -260,7 +261,7 @@ public class DeploymentFactoryFuncTest {
 //    File dir = new File( System.getProperty( "user.dir" ) );
 //    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-    Document web = TestUtils.parseXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+    Document web = XmlUtils.readXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
     //TestUtils.dumpXml( web );
     assertThat( web, hasXPath( "/web-app" ) );
     assertThat( web, hasXPath( "/web-app/servlet" ) );
@@ -272,7 +273,7 @@ public class DeploymentFactoryFuncTest {
     assertThat( web, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster-knox-gateway-servlet" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet-mapping/url-pattern", equalTo( "/*" ) ) );
 
-    Document gateway = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
+    Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/webhdfs/v1/?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
@@ -395,7 +396,7 @@ public class DeploymentFactoryFuncTest {
 //      File dir = new File( System.getProperty( "user.dir" ) );
 //      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-      Document web = TestUtils.parseXml(war.get("%2F/WEB-INF/web.xml").getAsset().openStream());
+      Document web = XmlUtils.readXml(war.get("%2F/WEB-INF/web.xml").getAsset().openStream());
       assertThat(web, hasXPath("/web-app/servlet/servlet-class", equalTo("org.apache.hadoop.gateway.GatewayServlet")));
       assertThat(web, hasXPath("/web-app/servlet/init-param/param-name", equalTo("gatewayDescriptorLocation")));
       assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("/WEB-INF/gateway.xml")));
@@ -463,7 +464,7 @@ public class DeploymentFactoryFuncTest {
     topology.addService( service );
 
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
-    Document doc = TestUtils.parseXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
+    Document doc = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 //    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
@@ -540,10 +541,10 @@ public class DeploymentFactoryFuncTest {
 
     Document doc;
 
-    doc = TestUtils.parseXml( archive.get( "META-INF/topology.xml" ).getAsset().openStream() );
+    doc = XmlUtils.readXml( archive.get( "META-INF/topology.xml" ).getAsset().openStream() );
     assertThat( doc, notNullValue() );
 
-    doc = TestUtils.parseXml( archive.get( "%2Fminimal-test-app-path/WEB-INF/gateway.xml" ).getAsset().openStream() );
+    doc = XmlUtils.readXml( archive.get( "%2Fminimal-test-app-path/WEB-INF/gateway.xml" ).getAsset().openStream() );
     assertThat( doc, notNullValue() );
     //dump( doc );
     assertThat( doc, hasXPath("/gateway/resource/pattern", equalTo("/**?**")));
@@ -612,28 +613,28 @@ public class DeploymentFactoryFuncTest {
 
     node = archive.get( "META-INF/topology.xml" );
     assertThat( "Find META-INF/topology.xml", node, notNullValue() );
-    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    doc = XmlUtils.readXml( node.getAsset().openStream() );
     assertThat( "Parse META-INF/topology.xml", doc, notNullValue() );
 
     node = archive.get( "%2F" );
     assertThat( "Find %2F", node, notNullValue() );
     node = archive.get( "%2F/WEB-INF/gateway.xml" );
     assertThat( "Find %2F/WEB-INF/gateway.xml", node, notNullValue() );
-    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    doc = XmlUtils.readXml( node.getAsset().openStream() );
     assertThat( "Parse %2F/WEB-INF/gateway.xml", doc, notNullValue() );
 
     WebArchive war = archive.getAsType( WebArchive.class, "%2Fminimal-test-app-path-one" );
     assertThat( "Find %2Fminimal-test-app-path-one", war, notNullValue() );
     node = war.get( "/WEB-INF/gateway.xml" );
     assertThat( "Find %2Fminimal-test-app-path-one/WEB-INF/gateway.xml", node, notNullValue() );
-    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    doc = XmlUtils.readXml( node.getAsset().openStream() );
     assertThat( "Parse %2Fminimal-test-app-path-one/WEB-INF/gateway.xml", doc, notNullValue() );
 
     war = archive.getAsType( WebArchive.class, "%2Fminimal-test-app-path-two" );
     assertThat( "Find %2Fminimal-test-app-path-two", war, notNullValue() );
     node = war.get( "/WEB-INF/gateway.xml" );
     assertThat( "Find %2Fminimal-test-app-path-two/WEB-INF/gateway.xml", node, notNullValue() );
-    doc = TestUtils.parseXml( node.getAsset().openStream() );
+    doc = XmlUtils.readXml( node.getAsset().openStream() );
     assertThat( "Parse %2Fminimal-test-app-path-two/WEB-INF/gateway.xml", doc, notNullValue() );
 
     LOG_EXIT();

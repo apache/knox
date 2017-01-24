@@ -26,6 +26,7 @@ import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.topology.Application;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.test.TestUtils;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class DeploymentFactoryTest {
 
     EnterpriseArchive archive = DeploymentFactory.createDeployment( config, topology );
 
-    Document xml = TestUtils.parseXml( archive.get( "/META-INF/topology.xml" ).getAsset().openStream() );
+    Document xml = XmlUtils.readXml( archive.get( "/META-INF/topology.xml" ).getAsset().openStream() );
     //TestUtils.dumpXml( xml );
     assertThat( xml, hasXPath( "/topology/gateway" ) );
     assertThat( xml, hasXPath( "/topology/name", equalTo( "test-topology" ) ) );

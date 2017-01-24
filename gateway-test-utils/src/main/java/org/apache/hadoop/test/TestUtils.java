@@ -33,9 +33,6 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -54,8 +51,6 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 public class TestUtils {
 
@@ -116,13 +111,6 @@ public class TestUtils {
     File tempDir = new File( targetDir, prefix + UUID.randomUUID() );
     FileUtils.forceMkdir( tempDir );
     return tempDir;
-  }
-
-  public static Document parseXml( InputStream stream ) throws ParserConfigurationException, IOException, SAXException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    Document document = builder.parse( new InputSource( stream ) );
-    return document;
   }
 
   public static void dumpXml( Document document ) throws TransformerException {

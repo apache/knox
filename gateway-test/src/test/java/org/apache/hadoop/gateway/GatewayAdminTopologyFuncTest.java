@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -31,9 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.MediaType;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import com.jayway.restassured.http.ContentType;
 import com.mycila.xmltool.XMLDoc;
@@ -49,6 +45,7 @@ import org.apache.hadoop.gateway.topology.Param;
 import org.apache.hadoop.gateway.topology.Provider;
 import org.apache.hadoop.gateway.topology.Service;
 import org.apache.hadoop.gateway.topology.Topology;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
@@ -61,7 +58,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
@@ -622,7 +618,8 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .put(url).getBody().asString();
 
-    Document doc = parse( XML );
+    InputSource source = new InputSource( new StringReader( XML ) );
+    Document doc = XmlUtils.readXml( source );
 
     assertThat( doc, hasXPath( "/topology/gateway/provider[1]/name", containsString( "WebAppSec" ) ) );
     assertThat( doc, hasXPath( "/topology/gateway/provider[1]/param/name", containsString( "csrf.enabled" ) ) );
@@ -826,13 +823,6 @@ public class GatewayAdminTopologyFuncTest {
     }
 
     LOG_EXIT();
-  }
-
-  private Document parse(String xml ) throws IOException, SAXException, ParserConfigurationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    InputSource source = new InputSource( new StringReader( xml ) );
-    return builder.parse( source );
   }
 
   private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();

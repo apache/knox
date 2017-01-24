@@ -21,13 +21,12 @@ import org.apache.hadoop.gateway.ha.provider.HaDescriptor;
 import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
 import org.apache.hadoop.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -46,10 +45,7 @@ public class HaDescriptorManager implements HaDescriptorConstants {
 
    public static void store(HaDescriptor descriptor, Writer writer) throws IOException {
       try {
-         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-         DocumentBuilder builder = builderFactory.newDocumentBuilder();
-         Document document = builder.newDocument();
-         document.setXmlStandalone(true);
+         Document document = XmlUtils.createDocument();
 
          Element root = document.createElement(ROOT_ELEMENT);
          document.appendChild(root);
@@ -94,10 +90,8 @@ public class HaDescriptorManager implements HaDescriptorConstants {
 
    public static HaDescriptor load(InputStream inputStream) throws IOException {
       HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-      DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
       try {
-         DocumentBuilder builder = builderFactory.newDocumentBuilder();
-         Document document = builder.parse(inputStream);
+         Document document = XmlUtils.readXml( inputStream );
          NodeList nodeList = document.getElementsByTagName(SERVICE_ELEMENT);
          if (nodeList != null && nodeList.getLength() > 0) {
             for (int i = 0; i < nodeList.getLength(); i++) {

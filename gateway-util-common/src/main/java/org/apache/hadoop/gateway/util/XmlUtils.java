@@ -17,10 +17,13 @@
 package org.apache.hadoop.gateway.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -32,15 +35,27 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class XmlUtils {
 
   public static Document readXml( File file ) throws ParserConfigurationException, IOException, SAXException {
+    return readXml( new FileInputStream( file ));
+  }
+
+  public static Document readXml( InputStream input ) throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
     DocumentBuilder b = f.newDocumentBuilder();
-    Document d = b.parse( file );
-    return d;
+    return b.parse( input );
+  }
+  
+  public static Document readXml( InputSource source ) throws ParserConfigurationException, IOException, SAXException {
+    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    DocumentBuilder b = f.newDocumentBuilder();
+    return b.parse( source );
   }
 
   public static void writeXml( Document document, Writer writer ) throws TransformerException {
@@ -62,10 +77,15 @@ public class XmlUtils {
 
 
   public static Document createDocument() throws ParserConfigurationException {
+    return createDocument(true);
+  }
+  
+  public static Document createDocument(boolean standalone) throws ParserConfigurationException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
     DocumentBuilder b = f.newDocumentBuilder();
     Document d = b.newDocument();
-    d.setXmlStandalone( true );
+    d.setXmlStandalone( standalone );
     return d;
   }
 

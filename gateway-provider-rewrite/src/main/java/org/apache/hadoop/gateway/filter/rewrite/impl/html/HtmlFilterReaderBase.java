@@ -31,11 +31,11 @@ import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteFilterReader;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteUtil;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
@@ -67,7 +67,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
     this.reader = reader;
-    document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    document = XmlUtils.createDocument( false );
     stack = new Stack<Level>();
     parser = new StreamedSource( reader );
     iterator = parser.iterator();

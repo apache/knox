@@ -19,14 +19,13 @@ package org.apache.hadoop.gateway.descriptor.xml;
 
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptor;
 import org.apache.hadoop.gateway.descriptor.GatewayDescriptorFactory;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.test.Console;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.CharArrayWriter;
 import java.io.IOException;
@@ -72,7 +71,8 @@ public class XmlGatewayDescriptorExporterTest {
 
     String xml = writer.toString();
 
-    Document doc = parse( xml );
+    InputSource source = new InputSource( new StringReader( xml ) );
+    Document doc = XmlUtils.readXml( source );
 
     assertThat( doc, hasXPath( "/gateway/resource[1]/pattern", is( "resource1-source" ) ) );
     //assertThat( doc, hasXPath( "/gateway/resource[1]/target", is( "resource1-target" ) ) );
@@ -99,7 +99,8 @@ public class XmlGatewayDescriptorExporterTest {
     String xml = writer.toString();
     //System.out.println( xml );
 
-    Document doc = parse( xml );
+    InputSource source = new InputSource( new StringReader( xml ) );
+    Document doc = XmlUtils.readXml( source );
 
     assertThat( doc, hasXPath( "/gateway/resource/filter/param" ) );
   }
@@ -120,13 +121,6 @@ public class XmlGatewayDescriptorExporterTest {
       console.release();
     }
 
-  }
-
-  private Document parse( String xml ) throws IOException, SAXException, ParserConfigurationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    InputSource source = new InputSource( new StringReader( xml ) );
-    return builder.parse( source );
   }
 
   private static class BrokenWriter extends Writer {

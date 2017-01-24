@@ -27,15 +27,8 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -56,10 +49,7 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
   @Override
   public void store( UrlRewriteRulesDescriptor descriptor, Writer writer ) throws IOException {
     try {
-      DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = builderFactory.newDocumentBuilder();
-      Document document = builder.newDocument();
-      document.setXmlStandalone( true );
+      Document document = XmlUtils.createDocument();
 
       Element root = document.createElement( ROOT );
       document.appendChild( root );

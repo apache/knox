@@ -21,6 +21,7 @@ import org.apache.hadoop.gateway.shell.AbstractRequest;
 import org.apache.hadoop.gateway.shell.EmptyResponse;
 import org.apache.hadoop.gateway.shell.Hadoop;
 import org.apache.hadoop.gateway.shell.hbase.HBase;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -30,8 +31,6 @@ import org.apache.http.entity.StringEntity;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -77,10 +76,7 @@ public class StoreRow {
       return new Callable<Response>() {
         @Override
         public Response call() throws Exception {
-          DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-          DocumentBuilder builder = builderFactory.newDocumentBuilder();
-          Document document = builder.newDocument();
-          document.setXmlStandalone( true );
+          Document document = XmlUtils.createDocument();
 
           Element root = document.createElement( ELEMENT_CELL_SET );
           document.appendChild( root );

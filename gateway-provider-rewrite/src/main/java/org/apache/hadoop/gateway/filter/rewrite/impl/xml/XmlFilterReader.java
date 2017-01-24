@@ -29,6 +29,7 @@ import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.hadoop.gateway.filter.rewrite.i18n.UrlRewriteResources;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -36,7 +37,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -190,7 +190,7 @@ public abstract class XmlFilterReader extends Reader {
     //System.out.println( "SD=" + event );
     String s;
 
-    document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    document = XmlUtils.createDocument( false );
     pushLevel( null, event, document, document, config );
 
     writer.write( "<?xml" );

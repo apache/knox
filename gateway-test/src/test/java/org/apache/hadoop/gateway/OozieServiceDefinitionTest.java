@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
+import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.mock.MockServletInputStream;
 import org.easymock.EasyMock;
@@ -91,7 +92,7 @@ public class OozieServiceDefinitionTest {
 
     InputStream stream = rewriteRequest.getInputStream();
 
-    Document document = TestUtils.parseXml( stream );
+    Document document = XmlUtils.readXml( stream );
 
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
@@ -144,7 +145,7 @@ public class OozieServiceDefinitionTest {
 
     InputStream stream = rewriteRequest.getInputStream();
 
-    Document document = TestUtils.parseXml( stream );
+    Document document = XmlUtils.readXml( stream );
 
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
@@ -198,7 +199,7 @@ public class OozieServiceDefinitionTest {
 
     InputStream stream = rewriteRequest.getInputStream();
 
-    Document document = TestUtils.parseXml( stream );
+    Document document = XmlUtils.readXml( stream );
 
     assertThat( document,
         hasXPath( "/configuration/property[name='oozie.wf.application.path']/value",
