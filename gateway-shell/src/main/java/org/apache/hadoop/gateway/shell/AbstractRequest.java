@@ -28,6 +28,7 @@ import org.apache.http.message.BasicNameValuePair;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -44,7 +45,28 @@ public abstract class AbstractRequest<T> {
   }
 
   protected CloseableHttpResponse execute(HttpRequest request ) throws IOException {
+    addHeaders(request, session.getHeaders());
     return session.executeNow( request );
+  }
+
+  /**
+   * @param request
+   * @param headers
+   */
+  private void removeHeaders(HttpRequest request, Map<String, String> headers) {
+    for(String header : headers.keySet()) {
+      request.removeHeaders(header);
+    }
+  }
+
+  /**
+   * @param request
+   * @param headers
+   */
+  private void addHeaders(HttpRequest request, Map<String, String> headers) {
+    for(String header : headers.keySet()) {
+      request.setHeader(header, headers.get(header));
+    }
   }
 
   protected URIBuilder uri( String... parts ) throws URISyntaxException {

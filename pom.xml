@@ -76,6 +76,7 @@
         <module>gateway-service-hive</module>
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
+        <module>gateway-service-knoxtoken</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
         <module>gateway-service-storm</module>
@@ -578,6 +579,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-knoxsso</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-knoxtoken</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
