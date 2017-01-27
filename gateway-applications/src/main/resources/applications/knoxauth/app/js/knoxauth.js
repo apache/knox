@@ -20,7 +20,8 @@ var userAgent = navigator.userAgent.toLowerCase();
 var firstLogIn = true;
 
 function get(name){
-   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+    //KNOX-820 changing the regex so that multiple query params get included with the 'originalUrl'
+   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^]*)')).exec(location.search))
       return decodeURIComponent(name[1]);
 }
 
