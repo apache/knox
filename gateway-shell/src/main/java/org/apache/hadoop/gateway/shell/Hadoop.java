@@ -91,7 +91,7 @@ public class Hadoop implements Closeable {
   public void setHeaders(Map<String, String> headers) {
     this.headers = headers;
   }
-
+  
   public static Hadoop login( String url, String username, String password ) throws URISyntaxException {
     return new Hadoop(ClientContext.with(username, password, url));
   }
@@ -101,29 +101,11 @@ public class Hadoop implements Closeable {
             .connection().secure(false).end());
   }
 
-<<<<<<< Updated upstream
   public Hadoop( ClientContext clientContext) throws HadoopException, URISyntaxException {
-=======
-  public static Hadoop login(String url, Map<String, String> headers) throws URISyntaxException {
-    return new Hadoop( url, headers, true );
-  }
-
-  private Hadoop( String url, Map<String, String> headers ) throws HadoopException, URISyntaxException {
-    this(url, null, null, false);
-    this.headers = headers;
-  }
-
-  private Hadoop( String url, String username, String password ) throws HadoopException, URISyntaxException {
-    this(url, username, password, false);
-  }
-
-  private Hadoop( String url, String username, String password, boolean secure ) throws HadoopException, URISyntaxException {
->>>>>>> Stashed changes
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
 
     try {
-<<<<<<< Updated upstream
       client = createClient(clientContext);
     } catch (GeneralSecurityException e) {
       throw new HadoopException("Failed to create HTTP client.", e);
@@ -147,63 +129,6 @@ public class Hadoop implements Closeable {
               + "*******************************************");
     }
 
-=======
-      if (!secure) {
-        client = createInsecureClient();
-      }
-      else {
-        client = createClient();
-      }
-      if (username != null && password != null) {
-        client.getCredentialsProvider().setCredentials(
-            new AuthScope( host.getHostName(), host.getPort() ),
-            new UsernamePasswordCredentials( username, password ) );
-        AuthCache authCache = new BasicAuthCache();
-        BasicScheme authScheme = new BasicScheme();
-        authCache.put( host, authScheme );
-        context = new BasicHttpContext();
-        context.setAttribute( ClientContext.AUTH_CACHE, authCache );
-      }
-    } catch( GeneralSecurityException e ) {
-      throw new HadoopException( "Failed to create HTTP client.", e );
-    }
-  }
-
-  private Hadoop(String url, Map<String,String> headers, boolean secure)
-      throws HadoopException, URISyntaxException {
-    this.executor = Executors.newCachedThreadPool();
-    this.base = url;
-    this.headers = headers;
-
-    URI uri = new URI( url );
-    host = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
-
-    try {
-      if (!secure) {
-        client = createInsecureClient();
-      }
-      else {
-        client = createClient();
-      }
-      if (username != null && password != null) {
-        client.getCredentialsProvider().setCredentials(
-            new AuthScope( host.getHostName(), host.getPort() ),
-            new UsernamePasswordCredentials( username, password ) );
-        AuthCache authCache = new BasicAuthCache();
-        BasicScheme authScheme = new BasicScheme();
-        authCache.put( host, authScheme );
-        context = new BasicHttpContext();
-        context.setAttribute( ClientContext.AUTH_CACHE, authCache );
-      }
-    } catch( GeneralSecurityException e ) {
-      throw new HadoopException( "Failed to create HTTP client.", e );
-    }
-  }
-
-
-  private static DefaultHttpClient createClient() throws GeneralSecurityException {
-    SchemeRegistry registry = new SchemeRegistry();
->>>>>>> Stashed changes
     KeyStore trustStore = getTrustStore();
     SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, trustStrategy).build();
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
@@ -232,22 +157,25 @@ public class Hadoop implements Closeable {
     // Auth
     URI uri = URI.create(clientContext.url());
     host = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    credentialsProvider.setCredentials(
-            new AuthScope(host.getHostName(), host.getPort()),
-            new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
-
-    AuthCache authCache = new BasicAuthCache();
-    BasicScheme authScheme = new BasicScheme();
-    authCache.put(host, authScheme);
-    context = new BasicHttpContext();
-    context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
-
+    
+    CredentialsProvider credentialsProvider = null; 
+    if (clientContext.username() != null && clientContext.password() != null) {
+      credentialsProvider = new BasicCredentialsProvider();
+      credentialsProvider.setCredentials(
+              new AuthScope(host.getHostName(), host.getPort()),
+              new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
+  
+      AuthCache authCache = new BasicAuthCache();
+      BasicScheme authScheme = new BasicScheme();
+      authCache.put(host, authScheme);
+      context = new BasicHttpContext();
+      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+    }
     return HttpClients.custom()
-            .setConnectionManager(connectionManager)
-            .setDefaultCredentialsProvider(credentialsProvider)
-            .build();
+        .setConnectionManager(connectionManager)
+        .setDefaultCredentialsProvider(credentialsProvider)
+        .build();
+
   }
 
   private static KeyStore getTrustStore() throws GeneralSecurityException {
