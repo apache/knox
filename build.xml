@@ -65,6 +65,13 @@ Release build file for the Apache Knox Gateway
 <os family="windows" />
 </condition>
 
+<condition property="ng.cmd" value="ng">
+<os family="unix" />
+</condition>
+<condition property="ng.cmd" value="ng">
+<os family="windows" />
+</condition>
+
   <target name="_username">
     <input message="" addproperty="username">
       <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
@@ -389,4 +396,27 @@ Release build file for the Apache Knox Gateway
     <target name="stop-test-servers" depends="stop-test-gateway,stop-test-ldap" description="Stop test LDAP server and gateway servers."/>
     <target name="restart-test-servers" depends="stop-test-servers,start-test-servers" description="Restart test LDAP and gateway servers."/>
 
+    <target name="build-admin-ui" description="Use the 'ng' command to make a production build of the Admin UI project">
+        <exec executable="ng" dir="gateway-admin-ui">
+            <arg value="build"/>
+            <arg value="--prod"/>
+        </exec>
+    </target>
+
+    <target name="install-test-admin-ui" depends="build-admin-ui" description="Install the Admin UI build into the test gateway home installation">
+        <delete dir="${install.dir}/${gateway-artifact}-${gateway-version}/data/applications/admin-ui/app/" quiet="true"/>
+        <mkdir dir="${install.dir}/${gateway-artifact}-${gateway-version}/data/applications/admin-ui/app/"/>
+        <copy todir="${install.dir}/${gateway-artifact}-${gateway-version}/data/applications/admin-ui/app/">
+           <fileset dir="gateway-admin-ui/dist"/>
+        </copy>
+        <touch file="${install.dir}/${gateway-artifact}-${gateway-version}/conf/topologies/manager.xml"/>
+    </target>
+
+    <target name="promote-admin-ui" depends="build-admin-ui" description="Copy the build artifacts of the admin UI to the applications module for check-in">
+        <delete dir="gateway-applications/src/main/resources/applications/admin-ui/app/" quiet="true"/>
+        <mkdir dir="gateway-applications/src/main/resources/applications/admin-ui/app/"/>
+        <copy todir="gateway-applications/src/main/resources/applications/admin-ui/app/">
+            <fileset dir="gateway-admin-ui/dist"/>
+        </copy>
+    </target>
 </project>
