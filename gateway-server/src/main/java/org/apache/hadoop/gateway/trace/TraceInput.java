@@ -61,7 +61,7 @@ class TraceInput extends SynchronousServletInputStreamAdapter {
       buffer.setLength( 0 );
       StringBuilder sb = new StringBuilder();
       TraceUtil.appendCorrelationContext( sb );
-      sb.append( String.format( "|RequestBody[%d]\n\t%s", body.length(), body ) );
+      sb.append( String.format( "|RequestBody[%d]%n\t%s", body.length(), body ) );
       if( bodyLog.isTraceEnabled() ) {
         log.trace( sb.toString() );
       }

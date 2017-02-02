@@ -66,7 +66,7 @@ class TraceResponse extends HttpServletResponseWrapper {
       Collection<String> names = getHeaderNames();
       for( String name : names ) {
         for( String value : getHeaders( name ) ) {
-          sb.append( String.format( "\n\tHeader[%s]=%s", name, value ) );
+          sb.append( String.format( "%n\tHeader[%s]=%s", name, value ) );
         }
       }
     }

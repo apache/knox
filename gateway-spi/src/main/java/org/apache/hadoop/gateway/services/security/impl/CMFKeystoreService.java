@@ -50,8 +50,8 @@ public class CMFKeystoreService extends BaseKeystoreService {
     this.serviceName = serviceName;
     this.keyStoreDir = keystoreDir + File.separator;
     File ksd = new File(this.keyStoreDir);
-    if (!ksd.exists()) {
-      ksd.mkdirs();
+    if (!ksd.exists() && !ksd.mkdirs()) {
+      throw new ServiceLifecycleException("Cannot create the keystore directory");
     }
   }
 

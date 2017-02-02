@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -237,11 +238,11 @@ public class WebSSOResource {
     // Probably not ideal but will not break existing integrations by requiring
     // some encoding.
     Map<String, String[]> params = request.getParameterMap();
-    for (String name : params.keySet()) {
-      if (!ORIGINAL_URL_REQUEST_PARAM.equals(name)
-          && !original.contains(name + "=")) {
-        buf.append("&").append(name);
-        String[] values = params.get(name);
+    for (Entry<String, String[]> entry : params.entrySet()) {
+      if (!ORIGINAL_URL_REQUEST_PARAM.equals(entry.getKey())
+          && !original.contains(entry.getKey() + "=")) {
+        buf.append("&").append(entry.getKey());
+        String[] values = entry.getValue();
         if (values.length > 0 && values[0] != null) {
           buf.append("=");
         }
@@ -249,7 +250,7 @@ public class WebSSOResource {
           if (values[0] != null) {
             buf.append(values[i]);
             if (i < values.length-1) {
-              buf.append("&").append(name).append("=");
+              buf.append("&").append(entry.getKey()).append("=");
             }
           }
         }

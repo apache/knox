@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -671,11 +672,8 @@ public class GatewayServer {
           internalDeactivateTopology( topology ); // KNOX-152
 
           EnterpriseArchive ear = DeploymentFactory.createDeployment( config, topology );
-          if( !deployDir.exists() ) {
-            deployDir.mkdirs();
-            if( !deployDir.exists() ) {
-              throw new DeploymentException( "Failed to create topology deployment temporary directory: " + deployDir.getAbsolutePath() );
-            }
+          if( !deployDir.exists() && !deployDir.mkdirs() ) {
+            throw new DeploymentException( "Failed to create topology deployment temporary directory: " + deployDir.getAbsolutePath() );
           }
           File tmp = ear.as( ExplodedExporter.class ).exportExploded( deployDir, topoDir.getName() + ".tmp" );
           if( !tmp.renameTo( topoDir ) ) {
@@ -702,11 +700,8 @@ public class GatewayServer {
 
   private File createArchiveTempDir( File warDir ) {
     File tempDir = FileUtils.getFile( warDir, "META-INF", "temp" );
-    if( !tempDir.exists() ) {
-      tempDir.mkdirs();
-      if( !tempDir.exists() ) {
-        throw new DeploymentException( "Failed to create archive temporary directory: " + tempDir.getAbsolutePath() );
-      }
+    if( !tempDir.exists() && !tempDir.mkdirs() ) {
+      throw new DeploymentException( "Failed to create archive temporary directory: " + tempDir.getAbsolutePath() );
     }
     return tempDir;
   }
@@ -784,7 +779,12 @@ public class GatewayServer {
     return frontendUri;
   }
 
-  private static class FileModificationTimeDescendingComparator implements Comparator<File> {
+  private static class FileModificationTimeDescendingComparator implements Comparator<File>, Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -2269785204848916823L;
+
     @Override
     public int compare( File left, File right ) {
       long leftTime = ( left == null ? Long.MIN_VALUE : left.lastModified() );

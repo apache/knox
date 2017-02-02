@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 
 public class MockServlet extends HttpServlet {
 
-  Logger LOG = Logger.getLogger(MockServlet.class.getName());
+  private static final Logger LOG = Logger.getLogger(MockServlet.class.getName());
 
   public String name;
   public Queue<MockInteraction> interactions;

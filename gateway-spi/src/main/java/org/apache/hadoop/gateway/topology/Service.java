@@ -131,4 +131,20 @@ public class Service {
     }
     return true;
   }
+  
+  @Override
+  public int hashCode() {
+    int hashCode = 17;
+    if (getName() != null) {
+      hashCode *= 31 * getName().hashCode();
+    }
+    if (getRole() != null) {
+      hashCode *= 31 * getRole().hashCode();
+    }
+    if (getVersion() != null) {
+      hashCode *= 31 * getVersion().hashCode();
+    }
+
+    return hashCode;
+  }
 }

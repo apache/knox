@@ -66,7 +66,7 @@ class TraceOutput extends SynchronousServletOutputStreamAdapter {
       buffer.setLength( 0 );
       StringBuilder sb = new StringBuilder();
       TraceUtil.appendCorrelationContext( sb );
-      sb.append( String.format( "|ResponseBody[%d]\n\t%s", body.length(), body ) );
+      sb.append( String.format( "|ResponseBody[%d]%n\t%s", body.length(), body ) );
       if( bodyLog.isTraceEnabled() ) {
         log.trace( sb.toString() );
       }

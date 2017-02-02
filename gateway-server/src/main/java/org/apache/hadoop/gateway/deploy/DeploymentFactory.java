@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
@@ -369,8 +370,8 @@ public abstract class DeploymentFactory {
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers ) {
     if( providers != null ) {
-      for( String role : providers.keySet() ) {
-        for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
+      for( Entry<String, List<ProviderDeploymentContributor>> entry : providers.entrySet() ) {
+        for( ProviderDeploymentContributor contributor : entry.getValue() ) {
           try {
             injectServices( contributor );
             log.initializeProvider( contributor.getName(), contributor.getRole() );
@@ -386,8 +387,8 @@ public abstract class DeploymentFactory {
 
   private static void initializeServices( DeploymentContext context, Map<String, List<ServiceDeploymentContributor>> services ) {
     if( services != null ) {
-      for( String role : services.keySet() ) {
-        for( ServiceDeploymentContributor contributor : services.get( role ) ) {
+      for( Entry<String, List<ServiceDeploymentContributor>> entry : services.entrySet() ) {
+        for( ServiceDeploymentContributor contributor : entry.getValue() ) {
           try {
             injectServices( contributor );
             log.initializeService( contributor.getName(), contributor.getRole() );
@@ -592,8 +593,8 @@ public abstract class DeploymentFactory {
 
   private static void finalizeProviders( DeploymentContext context, Map<String, List<ProviderDeploymentContributor>> providers ) {
     if( providers != null ) {
-      for( String role : providers.keySet() ) {
-        for( ProviderDeploymentContributor contributor : providers.get( role ) ) {
+      for( Entry<String, List<ProviderDeploymentContributor>> entry : providers.entrySet() ) {
+        for( ProviderDeploymentContributor contributor : entry.getValue() ) {
           try {
             log.finalizeProvider( contributor.getName(), contributor.getRole() );
             contributor.finalizeContribution( context );
@@ -609,8 +610,8 @@ public abstract class DeploymentFactory {
 
   private static void finalizeServices( DeploymentContext context, Map<String, List<ServiceDeploymentContributor>> services ) {
     if( services != null ) {
-      for( String role : services.keySet() ) {
-        for( ServiceDeploymentContributor contributor : services.get( role ) ) {
+      for( Entry<String, List<ServiceDeploymentContributor>> entry : services.entrySet() ) {
+        for( ServiceDeploymentContributor contributor : entry.getValue() ) {
           try {
             log.finalizeService( contributor.getName(), contributor.getRole() );
             contributor.finalizeContribution( context );
