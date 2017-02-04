@@ -35,6 +35,8 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
    */
   private static final String KNOXTOKENCACHE = ".knoxtokencache";
   public static final String COLLECTOR_TYPE = "KnoxToken";
+  public String targetUrl = null;
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.shell.CredentialCollector#collect()
    */
@@ -49,6 +51,7 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
         lines = Files.readAllLines(path, StandardCharsets.UTF_8);
         Map<String, String> attrs = JsonUtils.getMapFromJsonString(lines.get(0));
         value = attrs.get("access_token");
+        targetUrl = attrs.get("target_url");
         Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
         if (expires.before(new Date())) {
           System.out.println("Cached knox token has expired. Please relogin through knoxinit.");
@@ -63,6 +66,10 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
       System.out.println("Cached knox token cannot be found. Please login through knoxinit.");
       System.exit(1);
     }
+  }
+
+  public String getTargetUrl() {
+    return targetUrl;
   }
 
   /* (non-Javadoc)

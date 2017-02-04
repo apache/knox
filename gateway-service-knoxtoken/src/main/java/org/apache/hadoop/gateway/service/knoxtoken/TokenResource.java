@@ -45,13 +45,16 @@ public class TokenResource {
   private static final String EXPIRES_IN = "expires_in";
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
+  private static final String TARGET_URL = "target_url";
   private static final String BEARER = "Bearer ";
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
+  private static final String TOKEN_TARGET_URL = "knox.token.target.url";
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
   private long tokenTTL = 30000l;
   private String[] targetAudiences = null;
+  private String tokenTargetUrl = null;
 
   @Context
   private HttpServletRequest request;
@@ -79,6 +82,8 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+    
+    tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
   }
 
   @GET
@@ -120,7 +125,10 @@ public class TokenResource {
       map.put(ACCESS_TOKEN, accessToken);
       map.put(TOKEN_TYPE, BEARER);
       map.put(EXPIRES_IN, expires);
-      
+      if (tokenTargetUrl != null) {
+        map.put(TARGET_URL, tokenTargetUrl);
+      }
+
       String jsonResponse = JsonUtils.renderAsJsonString(map);
       
       response.getWriter().write(jsonResponse);
