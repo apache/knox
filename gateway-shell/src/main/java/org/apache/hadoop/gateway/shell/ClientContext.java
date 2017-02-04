@@ -191,6 +191,12 @@ public class ClientContext {
     return context;
   }
 
+  public static ClientContext with(final String url) {
+    ClientContext context = new ClientContext();
+    context.configuration.addProperty("url", url);
+    return context;
+  }
+
   public String username() {
     return configuration.getString("username");
   }
@@ -202,5 +208,4 @@ public class ClientContext {
   public String url() {
     return configuration.getString("url");
   }
-
 }

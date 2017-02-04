@@ -91,7 +91,13 @@ public class Hadoop implements Closeable {
   public void setHeaders(Map<String, String> headers) {
     this.headers = headers;
   }
-  
+
+  public static Hadoop login( String url, Map<String,String> headers ) throws URISyntaxException {
+    Hadoop instance = new Hadoop(ClientContext.with(url));
+    instance.setHeaders(headers);
+    return instance;
+  }
+
   public static Hadoop login( String url, String username, String password ) throws URISyntaxException {
     return new Hadoop(ClientContext.with(username, password, url));
   }

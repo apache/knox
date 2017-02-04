@@ -17,14 +17,20 @@
  */
 package org.apache.hadoop.gateway.shell;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
@@ -171,13 +177,12 @@ public class KnoxSh {
 
       Hadoop session = Hadoop.login(gateway, username, pass);
 
-      String text = Token.get( session ).now().toString();
+      String text = Token.get( session ).now().getString();
       Map<String, String> json = JsonUtils.getMapFromJsonString(text);
 
       //println "Access Token: " + json.access_token
       System.out.println("knoxinit successful!");
-      System.out.println("Token Type: " + json.get("token_type"));
-      System.out.println("Expires On: " + new Date(json.get("expires_in")));
+      displayTokenDetails(json);
 
       File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
       FileOutputStream fos = new FileOutputStream(tokenfile);
@@ -209,6 +214,8 @@ public class KnoxSh {
 
     @Override
     public void execute() throws Exception {
+      File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
+      tokenfile.delete();
     }
 
     @Override
@@ -225,6 +232,14 @@ public class KnoxSh {
 
     @Override
     public void execute() throws Exception {
+      String tokenfile = readFile(
+          System.getProperty("user.home") +
+          File.separator + ".knoxtokencache");
+
+      if (tokenfile != null) {
+        Map<String, String> json = JsonUtils.getMapFromJsonString(tokenfile);
+        displayTokenDetails(json);
+      }
     }
 
     @Override
@@ -233,6 +248,38 @@ public class KnoxSh {
     }
 
   }
+
+  private void displayTokenDetails(Map<String, String> json) {
+    System.out.println("Token Type: " + json.get("token_type"));
+
+    DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss");
+
+    long milliSeconds= Long.parseLong(json.get("expires_in"));
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(milliSeconds);
+    System.out.println("Expires On: " + formatter.format(calendar.getTime()));
+  }
+
+  private String readFile(String file) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader (file));
+    String line = null;
+    String content = null;
+    StringBuilder  stringBuilder = new StringBuilder();
+    String ls = System.getProperty("line.separator");
+
+    try {
+        while((line = reader.readLine()) != null) {
+            stringBuilder.append(line);
+            stringBuilder.append(ls);
+        }
+
+        content = stringBuilder.toString();
+    } finally {
+        reader.close();
+    }
+    return content;
+}
 
   /**
    * @param args
