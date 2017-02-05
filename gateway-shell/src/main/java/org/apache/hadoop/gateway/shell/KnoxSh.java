@@ -35,6 +35,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.hadoop.gateway.shell.knox.token.Get.Response;
 import org.apache.hadoop.gateway.shell.knox.token.Token;
 import org.apache.hadoop.gateway.util.JsonUtils;
 
@@ -170,33 +172,36 @@ public class KnoxSh {
 
       String username = credentials.get("user").string();
       String pass = credentials.get("pass").string();
-
-      if (gateway == null) {
-        gateway = System.getenv("GATEWAY_HOME");
+      
+      Hadoop session = null;
+      Response response = null;
+      try {
+        session = Hadoop.login(gateway, username, pass);
+  
+        response = Token.get( session ).now();
+        String text = response.getString();
+        Map<String, String> json = JsonUtils.getMapFromJsonString(text);
+  
+        //println "Access Token: " + json.access_token
+        System.out.println("knoxinit successful!");
+        displayTokenDetails(json);
+  
+        File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
+        FileOutputStream fos = new FileOutputStream(tokenfile);
+        fos.write(text.getBytes("UTF-8"));
+  
+        Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+        fos.close();
+  
+        //add owners permission only
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+  
+        Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
       }
-
-      Hadoop session = Hadoop.login(gateway, username, pass);
-
-      String text = Token.get( session ).now().getString();
-      Map<String, String> json = JsonUtils.getMapFromJsonString(text);
-
-      //println "Access Token: " + json.access_token
-      System.out.println("knoxinit successful!");
-      displayTokenDetails(json);
-
-      File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
-      FileOutputStream fos = new FileOutputStream(tokenfile);
-      fos.write(text.getBytes("UTF-8"));
-
-      Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
-      fos.close();
-
-      //add owners permission only
-      perms.add(PosixFilePermission.OWNER_READ);
-      perms.add(PosixFilePermission.OWNER_WRITE);
-
-      Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
-
+      catch(HadoopException he) {
+        System.out.println("Failuire to acquire token. Please verify your credentials and Knox URL and try again.");
+      }
       session.shutdown();
     }
 
@@ -259,6 +264,12 @@ public class KnoxSh {
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(milliSeconds);
     System.out.println("Expires On: " + formatter.format(calendar.getTime()));
+    String targetUrl = json.get("target_url");
+    if (targetUrl != null) {
+      System.out.println("Target URL: " + json.get("target_url"));
+    } else {
+      System.out.println("No specific target URL configured.");
+    }
   }
 
   private String readFile(String file) throws IOException {
