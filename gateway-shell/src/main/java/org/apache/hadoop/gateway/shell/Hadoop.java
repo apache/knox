@@ -59,6 +59,8 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -80,6 +82,21 @@ public class Hadoop implements Closeable {
   CloseableHttpClient client;
   BasicHttpContext context;
   ExecutorService executor;
+  Map<String, String> headers = new HashMap<String, String>();
+
+  public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(Map<String, String> headers) {
+    this.headers = headers;
+  }
+
+  public static Hadoop login( String url, Map<String,String> headers ) throws URISyntaxException {
+    Hadoop instance = new Hadoop(ClientContext.with(url));
+    instance.setHeaders(headers);
+    return instance;
+  }
 
   public static Hadoop login( String url, String username, String password ) throws URISyntaxException {
     return new Hadoop(ClientContext.with(username, password, url));
@@ -146,22 +163,25 @@ public class Hadoop implements Closeable {
     // Auth
     URI uri = URI.create(clientContext.url());
     host = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    credentialsProvider.setCredentials(
-            new AuthScope(host.getHostName(), host.getPort()),
-            new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
-
-    AuthCache authCache = new BasicAuthCache();
-    BasicScheme authScheme = new BasicScheme();
-    authCache.put(host, authScheme);
-    context = new BasicHttpContext();
-    context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
-
+    
+    CredentialsProvider credentialsProvider = null; 
+    if (clientContext.username() != null && clientContext.password() != null) {
+      credentialsProvider = new BasicCredentialsProvider();
+      credentialsProvider.setCredentials(
+              new AuthScope(host.getHostName(), host.getPort()),
+              new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
+  
+      AuthCache authCache = new BasicAuthCache();
+      BasicScheme authScheme = new BasicScheme();
+      authCache.put(host, authScheme);
+      context = new BasicHttpContext();
+      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+    }
     return HttpClients.custom()
-            .setConnectionManager(connectionManager)
-            .setDefaultCredentialsProvider(credentialsProvider)
-            .build();
+        .setConnectionManager(connectionManager)
+        .setDefaultCredentialsProvider(credentialsProvider)
+        .build();
+
   }
 
   private static KeyStore getTrustStore() throws GeneralSecurityException {

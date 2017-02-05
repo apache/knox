@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 import org.apache.commons.logging.Log;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
@@ -65,11 +66,12 @@ public class JWTFederationFilter implements Filter {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
       JWTToken token;
-      try {
-        token = JWTToken.parseToken(wireToken);
-      } catch (ParseException e) {
-        throw new ServletException("ParseException encountered while processing the JWT token: ", e);
-      }
+//      try {
+        token = new JWTToken(wireToken);
+//        token = JWTToken.parseToken(wireToken);
+//      } catch (ParseException e) {
+//        throw new ServletException("ParseException encountered while processing the JWT token: ", e);
+//      }
       boolean verified = false;
       try {
         verified = authority.verifyToken(token);
@@ -78,8 +80,8 @@ public class JWTFederationFilter implements Filter {
       }
       if (verified) {
         // TODO: validate expiration
-        // confirm that audience matches intended target - which for this filter must be HSSO
-        if (token.getAudience().equals("HSSO")) {
+        // confirm that audience matches intended target - which for this filter must be KNOXSSO
+        if (token.getIssuer().equals("KNOXSSO")) {
           // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
           Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
@@ -130,26 +132,23 @@ public class JWTFederationFilter implements Filter {
   }
   
   private Subject createSubjectFromToken(JWTToken token) {
-    final String principal = token.getPrincipal();
+    final String principal = token.getSubject();
 
+    @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<Principal>();
-    Principal p = new Principal() {
-      @Override
-      public String getName() {
-        return principal;
-      }
-    };
+    Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
     
 //        The newly constructed Sets check whether this Subject has been set read-only 
 //        before permitting subsequent modifications. The newly created Sets also prevent 
 //        illegal modifications by ensuring that callers have sufficient permissions.
- //
+//
 //        To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
 //        To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
 //        To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
     javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
     return subject;
   }
+
 }

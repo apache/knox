@@ -16,6 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.hadoop.gateway.shell.ClearInputCredentialCollector
-org.apache.hadoop.gateway.shell.HiddenInputCredentialCollector
-org.apache.hadoop.gateway.shell.KnoxTokenCredentialCollector
+org.apache.hadoop.gateway.service.knoxtoken.deploy.TokenServiceDeploymentContributor
