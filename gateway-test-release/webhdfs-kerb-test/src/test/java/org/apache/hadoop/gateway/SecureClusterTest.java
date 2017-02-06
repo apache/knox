@@ -77,7 +77,19 @@ import static org.junit.Assert.assertTrue;
 public class SecureClusterTest {
 
   private static MiniDFSCluster miniDFSCluster;
-  private static MiniKdc kdc;
+
+  /**
+   * Referring {@link MiniKdc} as {@link Object} to prevent the class loader
+   * from trying to load it before @BeforeClass annotation is called. Need to
+   * play this game because {@link MiniKdc} is not compatible with Java 7 so if
+   * we detect Java 7 we quit the test.
+   * <p>
+   * As result we need to up cast this object to {@link MiniKdc} every place we
+   * use it.
+   * 
+   * @since 0.10
+   */
+  private static Object kdc;
   private static HdfsConfiguration configuration;
   private static int nameNodeHttpPort;
   private static String userName;
@@ -85,8 +97,22 @@ public class SecureClusterTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
   private static File baseDir;
 
+  /**
+   * Test should run if java major version is greater or equal to this property.
+   *
+   * @since 0.10
+   */
+  private static int JAVA_MAJOR_VERSION_FOR_TEST = 8;
+
   @BeforeClass
   public static void setupSuite() throws Exception {
+
+    /*
+     * Run the test only if the jre version matches the one we want, see
+     * KNOX-769
+     */
+    org.junit.Assume.assumeTrue(isJreVersionOK());
+
     nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(SecureClusterTest.class));
@@ -101,10 +127,11 @@ public class SecureClusterTest {
         .build();
   }
 
+
   private static void initKdc() throws Exception {
     Properties kdcConf = MiniKdc.createConf();
     kdc = new MiniKdc(kdcConf, baseDir);
-    kdc.start();
+    ((MiniKdc)kdc).start();
 
     configuration = new HdfsConfiguration();
     SecurityUtil.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS, configuration);
@@ -115,9 +142,9 @@ public class SecureClusterTest {
     String keytab = keytabFile.getAbsolutePath();
     // Windows will not reverse name lookup "127.0.0.1" to "localhost".
     String krbInstance = Path.WINDOWS ? "127.0.0.1" : "localhost";
-    kdc.createPrincipal(keytabFile, userName + "/" + krbInstance, "HTTP/" + krbInstance);
-    String hdfsPrincipal = userName + "/" + krbInstance + "@" + kdc.getRealm();
-    String spnegoPrincipal = "HTTP/" + krbInstance + "@" + kdc.getRealm();
+    ((MiniKdc)kdc).createPrincipal(keytabFile, userName + "/" + krbInstance, "HTTP/" + krbInstance);
+    String hdfsPrincipal = userName + "/" + krbInstance + "@" + ((MiniKdc)kdc).getRealm();
+    String spnegoPrincipal = "HTTP/" + krbInstance + "@" + ((MiniKdc)kdc).getRealm();
 
     configuration.set(DFS_NAMENODE_KERBEROS_PRINCIPAL_KEY, hdfsPrincipal);
     configuration.set(DFS_NAMENODE_KEYTAB_FILE_KEY, keytab);
@@ -153,7 +180,7 @@ public class SecureClusterTest {
   private static void setupKnox(String keytab, String hdfsPrincipal) throws Exception {
     //kerberos setup for http client
     File jaasConf = setupJaasConf(baseDir, keytab, hdfsPrincipal);
-    System.setProperty("java.security.krb5.conf", kdc.getKrb5conf().getAbsolutePath());
+    System.setProperty("java.security.krb5.conf", ((MiniKdc)kdc).getKrb5conf().getAbsolutePath());
     System.setProperty("java.security.auth.login.config", jaasConf.getAbsolutePath());
     System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
     System.setProperty("sun.security.krb5.debug", "true");
@@ -163,7 +190,7 @@ public class SecureClusterTest {
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
     config.setHadoopKerberosSecured(true);
-    config.setKerberosConfig(kdc.getKrb5conf().getAbsolutePath());
+    config.setKerberosConfig(((MiniKdc)kdc).getKrb5conf().getAbsolutePath());
     config.setKerberosLoginConfig(jaasConf.getAbsolutePath());
     driver.setResourceBase(SecureClusterTest.class);
     driver.setupLdap(0);
@@ -172,9 +199,13 @@ public class SecureClusterTest {
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    kdc.stop();
-    miniDFSCluster.shutdown();
-    driver.cleanup();
+    /* No need to clean up if we did not start anything */
+    if (isJreVersionOK()) {
+      ((MiniKdc) kdc).stop();
+      miniDFSCluster.shutdown();
+      driver.cleanup();
+    }
+
   }
 
   @Test
@@ -294,6 +325,25 @@ public class SecureClusterTest {
         .gotoRoot();
 //     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
+  }
+
+  /**
+   * Check whether java version is >= {@link #JAVA_MAJOR_VERSION_FOR_TEST}
+   *
+   * @since 0.10
+   * @return
+   */
+  public static boolean isJreVersionOK() {
+
+    final String jreVersion = System.getProperty("java.version");
+    int majorVersion = Integer.parseInt(String.valueOf(jreVersion.charAt(2)));
+
+    if (majorVersion >= JAVA_MAJOR_VERSION_FOR_TEST) {
+      return true;
+    }
+
+    return false;
+
   }
 
 }
