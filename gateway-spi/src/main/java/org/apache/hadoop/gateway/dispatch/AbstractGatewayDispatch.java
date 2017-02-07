@@ -35,7 +35,7 @@ import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
 
-  private static int STREAM_COPY_BUFFER_SIZE = 4096;
+  private static final int STREAM_COPY_BUFFER_SIZE = 4096;
   private static Set<String> REQUEST_EXCLUDE_HEADERS;
 
   protected  HttpClient client;

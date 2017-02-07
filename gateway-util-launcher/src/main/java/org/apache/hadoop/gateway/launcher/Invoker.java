@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
 
 class Invoker {
 
-  private static String[] STRING_ARRAY = new String[0];
-  private static Class STRING_ARRAY_CLASS = STRING_ARRAY.getClass();
+  private static final String[] STRING_ARRAY = new String[0];
+  private static final Class STRING_ARRAY_CLASS = STRING_ARRAY.getClass();
 
   static void invoke( Command command ) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     setSysProps( command.props );

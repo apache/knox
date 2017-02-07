@@ -72,7 +72,7 @@ public class HttpUtils {
     return map;
   }
 
-  private final static String urlDecodeUtf8( String s ) {
+  private static final String urlDecodeUtf8( String s ) {
     if( s != null ) {
       try {
         s = URLDecoder.decode( s, "UTF-8" );
@@ -83,7 +83,7 @@ public class HttpUtils {
     return s;
   }
 
-  final static void addQueryStringParam( final Map<String,String[]> map, String name, String value ) {
+  static final void addQueryStringParam( final Map<String,String[]> map, String name, String value ) {
     name = urlDecodeUtf8( name );
     value = urlDecodeUtf8( value );
     String[] values = map.get( name );

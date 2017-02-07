@@ -88,7 +88,7 @@ import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 public class KnoxCLI extends Configured implements Tool {
 
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
-  final static private String COMMANDS =
+  static final private String COMMANDS =
       "   [--help]\n" +
       "   [" + VersionCommand.USAGE + "]\n" +
       "   [" + MasterCreateCommand.USAGE + "]\n" +

@@ -25,11 +25,11 @@ import java.util.Properties;
 
 public class Launcher {
 
-  private static String LAUNCHER_PREFIX = "launcher.";
-  private static String CFG_EXT = "cfg";
-  private static String LAUNCHER_CFG = "META-INF/" + LAUNCHER_PREFIX + CFG_EXT;
-  private static String EXTRACT = "extract";
-  private static String OVERRIDE = "override";
+  private static final String LAUNCHER_PREFIX = "launcher.";
+  private static final String CFG_EXT = "cfg";
+  private static final String LAUNCHER_CFG = "META-INF/" + LAUNCHER_PREFIX + CFG_EXT;
+  private static final String EXTRACT = "extract";
+  private static final String OVERRIDE = "override";
 
   private URL launcherJarUrl;
   private File launcherJarDir;

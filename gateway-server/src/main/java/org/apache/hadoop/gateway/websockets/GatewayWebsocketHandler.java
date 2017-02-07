@@ -48,14 +48,14 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 public class GatewayWebsocketHandler extends WebSocketHandler
     implements WebSocketCreator {
 
-  private static WebsocketLogMessages LOG = MessagesFactory
+  private static final WebsocketLogMessages LOG = MessagesFactory
       .get(WebsocketLogMessages.class);
 
-  public final static String WEBSOCKET_PROTOCOL_STRING = "ws://";
+  public static final String WEBSOCKET_PROTOCOL_STRING = "ws://";
   
-  final static String REGEX_SPLIT_CLUSTER_NAME = "^((?:[^/]*/){1}[^/]*)";
+  static final String REGEX_SPLIT_CLUSTER_NAME = "^((?:[^/]*/){1}[^/]*)";
   
-  final static String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
+  static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
 
   final GatewayConfig config;
   final GatewayServices services;

@@ -29,12 +29,12 @@ import java.util.regex.Pattern;
 
 public class Config {
 
-  static String DEFAULT_NAME = "";
-  static String COMMENT_PREFIX = "#";
-  static String SECTION_PREFIX = "[";
-  static String SECTION_SUFFIX = "]";
-  static Pattern SECTION_PATTERN = Pattern.compile( "^\\[(.*?)\\]?$" );
-  static Pattern PAIR_PATTERN = Pattern.compile( "^(.*?)=(.*)$" );
+  static final String DEFAULT_NAME = "";
+  static final String COMMENT_PREFIX = "#";
+  static final String SECTION_PREFIX = "[";
+  static final String SECTION_SUFFIX = "]";
+  static final Pattern SECTION_PATTERN = Pattern.compile( "^\\[(.*?)\\]?$" );
+  static final Pattern PAIR_PATTERN = Pattern.compile( "^(.*?)=(.*)$" );
 
   Map<String,Map<String,String>> sections;
 

@@ -28,9 +28,9 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.TYPE )
 public @interface Messages {
-  final static String DEFAULT_BUNDLE = "";
-  final static String DEFAULT_LOGGER = "";
-  final static String DEFAULT_CODES = "{0}";
+  static final String DEFAULT_BUNDLE = "";
+  static final String DEFAULT_LOGGER = "";
+  static final String DEFAULT_CODES = "{0}";
   String bundle() default DEFAULT_BUNDLE;
   String logger() default DEFAULT_LOGGER;
   String codes() default DEFAULT_CODES;

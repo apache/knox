@@ -46,15 +46,15 @@ import static org.junit.Assert.*;
  */
 public class Pac4jProviderTest {
 
-    private final static String LOCALHOST = "127.0.0.1";
-    private final static String HADOOP_SERVICE_URL = "https://" + LOCALHOST + ":8443/gateway/sandox/webhdfs/v1/tmp?op=LISTSTATUS";
-    private final static String KNOXSSO_SERVICE_URL = "https://" + LOCALHOST + ":8443/gateway/idp/api/v1/websso";
-    private final static String PAC4J_CALLBACK_URL = KNOXSSO_SERVICE_URL;
-    private final static String ORIGINAL_URL = "originalUrl";
-    private final static String CLUSTER_NAME = "knox";
-    private final static String PAC4J_PASSWORD = "pwdfortest";
-    private final static String CLIENT_CLASS = IndirectBasicAuthClient.class.getSimpleName();
-    private final static String USERNAME = "jleleu";
+    private static final String LOCALHOST = "127.0.0.1";
+    private static final String HADOOP_SERVICE_URL = "https://" + LOCALHOST + ":8443/gateway/sandox/webhdfs/v1/tmp?op=LISTSTATUS";
+    private static final String KNOXSSO_SERVICE_URL = "https://" + LOCALHOST + ":8443/gateway/idp/api/v1/websso";
+    private static final String PAC4J_CALLBACK_URL = KNOXSSO_SERVICE_URL;
+    private static final String ORIGINAL_URL = "originalUrl";
+    private static final String CLUSTER_NAME = "knox";
+    private static final String PAC4J_PASSWORD = "pwdfortest";
+    private static final String CLIENT_CLASS = IndirectBasicAuthClient.class.getSimpleName();
+    private static final String USERNAME = "jleleu";
 
     @Test
     public void test() throws Exception {

@@ -88,7 +88,7 @@ public class ResourcesInvoker implements InvocationHandler {
     return pattern;
   }
 
-  protected final static String getDefaultPattern( final Method method ) {
+  protected static final String getDefaultPattern( final Method method ) {
     final String prefix = method.getName();
     String suffix;
     final int params = method.getParameterTypes().length;
@@ -109,7 +109,7 @@ public class ResourcesInvoker implements InvocationHandler {
     return prefix + suffix;
   }
 
-  private final static String createDefaultPatternSuffix( final int size ) {
+  private static final String createDefaultPatternSuffix( final int size ) {
     StringBuilder builder = new StringBuilder( 1 + size*7 );
     builder.append( "(" );
     for( int i=0; i<size; i++ ) {
@@ -123,7 +123,7 @@ public class ResourcesInvoker implements InvocationHandler {
 
   }
 
-  private final static String calcBundleName( final Class<?> clazz ) {
+  private static final String calcBundleName( final Class<?> clazz ) {
     String bundle = null;
     final Resources anno = clazz.getAnnotation( Resources.class );
     if( anno != null ) {

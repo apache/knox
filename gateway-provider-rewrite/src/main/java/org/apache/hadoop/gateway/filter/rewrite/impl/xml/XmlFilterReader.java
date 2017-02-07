@@ -71,9 +71,9 @@ import java.util.regex.Pattern;
 
 public abstract class XmlFilterReader extends Reader {
 
-  private static UrlRewriteResources RES = ResourcesFactory.get( UrlRewriteResources.class );
+  private static final UrlRewriteResources RES = ResourcesFactory.get( UrlRewriteResources.class );
 
-  private static String DEFAULT_XML_VERSION = "1.0";
+  private static final String DEFAULT_XML_VERSION = "1.0";
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
   private static final UrlRewriteFilterPathDescriptor.Compiler<XPathExpression> XPATH_COMPILER = new XmlPathCompiler();

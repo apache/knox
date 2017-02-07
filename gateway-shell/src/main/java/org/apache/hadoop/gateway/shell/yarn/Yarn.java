@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Yarn {
 
-    static String SERVICE_PATH = "/resourcemanager";
+    static final String SERVICE_PATH = "/resourcemanager";
 
     public static NewApp.Request newApp(Hadoop session) {
         return new NewApp.Request(session);

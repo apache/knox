@@ -316,7 +316,7 @@ abstract class Segment {
   }
 
   // Escape .\${ and turn * into .*
-  final static String createRegex( final String segment ) {
+  static final String createRegex( final String segment ) {
     StringBuilder regex = new StringBuilder( segment );
     int len = regex.length();
     for( int i=len-1; i>=0; i-- ) {
@@ -340,7 +340,7 @@ abstract class Segment {
   }
 
   // Creates a pattern for a simplified filesystem style wildcard '*' syntax.
-  final static Pattern compileRegex( String segment ) {
+  static final Pattern compileRegex( String segment ) {
 //    // Turn '*' into '/' to keep it safe.
 //    // Chose '/' because that can't exist in a segment.
 //    segment = segment.replaceAll( "\\*", "/" );

@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Workflow {
 
-  static String SERVICE_PATH = "/oozie/v1";
+  static final String SERVICE_PATH = "/oozie/v1";
 
   public static Submit.Request submit( Hadoop session ) {
     return new Submit.Request( session );

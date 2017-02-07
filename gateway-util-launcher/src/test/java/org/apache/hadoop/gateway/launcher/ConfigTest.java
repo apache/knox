@@ -28,7 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ConfigTest {
 
-  private final static String NEWLINE = System.getProperty( "line.separator" );
+  private static final String NEWLINE = System.getProperty( "line.separator" );
 
   @Test
   public void testLoad() throws Exception {

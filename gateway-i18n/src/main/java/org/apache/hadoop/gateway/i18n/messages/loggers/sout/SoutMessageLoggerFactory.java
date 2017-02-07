@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SoutMessageLoggerFactory implements MessageLoggerFactory {
 
   private static SoutMessageLoggerFactory INSTANCE;
-  private static Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<String,MessageLogger>();
+  private static final Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<String,MessageLogger>();
 
   public static SoutMessageLoggerFactory getFactory() {
     if( INSTANCE == null ) {

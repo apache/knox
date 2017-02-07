@@ -32,9 +32,9 @@ import java.util.ServiceLoader;
 
 public abstract class UrlRewriteStreamFilterFactory {
 
-  private static String DEFAULT_CHARACTER_ENCODING = "ISO-8859-1";
+  private static final String DEFAULT_CHARACTER_ENCODING = "ISO-8859-1";
 
-  private static Map<String,Map<String,UrlRewriteStreamFilter>> MAP = loadFactories();
+  private static final Map<String,Map<String,UrlRewriteStreamFilter>> MAP = loadFactories();
 
   private UrlRewriteStreamFilterFactory() {
   }

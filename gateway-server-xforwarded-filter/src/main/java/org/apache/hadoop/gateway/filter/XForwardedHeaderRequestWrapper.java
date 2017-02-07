@@ -26,19 +26,19 @@ import java.util.Hashtable;
 
 public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
-  private static String X_FORWARDED_FOR = "X-Forwarded-For";
-  private static String X_FORWARDED_FOR_LOWER = X_FORWARDED_FOR.toLowerCase();
-  private static String X_FORWARDED_PROTO = "X-Forwarded-Proto";
-  private static String X_FORWARDED_PROTO_LOWER = X_FORWARDED_PROTO.toLowerCase();
-  private static String X_FORWARDED_PORT = "X-Forwarded-Port";
-  private static String X_FORWARDED_PORT_LOWER = X_FORWARDED_PORT.toLowerCase();
-  private static String X_FORWARDED_HOST = "X-Forwarded-Host";
-  private static String X_FORWARDED_HOST_LOWER = X_FORWARDED_HOST.toLowerCase();
-  private static String X_FORWARDED_SERVER = "X-Forwarded-Server";
-  private static String X_FORWARDED_SERVER_LOWER = X_FORWARDED_SERVER.toLowerCase();
-  private static String X_FORWARDED_CONTEXT = "X-Forwarded-Context";
-  private static String X_FORWARDED_CONTEXT_LOWER = X_FORWARDED_CONTEXT.toLowerCase();
-  private static ArrayList<String> headerNames = new ArrayList<>();
+  private static final String X_FORWARDED_FOR = "X-Forwarded-For";
+  private static final String X_FORWARDED_FOR_LOWER = X_FORWARDED_FOR.toLowerCase();
+  private static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
+  private static final String X_FORWARDED_PROTO_LOWER = X_FORWARDED_PROTO.toLowerCase();
+  private static final String X_FORWARDED_PORT = "X-Forwarded-Port";
+  private static final String X_FORWARDED_PORT_LOWER = X_FORWARDED_PORT.toLowerCase();
+  private static final String X_FORWARDED_HOST = "X-Forwarded-Host";
+  private static final String X_FORWARDED_HOST_LOWER = X_FORWARDED_HOST.toLowerCase();
+  private static final String X_FORWARDED_SERVER = "X-Forwarded-Server";
+  private static final String X_FORWARDED_SERVER_LOWER = X_FORWARDED_SERVER.toLowerCase();
+  private static final String X_FORWARDED_CONTEXT = "X-Forwarded-Context";
+  private static final String X_FORWARDED_CONTEXT_LOWER = X_FORWARDED_CONTEXT.toLowerCase();
+  private static final ArrayList<String> headerNames = new ArrayList<>();
 
   static {
     headerNames.add(X_FORWARDED_FOR);

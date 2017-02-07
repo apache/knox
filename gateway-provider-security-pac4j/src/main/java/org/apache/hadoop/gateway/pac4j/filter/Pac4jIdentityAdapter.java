@@ -43,7 +43,7 @@ import java.security.PrivilegedExceptionAction;
  */
 public class Pac4jIdentityAdapter implements Filter {
 
-  private final static Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
+  private static final Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
 
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(

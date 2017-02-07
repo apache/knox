@@ -24,7 +24,7 @@ import java.util.Map;
 
 public abstract class AbstractConfigurationAdapterDescriptor implements ConfigurationAdapterDescriptor {
 
-  private static Map<Class<?>, Class<? extends ConfigurationAdapter>> ADAPTERS =
+  private static final Map<Class<?>, Class<? extends ConfigurationAdapter>> ADAPTERS =
       new HashMap<Class<?>, Class<? extends ConfigurationAdapter>>();
 
   protected AbstractConfigurationAdapterDescriptor() {

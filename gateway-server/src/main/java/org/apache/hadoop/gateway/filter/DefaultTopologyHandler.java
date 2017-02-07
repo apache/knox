@@ -35,7 +35,7 @@ import org.eclipse.jetty.server.handler.HandlerWrapper;
 
 public class DefaultTopologyHandler extends HandlerWrapper {
 
-  private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
 
   private GatewayConfig config;
   private GatewayServices services;

@@ -28,14 +28,14 @@ import java.util.Set;
 
 public class TraceHandler extends HandlerWrapper {
 
-  static String HTTP_LOGGER = "org.apache.hadoop.gateway.http";
-  static String HTTP_REQUEST_LOGGER = HTTP_LOGGER + ".request";
-  static String HTTP_REQUEST_HEADER_LOGGER = HTTP_REQUEST_LOGGER + ".headers";
-  static String HTTP_REQUEST_BODY_LOGGER = HTTP_REQUEST_LOGGER + ".body";
+  static final String HTTP_LOGGER = "org.apache.hadoop.gateway.http";
+  static final String HTTP_REQUEST_LOGGER = HTTP_LOGGER + ".request";
+  static final String HTTP_REQUEST_HEADER_LOGGER = HTTP_REQUEST_LOGGER + ".headers";
+  static final String HTTP_REQUEST_BODY_LOGGER = HTTP_REQUEST_LOGGER + ".body";
 
-  static String HTTP_RESPONSE_LOGGER = HTTP_LOGGER + ".response";
-  static String HTTP_RESPONSE_HEADER_LOGGER = HTTP_RESPONSE_LOGGER + ".headers";
-  static String HTTP_RESPONSE_BODY_LOGGER = HTTP_RESPONSE_LOGGER + ".body";
+  static final String HTTP_RESPONSE_LOGGER = HTTP_LOGGER + ".response";
+  static final String HTTP_RESPONSE_HEADER_LOGGER = HTTP_RESPONSE_LOGGER + ".headers";
+  static final String HTTP_RESPONSE_BODY_LOGGER = HTTP_RESPONSE_LOGGER + ".body";
 
   private Set<Integer> bodyFilter;
 

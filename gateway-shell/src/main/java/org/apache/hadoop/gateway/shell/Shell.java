@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Shell {
 
-  private static String[] IMPORTS = new String[] {
+  private static final String[] IMPORTS = new String[] {
       Hadoop.class.getName(),
       HBase.class.getName(),
       Hdfs.class.getName(),

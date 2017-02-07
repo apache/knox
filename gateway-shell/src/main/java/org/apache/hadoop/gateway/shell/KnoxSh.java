@@ -46,7 +46,7 @@ import org.apache.hadoop.gateway.util.JsonUtils;
 public class KnoxSh {
 
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
-  final static private String COMMANDS =
+  static final private String COMMANDS =
       "   [--help]\n" +
       "   [" + KnoxInit.USAGE + "]\n" +
       "   [" + KnoxDestroy.USAGE + "]\n" +

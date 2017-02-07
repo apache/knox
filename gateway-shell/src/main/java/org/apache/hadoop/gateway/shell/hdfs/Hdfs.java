@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Hdfs {
 
-  static String SERVICE_PATH = "/webhdfs/v1";
+  static final String SERVICE_PATH = "/webhdfs/v1";
 
   public static Rename.Request rename( Hadoop session ) {
     return new Rename.Request( session );

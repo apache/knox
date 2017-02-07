@@ -40,11 +40,11 @@ import java.io.Serializable;
  */
 public class KnoxSessionStore implements SessionStore {
 
-    private final static Logger logger = LoggerFactory.getLogger(KnoxSessionStore.class);
+    private static final Logger logger = LoggerFactory.getLogger(KnoxSessionStore.class);
 
-    public final static String PAC4J_PASSWORD = "pac4j.password";
+    public static final String PAC4J_PASSWORD = "pac4j.password";
 
-    public final static String PAC4J_SESSION_PREFIX = "pac4j.session.";
+    public static final String PAC4J_SESSION_PREFIX = "pac4j.session.";
 
     private final JavaSerializationHelper javaSerializationHelper;
 

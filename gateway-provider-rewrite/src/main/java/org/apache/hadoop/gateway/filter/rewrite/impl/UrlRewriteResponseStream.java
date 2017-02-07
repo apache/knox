@@ -28,7 +28,7 @@ import java.io.InputStream;
 //TODO: This needs to be coded much more efficiently!
 public class UrlRewriteResponseStream extends SynchronousServletOutputStreamAdapter {
 
-  private static int DEFAULT_BUFFER_SIZE = 1024;
+  private static final int DEFAULT_BUFFER_SIZE = 1024;
 
   private GatewayResponse response;
   private ByteArrayOutputStream buffer;

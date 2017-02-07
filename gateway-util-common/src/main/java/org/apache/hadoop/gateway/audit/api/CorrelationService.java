@@ -27,7 +27,7 @@ public interface CorrelationService {
   /**
    * The recommended protocol header name used to transmit the correlation context over the network.
    */
-  static String PROTOCOL_HEADER = "X-Correlation-Context";
+  static final String PROTOCOL_HEADER = "X-Correlation-Context";
 
   /**
    * Creates a new correlation context.  The context is attached and empty.

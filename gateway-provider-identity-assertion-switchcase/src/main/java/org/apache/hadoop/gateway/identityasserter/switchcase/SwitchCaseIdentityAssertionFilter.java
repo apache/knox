@@ -27,8 +27,8 @@ import org.apache.hadoop.gateway.security.GroupPrincipal;
 
 public class SwitchCaseIdentityAssertionFilter extends CommonIdentityAssertionFilter {
 
-  private static String USER_INIT_PARAM = "principal.case";
-  private static String GROUP_INIT_PARAM = "group.principal.case";
+  private static final String USER_INIT_PARAM = "principal.case";
+  private static final String GROUP_INIT_PARAM = "group.principal.case";
 
   private enum SwitchCase { UPPER, LOWER, NONE }
 

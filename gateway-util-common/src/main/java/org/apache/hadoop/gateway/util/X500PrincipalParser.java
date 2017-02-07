@@ -28,19 +28,19 @@ public class X500PrincipalParser
   public static int LEASTSIGNIFICANT = 0;
   public static int MOSTSIGNIFICANT = 1;
   
-  public final static String attrCN = "CN";
-  public final static String attrOU = "OU";
-  public final static String attrO = "O";
-  public final static String attrC = "C";
-  public final static String attrL = "L";
-  public final static String attrST = "ST";
-  public final static String attrSTREET = "STREET";
-  public final static String attrEMAIL = "EMAILADDRESS";
-  public final static String attrUID = "UID";
+  public static final String attrCN = "CN";
+  public static final String attrOU = "OU";
+  public static final String attrO = "O";
+  public static final String attrC = "C";
+  public static final String attrL = "L";
+  public static final String attrST = "ST";
+  public static final String attrSTREET = "STREET";
+  public static final String attrEMAIL = "EMAILADDRESS";
+  public static final String attrUID = "UID";
 
   ArrayList rdnNameArray = new ArrayList();
 
-  private final static String attrTerminator = "=";
+  private static final String attrTerminator = "=";
 
   public X500PrincipalParser(X500Principal principal)
   {

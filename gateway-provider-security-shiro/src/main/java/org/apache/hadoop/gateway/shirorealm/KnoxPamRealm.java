@@ -81,8 +81,8 @@ import org.jvnet.libpam.UnixUser;
 
 public class KnoxPamRealm extends AuthorizingRealm {
   private static final String HASHING_ALGORITHM = "SHA-1";
-  private final static String SUBJECT_USER_ROLES = "subject.userRoles";
-  private final static String SUBJECT_USER_GROUPS = "subject.userGroups";
+  private static final String SUBJECT_USER_ROLES = "subject.userRoles";
+  private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
   private HashService hashService = new DefaultHashService();
   KnoxShiroMessages ShiroLog = MessagesFactory.get(KnoxShiroMessages.class);
   GatewayMessages GatewayLog = MessagesFactory.get(GatewayMessages.class);

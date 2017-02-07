@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.shell.Hadoop;
 
 public class Job {
 
-  static String SERVICE_PATH = "/templeton/v1";
+  static final String SERVICE_PATH = "/templeton/v1";
 
   public static Java.Request submitJava( Hadoop session ) {
     return new Java.Request( session );

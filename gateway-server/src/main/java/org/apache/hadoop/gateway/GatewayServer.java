@@ -103,9 +103,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class GatewayServer {
-  private static GatewayResources res = ResourcesFactory.get(GatewayResources.class);
-  private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
-  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+  private static final GatewayResources res = ResourcesFactory.get(GatewayResources.class);
+  private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
+  private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private static GatewayServer server;
   private static GatewayServices services;

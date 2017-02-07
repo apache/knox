@@ -29,8 +29,8 @@ import java.io.OutputStream;
 
 public abstract class GatewayResponseWrapper extends HttpServletResponseWrapper implements GatewayResponse {
 
-  private static String DEFAULT_MIME_TYPE = "*/*";
-  private static int STREAM_COPY_BUFFER_SIZE = 4096;
+  private static final String DEFAULT_MIME_TYPE = "*/*";
+  private static final int STREAM_COPY_BUFFER_SIZE = 4096;
 
   /**
    * Constructs a response adaptor wrapping the given response.

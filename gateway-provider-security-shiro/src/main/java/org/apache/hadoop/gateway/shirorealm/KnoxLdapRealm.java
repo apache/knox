@@ -137,16 +137,16 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private static String DEFAULT_PRINCIPAL_REGEX = "(.*)";
     private static final String MEMBER_SUBSTITUTION_TOKEN = "{0}";
 
-    private final static SearchControls SUBTREE_SCOPE = new SearchControls();
-    private final static SearchControls ONELEVEL_SCOPE = new SearchControls();
-    private final static SearchControls OBJECT_SCOPE = new SearchControls();
+    private static final SearchControls SUBTREE_SCOPE = new SearchControls();
+    private static final SearchControls ONELEVEL_SCOPE = new SearchControls();
+    private static final SearchControls OBJECT_SCOPE = new SearchControls();
 
-    private final static String  SUBJECT_USER_ROLES = "subject.userRoles";
-    private final static String  SUBJECT_USER_GROUPS = "subject.userGroups";
+    private static final String  SUBJECT_USER_ROLES = "subject.userRoles";
+    private static final String  SUBJECT_USER_GROUPS = "subject.userGroups";
 
-    private final static String  MEMBER_URL = "memberUrl";
+    private static final String  MEMBER_URL = "memberUrl";
 
-    private final static String POSIX_GROUP = "posixGroup";
+    private static final String POSIX_GROUP = "posixGroup";
 
     private static final String HASHING_ALGORITHM = "SHA-1";
 

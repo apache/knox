@@ -41,7 +41,7 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
  */
 public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
-  private static WebsocketLogMessages LOG = MessagesFactory
+  private static final WebsocketLogMessages LOG = MessagesFactory
       .get(WebsocketLogMessages.class);
 
   /* URI for the backend */

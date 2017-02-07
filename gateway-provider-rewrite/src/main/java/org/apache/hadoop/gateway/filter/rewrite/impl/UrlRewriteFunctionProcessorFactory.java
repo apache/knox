@@ -29,7 +29,7 @@ import java.util.ServiceLoader;
 
 public abstract class UrlRewriteFunctionProcessorFactory {
 
-  private static Map<Class<? extends UrlRewriteFunctionDescriptor>,Map<String,Class<? extends UrlRewriteFunctionProcessor>>> MAP
+  private static final Map<Class<? extends UrlRewriteFunctionDescriptor>,Map<String,Class<? extends UrlRewriteFunctionProcessor>>> MAP
       = loadProcessors();
 
   private UrlRewriteFunctionProcessorFactory() {

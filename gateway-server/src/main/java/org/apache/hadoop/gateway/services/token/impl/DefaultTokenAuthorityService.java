@@ -46,7 +46,7 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
-  private static String SIGNING_KEY_PASSPHRASE = "signing.key.passphrase";
+  private static final String SIGNING_KEY_PASSPHRASE = "signing.key.passphrase";
   private AliasService as = null;
   private KeystoreService ks = null;
   String signingKeyAlias = null;

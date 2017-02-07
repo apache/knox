@@ -28,7 +28,7 @@ import java.util.ServiceLoader;
 
 public abstract class UrlRewriteStepProcessorFactory {
 
-  private static Map<Class<? extends UrlRewriteStepDescriptor>,Map<String,Class<? extends UrlRewriteStepProcessor>>> MAP
+  private static final Map<Class<? extends UrlRewriteStepDescriptor>,Map<String,Class<? extends UrlRewriteStepProcessor>>> MAP
       = loadStepProcessors();
 
   private UrlRewriteStepProcessorFactory() {

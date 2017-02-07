@@ -32,16 +32,16 @@ import java.util.regex.Pattern;
 
 class Command {
 
-  private static String MAIN_CLASS = "main.class";
-  private static String MAIN_METHOD = "main.method";
-  private static String MAIN_ARGS = "main.args";
-  private static String CLASS_PATH = "class.path";
-  private static String CLASS_PATH_DELIM = ",;";
-  private static String FORK = "fork";
-  private static String REDIRECT = "redirect";
-  private static String RESTREAM = "restream";
-  private static String ENV_PREFIX = "env.";
-  private static int ENV_PREFIX_LENGTH = ENV_PREFIX.length();
+  private static final String MAIN_CLASS = "main.class";
+  private static final String MAIN_METHOD = "main.method";
+  private static final String MAIN_ARGS = "main.args";
+  private static final String CLASS_PATH = "class.path";
+  private static final String CLASS_PATH_DELIM = ",;";
+  private static final String FORK = "fork";
+  private static final String REDIRECT = "redirect";
+  private static final String RESTREAM = "restream";
+  private static final String ENV_PREFIX = "env.";
+  private static final int ENV_PREFIX_LENGTH = ENV_PREFIX.length();
 
   File base;
   String mainClass;
