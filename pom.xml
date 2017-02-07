@@ -104,7 +104,7 @@
         <gateway-version>0.12.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.knox</gateway-group>
         <groovy-version>2.4.6</groovy-version>
-        <hadoop-version>2.2.0</hadoop-version>
+        <hadoop-version>2.7.3</hadoop-version>
         <jetty-version>9.2.15.v20160210</jetty-version>
         <surefire-version>2.16</surefire-version>
         <failsafe-version>2.19.1</failsafe-version>
@@ -866,20 +866,12 @@
                         <artifactId>commons-codec</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>commons-configuration</groupId>
-                        <artifactId>commons-configuration</artifactId>
-                    </exclusion>
-                    <exclusion>
                         <groupId>commons-el</groupId>
                         <artifactId>commons-el</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>commons-httpclient</groupId>
                         <artifactId>commons-httpclient</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-lang</groupId>
-                        <artifactId>commons-lang</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>commons-logging</groupId>

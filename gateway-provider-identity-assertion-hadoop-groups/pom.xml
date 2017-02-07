@@ -58,7 +58,12 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-        </dependency>     
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>${gateway-group}</groupId>
