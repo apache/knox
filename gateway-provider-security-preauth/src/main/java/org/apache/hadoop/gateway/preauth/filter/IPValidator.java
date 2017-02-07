@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.preauth.filter;
 
+import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.hadoop.gateway.util.IpAddressValidator;
@@ -24,23 +25,34 @@ import org.apache.hadoop.gateway.util.IpAddressValidator;
 /**
  *
  */
-class IPValidator implements PreAuthValidator {
-  private IpAddressValidator ipv = null;
-  
-  /**
-   * @param initParameter
-   */
-  public IPValidator(String ipParam) {
-    ipv = new IpAddressValidator(ipParam);
+public class IPValidator implements PreAuthValidator {
+  public static final String IP_ADDRESSES_PARAM = "preauth.ip.addresses";
+  public static final String IP_VALIDATION_METHOD_VALUE = "preauth.ip.validation";
+
+  public IPValidator() {
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.preauth.filter.PreAuthValidator#validate(java.lang.String, java.lang.String)
+  /**
+   * @param httpRequest
+   * @param filterConfig
+   * @return true if validated, otherwise false
+   * @throws PreAuthValidationException
    */
   @Override
-  public boolean validate(HttpServletRequest request)
+  public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig)
       throws PreAuthValidationException {
-    
-    return ipv.validateIpAddress(request.getRemoteAddr());
+    String ipParam = filterConfig.getInitParameter(IP_ADDRESSES_PARAM);
+    IpAddressValidator ipv = new IpAddressValidator(ipParam);
+    return ipv.validateIpAddress(httpRequest.getRemoteAddr());
+  }
+
+  /**
+   * Return unique validator name
+   *
+   * @return name of validator
+   */
+  @Override
+  public String getName() {
+    return IP_VALIDATION_METHOD_VALUE;
   }
 }

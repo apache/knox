@@ -33,6 +33,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 
 /**
@@ -40,10 +41,8 @@ import org.apache.hadoop.gateway.security.PrimaryPrincipal;
  */
 public abstract class AbstractPreAuthFederationFilter implements Filter {
 
-  private static final String VALIDATION_METHOD_PARAM = "preauth.validation.method";
-  private static final String IP_VALIDATION_METHOD_VALUE = "preauth.ip.validation";
-  private static final String IP_ADDRESSES_PARAM = "preauth.ip.addresses";
   private PreAuthValidator validator = null;
+  private FilterConfig filterConfig;
 
   /**
    * 
@@ -54,18 +53,13 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    String validationMethod = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);
-    if (validationMethod != null) {
-      if (IP_VALIDATION_METHOD_VALUE.equals(validationMethod)) {
-        validator = new IPValidator(filterConfig.getInitParameter(IP_ADDRESSES_PARAM));
-      }
-    }
-    else {
-      validator = new DefaultValidator();
-      // TODO: log the fact that there is no verification going on to validate
-      // who is asserting the identity with the a header. Without some validation
-      // we are assuming the network security is the primary protection method.
-    }
+    this.filterConfig = filterConfig;
+    validator = PreAuthService.getValidator(filterConfig);
+  }
+
+  @VisibleForTesting
+  public PreAuthValidator getValidator() {
+    return validator;
   }
 
   @Override
@@ -74,7 +68,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)request;
     String principal = getPrimaryPrincipal(httpRequest);
     if (principal != null) {
-      if (isValid(httpRequest)) { 
+      if (isValid(httpRequest)) {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         addGroupPrincipals(httpRequest, subject.getPrincipals());
@@ -95,7 +89,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
    */
   private boolean isValid(HttpServletRequest httpRequest) {
     try {
-      return validator.validate(httpRequest);
+      return validator.validate(httpRequest, filterConfig);
     } catch (PreAuthValidationException e) {
       // TODO log exception
       return false;
@@ -142,15 +136,4 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
    * @param principals
    */
   abstract protected void addGroupPrincipals(HttpServletRequest request, Set<Principal> principals);
-  
-  class DefaultValidator implements PreAuthValidator {
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.preauth.filter.PreAuthValidator#validate(java.lang.String, java.lang.String)
-     */
-    @Override
-    public boolean validate(HttpServletRequest request)
-        throws PreAuthValidationException {
-      return true;
-    }
-  }
 }

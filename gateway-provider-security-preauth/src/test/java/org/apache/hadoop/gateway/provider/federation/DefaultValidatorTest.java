@@ -15,28 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.preauth.filter;
+package org.apache.hadoop.gateway.provider.federation;
+
+import junit.framework.TestCase;
+import org.apache.hadoop.gateway.preauth.filter.DefaultValidator;
+import org.junit.Test;
+
+import static org.mockito.Mockito.mock;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
-/**
- *
- */
-public interface PreAuthValidator {
-  /**
-   * @param httpRequest
-   * @param filterConfig
-   * @return true if validated, otherwise false
-   * @throws PreAuthValidationException
-   */
-  public abstract boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
-      PreAuthValidationException;
+public class DefaultValidatorTest extends TestCase {
+  @Test
+  public void testDefault() throws Exception {
+    final FilterConfig filterConfig = mock(FilterConfig.class);
+    final HttpServletRequest request = mock(HttpServletRequest.class);
+    DefaultValidator dv = new DefaultValidator();
+    assertTrue(dv.validate(request, filterConfig));
+  }
 
-  /**
-   * Return unique validator name
-   *
-   * @return name of validator
-   */
-  public abstract String getName();
+  @Test
+  public void testName() {
+    DefaultValidator dv = new DefaultValidator();
+    assertEquals(dv.getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
+  }
 }

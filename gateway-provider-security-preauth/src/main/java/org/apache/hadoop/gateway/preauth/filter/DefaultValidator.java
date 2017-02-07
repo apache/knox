@@ -21,22 +21,36 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- *
+ * @since 0.12
+ * This class implements the default Validator where really no validation is performed.
+ * TODO: log the fact that there is no verification going on to validate
+ * +  who is asserting the identity with the a header. Without some validation
+ * +  we are assuming the network security is the primary protection method.
  */
-public interface PreAuthValidator {
+public class DefaultValidator implements PreAuthValidator {
+  public static final String DEFAULT_VALIDATION_METHOD_VALUE = "preauth.default.validation";
+
+  public DefaultValidator() {
+  }
+
   /**
    * @param httpRequest
    * @param filterConfig
    * @return true if validated, otherwise false
    * @throws PreAuthValidationException
    */
-  public abstract boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
-      PreAuthValidationException;
+  @Override
+  public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws PreAuthValidationException {
+    return true;
+  }
 
   /**
    * Return unique validator name
    *
    * @return name of validator
    */
-  public abstract String getName();
+  @Override
+  public String getName() {
+    return DEFAULT_VALIDATION_METHOD_VALUE;
+  }
 }
