@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
-import org.apache.commons.logging.Log;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
@@ -40,12 +39,13 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.text.ParseException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JWTFederationFilter implements Filter {
+public class JWTFederationFilter extends AbstractJWTFilter {
 
+  public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
   private static final String BEARER = "Bearer ";
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private JWTokenAuthority authority = null;
@@ -54,6 +54,12 @@ public class JWTFederationFilter implements Filter {
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+
+    // expected audiences or null
+    String expectedAudiences = filterConfig.getInitParameter(KNOX_TOKEN_AUDIENCES);
+    if (expectedAudiences != null) {
+      audiences = parseExpectedAudiences(expectedAudiences);
+    }
   }
 
   public void destroy() {
@@ -66,12 +72,7 @@ public class JWTFederationFilter implements Filter {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
       JWTToken token;
-//      try {
-        token = new JWTToken(wireToken);
-//        token = JWTToken.parseToken(wireToken);
-//      } catch (ParseException e) {
-//        throw new ServletException("ParseException encountered while processing the JWT token: ", e);
-//      }
+      token = new JWTToken(wireToken);
       boolean verified = false;
       try {
         verified = authority.verifyToken(token);
@@ -79,12 +80,26 @@ public class JWTFederationFilter implements Filter {
         log.unableToVerifyToken(e);
       }
       if (verified) {
-        // TODO: validate expiration
-        // confirm that audience matches intended target - which for this filter must be KNOXSSO
+        // confirm that issue matches intended target - which for this filter must be KNOXSSO
         if (token.getIssuer().equals("KNOXSSO")) {
-          // TODO: verify that the user requesting access to the service/resource is authorized for it - need scopes?
-          Subject subject = createSubjectFromToken(token);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+          // if there is no expiration data then the lifecycle is tied entirely to
+          // the cookie validity - otherwise ensure that the current time is before
+          // the designated expiration time
+          if (tokenIsStillValid(token)) {
+            boolean audValid = validateAudiences(token);
+            if (audValid) {
+              Subject subject = createSubjectFromToken(token);
+              continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+            }
+            else {
+              log.failedToValidateAudience();
+              ((HttpServletResponse) response).sendError(400, "Bad request: missing required token audience");
+            }
+          }
+          else {
+            log.tokenHasExpired();
+            ((HttpServletResponse) response).sendError(400, "Bad request: token has expired");
+          }
         }
         else {
           ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -98,7 +113,6 @@ public class JWTFederationFilter implements Filter {
     }
     else {
       // no token provided in header
-      // TODO: may have to check cookie and url as well before sending error
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
       return; //break filter chain
     }

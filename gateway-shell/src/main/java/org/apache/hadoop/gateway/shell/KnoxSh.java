@@ -45,8 +45,8 @@ import org.apache.hadoop.gateway.util.JsonUtils;
  */
 public class KnoxSh {
 
-  private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
-  static final private String COMMANDS =
+  private static final String USAGE_PREFIX = "KnoxSh {cmd} [options]";
+  final static private String COMMANDS =
       "   [--help]\n" +
       "   [" + KnoxInit.USAGE + "]\n" +
       "   [" + KnoxDestroy.USAGE + "]\n" +
@@ -160,7 +160,7 @@ public class KnoxSh {
 
   private class KnoxInit extends Command {
 
-    public static final String USAGE = "init";
+    public static final String USAGE = "init --gateway topology-url";
     public static final String DESC = "Initializes a Knox token session.";
 
     @Override
@@ -200,7 +200,7 @@ public class KnoxSh {
         Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
       }
       catch(HadoopException he) {
-        System.out.println("Failuire to acquire token. Please verify your credentials and Knox URL and try again.");
+        System.out.println("Failure to acquire token. Please verify your credentials and Knox URL and try again.");
       }
       session.shutdown();
     }
@@ -214,8 +214,8 @@ public class KnoxSh {
 
   private class KnoxDestroy extends Command {
 
-    public static final String USAGE = "version";
-    public static final String DESC = "Displays Knox version information.";
+    public static final String USAGE = "destroy";
+    public static final String DESC = "Destroys an Knox token session.";
 
     @Override
     public void execute() throws Exception {
@@ -232,18 +232,23 @@ public class KnoxSh {
 
   private class KnoxList extends Command {
 
-    public static final String USAGE = "version";
-    public static final String DESC = "Displays Knox version information.";
+    public static final String USAGE = "list";
+    public static final String DESC = "Displays Knox token details.";
 
     @Override
     public void execute() throws Exception {
-      String tokenfile = readFile(
-          System.getProperty("user.home") +
-          File.separator + ".knoxtokencache");
-
-      if (tokenfile != null) {
-        Map<String, String> json = JsonUtils.getMapFromJsonString(tokenfile);
-        displayTokenDetails(json);
+      String tokenFilePath = System.getProperty("user.home") +
+          File.separator + ".knoxtokencache";
+      if (new File(tokenFilePath).exists()) {
+        String tokenfile = readFile(tokenFilePath);
+  
+        if (tokenfile != null) {
+          Map<String, String> json = JsonUtils.getMapFromJsonString(tokenfile);
+          displayTokenDetails(json);
+        }
+      }
+      else {
+        System.out.println("Knox token cache does not exist. Please login with init.");
       }
     }
 

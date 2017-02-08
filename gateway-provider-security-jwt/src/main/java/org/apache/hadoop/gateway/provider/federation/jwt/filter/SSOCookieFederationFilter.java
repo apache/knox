@@ -21,10 +21,8 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -47,8 +45,8 @@ import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
-public class SSOCookieFederationFilter implements Filter {
-  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
+public class SSOCookieFederationFilter extends AbstractJWTFilter implements Filter {
+  static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   public static final String SSO_COOKIE_NAME = "sso.cookie.name";
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
@@ -57,7 +55,6 @@ public class SSOCookieFederationFilter implements Filter {
 
   protected JWTokenAuthority authority = null;
   private String cookieName = null;
-  private List<String> audiences = null;
   private String authenticationProviderUrl = null;
 
   @Override
@@ -90,27 +87,10 @@ public class SSOCookieFederationFilter implements Filter {
     }
   }
 
-  /**
-   * @param expectedAudiences
-   * @return
-   */
-  private List<String> parseExpectedAudiences(String expectedAudiences) {
-    ArrayList<String> audList = null;
-    // setup the list of valid audiences for token validation
-    if (expectedAudiences != null) {
-      // parse into the list
-      String[] audArray = expectedAudiences.split(",");
-      audList = new ArrayList<String>();
-      for (String a : audArray) {
-        audList.add(a);
-      }
-    }
-    return audList;
-  }
-
   public void destroy() {
   }
 
+  @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
       throws IOException, ServletException {
     String wireToken = null;
@@ -135,11 +115,7 @@ public class SSOCookieFederationFilter implements Filter {
       try {
         verified = authority.verifyToken(token);
         if (verified) {
-          Date expires = token.getExpiresDate();
-          // if there is no expiration data then the lifecycle is tied entirely to
-          // the cookie validity - otherwise ensure that the current time is before
-          // the designated expiration time
-          if (expires == null || expires != null && new Date().before(expires)) {
+          if (tokenIsStillValid(token)) {
             boolean audValid = validateAudiences(token);
             if (audValid) {
               Subject subject = createSubjectFromToken(token);
@@ -209,39 +185,6 @@ public class SSOCookieFederationFilter implements Filter {
   private String getOriginalQueryString(HttpServletRequest request) {
     String originalQueryString = request.getQueryString();
     return (originalQueryString == null) ? "" : "?" + originalQueryString;
-  }
-
-  /**
-   * Validate whether any of the accepted audience claims is present in the
-   * issued token claims list for audience. Override this method in subclasses
-   * in order to customize the audience validation behavior.
-   *
-   * @param jwtToken
-   *          the JWT token where the allowed audiences will be found
-   * @return true if an expected audience is present, otherwise false
-   */
-  protected boolean validateAudiences(JWTToken jwtToken) {
-    boolean valid = false;
-    
-    String[] tokenAudienceList = jwtToken.getAudienceClaims();
-    // if there were no expected audiences configured then just
-    // consider any audience acceptable
-    if (audiences == null) {
-      valid = true;
-    } else {
-      // if any of the configured audiences is found then consider it
-      // acceptable
-      if (tokenAudienceList != null) {
-        for (String aud : tokenAudienceList) {
-          if (audiences.contains(aud)) {
-            log.jwtAudienceValidated();
-            valid = true;
-            break;
-          }
-        }
-      }
-    }
-    return valid;
   }
 
   private void sendUnauthorized(ServletResponse response) throws IOException {
