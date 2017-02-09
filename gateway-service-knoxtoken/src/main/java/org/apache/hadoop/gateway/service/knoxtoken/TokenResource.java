@@ -118,23 +118,25 @@ public class TokenResource {
         token = ts.issueToken(p, aud, "RS256", expires);
       }
 
-      String accessToken = token.toString();
-
-      HashMap<String, Object> map = new HashMap<String, Object>();
-      // TODO: populate map from JWT authorization code
-      map.put(ACCESS_TOKEN, accessToken);
-      map.put(TOKEN_TYPE, BEARER);
-      map.put(EXPIRES_IN, expires);
-      if (tokenTargetUrl != null) {
-        map.put(TARGET_URL, tokenTargetUrl);
+      if (token != null) {
+        String accessToken = token.toString();
+  
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put(ACCESS_TOKEN, accessToken);
+        map.put(TOKEN_TYPE, BEARER);
+        map.put(EXPIRES_IN, expires);
+        if (tokenTargetUrl != null) {
+          map.put(TARGET_URL, tokenTargetUrl);
+        }
+  
+        String jsonResponse = JsonUtils.renderAsJsonString(map);
+        
+        response.getWriter().write(jsonResponse);
+        return Response.ok().build();
       }
-
-      String jsonResponse = JsonUtils.renderAsJsonString(map);
-      
-      response.getWriter().write(jsonResponse);
-      //KNOX-685: response.getWriter().flush();
-//      return response; // break filter chain
-      return Response.ok().build();
+      else {
+        return Response.serverError().build();
+      }
 
     }
     catch (TokenServiceException | IOException e) {
