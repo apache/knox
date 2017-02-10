@@ -50,20 +50,10 @@
             <directory>..</directory>
             <outputDirectory></outputDirectory>
             <includes>
-                <include>CHANGES</include>
-                <include>ISSUES</include>
                 <include>LICENSE</include>
                 <include>NOTICE</include>
-                <include>README</include>
             </includes>
             <fileMode>0444</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/services/</directory>
-            <outputDirectory>data/services</outputDirectory>
-            <includes>
-                <include>**/*</include>
-            </includes>
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}/samples/</directory>
@@ -72,65 +62,13 @@
                 <include>**/*</include>
             </includes>
         </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/applications</directory>
-            <outputDirectory>data/applications</outputDirectory>
-            <includes>
-                <include>**/*</include>
-            </includes>
-        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>dep</outputDirectory>
-            <!--
-            <useTransitiveFiltering>true</useTransitiveFiltering>
-            -->
-            <scope>runtime</scope>
-            <excludes>
-                <exclude>${gateway-group}:gateway-*</exclude>
-                <exclude>${gateway-group}:hadoop-examples</exclude>
-            </excludes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>lib</outputDirectory>
-            <includes>
-                <include>${gateway-group}:gateway-*</include>
-                <!-- include>${gateway-group}:gateway-release-*</include -->
-            </includes>
-            <excludes>
-                <exclude>${gateway-group}:gateway-util-launcher</exclude>
-                <exclude>${gateway-group}:gateway-server-launcher</exclude>
-                <exclude>${gateway-group}:gateway-shell-launcher</exclude>
-                <exclude>${gateway-group}:gateway-demo-ldap-launcher</exclude>
-            </excludes>
-        </dependencySet>
-        <dependencySet>
             <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>knoxcli.jar</outputFileNameMapping>
+            <outputFileNameMapping>knoxshell.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:knox-cli-launcher</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>gateway.jar</outputFileNameMapping>
-            <includes>
-                <include>${gateway-group}:gateway-server-launcher</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>shell.jar</outputFileNameMapping>
-            <includes>
-                <include>${gateway-group}:gateway-shell-launcher</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>bin</outputDirectory>
-            <outputFileNameMapping>ldap.jar</outputFileNameMapping>
-            <includes>
-                <include>${gateway-group}:gateway-demo-ldap-launcher</include>
+                <include>${gateway-group}:gateway-shell-release</include>
             </includes>
         </dependencySet>
         <dependencySet>

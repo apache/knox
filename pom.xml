@@ -91,6 +91,8 @@
         <module>gateway-service-test</module>
         <module>gateway-test-release</module>
         <module>gateway-applications</module>
+        <module>gateway-shell-samples</module>
+        <module>gateway-shell-release</module>
     </modules>
 
     <properties>
@@ -669,6 +671,16 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-applications</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-shell-release</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-shell-samples</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
 

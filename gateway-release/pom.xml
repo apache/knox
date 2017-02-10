@@ -130,6 +130,14 @@
                                             <outputDirectory>${project.build.directory}</outputDirectory>
                                             <includes>applications/**/*</includes>
                                         </artifactItem>
+                                        <artifactItem>
+                                            <groupId>${gateway-group}</groupId>
+                                            <artifactId>gateway-shell-samples</artifactId>
+                                            <type>jar</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}</outputDirectory>
+                                            <includes>samples/**/*</includes>
+                                        </artifactItem>
                                     </artifactItems>
                                 </configuration>
                             </execution>
@@ -308,6 +316,10 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-applications</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-shell-samples</artifactId>
         </dependency>
 
         <dependency>
