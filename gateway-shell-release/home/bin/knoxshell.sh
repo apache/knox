@@ -57,14 +57,46 @@ APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
 function main {
    #printf "Starting $APP_LABEL \n"
    #printf "$@"
+   case "$1" in
+      init)
+        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh init --gateway $@ || exit 1
+         ;;
+      list)
+        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh list $@ || exit 1
+         ;;
+      destroy)
+        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh destroy $@ || exit 1
+         ;;
+      help)
+         printHelp
+         ;;
+      *)
+          $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $@ || exit 1
+         ;;
+   esac
    
-   $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $@ || exit 1
-
    return 0
 }
 
 function printHelp {
-   $JAVA -jar $APP_JAR -help
+   echo ""
+   echo "Apache Knox Client Shell"
+   echo "The client shell facility provide a CLI for establishing and managing Apache Knox Sessions"
+   echo "and executing the Apache Knox groovy-based DSL scripts. It may also be used to enter an"
+   echo "interactive shell where groovy-based DSL and groovy code may be entered and executed in realtime."
+   echo ""
+   echo "knoxshell usage: "
+   echo "       knoxshell.sh [[init|list|destroy|help] | [<script-file-name>]]"
+   echo "       ----------------------------------------------------------"
+   echo "       init <knox-gateway-url> - requests a session from the knox token service at the url"
+   echo "            example: knoxshell.sh init https://localhost:8443/gateway/sandbox"
+   echo "       list - lists the details of the cached knox session token"
+   echo "            example: knoxshell.sh list"
+   echo "       destroy - removes the cached knox session token"
+   echo "            example: knoxshell.sh destroy"
+   echo "       <script-file-name> - executes the groovy script file"
+   echo "            example: knoxshell.sh ~/bin/ls.groovy"
+   echo ""
    return 0
 }
 
