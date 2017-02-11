@@ -59,13 +59,18 @@ function main {
    #printf "$@"
    case "$1" in
       init)
-        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh init --gateway $@ || exit 1
+        if [ "$#" -ne 2 ]; then
+            echo "Illegal number of parameters."
+            printHelp
+        else
+          $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh init --gateway $2 || exit 1
+        fi
          ;;
       list)
-        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh list $@ || exit 1
+        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh list || exit 1
          ;;
       destroy)
-        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh destroy $@ || exit 1
+        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh destroy || exit 1
          ;;
       help)
          printHelp
@@ -86,16 +91,16 @@ function printHelp {
    echo "interactive shell where groovy-based DSL and groovy code may be entered and executed in realtime."
    echo ""
    echo "knoxshell usage: "
-   echo "       knoxshell.sh [[init|list|destroy|help] | [<script-file-name>]]"
-   echo "       ----------------------------------------------------------"
-   echo "       init <knox-gateway-url> - requests a session from the knox token service at the url"
-   echo "            example: knoxshell.sh init https://localhost:8443/gateway/sandbox"
-   echo "       list - lists the details of the cached knox session token"
-   echo "            example: knoxshell.sh list"
-   echo "       destroy - removes the cached knox session token"
-   echo "            example: knoxshell.sh destroy"
-   echo "       <script-file-name> - executes the groovy script file"
-   echo "            example: knoxshell.sh ~/bin/ls.groovy"
+   echo "   knoxshell.sh [[init <topology-url>|list|destroy|help] | [<script-file-name>]]"
+   echo "   ----------------------------------------------------------"
+   echo "   init <knox-gateway-url> - requests a session from the knox token service at the url"
+   echo "        example: knoxshell.sh init https://localhost:8443/gateway/sandbox"
+   echo "   list - lists the details of the cached knox session token"
+   echo "        example: knoxshell.sh list"
+   echo "   destroy - removes the cached knox session token"
+   echo "        example: knoxshell.sh destroy"
+   echo "   <script-file-name> - executes the groovy script file"
+   echo "        example: knoxshell.sh ~/bin/ls.groovy"
    echo ""
    return 0
 }
