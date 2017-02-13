@@ -28,12 +28,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
@@ -70,15 +66,8 @@ public class HaDescriptorManager implements HaDescriptorConstants {
             }
          }
 
-         TransformerFactory transformerFactory = TransformerFactory.newInstance();
-         transformerFactory.setAttribute("indent-number", 2);
-         Transformer transformer = transformerFactory.newTransformer();
-         transformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
-         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-         StreamResult result = new StreamResult(writer);
-         DOMSource source = new DOMSource(document);
-         transformer.transform(source, result);
-
+         Transformer t = XmlUtils.getTransformer( true, true, 2, false );
+         XmlUtils.writeXml( document, writer, t );
       } catch (ParserConfigurationException e) {
          LOG.failedToWriteHaDescriptor(e);
          throw new IOException(e);

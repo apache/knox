@@ -50,7 +50,6 @@ public class DeploymentFactoryTest {
     EnterpriseArchive archive = DeploymentFactory.createDeployment( config, topology );
 
     Document xml = XmlUtils.readXml( archive.get( "/META-INF/topology.xml" ).getAsset().openStream() );
-    //TestUtils.dumpXml( xml );
     assertThat( xml, hasXPath( "/topology/gateway" ) );
     assertThat( xml, hasXPath( "/topology/name", equalTo( "test-topology" ) ) );
   }

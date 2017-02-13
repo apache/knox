@@ -37,23 +37,14 @@ import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBa
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.xmlmatchers.namespace.SimpleNamespaceContext;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -770,27 +761,5 @@ public class HtmlFilterReaderBaseTest {
       return value;
     }
   }
-
-  public void dump( Node node, Writer writer ) throws TransformerException {
-    Transformer t = TransformerFactory.newInstance().newTransformer();
-    t.setOutputProperty( OutputKeys.METHOD, "xml" );
-    t.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
-    t.setOutputProperty( OutputKeys.INDENT, "yes" );
-    t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-    t.transform( new DOMSource( node ), new StreamResult( writer ) );
-  }
-
-  public void dump( Node node, OutputStream stream ) throws TransformerException {
-    Transformer t = TransformerFactory.newInstance().newTransformer();
-    t.setOutputProperty( OutputKeys.METHOD, "xml" );
-    t.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
-    t.setOutputProperty( OutputKeys.INDENT, "yes" );
-    t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-    t.transform( new DOMSource( node ), new StreamResult( stream ) );
-  }
-
-//  public void dump( Node node ) throws TransformerException {
-//    dump( node, System.out );
-//  }
 
 }

@@ -49,11 +49,8 @@ import javax.xml.stream.events.Namespace;
 import javax.xml.stream.events.StartDocument;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
@@ -636,17 +633,11 @@ public abstract class XmlFilterReader extends Reader {
 
   private static final void writeBufferedElement( Node node, Writer writer ) throws IOException {
     try {
-      getTransformer().transform( new DOMSource( node ), new StreamResult( writer ) );
+      Transformer t = XmlUtils.getTransformer( false, false, 0, true );
+      t.transform( new DOMSource( node ), new StreamResult( writer ) );
     } catch( TransformerException e ) {
       throw new IOException( e );
     }
-  }
-
-  private static final Transformer getTransformer() throws TransformerConfigurationException {
-    TransformerFactory tf = TransformerFactory.newInstance();
-    Transformer t = tf.newTransformer();
-    t.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
-    return t;
   }
 
 }

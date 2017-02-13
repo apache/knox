@@ -19,7 +19,6 @@ package org.apache.hadoop.gateway.deploy;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -29,12 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -262,7 +256,6 @@ public class DeploymentFactoryFuncTest {
 //    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
     Document web = XmlUtils.readXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
-    //TestUtils.dumpXml( web );
     assertThat( web, hasXPath( "/web-app" ) );
     assertThat( web, hasXPath( "/web-app/servlet" ) );
     assertThat( web, hasXPath( "/web-app/servlet/servlet-name" ) );
@@ -657,16 +650,6 @@ public class DeploymentFactoryFuncTest {
       }
     }
 
-  }
-
-  private void dump( Document document ) throws TransformerException {
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-    StreamResult result = new StreamResult( new StringWriter() );
-    DOMSource source = new DOMSource( document );
-    transformer.transform( source, result );
-    String xmlString = result.getWriter().toString();
-    System.out.println( xmlString );
   }
 
   private Node node( Node scope, String expression ) throws XPathExpressionException {

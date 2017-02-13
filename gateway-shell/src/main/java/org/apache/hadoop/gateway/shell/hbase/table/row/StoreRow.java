@@ -31,15 +31,12 @@ import org.apache.http.entity.StringEntity;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import javax.xml.transform.Transformer;
 
 public class StoreRow {
 
@@ -95,14 +92,9 @@ public class StoreRow {
             row.appendChild( cell );
           }
 
-          TransformerFactory transformerFactory = TransformerFactory.newInstance();
-          Transformer transformer = transformerFactory.newTransformer();
-          transformer.setOutputProperty( OutputKeys.STANDALONE, "yes" );
-
           StringWriter writer = new StringWriter();
-          StreamResult result = new StreamResult( writer );
-          DOMSource source = new DOMSource( document );
-          transformer.transform( source, result );
+          Transformer t = XmlUtils.getTransformer( true, false, 0, false );
+          XmlUtils.writeXml( document, writer, t );
 
           URIBuilder uri = uri( HBase.SERVICE_PATH, "/", tableName, "/false-row-key" );
           HttpPost request = new HttpPost( uri.build() );

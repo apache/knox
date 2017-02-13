@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -519,7 +520,8 @@ public class GatewayServer {
           originalRoot.appendChild( importedNode );
         }
       }
-      XmlUtils.writeXml( webXmlDoc, webXmlFile );
+      
+      XmlUtils.writeXml( webXmlDoc, new FileWriter(webXmlFile) );
     }
   }
 

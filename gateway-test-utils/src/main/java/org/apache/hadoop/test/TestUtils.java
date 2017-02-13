@@ -33,12 +33,6 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -50,7 +44,6 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
-import org.w3c.dom.Document;
 
 public class TestUtils {
 
@@ -111,16 +104,6 @@ public class TestUtils {
     File tempDir = new File( targetDir, prefix + UUID.randomUUID() );
     FileUtils.forceMkdir( tempDir );
     return tempDir;
-  }
-
-  public static void dumpXml( Document document ) throws TransformerException {
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-    StreamResult result = new StreamResult( new StringWriter() );
-    DOMSource source = new DOMSource( document );
-    transformer.transform( source, result );
-    String xmlString = result.getWriter().toString();
-    System.out.println( xmlString );
   }
 
   public static void LOG_ENTER() {

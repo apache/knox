@@ -18,7 +18,6 @@ package org.apache.hadoop.gateway.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
@@ -59,22 +58,38 @@ public class XmlUtils {
   }
 
   public static void writeXml( Document document, Writer writer ) throws TransformerException {
-    TransformerFactory f = TransformerFactory.newInstance();
-//    if( f.getClass().getPackage().getName().equals( "com.sun.org.apache.xalan.internal.xsltc.trax" ) ) {
-      f.setAttribute( "indent-number", 4 );
-//    }
-    Transformer t = f.newTransformer();
-    t.setOutputProperty( OutputKeys.INDENT, "yes" );
-    t.setOutputProperty( "{xml.apache.org/xslt}indent-amount", "4" );
+    Transformer t = XmlUtils.getTransformer( false, true, 4, false );
+    writeXml( document, writer, t );
+  }
+  
+  public static void writeXml( Document document, Writer writer, Transformer transformer ) throws TransformerException {
     DOMSource s = new DOMSource( document );
     StreamResult r = new StreamResult( writer );
-    t.transform( s, r );
+    transformer.transform( s, r );
   }
-
-  public static void writeXml( Document document, File file ) throws TransformerException, IOException {
-    writeXml( document, new FileWriter( file ) );
+  
+  public static Transformer getTransformer( boolean standalone, boolean indent, int indentNumber,
+                                            boolean omitXmlDeclaration) throws TransformerException {
+    TransformerFactory f = TransformerFactory.newInstance();
+    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    if ( indent ) {
+      f.setAttribute( "indent-number", indentNumber );
+    }
+    
+    Transformer t = f.newTransformer();
+    if ( standalone ) {
+      t.setOutputProperty( OutputKeys.STANDALONE, "yes" );
+    }
+    if ( indent ) {
+      t.setOutputProperty( OutputKeys.INDENT, "yes" );
+      t.setOutputProperty( "{xml.apache.org/xslt}indent-amount", "" + indentNumber );
+    }
+    if ( omitXmlDeclaration ) {
+      t.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+    }
+    
+    return t;
   }
-
 
   public static Document createDocument() throws ParserConfigurationException {
     return createDocument(true);
