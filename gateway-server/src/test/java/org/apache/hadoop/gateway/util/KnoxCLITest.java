@@ -444,7 +444,7 @@ public class KnoxCLITest {
 
     outContent.reset();
     rc = cli.run(args);
-    assertThat( rc, not(is(0)) );
+    assertThat( rc, is(0 ) );
     assertThat( outContent.toString(), containsString( "Master secret is already present on disk." ) );
 
     outContent.reset();

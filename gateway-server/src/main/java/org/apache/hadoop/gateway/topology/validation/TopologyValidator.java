@@ -57,7 +57,7 @@ public class TopologyValidator {
     try {
       SchemaFactory fact = SchemaFactory
           .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      URL schemaUrl = ClassLoader.getSystemResource( "conf/topology-v1.xsd" );
+      URL schemaUrl = getClass().getResource( "/conf/topology-v1.xsd" );
       Schema s = fact.newSchema( schemaUrl );
       Validator validator = s.newValidator();
       final List<SAXParseException> exceptions = new LinkedList<>();

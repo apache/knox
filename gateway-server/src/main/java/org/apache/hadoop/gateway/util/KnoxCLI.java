@@ -98,7 +98,6 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
       "   [" + RedeployCommand.USAGE + "]\n" +
-      "   [" + RedeployCommand.USAGE + "]\n" +
       "   [" + ListTopologiesCommand.USAGE + "]\n" +
       "   [" + ValidateTopologyCommand.USAGE + "]\n" +
       "   [" + LDAPAuthCommand.USAGE + "]\n" +
@@ -142,7 +141,7 @@ public class KnoxCLI extends Configured implements Tool {
       if (command != null && command.validate()) {
         initializeServices( command instanceof MasterCreateCommand );
         command.execute();
-      } else {
+      } else if (!(command instanceof MasterCreateCommand)){
         out.println("ERROR: Invalid Command" + "\n" + "Unrecognized option:" +
             args[0] + "\n" +
             "A fatal exception has occurred. Program will exit.");
