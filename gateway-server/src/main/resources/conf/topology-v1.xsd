@@ -57,6 +57,7 @@ limitations under the License.
                     <h:complexType>
                         <h:sequence>
                             <h:element name="role" type="h:string" minOccurs="1" maxOccurs="1"/>
+                            <h:element name="version" type="h:string" minOccurs="0" maxOccurs="1"/>
                             <h:element name="url" type="h:string" minOccurs="0" maxOccurs="unbounded" />
                             <h:element name="param" minOccurs="0" maxOccurs="unbounded">
                                 <h:complexType>
