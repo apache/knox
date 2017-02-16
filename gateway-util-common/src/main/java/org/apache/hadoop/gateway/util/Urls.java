@@ -18,8 +18,10 @@
 package org.apache.hadoop.gateway.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,9 +83,10 @@ public class Urls {
    * @return the extracted domain name
    * @throws URISyntaxException
    */
-  public static String getDomainName(String url, String domainSuffix) throws URISyntaxException {
-    URI uri = new URI(url);
-    String domain = uri.getHost();
+  public static String getDomainName(String url, String domainSuffix) throws MalformedURLException {
+
+    final URL originalUrl = new URL(url);
+    final String domain = originalUrl.getHost();
 
     // if the hostname ends with the domainSuffix the use the domainSuffix as
     // the cookie domain

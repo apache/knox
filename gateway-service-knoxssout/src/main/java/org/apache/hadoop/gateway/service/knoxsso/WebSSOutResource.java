@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.gateway.service.knoxsso;
 
+import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.util.Urls;
+
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
@@ -28,14 +31,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.util.Urls;
+import java.net.MalformedURLException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.ok;
-
-import java.net.URISyntaxException;
 
 @Path( WebSSOutResource.RESOURCE_PATH )
 public class WebSSOutResource {
@@ -43,7 +43,7 @@ public class WebSSOutResource {
   static final String RESOURCE_PATH = "/api/v1/webssout";
   static final String KNOXSSO_RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOutMessages log = MessagesFactory.get( KnoxSSOutMessages.class );
-  
+
   private String domainSuffix = null;
 
   @Context
@@ -88,7 +88,7 @@ public class WebSSOutResource {
     c.setPath("/");
     try {
       c.setDomain(Urls.getDomainName(request.getRequestURL().toString(), domainSuffix));
-    } catch (URISyntaxException e) {
+    } catch (MalformedURLException e) {
       log.problemWithCookieDomainUsingDefault();
       // we are probably not going to be able to
       // remove the cookie due to this error but it
@@ -96,7 +96,7 @@ public class WebSSOutResource {
       rc = false;
     }
     response.addCookie(c);
-    
+
     return rc;
   }
 }

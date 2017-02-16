@@ -55,6 +55,12 @@ public class UrlsTest {
 
     // ip addresses can not be wildcarded - may be a completely different domain
     Assert.assertEquals(Urls.getDomainName("http://127.0.0.1", null), null);
+
+    /* Make sure we handle encoded characters properly here */
+    Assert.assertTrue(Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui?limit=25&query=hive_table+where+name%3D%22table_1%22", null).equals(".local.com"));
+    /* Make sure we handle un-encoded characters safely */
+    Assert.assertTrue(Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui/?limit=25&query=\"table_1\"", null).equals(".local.com"));
+
   }
 
   @Test
