@@ -88,6 +88,12 @@ public class Urls {
     final URL originalUrl = new URL(url);
     final String domain = originalUrl.getHost();
 
+    // if the configured domainSuffix is '*' assume that it should be
+    // the default domain which should be the FQHN
+    if ("*".equals(domainSuffix)) {
+      return domain;
+    }
+
     // if the hostname ends with the domainSuffix the use the domainSuffix as
     // the cookie domain
     if (domainSuffix != null && domain.endsWith(domainSuffix)) {

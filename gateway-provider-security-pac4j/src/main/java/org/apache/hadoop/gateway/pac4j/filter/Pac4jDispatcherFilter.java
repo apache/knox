@@ -158,7 +158,7 @@ public class Pac4jDispatcherFilter implements Filter {
     requiresAuthenticationFilter.setClientName(clientName);
     requiresAuthenticationFilter.setConfig(config);
 
-    final String domainSuffix = context.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
+    final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
     ConfigSingleton.setConfig(config);
   }
