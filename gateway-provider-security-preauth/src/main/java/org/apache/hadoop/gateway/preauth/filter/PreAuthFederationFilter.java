@@ -22,6 +22,7 @@ import java.security.AccessController;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.List;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -37,7 +38,7 @@ import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 
 public class PreAuthFederationFilter implements Filter {
   private static final String CUSTOM_HEADER_PARAM = "preauth.customHeader";
-  private PreAuthValidator validator = null;
+  private List<PreAuthValidator> validators = null;
   private FilterConfig filterConfig;
   private String headerName = "SM_USER";
 
@@ -48,7 +49,7 @@ public class PreAuthFederationFilter implements Filter {
       headerName = customHeader;
     }
     this.filterConfig = filterConfig;
-    validator = PreAuthService.getValidator(filterConfig);
+    validators = PreAuthService.getValidators(filterConfig);
   }
 
   @Override
@@ -56,7 +57,7 @@ public class PreAuthFederationFilter implements Filter {
                        FilterChain chain) throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     if (httpRequest.getHeader(headerName) != null) {
-      if (isValid(httpRequest)) {
+      if (PreAuthService.validate(httpRequest, filterConfig, validators)) {
         // TODO: continue as subject
         chain.doFilter(request, response);
       } else {
@@ -65,18 +66,6 @@ public class PreAuthFederationFilter implements Filter {
       }
     } else {
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing Required Header for PreAuth SSO Federation");
-    }
-  }
-
-  /**
-   * @return
-   */
-  private boolean isValid(HttpServletRequest httpRequest) {
-    try {
-      return validator.validate(httpRequest, filterConfig);
-    } catch (PreAuthValidationException e) {
-      // TODO log exception
-      return false;
     }
   }
 

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -41,7 +42,7 @@ import org.apache.hadoop.gateway.security.PrimaryPrincipal;
  */
 public abstract class AbstractPreAuthFederationFilter implements Filter {
 
-  private PreAuthValidator validator = null;
+  private List<PreAuthValidator> validators = null;
   private FilterConfig filterConfig;
 
   /**
@@ -54,12 +55,12 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     this.filterConfig = filterConfig;
-    validator = PreAuthService.getValidator(filterConfig);
+    validators = PreAuthService.getValidators(filterConfig);
   }
 
   @VisibleForTesting
-  public PreAuthValidator getValidator() {
-    return validator;
+  public List<PreAuthValidator> getValidators() {
+    return validators;
   }
 
   @Override
@@ -68,7 +69,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)request;
     String principal = getPrimaryPrincipal(httpRequest);
     if (principal != null) {
-      if (isValid(httpRequest)) {
+      if (PreAuthService.validate(httpRequest, filterConfig, validators)) {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         addGroupPrincipals(httpRequest, subject.getPrincipals());
@@ -81,18 +82,6 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     } 
     else {
       ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing Required Header for PreAuth SSO Federation");
-    }
-  }
-
-  /**
-   * @return
-   */
-  private boolean isValid(HttpServletRequest httpRequest) {
-    try {
-      return validator.validate(httpRequest, filterConfig);
-    } catch (PreAuthValidationException e) {
-      // TODO log exception
-      return false;
     }
   }
 

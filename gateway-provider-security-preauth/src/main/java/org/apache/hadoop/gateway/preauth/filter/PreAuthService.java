@@ -22,6 +22,10 @@ import com.google.common.base.Strings;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Collections;
 import java.util.ServiceLoader;
@@ -62,19 +66,41 @@ public class PreAuthService {
    *
    * @since 0.12
    * @param filterConfig
-   * @return PreAuthValidator
+   * @return List<PreAuthValidator>
    * @throws ServletException
    */
-  public static PreAuthValidator getValidator(FilterConfig filterConfig) throws ServletException {
-    String validationMethod = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);
-    if (Strings.isNullOrEmpty(validationMethod)) {
-      validationMethod = DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE;
+  public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
+    String validationMethods = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);
+    List<PreAuthValidator> vList = new ArrayList<>();
+    if (Strings.isNullOrEmpty(validationMethods)) {
+      validationMethods = DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE;
     }
-    if (validatorMap.containsKey(validationMethod)) {
-      return validatorMap.get(validationMethod);
-    } else {
-      throw new ServletException(String.format("Unable to find validator with name '%s'", validationMethod));
+    Set<String> vMethodSet = new LinkedHashSet<>();
+    Collections.addAll(vMethodSet, validationMethods.trim().split("\\s*,\\s*"));
+    for (String vName : vMethodSet) {
+      if (validatorMap.containsKey(vName)) {
+        vList.add(validatorMap.get(vName));
+      } else {
+        throw new ServletException(String.format("Unable to find validator with name '%s'", validationMethods));
+      }
     }
+    return vList;
+  }
+
+  public static boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig, List<PreAuthValidator>
+      validators) {
+    try {
+      for (PreAuthValidator validator : validators) {
+        //Any one validator fails, it will fail the request. loginal AND behavior
+        if (!validator.validate(httpRequest, filterConfig)) {
+          return false;
+        }
+      }
+    } catch (PreAuthValidationException e) {
+      // TODO log exception
+      return false;
+    }
+    return true;
   }
 
 }

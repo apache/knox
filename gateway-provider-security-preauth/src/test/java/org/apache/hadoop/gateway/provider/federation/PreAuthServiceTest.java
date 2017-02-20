@@ -25,6 +25,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.mock;
@@ -50,9 +51,10 @@ public class PreAuthServiceTest extends TestCase {
     final FilterConfig filterConfig = mock(FilterConfig.class);
     when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn
         (DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
-    PreAuthValidator validator = PreAuthService.getValidator(filterConfig);
-    assertEquals(validator.getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
-    assertTrue(validator.validate(request, filterConfig));
+    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -63,11 +65,45 @@ public class PreAuthServiceTest extends TestCase {
     when(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).thenReturn("5.4.3.2,10.1.23.42");
     when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn(IPValidator
         .IP_VALIDATION_METHOD_VALUE);
-    PreAuthValidator validator = PreAuthService.getValidator(filterConfig);
-    assertEquals(validator.getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
-    assertTrue(validator.validate(request, filterConfig));
+    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
     //Negative testing
     when(request.getRemoteAddr()).thenReturn("10.10.22.33");
-    assertFalse(validator.validate(request, filterConfig));
+    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+  }
+
+  @Test
+  public void testMultipleValidatorsPositive() throws ServletException, PreAuthValidationException {
+    final HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getRemoteAddr()).thenReturn("10.1.23.42");
+    final FilterConfig filterConfig = mock(FilterConfig.class);
+    when(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).thenReturn("5.4.3.2,10.1.23.42");
+    when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn
+        (DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE + "," + IPValidator.IP_VALIDATION_METHOD_VALUE );
+    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    assertEquals(validators.size(), 2);
+    assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
+    assertEquals(validators.get(1).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
+
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    //Negative testing
+    when(request.getRemoteAddr()).thenReturn("10.10.22.33");
+    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+
+  }
+
+  @Test
+  public void testMultipleValidatorsNegative() throws ServletException, PreAuthValidationException {
+    final FilterConfig filterConfig = mock(FilterConfig.class);
+    when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn
+        (DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE + ",  NOT_EXISTED_VALIDATOR" );
+    try {
+      PreAuthService.getValidators(filterConfig);
+      fail("Should throw exception due to invalid validator");
+    } catch (Exception e) {
+      //Expected
+    }
   }
 }

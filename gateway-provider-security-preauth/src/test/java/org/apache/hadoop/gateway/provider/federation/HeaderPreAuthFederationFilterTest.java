@@ -25,6 +25,8 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.List;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,9 +40,10 @@ public class HeaderPreAuthFederationFilterTest extends TestCase {
     when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn
         (DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
     hpaff.init(filterConfig);
-    PreAuthValidator validator = hpaff.getValidator();
-    assertEquals(validator.getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
-    assertTrue(validator.validate(request, filterConfig));
+    List<PreAuthValidator> validators = hpaff.getValidators();
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -53,12 +56,13 @@ public class HeaderPreAuthFederationFilterTest extends TestCase {
     when(filterConfig.getInitParameter(PreAuthService.VALIDATION_METHOD_PARAM)).thenReturn(IPValidator
         .IP_VALIDATION_METHOD_VALUE);
     hpaff.init(filterConfig);
-    PreAuthValidator validator = hpaff.getValidator();
-    assertEquals(validator.getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
-    assertTrue(validator.validate(request, filterConfig));
+    List<PreAuthValidator> validators = hpaff.getValidators();
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
     //Negative testing
     when(request.getRemoteAddr()).thenReturn("10.10.22.33");
-    assertFalse(validator.validate(request, filterConfig));
+    assertFalse(PreAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -70,11 +74,12 @@ public class HeaderPreAuthFederationFilterTest extends TestCase {
         (DummyValidator.NAME);
 
     hpaff.init(filterConfig);
-    PreAuthValidator validator = hpaff.getValidator();
-    assertEquals(validator.getName(), DummyValidator.NAME);
+    List<PreAuthValidator> validators = hpaff.getValidators();
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), DummyValidator.NAME);
     //Positive test
     when(request.getHeader("CUSTOM_TOKEN")).thenReturn("HelloWorld");
-    assertTrue(validator.validate(request, filterConfig));
+    assertTrue(PreAuthService.validate(request, filterConfig, validators));
 
   }
 
@@ -87,11 +92,12 @@ public class HeaderPreAuthFederationFilterTest extends TestCase {
         (DummyValidator.NAME);
 
     hpaff.init(filterConfig);
-    PreAuthValidator validator = hpaff.getValidator();
-    assertEquals(validator.getName(), DummyValidator.NAME);
+    List<PreAuthValidator> validators = hpaff.getValidators();
+    assertEquals(validators.size(), 1);
+    assertEquals(validators.get(0).getName(), DummyValidator.NAME);
 
     when(request.getHeader("CUSTOM_TOKEN")).thenReturn("NOTHelloWorld");
-    assertFalse(validator.validate(request, filterConfig));
+    assertFalse(PreAuthService.validate(request, filterConfig, validators));
 
   }
 
