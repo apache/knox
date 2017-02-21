@@ -56,6 +56,9 @@ APP_DBG_OPTS=""
 # The app's PID
 APP_PID=0
 
+#dynamic library path
+APP_JAVA_LIB_PATH="-Djava.library.path=$APP_HOME_DIR/ext/native"
+
 # Start, stop, status, clean or setup
 APP_LAUNCH_CMD=$1
 
@@ -109,7 +112,7 @@ function appStart {
    checkEnv
 
    if [ "$GATEWAY_SERVER_RUN_IN_FOREGROUND" == true ]; then
-      $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE
+      $JAVA $APP_JAVA_LIB_PATH $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE
    else
       getPID
       if [ "$?" -eq "0" ]; then
@@ -121,7 +124,7 @@ function appStart {
    
       rm -f $APP_PID_FILE
 
-      nohup $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
+      nohup $JAVA $APP_JAVA_LIB_PATH $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
 
       getPID
       for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
