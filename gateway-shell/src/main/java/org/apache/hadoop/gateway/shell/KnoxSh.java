@@ -203,7 +203,9 @@ public class KnoxSh {
       catch(HadoopException he) {
         System.out.println("Failure to acquire token. Please verify your credentials and Knox URL and try again.");
       }
-      session.shutdown();
+      if ( session != null ) {
+        session.shutdown();
+      }
     }
 
     @Override

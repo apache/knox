@@ -32,6 +32,8 @@ public class Streamer extends Thread {
     this.setName( name );
     this.setPriority( priority );
     this.start();
+    this.input = input;
+    this.output = output;
   }
 
   @Override

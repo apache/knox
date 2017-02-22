@@ -135,7 +135,9 @@ public class BaseKeystoreService {
       }
       finally {
           try {
-            input.close();
+            if ( input != null ) {
+              input.close();
+            }
           } catch (IOException e) {
             LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
           }

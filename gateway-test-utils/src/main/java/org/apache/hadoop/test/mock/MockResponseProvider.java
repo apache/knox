@@ -44,7 +44,6 @@ public class MockResponseProvider {
   String contentType = null;
   String characterEncoding = null;
   Integer contentLength = null;
-  Locale locale = null;
 
   public MockResponseProvider status( int statusCode ) {
     this.statusCode = statusCode;
@@ -138,9 +137,6 @@ public class MockResponseProvider {
       for( Cookie cookie: cookies ) {
         response.addCookie( cookie );
       }
-    }
-    if( locale != null ) {
-      response.setLocale( locale );
     }
     if( contentType != null ) {
       response.setContentType( contentType );

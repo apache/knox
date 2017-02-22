@@ -18,7 +18,6 @@
 package org.apache.hadoop.gateway.audit.log4j.audit;
 
 import java.io.Serializable;
-import java.util.Set;
 
 import org.apache.hadoop.gateway.audit.api.AuditContext;
 
@@ -29,7 +28,6 @@ public class Log4jAuditContext implements Serializable, AuditContext {
   private String username;
   private String proxyUsername;
   private String systemUsername;
-  private Set<String> groups;
   private String targetServiceName;
   private String remoteIp;
   private String remoteHostname;
@@ -101,7 +99,6 @@ public class Log4jAuditContext implements Serializable, AuditContext {
     sb.append( "username=" ).append( username );
     sb.append( ", proxy_username=" ).append( proxyUsername );
     sb.append( ", system_username=" ).append( systemUsername );
-    sb.append( ", groups=" ).append( groups );
     sb.append( ", targetServiceName=" ).append( targetServiceName );
     sb.append( ", remoteIp=" ).append( remoteIp );
     sb.append( ", remoteHostname=" ).append( remoteHostname );

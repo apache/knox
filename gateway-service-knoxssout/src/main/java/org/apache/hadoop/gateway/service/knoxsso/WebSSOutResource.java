@@ -80,6 +80,10 @@ public class WebSSOutResource {
       return ok().entity("{ \"loggedOut\" : false }").build();
     }
   }
+  
+  public void setDomainSuffix(String domainSuffix) {
+    this.domainSuffix = domainSuffix;
+  }
 
   private boolean removeAuthenticationToken(HttpServletResponse response) {
     boolean rc = true;

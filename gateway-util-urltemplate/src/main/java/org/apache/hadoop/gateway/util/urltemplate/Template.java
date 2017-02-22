@@ -43,7 +43,6 @@ public class Template {
   private boolean hasQuery;
   private Fragment fragment;
   private boolean hasFragment;
-  private String image;
   private Integer hash;
 
   Template(
@@ -81,7 +80,6 @@ public class Template {
     this.hasQuery = hasQuery;
     this.fragment = fragment;
     this.hasFragment = hasFragment;
-    this.image = null;
     this.hash = null;
   }
 
@@ -363,21 +361,16 @@ public class Template {
   }
 
   private String toString( boolean encoded ) {
-    String s = image;
-    if( s == null ) {
-      StringBuilder b = new StringBuilder();
-      buildScheme( b, encoded );
-      buildAuthority( b, encoded );
-      buildPath( b, encoded );
-      buildQuery( b, encoded );
-      buildFragment( b , encoded);
-      s = b.toString();
-      //image = s;
-    }
-    return s;
+    StringBuilder b = new StringBuilder();
+    buildScheme( b, encoded );
+    buildAuthority( b, encoded );
+    buildPath( b, encoded );
+    buildQuery( b, encoded );
+    buildFragment( b , encoded);
+    return b.toString();
   }
 
- public String toEncodedString() {
+  public String toEncodedString() {
     return toString(true);
   }
 

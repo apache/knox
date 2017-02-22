@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -204,7 +205,7 @@ public class WebSSOResource {
       try {
         response.getOutputStream().close();
       } catch (IOException e) {
-        log.unableToCloseOutputStream(e.getMessage(), e.getStackTrace().toString());
+        log.unableToCloseOutputStream(e.getMessage(), Arrays.toString(e.getStackTrace()));
       }
     }
     catch (TokenServiceException e) {
@@ -291,7 +292,7 @@ public class WebSSOResource {
       log.addedJWTCookie();
     }
     catch(Exception e) {
-      log.unableAddCookieToResponse(e.getMessage(), e.getStackTrace().toString());
+      log.unableAddCookieToResponse(e.getMessage(), Arrays.toString(e.getStackTrace()));
       throw new WebApplicationException("Unable to add JWT cookie to response.");
     }
   }

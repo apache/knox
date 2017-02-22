@@ -211,17 +211,19 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
 
   private static String getConfigName( Method method ) {
     String methodName = method.getName();
-    StringBuilder name = new StringBuilder( methodName.length() );
-    if( methodName != null &&
-        methodName.length() > 3 &&
-        methodName.startsWith( "set" ) &&
-        Character.isUpperCase( methodName.charAt( 3 ) ) ) {
-      name.append( methodName.substring( 3 ) );
-      name.setCharAt( 0, Character.toLowerCase( name.charAt( 0 ) ) );
-    } else {
-      name.append( name );
+    if( methodName != null ) {
+        StringBuilder name = new StringBuilder( methodName.length() );
+        if( methodName.length() > 3 &&
+            methodName.startsWith( "set" ) &&
+            Character.isUpperCase( methodName.charAt( 3 ) ) ) {
+          name.append( methodName.substring( 3 ) );
+          name.setCharAt( 0, Character.toLowerCase( name.charAt( 0 ) ) );
+        } else {
+          name.append( name );
+        }
+        return name.toString();
     }
-    return name.toString();
+    return null;
   }
 
 }
