@@ -60,7 +60,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
 
   private UrlRewriteRulesDescriptor serviceRules;
 
-  private static ServiceDefinition loadServiceDefinition( Application application, File file ) throws JAXBException, FileNotFoundException {
+  private static ServiceDefinition loadServiceDefinition( Application application, File file ) throws JAXBException, FileNotFoundException, IOException {
     ServiceDefinition definition;
     if( !file.exists() ) {
       definition = new ServiceDefinition();
@@ -77,8 +77,9 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     } else {
       JAXBContext context = JAXBContext.newInstance( ServiceDefinition.class );
       Unmarshaller unmarshaller = context.createUnmarshaller();
-      FileInputStream inputStream = new FileInputStream( file );
-      definition = (ServiceDefinition) unmarshaller.unmarshal( inputStream );
+      try( FileInputStream inputStream = new FileInputStream( file ) ) {
+          definition = (ServiceDefinition) unmarshaller.unmarshal( inputStream );
+      }
     }
     return definition;
   }

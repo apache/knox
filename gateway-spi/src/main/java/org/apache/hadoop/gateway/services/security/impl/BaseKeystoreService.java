@@ -212,26 +212,19 @@ public class BaseKeystoreService {
 
   protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
-    final FileOutputStream out = new FileOutputStream( file );
     Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
-    try {
+    try( final FileOutputStream out = new FileOutputStream( file ) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
       out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
-    } finally {
-      out.close();
     }
   }
 
   protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
      // TODO: backup the keystore on disk before attempting a write and restore on failure
-     final FileOutputStream  out = new FileOutputStream(file);
-     try {
-         keyStore.store( out, masterService.getMasterSecret());
-     }
-     finally {
-         out.close();
+     try( final FileOutputStream out = new FileOutputStream(file) ) {
+         keyStore.store( out, masterService.getMasterSecret() );
      }
   }
 

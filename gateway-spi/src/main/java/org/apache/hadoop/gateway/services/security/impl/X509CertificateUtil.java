@@ -276,14 +276,11 @@ public class X509CertificateUtil {
   public static void writeCertificateToFile(Certificate cert, final File file)
        throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
-    final FileOutputStream out = new FileOutputStream( file );
     Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
-    try {
+    try( final FileOutputStream out = new FileOutputStream( file ) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
       out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
-    } finally {
-      out.close();
     }
   }
 
