@@ -93,6 +93,7 @@
         <module>gateway-applications</module>
         <module>gateway-shell-samples</module>
         <module>gateway-shell-release</module>
+        <module>gateway-test-release-utils</module>
     </modules>
 
     <properties>

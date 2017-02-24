@@ -196,6 +196,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-test-release-utils</artifactId>
+            <version>${gateway-version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
