@@ -336,6 +336,10 @@ public class GatewayServer {
     }
     connector.setHost( address.getHostName() );
     connector.setPort( address.getPort() );
+    long idleTimeout = config.getGatewayIdleTimeout();
+    if (idleTimeout > 0l) {
+      connector.setIdleTimeout(idleTimeout);
+    }
 
     return connector;
   }

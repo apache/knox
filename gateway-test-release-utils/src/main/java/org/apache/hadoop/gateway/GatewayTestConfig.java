@@ -125,6 +125,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getGatewayIdleTimeout() {
+    return 0l;
+  }
+
+  @Override
   public boolean isSSLEnabled() {
     // TODO Auto-generated method stub
     return false;

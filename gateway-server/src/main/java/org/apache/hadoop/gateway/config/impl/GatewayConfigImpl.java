@@ -136,6 +136,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GRAPHITE_METRICS_REPORTING_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.host";
   public static final String GRAPHITE_METRICS_REPORTING_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.port";
   public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
+  public static final String GATEWAY_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".idle.timeout";
 
   /* @since 0.10 Websocket config variables */
   public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
@@ -634,6 +635,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       i = -1;
     }
     return i;
+  }
+
+  @Override
+  public long getGatewayIdleTimeout() {
+    return getLong(GATEWAY_IDLE_TIMEOUT, 0l);
   }
 
   @Override

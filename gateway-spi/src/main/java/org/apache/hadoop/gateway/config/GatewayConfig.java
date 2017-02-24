@@ -139,6 +139,8 @@ public interface GatewayConfig {
 
   long getGatewayDeploymentsBackupAgeLimit();
 
+  long getGatewayIdleTimeout();
+
   String getSigningKeystoreName();
 
   String getSigningKeyAlias();
