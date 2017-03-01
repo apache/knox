@@ -48,6 +48,14 @@ public interface HaProvider {
    public String getActiveURL(String serviceName);
 
    /**
+    * Sets a given URL that is known to be active for the service
+    *
+    * @param serviceName the name of the service
+    * @param url the active url
+    */
+   public void setActiveURL(String serviceName, String url);
+
+   /**
     * Mark the URL for the service as one that has failed. This method puts changes the active URL to
     * the next available URL for the service.
     *

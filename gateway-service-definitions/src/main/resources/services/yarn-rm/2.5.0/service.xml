@@ -56,4 +56,5 @@
         <testURL>/resourcemanager/v1/cluster/metrics</testURL>
         <testURL>/resourcemanager/v1/cluster/apps</testURL>
     </testURLs>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.hadoop.gateway.rm.dispatch.RMHaDispatch"/>
 </service>

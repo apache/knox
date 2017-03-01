@@ -76,6 +76,16 @@ public class DefaultHaProvider implements HaProvider {
   }
 
   @Override
+  public void setActiveURL(String serviceName, String url) {
+    if ( haServices.containsKey(serviceName) ) {
+      haServices.get(serviceName).setActiveURL(url);
+    } else {
+      LOG.noServiceFound(serviceName);
+    }
+
+  }
+
+  @Override
   public void markFailedURL(String serviceName, String url) {
     if ( haServices.containsKey(serviceName) ) {
       haServices.get(serviceName).markFailed(url);

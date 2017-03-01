@@ -24,6 +24,7 @@ import org.apache.hadoop.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -49,6 +50,21 @@ public class DefaultURLManager implements URLManager {
   @Override
   public String getActiveURL() {
     return urls.peek();
+  }
+
+  @Override
+  public synchronized void setActiveURL(String url) {
+    String top = urls.peek();
+    if (top.equalsIgnoreCase(url)) {
+      return;
+    }
+    if (urls.contains(url)) {
+      urls.remove(url);
+      List<String> remainingList = getURLs();
+      urls.clear();
+      urls.add(url);
+      urls.addAll(remainingList);
+    }
   }
 
   @Override

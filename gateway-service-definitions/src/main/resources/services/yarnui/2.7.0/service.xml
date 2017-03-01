@@ -39,4 +39,5 @@
             <rewrite apply="YARNUI/yarn/outbound/headers/sparkhistory/job" to="response.headers"/>
         </route>
     </routes>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.hadoop.gateway.rm.dispatch.RMUIHaDispatch"/>
 </service>

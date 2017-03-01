@@ -66,12 +66,20 @@ public class DefaultHaProviderTest {
       urls.add(url1);
       String url2 = "http://host2";
       urls.add(url2);
+      String url3 = "http://host3";
+      urls.add(url3);
       String serviceName = "foo";
       provider.addHaService(serviceName, urls);
       assertEquals(url1, provider.getActiveURL(serviceName));
       provider.markFailedURL(serviceName, url1);
       assertEquals(url2, provider.getActiveURL(serviceName));
       provider.markFailedURL(serviceName, url2);
+      assertEquals(url3, provider.getActiveURL(serviceName));
+      provider.markFailedURL(serviceName, url3);
       assertEquals(url1, provider.getActiveURL(serviceName));
+      provider.setActiveURL(serviceName, url3);
+      assertEquals(url3, provider.getActiveURL(serviceName));
+      provider.setActiveURL(serviceName, url2);
+      assertEquals(url2, provider.getActiveURL(serviceName));
    }
 }
