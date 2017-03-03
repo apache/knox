@@ -161,8 +161,10 @@ public class WebsocketMultipleConnectionTest {
     }
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
-
-      sessions[i].getBasicRemote().sendText("OK");
+      /* make sure the session is active and valid before trying to connect */
+      if(sessions[i].isOpen() && sessions[i].getBasicRemote() != null) {
+        sessions[i].getBasicRemote().sendText("OK");
+      }
     }
 
     latch.await(5 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
