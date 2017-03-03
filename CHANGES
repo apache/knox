@@ -1,4 +1,54 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.12.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-841] - Proxy support for Solr UI and API
+    * [KNOX-719] - YARN RM HA implementation for REST API and UI (Jeffrey E Rodriguez and Sumit Gupta)
+    * [KNOX-848] - Support for Gremlin Server REST (Shi Wang via Sumit Gupta)
+    * [KNOX-861] - Support for pluggable validator for Header pre authentication provider (Mohammad Kamrul Islam via Sandeep More)
+    * [KNOX-850] - KnoxToken API for Acquiring a Knox Access Token
+    * [KNOX-710] - Support Zeppelin UI through Knox
+    * [KNOX-865] - Added a release module for KnoxShell
+    * [KNOX-881] - Add KnoxSh init, list and destroy to knoxshell.sh
+** Improvement
+    * [KNOX-841] - Changed version number for Solr proxy support
+    * [KNOX-890] - Make IdleTimeout Configurable in Knox Gateway Server (make default 5 mins)
+    * [KNOX-890] - Make IdleTimeout Configurable in Knox Gateway Server
+    * [KNOX-845] - refactoring for the release tests
+    * [KNOX-868] - Add /ext/native to java.library.path in gateway.sh (Mohammad Kamrul Islam via Sandeep More)
+    * [KNOX-869] - Support for multiple pre-auth validaors (Mohammad Kamrul Islam via Sandeep More)
+    * [KNOX-839] - new ant tasks to help with admin-ui development
+    * [KNOX-873] - JWTFederationFilter must Validate Expected Audiences
+    * [KNOX-874] - Updated hadoop dependency in root pom
+    * [KNOX-864] - Making gateway and ldap scripts upstart compatible (Attila Kanto via Sumit Gupta)
+    * [KNOX-854] - Consolidate DocumentBuilderFactory calls + enable SECURE_PROCESSING (Colm O hEigeartaigh via Sumit Gupta)
+    * [KNOX-828] - Adding truncate for HBase table in KnoxShell (Vincent Devillers via Sumit Gupta)
+    * [KNOX-845] - Added webhdfs groovy shell tests using MiniDFSCluster
+    * [KNOX-806] - Implement Closeable for deallocable resources (Vincent Devillers via Sumit Gupta)
+    * [KNOX-805] - ability to define custom HttpClient (Vincent Devillers via Sumit Gupta)
+    * [KNOX-809] - Enhance the 'put' in HFDS for ClientDSL (Vincent Devillers via Sumit Gupta)
+    * [KNOX-810] - Add status in HDFS for ClientDSL (Vincent Devillers via Sumit Gupta)
+    * [KNOX-813] - Added rename in HDFS for ClientDSL (Vincent Devillers/Khanh Maudoux via Sumit Gupta)
+    * [KNOX-858] - Simplifying Hamcrest dependencies (Colm O hEigeartaigh via Sumit Gupta)
+** Bug
+    * [KNOX-876] - Fix FindBugs "Experimental" issues (Colm O hEigeartaigh via lmccay)
+    * [KNOX-883] - Fix FindBugs "Correctness" issues (Colm O hEigeartaigh via lmccay)
+    * [KNOX-730] - pac4jRequestedUrl = null after saml2 assertion is parsed
+    * [KNOX-879] - Fix url encoding issue for KnoxSSO
+    * [KNOX-875] - Added version element to topology schema (Jeffrey E Rodriguez via Sandeep More)
+    * [KNOX-866] - Fix validate-topology cli command (Richard Ding via Sandeep More)
+    * [KNOX-863] - Consolidate TransformerFactory calls + enable (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-877] - Coverity Scan Cleanup
+    * [KNOX-871] - Fix FindBugs -  Malicious code vulnerability (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-769] - Fix SecureClusterTest for Java 1.7
+    * [KNOX-867] - Fix FindBugs, bad practice issues (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-838] - Admin UI title change
+    * [KNOX-820] - Changed the originalUrl parsing so that multiple query params get included
+    * [KNOX-859] - Added rule for app.*.js, extensions, jax, and components (Prabhjyot Singh via Sandeep More)
+    * [KNOX-855] - Add application/x-javascript mime type to the list of compressed resources and make it configurable
+    * [KNOX-836] - Fix for websocket termination based on message size (Sandeep More via Sumit Gupta)
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.11.0
 ------------------------------------------------------------------------------
 ** New Feature
