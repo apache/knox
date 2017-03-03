@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gateway</artifactId>
         <groupId>org.apache.knox</groupId>
-        <version>0.12.0-SNAPSHOT</version>
+        <version>0.13.0-SNAPSHOT</version>
     </parent>
     <artifactId>gateway-demo-ldap-launcher</artifactId>
     <name>gateway-demo-ldap-launcher</name>

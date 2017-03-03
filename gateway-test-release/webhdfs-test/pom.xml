@@ -22,12 +22,12 @@
     <parent>
         <artifactId>gateway-test-release</artifactId>
         <groupId>org.apache.knox</groupId>
-        <version>0.12.0-SNAPSHOT</version>
+        <version>0.13.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>webhdfs-test</artifactId>
     <name>webhdfs-test</name>
-    <version>0.12.0-SNAPSHOT</version>
+    <version>0.13.0-SNAPSHOT</version>
     <description>Tests for WebHDFS integration with Knox</description>
     <build>
         <plugins>
