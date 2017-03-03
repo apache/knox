@@ -191,4 +191,17 @@ public class GatewayConfigImplTest {
     assertThat(config.getGraphitePort(), is(32772));
   }
 
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGatewayIdleTimeout() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    long idleTimeout = 0l;
+    
+    idleTimeout = config.getGatewayIdleTimeout();
+    assertThat( idleTimeout, is(300000L));
+
+    config.set( GatewayConfigImpl.GATEWAY_IDLE_TIMEOUT, "15000" );
+    idleTimeout = config.getGatewayIdleTimeout();
+    assertThat( idleTimeout, is(15000L));
+  }
+
 }
