@@ -119,7 +119,7 @@ public class SecureClusterTest {
     System.setProperty(MiniDFSCluster.PROP_TEST_BUILD_DATA, baseDir.getAbsolutePath());
     initKdc();
     miniDFSCluster = new MiniDFSCluster.Builder(configuration)
-        .nameNodePort(20112)
+        .nameNodePort(TestUtils.findFreePort())
         .nameNodeHttpPort(nameNodeHttpPort)
         .numDataNodes(0)
         .format(true)

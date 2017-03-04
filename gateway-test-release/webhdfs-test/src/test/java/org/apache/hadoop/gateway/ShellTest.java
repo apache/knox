@@ -74,7 +74,7 @@ public class ShellTest {
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(ShellTest.class));
     System.setProperty(MiniDFSCluster.PROP_TEST_BUILD_DATA, baseDir.getAbsolutePath());
     miniDFSCluster = new MiniDFSCluster.Builder(configuration)
-        .nameNodePort(20112)
+        .nameNodePort(TestUtils.findFreePort())
         .nameNodeHttpPort(nameNodeHttpPort)
         .numDataNodes(2)
         .format(true)
