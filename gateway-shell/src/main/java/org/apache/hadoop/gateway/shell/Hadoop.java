@@ -122,10 +122,11 @@ public class Hadoop implements Closeable {
 
     // SSL
     HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
-    TrustStrategy trustStrategy = TrustSelfSignedStrategy.INSTANCE;
+    TrustStrategy trustStrategy = null;
     if (clientContext.connection().secure()) {
       hostnameVerifier = SSLConnectionSocketFactory.getDefaultHostnameVerifier();
     } else {
+      trustStrategy = TrustSelfSignedStrategy.INSTANCE;
       System.out.println("**************** WARNING ******************\n"
               + "This is an insecure client instance and may\n"
               + "leave the interactions subject to a man in\n"
