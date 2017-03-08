@@ -47,6 +47,7 @@ Release Notes - Apache Knox - Version 0.12.0
     * [KNOX-859] - Added rule for app.*.js, extensions, jax, and components (Prabhjyot Singh via Sandeep More)
     * [KNOX-855] - Add application/x-javascript mime type to the list of compressed resources and make it configurable
     * [KNOX-836] - Fix for websocket termination based on message size (Sandeep More via Sumit Gupta)
+    * [KNOX-903] - KnoxShell allows self signed certs to be used without any checks
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.11.0
