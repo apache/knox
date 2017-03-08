@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-var loginURL = "/gateway/knoxsso/api/v1/websso?originalUrl=";
+var loginPageSuffix = "/knoxauth/login.html";
+var webssoURL = "/api/v1/websso?originalUrl=";
 var userAgent = navigator.userAgent.toLowerCase();
 var firstLogIn = true;
 
@@ -46,6 +47,9 @@ var keypressed = function(event) {
 }
 
 var login = function() {
+    var pathname = window.location.pathname;
+    var topologyContext = pathname.replace(loginPageSuffix, "");;
+    var loginURL = topologyContext + webssoURL;
     var form = document.forms[0];
     var username = form.username.value;
     var password = form.password.value;
@@ -55,7 +59,7 @@ var login = function() {
     var redirectUrl = originalUrl;
       //Instantiate HTTP Request
         var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
-        request.open("POST", loginURL + originalUrl, true);
+        request.open("POST", idpUrl, true);
         request.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password))
         request.send(null);
 
