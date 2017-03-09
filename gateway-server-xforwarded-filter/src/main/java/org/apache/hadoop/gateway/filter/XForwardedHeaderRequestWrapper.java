@@ -118,7 +118,14 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
   private static String getForwardedPort( HttpServletRequest request ) {
     String value = request.getHeader( X_FORWARDED_PORT );
     if( value == null ) {
-      value = Integer.toString( request.getLocalPort() );
+      String forwardedHost = getForwardedHost( request );
+      int separator = forwardedHost.indexOf( ":" );
+      if ( separator > 0 ) {
+          value = forwardedHost.substring(separator + 1, forwardedHost.length());
+      } else {
+          // use default ports
+          value = request.isSecure() ? "443" : "80";
+      }
     }
     return value;
   }
