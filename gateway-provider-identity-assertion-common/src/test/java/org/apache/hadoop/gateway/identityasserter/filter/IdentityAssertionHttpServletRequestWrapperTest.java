@@ -18,12 +18,14 @@
 package org.apache.hadoop.gateway.identityasserter.filter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.identityasserter.common.filter.IdentityAsserterHttpServletRequestWrapper;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.apache.hadoop.test.mock.MockHttpServletRequest;
 import org.apache.hadoop.test.mock.MockServletInputStream;
 import org.junit.Test;
+import org.junit.After;
 import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
@@ -37,6 +39,11 @@ import static org.hamcrest.Matchers.not;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class IdentityAssertionHttpServletRequestWrapperTest {
+
+  @After
+  public void resetSystemProps() {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
+  }
 
   @Test
   public void testInsertUserNameInPostMethod() throws IOException {
@@ -141,6 +148,19 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String output = wrapper.getQueryString();
 
     assertThat( output, containsString( "user.name=output-user" ) );
+  }
+
+  @Test
+  public void testInsertDoAsInQueryString() {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setQueryString("op=LISTSTATUS&user.name=jack&User.Name=jill&DOas=admin&doas=root");
+
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
+
+    String output = wrapper.getQueryString();
+    assertThat(output, is("op=LISTSTATUS&doAs=output-user"));
   }
 
   @Test

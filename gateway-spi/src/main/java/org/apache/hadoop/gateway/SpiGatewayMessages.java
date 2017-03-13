@@ -67,4 +67,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Inbound response entity content type: {0}" )
   void inboundResponseEntityContentType( String fullContentType );
+
+  @Message( level = MessageLevel.WARN, text = "Possible identity spoofing attempt - impersonation parameter removed: {0}" )
+  void possibleIdentitySpoofingAttempt( String impersonationParam );
 }
