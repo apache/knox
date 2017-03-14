@@ -70,6 +70,11 @@
           <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
         </route>
 
+        <!-- Hive 2.0 view -->
+        <route path="/ambari/views/HIVE/**/assets/ui.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
+        </route>
+
         <!-- No need to rewrite Slider View -->
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
