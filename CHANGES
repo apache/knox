@@ -48,6 +48,14 @@ Release Notes - Apache Knox - Version 0.12.0
     * [KNOX-855] - Add application/x-javascript mime type to the list of compressed resources and make it configurable
     * [KNOX-836] - Fix for websocket termination based on message size (Sandeep More via Sumit Gupta)
     * [KNOX-903] - KnoxShell allows self signed certs to be used without any checks
+    * [KNOX-900] - In the WebsocketMultipleConnectionTest before sending data check whether the socket is active
+    * [KNOX-897] - X-Forwarded-Port incorrectly defaults to the one configured for Knox if standard ports (80 and 443) are used (Attila Kanto via Sandeep More)
+	* [KNOX-901] - Finding free ports for namenode
+	* [KNOX-902] - Fix the hardcoded knoxsso topology name (Attila Kanto via Sandeep More)
+	* [KNOX-904] - Reverting back httpclient to 4.5.1 due to bug in 4.5.2
+    * [KNOX-905] - added httpclient properties to knoxshell log4j properties file
+	* [KNOX-906] - Log WARN of Removed Impersonation Params
+    * [KNOX-907] - Ambari Hive 2.0 view fix
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.11.0
