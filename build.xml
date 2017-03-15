@@ -24,6 +24,7 @@ Release build file for the Apache Knox Gateway
 <property name="gateway-name" value="Apache Knox"/>
 <property name="gateway-project" value="knox"/>
 <property name="gateway-artifact" value="knox"/>
+    <property name="knoxshell-artifact" value="knoxshell"/>
     <property name="gateway-version" value="0.13.0-SNAPSHOT"/>
 <property name="release-manager" value="kminder"/>
 
@@ -177,6 +178,12 @@ Release build file for the Apache Knox Gateway
             <url url="${build-url}/knox-${gateway-version}.tar.gz"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz.md5"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz.sha"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip.md5"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip.sha"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz.md5"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha"/>
             <url url="${build-url}/CHANGES"/>
         </get>
     </target>
@@ -196,6 +203,14 @@ Release build file for the Apache Knox Gateway
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.md5"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.asc"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.md5"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/CHANGES"/>
         </get>
     </target>
@@ -257,6 +272,20 @@ Release build file for the Apache Knox Gateway
             <arg value="${passphrase}"/>
             <arg value="--detach-sig"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz"/>
+        </exec>
+        <exec executable="gpg" dir="${candidate.dir}">
+            <arg value="--armor"/>
+            <arg value="--passphrase"/>
+            <arg value="${passphrase}"/>
+            <arg value="--detach-sig"/>
+            <arg value="${knoxshell-artifact}-${gateway-version}.zip"/>
+        </exec>
+        <exec executable="gpg" dir="${candidate.dir}">
+            <arg value="--armor"/>
+            <arg value="--passphrase"/>
+            <arg value="${passphrase}"/>
+            <arg value="--detach-sig"/>
+            <arg value="${knoxshell-artifact}-${gateway-version}.tar.gz"/>
         </exec>
         <copy file="src/vote.txt" tofile="target/vote.txt">
             <filterchain>
