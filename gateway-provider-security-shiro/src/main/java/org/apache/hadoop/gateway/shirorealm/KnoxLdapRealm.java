@@ -148,7 +148,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
     private static final String POSIX_GROUP = "posixGroup";
 
-    private static final String HASHING_ALGORITHM = "SHA-1";
+    private static final String HASHING_ALGORITHM = "SHA-256";
 
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
