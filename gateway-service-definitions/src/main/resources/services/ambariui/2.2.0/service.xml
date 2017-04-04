@@ -51,6 +51,11 @@
             <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
         </route>
 
+        <!-- Pig view -->
+        <route path="/ambari/views/PIG/**/javascripts/app.js">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
+        </route>
+
         <!-- Hive view route -->
         <route path="/ambari/views/HIVE/**/assets/hive.js">
             <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>
