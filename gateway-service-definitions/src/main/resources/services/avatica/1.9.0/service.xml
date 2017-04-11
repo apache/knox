@@ -15,12 +15,6 @@
    limitations under the License.
 -->
 <service role="AVATICA" name="avatica" version="1.9.0">
-  <policies>
-        <policy role="webappsec"/>
-        <policy role="authentication"/>
-        <policy role="rewrite"/>
-        <policy role="authorization"/>
-  </policies>
   <routes>
     <route path="/avatica">
         <rewrite apply="AVATICA/avatica/inbound/root" to="request.url"/>
