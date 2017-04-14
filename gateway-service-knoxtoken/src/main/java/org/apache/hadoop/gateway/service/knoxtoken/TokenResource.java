@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.service.knoxtoken;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.HashMap;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -50,11 +51,13 @@ public class TokenResource {
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
+  private static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
   private long tokenTTL = 30000l;
   private String[] targetAudiences = null;
   private String tokenTargetUrl = null;
+  private Map<String,Object> tokenClientDataMap = null;
 
   @Context
   private HttpServletRequest request;
@@ -84,6 +87,13 @@ public class TokenResource {
     }
     
     tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
+
+    String clientData = context.getInitParameter(TOKEN_CLIENT_DATA);
+    if (clientData != null) {
+      tokenClientDataMap = new HashMap<String,Object>();
+      String[] tokenClientData = clientData.split(",");
+      addClientDataToMap(tokenClientData, tokenClientDataMap);
+    }
   }
 
   @GET
@@ -128,22 +138,34 @@ public class TokenResource {
         if (tokenTargetUrl != null) {
           map.put(TARGET_URL, tokenTargetUrl);
         }
+        if (tokenClientDataMap != null) {
+          map.putAll(tokenClientDataMap);
+        }
   
         String jsonResponse = JsonUtils.renderAsJsonString(map);
-        
+
         response.getWriter().write(jsonResponse);
         return Response.ok().build();
       }
       else {
         return Response.serverError().build();
       }
-
     }
     catch (TokenServiceException | IOException e) {
       log.unableToIssueToken(e);
     }
-
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  void addClientDataToMap(String[] tokenClientData,
+      Map<String,Object> map) {
+    String[] kv = null;
+    for (int i = 0; i < tokenClientData.length; i++) {
+      kv = tokenClientData[i].split("=");
+      if (kv.length == 2) {
+        map.put(kv[0], kv[1]);
+      }
+    }
   }
 
   private long getExpiry() {
