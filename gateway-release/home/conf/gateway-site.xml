@@ -67,4 +67,10 @@ limitations under the License.
         <description>Enable/Disable websocket feature.</description>
     </property>
 
+    <property>
+        <name>gateway.scope.cookies.feature.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable cookie scoping feature.</description>
+    </property>
+
 </configuration>

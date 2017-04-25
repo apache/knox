@@ -33,12 +33,15 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.DeploymentException;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
+import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.filter.XForwardedHeaderFilter;
+import org.apache.hadoop.gateway.filter.rewrite.api.CookieScopeServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.hadoop.gateway.service.definition.Policy;
@@ -55,6 +58,8 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   private static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
+  private static final String COOKIE_SCOPING_FILTER_NAME = "CookieScopeServletFilter";
+  private static final String COOKIE_SCOPING_FILTER_ROLE = "cookiescopef";
 
   private ServiceDefinition serviceDefinition;
 
@@ -170,6 +175,10 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     //add x-forwarded filter if enabled in config
     if (context.getGatewayConfig().isXForwardedEnabled()) {
       resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl(XForwardedHeaderFilter.class);
+    }
+    if (context.getGatewayConfig().isCookieScopingToPathEnabled()) {
+      FilterDescriptor filter = resource.addFilter().name(COOKIE_SCOPING_FILTER_NAME).role(COOKIE_SCOPING_FILTER_ROLE).impl(CookieScopeServletFilter.class);
+      filter.param().name(GatewayConfigImpl.HTTP_PATH).value(context.getGatewayConfig().getGatewayPath());
     }
     List<Policy> policyBindings = binding.getPolicies();
     if ( policyBindings == null ) {

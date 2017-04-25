@@ -222,4 +222,11 @@ public interface GatewayConfig {
    */
   List<String> getMimeTypesToCompress();
 
+  /**
+   * Enable cookie scoping to gateway path
+   *
+   * @since 0.13
+   */
+  boolean isCookieScopingToPathEnabled();
+
 }

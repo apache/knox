@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.deploy.impl;
 
+import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.deploy.ServiceDeploymentContributorBase;
 import org.apache.hadoop.gateway.descriptor.FilterDescriptor;
@@ -24,6 +25,7 @@ import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.dispatch.GatewayDispatchFilter;
 import org.apache.hadoop.gateway.filter.XForwardedHeaderFilter;
+import org.apache.hadoop.gateway.filter.rewrite.api.CookieScopeServletFilter;
 import org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.hadoop.gateway.service.definition.CustomDispatch;
 import org.apache.hadoop.gateway.service.definition.Policy;
@@ -55,6 +57,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
 
   private static final String DEFAULT_HA_DISPATCH_CLASS = "org.apache.hadoop.gateway.ha.dispatch.DefaultHaDispatch";
+
+  private static final String COOKIE_SCOPING_FILTER_NAME = "CookieScopeServletFilter";
+
+  private static final String COOKIE_SCOPING_FILTER_ROLE = "cookiescopef";
 
   private ServiceDefinition serviceDefinition;
 
@@ -121,6 +127,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     //add x-forwarded filter if enabled in config
     if (context.getGatewayConfig().isXForwardedEnabled()) {
       resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl(XForwardedHeaderFilter.class);
+    }
+    if (context.getGatewayConfig().isCookieScopingToPathEnabled()) {
+      FilterDescriptor filter = resource.addFilter().name(COOKIE_SCOPING_FILTER_NAME).role(COOKIE_SCOPING_FILTER_ROLE).impl(CookieScopeServletFilter.class);
+      filter.param().name(GatewayConfigImpl.HTTP_PATH).value(context.getGatewayConfig().getGatewayPath());
     }
     List<Policy> policyBindings = binding.getPolicies();
     if ( policyBindings == null ) {

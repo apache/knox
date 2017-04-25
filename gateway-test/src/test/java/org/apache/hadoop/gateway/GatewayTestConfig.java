@@ -525,4 +525,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public List<String> getMimeTypesToCompress() {
     return new ArrayList<String>();
   }
+
+  @Override
+  public  boolean isCookieScopingToPathEnabled() {
+      return false;
+  }
 }

@@ -467,4 +467,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getGraphiteReportingFrequency() {
     return 0;
   }
+
+  @Override
+  public  boolean isCookieScopingToPathEnabled() {
+      return false;
+  }
 }
