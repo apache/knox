@@ -145,7 +145,11 @@ public class Matcher<V> {
     pickMatchingChildren( input.getUsername(), status );
     pickMatchingChildren( input.getPassword(), status );
     pickMatchingChildren( input.getHost(), status );
-    pickMatchingChildren( input.getPort(), status );
+    // port does not makes sense without host
+    if(input.getHost() != null) {
+      // port is optional, since default ports do not need to present in URL
+      pickMatchingOptionalSegment(input.getPort(), status);
+    }
     return status.hasCandidates();
   }
 
@@ -180,6 +184,26 @@ public class Matcher<V> {
       }
       status.swapMatchesToCandidates();
     }
+  }
+
+  /**
+   * optional segment, if it does not present (it is null) it is accepted
+   */
+  private void pickMatchingOptionalSegment( Segment segment, Status status ) {
+    for( MatchSegment parent : status.candidates ) {
+      if( parent.pathNode.children != null ) {
+        for( PathNode node : parent.pathNode.children.values() ) {
+          if( segment != null ) {
+            if( node.matches( segment ) ) {
+              status.matches.add( new MatchSegment( parent, node, node.segment, segment ) );
+            }
+          } else {
+            status.matches.add( new MatchSegment( parent, node, node.segment, segment ) );
+          }
+        }
+      }
+    }
+    status.swapMatchesToCandidates();
   }
 
   private Match pickBestMatch( Template input, Status status ) {

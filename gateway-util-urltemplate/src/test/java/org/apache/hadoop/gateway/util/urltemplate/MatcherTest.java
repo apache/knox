@@ -308,6 +308,36 @@ public class MatcherTest {
   }
 
   @Test
+  public void testDefaultPortMatching() throws Exception {
+    Matcher<String> matcher = new Matcher<String>();
+    Template patternTemplate, inputTemplate;
+    Matcher<String>.Match match;
+
+    patternTemplate = Parser.parseTemplate( "*://*:*/{path=*}" );
+    matcher.add( patternTemplate, "test-match" );
+
+    inputTemplate = Parser.parseLiteral( "test-scheme://test-host" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parseLiteral( "test-scheme://test-host/" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, nullValue() );
+    inputTemplate = Parser.parseLiteral( "test-scheme://test-host/test-path" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+
+
+    inputTemplate = Parser.parseLiteral( "https://127.0.0.1/a1/a2/b/c1/c2/d" );
+    patternTemplate = Parser.parseTemplate( "*://*:*/{pathA=**}/b/{pathC=**}/d" );
+    matcher.add( patternTemplate, "webhdfs" );
+    match = matcher.match( inputTemplate );
+    assertThat( match, notNullValue() );
+    assertThat( match.getValue(), is( "webhdfs" ) );
+    assertThat( match.getParams().resolve( "pathA" ), hasItems( "a1", "a2" ) );
+    assertThat( match.getParams().resolve( "pathC" ), hasItems( "c1", "c2" ) );
+  }
+
+  @Test
   public void testTopLevelPathGlobMatch() throws Exception {
     Matcher<String> matcher;
     Template patternTemplate, inputTemplate;

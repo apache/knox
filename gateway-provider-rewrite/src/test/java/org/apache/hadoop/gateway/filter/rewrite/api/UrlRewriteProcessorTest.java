@@ -328,6 +328,50 @@ public class UrlRewriteProcessorTest {
     assertEquals("true", reWrittenParams.get("indent"));
   }
 
+
+  @Test
+  public void testSolrRewriteDefaultPort() throws Exception {
+    URI inputUri, outputUri;
+    Matcher<Void> matcher;
+    Matcher<Void>.Match match;
+    Template input, pattern, template;
+
+    inputUri = new URI(
+                "https://hortonworks.sandbox.hdp.24.test/gateway/sandbox/solr/TestCollection/select?q=*.*&wt=json&indent=true");
+
+    input = Parser.parseLiteral(inputUri.toString());
+    pattern = Parser.parseTemplate("*://*:*/**/solr/{collection=**}/{query=**}?{**}");
+    template = Parser.parseTemplate("http://sandbox.hortonworks.com/solr/{collection=**}/{query=**}?{**}");
+
+    matcher = new Matcher<Void>();
+    matcher.add(pattern, null);
+    match = matcher.match(input);
+
+    outputUri = Expander.expand(template, match.getParams(), null);
+
+    final String reWrittenScheme = outputUri.getScheme();
+    assertEquals("http", reWrittenScheme);
+
+    final String reWrittenHost = outputUri.getHost();
+    assertEquals("sandbox.hortonworks.com", reWrittenHost);
+
+    final String reWrittenPath = outputUri.getPath();
+    assertEquals("/solr/TestCollection/select", reWrittenPath);
+
+    // Whole thing is (non-deterministicly ordered around the &s):
+    // "q=*.*&wt=json&indent=true"
+    final String reWrittenQuery = outputUri.getQuery();
+
+    // Check individual parameters are present, and have the right value.
+    final Map<String, String> reWrittenParams = mapUrlParameters(reWrittenQuery);
+    assertTrue(reWrittenParams.containsKey("q"));
+    assertEquals("*.*", reWrittenParams.get("q"));
+    assertTrue(reWrittenParams.containsKey("wt"));
+    assertEquals("json", reWrittenParams.get("wt"));
+    assertEquals("true", reWrittenParams.get("indent"));
+  }
+
+
   /**
    * Turn a string containing URL parameters, e.g.
    * 
