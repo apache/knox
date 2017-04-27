@@ -756,15 +756,13 @@ public abstract class DeploymentFactory {
       // Explicit configuration that is wrong should just fail
       // rather than randomly select a provider. Implicit default
       // providers can be selected when no name is provided.
-      if (name != null) {
-        if (contributor == null || !contributor.getRole().equals(role) ||
-            !contributor.getName().equals(name)) {
-          throw new DeploymentException(
-              "Failed to contribute provider. Role: " +
-              role + " Name: " + name + ". Please check the topology for" +
-              		" errors in name and role and that the provider is " +
-              		"on the classpath.");
-        }
+      if (contributor == null || !contributor.getRole().equals(role) ||
+          !contributor.getName().equals(name)) {
+        throw new DeploymentException(
+            "Failed to contribute provider. Role: " +
+            role + " Name: " + name + ". Please check the topology for" +
+              	    " errors in name and role and that the provider is " +
+              	    "on the classpath.");
       }
     }
     return contributor;

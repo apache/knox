@@ -120,7 +120,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
     @Override
     public List<Cookie> getCookies() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @Override

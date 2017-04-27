@@ -229,7 +229,7 @@ public class DefaultTopologyService
 
   private Map<File, Topology> loadTopologies(File directory) {
     Map<File, Topology> map = new HashMap<File, Topology>();
-    if (directory.exists() && directory.canRead()) {
+    if (directory.isDirectory() && directory.canRead()) {
       for (File file : directory.listFiles(this)) {
         try {
           Topology loadTopology = loadTopology(file);
@@ -331,7 +331,7 @@ public class DefaultTopologyService
   public void deleteTopology(Topology t) {
     File topoDir = directory;
 
-    if(topoDir.exists() && topoDir.canRead()) {
+    if(topoDir.isDirectory() && topoDir.canRead()) {
       File[] results = topoDir.listFiles();
       for (File f : results) {
         String fName = FilenameUtils.getBaseName(f.getName());
@@ -357,9 +357,11 @@ public class DefaultTopologyService
   public Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config) {
     File tFile = null;
     Map<String, List<String>> urls = new HashMap<>();
-    for(File f : directory.listFiles()){
-      if(FilenameUtils.removeExtension(f.getName()).equals(t.getName())){
-        tFile = f;
+    if(directory.isDirectory() && directory.canRead()) {
+      for(File f : directory.listFiles()){
+        if(FilenameUtils.removeExtension(f.getName()).equals(t.getName())){
+          tFile = f;
+        }
       }
     }
     Set<ServiceDefinition> defs;

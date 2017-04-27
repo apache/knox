@@ -23,18 +23,20 @@ import java.util.Set;
 
 public class PassAllHeadersDispatch extends DefaultDispatch {
 
-  private static Set<String> REQUEST_EXCLUDE_HEADERS;
+  private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
+  
+  static {
+      REQUEST_EXCLUDE_HEADERS.add("Content-Length");
+  }
 
   @Override
   public void init() {
     super.init();
-    REQUEST_EXCLUDE_HEADERS = new HashSet<>();
-    REQUEST_EXCLUDE_HEADERS.add("Content-Length");
   }
 
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {
-    return Collections.EMPTY_SET;
+    return Collections.emptySet();
   }
 
   @Override

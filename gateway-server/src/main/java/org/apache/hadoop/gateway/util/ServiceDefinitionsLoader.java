@@ -108,7 +108,7 @@ public class ServiceDefinitionsLoader {
         }
       }, TrueFileFilter.INSTANCE);
     } else {
-      return files = new HashSet<File>();
+      files = new HashSet<File>();
     }
 
     return files;

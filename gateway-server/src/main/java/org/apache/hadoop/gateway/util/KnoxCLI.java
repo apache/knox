@@ -410,7 +410,6 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   private abstract class Command {
-    protected Service provider = null;
 
     public boolean validate() {
       return true;
@@ -937,7 +936,7 @@ public class KnoxCLI extends Configured implements Tool {
       } else if(cluster == null) {
         // The following block of code retreieves the list of files in the topologies directory
         File tops = new File(topDir + "/topologies");
-        if(tops.exists()) {
+        if(tops.isDirectory()) {
           out.println("List of files available in the topologies directory");
           for (File f : tops.listFiles()) {
             if(f.getName().endsWith(".xml")) {
@@ -996,7 +995,7 @@ public class KnoxCLI extends Configured implements Tool {
       File tops = new File(confDir + "/topologies");
       out.println("List of files available in the topologies directory");
       out.println(tops.toString());
-      if(tops.exists()) {
+      if(tops.isDirectory()) {
         for (File f : tops.listFiles()) {
           if(f.getName().endsWith(".xml")) {
             String fName = f.getName().replace(".xml", "");

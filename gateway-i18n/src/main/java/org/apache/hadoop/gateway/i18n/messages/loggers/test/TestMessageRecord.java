@@ -24,12 +24,12 @@ import org.apache.hadoop.gateway.i18n.messages.MessageLevel;
  */
 public class TestMessageRecord {
 
-  public TestMessageLogger logger;
-  public StackTraceElement caller;
-  public MessageLevel level;
-  public String id;
-  public String message;
-  public Throwable throwable;
+  private final TestMessageLogger logger;
+  private final StackTraceElement caller;
+  private final MessageLevel level;
+  private final String id;
+  private final String message;
+  private final Throwable throwable;
 
   public TestMessageRecord( TestMessageLogger logger, StackTraceElement caller, MessageLevel level, String id, String message, Throwable throwable ) {
     this.logger = logger;
@@ -38,6 +38,30 @@ public class TestMessageRecord {
     this.id = id;
     this.message = message;
     this.throwable = throwable;
+  }
+  
+  public TestMessageLogger getLogger() {
+    return logger;
+  }
+
+  public StackTraceElement getCaller() {
+    return caller;
+  }
+
+  public MessageLevel getLevel() {
+    return level;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public Throwable getThrowable() {
+    return throwable;
   }
 
 }

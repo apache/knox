@@ -363,7 +363,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getGlobalRulesServices() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   /* (non-Javadoc)

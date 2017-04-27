@@ -46,8 +46,8 @@ public class MessagesTest {
 
     TestMessageRecord record = logger.records.get( 0 );
 
-    assertThat( record.caller.getClassName(), is( this.getClass().getName() ) );
-    assertThat( record.caller.getMethodName(), is( "testFirst" ) );
+    assertThat( record.getCaller().getClassName(), is( this.getClass().getName() ) );
+    assertThat( record.getCaller().getMethodName(), is( "testFirst" ) );
 
   }
 

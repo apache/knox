@@ -34,7 +34,7 @@ public class Expander {
   private static Params EMPTY_PARAMS = new EmptyParams();
 
   public static URI expand( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
-    return new Expander().expandToUri( template, params, evaluator );
+    return Expander.expandToUri( template, params, evaluator );
   }
 
   public static URI expandToUri( Template template, Params params, Evaluator evaluator ) throws URISyntaxException {
@@ -307,12 +307,12 @@ public class Expander {
   private static class EmptyParams implements Params {
     @Override
     public Set<String> getNames() {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
     }
 
     @Override
     public List<String> resolve( String name ) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
   }

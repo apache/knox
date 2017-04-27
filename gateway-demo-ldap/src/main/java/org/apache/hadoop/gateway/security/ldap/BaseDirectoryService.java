@@ -709,7 +709,7 @@ public class BaseDirectoryService implements DirectoryService
     //noinspection MismatchedQueryAndUpdateOfCollection
     List<LdifEntry> cloned = new ArrayList<LdifEntry>();
     cloned.addAll( testEntries );
-    this.testEntries = testEntries;
+    this.testEntries = cloned;
   }
 
 

@@ -163,7 +163,7 @@ public class WebSSOResource {
       // we need to get it from the request parameters
       removeOriginalUrlCookie = false;
       original = getOriginalUrlFromQueryParams();
-      if (original == null) {
+      if (original.isEmpty()) {
         log.originalURLNotFound();
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
       }

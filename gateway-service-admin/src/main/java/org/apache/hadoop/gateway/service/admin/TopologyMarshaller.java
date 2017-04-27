@@ -83,7 +83,7 @@ public class TopologyMarshaller implements MessageBodyWriter<Topology>, MessageB
   public Topology readFrom(Class<Topology> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
     try {
       if(isReadable(type, genericType, annotations, mediaType)) {
-        Map<String, Object> properties = Collections.EMPTY_MAP;
+        Map<String, Object> properties = Collections.emptyMap();
         JAXBContext context = JAXBContext.newInstance(new Class[]{Topology.class}, properties);
         InputStream is = entityStream;
         Unmarshaller u = context.createUnmarshaller();
