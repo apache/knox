@@ -752,7 +752,7 @@ public class GatewayServer {
     socket.close();
   }
 
-  private class RegexFilenameFilter implements FilenameFilter {
+  private static class RegexFilenameFilter implements FilenameFilter {
 
     Pattern pattern;
 

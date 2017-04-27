@@ -72,7 +72,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
     SecurityUtils.getSubject().execute(callableChain);
   }
   
-  private class CallableChain implements Callable<Void> {
+  private static class CallableChain implements Callable<Void> {
     private FilterChain chain = null;
     ServletRequest request = null;
     ServletResponse response = null;

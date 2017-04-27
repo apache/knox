@@ -266,7 +266,7 @@ public class GatewayServlet implements Servlet, Filter {
     return filter;
   }
 
-  private class FilterConfigAdapter implements FilterConfig {
+  private static class FilterConfigAdapter implements FilterConfig {
 
     private ServletConfig config;
 

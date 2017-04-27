@@ -83,14 +83,14 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    forPattern( "*/" + ACTION ).addRule( new SetPropertiesRule() );
   }
 
-  private class RulesFactory extends FactoryRule {
+  private static class RulesFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       return UrlRewriteRulesDescriptorFactory.create();
     }
   }
 
-  private class RuleFactory extends Rule {
+  private static class RuleFactory extends Rule {
     @Override
     public void begin( String namespace, String name, Attributes attributes ) throws Exception {
       Digester digester = getDigester();
@@ -108,7 +108,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class StepFactory extends FactoryRule {
+  private static class StepFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFlowDescriptor flow = getDigester().peek();
@@ -116,7 +116,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FunctionFactory extends FactoryRule {
+  private static class FunctionFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteRulesDescriptor rules = getDigester().peek();
@@ -124,7 +124,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterFactory extends FactoryRule {
+  private static class FilterFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteRulesDescriptor parent = getDigester().peek();
@@ -132,7 +132,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterContentFactory extends FactoryRule {
+  private static class FilterContentFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterDescriptor parent = getDigester().peek();
@@ -144,7 +144,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterApplyFactory extends FactoryRule {
+  private static class FilterApplyFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
@@ -155,7 +155,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterScopeFactory extends FactoryRule {
+  private static class FilterScopeFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
@@ -166,7 +166,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterBufferFactory extends FactoryRule {
+  private static class FilterBufferFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
@@ -177,7 +177,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-  private class FilterDetectFactory extends FactoryRule {
+  private static class FilterDetectFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
       UrlRewriteFilterGroupDescriptor parent = getDigester().peek();
@@ -188,7 +188,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     }
   }
 
-//  private class MatchFactory extends FactoryRule {
+//  private static class MatchFactory extends FactoryRule {
 //    @Override
 //    public Object create( String namespace, String name, Attributes attributes ) {
 //      UrlRewriteRuleDescriptor rule = getDigester().peek();
@@ -196,7 +196,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    }
 //  }
 //
-//  private class CheckFactory extends FactoryRule {
+//  private static class CheckFactory extends FactoryRule {
 //    @Override
 //    public Object create( String namespace, String name, Attributes attributes ) {
 //      UrlRewriteRuleDescriptor rule = getDigester().peek();
@@ -204,7 +204,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    }
 //  }
 //
-//  private class ActionFactory extends FactoryRule {
+//  private static class ActionFactory extends FactoryRule {
 //    @Override
 //    public Object create( String namespace, String name, Attributes attributes ) {
 //      UrlRewriteRuleDescriptor rule = getDigester().peek();
@@ -212,7 +212,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    }
 //  }
 //
-//  private class ControlFactory extends FactoryRule {
+//  private static class ControlFactory extends FactoryRule {
 //    @Override
 //    public Object create( String namespace, String name, Attributes attributes ) {
 //      UrlRewriteRuleDescriptor rule = getDigester().peek();
@@ -220,7 +220,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    }
 //  }
 
-  private abstract class FactoryRule extends Rule {
+  private static abstract class FactoryRule extends Rule {
 
     protected abstract Object create( String namespace, String name, Attributes attributes );
 

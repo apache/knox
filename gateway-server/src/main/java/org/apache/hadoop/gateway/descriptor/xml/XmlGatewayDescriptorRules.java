@@ -44,7 +44,7 @@ public class XmlGatewayDescriptorRules extends AbstractRulesModule implements Xm
     forPattern( GATEWAY + "/" + RESOURCE + "/" + FILTER + "/" + FILTER_PARAM + "/" + FILTER_PARAM_VALUE ).callMethod( "value" ).usingElementBodyAsArgument();
   }
 
-  private class AddNextRule extends Rule {
+  private static class AddNextRule extends Rule {
 
     private String method;
 

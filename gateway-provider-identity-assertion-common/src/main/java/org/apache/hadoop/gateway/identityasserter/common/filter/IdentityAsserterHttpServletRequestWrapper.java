@@ -252,7 +252,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return sb.toString();
   }
 
-  private class ServletInputStreamWrapper extends SynchronousServletInputStreamAdapter {
+  private static class ServletInputStreamWrapper extends SynchronousServletInputStreamAdapter {
 
     private InputStream stream;
 

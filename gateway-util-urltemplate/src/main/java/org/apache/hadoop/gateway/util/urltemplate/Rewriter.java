@@ -69,7 +69,7 @@ public class Rewriter {
     return outputUri;
   }
 
-  private class RewriteParams implements Params {
+  private static class RewriteParams implements Params {
     private Params params;
     private Resolver[] resolvers;
 

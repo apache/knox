@@ -92,7 +92,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
     return results;
   }
 
-  private class ParamResolver implements UrlRewriteResolver {
+  private static class ParamResolver implements UrlRewriteResolver {
 
     private String paramName;
 
@@ -107,7 +107,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
 
   }
 
-  private class FixedResolver implements UrlRewriteResolver {
+  private static class FixedResolver implements UrlRewriteResolver {
 
     private List<String> fixedValues;
 

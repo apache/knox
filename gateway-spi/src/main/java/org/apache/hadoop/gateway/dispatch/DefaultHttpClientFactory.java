@@ -112,7 +112,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     return builder.build();
   }
 
-  private class NoCookieStore implements CookieStore {
+  private static class NoCookieStore implements CookieStore {
     @Override
     public void addCookie(Cookie cookie) {
       //no op
@@ -134,7 +134,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
   }
 
-  private class NeverRedirectStrategy implements RedirectStrategy {
+  private static class NeverRedirectStrategy implements RedirectStrategy {
     @Override
     public boolean isRedirected( HttpRequest request, HttpResponse response, HttpContext context )
         throws ProtocolException {
@@ -148,7 +148,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
   }
 
-  private class NeverRetryHandler implements HttpRequestRetryHandler {
+  private static class NeverRetryHandler implements HttpRequestRetryHandler {
     @Override
     public boolean retryRequest( IOException exception, int executionCount, HttpContext context ) {
       return false;

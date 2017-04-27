@@ -144,7 +144,7 @@ public class TopologiesResource {
   }
 
 
-  private class TopologyComparator implements Comparator<SimpleTopology> {
+  private static class TopologyComparator implements Comparator<SimpleTopology> {
     @Override
     public int compare(SimpleTopology t1, SimpleTopology t2) {
       return t1.getName().compareTo(t2.getName());
