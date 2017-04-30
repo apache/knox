@@ -26,17 +26,39 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.gateway.identityasserter.common.filter.AbstractIdentityAssertionFilter;
+import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
+import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
 import java.io.IOException;
 import java.security.AccessController;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
+  private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
+  private static final String PRINCIPAL_MAPPING = "principal.mapping";
+  private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
+
   /* (non-Javadoc)
    * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
    */
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
+    if (principalMapping == null || principalMapping.isEmpty()) {
+      principalMapping = filterConfig.getServletContext().getInitParameter(PRINCIPAL_MAPPING);
+    }
+    String groupPrincipalMapping = filterConfig.getInitParameter(GROUP_PRINCIPAL_MAPPING);
+    if (groupPrincipalMapping == null || groupPrincipalMapping.isEmpty()) {
+      groupPrincipalMapping = filterConfig.getServletContext().getInitParameter(GROUP_PRINCIPAL_MAPPING);
+    }
+    if (principalMapping != null && !principalMapping.isEmpty() || groupPrincipalMapping != null && !groupPrincipalMapping.isEmpty()) {
+      try {
+        mapper.loadMappingTable(principalMapping, groupPrincipalMapping);
+      } catch (PrincipalMappingException e) {
+        throw new ServletException("Unable to load principal mapping table.", e);
+      }
+    }
   }
 
   /* (non-Javadoc)
@@ -56,14 +78,31 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     Subject subject = Subject.getSubject(AccessController.getContext());
 
     String principalName = getPrincipalName(subject);
-    
-    String mappedPrincipalName = mapUserPrincipal(principalName);
+
+    String mappedPrincipalName = mapUserPrincipalBase(principalName);
+    mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
+    String[] mappedGroups = mapGroupPrincipals(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
+    groups = combineGroupMappings(mappedGroups, groups);
 
     HttpServletRequestWrapper wrapper = wrapHttpServletRequest(
         request, mappedPrincipalName);
 
     continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, groups);
+  }
+
+  /**
+   * @param mappedGroups
+   * @param groups
+   * @return
+   */
+  private String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
+    if (mappedGroups != null && groups != null) {
+      return (String[])ArrayUtils.addAll(mappedGroups, groups);
+    }
+    else {
+      return groups != null ? groups : mappedGroups;
+    }
   }
 
   public HttpServletRequestWrapper wrapHttpServletRequest(
@@ -75,6 +114,14 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         (HttpServletRequest)request, 
         mappedPrincipalName);
     return wrapper;
+  }
+
+  protected String[] mapGroupPrincipalsBase(String mappedPrincipalName, Subject subject) {
+    return mapper.mapGroupPrincipal(mappedPrincipalName);
+  }
+
+  protected String mapUserPrincipalBase(String principalName) {
+    return mapper.mapUserPrincipal(principalName);
   }
 
   /* (non-Javadoc)

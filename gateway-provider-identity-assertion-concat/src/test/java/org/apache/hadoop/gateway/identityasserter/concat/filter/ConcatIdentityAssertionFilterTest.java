@@ -24,6 +24,7 @@ import java.security.Principal;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 
 import org.apache.hadoop.gateway.security.GroupPrincipal;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
@@ -38,7 +39,12 @@ public class ConcatIdentityAssertionFilterTest {
   @Test
   public void testPrefixAndSuffix() throws Exception {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
 
     ConcatIdentityAssertionFilter filter = new ConcatIdentityAssertionFilter();
     Subject subject = new Subject();
@@ -54,23 +60,36 @@ public class ConcatIdentityAssertionFilterTest {
     assertNull(groups); // means for the caller to use the existing subject groups
     
     config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.prefix") ).andReturn( "sir-" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     assertEquals(username, "sir-larry");
 
     config = EasyMock.createNiceMock( FilterConfig.class );
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.suffix") ).andReturn( "-tenant-1" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     assertEquals(username, "larry-tenant-1");
 
     config = EasyMock.createNiceMock( FilterConfig.class );
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.prefix") ).andReturn( "sir-" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.suffix") ).andReturn( "-tenant-1" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     assertEquals(username, "sir-larry-tenant-1");

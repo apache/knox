@@ -27,6 +27,7 @@ import java.util.Vector;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
@@ -74,7 +75,12 @@ public class HadoopGroupProviderFilterTest {
   public void testGroups() throws ServletException {
 
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
-    EasyMock.replay(config);
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    EasyMock.replay( config );
+    EasyMock.replay( context );
 
     final HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter();
 
@@ -103,7 +109,12 @@ public class HadoopGroupProviderFilterTest {
   public void testUnknownUser() throws ServletException {
 
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
-    EasyMock.replay(config);
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    EasyMock.replay( config );
+    EasyMock.replay( context );
 
     final HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter();
 
@@ -144,6 +155,10 @@ public class HadoopGroupProviderFilterTest {
         "hadoop.security.group.mapping.ldap.search.filter.user");
 
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
 
     EasyMock.expect(config.getInitParameter("hadoop.security.group.mapping"))
         .andReturn("org.apache.hadoop.security.LdapGroupsMapping").anyTimes();
@@ -176,7 +191,8 @@ public class HadoopGroupProviderFilterTest {
     EasyMock.expect(config.getInitParameterNames())
         .andReturn(new Vector(keysList).elements()).anyTimes();
 
-    EasyMock.replay(config);
+    EasyMock.replay( config );
+    EasyMock.replay( context );
 
     final HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter();
 

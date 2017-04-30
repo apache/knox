@@ -37,6 +37,8 @@ public class SwitchCaseIdentityAssertionFilter extends CommonIdentityAssertionFi
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
+    super.init(filterConfig);
+
     String s;
     s = filterConfig.getInitParameter( USER_INIT_PARAM );
     if ( s != null ) {

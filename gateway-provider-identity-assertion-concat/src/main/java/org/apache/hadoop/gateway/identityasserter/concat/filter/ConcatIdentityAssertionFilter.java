@@ -31,6 +31,8 @@ public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter
    */
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    super.init(filterConfig);
+
     prefix = filterConfig.getInitParameter("concat.prefix");
     suffix = filterConfig.getInitParameter("concat.suffix");
     if (prefix == null) {
@@ -46,7 +48,6 @@ public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter
    */
   @Override
   public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
-    // NOP - returning null will allow existing Subject group principals to remain the same
     return null;
   }
 

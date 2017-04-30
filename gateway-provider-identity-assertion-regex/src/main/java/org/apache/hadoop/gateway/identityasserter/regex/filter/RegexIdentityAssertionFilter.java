@@ -37,6 +37,7 @@ public class RegexIdentityAssertionFilter extends CommonIdentityAssertionFilter 
   
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    super.init(filterConfig);
     try {
       input = filterConfig.getInitParameter( "input" );
       if( input == null ) {

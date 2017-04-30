@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+
 import java.security.Principal;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -36,7 +38,12 @@ public class RegexIdentityAssertionFilterTest {
   @Test
   public void testExtractUsernameFromEmail() throws Exception {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
 
     RegexIdentityAssertionFilter filter = new RegexIdentityAssertionFilter();
 
@@ -54,17 +61,27 @@ public class RegexIdentityAssertionFilterTest {
 
     // Test what is effectively a static mapping
     config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "test-output" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init( config );
     actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     assertEquals( actual, "test-output" );
 
     // Test username extraction.
     config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "(.*)@.*" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init( config );
     actual = filter.mapUserPrincipal( "member@us.apache.org" );
     assertEquals( actual, "prefix_member_suffix" );
@@ -74,7 +91,12 @@ public class RegexIdentityAssertionFilterTest {
   @Test
   public void testMapDomain() throws Exception {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
 
     RegexIdentityAssertionFilter filter = new RegexIdentityAssertionFilter();
 
@@ -87,10 +109,15 @@ public class RegexIdentityAssertionFilterTest {
 
     // Test dictionary lookup.
     config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "(.*)@(.*?)\\..*" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix:{[2]}" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "lookup" ) ).andReturn( "us=USA;ca=CANADA" ).anyTimes();
     EasyMock.replay( config );
+    EasyMock.replay( context );
     filter.init( config );
     actual = filter.mapUserPrincipal( "member1@us.apache.org" );
     assertThat( actual, is( "prefix_member1_suffix:USA" ) );

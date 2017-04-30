@@ -22,40 +22,21 @@ import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import org.apache.hadoop.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
-import org.apache.hadoop.gateway.security.principal.PrincipalMappingException;
-import org.apache.hadoop.gateway.security.principal.SimplePrincipalMapper;
 
 public class IdentityAsserterFilter extends CommonIdentityAssertionFilter {
-  private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
-  private static final String PRINCIPAL_MAPPING = "principal.mapping";
-  private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
-    if (principalMapping == null || principalMapping.isEmpty()) {
-      principalMapping = filterConfig.getServletContext().getInitParameter(PRINCIPAL_MAPPING);
-    }
-    String groupPrincipalMapping = filterConfig.getInitParameter(GROUP_PRINCIPAL_MAPPING);
-    if (groupPrincipalMapping == null || groupPrincipalMapping.isEmpty()) {
-      groupPrincipalMapping = filterConfig.getServletContext().getInitParameter(GROUP_PRINCIPAL_MAPPING);
-    }
-    if (principalMapping != null && !principalMapping.isEmpty() || groupPrincipalMapping != null && !groupPrincipalMapping.isEmpty()) {
-      try {
-        mapper.loadMappingTable(principalMapping, groupPrincipalMapping);
-      } catch (PrincipalMappingException e) {
-        throw new ServletException("Unable to load principal mapping table.", e);
-      }
-    }
+    super.init(filterConfig);
   }
 
   @Override
   public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
-    return mapper.mapGroupPrincipal(mappedPrincipalName);
+    return mapGroupPrincipalsBase(mappedPrincipalName, subject);
   }
 
   @Override
   public String mapUserPrincipal(String principalName) {
-    return mapper.mapUserPrincipal(principalName);
+    return mapUserPrincipalBase(principalName);
   }
 }

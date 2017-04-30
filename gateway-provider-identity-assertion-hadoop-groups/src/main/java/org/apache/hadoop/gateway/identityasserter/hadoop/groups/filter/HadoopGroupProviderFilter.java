@@ -62,6 +62,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
 
   @Override
   public void init(final FilterConfig filterConfig) throws ServletException {
+    super.init(filterConfig);
 
     try {
       hadoopConfig = new Configuration(false);
