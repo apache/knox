@@ -62,7 +62,7 @@ public class AuditLayoutTest {
   private static final String PARENT_REQUEST_ID = "2";
   private static final String REQUEST_ID = "3";
   private static final String EMPTY = "";
-  private static final String RECORD_PATTERN = "%s %s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s%s";
+  private static final String RECORD_PATTERN = "%s %s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s%s";
 
   static {
     layout.activateOptions();
@@ -111,11 +111,11 @@ public class AuditLayoutTest {
     LoggingEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss" );
     String formatedDate = format.format( new Date( event.getTimeStamp() ) );
-    //14/01/24 12:40:24 1|2|3|audit.forward|WEBHDFS|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
+    //14/01/24 12:40:24 1|2|3|audit.forward|hostaddress|WEBHDFS|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format(
         RECORD_PATTERN, formatedDate,
         ROOT_REQUEST_ID, PARENT_REQUEST_ID, REQUEST_ID, "audit.forward",
-        TARGET_SERVICE, USERNAME, PROXYUSERNAME, SYSTEMUSERNAME, ACTION,
+        HOST_ADDRESS, TARGET_SERVICE, USERNAME, PROXYUSERNAME, SYSTEMUSERNAME, ACTION,
         RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
@@ -132,7 +132,7 @@ public class AuditLayoutTest {
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format( RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
-        EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
+        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
     
@@ -148,7 +148,7 @@ public class AuditLayoutTest {
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|
     String expectedOutput = String.format( RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
-        EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, EMPTY, AuditLayout.LINE_SEP );
+        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, EMPTY, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
   }

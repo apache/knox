@@ -50,6 +50,7 @@ public class AuditLayout extends DateLayout {
     appendParameter( cc == null ? null : cc.getParentRequestId() );
     appendParameter( cc == null ? null : cc.getRequestId() );
     appendParameter( event.getLoggerName() );
+    appendParameter( ac == null ? null : ac.getRemoteIp() );
     appendParameter( ac == null ? null : ac.getTargetServiceName() );
     appendParameter( ac == null ? null : ac.getUsername() );
     appendParameter( ac == null ? null : ac.getProxyUsername() );
