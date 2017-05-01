@@ -278,6 +278,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     setDefaultGlobalRulesServices();
 
     initGatewayHomeDir( lastFileUrl );
+
+    // log whether the scoping cookies to the gateway.path feature is enabled
+    log.cookieScopingFeatureEnabled(isCookieScopingToPathEnabled());
   }
 
   private void setDefaultGlobalRulesServices() {
@@ -811,7 +814,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isCookieScopingToPathEnabled() {
     final boolean result = Boolean.parseBoolean(get(COOKIE_SCOPING_ENABLED,
             Boolean.toString(DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED)));
-    log.cookieScopingFeatureEnabled(result);
     return result;
   }
 
