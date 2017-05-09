@@ -1,0 +1,5 @@
+<service role="KAFKA" name="kafka" version="0.0.1">
+  <routes>
+    <route path="/kafka/**"/>
+  </routes>
+</service>
