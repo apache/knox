@@ -22,6 +22,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -57,6 +59,14 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   
   static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
 
+  private static final int POOL_SIZE = 10;
+
+  /**
+   * Manage the threads that are spawned
+   * @since 0.13
+   */
+  private final ExecutorService pool;
+
   final GatewayConfig config;
   final GatewayServices services;
 
@@ -72,6 +82,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     this.config = config;
     this.services = services;
+    pool = Executors.newFixedThreadPool(POOL_SIZE);
 
   }
 
@@ -124,7 +135,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       final String backendURL = getMatchedBackendURL(path);
 
       /* Upgrade happens here */
-      return new ProxyWebSocketAdapter(URI.create(backendURL));
+      return new ProxyWebSocketAdapter(URI.create(backendURL), pool);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
       throw e;
@@ -136,8 +147,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * url. If websocket url is found it is used as is, or we default to
    * ws://{host}:{port} which might or might not be right.
    * 
-   * @param The
-   *          context path
+   * @param  The context path
    * @return Websocket backend url
    */
   private synchronized String getMatchedBackendURL(final String path) {

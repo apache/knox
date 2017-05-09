@@ -59,14 +59,12 @@ public class ProxyInboundSocket {
 
   @OnError
   public void onClientError(Throwable cause) {
-    cause.printStackTrace(System.err);
     callback.onError(cause);
   }
 
   @OnMessage(maxMessageSize = Integer.MAX_VALUE)
   public void onBackendMessage(final String message,
       final javax.websocket.Session session) {
-
     callback.onMessageText(message, session);
 
   }

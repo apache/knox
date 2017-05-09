@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.websockets;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.websocket.CloseReason;
@@ -94,7 +95,7 @@ public class BadBackendTest {
 
     /* start Knox with WebsocketAdapter to test */
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new ProxyWebSocketAdapter(new URI(BAD_BACKEND)));
+        new ProxyWebSocketAdapter(new URI(BAD_BACKEND), Executors.newFixedThreadPool(10)));
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");

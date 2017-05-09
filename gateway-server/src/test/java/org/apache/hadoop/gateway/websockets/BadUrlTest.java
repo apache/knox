@@ -119,6 +119,7 @@ public class BadUrlTest {
    *
    * @throws Exception
    */
+
   @Test
   public void testBadUrl() throws Exception {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -135,6 +136,7 @@ public class BadUrlTest {
         CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
 
   }
+
 
   /**
    * Start Gateway Server.

@@ -19,6 +19,8 @@ package org.apache.hadoop.gateway.websockets;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -55,12 +57,15 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   private WebSocketContainer container;
 
+  private ExecutorService pool;
+
   /**
    * Create an instance
    */
-  public ProxyWebSocketAdapter(URI backend) {
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool) {
     super();
     this.backend = backend;
+    this.pool = pool;
   }
 
   @Override
@@ -129,7 +134,13 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   public void onWebSocketClose(int statusCode, String reason) {
     super.onWebSocketClose(statusCode, reason);
 
-    closeQuietly();
+    /* do the cleaning business in seperate thread so we don't block */
+    pool.execute(new Runnable() {
+      @Override
+      public void run() {
+        closeQuietly();
+      }
+    });
 
     LOG.onConnectionClose(backend.toString());
 
@@ -137,23 +148,34 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   @Override
   public void onWebSocketError(final Throwable t) {
-    passErrorToInboundConnection(t);
+    cleanupOnError(t);
   }
 
   /**
-   * A helper function to pass errors to Inbound connection (browser/client)
+   * Cleanup sessions
    */
-  private void passErrorToInboundConnection(final Throwable t) {
+  private void cleanupOnError(final Throwable t) {
 
     LOG.onError(t.toString());
     if (t.toString().contains("exceeds maximum size")) {
-      frontendSession.close(StatusCode.MESSAGE_TOO_LARGE, t.getMessage());
+      if(frontendSession != null && !frontendSession.isOpen()) {
+        frontendSession.close(StatusCode.MESSAGE_TOO_LARGE, t.getMessage());
+      }
     }
 
     else {
-      frontendSession.close(StatusCode.SERVER_ERROR, t.getMessage());
-      closeQuietly();
-      throw new RuntimeException(t);
+      if(frontendSession != null && !frontendSession.isOpen()) {
+        frontendSession.close(StatusCode.SERVER_ERROR, t.getMessage());
+      }
+
+      /* do the cleaning business in seperate thread so we don't block */
+      pool.execute(new Runnable() {
+        @Override
+        public void run() {
+          closeQuietly();
+        }
+      });
+
     }
   }
 
@@ -179,14 +201,22 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           frontendSession.close(reason.getCloseCode().getCode(),
               reason.getReasonPhrase());
         } finally {
-          closeQuietly();
+
+          /* do the cleaning business in seperate thread so we don't block */
+          pool.execute(new Runnable() {
+            @Override
+            public void run() {
+              closeQuietly();
+            }
+          });
+
         }
 
       }
 
       @Override
       public void onError(Throwable cause) {
-        passErrorToInboundConnection(cause);
+        cleanupOnError(cause);
       }
 
       @Override
@@ -223,7 +253,9 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   private void closeQuietly() {
 
     try {
-      backendSession.close();
+      if(backendSession != null && !backendSession.isOpen()) {
+        backendSession.close();
+      }
     } catch (IOException e) {
       LOG.connectionFailed(e);
     }
@@ -236,7 +268,9 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
       }
     }
 
-    frontendSession.close();
+    if(frontendSession != null && !frontendSession.isOpen()) {
+      frontendSession.close();
+    }
 
   }
 
