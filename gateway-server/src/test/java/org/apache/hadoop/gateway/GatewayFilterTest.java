@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway;
 
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
@@ -59,9 +60,18 @@ public class GatewayFilterTest {
     EasyMock.replay( config );
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
     EasyMock.expect( request.getPathInfo() ).andReturn( "source" ).anyTimes();
+    EasyMock.expect( request.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect( context.getAttribute(
+        GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+        "Custom-Forwarded-For").anyTimes();
     EasyMock.replay( request );
-
+    EasyMock.replay( context );
+    EasyMock.replay( gatewayConfig );
+    
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( response );
 
@@ -81,8 +91,17 @@ public class GatewayFilterTest {
     EasyMock.replay( config );
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
     EasyMock.expect( request.getPathInfo() ).andReturn( "source" ).anyTimes();
+    EasyMock.expect( request.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect( context.getAttribute(
+        GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+        "Custom-Forwarded-For").anyTimes();
     EasyMock.replay( request );
+    EasyMock.replay( context );
+    EasyMock.replay( gatewayConfig );
 
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( response );
@@ -119,11 +138,20 @@ public class GatewayFilterTest {
     EasyMock.replay( config );
 
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
     EasyMock.expect( request.getPathInfo() ).andReturn( "test-path/test-resource" ).anyTimes();
+    EasyMock.expect( request.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect( context.getAttribute(
+        GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+        "Custom-Forwarded-For").anyTimes();
     request.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, "test-role" );
     EasyMock.expectLastCall().anyTimes();
     EasyMock.expect( request.getAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE ) ).andReturn( "test-role" ).anyTimes();
     EasyMock.replay( request );
+    EasyMock.replay( context );
+    EasyMock.replay( gatewayConfig );
 
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( response );

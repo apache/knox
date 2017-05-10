@@ -137,6 +137,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GRAPHITE_METRICS_REPORTING_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.port";
   public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
   public static final String GATEWAY_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".idle.timeout";
+  public static final String REMOTE_IP_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.ip.header.name";
 
   /* @since 0.10 Websocket config variables */
   public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
@@ -815,6 +816,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     final boolean result = Boolean.parseBoolean(get(COOKIE_SCOPING_ENABLED,
             Boolean.toString(DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED)));
     return result;
+  }
+
+  @Override
+  public String getHeaderNameForRemoteAddress() {
+    String value = getVar(REMOTE_IP_HEADER_NAME, "X-Forwarded-For");
+    return value;
   }
 
 }

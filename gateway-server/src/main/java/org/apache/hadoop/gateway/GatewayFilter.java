@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.audit.api.CorrelationContext;
 import org.apache.hadoop.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
@@ -126,7 +127,7 @@ public class GatewayFilter implements Filter {
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
-    auditContext.setRemoteIp( servletRequest.getRemoteAddr() );
+    auditContext.setRemoteIp( getRemoteAddress(servletRequest) );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
     auditor.audit(
         Action.ACCESS, contextWithPathAndQuery, ResourceType.URI,
@@ -165,6 +166,19 @@ public class GatewayFilter implements Filter {
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]
+  }
+
+  private String getRemoteAddress(ServletRequest servletRequest) {
+    GatewayConfig gatewayConfig =
+        (GatewayConfig) servletRequest.getServletContext().
+        getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+
+    String addrHeaderName = gatewayConfig.getHeaderNameForRemoteAddress();
+    String addr = ((HttpServletRequest)servletRequest).getHeader(addrHeaderName);
+    if (addr == null || addr.trim().isEmpty()) {
+      addr = servletRequest.getRemoteAddr();
+    }
+    return addr;
   }
 
   @Override
