@@ -46,9 +46,11 @@ import java.util.Set;
 public class JWTFederationFilter extends AbstractJWTFilter {
 
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
+  private static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
   private static final String BEARER = "Bearer ";
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private JWTokenAuthority authority = null;
+  private String paramName = "knoxtoken";
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -60,6 +62,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (expectedAudiences != null) {
       audiences = parseExpectedAudiences(expectedAudiences);
     }
+
+    // query param name for finding the provided knoxtoken
+    String queryParamName = filterConfig.getInitParameter(KNOX_TOKEN_QUERY_PARAM_NAME);
+    if (queryParamName != null) {
+      paramName = queryParamName;
+    }
+
   }
 
   public void destroy() {
@@ -71,51 +80,73 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       String wireToken = header.substring(BEARER.length());
-      JWTToken token;
-      token = new JWTToken(wireToken);
-      boolean verified = false;
-      try {
-        verified = authority.verifyToken(token);
-      } catch (TokenServiceException e) {
-        log.unableToVerifyToken(e);
+      JWTToken token = new JWTToken(wireToken);
+      if (validateToken(request, response, chain, token)) {
+        Subject subject = createSubjectFromToken(token);
+        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
       }
-      if (verified) {
-        // confirm that issue matches intended target - which for this filter must be KNOXSSO
-        if (token.getIssuer().equals("KNOXSSO")) {
-          // if there is no expiration data then the lifecycle is tied entirely to
-          // the cookie validity - otherwise ensure that the current time is before
-          // the designated expiration time
-          if (tokenIsStillValid(token)) {
-            boolean audValid = validateAudiences(token);
-            if (audValid) {
-              Subject subject = createSubjectFromToken(token);
-              continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
-            }
-            else {
-              log.failedToValidateAudience();
-              ((HttpServletResponse) response).sendError(400, "Bad request: missing required token audience");
-            }
-          }
-          else {
-            log.tokenHasExpired();
-            ((HttpServletResponse) response).sendError(400, "Bad request: token has expired");
-          }
-        }
-        else {
-          ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-          return; //break filter chain
+      else {
+        return; // break the filter chain
+      }
+    }
+    else {
+      // check for query param
+      String wireToken = ((HttpServletRequest) request).getParameter(paramName);
+      if (wireToken != null) {
+        JWTToken token = new JWTToken(wireToken);
+        if (validateToken(request, response, chain, token)) {
+          Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
         }
       }
       else {
+        // no token provided in header
         ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
         return; //break filter chain
       }
     }
-    else {
-      // no token provided in header
-      ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-      return; //break filter chain
+  }
+
+  private boolean validateToken(ServletRequest request, ServletResponse response,
+      FilterChain chain, JWTToken token)
+      throws IOException, ServletException {
+    boolean rc = false;
+    boolean verified = false;
+    try {
+      verified = authority.verifyToken(token);
+    } catch (TokenServiceException e) {
+      log.unableToVerifyToken(e);
     }
+    if (verified) {
+      // confirm that issue matches intended target - which for this filter must be KNOXSSO
+      if (token.getIssuer().equals("KNOXSSO")) {
+        // if there is no expiration data then the lifecycle is tied entirely to
+        // the cookie validity - otherwise ensure that the current time is before
+        // the designated expiration time
+        if (tokenIsStillValid(token)) {
+          boolean audValid = validateAudiences(token);
+          if (audValid) {
+            rc = true;
+          }
+          else {
+            log.failedToValidateAudience();
+            ((HttpServletResponse) response).sendError(400, "Bad request: missing required token audience");
+          }
+        }
+        else {
+          log.tokenHasExpired();
+          ((HttpServletResponse) response).sendError(400, "Bad request: token has expired");
+        }
+      }
+      else {
+        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+      }
+    }
+    else {
+      ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    return rc;
   }
   
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
