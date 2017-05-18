@@ -78,7 +78,7 @@ public class GatewayFilter implements Filter {
   private FilterConfig config;
 
   public GatewayFilter() {
-    holders = new HashSet<Holder>();
+    holders = new HashSet<>();
     chains = new Matcher<Chain>();
   }
 

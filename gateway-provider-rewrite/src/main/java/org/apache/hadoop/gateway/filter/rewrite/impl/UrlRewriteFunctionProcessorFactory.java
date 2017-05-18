@@ -62,13 +62,13 @@ public abstract class UrlRewriteFunctionProcessorFactory {
 
   private static Map<Class<? extends UrlRewriteFunctionDescriptor>,Map<String,Class<? extends UrlRewriteFunctionProcessor>>> loadProcessors() {
     Map<Class<? extends UrlRewriteFunctionDescriptor>,Map<String,Class<? extends UrlRewriteFunctionProcessor>>> descriptorMap
-        = new HashMap<Class<? extends UrlRewriteFunctionDescriptor>,Map<String,Class<? extends UrlRewriteFunctionProcessor>>>();
+        = new HashMap<>();
     ServiceLoader<UrlRewriteFunctionProcessor> processors = ServiceLoader.load( UrlRewriteFunctionProcessor.class );
     for( UrlRewriteFunctionProcessor processor : processors ) {
       Class<? extends UrlRewriteFunctionDescriptor> descriptorInterface = getDescriptorInterface( processor );
       Map<String,Class<? extends UrlRewriteFunctionProcessor>> typeMap = descriptorMap.get( descriptorInterface );
       if( typeMap == null ) {
-        typeMap = new HashMap<String,Class<? extends UrlRewriteFunctionProcessor>>();
+        typeMap = new HashMap<>();
         descriptorMap.put( descriptorInterface, typeMap );
       }
       String functionName = processor.name();

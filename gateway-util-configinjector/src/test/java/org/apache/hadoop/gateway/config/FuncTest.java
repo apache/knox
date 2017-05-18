@@ -81,7 +81,7 @@ public class FuncTest {
   @Test
   public void testMapOfStrings() {
 
-    Map<String,String> testConfig = new HashMap<String,String>();
+    Map<String,String> testConfig = new HashMap<>();
     testConfig.put( "stringMember", "stringValue" );
     testConfig.put( "intMember", "2" );
     testConfig.put( "integerMember", "2" );
@@ -154,7 +154,7 @@ public class FuncTest {
   @Test
   public void testExplicitProvider() {
 
-    Map<String,String> testConfig = new HashMap<String,String>();
+    Map<String,String> testConfig = new HashMap<>();
     testConfig.put( "stringMember", "stringValue" );
     testConfig.put( "intMember", "2" );
     testConfig.put( "integerMember", "2" );
@@ -183,7 +183,7 @@ public class FuncTest {
   @Test
   public void testMapOfObjects() {
 
-    Map<Object,Object> testConfig = new HashMap<Object,Object>();
+    Map<Object,Object> testConfig = new HashMap<>();
     testConfig.put( "stringMember", "stringValue" );
     testConfig.put( "intMember", 42 );
     testConfig.put( "integerMember", new Integer(42) );

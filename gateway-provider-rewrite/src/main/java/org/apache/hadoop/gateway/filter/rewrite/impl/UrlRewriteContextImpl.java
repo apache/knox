@@ -99,7 +99,7 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
 
   private class ContextParameters implements Params {
 
-    Map<String,List<String>> map = new HashMap<String,List<String>>();
+    Map<String,List<String>> map = new HashMap<>();
 
     @Override
     public Set<String> getNames() {

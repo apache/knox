@@ -48,7 +48,7 @@ public class CSRFPreventionFilter implements Filter {
       mti = customMTI;
     }
     String[] methods = mti.split(",");
-    methodsToIgnore = new HashSet<String>();
+    methodsToIgnore = new HashSet<>();
     for (int i = 0; i < methods.length; i++) {
       methodsToIgnore.add(methods[i]);
     }

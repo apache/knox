@@ -50,7 +50,7 @@ public class ServiceDefinitionsLoader {
   private static final String REWRITE_FILE = "rewrite.xml";
 
   public static Set<ServiceDeploymentContributor> loadServiceDefinitions(File servicesDir) {
-    Set<ServiceDeploymentContributor> contributors = new HashSet<ServiceDeploymentContributor>();
+    Set<ServiceDeploymentContributor> contributors = new HashSet<>();
     if ( servicesDir.exists() && servicesDir.isDirectory() ) {
       try {
         JAXBContext context = JAXBContext.newInstance(ServiceDefinition.class);
@@ -108,7 +108,7 @@ public class ServiceDefinitionsLoader {
         }
       }, TrueFileFilter.INSTANCE);
     } else {
-      files = new HashSet<File>();
+      files = new HashSet<>();
     }
 
     return files;

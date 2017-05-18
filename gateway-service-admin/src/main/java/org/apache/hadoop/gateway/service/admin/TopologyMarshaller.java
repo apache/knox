@@ -59,7 +59,7 @@ public class TopologyMarshaller implements MessageBodyWriter<Topology>, MessageB
   @Override
   public void writeTo(Topology instance, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
     try {
-      Map<String, Object> properties = new HashMap<String, Object>(1);
+      Map<String, Object> properties = new HashMap<>(1);
       properties.put( JAXBContextProperties.MEDIA_TYPE, mediaType.toString());
       JAXBContext context = JAXBContext.newInstance(new Class[]{Topology.class}, properties);
       Marshaller m = context.createMarshaller();

@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.hadoop.gateway.util.urltemplate.Params;
 
 public class EncryptStepContextParams implements Params {
-  Map<String, List<String>> params = new HashMap<String, List<String>>();
+  Map<String, List<String>> params = new HashMap<>();
 
   public EncryptStepContextParams() {
   }

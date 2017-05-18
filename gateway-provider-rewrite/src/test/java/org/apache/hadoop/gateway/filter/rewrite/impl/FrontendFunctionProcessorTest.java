@@ -172,7 +172,7 @@ public class FrontendFunctionProcessorTest {
 
   @Test
   public void testFrontendFunctionsOnJsonRequestBody() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.body", "test-filter" );
     setUp( "test-user", initParams, null );
 
@@ -213,7 +213,7 @@ public class FrontendFunctionProcessorTest {
   public void testFrontendFunctionsWithFrontendUriConfigOnJsonRequestBody() throws Exception {
 
     // This hooks up the filter in rewrite.xml in this class' test resource directory.
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.body", "test-filter" );
 
     // This simulates having gateway.frontend.uri in gateway-site.xml

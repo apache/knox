@@ -96,7 +96,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       HashMap<String,RegEntry> clusterServices = registry.get(clusterName);
       if (clusterServices == null) {
         synchronized(this) {
-          clusterServices = new HashMap<String,RegEntry>();
+          clusterServices = new HashMap<>();
           registry.put(clusterName, clusterServices);
         }
       }

@@ -43,7 +43,7 @@ public class DefaultCryptoService implements CryptoService {
 
   private AliasService as = null;
   private KeystoreService ks = null;
-  private HashMap<String,AESEncryptor> encryptorCache = new HashMap<String,AESEncryptor>();
+  private HashMap<String,AESEncryptor> encryptorCache = new HashMap<>();
 
   public void setKeystoreService(KeystoreService ks) {
     this.ks = ks;

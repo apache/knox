@@ -49,7 +49,7 @@ public class UrlRewriteContextImplTest {
 
     EasyMock.replay( environment, resolver );
 
-    Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
+    Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<>();
 
     UrlRewriter.Direction direction = UrlRewriter.Direction.OUT;
     Template template = Parser.parseLiteral( "scheme://host:port/dir/file" );

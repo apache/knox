@@ -164,7 +164,7 @@ public class KnoxCLI extends Configured implements Tool {
 
   private void initializeServices(boolean persisting) throws ServiceLifecycleException {
     GatewayConfig config = getGatewayConfig();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(persisting));
     if (master != null) {
       options.put("master", master);

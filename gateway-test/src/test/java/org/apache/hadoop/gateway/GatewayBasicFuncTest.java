@@ -2134,7 +2134,7 @@ public class GatewayBasicFuncTest {
     getYarnRmApps( ContentType.XML, null );
     getYarnRmApps( ContentType.JSON, null );
 
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put( "states", "FINISHED" );
     params.put( "finalStatus", "SUCCEEDED" );
     params.put( "user", "test" );
@@ -2487,7 +2487,7 @@ public class GatewayBasicFuncTest {
     getYarnRmNodes( ContentType.JSON, null );
     getYarnRmNodes( ContentType.XML, null );
 
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put( "state", "new,running" );
     params.put( "healthy", "true" );
 
@@ -2578,7 +2578,7 @@ public class GatewayBasicFuncTest {
     String path = "/v1/cluster/apps/application_1399541193872_0033/";
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
 
-    Map<String, Matcher<?>> matchers = new HashMap<String, Matcher<?>>();
+    Map<String, Matcher<?>> matchers = new HashMap<>();
 
     VelocityEngine velocity = new VelocityEngine();
     velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );

@@ -217,8 +217,8 @@ public class DefaultTopologyService
     observer.addListener(this);
     monitor.addObserver(observer);
 
-    this.listeners = new HashSet<TopologyListener>();
-    this.topologies = new HashMap<File, Topology>(); //loadTopologies( this.directory );
+    this.listeners = new HashSet<>();
+    this.topologies = new HashMap<>(); //loadTopologies( this.directory );
   }
 
   private void initListener(File directory) throws IOException, SAXException {
@@ -228,7 +228,7 @@ public class DefaultTopologyService
   }
 
   private Map<File, Topology> loadTopologies(File directory) {
-    Map<File, Topology> map = new HashMap<File, Topology>();
+    Map<File, Topology> map = new HashMap<>();
     if (directory.isDirectory() && directory.canRead()) {
       for (File file : directory.listFiles(this)) {
         try {
@@ -269,7 +269,7 @@ public class DefaultTopologyService
       String pkgName = topologyPkg.getName();
       String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
 
-      Map<String, Object> properties = new HashMap<String, Object>(1);
+      Map<String, Object> properties = new HashMap<>(1);
       properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
       JAXBContext jc = JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
       Marshaller mr = jc.createMarshaller();

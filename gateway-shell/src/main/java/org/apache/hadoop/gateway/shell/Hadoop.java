@@ -82,7 +82,7 @@ public class Hadoop implements Closeable {
   CloseableHttpClient client;
   BasicHttpContext context;
   ExecutorService executor;
-  Map<String, String> headers = new HashMap<String, String>();
+  Map<String, String> headers = new HashMap<>();
 
   public Map<String, String> getHeaders() {
     return headers;

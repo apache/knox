@@ -82,7 +82,7 @@ public class GatewayFuncTestDriver {
   private static Logger log = LoggerFactory.getLogger( GatewayFuncTestDriver.class );
 
   public Class<?> resourceBaseClass;
-  public Map<String,Service> services = new HashMap<String,Service>();
+  public Map<String,Service> services = new HashMap<>();
   public SimpleLdapDirectoryServer ldap;
   public TcpTransport ldapTransport;
   public boolean useGateway;
@@ -148,7 +148,7 @@ public class GatewayFuncTestDriver {
     stream.close();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {

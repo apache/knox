@@ -54,7 +54,7 @@ public class DeploymentContextImpl implements DeploymentContext {
     this.webArchive = webArchive;
     this.webAppDescriptor = webAppDescriptor;
     this.providers = providers;
-    this.descriptors = new HashMap<String,Object>();
+    this.descriptors = new HashMap<>();
   }
 
 //  @Override

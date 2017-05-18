@@ -80,7 +80,7 @@ class Command {
 
   void consumeSysPropsAndEnvVars( Properties config ) {
     props = new Properties();
-    vars = new HashMap<String,String>();
+    vars = new HashMap<>();
     for( String name : config.stringPropertyNames() ) {
       String value = config.getProperty( name );
       if( name.startsWith( ENV_PREFIX ) ) {

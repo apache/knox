@@ -27,8 +27,8 @@ import java.util.Map;
 
 public class FileBasedHostMapper implements HostMapper {
 
-  private Map<String, String> inbound = new HashMap<String, String>();
-  private Map<String, String> outbound = new HashMap<String, String>();
+  private Map<String, String> inbound = new HashMap<>();
+  private Map<String, String> outbound = new HashMap<>();
 
   public FileBasedHostMapper( URL url ) throws IOException {
     if( url != null ) {

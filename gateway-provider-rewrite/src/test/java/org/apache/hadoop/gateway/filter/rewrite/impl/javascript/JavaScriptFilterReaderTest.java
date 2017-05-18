@@ -92,8 +92,8 @@ public class JavaScriptFilterReaderTest {
 
   @Test
   public void testMatchedJsContent() throws IOException {
-    Map<String, Map<String, String>> rules = new HashMap<String, Map<String, String>>();
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, Map<String, String>> rules = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     map.put( "(https?://[^/':,]+:[\\d]+)?/cluster/app", "https://knoxhost:8443/cluster/app" );
     map.put( "/webhdfs/v1", "https://knoxhost:8443/webhdfs/v1" );
     rules.put( "test-rule", map );

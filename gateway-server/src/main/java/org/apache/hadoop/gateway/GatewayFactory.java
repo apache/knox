@@ -78,7 +78,7 @@ public class GatewayFactory {
   }
 
   private static Map<String, String> createParams( FilterDescriptor filter ) {
-    Map<String, String> paramMap = new HashMap<String, String>();
+    Map<String, String> paramMap = new HashMap<>();
     ResourceDescriptor resource = filter.up();
     GatewayDescriptor gateway = resource.up();
     for( GatewayParamDescriptor param : gateway.params() ) {

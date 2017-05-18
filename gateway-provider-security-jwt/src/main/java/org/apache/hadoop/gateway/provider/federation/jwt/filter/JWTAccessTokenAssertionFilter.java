@@ -112,7 +112,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       
       String serviceURL = sr.lookupServiceURL(clusterName, serviceName);
       
-      HashMap<String, Object> map = new HashMap<String, Object>();
+      HashMap<String, Object> map = new HashMap<>();
       // TODO: populate map from JWT authorization code
       map.put(ACCESS_TOKEN, accessToken);
       map.put(TOKEN_TYPE, BEARER);

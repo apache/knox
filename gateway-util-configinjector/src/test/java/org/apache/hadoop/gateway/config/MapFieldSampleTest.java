@@ -32,7 +32,7 @@ public class MapFieldSampleTest {
     private int retryLimit = 3;
   }
 
-  static Map<String,String> config = new HashMap<String,String>();
+  static Map<String,String> config = new HashMap<>();
   static { config.put( "retryLimit", "5" ); }
 
   @Test

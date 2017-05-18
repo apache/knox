@@ -275,7 +275,7 @@ public class WebsocketMultipleConnectionTest {
 
     final TestTopologyListener topoListener = new TestTopologyListener();
 
-    final Map<String, String> options = new HashMap<String, String>();
+    final Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
 

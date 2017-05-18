@@ -141,7 +141,7 @@ public class GatewayServer {
         if (config.isHadoopKerberosSecured()) {
           configureKerberosSecurity( config );
         }
-        Map<String,String> options = new HashMap<String,String>();
+        Map<String,String> options = new HashMap<>();
         options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
         services.init(config, options);
         if (!cmd.hasOption(GatewayCommandLine.NOSTART_LONG)) {

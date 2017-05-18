@@ -551,7 +551,7 @@ public class JsonPathTest {
 
     expression = JsonPath.compile( "$..field" );
     matches = expression.evaluate( root );
-    matchValues = new HashSet<String>();
+    matchValues = new HashSet<>();
     assertThat( matches.size(), is( 1 ) );
     for( JsonPath.Match match : matches ) {
       matchValues.add( match.getNode().asText() );
@@ -565,7 +565,7 @@ public class JsonPathTest {
     expression = JsonPath.compile( "$..field" );
     matches = expression.evaluate( root );
     assertThat( matches.size(), is( 5 ) );
-    matchValues = new HashSet<String>();
+    matchValues = new HashSet<>();
     for( JsonPath.Match match : matches ) {
       matchValues.add( match.getNode().asText() );
     }

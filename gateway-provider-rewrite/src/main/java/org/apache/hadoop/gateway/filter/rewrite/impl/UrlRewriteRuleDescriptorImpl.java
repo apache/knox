@@ -176,7 +176,7 @@ public class UrlRewriteRuleDescriptorImpl extends UrlRewriteFlowDescriptorBase<U
     return directionNameMap.get( direction );
   }
 
-  private static Map<String,UrlRewriter.Direction> directionNameMap = new HashMap<String,UrlRewriter.Direction>();
+  private static Map<String,UrlRewriter.Direction> directionNameMap = new HashMap<>();
   static {
     directionNameMap.put( "inbound", UrlRewriter.Direction.IN );
     directionNameMap.put( "in", UrlRewriter.Direction.IN );

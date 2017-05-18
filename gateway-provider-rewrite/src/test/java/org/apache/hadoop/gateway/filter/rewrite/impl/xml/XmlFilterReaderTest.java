@@ -237,7 +237,7 @@ public class XmlFilterReaderTest {
 
   @Test
   public void testMappedText() throws IOException, ParserConfigurationException, XMLStreamException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root>input-text</root>";
     StringReader inputReader = new StringReader( inputXml );
@@ -249,7 +249,7 @@ public class XmlFilterReaderTest {
 
   @Test
   public void testMappedAttribute() throws IOException, ParserConfigurationException, XMLStreamException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root attribute='input-text'/>";
     StringReader inputReader = new StringReader( inputXml );
@@ -261,7 +261,7 @@ public class XmlFilterReaderTest {
 
   @Test
   public void testCombined() throws IOException, ParserConfigurationException, XMLStreamException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "attr1-input", "attr1-output" );
     map.put( "attr2-input", "attr2-output" );
     map.put( "attr3-input", "attr3-output" );

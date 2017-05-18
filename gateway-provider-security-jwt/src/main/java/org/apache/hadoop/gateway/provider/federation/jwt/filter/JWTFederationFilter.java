@@ -181,7 +181,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
     @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
-    Set<Principal> principals = new HashSet<Principal>();
+    Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
     

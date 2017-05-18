@@ -51,7 +51,7 @@ public class Expander {
     if( params == null ) {
       params = EMPTY_PARAMS;
     }
-    Set<String> names = new HashSet<String>( params.getNames() );
+    Set<String> names = new HashSet<>( params.getNames() );
     expandScheme( template, names, params, evaluator, builder );
     expandAuthority( template, names, params, evaluator, builder );
     expandPath( template, names, params, evaluator, builder );

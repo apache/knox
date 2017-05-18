@@ -92,7 +92,7 @@ public class DeploymentFactoryFuncTest {
 
     addStacksDir(config, targetDir);
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
@@ -156,7 +156,7 @@ public class DeploymentFactoryFuncTest {
     addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
@@ -215,7 +215,7 @@ public class DeploymentFactoryFuncTest {
     addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
@@ -336,7 +336,7 @@ public class DeploymentFactoryFuncTest {
       deployDir.mkdirs();
 
       DefaultGatewayServices srvcs = new DefaultGatewayServices();
-      Map<String, String> options = new HashMap<String, String>();
+      Map<String, String> options = new HashMap<>();
       options.put("persist-master", "false");
       options.put("master", "password");
       try {
@@ -414,7 +414,7 @@ public class DeploymentFactoryFuncTest {
     addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
@@ -509,7 +509,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
@@ -568,7 +568,7 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {

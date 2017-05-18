@@ -390,7 +390,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestUrlRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.url", "test-rule-2" );
     setUp( initParams );
 
@@ -423,7 +423,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestHeaderRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.headers", "test-filter-2" );
     setUp( initParams );
 
@@ -464,7 +464,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestJsonBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     //initParams.put( "url, "" );
     initParams.put( "request.body", "test-filter-2" );
     //initParams.put( "response", "" );
@@ -498,7 +498,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestXmlBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "test-filter-2" );
     setUp( initParams );
 
@@ -534,7 +534,7 @@ public class UrlRewriteServletFilterTest {
     Enumeration<Appender> realAppenders = NoOpAppender.setUp();
     try {
 
-      Map<String,String> initParams = new HashMap<String,String>();
+      Map<String,String> initParams = new HashMap<>();
       initParams.put( "request.body", "test-filter-3" );
       setUp( initParams );
 
@@ -570,7 +570,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestFormBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "test-filter-2" );
     setUp( initParams );
 
@@ -602,7 +602,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testResponseHeaderRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.headers", "test-filter-2" );
     setUp( initParams );
 
@@ -644,7 +644,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testResponseJsonBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-2" );
     //initParams.put( "response", "" );
@@ -677,7 +677,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testResponseHtmlBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-4" );
     //initParams.put( "response", "" );
@@ -728,7 +728,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testResponseXmlBodyRewriteWithFilterInitParam() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.body", "test-filter-2" );
     setUp( initParams );
 
@@ -762,7 +762,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testResponseHtmlBodyRewriteCSSImport() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-5" );
     //initParams.put( "response", "" );
@@ -814,7 +814,7 @@ public class UrlRewriteServletFilterTest {
    */
   @Test
   public void testResponseHtmlAttributeEscaping() throws Exception {
-    final Map<String, String> initParams = new HashMap<String, String>();
+    final Map<String, String> initParams = new HashMap<>();
     initParams.put("response.body", "test-filter-4");
     setUp(initParams);
 

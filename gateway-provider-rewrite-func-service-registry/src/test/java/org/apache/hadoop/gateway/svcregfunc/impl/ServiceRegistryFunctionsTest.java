@@ -115,7 +115,7 @@ public class ServiceRegistryFunctionsTest {
 
   @Test
   public void testServiceRegistryFunctionsOnXmlRequestBody() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "oozie-conf" );
     setUp( "test-user", initParams );
 
@@ -147,7 +147,7 @@ public class ServiceRegistryFunctionsTest {
 
   @Test
   public void testServiceRegistryFunctionsOnJsonRequestBody() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "oozie-conf" );
     setUp( "test-user", initParams );
 

@@ -62,7 +62,7 @@ public class HostmapDeploymentContributorTest {
 
     UrlRewriteRulesDescriptorImpl rewriteRules = new UrlRewriteRulesDescriptorImpl();
 
-    Map<String,String> providerParams = new HashMap<String, String>();
+    Map<String,String> providerParams = new HashMap<>();
     providerParams.put( "test-host-external", "test-host-internal" );
     Provider provider = new Provider();
     provider.setEnabled( true );

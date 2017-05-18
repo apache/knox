@@ -86,7 +86,7 @@ public class DefaultTopologyServiceTest {
       FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
       TopologyService provider = new DefaultTopologyService();
-      Map<String, String> c = new HashMap<String, String>();
+      Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(dir.toString()).anyTimes();
@@ -114,7 +114,7 @@ public class DefaultTopologyServiceTest {
       provider.reloadTopologies();
       topologies = provider.getTopologies();
       assertThat(topologies.size(), is(2));
-      Set<String> names = new HashSet<String>(Arrays.asList("one", "two"));
+      Set<String> names = new HashSet<>(Arrays.asList("one", "two"));
       Iterator<Topology> iterator = topologies.iterator();
       topology = iterator.next();
       assertThat(names, hasItem(topology.getName()));
@@ -135,7 +135,7 @@ public class DefaultTopologyServiceTest {
       provider.reloadTopologies();
       topologies = provider.getTopologies();
       assertThat(topologies.size(), is(2));
-      names = new HashSet<String>(Arrays.asList("one", "two"));
+      names = new HashSet<>(Arrays.asList("one", "two"));
       iterator = topologies.iterator();
       topology = iterator.next();
       assertThat(names, hasItem(topology.getName()));
