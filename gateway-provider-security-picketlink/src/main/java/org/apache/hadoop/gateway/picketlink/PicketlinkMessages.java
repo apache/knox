@@ -31,6 +31,9 @@ public interface PicketlinkMessages {
   @Message( level = MessageLevel.DEBUG, text = "setting cookie for original-url")
   public void settingCookieForOriginalURL();
 
+  @Message( level = MessageLevel.DEBUG, text = "Secure Flag is set to False for cookie")
+  public void secureFlagFalseForCookie();
+
   @Message( level = MessageLevel.ERROR, text = "Unable to get the gateway identity passphrase: {0}")
   public void unableToGetGatewayIdentityPassphrase(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
