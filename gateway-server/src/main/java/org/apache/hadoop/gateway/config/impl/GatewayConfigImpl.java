@@ -192,6 +192,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   public static final String COOKIE_SCOPING_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
   public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED =  false;
+  private static final String CRYPTO_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.algorithm";
+  private static final String CRYPTO_PBE_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.pbe.algorithm";
+  private static final String CRYPTO_TRANSFORMATION = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.transformation";
+  private static final String CRYPTO_SALTSIZE = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.salt.size";
+  private static final String CRYPTO_ITERATION_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.iteration.count";
+  private static final String CRYPTO_KEY_LENGTH = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.key.length";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -824,4 +830,33 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return value;
   }
 
+  @Override
+  public String getAlgorithm() {
+	return getVar(CRYPTO_ALGORITHM, null);
+  }
+
+  @Override
+  public String getPBEAlgorithm() {
+	return getVar(CRYPTO_PBE_ALGORITHM, null);
+  }
+
+  @Override
+  public String getTransformation() {
+	return getVar(CRYPTO_TRANSFORMATION, null);
+  }
+
+  @Override
+  public String getSaltSize() {
+	return getVar(CRYPTO_SALTSIZE, null);
+  }
+
+  @Override
+  public String getIterationCount() {
+	return getVar(CRYPTO_ITERATION_COUNT, null);
+  }
+
+  @Override
+  public String getKeyLength() {
+	return getVar(CRYPTO_KEY_LENGTH, null);
+  }
 }

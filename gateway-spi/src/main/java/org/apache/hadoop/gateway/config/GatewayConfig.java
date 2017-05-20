@@ -236,4 +236,46 @@ public interface GatewayConfig {
    */
   String getHeaderNameForRemoteAddress();
 
+  /**
+   * Configured Algorithm name to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getAlgorithm();
+
+  /**
+   * Configured Algorithm name to be used by the CryptoService
+   * for password based encryption
+   * @return
+   */
+  String getPBEAlgorithm();
+
+  /**
+   * Configured Transformation name to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getTransformation();
+
+  /**
+   * Configured SaltSize to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getSaltSize();
+
+  /**
+   * Configured IterationCount to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getIterationCount();
+
+  /**
+   * Configured KeyLength to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getKeyLength();
+
 }

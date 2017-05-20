@@ -18,7 +18,5 @@
 package org.apache.hadoop.gateway.services.security;
 
 public interface MasterService {
-
   public abstract char[] getMasterSecret();
-
 }
