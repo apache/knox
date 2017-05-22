@@ -24,6 +24,8 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
@@ -56,6 +58,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private boolean sslEnabled = false;
   private String truststoreType = "jks";
   private String keystoreType = "jks";
+  private boolean isTopologyPortMappingEnabled = true;
+  private ConcurrentHashMap topologyPortMapping = new ConcurrentHashMap<String, Integer>();
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -385,6 +389,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return backupVersionLimit;
   }
 
+  public void setTopologyPortMapping(ConcurrentHashMap topologyPortMapping) {
+    this.topologyPortMapping = topologyPortMapping;
+  }
+
+  public void setGatewayPortMappingEnabled(
+      boolean topologyPortMappingEnabled) {
+    isTopologyPortMappingEnabled = topologyPortMappingEnabled;
+  }
+
   private long backupAgeLimit = -1;
 
   @Override
@@ -565,4 +578,25 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public String getKeyLength() {
 	return null;
   }
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+    return topologyPortMapping;
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    return isTopologyPortMappingEnabled;
+  }
+
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.config.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.gateway.GatewayMessages;
@@ -33,8 +34,10 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The configuration for the Gateway.
@@ -150,6 +153,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
 
   /**
+   * Properties for for gateway port mapping feature
+   */
+  public static final String GATEWAY_PORT_MAPPING_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".port.mapping.";
+  public static final String GATEWAY_PORT_MAPPING_REGEX = GATEWAY_CONFIG_FILE_PREFIX + "\\.port\\.mapping\\..*";
+  public static final String GATEWAY_PORT_MAPPING_ENABLED = GATEWAY_PORT_MAPPING_PREFIX + "enabled";
+
+  /**
    * Comma seperated list of MIME Types to be compressed by Knox on the way out.
    *
    * @since 0.12
@@ -182,6 +192,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+
+  public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED =  true;
 
   /**
    * Default list of MIME Type to be compressed.
@@ -806,6 +818,41 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       mimeTypes = Arrays.asList(value.trim().split("\\s*,\\s*"));
     }
     return mimeTypes;
+  }
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+
+    final Map<String, Integer> result = new ConcurrentHashMap<String, Integer>();
+    final Map<String, String> properties = getValByRegex(GATEWAY_PORT_MAPPING_REGEX);
+
+    // Convert port no. from string to int
+    for(final Map.Entry<String, String> e : properties.entrySet()) {
+      // ignore the GATEWAY_PORT_MAPPING_ENABLED property
+      if(!e.getKey().equalsIgnoreCase(GATEWAY_PORT_MAPPING_ENABLED)) {
+        // extract the topology name and use it as a key
+        result.put(StringUtils.substringAfter(e.getKey(), GATEWAY_PORT_MAPPING_PREFIX), Integer.parseInt(e.getValue()) );
+      }
+
+    }
+
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    final String result = get( GATEWAY_PORT_MAPPING_ENABLED, Boolean.toString(DEFAULT_GATEWAY_PORT_MAPPING_ENABLED));
+    return Boolean.parseBoolean(result);
   }
 
   private static long parseNetworkTimeout(String s ) {

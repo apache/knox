@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.config;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
 
 public interface GatewayConfig {
 
@@ -277,5 +278,19 @@ public interface GatewayConfig {
    * @return
    */
   String getKeyLength();
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  Map<String, Integer> getGatewayPortMappings();
+
+  /**
+   * Is the Port Mapping feature on ?
+   * @return
+   */
+  boolean isGatewayPortMappingEnabled();
+
 
 }

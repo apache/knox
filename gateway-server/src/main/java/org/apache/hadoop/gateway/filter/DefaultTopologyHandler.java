@@ -86,7 +86,7 @@ public class DefaultTopologyHandler extends HandlerWrapper {
     }
   }
 
-  private static class ForwardedRequest extends HttpServletRequestWrapper {
+  static class ForwardedRequest extends HttpServletRequestWrapper {
 
     private String contextPath;
 

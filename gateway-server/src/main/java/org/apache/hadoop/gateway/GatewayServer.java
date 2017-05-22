@@ -17,39 +17,13 @@
  */
 package org.apache.hadoop.gateway;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -62,6 +36,8 @@ import org.apache.hadoop.gateway.deploy.DeploymentException;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.filter.CorrelationHandler;
 import org.apache.hadoop.gateway.filter.DefaultTopologyHandler;
+import org.apache.hadoop.gateway.filter.PortMappingHelperHandler;
+import org.apache.hadoop.gateway.filter.RequestUpdateHandler;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.gateway.services.GatewayServices;
@@ -80,13 +56,13 @@ import org.apache.hadoop.gateway.util.XmlUtils;
 import org.apache.hadoop.gateway.websockets.GatewayWebsocketHandler;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -103,11 +79,43 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+
 public class GatewayServer {
   private static final GatewayResources res = ResourcesFactory.get(GatewayResources.class);
   private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+  private static final String DEFAULT_CONNECTOR_NAME = "default";
+
   private static GatewayServer server;
   private static GatewayServices services;
 
@@ -295,7 +303,26 @@ public class GatewayServer {
       server.start();
       // Coverity CID 1352654
       URI uri = server.jetty.getURI();
-      log.startedGateway( uri != null ? uri.getPort() : -1 );
+
+      // Logging for topology <-> port
+      InetSocketAddress[] addresses = new InetSocketAddress[server.jetty
+          .getConnectors().length];
+      for (int i = 0, n = addresses.length; i < n; i++) {
+        NetworkConnector connector = (NetworkConnector) server.jetty
+            .getConnectors()[i];
+        if (connector != null) {
+
+          if (connector.getName() == null) {
+            log.startedGateway(
+                connector != null ? connector.getLocalPort() : -1);
+          } else {
+            log.startedGateway(connector != null ? connector.getName() : "",
+                connector != null ? connector.getLocalPort() : -1);
+          }
+
+        }
+      }
+
       return server;
     }
   }
@@ -309,12 +336,34 @@ public class GatewayServer {
       this.listener = new InternalTopologyListener();
   }
 
-  private static Connector createConnector( final Server server, final GatewayConfig config ) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException {
+  /**
+   * Create a connector for Gateway Server to listen on.
+   *
+   * @param server       Jetty server
+   * @param config       GatewayConfig
+   * @param port         If value is > 0 then the given value is used else we
+   *                     use the port provided in GatewayConfig.
+   * @param topologyName Connector name, only used when not null
+   * @return
+   * @throws IOException
+   * @throws CertificateException
+   * @throws NoSuchAlgorithmException
+   * @throws KeyStoreException
+   */
+  private static Connector createConnector(final Server server,
+      final GatewayConfig config, final int port, final String topologyName)
+      throws IOException, CertificateException, NoSuchAlgorithmException,
+      KeyStoreException {
+
     ServerConnector connector;
 
     // Determine the socket address and check availability.
     InetSocketAddress address = config.getGatewayAddress();
     checkAddressAvailability( address );
+
+    final int connectorPort = port > 0 ? port : address.getPort();
+
+    checkPortConflict(connectorPort, topologyName, config);
 
     HttpConfiguration httpConfig = new HttpConfiguration();
     httpConfig.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
@@ -325,7 +374,7 @@ public class GatewayServer {
     if (config.isSSLEnabled()) {
       HttpConfiguration httpsConfig = new HttpConfiguration( httpConfig );
       httpsConfig.setSecureScheme( "https" );
-      httpsConfig.setSecurePort( address.getPort() );
+      httpsConfig.setSecurePort( connectorPort );
       httpsConfig.addCustomizer( new SecureRequestCustomizer() );
       SSLService ssl = services.getService("SSLService");
       String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
@@ -335,7 +384,12 @@ public class GatewayServer {
       connector = new ServerConnector( server );
     }
     connector.setHost( address.getHostName() );
-    connector.setPort( address.getPort() );
+    connector.setPort( connectorPort );
+
+    if(!StringUtils.isBlank(topologyName)) {
+      connector.setName(topologyName);
+    }
+
     long idleTimeout = config.getGatewayIdleTimeout();
     if (idleTimeout > 0l) {
       connector.setIdleTimeout(idleTimeout);
@@ -347,9 +401,11 @@ public class GatewayServer {
   private static HandlerCollection createHandlers(
       final GatewayConfig config,
       final GatewayServices services,
-      final ContextHandlerCollection contexts ) {
+      final ContextHandlerCollection contexts,
+      final Map<String, Integer> topologyPortMap) {
     HandlerCollection handlers = new HandlerCollection();
     RequestLogHandler logHandler = new RequestLogHandler();
+
     logHandler.setRequestLog( new AccessHandler() );
 
     TraceHandler traceHandler = new TraceHandler();
@@ -369,44 +425,122 @@ public class GatewayServer {
     gzipHandler.addIncludedMimeTypes(mimeTypes);
     gzipHandler.setHandler(correlationHandler);
 
+    // Used to correct the {target} part of request with Topology Port Mapping feature
+    final PortMappingHelperHandler portMappingHandler = new PortMappingHelperHandler(config);
+    portMappingHandler.setHandler(gzipHandler);
+
     DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler(
         config, services, contexts);
 
-    if (config.isWebsocketEnabled()) {      
-      GatewayWebsocketHandler websockethandler = new GatewayWebsocketHandler(
-          config, services);
-      websockethandler.setHandler(gzipHandler);
 
-      /*
-       * Chaining the gzipHandler to correlationHandler. The expected flow here
-       * is defaultTopoHandler -> logHandler -> gzipHandler ->
-       * correlationHandler -> traceHandler -> websockethandler
-       */
-      handlers.setHandlers(
-          new Handler[] { defaultTopoHandler, logHandler, websockethandler });
+     // If topology to port mapping feature is enabled then we add new Handler {RequestForwardHandler}
+     // to the chain, this handler listens on the configured port (in gateway-site.xml)
+     // and simply forwards requests to the correct context path.
+
+     //  The reason for adding ContextHandler is so that we can add a connector
+     // to it on which the handler listens (exclusively).
+
+
+    if (config.isGatewayPortMappingEnabled()) {
+
+      for (final Map.Entry<String, Integer> entry : topologyPortMap
+          .entrySet()) {
+        log.createJettyHandler(entry.getKey());
+        final ContextHandler topologyContextHandler = new ContextHandler();
+
+        final RequestUpdateHandler updateHandler = new RequestUpdateHandler(
+            config, entry.getKey(), services);
+
+        topologyContextHandler.setHandler(updateHandler);
+        topologyContextHandler.setVirtualHosts(
+            new String[] { "@" + entry.getKey().toLowerCase() });
+
+        handlers.addHandler(topologyContextHandler);
+      }
+
+    }
+
+    handlers.addHandler(defaultTopoHandler);
+    handlers.addHandler(logHandler);
+
+    if (config.isWebsocketEnabled()) {      
+      final GatewayWebsocketHandler websocketHandler = new GatewayWebsocketHandler(
+          config, services);
+      websocketHandler.setHandler(portMappingHandler);
+
+      handlers.addHandler(websocketHandler);
+
     } else {
-      /*
-       * Chaining the gzipHandler to correlationHandler. The expected flow here
-       * is defaultTopoHandler -> logHandler -> gzipHandler ->
-       * correlationHandler -> traceHandler
-       */
-      handlers.setHandlers(
-          new Handler[] { defaultTopoHandler, logHandler, gzipHandler });
+      handlers.addHandler(portMappingHandler);
     }
 
     return handlers;
   }
 
+  /**
+   * Sanity Check to make sure configured ports are free and there is not port
+   * conflict.
+   *
+   * @param port
+   * @param topologyName
+   * @param config
+   * @throws IOException
+   */
+  public static void checkPortConflict(final int port,
+      final String topologyName, final GatewayConfig config)
+      throws IOException {
+
+    // Throw an exception if port in use
+    if (isPortInUse(port)) {
+      if (topologyName == null) {
+        log.portAlreadyInUse(port);
+      } else {
+        log.portAlreadyInUse(port, topologyName);
+      }
+      throw new IOException(String.format(" Port %d already in use. ", port));
+    }
+
+    // if topology name is blank which means we have all topologies listening on this port
+    if (StringUtils.isBlank(topologyName)) {
+      if (config.getGatewayPortMappings().containsValue(new Integer(port))) {
+        log.portAlreadyInUse(port);
+        throw new IOException(
+            String.format(" Cannot use port %d, it has to be unique. ", port));
+      }
+    } else {
+      // Topology name is not blank so check amongst other ports if we have a conflict
+      for (final Map.Entry<String, Integer> entry : config
+          .getGatewayPortMappings().entrySet()) {
+        if (entry.getKey().equalsIgnoreCase(topologyName)) {
+          continue;
+        }
+
+        if (entry.getValue() == port) {
+          log.portAlreadyInUse(port, topologyName);
+          throw new IOException(String.format(
+              " Topologies %s and %s use the same port %d, ports for topologies (if defined) have to be unique. ",
+              entry.getKey(), topologyName, port));
+        }
+
+      }
+
+    }
+
+  }
+
   private synchronized void start() throws Exception {
     // Create the global context handler.
     contexts = new ContextHandlerCollection();
+
      // A map to keep track of current deployments by cluster name.
     deployments = new ConcurrentHashMap<String, WebAppContext>();
 
     // Start Jetty.
     jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
-    jetty.addConnector( createConnector( jetty, config ) );
-    jetty.setHandler( createHandlers( config, services, contexts ) );
+
+    /* topologyName is null because all topology listen on this port */
+    jetty.addConnector( createConnector( jetty, config, config.getGatewayPort(), null) );
+
 
     // Add Annotations processing into the Jetty server to support JSPs
     Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
@@ -420,6 +554,40 @@ public class GatewayServer {
     monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(listener);
     monitor.reloadTopologies();
+
+    final Collection<Topology> topologies = monitor.getTopologies();
+    final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();
+
+    // List of all the topology that are deployed
+    final List<String> deployedTopologyList = new ArrayList<String>();
+
+    for (final Topology t : topologies) {
+      deployedTopologyList.add(t.getName());
+    }
+
+
+    // Check whether the configured topologies for port mapping exist, if not
+    // log WARN message and continue
+    checkMappedTopologiesExist(topologyPortMap, deployedTopologyList);
+
+    final HandlerCollection handlers = createHandlers( config, services, contexts, topologyPortMap);
+
+     // Check whether a topology wants dedicated port,
+     // if yes then we create a connector that listens on the provided port.
+
+    log.gatewayTopologyPortMappingEnabled(config.isGatewayPortMappingEnabled());
+    if (config.isGatewayPortMappingEnabled()) {
+      for (Map.Entry<String, Integer> entry : topologyPortMap.entrySet()) {
+        // Add connector for only valid topologies, i.e. deployed topologies.
+        if(deployedTopologyList.contains(entry.getKey())) {
+          log.createJettyConnector(entry.getKey().toLowerCase(), entry.getValue());
+          jetty.addConnector(createConnector(jetty, config, entry.getValue(),
+              entry.getKey().toLowerCase()));
+        }
+      }
+    }
+
+    jetty.setHandler(handlers);
 
     try {
       jetty.start();
@@ -443,6 +611,51 @@ public class GatewayServer {
     jetty.stop();
     jetty.join();
     log.stoppedGateway();
+  }
+
+  /**
+   * Check whether a port is free
+   *
+   * @param port
+   * @return true if port in use else false
+   */
+  public static boolean isPortInUse(final int port) {
+
+    Socket socket = null;
+    try {
+      socket = new Socket("localhost", port);
+      return true;
+    } catch (final UnknownHostException e) {
+      return false;
+    } catch (final IOException e) {
+      return false;
+    } finally {
+      IOUtils.closeQuietly(socket);
+    }
+
+  }
+
+  /**
+   * Checks whether the topologies defined in gateway-xml as part of Topology
+   * Port mapping feature exists. If it does not Log a message and move on.
+   *
+   * @param configTopologies
+   * @param topologies
+   * @return
+   */
+  private void checkMappedTopologiesExist(
+      final Map<String, Integer> configTopologies,
+      final List<String> topologies) throws IOException {
+
+    for(final Map.Entry<String, Integer> entry : configTopologies.entrySet()) {
+
+      // If the topologies defined in gateway-config.xml are not found in gateway
+      if (!topologies.contains(entry.getKey())) {
+        log.topologyPortMappingCannotFindTopology(entry.getKey(), entry.getValue());
+      }
+
+    }
+
   }
 
   public URI getURI() {
@@ -487,6 +700,7 @@ public class GatewayServer {
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
+
     return context;
   }
 
@@ -585,11 +799,13 @@ public class GatewayServer {
       if( contexts.isRunning() && !newContext.isRunning() ) {
           newContext.start();
       }
+
     } catch( Exception e ) {
       auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
       log.failedToDeployTopology( topology.getName(), e );
     }
   }
+
 
   private synchronized void internalDeactivateTopology( Topology topology ) {
 
@@ -614,6 +830,7 @@ public class GatewayServer {
         }
       }
     }
+
     // Deactivate the required deployed contexts.
     for( WebAppContext context : deactivate ) {
       String contextPath = context.getContextPath();

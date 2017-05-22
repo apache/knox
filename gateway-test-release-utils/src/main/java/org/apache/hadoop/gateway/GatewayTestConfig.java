@@ -25,6 +25,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
@@ -436,6 +438,26 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public List<String> getMimeTypesToCompress() {
     return new ArrayList<String>();
+  }
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+    return new ConcurrentHashMap<String, Integer>();
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    return true;
   }
 
   @Override
