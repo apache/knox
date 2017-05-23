@@ -181,7 +181,7 @@ public class GatewayLocalServiceFuncTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-jersey-service/test-jersey-resource-path";
+    String serviceUrl = clusterUrl + "/test-jersey-service/test-jersey-resource-path";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

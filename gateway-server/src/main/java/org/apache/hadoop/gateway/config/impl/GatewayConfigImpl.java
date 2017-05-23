@@ -131,8 +131,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_SERVER_REQUEST_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestHeaderBuffer";
   public static final String HTTP_SERVER_RESPONSE_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseBuffer";
   public static final String HTTP_SERVER_RESPONSE_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseHeaderBuffer";
-  public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
-  public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
+  public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
+  public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
   public static final String METRICS_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".metrics.enabled";
   public static final String JMX_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".jmx.metrics.reporting.enabled";
   public static final String GRAPHITE_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.enabled";
@@ -143,14 +143,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String REMOTE_IP_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.ip.header.name";
 
   /* @since 0.10 Websocket config variables */
-  public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
-  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.size";
-  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.size";
-  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.buffer.size";
-  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.buffer.size";
-  public static final String WEBSOCKET_INPUT_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
-  public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
-  public static final String WEBSOCKET_IDLE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+  public static final String WEBSOCKET_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.size";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.buffer.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.buffer.size";
+  public static final String WEBSOCKET_INPUT_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
+  public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
+  public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
 
   /**
    * Properties for for gateway port mapping feature
@@ -184,16 +184,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DATA_DIR = "data";
 
   /* Websocket defaults */
-  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED =  false;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
-  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
-  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
+  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
+  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
-  public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED =  true;
+  public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
 
   /**
    * Default list of MIME Type to be compressed.
@@ -202,8 +202,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_MIME_TYPES_TO_COMPRESS = "text/html, text/plain, text/xml, text/css, "
       + "application/javascript, application/x-javascript, text/javascript";
 
-  public static final String COOKIE_SCOPING_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
-  public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED =  false;
+  public static final String COOKIE_SCOPING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
+  public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED = false;
   private static final String CRYPTO_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.algorithm";
   private static final String CRYPTO_PBE_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.pbe.algorithm";
   private static final String CRYPTO_TRANSFORMATION = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.transformation";

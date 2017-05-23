@@ -52,7 +52,7 @@ public class BaseKeystoreService {
        final KeyStore  keyStore = KeyStore.getInstance(storeType);
        if ( keyStoreFile.exists() )
        {
-           final FileInputStream   input   = new FileInputStream( keyStoreFile );
+           final FileInputStream   input = new FileInputStream( keyStoreFile );
            try {
                keyStore.load( input, masterPassword );
            }
@@ -119,7 +119,7 @@ public class BaseKeystoreService {
       FileInputStream input = null;
       try {
         final KeyStore  keyStore = KeyStore.getInstance(storeType);
-        input   = new FileInputStream( keyStoreFile );
+        input = new FileInputStream( keyStoreFile );
         keyStore.load( input, masterService.getMasterSecret() );
         return true;
       } catch (NoSuchAlgorithmException e) {

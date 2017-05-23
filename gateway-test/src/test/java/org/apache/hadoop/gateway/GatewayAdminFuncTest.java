@@ -195,7 +195,7 @@ public class GatewayAdminFuncTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/api/v1/version";
+    String serviceUrl = clusterUrl + "/api/v1/version";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

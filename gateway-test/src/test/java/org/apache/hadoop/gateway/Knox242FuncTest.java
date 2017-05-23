@@ -145,7 +145,7 @@ public class Knox242FuncTest {
 
     gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
     clusterUrl = gatewayUrl + "/testdg-cluster";
-    serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
 
     GatewayServices services = GatewayServer.getGatewayServices();
     AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
@@ -284,7 +284,7 @@ public class Knox242FuncTest {
     LOG_ENTER();
     String username = "joe";
     String password = "joe-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -302,7 +302,7 @@ public class Knox242FuncTest {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

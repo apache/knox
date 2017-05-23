@@ -178,7 +178,7 @@ public class AuditServiceTest {
     assertThat( context.getRemoteHostname(), is( expectedAuditContext.getRemoteHostname() ) );
     assertThat( context.getTargetServiceName(), is( expectedAuditContext.getTargetServiceName() ) );
          
-    CorrelationContext correlationContext =  (CorrelationContext)event.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
+    CorrelationContext correlationContext = (CorrelationContext)event.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
     assertThat( correlationContext.getRequestId(), is( expectedCorrelationContext.getRequestId() ) );
     assertThat( correlationContext.getRootRequestId(), is( expectedCorrelationContext.getRootRequestId() ) );
     assertThat( correlationContext.getParentRequestId(), is( expectedCorrelationContext.getParentRequestId() ) );

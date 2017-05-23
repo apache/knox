@@ -273,7 +273,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String username = "admin";
     String password = "admin-password";
-    String serviceUrl =  clusterUrl + "/api/v1/topologies";
+    String serviceUrl = clusterUrl + "/api/v1/topologies";
     String href1 = given()
         //.log().all()
         .auth().preemptive().basic(username, password)
@@ -330,7 +330,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String username = "admin";
     String password = "admin-password";
-    String serviceUrl =  clusterUrl + "/api/v1/topologies";
+    String serviceUrl = clusterUrl + "/api/v1/topologies";
     String hrefJson = given()
         //.log().all()
         .auth().preemptive().basic(username, password)
@@ -392,7 +392,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String adminUser = "admin";
     String adminPass = "admin-password";
-    String url =  clusterUrl + "/api/v1/topologies";
+    String url = clusterUrl + "/api/v1/topologies";
 
     given()
         //.log().all()
@@ -420,7 +420,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String guestUser = "guest";
     String guestPass = "guest-password";
-    String url =  clusterUrl + "/api/v1/topologies";
+    String url = clusterUrl + "/api/v1/topologies";
 
     given()
         //.log().all()
@@ -557,7 +557,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String username = "admin";
     String password = "admin-password";
-    String url =  clusterUrl + "/api/v1/topologies/" + test.getName();
+    String url = clusterUrl + "/api/v1/topologies/" + test.getName();
 
     GatewayServices gs = GatewayServer.getGatewayServices();
 
@@ -598,7 +598,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String username = "admin";
     String password = "admin-password";
-    String url =  clusterUrl + "/api/v1/topologies/test-put";
+    String url = clusterUrl + "/api/v1/topologies/test-put";
 
     String JsonPut =
         given()
@@ -669,7 +669,7 @@ public class GatewayAdminTopologyFuncTest {
 
     String username = "admin";
     String password = "admin-password";
-    String url =  clusterUrl + "/api/v1/topologies";
+    String url = clusterUrl + "/api/v1/topologies";
 
 //    X-Forward header values
     String port = String.valueOf(777);
@@ -784,7 +784,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_ENTER();
     String username = "admin";
     String password = "admin-password";
-    String url =  clusterUrl + "/api/v1/topologies";
+    String url = clusterUrl + "/api/v1/topologies";
 
 //     Case 1: Normal Request (No Change in gateway.path). Ensure HTTP OK resp + valid URL.
     given()

@@ -1528,7 +1528,7 @@ public class KnoxCLI extends Configured implements Tool {
     private HashSet<String> getGroups(Topology t, UsernamePasswordToken token){
       HashSet<String> groups = null;
       try {
-        Subject subject  = getSubject(getConfig(t));
+        Subject subject = getSubject(getConfig(t));
         if(!subject.isAuthenticated()) {
           subject.login(token);
         }
@@ -1598,7 +1598,7 @@ public class KnoxCLI extends Configured implements Tool {
   public class ServiceTestCommand extends Command {
     public static final String USAGE = "service-test [--u username] [--p password] [--cluster clustername] [--hostname name] " +
         "[--port port]";
-    public static final String DESC =  "This command requires a running instance of Knox to be present on the same " +
+    public static final String DESC = "This command requires a running instance of Knox to be present on the same " +
         "machine. It will execute a test to make sure all services are accessible through the gateway URLs. Errors are " +
         "reported and suggestions to resolve any problems are returned. JSON formatted.";
 
@@ -1648,7 +1648,7 @@ public class KnoxCLI extends Configured implements Tool {
       }
 
 
-      String path =  "/" + conf.getGatewayPath();
+      String path = "/" + conf.getGatewayPath();
       String topology = "/" + cluster;
       String httpServiceTestURL = http + host + ":" + gatewayPort + path + topology + "/service-test";
       String httpsServiceTestURL = https + host + ":" + gatewayPort + path + topology + "/service-test";

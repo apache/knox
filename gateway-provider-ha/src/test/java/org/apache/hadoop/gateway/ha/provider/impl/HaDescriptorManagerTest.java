@@ -39,7 +39,7 @@ public class HaDescriptorManagerTest {
       HaDescriptor descriptor = HaDescriptorManager.load(inputStream);
       assertNotNull(descriptor);
       assertEquals(1, descriptor.getEnabledServiceNames().size());
-      HaServiceConfig config =  descriptor.getServiceConfig("foo");
+      HaServiceConfig config = descriptor.getServiceConfig("foo");
       assertNotNull(config);
       assertEquals("foo", config.getServiceName());
       assertEquals(42, config.getMaxFailoverAttempts());
@@ -47,7 +47,7 @@ public class HaDescriptorManagerTest {
       assertEquals(2, config.getMaxRetryAttempts());
       assertEquals(2213, config.getRetrySleep());
       assertFalse(config.isEnabled());
-      config =  descriptor.getServiceConfig("bar");
+      config = descriptor.getServiceConfig("bar");
       assertTrue(config.isEnabled());
    }
 
@@ -58,7 +58,7 @@ public class HaDescriptorManagerTest {
       HaDescriptor descriptor = HaDescriptorManager.load(inputStream);
       assertNotNull(descriptor);
       assertEquals(1, descriptor.getEnabledServiceNames().size());
-      HaServiceConfig config =  descriptor.getServiceConfig("foo");
+      HaServiceConfig config = descriptor.getServiceConfig("foo");
       assertNotNull(config);
       assertEquals("foo", config.getServiceName());
       assertEquals(HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS, config.getMaxFailoverAttempts());

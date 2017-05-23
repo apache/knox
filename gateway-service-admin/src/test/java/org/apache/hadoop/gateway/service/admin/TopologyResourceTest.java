@@ -46,8 +46,8 @@ public class TopologyResourceTest {
   private String fullContext = startContext + reqContext;
   private String pathInfo = "/api/version";
   private String topologyName = "topology-name";
-  private String expectedBase =  proto + "://" + server + ":" + port + "/mycontext/" + gatewayPath;
-  private String expectedURI =  expectedBase + "/" + topologyName;
+  private String expectedBase = proto + "://" + server + ":" + port + "/mycontext/" + gatewayPath;
+  private String expectedURI = expectedBase + "/" + topologyName;
   private String expectedHref = expectedBase + "/a-topology" + pathInfo + "/" + topologyName;
 
   @Test

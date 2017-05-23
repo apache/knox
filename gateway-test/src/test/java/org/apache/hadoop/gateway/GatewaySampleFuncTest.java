@@ -197,7 +197,7 @@ public class GatewaySampleFuncTest {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

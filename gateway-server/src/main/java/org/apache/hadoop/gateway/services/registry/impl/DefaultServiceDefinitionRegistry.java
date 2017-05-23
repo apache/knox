@@ -83,7 +83,7 @@ public class DefaultServiceDefinitionRegistry implements ServiceDefinitionRegist
   public ServiceDefEntry getMatchingService(String urlPattern) {
     Matcher<ServiceDefEntry>.Match match = null;
     try {
-      match =  entries.match(Parser.parseLiteral(urlPattern));
+      match = entries.match(Parser.parseLiteral(urlPattern));
     } catch ( URISyntaxException e ) {
       LOG.failedToParsePath(urlPattern, e);
     }

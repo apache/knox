@@ -166,7 +166,7 @@ public class GatewayLdapGroupFuncTest {
 
     gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
     clusterUrl = gatewayUrl + "/test-cluster";
-    serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
 
     ///*
     GatewayServices services = GatewayServer.getGatewayServices();
@@ -290,7 +290,7 @@ public class GatewayLdapGroupFuncTest {
     LOG_ENTER();
     String username = "sam";
     String password = "sam-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -308,7 +308,7 @@ public class GatewayLdapGroupFuncTest {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
