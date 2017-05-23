@@ -389,7 +389,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return backupVersionLimit;
   }
 
-  public void setTopologyPortMapping(ConcurrentHashMap topologyPortMapping) {
+  public void setTopologyPortMapping(ConcurrentHashMap<String, Integer> topologyPortMapping) {
     this.topologyPortMapping = topologyPortMapping;
   }
 
