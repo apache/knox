@@ -54,6 +54,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       .get(WebsocketLogMessages.class);
 
   public static final String WEBSOCKET_PROTOCOL_STRING = "ws://";
+
+  public static final String SECURE_WEBSOCKET_PROTOCOL_STRING = "wss://";
   
   static final String REGEX_SPLIT_CLUSTER_NAME = "^((?:[^/]*/){1}[^/]*)";
   
@@ -181,7 +183,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     try {
 
       /* if we do not find websocket URL we default to HTTP */
-      if (!StringUtils.contains(backendURL, WEBSOCKET_PROTOCOL_STRING)) {
+      if (!StringUtils.containsAny(backendURL, WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
         URL serviceUrl = new URL(backendURL);
 
         final StringBuffer backend = new StringBuffer();
