@@ -85,7 +85,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
@@ -141,7 +141,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
       Mockito.when(request.getCookies()).thenReturn(new Cookie[] { cookie });
       Mockito.when(request.getRequestURL()).thenReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
       Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
           SERVICE_URL);
@@ -180,7 +180,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
       Mockito.when(request.getCookies()).thenReturn(new Cookie[] { cookie });
       Mockito.when(request.getRequestURL()).thenReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
       Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
           SERVICE_URL);
@@ -210,7 +210,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
@@ -246,7 +246,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
@@ -280,7 +280,7 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
@@ -315,11 +315,11 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
+          SERVICE_URL).anyTimes();
       EasyMock.replay(request);
 
       ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority());
@@ -350,11 +350,11 @@ public class SSOCookieProviderTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
       EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL));
+          new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
+          SERVICE_URL).anyTimes();
       EasyMock.replay(request);
 
       ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority());
@@ -377,7 +377,7 @@ public class SSOCookieProviderTest  {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getRequestURL()).andReturn(
-        new StringBuffer(SERVICE_URL));
+        new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getQueryString()).andReturn("name=value");
     EasyMock.replay(request);
 
@@ -393,7 +393,7 @@ public class SSOCookieProviderTest  {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getRequestURL()).andReturn(
-        new StringBuffer(SERVICE_URL));
+        new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getQueryString()).andReturn(null);
     EasyMock.replay(request);
 
@@ -433,7 +433,7 @@ public class SSOCookieProviderTest  {
     aud.add("bar");
 
     JWTClaimsSet claims = new JWTClaimsSet.Builder()
-    .issuer("https://c2id.com")
+    .issuer("KNOXSSO")
     .subject(sub)
     .audience(aud)
     .expirationTime(expires)

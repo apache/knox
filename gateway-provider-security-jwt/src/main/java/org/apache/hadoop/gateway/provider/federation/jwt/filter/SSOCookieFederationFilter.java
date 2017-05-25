@@ -18,18 +18,10 @@
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
-import java.security.Principal;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.security.auth.Subject;
-import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -40,32 +32,22 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
-import org.apache.hadoop.gateway.services.GatewayServices;
-import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
-import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
-public class SSOCookieFederationFilter extends AbstractJWTFilter implements Filter {
-  static JWTMessages log = MessagesFactory.get( JWTMessages.class );
-  private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
+public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_COOKIE_NAME = "sso.cookie.name";
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
+  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
+  private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
-  protected JWTokenAuthority authority = null;
-  private String cookieName = null;
-  private String authenticationProviderUrl = null;
+  private String cookieName;
+  private String authenticationProviderUrl;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
-    ServletContext context = filterConfig.getServletContext();
-    if (context != null) {
-      GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-      if (services != null) {
-        authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
-      }
-    }
+    super.init(filterConfig);
     
     // configured cookieName
     cookieName = filterConfig.getInitParameter(SSO_COOKIE_NAME);
@@ -111,35 +93,17 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter implements Filt
     }
     else {
       JWTToken token = new JWTToken(wireToken);
-      boolean verified = false;
-      try {
-        verified = authority.verifyToken(token);
-        if (verified) {
-          if (tokenIsStillValid(token)) {
-            boolean audValid = validateAudiences(token);
-            if (audValid) {
-              Subject subject = createSubjectFromToken(token);
-              continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
-            }
-            else {
-              log.failedToValidateAudience();
-              ((HttpServletResponse) response).sendRedirect(loginURL);
-            }
-          }
-          else {
-            log.tokenHasExpired();
-          ((HttpServletResponse) response).sendRedirect(loginURL);
-          }
-        }
-        else {
-          log.failedToVerifyTokenSignature();
-        ((HttpServletResponse) response).sendRedirect(loginURL);
-        }
-      } catch (TokenServiceException e) {
-        log.unableToVerifyToken(e);
-      ((HttpServletResponse) response).sendRedirect(loginURL);
+      if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
+        Subject subject = createSubjectFromToken(token);
+        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
       }
     }
+  }
+
+  protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
+                                       String error) throws IOException {
+    String loginURL = constructLoginURL(request);
+    response.sendRedirect(loginURL);
   }
 
   /**
@@ -185,58 +149,6 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter implements Filt
   private String getOriginalQueryString(HttpServletRequest request) {
     String originalQueryString = request.getQueryString();
     return (originalQueryString == null) ? "" : "?" + originalQueryString;
-  }
-
-  private void sendUnauthorized(ServletResponse response) throws IOException {
-    ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    return;
-  }
-
-  private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
-    try {
-      Subject.doAs(
-        subject,
-        new PrivilegedExceptionAction<Object>() {
-          @Override
-          public Object run() throws Exception {
-            chain.doFilter(request, response);
-            return null;
-          }
-        }
-        );
-    }
-    catch (PrivilegedActionException e) {
-      Throwable t = e.getCause();
-      if (t instanceof IOException) {
-        throw (IOException) t;
-      }
-      else if (t instanceof ServletException) {
-        throw (ServletException) t;
-      }
-      else {
-        throw new ServletException(t);
-      }
-    }
-  }
-
-  private Subject createSubjectFromToken(JWTToken token) {
-    final String principal = token.getSubject();
-
-    @SuppressWarnings("rawtypes")
-    HashSet emptySet = new HashSet();
-    Set<Principal> principals = new HashSet<>();
-    Principal p = new PrimaryPrincipal(principal);
-    principals.add(p);
-    
-//        The newly constructed Sets check whether this Subject has been set read-only 
-//        before permitting subsequent modifications. The newly created Sets also prevent 
-//        illegal modifications by ensuring that callers have sufficient permissions.
-//
-//        To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
-//        To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
-//        To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
-    return subject;
   }
 
 }
