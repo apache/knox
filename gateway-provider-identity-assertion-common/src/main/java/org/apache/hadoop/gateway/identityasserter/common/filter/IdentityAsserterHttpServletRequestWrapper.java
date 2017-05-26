@@ -20,7 +20,6 @@ package org.apache.hadoop.gateway.identityasserter.common.filter;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.gateway.SpiGatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.servlet.SynchronousServletInputStreamAdapter;
@@ -196,9 +195,6 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   @Override
   public ServletInputStream getInputStream() throws java.io.IOException {
-    if (this.getRequest() instanceof UrlRewriteRequest) {
-      return super.getInputStream();
-    }
     String contentType = getContentType();
     if( contentType != null && contentType.startsWith( "application/x-www-form-urlencoded" ) ) {
       String encoding = getCharacterEncoding();
