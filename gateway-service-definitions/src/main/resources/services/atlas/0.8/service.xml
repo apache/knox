@@ -24,6 +24,7 @@
             <rewrite apply="ATLAS/atlas/inbound/path" to="request.url"/>
         </route>
     </routes>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
     <testURLs>
         <testURL>/api/atlas/v2/search/basic</testURL>
     </testURLs>
