@@ -296,7 +296,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements UrlRewriteF
 
     private Map<String,String> getNamespaces() {
       if( namespaces == null ) {
-        namespaces = new HashMap<String,String>();
+        namespaces = new HashMap<>();
         parseNamespaces();
       }
       return namespaces;

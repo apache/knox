@@ -400,7 +400,7 @@ public class UrlRewriteProcessorTest {
    * @return a map, with the key-values pairs representing the URL parameters.
    */
   private Map<String, String> mapUrlParameters(String urlParameters) {
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
     for (String pair : urlParameters.split("&")) {
       String[] kv = pair.split("=");
       map.put(kv[0], kv[1]);

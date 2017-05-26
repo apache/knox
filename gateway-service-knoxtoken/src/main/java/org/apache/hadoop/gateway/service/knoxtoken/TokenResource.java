@@ -90,7 +90,7 @@ public class TokenResource {
 
     String clientData = context.getInitParameter(TOKEN_CLIENT_DATA);
     if (clientData != null) {
-      tokenClientDataMap = new HashMap<String,Object>();
+      tokenClientDataMap = new HashMap<>();
       String[] tokenClientData = clientData.split(",");
       addClientDataToMap(tokenClientData, tokenClientDataMap);
     }
@@ -131,7 +131,7 @@ public class TokenResource {
       if (token != null) {
         String accessToken = token.toString();
   
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
         map.put(TOKEN_TYPE, BEARER);
         map.put(EXPIRES_IN, expires);

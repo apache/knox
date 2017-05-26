@@ -30,12 +30,12 @@ import java.util.Map;
 
 public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor {
 
-  private Map<String,UrlRewriteFunctionDescriptor> funcMap = new HashMap<String,UrlRewriteFunctionDescriptor>();
+  private Map<String,UrlRewriteFunctionDescriptor> funcMap = new HashMap<>();
   private List<UrlRewriteFunctionDescriptor> funcList = new ArrayList<UrlRewriteFunctionDescriptor>();
   private List<UrlRewriteRuleDescriptor> ruleList = new ArrayList<UrlRewriteRuleDescriptor>();
-  private Map<String,UrlRewriteRuleDescriptor> ruleMap = new HashMap<String,UrlRewriteRuleDescriptor>();
+  private Map<String,UrlRewriteRuleDescriptor> ruleMap = new HashMap<>();
   private List<UrlRewriteFilterDescriptor> filterList = new ArrayList<UrlRewriteFilterDescriptor>();
-  private Map<String,UrlRewriteFilterDescriptor> filterMap = new HashMap<String,UrlRewriteFilterDescriptor>();
+  private Map<String,UrlRewriteFilterDescriptor> filterMap = new HashMap<>();
 
   @Override
   public void addRules( UrlRewriteRulesDescriptor rules ) {

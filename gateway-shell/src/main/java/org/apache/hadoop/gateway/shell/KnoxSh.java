@@ -189,7 +189,7 @@ public class KnoxSh {
         File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
         try( FileOutputStream fos = new FileOutputStream(tokenfile) ) {
           fos.write(text.getBytes("UTF-8"));
-          Set<PosixFilePermission> perms = new HashSet<PosixFilePermission>();
+          Set<PosixFilePermission> perms = new HashSet<>();
           //add owners permission only
           perms.add(PosixFilePermission.OWNER_READ);
           perms.add(PosixFilePermission.OWNER_WRITE);

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.config.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.gateway.GatewayMessages;
@@ -33,8 +34,10 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The configuration for the Gateway.
@@ -128,8 +131,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_SERVER_REQUEST_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestHeaderBuffer";
   public static final String HTTP_SERVER_RESPONSE_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseBuffer";
   public static final String HTTP_SERVER_RESPONSE_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseHeaderBuffer";
-  public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
-  public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
+  public static final String DEPLOYMENTS_BACKUP_VERSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.versionLimit";
+  public static final String DEPLOYMENTS_BACKUP_AGE_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.backup.ageLimit";
   public static final String METRICS_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".metrics.enabled";
   public static final String JMX_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".jmx.metrics.reporting.enabled";
   public static final String GRAPHITE_METRICS_REPORTING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.enabled";
@@ -137,16 +140,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GRAPHITE_METRICS_REPORTING_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.port";
   public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
   public static final String GATEWAY_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".idle.timeout";
+  public static final String REMOTE_IP_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.ip.header.name";
 
   /* @since 0.10 Websocket config variables */
-  public static final String WEBSOCKET_FEATURE_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
-  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.size";
-  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.size";
-  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.buffer.size";
-  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.buffer.size";
-  public static final String WEBSOCKET_INPUT_BUFFER_SIZE =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
-  public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
-  public static final String WEBSOCKET_IDLE_TIMEOUT =  GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+  public static final String WEBSOCKET_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.size";
+  public static final String WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.text.buffer.size";
+  public static final String WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.binary.buffer.size";
+  public static final String WEBSOCKET_INPUT_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
+  public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
+  public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+
+  /**
+   * Properties for for gateway port mapping feature
+   */
+  public static final String GATEWAY_PORT_MAPPING_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".port.mapping.";
+  public static final String GATEWAY_PORT_MAPPING_REGEX = GATEWAY_CONFIG_FILE_PREFIX + "\\.port\\.mapping\\..*";
+  public static final String GATEWAY_PORT_MAPPING_ENABLED = GATEWAY_PORT_MAPPING_PREFIX + "enabled";
 
   /**
    * Comma seperated list of MIME Types to be compressed by Knox on the way out.
@@ -173,14 +184,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DATA_DIR = "data";
 
   /* Websocket defaults */
-  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED =  false;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
-  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
-  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
+  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
+  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
+
+  public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
 
   /**
    * Default list of MIME Type to be compressed.
@@ -189,8 +202,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_MIME_TYPES_TO_COMPRESS = "text/html, text/plain, text/xml, text/css, "
       + "application/javascript, application/x-javascript, text/javascript";
 
-  public static final String COOKIE_SCOPING_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
-  public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED =  false;
+  public static final String COOKIE_SCOPING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
+  public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED = false;
+  private static final String CRYPTO_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.algorithm";
+  private static final String CRYPTO_PBE_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.pbe.algorithm";
+  private static final String CRYPTO_TRANSFORMATION = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.transformation";
+  private static final String CRYPTO_SALTSIZE = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.salt.size";
+  private static final String CRYPTO_ITERATION_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.iteration.count";
+  private static final String CRYPTO_KEY_LENGTH = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.key.length";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -801,6 +820,41 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return mimeTypes;
   }
 
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+
+    final Map<String, Integer> result = new ConcurrentHashMap<String, Integer>();
+    final Map<String, String> properties = getValByRegex(GATEWAY_PORT_MAPPING_REGEX);
+
+    // Convert port no. from string to int
+    for(final Map.Entry<String, String> e : properties.entrySet()) {
+      // ignore the GATEWAY_PORT_MAPPING_ENABLED property
+      if(!e.getKey().equalsIgnoreCase(GATEWAY_PORT_MAPPING_ENABLED)) {
+        // extract the topology name and use it as a key
+        result.put(StringUtils.substringAfter(e.getKey(), GATEWAY_PORT_MAPPING_PREFIX), Integer.parseInt(e.getValue()) );
+      }
+
+    }
+
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    final String result = get( GATEWAY_PORT_MAPPING_ENABLED, Boolean.toString(DEFAULT_GATEWAY_PORT_MAPPING_ENABLED));
+    return Boolean.parseBoolean(result);
+  }
+
   private static long parseNetworkTimeout(String s ) {
     PeriodFormatter f = new PeriodFormatterBuilder()
         .appendMinutes().appendSuffix("m"," min")
@@ -817,4 +871,39 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return result;
   }
 
+  @Override
+  public String getHeaderNameForRemoteAddress() {
+    String value = getVar(REMOTE_IP_HEADER_NAME, "X-Forwarded-For");
+    return value;
+  }
+
+  @Override
+  public String getAlgorithm() {
+	return getVar(CRYPTO_ALGORITHM, null);
+  }
+
+  @Override
+  public String getPBEAlgorithm() {
+	return getVar(CRYPTO_PBE_ALGORITHM, null);
+  }
+
+  @Override
+  public String getTransformation() {
+	return getVar(CRYPTO_TRANSFORMATION, null);
+  }
+
+  @Override
+  public String getSaltSize() {
+	return getVar(CRYPTO_SALTSIZE, null);
+  }
+
+  @Override
+  public String getIterationCount() {
+	return getVar(CRYPTO_ITERATION_COUNT, null);
+  }
+
+  @Override
+  public String getKeyLength() {
+	return getVar(CRYPTO_KEY_LENGTH, null);
+  }
 }

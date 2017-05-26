@@ -69,7 +69,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   // Testing with 16K made no appreciable difference.
   private static final int STREAM_BUFFER_SIZE = 8 * 1024;
 
-  private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<String>();
+  private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<>();
   static {
     IGNORE_HEADER_NAMES.add( "Content-Length" );
   }

@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
 public class HttpUtils {
 
   public static Map<String,String[]> parseQueryString( String queryString ) {
-    Map<String,String[]> map = new HashMap<String,String[]>();
+    Map<String,String[]> map = new HashMap<>();
     if( queryString != null && !queryString.isEmpty() ) {
       StringTokenizer parser = new StringTokenizer( queryString, "&?;=", true );
       String name = null;

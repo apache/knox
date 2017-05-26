@@ -29,7 +29,7 @@ public class MimeTypeMap<V> {
   private Map<String,V> map;
 
   public MimeTypeMap() {
-    map = new HashMap<String,V>();
+    map = new HashMap<>();
   }
 
   public int size() {

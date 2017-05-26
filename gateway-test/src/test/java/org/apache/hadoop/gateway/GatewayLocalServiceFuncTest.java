@@ -118,7 +118,7 @@ public class GatewayLocalServiceFuncTest {
     stream.close();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );
     options.put( "master", "password" );
     try {
@@ -181,7 +181,7 @@ public class GatewayLocalServiceFuncTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-jersey-service/test-jersey-resource-path";
+    String serviceUrl = clusterUrl + "/test-jersey-service/test-jersey-resource-path";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

@@ -145,7 +145,7 @@ public class AccessTokenFederationFilter implements Filter {
     final String principal = token.getPrincipal();
 
     HashSet emptySet = new HashSet();
-    Set<Principal> principals = new HashSet<Principal>();
+    Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
     

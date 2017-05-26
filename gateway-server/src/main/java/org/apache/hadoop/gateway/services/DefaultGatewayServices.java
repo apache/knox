@@ -47,7 +47,7 @@ public class DefaultGatewayServices implements GatewayServices {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private Map<String,Service> services = new HashMap<String, Service>();
+  private Map<String,Service> services = new HashMap<>();
   private DefaultMasterService ms = null;
   private DefaultKeystoreService ks = null;
 

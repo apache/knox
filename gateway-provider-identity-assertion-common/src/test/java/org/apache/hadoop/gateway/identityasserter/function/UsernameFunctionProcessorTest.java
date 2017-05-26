@@ -168,7 +168,7 @@ public class UsernameFunctionProcessorTest {
 
   @Test
   public void testRequestUrlRewriteOfUsernameViaRewriteRule() throws Exception {
-    Map<String,String> initParams = new HashMap<String,String>();
+    Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.url", "test-rule-username" );
     setUp( "test-user", initParams );
 

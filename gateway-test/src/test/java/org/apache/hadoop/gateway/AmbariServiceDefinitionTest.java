@@ -136,7 +136,7 @@ public class AmbariServiceDefinitionTest {
 
   public static void startGatewayServer() throws Exception {
     services = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );
     options.put( "master", "password" );
     try {
@@ -177,7 +177,7 @@ public class AmbariServiceDefinitionTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/clusters";
+    String serviceUrl = clusterUrl + "/ambari/api/v1/clusters";
 
     mockAmbari.expect()
         .method( "GET" )
@@ -213,7 +213,7 @@ public class AmbariServiceDefinitionTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/clusters/test/hosts/c6401.ambari.apache.org/host_components/HISTORYSERVER";
+    String serviceUrl = clusterUrl + "/ambari/api/v1/clusters/test/hosts/c6401.ambari.apache.org/host_components/HISTORYSERVER";
 
     mockAmbari.expect()
         .method( "GET" )
@@ -245,7 +245,7 @@ public class AmbariServiceDefinitionTest {
   public void unwiseCharacterRequest() throws Exception {
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/clusters/test/components";
+    String serviceUrl = clusterUrl + "/ambari/api/v1/clusters/test/components";
 
     mockAmbari.expect()
         .method( "GET" )
@@ -274,7 +274,7 @@ public class AmbariServiceDefinitionTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/persist/CLUSTER_CURRENT_STATUS?_=1457977721091";
+    String serviceUrl = clusterUrl + "/ambari/api/v1/persist/CLUSTER_CURRENT_STATUS?_=1457977721091";
 
     mockAmbari.expect()
         .method( "GET" )
@@ -302,7 +302,7 @@ public class AmbariServiceDefinitionTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/stacks/HDP/versions/2.3/recommendations";
+    String serviceUrl = clusterUrl + "/ambari/api/v1/stacks/HDP/versions/2.3/recommendations";
 
     mockAmbari.expect()
         .method( "POST" )
@@ -332,7 +332,7 @@ public class AmbariServiceDefinitionTest {
     String username = "guest";
     String password = "guest-password";
 
-    String serviceUrl =  clusterUrl + "/ambari/api/v1/views?fields=versions/instances/ViewInstanceInfo,versions/" +
+    String serviceUrl = clusterUrl + "/ambari/api/v1/views?fields=versions/instances/ViewInstanceInfo,versions/" +
         "ViewVersionInfo/label&versions/ViewVersionInfo/system=false&_=1461186937589";
 
     mockAmbari.expect()

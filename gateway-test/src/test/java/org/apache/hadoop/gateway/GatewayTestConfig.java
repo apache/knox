@@ -24,18 +24,20 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   /* Websocket defaults */
-  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED =  false;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE =  Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE =  32768;
-  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE =  4096;
-  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT =  60000;
-  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT =  300000;
+  public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
+  public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
+  public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
+  public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
   private String gatewayHomeDir = "gateway-home";
   private String hadoopConfDir = "hadoop";
@@ -56,6 +58,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private boolean sslEnabled = false;
   private String truststoreType = "jks";
   private String keystoreType = "jks";
+  private boolean isTopologyPortMappingEnabled = true;
+  private ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
@@ -385,6 +389,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return backupVersionLimit;
   }
 
+  public void setTopologyPortMapping(ConcurrentHashMap<String, Integer> topologyPortMapping) {
+    this.topologyPortMapping = topologyPortMapping;
+  }
+
+  public void setGatewayPortMappingEnabled(
+      boolean topologyPortMappingEnabled) {
+    isTopologyPortMappingEnabled = topologyPortMappingEnabled;
+  }
+
   private long backupAgeLimit = -1;
 
   @Override
@@ -530,4 +543,60 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public  boolean isCookieScopingToPathEnabled() {
       return false;
   }
+
+  @Override
+  public String getHeaderNameForRemoteAddress() {
+    return "X-Forwarded-For";
+  }
+
+  @Override
+  public String getAlgorithm() {
+	return null;
+  }
+
+  @Override
+  public String getPBEAlgorithm() {
+	return null;
+  }
+
+  @Override
+  public String getTransformation() {
+	return null;
+  }
+
+  @Override
+  public String getSaltSize() {
+	return null;
+  }
+
+  @Override
+  public String getIterationCount() {
+	return null;
+  }
+
+  @Override
+  public String getKeyLength() {
+	return null;
+  }
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+    return topologyPortMapping;
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    return isTopologyPortMappingEnabled;
+  }
+
 }

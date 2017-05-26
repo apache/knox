@@ -307,7 +307,7 @@ abstract class Segment {
 //          matches = true;
 //          break;
 //        case( REGEX ):
-//          matches =  this.pattern.equals( that.pattern );
+//          matches = this.pattern.equals( that.pattern );
 //          break;
 //      }
 //      return matches;

@@ -151,7 +151,7 @@ public class GatewayAppFuncTest {
 
   public static void startGatewayServer() throws Exception {
     services = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );
     options.put( "master", "password" );
     try {
@@ -187,7 +187,7 @@ public class GatewayAppFuncTest {
 
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/static-hello-app-path/index.html";
+    String serviceUrl = clusterUrl + "/static-hello-app-path/index.html";
     String body = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -198,7 +198,7 @@ public class GatewayAppFuncTest {
         .when().get( serviceUrl ).asString();
     assertThat( the(body), hasXPath( "/html/head/title/text()", equalTo("Static Hello Application") ) );
 
-    serviceUrl =  clusterUrl + "/static-hello-app-path/";
+    serviceUrl = clusterUrl + "/static-hello-app-path/";
     body = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -209,7 +209,7 @@ public class GatewayAppFuncTest {
         .when().get( serviceUrl ).asString();
     assertThat( the(body), hasXPath( "/html/head/title/text()", equalTo("Static Hello Application") ) );
 
-    serviceUrl =  clusterUrl + "/static-hello-app-path";
+    serviceUrl = clusterUrl + "/static-hello-app-path";
     body = given()
         //.log().all()
         .auth().preemptive().basic( username, password )

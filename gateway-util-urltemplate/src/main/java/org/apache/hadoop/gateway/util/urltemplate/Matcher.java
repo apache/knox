@@ -374,7 +374,7 @@ public class Matcher<V> {
 
   private class MatchParams implements Params {
 
-    private Map<String,List<String>> map = new HashMap<String,List<String>>();
+    private Map<String,List<String>> map = new HashMap<>();
 
     public Set<String> getNames() {
       return map.keySet();

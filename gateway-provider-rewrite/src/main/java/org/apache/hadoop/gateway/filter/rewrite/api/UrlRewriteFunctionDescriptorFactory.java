@@ -44,7 +44,7 @@ public abstract class UrlRewriteFunctionDescriptorFactory {
 
   private static Map<String,Class<? extends UrlRewriteFunctionDescriptor>> loadDescriptors() {
     Map<String,Class<? extends UrlRewriteFunctionDescriptor>> map
-        = new HashMap<String, Class<? extends UrlRewriteFunctionDescriptor>>();
+        = new HashMap<>();
     ServiceLoader<? extends UrlRewriteFunctionDescriptor> descriptors
         = ServiceLoader.load( UrlRewriteFunctionDescriptor.class );
     for( UrlRewriteFunctionDescriptor descriptor : descriptors ) {

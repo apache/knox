@@ -45,7 +45,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     if (mappings == null) {
       return null;
     }
-    HashMap<String, String[]> table = new HashMap<String, String[]>();
+    HashMap<String, String[]> table = new HashMap<>();
     try {
       StringTokenizer t = new StringTokenizer(mappings, ";");
       if (t.hasMoreTokens()) {

@@ -33,11 +33,12 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.security.EncryptionResult;
 
-public class AESEncryptor {
+public class ConfigurableEncryptor {
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
   
   private static final int ITERATION_COUNT = 65536;
@@ -48,21 +49,27 @@ public class AESEncryptor {
   private SecretKey secret;
   private byte[] salt = null;
   private char[] passPhrase = null;
+  private String alg = "AES";
+  private String pbeAlg = "PBKDF2WithHmacSHA1";
+  private String transformation = "AES/CBC/PKCS5Padding";
+  private int saltSize = 8;
+  private int iterationCount = ITERATION_COUNT;
+  private int keyLength = KEY_LENGTH;
  
-  public AESEncryptor(String passPhrase) {
+  public ConfigurableEncryptor(String passPhrase) {
       try {
         this.passPhrase = passPhrase.toCharArray();
-        salt = new byte[8];
+        salt = new byte[saltSize];
         SecureRandom rnd = new SecureRandom();
         rnd.nextBytes(salt);
         
         SecretKey tmp = getKeyFromPassword(passPhrase);
-        secret = new SecretKeySpec (tmp.getEncoded(), "AES");
+        secret = new SecretKeySpec (tmp.getEncoded(), alg);
  
-        ecipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        ecipher = Cipher.getInstance(transformation);
         ecipher.init(Cipher.ENCRYPT_MODE, secret);
        
-        dcipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        dcipher = Cipher.getInstance(transformation);
         byte[] iv = ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
         dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
       } catch (NoSuchAlgorithmException e) {
@@ -78,14 +85,14 @@ public class AESEncryptor {
       }
   }
   
-  AESEncryptor(SecretKey secret) {
+  ConfigurableEncryptor(SecretKey secret) {
     try {
-      this.secret = new SecretKeySpec (secret.getEncoded(), "AES");
+      this.secret = new SecretKeySpec (secret.getEncoded(), alg);
 
-      ecipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+      ecipher = Cipher.getInstance(transformation);
       ecipher.init(Cipher.ENCRYPT_MODE, secret);
      
-      dcipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+      dcipher = Cipher.getInstance(transformation);
       byte[] iv = ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
       dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
     } catch (NoSuchAlgorithmException e) {
@@ -101,6 +108,35 @@ public class AESEncryptor {
     }
   }
 
+  public void init(GatewayConfig config) {
+    if (config != null) {
+	    String alg = config.getAlgorithm();
+	    if (alg != null) {
+		  this.alg = alg;
+	    }
+	    String pbeAlg = config.getPBEAlgorithm();
+	    if (pbeAlg != null) {
+		  this.pbeAlg = pbeAlg;
+	    }
+	    String transformation = config.getTransformation();
+	    if (transformation != null) {
+		  this.transformation = transformation;
+	    }
+	    String saltSize = config.getSaltSize();
+	    if (saltSize != null) {
+		  this.saltSize = Integer.parseInt(saltSize);
+	    }
+	    String iterationCount = config.getIterationCount();
+	    if (iterationCount != null) {
+		  this.iterationCount = Integer.parseInt(iterationCount);
+	    }
+	    String keyLength = config.getKeyLength();
+	    if (keyLength != null) {
+		  this.keyLength = Integer.parseInt(keyLength);
+	    }
+    }
+  }
+
   public SecretKey getKeyFromPassword(String passPhrase) {
     return getKeyFromPassword(passPhrase, salt);
   }
@@ -109,8 +145,8 @@ public class AESEncryptor {
     SecretKeyFactory factory;
     SecretKey key = null;
     try {
-      factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-      KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), salt, ITERATION_COUNT, KEY_LENGTH);
+      factory = SecretKeyFactory.getInstance(pbeAlg);
+      KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), salt, iterationCount, keyLength);
       key = factory.generateSecret(spec);
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToGenerateKeyFromPassword( e );
@@ -139,7 +175,7 @@ public class AESEncryptor {
 
   public byte[] decrypt(byte[] salt, byte[] iv, byte[] encrypt) throws Exception {
     SecretKey tmp = getKeyFromPassword(new String(passPhrase), salt);
-    secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+    secret = new SecretKeySpec(tmp.getEncoded(), alg);
     
     dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
     return dcipher.doFinal(encrypt);

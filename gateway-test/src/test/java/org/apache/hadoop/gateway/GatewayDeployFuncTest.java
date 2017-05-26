@@ -122,7 +122,7 @@ public class GatewayDeployFuncTest {
     deployDir.mkdirs();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );
     options.put( "master", "password" );
     try {
@@ -211,7 +211,7 @@ public class GatewayDeployFuncTest {
     int numFilesInWebInf = 4; // # files in WEB-INF (ie gateway.xml, rewrite.xml, shiro.ini, web.xml)
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl =  clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
     long topoTimestampBefore, topoTimestampAfter;
 
     File topoDir = new File( config.getGatewayTopologyDir() );

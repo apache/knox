@@ -360,7 +360,7 @@ public class RewriterTest {
     actualOutput = Rewriter.rewrite( actualInput, inputTemplate, outputTemplate, null, null );
 
     Map<String, String> actualInputParameters = this.getParameters( actualInput.toURL());
-    Map<String, String> actualOutputParameters  = this.getParameters( actualOutput.toURL());
+    Map<String, String> actualOutputParameters = this.getParameters( actualOutput.toURL());
     assertTrue( actualInputParameters.equals(actualOutputParameters));
 
   }

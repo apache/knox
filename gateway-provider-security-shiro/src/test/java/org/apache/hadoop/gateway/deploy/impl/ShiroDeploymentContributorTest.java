@@ -66,7 +66,7 @@ public class ShiroDeploymentContributorTest {
   public void testDeployment() throws IOException {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-archive" );
 
-    Map<String,String> providerParams = new HashMap<String, String>();
+    Map<String,String> providerParams = new HashMap<>();
     Provider provider = new Provider();
     provider.setEnabled( true );
     provider.setName( "shiro" );

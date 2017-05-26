@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.services.security.impl;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
+import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.GatewaySpiMessages;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -39,7 +40,7 @@ public class CMFMasterService {
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
   protected char[] master = null;
   protected String serviceName = null;
-  private AESEncryptor aes = new AESEncryptor(MASTER_PASSPHRASE);
+  private ConfigurableEncryptor encryptor = new ConfigurableEncryptor(MASTER_PASSPHRASE);
 
   public CMFMasterService(String serviceName) {
     super();
@@ -48,6 +49,13 @@ public class CMFMasterService {
 
   public char[] getMasterSecret() {
     return this.master;
+  }
+
+  public void setupMasterSecret(String securityDir, String filename,
+		  boolean persisting, GatewayConfig config)
+				  throws ServiceLifecycleException  {
+      encryptor.init(config);
+      setupMasterSecret(securityDir, filename, persisting);
   }
 
   protected void setupMasterSecret(String securityDir, boolean persisting) throws ServiceLifecycleException {
@@ -60,7 +68,6 @@ public class CMFMasterService {
       try {
         initializeFromMaster(masterFile);
       } catch (Exception e) {
-        // TODO Auto-generated catch block
         throw new ServiceLifecycleException("Unable to load the persisted master secret.", e);
       }
     }
@@ -146,7 +153,7 @@ public class CMFMasterService {
   private EncryptionResult encryptMaster(char[] master) {
     // TODO Auto-generated method stub
     try {
-      return aes.encrypt(new String(master));
+      return encryptor.encrypt(new String(master));
     } catch (Exception e) {
       LOG.failedToEncryptMasterSecret(e);
     }
@@ -160,7 +167,7 @@ public class CMFMasterService {
         LOG.loadingFromPersistentMaster( tag );
         String line = new String(Base64.decodeBase64(lines.get(1)));
         String[] parts = line.split("::");
-        this.master = new String(aes.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();
+        this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();
       } catch (IOException e) {
         LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
         throw e;

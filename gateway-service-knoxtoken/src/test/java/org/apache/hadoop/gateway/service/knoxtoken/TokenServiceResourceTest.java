@@ -38,15 +38,15 @@ public class TokenServiceResourceTest {
   public void testClientData() throws Exception {
     TokenResource tr = new TokenResource();
 
-    Map<String,Object> clientDataMap = new HashMap<String,Object>();
+    Map<String,Object> clientDataMap = new HashMap<>();
     tr.addClientDataToMap("cookie.name=hadoop-jwt,test=value".split(","), clientDataMap);
     Assert.assertTrue(clientDataMap.size() == 2);
 
-    clientDataMap = new HashMap<String,Object>();
+    clientDataMap = new HashMap<>();
     tr.addClientDataToMap("cookie.name=hadoop-jwt".split(","), clientDataMap);
     Assert.assertTrue(clientDataMap.size() == 1);
 
-    clientDataMap = new HashMap<String,Object>();
+    clientDataMap = new HashMap<>();
     tr.addClientDataToMap("".split(","), clientDataMap);
     Assert.assertTrue(clientDataMap.size() == 0);
   }

@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway.config;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
 
 public interface GatewayConfig {
 
@@ -228,5 +229,68 @@ public interface GatewayConfig {
    * @since 0.13
    */
   boolean isCookieScopingToPathEnabled();
+
+  /**
+   * Configured name of the HTTP Header that is expected
+   * to be set by a proxy in front of the gateway.
+   * @return
+   */
+  String getHeaderNameForRemoteAddress();
+
+  /**
+   * Configured Algorithm name to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getAlgorithm();
+
+  /**
+   * Configured Algorithm name to be used by the CryptoService
+   * for password based encryption
+   * @return
+   */
+  String getPBEAlgorithm();
+
+  /**
+   * Configured Transformation name to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getTransformation();
+
+  /**
+   * Configured SaltSize to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getSaltSize();
+
+  /**
+   * Configured IterationCount to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getIterationCount();
+
+  /**
+   * Configured KeyLength to be used by the CryptoService
+   * and MasterService implementations
+   * @return
+   */
+  String getKeyLength();
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  Map<String, Integer> getGatewayPortMappings();
+
+  /**
+   * Is the Port Mapping feature on ?
+   * @return
+   */
+  boolean isGatewayPortMappingEnabled();
+
 
 }

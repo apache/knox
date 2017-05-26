@@ -82,7 +82,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
   public Enumeration getParameterNames() {
     Map<String, String[]> params = getParams();
     if (params == null) {
-      params = new HashMap<String, String[]>();
+      params = new HashMap<>();
     }
     Enumeration<String> e = Collections.enumeration((Collection<String>) params.keySet());
 
@@ -93,7 +93,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
   public String[] getParameterValues(String name) {
     Map<String, String[]> params = getParams();
     if (params == null) {
-      params = new HashMap<String, String[]>();
+      params = new HashMap<>();
     }
 
     return params.get(name);
@@ -106,7 +106,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
         params = HttpUtils.parseQueryString( qString );
       }
       else {
-        params = new HashMap<String, String[]>();
+        params = new HashMap<>();
       }
     }
     else {
@@ -130,7 +130,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     Map<String, String[]> params = getParams();
 
     if (params == null) {
-      params = new HashMap<String, String[]>();
+      params = new HashMap<>();
     }
     
     ArrayList<String> al = new ArrayList<String>();
@@ -167,7 +167,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   private Map<String, String[]> scrubOfExistingPrincipalParams(
       Map<String, String[]> params, List<String> principalParamNames) {
-    HashSet<String> remove = new HashSet<String>();
+    HashSet<String> remove = new HashSet<>();
     for (String paramKey : params.keySet()) {
       for (String p : principalParamNames) {
         if (p.equalsIgnoreCase(paramKey)) {
@@ -204,7 +204,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       String body = IOUtils.toString( super.getInputStream(), encoding );
       Map<String, String[]> params = getParams( body );
       if (params == null) {
-        params = new HashMap<String, String[]>();
+        params = new HashMap<>();
       }
       body = urlEncode( params, encoding );
       // ASCII is OK here because the urlEncode about should have already escaped

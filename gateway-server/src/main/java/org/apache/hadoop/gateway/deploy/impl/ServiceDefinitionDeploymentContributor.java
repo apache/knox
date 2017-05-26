@@ -100,7 +100,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   }
 
   private void contributeResources(DeploymentContext context, Service service) {
-    Map<String, String> filterParams = new HashMap<String, String>();
+    Map<String, String> filterParams = new HashMap<>();
     List<Route> bindings = serviceDefinition.getRoutes();
     for ( Route binding : bindings ) {
       List<Rewrite> filters = binding.getRewrites();

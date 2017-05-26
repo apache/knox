@@ -79,7 +79,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
    }
 
    private static Map<String, String> parseHaConfiguration(String configuration) {
-      Map<String, String> parameters = new HashMap<String, String>();
+      Map<String, String> parameters = new HashMap<>();
       if (configuration != null) {
          String[] pairs = configuration.split(CONFIG_PAIRS_DELIMITER);
          for (String pair : pairs) {

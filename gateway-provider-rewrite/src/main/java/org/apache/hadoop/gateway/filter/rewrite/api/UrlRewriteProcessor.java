@@ -45,10 +45,10 @@ public class UrlRewriteProcessor implements UrlRewriter {
 
   UrlRewriteEnvironment environment;
   UrlRewriteRulesDescriptor descriptor;
-  Map<String,UrlRewriteRuleProcessorHolder> rules = new HashMap<String,UrlRewriteRuleProcessorHolder>();
+  Map<String,UrlRewriteRuleProcessorHolder> rules = new HashMap<>();
   ScopedMatcher inbound = new ScopedMatcher();
   ScopedMatcher outbound = new ScopedMatcher();
-  Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<String,UrlRewriteFunctionProcessor>();
+  Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<>();
 
   public UrlRewriteProcessor() {
   }

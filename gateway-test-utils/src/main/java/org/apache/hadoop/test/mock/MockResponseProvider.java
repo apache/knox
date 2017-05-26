@@ -63,7 +63,7 @@ public class MockResponseProvider {
 
   public MockResponseProvider header( String name, String value ) {
     if( headers == null ) {
-      headers = new HashMap<String, String>();
+      headers = new HashMap<>();
     }
     headers.put( name, value );
     return this;
@@ -71,7 +71,7 @@ public class MockResponseProvider {
 
   public MockResponseProvider cookie( Cookie cookie ) {
     if( cookies == null ) {
-      cookies = new HashSet<Cookie>();
+      cookies = new HashSet<>();
     }
     cookies.add( cookie );
     return this;

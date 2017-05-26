@@ -202,7 +202,7 @@ public abstract class DeploymentFactory {
     StringWriter writer = new StringWriter();
     String xml;
     try {
-      Map<String,Object> properties = new HashMap<String,Object>(2);
+      Map<String,Object> properties = new HashMap<>(2);
       properties.put( "eclipselink-oxm-xml", "org/apache/hadoop/gateway/topology/topology_binding-xml.xml" );
       properties.put( "eclipselink.media-type", "application/xml" );
       JAXBContext jaxbContext = JAXBContext.newInstance( Topology.class.getPackage().getName(), Topology.class.getClassLoader() , properties );
@@ -293,7 +293,7 @@ public abstract class DeploymentFactory {
   // For each that we find add it to the list of service roles included in the topology.
   private static Map<String,List<ServiceDeploymentContributor>> selectContextServices( Topology topology ) {
     Map<String,List<ServiceDeploymentContributor>> defaults
-        = new HashMap<String,List<ServiceDeploymentContributor>>();
+        = new HashMap<>();
     for( Service service : topology.getServices() ) {
       String role = service.getRole();
       ServiceDeploymentContributor contributor = getServiceContributor( role, service.getName(), service.getVersion() );
@@ -679,7 +679,7 @@ public abstract class DeploymentFactory {
   }
 
   private static void loadServiceContributors() {
-    SERVICE_CONTRIBUTOR_MAP = new HashMap<String, Map<String, Map<Version, ServiceDeploymentContributor>>>();
+    SERVICE_CONTRIBUTOR_MAP = new HashMap<>();
     ServiceLoader<ServiceDeploymentContributor> loader = ServiceLoader.load( ServiceDeploymentContributor.class );
     Iterator<ServiceDeploymentContributor> contributors = loader.iterator();
     addServiceDeploymentContributors(contributors);
@@ -702,12 +702,12 @@ public abstract class DeploymentFactory {
         }
         Map<String,Map<Version, ServiceDeploymentContributor>> nameMap = SERVICE_CONTRIBUTOR_MAP.get( contributor.getRole() );
         if( nameMap == null ) {
-          nameMap = new HashMap<String,Map<Version, ServiceDeploymentContributor>>();
+          nameMap = new HashMap<>();
           SERVICE_CONTRIBUTOR_MAP.put( contributor.getRole(), nameMap );
         }
         Map<Version, ServiceDeploymentContributor> versionMap = nameMap.get(contributor.getName());
         if (versionMap == null) {
-          versionMap = new TreeMap<Version, ServiceDeploymentContributor>();
+          versionMap = new TreeMap<>();
           nameMap.put(contributor.getName(), versionMap);
         }
         versionMap.put( contributor.getVersion(), contributor );
@@ -715,9 +715,9 @@ public abstract class DeploymentFactory {
    }
 
    private static void loadProviderContributors() {
-    Set<ProviderDeploymentContributor> set = new HashSet<ProviderDeploymentContributor>();
+    Set<ProviderDeploymentContributor> set = new HashSet<>();
     Map<String,Map<String,ProviderDeploymentContributor>> roleMap
-        = new HashMap<String,Map<String,ProviderDeploymentContributor>>();
+        = new HashMap<>();
 
     ServiceLoader<ProviderDeploymentContributor> loader = ServiceLoader.load( ProviderDeploymentContributor.class );
     Iterator<ProviderDeploymentContributor> contributors = loader.iterator();
@@ -734,7 +734,7 @@ public abstract class DeploymentFactory {
       set.add( contributor );
       Map nameMap = roleMap.get( contributor.getRole() );
       if( nameMap == null ) {
-        nameMap = new HashMap<String,ProviderDeploymentContributor>();
+        nameMap = new HashMap<>();
         roleMap.put( contributor.getRole(), nameMap );
       }
       nameMap.put( contributor.getName(), contributor );

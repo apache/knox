@@ -73,7 +73,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
           url = sr.lookupServiceURL("token", "TGS");
         }
         
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        HashMap<String, Object> map = new HashMap<>();
         // TODO: populate map from JWT authorization code
         // Coverity CID 1327960
         if( authCode != null ) {

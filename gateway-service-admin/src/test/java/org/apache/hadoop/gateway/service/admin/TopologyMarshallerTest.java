@@ -45,7 +45,7 @@ public class TopologyMarshallerTest {
     StringWriter writer = new StringWriter();
     String xml;
 
-    Map<String,Object> properties = new HashMap<String,Object>(2);
+    Map<String,Object> properties = new HashMap<>(2);
     properties.put( "eclipselink-oxm-xml", "org/apache/hadoop/gateway/topology/topology_binding-xml.xml" );
     properties.put( "eclipselink.media-type", "application/xml" );
     JAXBContext jaxbContext = JAXBContext.newInstance( Topology.class.getPackage().getName(), Topology.class.getClassLoader() , properties );

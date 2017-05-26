@@ -42,7 +42,7 @@ public class ConfigurationAdapterFactory {
 
   private static void loadAdapters() {
     Map<Class<?>, Class<? extends ConfigurationAdapter>> all =
-        new HashMap<Class<?>, Class<? extends ConfigurationAdapter>>();
+        new HashMap<>();
     ServiceLoader<ConfigurationAdapterDescriptor> loader = ServiceLoader.load( ConfigurationAdapterDescriptor.class );
     if( loader != null ) {
       Iterator<ConfigurationAdapterDescriptor> i = loader.iterator();

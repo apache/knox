@@ -245,7 +245,7 @@ public class BaseDirectoryService implements DirectoryService
   private Partition systemPartition;
 
   /** The set of all declared partitions */
-  private Set<Partition> partitions = new HashSet<Partition>();
+  private Set<Partition> partitions = new HashSet<>();
 
   /** A list of LDIF entries to inject at startup */
   private List<? extends LdifEntry> testEntries = new ArrayList<LdifEntry>(); // List<Attributes>
@@ -330,7 +330,7 @@ public class BaseDirectoryService implements DirectoryService
    */
   public Set<? extends Partition> getPartitions()
   {
-    Set<Partition> cloned = new HashSet<Partition>();
+    Set<Partition> cloned = new HashSet<>();
     cloned.addAll( partitions );
     return cloned;
   }
@@ -343,9 +343,9 @@ public class BaseDirectoryService implements DirectoryService
    */
   public void setPartitions( Set<? extends Partition> partitions )
   {
-    Set<Partition> cloned = new HashSet<Partition>();
+    Set<Partition> cloned = new HashSet<>();
     cloned.addAll( partitions );
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new HashSet<>();
 
     for ( Partition partition : cloned )
     {
@@ -649,7 +649,7 @@ public class BaseDirectoryService implements DirectoryService
    */
   public void setInterceptors( List<Interceptor> interceptors )
   {
-    Map<String, Interceptor> interceptorNames = new HashMap<String, Interceptor>();
+    Map<String, Interceptor> interceptorNames = new HashMap<>();
 
     // Check if we don't have duplicate names in the interceptors list
     for ( Interceptor interceptor : interceptors )

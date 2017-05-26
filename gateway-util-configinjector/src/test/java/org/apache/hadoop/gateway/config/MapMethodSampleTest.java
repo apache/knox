@@ -36,7 +36,7 @@ public class MapMethodSampleTest {
     }
   }
 
-  static Map<String,String> config = new HashMap<String,String>();
+  static Map<String,String> config = new HashMap<>();
   static { config.put( "retryLimit", "5" ); }
 
   @Test

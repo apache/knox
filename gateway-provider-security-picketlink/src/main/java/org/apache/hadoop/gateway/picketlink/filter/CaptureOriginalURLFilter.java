@@ -34,14 +34,20 @@ import java.io.IOException;
 
 public class CaptureOriginalURLFilter implements Filter {
   private static PicketlinkMessages log = MessagesFactory.get( PicketlinkMessages.class );
-  private static final String COOKIE_PATH = "cookie.path"; 
+  private static final String COOKIE_PATH = "cookie.path";
+  private static final String COOKIE_SECURE = "cookie.secure";
   private String cookiePath = null;
+  private String cookieSecure = null;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     cookiePath = filterConfig.getInitParameter(COOKIE_PATH);
     if (cookiePath == null) {
       cookiePath = "/gateway/idp/knoxsso/api/v1/websso";
+    }
+    cookieSecure = filterConfig.getInitParameter(COOKIE_SECURE);
+    if (cookieSecure == null) {
+      cookieSecure = "true";
     }
   }
 
@@ -63,10 +69,19 @@ public class CaptureOriginalURLFilter implements Filter {
   public void destroy() {
 
   }
-  
+
   private void addCookie(ServletResponse servletResponse, String original) {
     Cookie c = new Cookie("original-url", original);
     c.setPath(cookiePath);
+    c.setHttpOnly(true);
+    boolean secureOnly = true;
+    if (cookieSecure != null) {
+      secureOnly = ("false".equals(cookieSecure) ? false : true);
+      if (!secureOnly) {
+        log.secureFlagFalseForCookie();
+      }
+    }
+    c.setSecure(secureOnly);
     c.setMaxAge(60);
     ((HttpServletResponse)servletResponse).addCookie(c);
   }

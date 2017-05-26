@@ -80,7 +80,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher method( String... methods ) {
     if( this.methods == null ) {
-      this.methods = new HashSet<String>();
+      this.methods = new HashSet<>();
     }
     if( methods != null ) {
       for( String method: methods ) {
@@ -102,7 +102,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher header( String name, String value ) {
     if( headers == null ) {
-      headers = new HashMap<String, Matcher>();
+      headers = new HashMap<>();
     }
     headers.put( name, Matchers.is(value) );
     return this;
@@ -110,7 +110,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher header( String name, Matcher matcher ) {
     if( headers == null ) {
-      headers = new HashMap<String, Matcher>();
+      headers = new HashMap<>();
     }
     headers.put( name, matcher );
     return this;
@@ -118,7 +118,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher cookie( Cookie cookie ) {
     if( cookies == null ) {
-      cookies = new HashSet<Cookie>();
+      cookies = new HashSet<>();
     }
     cookies.add( cookie );
     return this;
@@ -126,7 +126,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher attribute( String name, Object value ) {
     if( this.attributes == null ) {
-      this.attributes = new HashMap<String,Object>();
+      this.attributes = new HashMap<>();
     }
     attributes.put( name, value );
     return this;
@@ -134,7 +134,7 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher queryParam( String name, String value ) {
     if( this.queryParams == null ) {
-      this.queryParams = new HashMap<String, String>();
+      this.queryParams = new HashMap<>();
     }
     queryParams.put( name, value );
     return this;
@@ -145,7 +145,7 @@ public class MockRequestMatcher {
       throw new IllegalStateException( "Entity already specified." );
     }
     if( formParams == null ) {
-      formParams = new HashMap<String, String[]>();
+      formParams = new HashMap<>();
     }
     String[] currentValues = formParams.get( name );
     if( currentValues == null ) {

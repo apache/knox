@@ -19,15 +19,17 @@ package org.apache.hadoop.gateway.services.security;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.gateway.services.security.impl.AESEncryptor;
+import org.apache.hadoop.gateway.services.security.impl.ConfigurableEncryptor;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.test.category.MediumTests;
+import org.easymock.EasyMock;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.security.cert.Certificate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,42 +115,91 @@ public class CryptoServiceTest {
     cs = new DefaultCryptoService();
     ((DefaultCryptoService)cs).setAliasService(as);
   }
-  
+
   @Test
-  public void testAESEncryptor() throws Exception {
+  public void testCryptoServiceAES() throws Exception {
+    GatewayConfig config = EasyMock.createNiceMock( GatewayConfig.class );
+    EasyMock.expect(config.getAlgorithm()).andReturn("AES");
+    EasyMock.expect(config.getPBEAlgorithm()).andReturn("PBKDF2WithHmacSHA1");
+    EasyMock.expect(config.getSaltSize()).andReturn("16");
+    EasyMock.expect(config.getIterationCount()).andReturn("65536");
+    EasyMock.expect(config.getKeyLength()).andReturn("128");
+    EasyMock.expect(config.getTransformation()).andReturn("AES/CBC/PKCS5Padding");
+    EasyMock.replay(config);
+
     // password to create key - same Encryptor
     String queryString = "url=http://localhost:50070/api/v1/blahblah";
-    AESEncryptor aes0 = new AESEncryptor("password");
+    ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
+    aes0.init(config);
+    cs.init(config, new HashMap<String,String>());
     EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes("UTF8"));
-    byte[] decrypted0 = aes0.decrypt(result0.salt, result0.iv, result0.cipher);
+    byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
     assertEquals(queryString, new String(decrypted0, "UTF8"));
     assertEquals(queryString.getBytes("UTF8").length, decrypted0.length);
     assertEquals(queryString.getBytes("UTF8").length, new String(decrypted0, "UTF8").toCharArray().length);
-    
+  }
+
+  @Test
+  public void testCryptoServiceDES() throws Exception {
+    GatewayConfig config = EasyMock.createNiceMock( GatewayConfig.class );
+    EasyMock.expect(config.getAlgorithm()).andReturn("DES");
+    EasyMock.expect(config.getPBEAlgorithm()).andReturn("PBKDF2WithHmacSHA1");
+    EasyMock.expect(config.getSaltSize()).andReturn("16");
+    EasyMock.expect(config.getIterationCount()).andReturn("65536");
+    EasyMock.expect(config.getKeyLength()).andReturn("128");
+    EasyMock.expect(config.getTransformation()).andReturn("DES");
+    EasyMock.replay(config);
+
     // password to create key - same Encryptor
-    AESEncryptor aes = new AESEncryptor("Test");
+    String queryString = "url=http://localhost:50070/api/v1/blahblah";
+    ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
+    aes0.init(config);
+    cs.init(config, new HashMap<String,String>());
+    EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes("UTF8"));
+    byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
+    assertEquals(queryString, new String(decrypted0, "UTF8"));
+    assertEquals(queryString.getBytes("UTF8").length, decrypted0.length);
+    assertEquals(queryString.getBytes("UTF8").length, new String(decrypted0, "UTF8").toCharArray().length);
+  }
+
+  @Test
+  public void testConfigurableEncryptor() throws Exception {
+    GatewayConfig config = EasyMock.createNiceMock( GatewayConfig.class );
+    EasyMock.expect(config.getAlgorithm()).andReturn("AES");
+    EasyMock.expect(config.getPBEAlgorithm()).andReturn("PBKDF2WithHmacSHA1");
+    EasyMock.expect(config.getSaltSize()).andReturn("16");
+    EasyMock.expect(config.getIterationCount()).andReturn("65536");
+    EasyMock.expect(config.getKeyLength()).andReturn("128");
+    EasyMock.expect(config.getTransformation()).andReturn("AES/CBC/PKCS5Padding");
+    EasyMock.replay(config);
+
+    // password to create key - same Encryptor
+    ConfigurableEncryptor aes = new ConfigurableEncryptor("Test");
+    aes.init(config);
     EncryptionResult result = aes.encrypt("larry".getBytes("UTF8"));
     byte[] decrypted = aes.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
     // password to create key - different Encryptor
-    AESEncryptor aes2 = new AESEncryptor("Test");
+    ConfigurableEncryptor aes2 = new ConfigurableEncryptor("Test");
+    aes2.init(config);
     decrypted = aes2.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
-    
     // password to create key resolved from alias - same Encryptor
-    AESEncryptor aes3 = new AESEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
+    ConfigurableEncryptor aes3 = new ConfigurableEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
+    aes3.init(config);
     result = aes3.encrypt("larry".getBytes("UTF8"));
     decrypted = aes3.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
 
     // password to create key resolved from alias - different Encryptor
-    AESEncryptor aes4 = new AESEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
+    ConfigurableEncryptor aes4 = new ConfigurableEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
+    aes4.init(config);
     decrypted = aes4.decrypt(result.salt, result.iv, result.cipher);
     assertEquals(new String(decrypted, "UTF8"), "larry");
   }
-  
+
   @Test
   //@Ignore
   public void testEncryptionOfQueryStrings() throws Exception {

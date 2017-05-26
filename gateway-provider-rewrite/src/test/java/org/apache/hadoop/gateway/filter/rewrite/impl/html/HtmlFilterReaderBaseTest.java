@@ -217,7 +217,7 @@ public class HtmlFilterReaderBaseTest {
 
   @Test
   public void testMappedText() throws IOException, ParserConfigurationException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root>input-text</root>";
     StringReader inputReader = new StringReader( inputXml );
@@ -229,7 +229,7 @@ public class HtmlFilterReaderBaseTest {
 
   @Test
   public void testMappedAttribute() throws IOException, ParserConfigurationException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "input-text", "output-text" );
     String inputXml = "<root attribute='input-text'/>";
     StringReader inputReader = new StringReader( inputXml );
@@ -241,7 +241,7 @@ public class HtmlFilterReaderBaseTest {
 
   @Test
   public void testCombined() throws IOException, ParserConfigurationException {
-    Map<String,String> map = new HashMap<String,String>();
+    Map<String,String> map = new HashMap<>();
     map.put( "attr1-input", "attr1-output" );
     map.put( "attr2-input", "attr2-output" );
     map.put( "attr3-input", "attr3-output" );
@@ -309,8 +309,8 @@ public class HtmlFilterReaderBaseTest {
 
   @Test
   public void testMatchedJavaScriptText() throws IOException, ParserConfigurationException {
-    Map<String, Map<String, String>> rules = new HashMap<String, Map<String, String>>();
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, Map<String, String>> rules = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     map.put( "(https?://[^/':,]+:[\\d]+)?/cluster/app", "https://knoxhost:8443/cluster/app" );
     rules.put( "test-rule", map );
     String inputXml =
@@ -343,8 +343,8 @@ public class HtmlFilterReaderBaseTest {
 
   @Test
   public void testMRJobHistoryUIJavaScriptText() throws IOException, ParserConfigurationException {
-    Map<String, Map<String, String>> rules = new HashMap<String, Map<String, String>>();
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, Map<String, String>> rules = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     map.put( "https?://[^/':,]+:[\\d]+", "https://knoxhost:8443/gateway/nodemanagerui/node?host=knoxhost" );
     rules.put( "test-rule", map );
     String inputXml =

@@ -247,22 +247,22 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String s;
     HashMap<String,String[]> m;
 
-    m = new HashMap<String,String[]>();
+    m = new HashMap<>();
     m.put( "null-values", null );
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "null-values" ) );
 
-    m = new HashMap<String,String[]>();
+    m = new HashMap<>();
     m.put( "no-values", new String[0] );
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "no-values" ) );
 
-    m = new HashMap<String,String[]>();
+    m = new HashMap<>();
     m.put( "one-value", new String[]{ "value1" } );
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "one-value=value1" ) );
 
-    m = new HashMap<String,String[]>();
+    m = new HashMap<>();
     m.put( "two-values", new String[]{ "value1", "value2" } );
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "two-values=value1&two-values=value2" ) );

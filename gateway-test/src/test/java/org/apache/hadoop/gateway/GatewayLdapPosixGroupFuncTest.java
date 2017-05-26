@@ -128,7 +128,7 @@ public class GatewayLdapPosixGroupFuncTest {
     deployDir.mkdirs();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<String,String>();
+    Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "true" );
     options.put( "master", "hadoop" );
 

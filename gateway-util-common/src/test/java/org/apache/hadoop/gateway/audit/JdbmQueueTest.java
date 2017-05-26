@@ -169,7 +169,7 @@ public class JdbmQueueTest {
     System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     int iterations = 100;
-    HashSet<String> consumed = new HashSet<String>();
+    HashSet<String> consumed = new HashSet<>();
     Consumer consumer = new Consumer( consumed );
     consumer.start();
     Producer producer1 = new Producer( iterations );
@@ -191,7 +191,7 @@ public class JdbmQueueTest {
     System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     int iterations = 100;
-    HashSet<String> consumed = new HashSet<String>();
+    HashSet<String> consumed = new HashSet<>();
     Processor consumer = new Processor( consumed );
     consumer.start();
     Producer producer1 = new Producer( iterations );

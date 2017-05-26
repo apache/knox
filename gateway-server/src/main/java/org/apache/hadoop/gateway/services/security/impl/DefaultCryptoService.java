@@ -43,7 +43,9 @@ public class DefaultCryptoService implements CryptoService {
 
   private AliasService as = null;
   private KeystoreService ks = null;
-  private HashMap<String,AESEncryptor> encryptorCache = new HashMap<String,AESEncryptor>();
+  private HashMap<String,ConfigurableEncryptor> encryptorCache =
+		  new HashMap<String,ConfigurableEncryptor>();
+  private GatewayConfig config = null;
 
   public void setKeystoreService(KeystoreService ks) {
     this.ks = ks;
@@ -56,7 +58,8 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    if (as == null) {
+    this.config = config;
+	if (as == null) {
       throw new ServiceLifecycleException("Alias service is not set");
     }
   }
@@ -188,11 +191,12 @@ public class DefaultCryptoService implements CryptoService {
 
   // The assumption here is that lock contention will be less of a performance issue than the cost of object creation.
   // We have seen via profiling that AESEncryptor instantiation is very expensive.
-  private final AESEncryptor getEncryptor( final String clusterName, final char[] password ) {
+  private final ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
     synchronized( encryptorCache ) {
-      AESEncryptor encryptor = encryptorCache.get( clusterName );
+    	ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
       if( encryptor == null ) {
-        encryptor = new AESEncryptor( String.valueOf( password ) );
+        encryptor = new ConfigurableEncryptor( String.valueOf( password ) );
+        encryptor.init(config);
         encryptorCache.put( clusterName, encryptor );
       }
       return encryptor;

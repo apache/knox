@@ -33,11 +33,11 @@ public class Topology {
   private String name;
   private long timestamp;
   public List<Provider> providerList = new ArrayList<Provider>();
-  private Map<String,Map<String,Provider>> providerMap = new HashMap<String,Map<String,Provider>>();
+  private Map<String,Map<String,Provider>> providerMap = new HashMap<>();
   public List<Service> services = new ArrayList<Service>();
   private MultiKeyMap serviceMap;
   private List<Application> applications = new ArrayList<Application>();
-  private Map<String,Application> applicationMap = new HashMap<String,Application>();
+  private Map<String,Application> applicationMap = new HashMap<>();
 
   public Topology() {
     serviceMap = MultiKeyMap.decorate(new HashedMap());
@@ -133,7 +133,7 @@ public class Topology {
     String role = provider.getRole();
     Map<String,Provider> nameMap = providerMap.get( role );
     if( nameMap == null ) {
-      nameMap = new HashMap<String,Provider>();
+      nameMap = new HashMap<>();
       providerMap.put( role, nameMap );
     }
     nameMap.put( provider.getName(), provider );

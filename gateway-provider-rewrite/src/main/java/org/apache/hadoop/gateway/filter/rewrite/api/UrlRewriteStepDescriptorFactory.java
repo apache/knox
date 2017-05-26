@@ -43,7 +43,7 @@ public abstract class UrlRewriteStepDescriptorFactory {
 
   private static Map<String,Class<? extends UrlRewriteStepDescriptor>> loadStepDescriptors() {
     Map<String,Class<? extends UrlRewriteStepDescriptor>> map
-        = new HashMap<String, Class<? extends UrlRewriteStepDescriptor>>();
+        = new HashMap<>();
     ServiceLoader<? extends UrlRewriteStepDescriptor> descriptors
         = ServiceLoader.load( UrlRewriteStepDescriptor.class );
     for( UrlRewriteStepDescriptor descriptor : descriptors ) {

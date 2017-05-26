@@ -59,7 +59,7 @@ public abstract class UrlRewriteStreamFilterFactory {
   }
 
   private static Map<String,Map<String,UrlRewriteStreamFilter>> loadFactories() {
-    Map<String,Map<String,UrlRewriteStreamFilter>> typeMap = new HashMap<String,Map<String,UrlRewriteStreamFilter>>();
+    Map<String,Map<String,UrlRewriteStreamFilter>> typeMap = new HashMap<>();
     ServiceLoader<UrlRewriteStreamFilter> filters = ServiceLoader.load( UrlRewriteStreamFilter.class );
     for( UrlRewriteStreamFilter filter : filters ) {
       String[] types = filter.getTypes();

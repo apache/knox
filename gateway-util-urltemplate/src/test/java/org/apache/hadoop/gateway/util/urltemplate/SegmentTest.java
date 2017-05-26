@@ -120,7 +120,7 @@ public class SegmentTest {
     assertThat( Segment.createRegex( "**" ), is( ".*.*" ) );
     assertThat( Segment.createRegex( "\\.${}*" ), is( "\\\\\\.\\$\\{\\}.*" ) );
 
-    String input  = "/var/lib/oozie/*.jar,/usr/lib/hadoop/client/*.jar,/usr/lib/oozie/libserver/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar";
+    String input = "/var/lib/oozie/*.jar,/usr/lib/hadoop/client/*.jar,/usr/lib/oozie/libserver/*.jar,${catalina.home}/lib,${catalina.home}/lib/*.jar";
     String expect = "/var/lib/oozie/.*\\.jar,/usr/lib/hadoop/client/.*\\.jar,/usr/lib/oozie/libserver/.*\\.jar,\\$\\{catalina\\.home\\}/lib,\\$\\{catalina\\.home\\}/lib/.*\\.jar";
     String output = Segment.createRegex( input );
     assertThat( expect, is( output ) );

@@ -49,7 +49,7 @@ public class TraceUtil {
   }
 
   static final Set<Integer> parseIntegerSet( String str ) {
-    Set<Integer> set = new HashSet<Integer>();
+    Set<Integer> set = new HashSet<>();
     if( str != null && !str.trim().isEmpty() ) {
       StringTokenizer parser = new StringTokenizer( str.trim(), ",", false );
       while( parser.hasMoreTokens() ) {
