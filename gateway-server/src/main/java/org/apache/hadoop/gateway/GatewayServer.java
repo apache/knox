@@ -35,7 +35,6 @@ import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.deploy.DeploymentException;
 import org.apache.hadoop.gateway.deploy.DeploymentFactory;
 import org.apache.hadoop.gateway.filter.CorrelationHandler;
-import org.apache.hadoop.gateway.filter.DefaultTopologyHandler;
 import org.apache.hadoop.gateway.filter.PortMappingHelperHandler;
 import org.apache.hadoop.gateway.filter.RequestUpdateHandler;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
@@ -429,10 +428,6 @@ public class GatewayServer {
     final PortMappingHelperHandler portMappingHandler = new PortMappingHelperHandler(config);
     portMappingHandler.setHandler(gzipHandler);
 
-    DefaultTopologyHandler defaultTopoHandler = new DefaultTopologyHandler(
-        config, services, contexts);
-
-
      // If topology to port mapping feature is enabled then we add new Handler {RequestForwardHandler}
      // to the chain, this handler listens on the configured port (in gateway-site.xml)
      // and simply forwards requests to the correct context path.
@@ -460,7 +455,6 @@ public class GatewayServer {
 
     }
 
-    handlers.addHandler(defaultTopoHandler);
     handlers.addHandler(logHandler);
 
     if (config.isWebsocketEnabled()) {      
@@ -502,10 +496,15 @@ public class GatewayServer {
 
     // if topology name is blank which means we have all topologies listening on this port
     if (StringUtils.isBlank(topologyName)) {
-      if (config.getGatewayPortMappings().containsValue(new Integer(port))) {
+      // If we have Default Topology old and new configuration (Port Mapping) throw error.
+      if (config.getGatewayPortMappings().containsValue(new Integer(port))
+          && !StringUtils.isBlank(config.getDefaultTopologyName())) {
         log.portAlreadyInUse(port);
-        throw new IOException(
-            String.format(" Cannot use port %d, it has to be unique. ", port));
+        throw new IOException(String.format(
+            " Please map port %d using either \"gateway.port.mapping.sandbox\" or "
+                + "\"default.app.topology.name\" property, "
+                + "specifying both is not a valid configuration. ",
+            port));
       }
     } else {
       // Topology name is not blank so check amongst other ports if we have a conflict
@@ -533,7 +532,7 @@ public class GatewayServer {
     contexts = new ContextHandlerCollection();
 
      // A map to keep track of current deployments by cluster name.
-    deployments = new ConcurrentHashMap<String, WebAppContext>();
+    deployments = new ConcurrentHashMap<>();
 
     // Start Jetty.
     jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
@@ -579,7 +578,8 @@ public class GatewayServer {
     if (config.isGatewayPortMappingEnabled()) {
       for (Map.Entry<String, Integer> entry : topologyPortMap.entrySet()) {
         // Add connector for only valid topologies, i.e. deployed topologies.
-        if(deployedTopologyList.contains(entry.getKey())) {
+        // and NOT for Default Topology listening on standard gateway port.
+        if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue().intValue() != config.getGatewayPort()) ) {
           log.createJettyConnector(entry.getKey().toLowerCase(), entry.getValue());
           jetty.addConnector(createConnector(jetty, config, entry.getValue(),
               entry.getKey().toLowerCase()));

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 
@@ -199,8 +200,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getDefaultAppRedirectPath() {
-    // TODO Auto-generated method stub
-    return "/gateway/sandbox";
+
+    if(StringUtils.isBlank(this.defaultTopologyName)) {
+      return "/gateway/sandbox";
+    } else {
+      return "/gateway/"+this.defaultTopologyName;
+    }
+
   }
 
   /* (non-Javadoc)

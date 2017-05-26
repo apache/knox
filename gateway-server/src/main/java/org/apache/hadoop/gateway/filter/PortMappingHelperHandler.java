@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -34,6 +35,13 @@ import java.io.IOException;
  * This is a helper handler that adjusts the "target" patch of the request.
  * Used when Topology Port Mapping feature is used.
  * See KNOX-928
+ * <p>
+ * This class also handles the Default Topology Feature
+ * where, any one of the topologies can be set to "default"
+ * and can listen on the standard Knox port (8443) and
+ * will not need /gateway/{topology} context.
+ * Basically Topology Port Mapping for standard port.
+ * Backwards compatible to Default Topology Feature.
  *
  */
 public class PortMappingHelperHandler extends HandlerWrapper {
@@ -43,9 +51,43 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
   final GatewayConfig config;
 
+  private String defaultTopologyRedirectContext = null;
+
   public PortMappingHelperHandler(final GatewayConfig config) {
 
     this.config = config;
+    //Set up context for default topology feature.
+    String defaultTopologyName = config.getDefaultTopologyName();
+
+    // default topology feature can also be enabled using port mapping feature
+    // config e.g. gateway.port.mapping.{defaultTopologyName}
+
+    if(defaultTopologyName == null && config.getGatewayPortMappings().values().contains(config.getGatewayPort())) {
+
+      for(final Map.Entry<String, Integer> entry: config.getGatewayPortMappings().entrySet()) {
+
+        if(entry.getValue().intValue() == config.getGatewayPort()) {
+          defaultTopologyRedirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
+          break;
+        }
+
+      }
+
+
+    }
+
+    if (defaultTopologyName != null) {
+      defaultTopologyRedirectContext = config.getDefaultAppRedirectPath();
+      if (defaultTopologyRedirectContext != null
+          && defaultTopologyRedirectContext.trim().isEmpty()) {
+        defaultTopologyRedirectContext = null;
+      }
+    }
+    if (defaultTopologyRedirectContext != null) {
+      LOG.defaultTopologySetup(defaultTopologyName,
+          defaultTopologyRedirectContext);
+    }
+
   }
 
   @Override
@@ -53,11 +95,13 @@ public class PortMappingHelperHandler extends HandlerWrapper {
       final HttpServletRequest request, final HttpServletResponse response)
       throws IOException, ServletException {
 
+    String newTarget = target;
+    String baseURI = baseRequest.getUri().toString();
+
     // If Port Mapping feature enabled
     if (config.isGatewayPortMappingEnabled()) {
       int targetIndex;
       String context = "";
-      String baseURI = baseRequest.getUri().toString();
 
       // extract the gateway specific part i.e. {/gatewayName/}
       String originalContextPath = "";
@@ -89,9 +133,23 @@ public class PortMappingHelperHandler extends HandlerWrapper {
         LOG.topologyPortMappingAddContext(target, context + target);
       }
       // Move on to the next handler in chain with updated path
-      super.handle(context + target, baseRequest, request, response);
+      newTarget = context + target;
+    }
+
+    //Backwards compatibility for default topology feature
+    if (defaultTopologyRedirectContext != null && !baseURI
+        .startsWith("/" + config.getGatewayPath())) {
+      newTarget = defaultTopologyRedirectContext + target;
+
+      final RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
+          request, defaultTopologyRedirectContext, newTarget);
+
+      LOG.defaultTopologyForward(target, newTarget);
+      super.handle(newTarget, baseRequest, newRequest, response);
+
     } else {
-      super.handle(target, baseRequest, request, response);
+
+      super.handle(newTarget, baseRequest, request, response);
     }
 
   }

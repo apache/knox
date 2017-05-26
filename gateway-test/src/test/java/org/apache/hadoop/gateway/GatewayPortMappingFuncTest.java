@@ -25,7 +25,9 @@ import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -57,7 +59,7 @@ public class GatewayPortMappingFuncTest {
 
   private static MockServer masterServer;
 
-  private int eeriePort;
+  private static int eeriePort;
 
   public GatewayPortMappingFuncTest() {
     super();
@@ -74,8 +76,8 @@ public class GatewayPortMappingFuncTest {
    *
    * @throws Exception Thrown if any failure occurs.
    */
-  @Before
-  public void setup() throws Exception {
+  @BeforeClass
+  public static void setup() throws Exception {
     LOG_ENTER();
 
     eeriePort = getAvailablePort(1240, 49151);
@@ -88,18 +90,21 @@ public class GatewayPortMappingFuncTest {
     config.setGatewayPath("gateway");
     config.setTopologyPortMapping(topologyPortMapping);
 
+    // Enable default topology
+    config.setDefaultTopologyName("eerie");
+
     driver.setResourceBase(WebHdfsHaFuncTest.class);
     driver.setupLdap(0);
 
     driver.setupService("WEBHDFS", "http://vm.local:50070/webhdfs", "/eerie/webhdfs", USE_MOCK_SERVICES);
 
-    driver.setupGateway(config, "eerie", createTopology("WEBHDFS"), USE_GATEWAY);
+    driver.setupGateway(config, "eerie", createTopology("WEBHDFS", driver.getLdapUrl(), masterServer.getPort()), USE_GATEWAY);
 
     LOG_EXIT();
   }
 
-  @After
-  public void cleanup() throws Exception {
+  @AfterClass
+  public static void cleanup() throws Exception {
     LOG_ENTER();
     driver.cleanup();
     driver.reset();
@@ -117,6 +122,21 @@ public class GatewayPortMappingFuncTest {
   public void testBasicListOperation() throws IOException {
     LOG_ENTER();
     test("http://localhost:" + driver.getGatewayPort() + "/gateway/eerie" + "/webhdfs" );
+    LOG_EXIT();
+  }
+
+  /**
+   * Test the Default Topology Feature, activated by property
+   * "default.app.topology.name"
+   *
+   * http://localhost:{eeriePort}/gateway/eerie/webhdfs/v1
+   *
+   * @throws IOException
+   */
+  @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testDefaultTopologyFeature() throws IOException {
+    LOG_ENTER();
+    test("http://localhost:" + driver.getGatewayPort() + "/webhdfs" );
     LOG_EXIT();
   }
 
@@ -145,45 +165,6 @@ public class GatewayPortMappingFuncTest {
   public void testMultiPortWithGatewayPath() throws IOException {
     LOG_ENTER();
     test("http://localhost:" + eeriePort + "/gateway/eerie" + "/webhdfs" );
-    LOG_EXIT();
-  }
-
-  /**
-   * Fail when trying to use this feature on the standard port.
-   *
-   * http://localhost:{gatewayPort}/webhdfs/v1
-   *
-   * @throws IOException
-   */
-  @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testMultiPortOperationFail() throws IOException {
-    LOG_ENTER();
-    final String url = "http://localhost:" + driver.getGatewayPort() + "/webhdfs" ;
-
-    String password = "hdfs-password";
-    String username = "hdfs";
-
-    masterServer.expect()
-        .method("GET")
-        .pathInfo("/webhdfs/v1/")
-        .queryParam("op", "LISTSTATUS")
-        .queryParam("user.name", username)
-        .respond()
-        .status(HttpStatus.SC_OK)
-        .content(driver.getResourceBytes("webhdfs-liststatus-success.json"))
-        .contentType("application/json");
-
-    given()
-        .auth().preemptive().basic(username, password)
-        .header("X-XSRF-Header", "jksdhfkhdsf")
-        .queryParam("op", "LISTSTATUS")
-        .expect()
-        //.log().ifError()
-        .statusCode(HttpStatus.SC_NOT_FOUND)
-        //.content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
-        .when().get(url + "/v1/");
-    masterServer.isEmpty();
-
     LOG_EXIT();
   }
 
@@ -221,7 +202,7 @@ public class GatewayPortMappingFuncTest {
    *
    * @return A populated XML structure for a topology file.
    */
-  private static XMLTag createTopology(final String role) {
+  public static XMLTag createTopology(final String role, final String ldapURL, final int gatewayPort ) {
     XMLTag xml = XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
@@ -244,7 +225,7 @@ public class GatewayPortMappingFuncTest {
         .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.url")
-        .addTag("value").addText(driver.getLdapUrl()).gotoParent()
+        .addTag("value").addText(ldapURL).gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
         .addTag("value").addText("simple").gotoParent()
@@ -272,7 +253,7 @@ public class GatewayPortMappingFuncTest {
         .gotoRoot()
         .addTag("service")
         .addTag("role").addText(role)
-        .addTag("url").addText("http://localhost:" + masterServer.getPort() + "/webhdfs")
+        .addTag("url").addText("http://localhost:" + gatewayPort + "/webhdfs")
         .gotoRoot();
     return xml;
   }
