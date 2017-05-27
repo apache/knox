@@ -232,6 +232,11 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite-func-inbound-query-param</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-security-picketlink</artifactId>
         </dependency>
         <dependency>

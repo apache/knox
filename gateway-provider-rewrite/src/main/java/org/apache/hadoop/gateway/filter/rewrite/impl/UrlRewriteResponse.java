@@ -77,6 +77,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private static final String REQUEST_PARAM_PREFIX = "request.";
   private static final String CLUSTER_PARAM_PREFIX = "cluster.";
   private static final String GATEWAY_PARAM_PREFIX = "gateway.";
+  public  static final String INBOUND_QUERY_PARAM_PREFIX   = "query.param.";
 
   private UrlRewriter rewriter;
   private FilterConfig config;
@@ -219,7 +220,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       return Arrays.asList( getGatewayParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
     } else if ( name.startsWith( CLUSTER_PARAM_PREFIX ) ) {
       return Arrays.asList( getClusterParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
-    }  else {
+    } else if ( name.startsWith( INBOUND_QUERY_PARAM_PREFIX ) ) {
+      return getInboundQueryParam(name.substring(INBOUND_QUERY_PARAM_PREFIX.length()));
+    } else {
       return Arrays.asList( config.getInitParameter( name ) );
     }
   }
@@ -270,6 +273,14 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     } else {
       return null;
     }
+  }
+
+  private List <String> getInboundQueryParam(String name ){
+     List <String> inboundHosts = null;
+     if( this.request!=null )
+       inboundHosts =
+         Arrays.asList( this.request.getParameterValues(name));
+     return inboundHosts;
   }
 
   private String getRequestParam( String name ) {

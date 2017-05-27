@@ -51,6 +51,7 @@
         <module>gateway-provider-rewrite</module>
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
+        <module>gateway-provider-rewrite-func-inbound-query-param</module>
         <module>gateway-provider-rewrite-step-secure-query</module>
         <module>gateway-provider-rewrite-step-encrypt-uri</module>
         <module>gateway-provider-security-jwt</module>
@@ -543,6 +544,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-rewrite-func-service-registry</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-provider-rewrite-func-inbound-query-param</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
