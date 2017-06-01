@@ -34,6 +34,24 @@ objectclass:top
 objectclass:organizationalUnit
 ou: groups
 
+# create the analyst group under groups
+dn: cn=analyst,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: analyst
+description:analyst  group
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
+
+
+# create the scientist group under groups
+dn: cn=scientist,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: scientist
+description: scientist group
+member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+
 dn: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
@@ -114,8 +132,43 @@ sn: Smith
 uid: deniedUser
 userPassword:password
 
-dn: cn=admin,ou=groups,dc=hadoop,dc=apache,dc=org
+dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
-objectclass:groupOfNames
-cn: admin
-member: uid=allowedUser,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Guest
+sn: User
+uid: guest
+userPassword:guest-password
+
+dn: uid=admin,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Admin
+sn: Admin
+uid: admin
+userPassword:admin-password
+
+dn: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: sam
+sn: sam
+uid: sam
+userPassword:sam-password
+
+dn: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: tom
+sn: tom
+uid: tom
+userPassword:tom-password
+

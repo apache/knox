@@ -62,6 +62,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -105,9 +107,14 @@ public class GatewayFuncTestDriver {
    * @throws Exception Thrown if a failure occurs.
    */
   public int setupLdap( int port ) throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
+
     ldapTransport = new TcpTransport( port );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org",path.toFile(), ldapTransport );
     ldap.start();
     log.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
     return port;

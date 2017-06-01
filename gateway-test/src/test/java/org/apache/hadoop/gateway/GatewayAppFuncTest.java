@@ -20,6 +20,8 @@ package org.apache.hadoop.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -107,9 +109,14 @@ public class GatewayAppFuncTest {
   }
 
   public static void setupLdap() throws Exception {
-    URL usersUrl = TestUtils.getResourceUrl( DAT, "users.ldif" );
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
+
     ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
     ldap.start();
     ldapPort = ldapTransport.getAcceptor().getLocalAddress().getPort();
     LOG.info( "LDAP port = " + ldapPort );

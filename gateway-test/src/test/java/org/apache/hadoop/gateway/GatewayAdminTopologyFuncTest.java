@@ -25,6 +25,8 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,9 +103,14 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   public static void setupLdap() throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
+
     ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
     ldap.start();
     LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }

@@ -33,6 +33,8 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +65,7 @@ import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 
 /**
- * Functional test to verify : looking up ldap groups from directory 
+ * Functional test to verify : looking up ldap groups from directory
  * and using them in acl authorization checks
  *
  */
@@ -103,9 +105,14 @@ public class GatewayLdapDynamicGroupFuncTest {
   }
 
   public static int setupLdap() throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users-dynamic.ldif");
+
     ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
+    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
     ldap.start();
     LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
     return ldapTransport.getAcceptor().getLocalAddress().getPort();

@@ -169,19 +169,30 @@ uid: bob
 userPassword:bob-password
 title: director
 
+dn: ou=contractors,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: contractors
+
+# entry for sample user joe with title: director 
+# would be a member of a dynamic group based on title: director
+dn: uid=joe,ou=contractors,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: joe
+sn: joe
+uid: joe
+userPassword: joe-password
+title: director
+
 # create FIRST Level groups branch
 dn: ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:organizationalUnit
 ou: groups
 description: generic groups branch
-
-# create dynamic group directors under groups
-dn: cn=directors,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass: groupofnames
-cn: directors
-description: directors group
 
 # create the analyst group under groups
 dn: cn=analyst,ou=groups,dc=hadoop,dc=apache,dc=org
@@ -191,7 +202,6 @@ cn: analyst
 description:analyst  group
 member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
 member: uid=tom,ou=people,dc=hadoop,dc=apache,dc=org
-
 
 # create the scientist group under groups
 dn: cn=scientist1,ou=groups,dc=hadoop,dc=apache,dc=org
