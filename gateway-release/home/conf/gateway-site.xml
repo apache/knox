@@ -51,7 +51,7 @@ limitations under the License.
     <property>
         <name>java.security.auth.login.config</name>
         <value>/etc/knox/conf/krb5JAASLogin.conf</value>
-        <description>Absolute path to JASS login config file</description>
+        <description>Absolute path to JAAS login config file</description>
     </property>
 
     <property>
