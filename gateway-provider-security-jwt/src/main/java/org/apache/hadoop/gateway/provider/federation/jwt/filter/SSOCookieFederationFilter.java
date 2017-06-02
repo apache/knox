@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -92,10 +93,14 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       ((HttpServletResponse) response).sendRedirect(loginURL);
     }
     else {
-      JWTToken token = new JWTToken(wireToken);
-      if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
-        Subject subject = createSubjectFromToken(token);
-        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+      try {
+        JWTToken token = new JWTToken(wireToken);
+        if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
+          Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        }
+      } catch (ParseException ex) {
+        ((HttpServletResponse) response).sendRedirect(loginURL);
       }
     }
   }

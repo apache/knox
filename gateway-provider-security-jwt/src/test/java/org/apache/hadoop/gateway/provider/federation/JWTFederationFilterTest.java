@@ -42,6 +42,11 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
       EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
     }
     
+    protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
+      String token = "Bearer " + "ljm" + jwt.serialize();
+      EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+    }
+
     protected String getAudienceProperty() {
       return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
     }

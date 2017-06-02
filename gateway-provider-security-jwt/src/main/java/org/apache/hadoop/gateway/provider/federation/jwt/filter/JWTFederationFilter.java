@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
@@ -72,10 +73,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     
     if (wireToken != null) {
-      JWTToken token = new JWTToken(wireToken);
-      if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
-        Subject subject = createSubjectFromToken(token);
-        continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+      try {
+        JWTToken token = new JWTToken(wireToken);
+        if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
+          Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        }
+      } catch (ParseException ex) {
+        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
       }
     }
     else {

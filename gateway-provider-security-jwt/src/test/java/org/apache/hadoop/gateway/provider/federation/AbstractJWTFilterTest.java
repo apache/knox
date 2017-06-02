@@ -71,6 +71,7 @@ public abstract class AbstractJWTFilterTest  {
   protected RSAPrivateKey privateKey = null;
 
   protected abstract void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
+  protected abstract void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
   protected abstract String getAudienceProperty();
 
   @Before
@@ -236,6 +237,34 @@ public abstract class AbstractJWTFilterTest  {
     }
   }
   
+  @Test
+  public void testUnableToParseJWT() throws Exception {
+    try {
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("bob",new Date(new Date().getTime() + 5000), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setGarbledTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL).anyTimes();
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == false);
+      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
   protected Properties getProperties() {
     Properties props = new Properties();
     props.setProperty(

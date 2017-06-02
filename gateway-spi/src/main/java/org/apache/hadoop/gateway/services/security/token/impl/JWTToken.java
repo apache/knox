@@ -49,11 +49,12 @@ public class JWTToken implements JWT {
     }
   }
 
-  public JWTToken(String serializedJWT) {
+  public JWTToken(String serializedJWT) throws ParseException {
     try {
       jwt = SignedJWT.parse(serializedJWT);
     } catch (ParseException e) {
       log.unableToParseToken(e);
+      throw e;
     }
   }
 
