@@ -57,6 +57,11 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
         authority = ts;
       }
         
+    }
+
+    @Override
+    protected String getVerificationPemProperty() {
+      return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
     };
     
 }

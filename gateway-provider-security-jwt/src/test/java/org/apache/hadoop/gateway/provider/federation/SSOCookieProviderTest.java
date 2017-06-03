@@ -74,7 +74,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000),
-          privateKey);
+          privateKey, props);
 
       Cookie cookie = new Cookie("jowt", jwt.serialize());
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
@@ -185,6 +185,12 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
   }
+  
+
+  @Override
+  protected String getVerificationPemProperty() {
+    return SSOCookieFederationFilter.SSO_VERIFICATION_PEM;
+  };
 
   private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter {
     public String testConstructLoginURL(HttpServletRequest req) {

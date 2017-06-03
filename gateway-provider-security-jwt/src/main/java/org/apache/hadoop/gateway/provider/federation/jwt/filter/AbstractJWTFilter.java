@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -53,6 +54,8 @@ public abstract class AbstractJWTFilter implements Filter {
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   protected List<String> audiences;
   protected JWTokenAuthority authority;
+  protected String verificationPEM = null;
+  protected RSAPublicKey publicKey = null;
 
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
@@ -63,7 +66,7 @@ public abstract class AbstractJWTFilter implements Filter {
   public AbstractJWTFilter() {
     super();
   }
-  
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     ServletContext context = filterConfig.getServletContext();
@@ -94,13 +97,13 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected boolean tokenIsStillValid(JWTToken jwtToken) {
-    // if there is no expiration data then the lifecycle is tied entirely to
+    // if there is no expiration date then the lifecycle is tied entirely to
     // the cookie validity - otherwise ensure that the current time is before
     // the designated expiration time
     Date expires = jwtToken.getExpiresDate();
     return (expires == null || expires != null && new Date().before(expires));
   }
-  
+
   /**
    * Validate whether any of the accepted audience claims is present in the
    * issued token claims list for audience. Override this method in subclasses
@@ -186,7 +189,12 @@ public abstract class AbstractJWTFilter implements Filter {
       throws IOException, ServletException {
     boolean verified = false;
     try {
-      verified = authority.verifyToken(token);
+      if (publicKey == null) {
+        verified = authority.verifyToken(token);
+      }
+      else {
+        verified = authority.verifyToken(token, publicKey);
+      }
     } catch (TokenServiceException e) {
       log.unableToVerifyToken(e);
     }

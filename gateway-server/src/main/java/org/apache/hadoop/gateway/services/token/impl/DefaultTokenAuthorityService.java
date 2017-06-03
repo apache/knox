@@ -161,10 +161,21 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public boolean verifyToken(JWTToken token)
       throws TokenServiceException {
+    return verifyToken(token, null);
+  }
+
+  @Override
+  public boolean verifyToken(JWTToken token, RSAPublicKey publicKey)
+      throws TokenServiceException {
     boolean rc = false;
     PublicKey key;
     try {
-      key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+      if (publicKey == null) {
+        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+      }
+      else {
+        key = publicKey;
+      }
       JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) key);
       // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
       // consider jwk for specifying the key too
@@ -211,5 +222,4 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public void stop() throws ServiceLifecycleException {
   }
-
 }

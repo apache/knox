@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.services.security.token;
 
 import java.security.Principal;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
 import javax.security.auth.Subject;
@@ -37,6 +38,9 @@ public interface JWTokenAuthority {
       String algorithm) throws TokenServiceException;
 
   boolean verifyToken(JWTToken token) throws TokenServiceException;
+
+  boolean verifyToken(JWTToken token, RSAPublicKey publicKey)
+      throws TokenServiceException;
 
   JWTToken issueToken(Principal p, String audience, String algorithm,
       long expires) throws TokenServiceException;
