@@ -302,7 +302,7 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("bob",new Date(new Date().getTime() + 5000), privateKey);
+      SignedJWT jwt = getJWT("bob",new Date(new Date().getTime() + 5000), privateKey, props);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setGarbledTokenOnRequest(request, jwt);
