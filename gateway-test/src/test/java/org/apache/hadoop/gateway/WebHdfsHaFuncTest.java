@@ -48,7 +48,7 @@ public class WebHdfsHaFuncTest {
    // This is frequently used to verify the behavior of the test both with and without mock services.
    private static final boolean USE_MOCK_SERVICES = true;
 
-   private static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
+   private static GatewayTestDriver driver = new GatewayTestDriver();
 
    private static MockServer masterServer;
 

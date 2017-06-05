@@ -27,13 +27,17 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.core.MediaType;
 
+import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Cookie;
 import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.Response;
@@ -41,17 +45,33 @@ import com.jayway.restassured.specification.ResponseSpecification;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.MediumTests;
 import org.apache.hadoop.test.category.VerifyTest;
 import org.apache.hadoop.test.mock.MockRequestMatcher;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.util.EntityUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -68,10 +88,10 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
+import static org.junit.Assert.assertThat;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -92,7 +112,7 @@ public class GatewayBasicFuncTest {
 
   private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
 
-  public static GatewayFuncTestDriver driver = new GatewayFuncTestDriver();
+  public static GatewayTestDriver driver = new GatewayTestDriver();
 
   // Controls the host name to which the gateway dispatch requests.  This may be the name of a sandbox VM
   // or an EC2 instance.  Currently only a single host is supported.
@@ -736,73 +756,73 @@ public class GatewayBasicFuncTest {
     String groupAB = "hadoop";
     String groupC = "hcat";
 
-    driver.deleteFile( userA, passA, root, "true", 200 );
+    deleteFile( userA, passA, root, "true", 200 );
 
-    driver.createDir( userA, passA, groupA, root + "/dirA700", "700", 200, 200 );
-    driver.createDir( userA, passA, groupA, root + "/dirA770", "770", 200, 200 );
-    driver.createDir( userA, passA, groupA, root + "/dirA707", "707", 200, 200 );
-    driver.createDir( userA, passA, groupA, root + "/dirA777", "777", 200, 200 );
-    driver.createDir( userA, passA, groupAB, root + "/dirAB700", "700", 200, 200 );
-    driver.createDir( userA, passA, groupAB, root + "/dirAB770", "770", 200, 200 );
-    driver.createDir( userA, passA, groupAB, root + "/dirAB707", "707", 200, 200 );
-    driver.createDir( userA, passA, groupAB, root + "/dirAB777", "777", 200, 200 );
+    createDir( userA, passA, groupA, root + "/dirA700", "700", 200, 200 );
+    createDir( userA, passA, groupA, root + "/dirA770", "770", 200, 200 );
+    createDir( userA, passA, groupA, root + "/dirA707", "707", 200, 200 );
+    createDir( userA, passA, groupA, root + "/dirA777", "777", 200, 200 );
+    createDir( userA, passA, groupAB, root + "/dirAB700", "700", 200, 200 );
+    createDir( userA, passA, groupAB, root + "/dirAB770", "770", 200, 200 );
+    createDir( userA, passA, groupAB, root + "/dirAB707", "707", 200, 200 );
+    createDir( userA, passA, groupAB, root + "/dirAB777", "777", 200, 200 );
 
     // CREATE: Files
     // userA:groupA
-    driver.createFile( userA, passA, groupA, root + "/dirA700/fileA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupA, root + "/dirA770/fileA770", "770", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupA, root + "/dirA707/fileA707", "707", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupA, root + "/dirA777/fileA777", "777", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupA, root + "/dirA700/fileA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupA, root + "/dirA770/fileA770", "770", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupA, root + "/dirA707/fileA707", "707", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupA, root + "/dirA777/fileA777", "777", "text/plain", "small1.txt", 307, 201, 200 );
     // userA:groupAB
-    driver.createFile( userA, passA, groupAB, root + "/dirAB700/fileAB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupAB, root + "/dirAB770/fileAB770", "770", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupAB, root + "/dirAB707/fileAB707", "707", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userA, passA, groupAB, root + "/dirAB777/fileAB777", "777", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupAB, root + "/dirAB700/fileAB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupAB, root + "/dirAB770/fileAB770", "770", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupAB, root + "/dirAB707/fileAB707", "707", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userA, passA, groupAB, root + "/dirAB777/fileAB777", "777", "text/plain", "small1.txt", 307, 201, 200 );
     // userB:groupB
-    driver.createFile( userB, passB, groupB, root + "/dirA700/fileB700", "700", "text/plain", "small1.txt", 307, 403, 0 );
-    driver.createFile( userB, passB, groupB, root + "/dirA770/fileB700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userB, passB, groupB, root + "/dirA700/fileB700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userB, passB, groupB, root + "/dirA770/fileB700", "700", "text/plain", "small1.txt", 307, 403, 0 );
 //kam:20130219[ chmod seems to be broken at least in Sandbox 1.2
-//    driver.createFile( userB, passB, groupB, root + "/dirA707/fileB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
-//    driver.createFile( userB, passB, groupB, root + "/dirA777/fileB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+//    createFile( userB, passB, groupB, root + "/dirA707/fileB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+//    createFile( userB, passB, groupB, root + "/dirA777/fileB700", "700", "text/plain", "small1.txt", 307, 201, 200 );
 //kam]
     // userB:groupAB
-    driver.createFile( userB, passB, groupAB, root + "/dirA700/fileBA700", "700", "text/plain", "small1.txt", 307, 403, 0 );
-    driver.createFile( userB, passB, groupAB, root + "/dirA770/fileBA700", "700", "text/plain", "small1.txt", 307, 403, 0 );
-    driver.createFile( userB, passB, groupAB, root + "/dirA707/fileBA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
-    driver.createFile( userB, passB, groupAB, root + "/dirA777/fileBA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userB, passB, groupAB, root + "/dirA700/fileBA700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userB, passB, groupAB, root + "/dirA770/fileBA700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userB, passB, groupAB, root + "/dirA707/fileBA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+    createFile( userB, passB, groupAB, root + "/dirA777/fileBA700", "700", "text/plain", "small1.txt", 307, 201, 200 );
     // userC:groupC
-    driver.createFile( userC, passC, groupC, root + "/dirA700/fileC700", "700", "text/plain", "small1.txt", 307, 403, 0 );
-    driver.createFile( userC, passC, groupC, root + "/dirA770/fileC700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userC, passC, groupC, root + "/dirA700/fileC700", "700", "text/plain", "small1.txt", 307, 403, 0 );
+    createFile( userC, passC, groupC, root + "/dirA770/fileC700", "700", "text/plain", "small1.txt", 307, 403, 0 );
 //kam:20130219[ chmod seems to be broken at least in Sandbox 1.2
-//    driver.createFile( userC, passC, groupC, root + "/dirA707/fileC700", "700", "text/plain", "small1.txt", 307, 201, 200 );
-//    driver.createFile( userC, passC, groupC, root + "/dirA777/fileC700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+//    createFile( userC, passC, groupC, root + "/dirA707/fileC700", "700", "text/plain", "small1.txt", 307, 201, 200 );
+//    createFile( userC, passC, groupC, root + "/dirA777/fileC700", "700", "text/plain", "small1.txt", 307, 201, 200 );
 //kam]
 
     // READ
     // userA
-    driver.readFile( userA, passA, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_OK );
-    driver.readFile( userA, passA, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_OK );
-    driver.readFile( userA, passA, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
-    driver.readFile( userA, passA, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userA, passA, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userA, passA, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userA, passA, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userA, passA, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
     // userB:groupB
-    driver.readFile( userB, passB, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userB, passB, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userB, passB, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
-    driver.readFile( userB, passB, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userB, passB, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userB, passB, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userB, passB, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userB, passB, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
     // userB:groupAB
-    driver.readFile( userB, passB, root + "/dirAB700/fileAB700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userB, passB, root + "/dirAB770/fileAB770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userB, passB, root + "/dirAB707/fileAB707", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userB, passB, root + "/dirAB777/fileAB777", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userB, passB, root + "/dirAB700/fileAB700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userB, passB, root + "/dirAB770/fileAB770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userB, passB, root + "/dirAB707/fileAB707", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userB, passB, root + "/dirAB777/fileAB777", "text/plain", "small1.txt", HttpStatus.SC_OK );
     // userC:groupC
-    driver.readFile( userC, passC, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userC, passC, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
-    driver.readFile( userC, passC, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
-    driver.readFile( userC, passC, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userC, passC, root + "/dirA700/fileA700", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userC, passC, root + "/dirA770/fileA770", "text/plain", "small1.txt", HttpStatus.SC_FORBIDDEN );
+    readFile( userC, passC, root + "/dirA707/fileA707", "text/plain", "small1.txt", HttpStatus.SC_OK );
+    readFile( userC, passC, root + "/dirA777/fileA777", "text/plain", "small1.txt", HttpStatus.SC_OK );
 
     //NEGATIVE: Test a bad password.
     if( driver.isUseGateway() ) {
-      Response response = given()
+      given()
           //.log().all()
           .auth().preemptive().basic( userA, "invalid-password" )
           .header("X-XSRF-Header", "jksdhfkhdsf")
@@ -815,20 +835,20 @@ public class GatewayBasicFuncTest {
     driver.assertComplete();
 
     // UPDATE (Negative First)
-    driver.updateFile( userC, passC, root + "/dirA700/fileA700", "text/plain", "small2.txt", 307, 403 );
-    driver.updateFile( userB, passB, root + "/dirAB700/fileAB700", "text/plain", "small2.txt", 307, 403 );
-    driver.updateFile( userB, passB, root + "/dirAB770/fileAB700", "text/plain", "small2.txt", 307, 403 );
-    driver.updateFile( userB, passB, root + "/dirAB770/fileAB770", "text/plain", "small2.txt", 307, 403 );
-    driver.updateFile( userA, passA, root + "/dirA700/fileA700", "text/plain", "small2.txt", 307, 201 );
+    updateFile( userC, passC, root + "/dirA700/fileA700", "text/plain", "small2.txt", 307, 403 );
+    updateFile( userB, passB, root + "/dirAB700/fileAB700", "text/plain", "small2.txt", 307, 403 );
+    updateFile( userB, passB, root + "/dirAB770/fileAB700", "text/plain", "small2.txt", 307, 403 );
+    updateFile( userB, passB, root + "/dirAB770/fileAB770", "text/plain", "small2.txt", 307, 403 );
+    updateFile( userA, passA, root + "/dirA700/fileA700", "text/plain", "small2.txt", 307, 201 );
 
     // DELETE (Negative First)
-    driver.deleteFile( userC, passC, root + "/dirA700/fileA700", "false", HttpStatus.SC_FORBIDDEN );
-    driver.deleteFile( userB, passB, root + "/dirAB700/fileAB700", "false", HttpStatus.SC_FORBIDDEN );
-    driver.deleteFile( userB, passB, root + "/dirAB770/fileAB770", "false", HttpStatus.SC_FORBIDDEN );
-    driver.deleteFile( userA, passA, root + "/dirA700/fileA700", "false", HttpStatus.SC_OK );
+    deleteFile( userC, passC, root + "/dirA700/fileA700", "false", HttpStatus.SC_FORBIDDEN );
+    deleteFile( userB, passB, root + "/dirAB700/fileAB700", "false", HttpStatus.SC_FORBIDDEN );
+    deleteFile( userB, passB, root + "/dirAB770/fileAB770", "false", HttpStatus.SC_FORBIDDEN );
+    deleteFile( userA, passA, root + "/dirA700/fileA700", "false", HttpStatus.SC_OK );
 
     // Cleanup anything that might have been leftover because the test failed previously.
-    driver.deleteFile( userA, passA, root, "true", HttpStatus.SC_OK );
+    deleteFile( userA, passA, root, "true", HttpStatus.SC_OK );
     LOG_EXIT();
   }
 
@@ -844,28 +864,28 @@ public class GatewayBasicFuncTest {
 //    String group = "hcat";
 
     // Cleanup anything that might have been leftover because the test failed previously.
-    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
     curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
+    createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
     curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, null, root+"/input/changes.txt", "777", "text/plain", "changes.txt", 307, 201, 200 );
+    createFile( user, pass, null, root+"/input/changes.txt", "777", "text/plain", "changes.txt", 307, 201, 200 );
 
     /* Create the output directory
     curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
     */
-    driver.createDir( user, pass, null, root+"/output", "777", 200, 200 );
+    createDir( user, pass, null, root+"/output", "777", 200, 200 );
 
     /* Submit the job
     curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/templeton/v1/mapreduce/jar'
     {"id":"job_201210301335_0059"}
     */
-    String job = driver.submitJava(
+    String job = submitJava(
         user, pass,
         root+"/hadoop-examples.jar", "org.apache.org.apache.hadoop.examples.WordCount",
         root+"/input", root+"/output",
@@ -874,7 +894,7 @@ public class GatewayBasicFuncTest {
     /* Get the job status
     curl 'http://vm:50111/templeton/v1/queue/:jobid?user.name=hdfs'
     */
-    driver.queryQueue( user, pass, job );
+    queryQueue( user, pass, job );
 
     // Can't really check for the output here because the job won't be done.
     /* Retrieve results
@@ -883,7 +903,7 @@ public class GatewayBasicFuncTest {
 
     if( CLEANUP_TEST ) {
       // Cleanup anything that might have been leftover because the test failed previously.
-      driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+      deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
     }
     LOG_EXIT();
   }
@@ -897,25 +917,25 @@ public class GatewayBasicFuncTest {
     String group = "mapred";
 
     // Cleanup if previous run failed.
-    driver.deleteFile( user, pass, root, "true", 200, 404 );
+    deleteFile( user, pass, root, "true", 200, 404 );
 
     // Post the data to HDFS
-    driver.createFile( user, pass, null, root + "/passwd.txt", "777", "text/plain", "passwd.txt", 307, 201, 200 );
+    createFile( user, pass, null, root + "/passwd.txt", "777", "text/plain", "passwd.txt", 307, 201, 200 );
 
     // Post the script to HDFS
-    driver.createFile( user, pass, null, root+"/script.pig", "777", "text/plain", "script.pig", 307, 201, 200 );
+    createFile( user, pass, null, root+"/script.pig", "777", "text/plain", "script.pig", 307, 201, 200 );
 
     // Create the output directory
-    driver.createDir( user, pass, null, root + "/output", "777", 200, 200 );
+    createDir( user, pass, null, root + "/output", "777", 200, 200 );
 
     // Submit the job
-    driver.submitPig( user, pass, group, root + "/script.pig", "-v", root + "/output", 200 );
+    submitPig( user, pass, group, root + "/script.pig", "-v", root + "/output", 200 );
 
     // Check job status (if possible)
     // Check output (if possible)
 
     // Cleanup
-    driver.deleteFile( user, pass, root, "true", 200 );
+    deleteFile( user, pass, root, "true", 200 );
     LOG_EXIT();
   }
 
@@ -928,21 +948,21 @@ public class GatewayBasicFuncTest {
     String root = "/tmp/GatewayWebHCatFuncTest/testHiveViaWebHCat";
 
     // Cleanup if previous run failed.
-    driver.deleteFile( user, pass, root, "true", 200, 404 );
+    deleteFile( user, pass, root, "true", 200, 404 );
 
     // Post the data to HDFS
 
     // Post the script to HDFS
-    driver.createFile(user, pass, null, root + "/script.hive", "777", "text/plain", "script.hive", 307, 201, 200);
+    createFile(user, pass, null, root + "/script.hive", "777", "text/plain", "script.hive", 307, 201, 200);
 
     // Submit the job
-    driver.submitHive(user, pass, group, root + "/script.hive", root + "/output", 200);
+    submitHive(user, pass, group, root + "/script.hive", root + "/output", 200);
 
     // Check job status (if possible)
     // Check output (if possible)
 
     // Cleanup
-    driver.deleteFile( user, pass, root, "true", 200 );
+    deleteFile( user, pass, root, "true", 200 );
     LOG_EXIT();
   }
 
@@ -955,20 +975,20 @@ public class GatewayBasicFuncTest {
     String group = "hdfs";
 
     // Cleanup anything that might have been leftover because the test failed previously.
-    driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+    deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
 
     /* Put the workflow definition into HDFS */
-    driver.createFile( user, pass, group, root+"/workflow.xml", "666", "application/octet-stream", "oozie-workflow.xml", 307, 201, 200 );
+    createFile( user, pass, group, root+"/workflow.xml", "666", "application/octet-stream", "oozie-workflow.xml", 307, 201, 200 );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
     curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
+    createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
     curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
-    driver.createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
+    createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
 
     VelocityEngine velocity = new VelocityEngine();
     velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
@@ -995,7 +1015,7 @@ public class GatewayBasicFuncTest {
     //System.out.println( "REQUEST=" + request );
 
     /* Submit the job via Oozie. */
-    String id = driver.oozieSubmitJob( user, pass, request, 201 );
+    String id = oozieSubmitJob( user, pass, request, 201 );
     //System.out.println( "ID=" + id );
 
     String success = "SUCCEEDED";
@@ -1004,7 +1024,7 @@ public class GatewayBasicFuncTest {
     long limit = 1000 * 60; // 60 seconds.
     long start = System.currentTimeMillis();
     while( System.currentTimeMillis() <= start+limit ) {
-      status = driver.oozieQueryJobStatus( user, pass, id, 200 );
+      status = oozieQueryJobStatus( user, pass, id, 200 );
       //System.out.println( "Status=" + status );
       if( success.equalsIgnoreCase( status ) ) {
         break;
@@ -1018,7 +1038,7 @@ public class GatewayBasicFuncTest {
 
     if( CLEANUP_TEST ) {
       // Cleanup anything that might have been leftover because the test failed previously.
-      driver.deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
+      deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
     }
     LOG_EXIT();
   }
@@ -3310,7 +3330,7 @@ public class GatewayBasicFuncTest {
         .status(HttpStatus.SC_MOVED_TEMPORARILY)
         .contentType(ContentType.JSON.toString());
 
-    Response response = given()
+    given()
         .auth().preemptive().basic(username, password)
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .header("X-CSRF-Token", "H/8xIWCYQo4ZDWLvV9k0FAkjD0omWI8beVTp2mEPRxCbJmWBTYhRMhIV9LGIY3E51OAj+s6T7eQChpGJ")
@@ -3729,5 +3749,686 @@ public class GatewayBasicFuncTest {
       System.out.println(e.getMessage());
     }
   }
+  
+  private String createFileNN( String user, String password, String file, String permsOctal, int status ) throws IOException {
+    if( status == HttpStatus.SC_TEMPORARY_REDIRECT ) {
+      driver.getMock( "WEBHDFS" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( "/v1" + file )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .respond()
+          .status( status )
+          .header( "Location", driver.getRealUrl("DATANODE") + file + "?op=CREATE&user.name="+user );
+    } else {
+      driver.getMock( "WEBHDFS" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( "/v1" + file )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .respond()
+          .status( status );
+    }
+    Response response = given()
+        //.log().headers()
+        //.log().parameters()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "CREATE" )
+        .queryParam( "permission", permsOctal )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    String location = response.getHeader( "Location" );
+    log.trace( "Redirect location: " + response.getHeader( "Location" ) );
+    return location;
+  }
+
+  private int createFileDN( String user, String password, String path, String location, String contentType, String resource, int status ) throws IOException {
+    if( status == HttpStatus.SC_CREATED ) {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( path )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .contentType( contentType )
+          .content( driver.getResourceBytes( resource ) )
+          .respond()
+          .status( status )
+          .header( "Location", "webhdfs://" + driver.getRealAddr( "DATANODE" ) + "/v1" + path );
+    } else {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( path )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .contentType( contentType )
+          .content( driver.getResourceStream( resource ) )
+          .respond()
+          .status( status );
+    }
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .contentType( contentType )
+        .content( driver.getResourceBytes( resource ) )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( location );
+    return response.getStatusCode();
+  }
+
+  private String createFile(
+        String user, String password, String group, String file, String permsOctal, String contentType, String resource,
+        int nnStatus, int dnStatus, int chownStatus ) throws IOException {
+    String location = createFileNN( user, password, file, permsOctal, nnStatus );
+    if( location != null ) {
+      int status = createFileDN( user, password, file, location, contentType, resource, dnStatus );
+      if( status < 300 && permsOctal != null ) {
+        chmodFile( user, password, file, permsOctal, chownStatus );
+        if( group != null ) {
+          chownFile( user, password, file, user, group, chownStatus );
+        }
+      }
+    }
+    driver.assertComplete();
+    return location;
+  }
+
+  private void readFile( String user, String password, String file, String contentType, String resource, int status ) throws IOException {
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/v1" + file )
+        .queryParam( "user.name", user )
+        .queryParam( "op", "OPEN" )
+        .respond()
+        .status( HttpStatus.SC_TEMPORARY_REDIRECT )
+        .header( "Location", driver.getRealUrl( "DATANODE" ) + file + "?op=OPEN&user.name="+user );
+    if( status == HttpStatus.SC_OK ) {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "GET" )
+          .pathInfo( file )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "OPEN" )
+          .respond()
+          .status( status )
+          .contentType( contentType )
+          .content( driver.getResourceBytes( resource ) );
+    } else {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "GET" )
+          .pathInfo( file )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "OPEN" )
+          .respond()
+          .status( status );
+    }
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "OPEN" )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().get( driver.getUrl("WEBHDFS") + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    if( response.getStatusCode() == HttpStatus.SC_OK ) {
+      String actualContent = response.asString();
+      String expectedContent = driver.getResourceString( resource, Charset.forName("UTF-8") );
+      assertThat( actualContent, Matchers.is(expectedContent) );
+    }
+    driver.assertComplete();
+  }
+
+  private void chownFile( String user, String password, String file, String owner, String group, int status ) {
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/v1" + file )
+        .queryParam( "op", "SETOWNER" )
+        .queryParam( "user.name", user )
+        .queryParam( "owner", owner )
+        .queryParam( "group", group )
+        .respond()
+        .status( HttpStatus.SC_OK );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "SETOWNER" )
+        .queryParam( "owner", owner )
+        .queryParam( "group", group )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    driver.assertComplete();
+  }
+
+  private void chmodFile( String user, String password, String file, String permsOctal, int status ) {
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/v1" + file )
+        .queryParam( "op", "SETPERMISSION" )
+        .queryParam( "user.name", user )
+        .queryParam( "permission", permsOctal )
+        .respond()
+        .status( HttpStatus.SC_OK );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "SETPERMISSION" )
+        .queryParam( "permission", permsOctal )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    driver.assertComplete();
+  }
+
+  private String updateFile( String user, String password, String file, String contentType, String resource, int nnStatus, int dnStatus ) throws IOException {
+    String location;
+    location = updateFileNN( user, password, file, resource, nnStatus );
+    if( location != null ) {
+      updateFileDN( user, password, file, location, contentType, resource, dnStatus );
+    }
+    driver.assertComplete();
+    return location;
+  }
+
+  private String updateFileNN( String user, String password, String file, String resource, int status ) throws IOException {
+    if( status == HttpStatus.SC_TEMPORARY_REDIRECT ) {
+      driver.getMock( "WEBHDFS" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( "/v1" + file )
+          .queryParam( "op", "CREATE" )
+          .queryParam( "user.name", user )
+          .queryParam( "overwrite", "true" )
+          .respond()
+          .status( status )
+          .header( "Location", driver.getRealUrl("DATANODE") + file + "?op=CREATE&user.name="+user );
+    } else {
+      driver.getMock( "WEBHDFS" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( "v1" + file )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .respond()
+          .status( status );
+    }
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "CREATE" )
+        .queryParam( "overwrite", "true" )
+        .content( driver.getResourceBytes( resource ) )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    String location = response.getHeader( "Location" );
+    log.trace( "Redirect location: " + response.getHeader( "Location" ) );
+    return location;
+  }
+
+  private void updateFileDN( String user, String password, String path, String location, String contentType, String resource, int status ) throws IOException {
+    if( status == HttpStatus.SC_CREATED ) {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( path )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .contentType( contentType )
+          .content( driver.getResourceBytes( resource ) )
+          .respond()
+          .status( status )
+          .header( "Location", "webhdfs://" + driver.getRealAddr( "DATANODE" ) + "/v1" + path );
+    } else {
+      driver.getMock( "DATANODE" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( path )
+          .queryParam( "user.name", user )
+          .queryParam( "op", "CREATE" )
+          .contentType( contentType )
+          .content( driver.getResourceBytes( resource ) )
+          .respond()
+          .status( status );
+    }
+    given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "CREATE" )
+        .queryParam( "overwrite", "true" )
+        .contentType( contentType )
+        .content( driver.getResourceBytes( resource ) )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().put( location );
+  }
+
+  private void deleteFile( String user, String password, String file, String recursive, int... status ) {
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "DELETE" )
+        .pathInfo( "/v1" + file )
+        .queryParam( "user.name", user )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", recursive )
+        .respond().status( status[0] );
+    given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "DELETE" )
+        .queryParam( "recursive", recursive )
+        .expect()
+        //.log().all()
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .when()
+        .delete( driver.getUrl( "WEBHDFS" ) + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    driver.assertComplete();
+  }
+
+  private String createDir( String user, String password, String dir, String permsOctal, int status ) {
+    driver.getMock( "WEBHDFS" )
+        .expect()
+        .method( "PUT" )
+        .pathInfo( "/v1" + dir )
+        .queryParam( "op", "MKDIRS" )
+        .queryParam( "user.name", user )
+        .queryParam( "permission", permsOctal )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .contentType( "application/json" )
+        .content( "{\"boolean\": true}".getBytes() );
+    Response response = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .queryParam( "op", "MKDIRS" )
+        .queryParam( "permission", permsOctal )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .contentType( "application/json" )
+        .content( "boolean", CoreMatchers.equalTo(true) )
+        .when()
+        .put( driver.getUrl("WEBHDFS") + "/v1" + dir + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    String location = response.getHeader( "Location" );
+    return location;
+  }
+
+  private String createDir( String user, String password, String group, String dir, String permsOctal, int nnStatus, int chownStatus ) {
+    String location = createDir( user, password, dir, permsOctal, nnStatus );
+    if( location != null ) {
+      chownFile( user, password, dir, user, group, chownStatus );
+    }
+    return location;
+  }
+
+  private String submitJava( String user, String password, String jar, String main, String input, String output, int status ) {
+    driver.getMock( "WEBHCAT" )
+        .expect()
+        .method( "POST" )
+        .pathInfo( "/v1/mapreduce/jar" )
+        .formParam( "user.name", user )
+        .formParam( "jar", jar )
+        .formParam( "class", main )
+        .formParam( "arg", input, output )
+        .respond()
+        .status( status )
+        .contentType( "application/json" )
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+    String json = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .formParam( "user.name", user )
+        .formParam( "jar", jar )    //"/user/hdfs/test/hadoop-examples.jar" )
+        .formParam( "class", main ) //"org.apache.org.apache.hadoop.examples.WordCount" )
+        .formParam( "arg", input, output ) //.formParam( "arg", "/user/hdfs/test/input", "/user/hdfs/test/output" )
+        .expect()
+        //.log().all()
+        .statusCode( status )
+        .when().post( driver.getUrl( "WEBHCAT" ) + "/v1/mapreduce/jar" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+    log.trace( "JSON=" + json );
+    String job = JsonPath.from(json).getString( "id" );
+    log.debug( "JOB=" + job );
+    driver.assertComplete();
+    return job;
+  }
+
+  private String submitPig( String user, String password, String group, String file, String arg, String statusDir, int... status ) {
+    driver.getMock( "WEBHCAT" )
+        .expect()
+        .method( "POST" )
+        .pathInfo( "/v1/pig" )
+        .respond()
+        .status( status[0] )
+        .contentType( "application/json" )
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+    String json = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        //BUG: The identity asserter needs to check for this too.
+        .formParam( "user.name", user )
+        .formParam( "group", group )
+        .formParam( "file", file )
+        .formParam( "arg", arg )
+        .formParam( "statusdir", statusDir )
+        .expect()
+        //.log().all();
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .contentType( "application/json" )
+        //.content( "boolean", equalTo( true ) )
+        .when()
+        .post( driver.getUrl( "WEBHCAT" ) + "/v1/pig" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) )
+        .asString();
+    log.trace( "JSON=" + json );
+    String job = JsonPath.from(json).getString( "id" );
+    log.debug( "JOB=" + job );
+    driver.assertComplete();
+    return job;
+  }
+
+  private String submitHive( String user, String password, String group, String file, String statusDir, int... status ) {
+    driver.getMock( "WEBHCAT" )
+        .expect()
+        .method( "POST" )
+        .pathInfo( "/v1/hive" )
+        .respond()
+        .status( status[ 0 ] )
+        .contentType( "application/json" )
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+    String json = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .formParam( "user.name", user )
+        .formParam( "group", group )
+        .formParam( "group", group )
+        .formParam( "file", file )
+        .formParam( "statusdir", statusDir )
+        .expect()
+        //.log().all()
+        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .contentType( "application/json" )
+        //.content( "boolean", equalTo( true ) )
+        .when()
+        .post( driver.getUrl( "WEBHCAT" ) + "/v1/hive" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) )
+        .asString();
+    log.trace( "JSON=" + json );
+    String job = JsonPath.from(json).getString( "id" );
+    log.debug( "JOB=" + job );
+    driver.assertComplete();
+    return job;
+  }
+
+  private void queryQueue( String user, String password, String job ) throws IOException {
+    driver.getMock( "WEBHCAT" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/v1/jobs/" + job )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "webhcat-job-status.json" ) )
+        .contentType( "application/json" );
+    String status = given()
+        //.log().all()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .pathParam( "job", job )
+        .expect()
+        //.log().all()
+        .content( "status.jobId", CoreMatchers.equalTo(job) )
+        .statusCode( HttpStatus.SC_OK )
+        .when().get( driver.getUrl( "WEBHCAT" ) + "/v1/jobs/{job}" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+    log.debug( "STATUS=" + status );
+    driver.assertComplete();
+  }
+
+  /* GET /oozie/versions
+  HTTP/1.1 200 OK
+  Content-Type: application/json;charset=UTF-8
+  Content-Length: 5
+  Server: Apache-Coyote/1.1
+  Date: Thu, 14 Feb 2013 15:47:51 GMT
+  See: oozie-versions.json
+  */
+  private void oozieGetVersions( String user, String password ) throws IOException {
+    given()
+        .auth().preemptive().basic( user, password )
+        .header( "X-XSRF-Header", "jksdhfkhdsf" )
+        .expect()
+        .statusCode( 200 )
+        .body( "", Matchers.hasItems(0, 1) )
+        .when().get( driver.getUrl( "OOZIE" ) + "/versions" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+  }
+
+  /* GET /oozie/v1/admin/status
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 23
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 15:49:16 GMT
+    See: oozie-admin-status.json
+   */
+
+  /* PUT /oozie/v1/admin/status?safemode=true
+  TODO
+  */
+
+  /* GET /oozie/v1/admin/os-env
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 2039
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 15:51:56 GMT
+    See: oozie-admin-os-env.json
+   */
+
+  /* GET /oozie/v1/admin/java-sys-properties
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 3673
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 15:53:00 GMT
+    See: oozie-admin-java-sys-properties.json
+  */
+
+  /* GET /oozie/v1/admin/configuration
+    HTTP/1.1 200 OK
+    Transfer-Encoding: Identity
+    Content-Type: application/json;charset=UTF-8
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 15:53:31 GMT
+    See: oozie-admin-configuration.json
+  */
+
+  /* GET /oozie/v1/admin/instrumentation
+    HTTP/1.1 200 OK
+    Transfer-Encoding: Identity
+    Content-Type: application/json;charset=UTF-8
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 15:55:43 GMT
+    See: oozie-admin-instrumentation.json
+  */
+
+  /* GET /oozie/v1/admin/build-version
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 27
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 16:08:31 GMT
+    See: oozie-admin-build-version.json
+  */
+
+  /* POST /oozie/v1/jobs (request XML; contains URL, response JSON)
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 45
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 18:10:52 GMT
+  */
+  private String oozieSubmitJob( String user, String password, String request, int status ) throws IOException, URISyntaxException {
+    driver.getMock( "OOZIE" )
+        .expect()
+        .method( "POST" )
+        .pathInfo( "/v1/jobs" )
+        .respond()
+        .status( HttpStatus.SC_CREATED )
+        .content( driver.getResourceBytes( "oozie-jobs-submit-response.json" ) )
+        .contentType( "application/json" );
+    //System.out.println( "REQUEST LENGTH = " + request.length() );
+
+    URL url = new URL( driver.getUrl( "OOZIE" ) + "/v1/jobs?action=start" + ( driver.isUseGateway() ? "" : "&user.name=" + user ) );
+    HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
+    DefaultHttpClient client = new DefaultHttpClient();
+    client.getCredentialsProvider().setCredentials(
+        new AuthScope( targetHost ),
+        new UsernamePasswordCredentials( user, password ) );
+
+    // Create AuthCache instance
+    AuthCache authCache = new BasicAuthCache();
+    // Generate BASIC scheme object and add it to the local auth cache
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+    // Add AuthCache to the execution context
+    BasicHttpContext localContext = new BasicHttpContext();
+    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+
+    HttpPost post = new HttpPost( url.toURI() );
+//      post.getParams().setParameter( "action", "start" );
+    StringEntity entity = new StringEntity( request, org.apache.http.entity.ContentType.create( "application/xml", "UTF-8" ) );
+    post.setEntity( entity );
+    post.setHeader( "X-XSRF-Header", "ksdjfhdsjkfhds" );
+    HttpResponse response = client.execute( targetHost, post, localContext );
+    assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
+    String json = EntityUtils.toString( response.getEntity() );
+
+//      String json = given()
+//          .log().all()
+//          .auth().preemptive().basic( user, password )
+//          .queryParam( "action", "start" )
+//          .contentType( "application/xml;charset=UTF-8" )
+//          .content( request )
+//          .expect()
+//          .log().all()
+//          .statusCode( status )
+//          .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
+      //System.out.println( "JSON=" + json );
+    String id = JsonPath.from(json).getString( "id" );
+    return id;
+  }
+
+  /* GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50 (body JSON; contains URL)
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 46
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 16:10:25 GMT
+  */
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 2611
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 17:39:36 GMT
+  */
+
+  /* http://192.168.56.101:11000/oozie/v1/job/0000000-130214094519989-oozie-oozi-W?action=start&user.name=sandbox
+    HTTP/1.1 200 OK
+    Date: Thu, 14 Feb 2013 17:52:13 GMT
+    Content-Length: 0
+    Server: Apache-Coyote/1.1
+    Set-Cookie: hadoop.auth="u=sandbox&p=sandbox&t=simple&e=1360900333149&s=AU/GeHDNBuK9RBRaBJfrqatjfz8="; Version=1; Path=/
+  */
+
+  /* PUT /oozie/v1/job/job-3?action=rerun (request body XML, contains URL)
+    HTTP/1.1 200 OK
+    Date: Thu, 14 Feb 2013 18:07:45 GMT
+    Content-Length: 0
+    Server: Apache-Coyote/1.1
+    Set-Cookie: hadoop.auth="u=sandbox&p=sandbox&t=simple&e=1360901264892&s=DCOczPqn9mcisCeOb5x2C7LIRc8="; Version=1; Path=/
+  */
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=info (body JSON, contains URL)
+    HTTP/1.1 200 OK
+    Content-Type: application/json;charset=UTF-8
+    Content-Length: 2611
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 17:45:23 GMT
+  */
+  private String oozieQueryJobStatus( String user, String password, String id, int status ) throws Exception {
+    driver.getMock( "OOZIE" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/v1/job/" + id )
+        .respond()
+        .status( HttpStatus.SC_OK )
+        .content( driver.getResourceBytes( "oozie-job-show-info.json" ) )
+        .contentType( "application/json" );
+
+    //NOTE:  For some reason REST-assured doesn't like this and ends up failing with Content-Length issues.
+    URL url = new URL( driver.getUrl( "OOZIE" ) + "/v1/job/" + id + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
+    HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
+    DefaultHttpClient client = new DefaultHttpClient();
+    client.getCredentialsProvider().setCredentials(
+        new AuthScope( targetHost ),
+        new UsernamePasswordCredentials( user, password ) );
+
+    // Create AuthCache instance
+    AuthCache authCache = new BasicAuthCache();
+    // Generate BASIC scheme object and add it to the local auth cache
+    BasicScheme basicAuth = new BasicScheme();
+    authCache.put( targetHost, basicAuth );
+    // Add AuthCache to the execution context
+    BasicHttpContext localContext = new BasicHttpContext();
+    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+
+    HttpGet request = new HttpGet( url.toURI() );
+    request.setHeader("X-XSRF-Header", "ksdhfjkhdsjkf");
+    HttpResponse response = client.execute( targetHost, request, localContext );
+    assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
+    String json = EntityUtils.toString( response.getEntity() );
+    String jobStatus = JsonPath.from(json).getString( "status" );
+    return jobStatus;
+  }
+
+  /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=definition
+    HTTP/1.1 200 OK
+    Content-Type: application/xml;charset=UTF-8
+    Content-Length: 1494
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 17:43:30 GMT
+  */
+
+  /* GET GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=log
+    HTTP/1.1 200 OK
+    Transfer-Encoding: Identity
+    Content-Type: text/plain;charset=UTF-8
+    Server: Apache-Coyote/1.1
+    Date: Thu, 14 Feb 2013 17:41:43 GMT
+  */
 
 }

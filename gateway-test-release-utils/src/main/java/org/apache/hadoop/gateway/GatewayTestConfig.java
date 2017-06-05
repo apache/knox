@@ -17,13 +17,13 @@
  */
 package org.apache.hadoop.gateway;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,9 +51,25 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
   private String frontendUrl = null;
   private boolean xForwardedEnabled = true;
+  private String gatewayApplicationsDir = null;
+  private String gatewayServicesDir;
+  private String defaultTopologyName = "default";
+  private List<String> includedSSLCiphers = null;
+  private List<String> excludedSSLCiphers = null;
+  private boolean sslEnabled = false;
+  private String truststoreType = "jks";
+  private String keystoreType = "jks";
+  private boolean isTopologyPortMappingEnabled = true;
+  private ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
+  private int backupVersionLimit = -1;
+  private long backupAgeLimit = -1;
 
   public void setGatewayHomeDir( String gatewayHomeDir ) {
     this.gatewayHomeDir = gatewayHomeDir;
+  }
+
+  public String getGatewayHomeDir() {
+    return this.gatewayHomeDir;
   }
 
   @Override
@@ -126,15 +142,18 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return new InetSocketAddress( getGatewayHost(), getGatewayPort() );
   }
 
-  @Override
+
   public long getGatewayIdleTimeout() {
     return 0l;
   }
 
   @Override
   public boolean isSSLEnabled() {
-    // TODO Auto-generated method stub
-    return false;
+    return sslEnabled;
+  }
+
+  public void setSSLEnabled( boolean sslEnabled ) {
+    this.sslEnabled = sslEnabled;
   }
 
   @Override
@@ -155,31 +174,27 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     this.kerberosConfig = kerberosConfig;
   }
 
-
   @Override
   public boolean isKerberosDebugEnabled() {
     return kerberosDebugEnabled;
   }
   
-//  public void setKerberosDebugEnabled(boolean kerberosConfigEnabled) {
-//    this.kerberosDebugEnabled = kerberosDebugEnabled;
-//  }
+  public void setKerberosDebugEnabled(boolean kerberosDebugEnabled) {
+    this.kerberosDebugEnabled = kerberosDebugEnabled;
+  }
   
   @Override
   public String getKerberosLoginConfig() {
     return kerberosLoginConfig;
   }
 
-  public void setKerberosLoginConfig(String kerberosLoginConfig) {
-    this.kerberosLoginConfig = kerberosLoginConfig;
-  }
-
-  /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.config.GatewayConfig#getDefaultTopologyName()
-     */
   @Override
   public String getDefaultTopologyName() {
-    return "default";
+    return defaultTopologyName;
+  }
+
+  public void setDefaultTopologyName( String defaultTopologyName ) {
+    this.defaultTopologyName = defaultTopologyName;
   }
 
   /* (non-Javadoc)
@@ -187,8 +202,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getDefaultAppRedirectPath() {
-    // TODO Auto-generated method stub
-    return "/gateway/sandbox";
+
+    if(StringUtils.isBlank(this.defaultTopologyName)) {
+      return "/gateway/sandbox";
+    } else {
+      return "/gateway/"+this.defaultTopologyName;
+    }
+
   }
 
   /* (non-Javadoc)
@@ -196,6 +216,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getFrontendUrl() { return frontendUrl; }
+
+  public void setFrontendUrl( String frontendUrl ) {
+    this.frontendUrl = frontendUrl;
+  }
 
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getExcludedSSLProtocols()
@@ -209,16 +233,20 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public List getIncludedSSLCiphers() {
-    return null;
+    return includedSSLCiphers;
+  }
+
+  public void setIncludedSSLCiphers( List<String> list ) {
+    includedSSLCiphers = list;
   }
 
   @Override
   public List getExcludedSSLCiphers() {
-    return null;
+    return excludedSSLCiphers;
   }
 
-  public void setFrontendUrl( String frontendUrl ) {
-    this.frontendUrl = frontendUrl;
+  public void setExcludedSSLCiphers( List<String> list ) {
+    excludedSSLCiphers = list;
   }
 
   /* (non-Javadoc)
@@ -253,32 +281,54 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getTruststoreType() {
-    // TODO Auto-generated method stub
-    return null;
+    return truststoreType;
   }
-  
+
+  public void setTruststoreType( String truststoreType ) {
+    this.truststoreType = truststoreType;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.config.GatewayConfig#getKeystoreType()
    */
   @Override
   public String getKeystoreType() {
-    // TODO Auto-generated method stub
-    return null;
+    return keystoreType;
   }
 
-//  public void setKerberosLoginConfig(String kerberosLoginConfig) {
-//   this.kerberosLoginConfig = kerberosLoginConfig;
-//  }
+  public void setKeystoreType( String keystoreType ) {
+    this.keystoreType = keystoreType;
+  }
+
+  public void setKerberosLoginConfig(String kerberosLoginConfig) {
+   this.kerberosLoginConfig = kerberosLoginConfig;
+  }
 
    @Override
    public String getGatewayServicesDir() {
-      return gatewayHomeDir + "/data/services";
-   }
+    if( gatewayServicesDir != null ) {
+      return gatewayServicesDir;
+    } else {
+      return getGatewayDataDir() + "/services";
+    }
+  }
+
+  public void setGatewayServicesDir( String gatewayServicesDir ) {
+    this.gatewayServicesDir = gatewayServicesDir;
+  }
 
   @Override
   public String getGatewayApplicationsDir() {
-    return gatewayHomeDir + "/conf/applications";
+    if( gatewayApplicationsDir != null ) {
+      return gatewayApplicationsDir;
+    } else {
+      return getGatewayConfDir() + "/applications";
+    }
   }
+
+  public void setGatewayApplicationsDir( String gatewayApplicationsDir ) {
+    this.gatewayApplicationsDir = gatewayApplicationsDir;
+   }
 
   @Override
   public boolean isXForwardedEnabled() {
@@ -337,14 +387,30 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 8*1024;
   }
 
-  @Override
+  public void setGatewayDeploymentsBackupVersionLimit( int newBackupVersionLimit ) {
+    backupVersionLimit = newBackupVersionLimit;
+  }
+
   public int getGatewayDeploymentsBackupVersionLimit() {
-    return Integer.MAX_VALUE;
+    return backupVersionLimit;
+  }
+
+  public void setTopologyPortMapping(ConcurrentHashMap<String, Integer> topologyPortMapping) {
+    this.topologyPortMapping = topologyPortMapping;
+  }
+
+  public void setGatewayPortMappingEnabled(
+      boolean topologyPortMappingEnabled) {
+    isTopologyPortMappingEnabled = topologyPortMappingEnabled;
   }
 
   @Override
   public long getGatewayDeploymentsBackupAgeLimit() {
-    return Long.MAX_VALUE;
+    return backupAgeLimit;
+  }
+
+  public void setGatewayDeploymentsBackupAgeLimit( long newBackupAgeLimit ) {
+    backupAgeLimit = newBackupAgeLimit;
   }
 
   /* (non-Javadoc)
@@ -365,7 +431,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getGlobalRulesServices() {
-    return Collections.emptyList();
+    ArrayList<String> services = new ArrayList<>();
+    services.add("WEBHDFS");
+    services.add("HBASE");
+    services.add("HIVE");
+    services.add("OOZIE");
+    services.add("RESOURCEMANAGER");
+    services.add("STORM");
+    return services;
   }
 
   /* (non-Javadoc)
@@ -432,34 +505,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
-   */
-  @Override
-  public List<String> getMimeTypesToCompress() {
-    return new ArrayList<String>();
-  }
-
-  /**
-   * Map of Topology names and their ports.
-   *
-   * @return
-   */
-  @Override
-  public Map<String, Integer> getGatewayPortMappings() {
-    return new ConcurrentHashMap<String, Integer>();
-  }
-
-  /**
-   * Is the Port Mapping feature on ?
-   *
-   * @return
-   */
-  @Override
-  public boolean isGatewayPortMappingEnabled() {
-    return true;
-  }
-
   @Override
   public boolean isMetricsEnabled() {
     return false;
@@ -490,9 +535,17 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 0;
   }
 
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#getMimeTypesToCompress()
+   */
+  @Override
+  public List<String> getMimeTypesToCompress() {
+    return new ArrayList<String>();
+  }
+
   @Override
   public  boolean isCookieScopingToPathEnabled() {
-      return false;
+    return false;
   }
 
   @Override
@@ -502,31 +555,52 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getAlgorithm() {
-	return null;
+    return null;
   }
 
   @Override
   public String getPBEAlgorithm() {
-	return null;
+    return null;
   }
 
   @Override
   public String getTransformation() {
-	return null;
+    return null;
   }
 
   @Override
   public String getSaltSize() {
-	return null;
+    return null;
   }
 
   @Override
   public String getIterationCount() {
-	return null;
+    return null;
   }
 
   @Override
   public String getKeyLength() {
-	return null;
+    return null;
   }
+
+  /**
+   * Map of Topology names and their ports.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, Integer> getGatewayPortMappings() {
+    return topologyPortMapping;
+  }
+
+  /**
+   * Is the Port Mapping feature on ?
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayPortMappingEnabled() {
+    return isTopologyPortMappingEnabled;
+  }
+
 }

@@ -60,7 +60,7 @@ import static org.junit.Assert.assertThat;
 public class GatewayLocalServiceFuncTest {
 
   private static Class RESOURCE_BASE_CLASS = GatewayLocalServiceFuncTest.class;
-  private static Logger LOG = LoggerFactory.getLogger( GatewayFuncTestDriver.class );
+  private static Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
 
   public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
