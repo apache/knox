@@ -603,4 +603,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return isTopologyPortMappingEnabled;
   }
 
+  @Override
+  public boolean isGatewayServerHeaderEnabled() {
+	return false;
+  }
 }

@@ -190,7 +190,7 @@ public class GatewayConfigImplTest {
     assertThat(config.getGraphiteHost(), is("localhost"));
     assertThat(config.getGraphitePort(), is(32772));
   }
-
+  
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testGatewayIdleTimeout() {
     GatewayConfigImpl config = new GatewayConfigImpl();
@@ -202,6 +202,19 @@ public class GatewayConfigImplTest {
     config.set( GatewayConfigImpl.GATEWAY_IDLE_TIMEOUT, "15000" );
     idleTimeout = config.getGatewayIdleTimeout();
     assertThat( idleTimeout, is(15000L));
+  }
+  
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testGatewayServerHeaderEnabled() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    boolean serverHeaderEnabled = true;
+    
+    serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
+    assertThat( serverHeaderEnabled, is(true));
+
+    config.set( GatewayConfigImpl.SERVER_HEADER_ENABLED, "false");
+    serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
+    assertThat( serverHeaderEnabled, is(false));
   }
 
 }

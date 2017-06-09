@@ -287,10 +287,14 @@ public interface GatewayConfig {
   Map<String, Integer> getGatewayPortMappings();
 
   /**
-   * Is the Port Mapping feature on ?
+   * Is the Port Mapping feature on
    * @return
    */
   boolean isGatewayPortMappingEnabled();
 
-
+  /**
+   * Is the Server header suppressed
+   * @return
+   */
+  boolean isGatewayServerHeaderEnabled();
 }

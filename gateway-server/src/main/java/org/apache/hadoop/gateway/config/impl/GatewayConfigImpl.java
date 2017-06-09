@@ -210,6 +210,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CRYPTO_SALTSIZE = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.salt.size";
   private static final String CRYPTO_ITERATION_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.iteration.count";
   private static final String CRYPTO_KEY_LENGTH = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.key.length";
+  public static final String SERVER_HEADER_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".server.header.enabled";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -905,5 +906,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getKeyLength() {
 	return getVar(CRYPTO_KEY_LENGTH, null);
+  }
+
+  @Override
+  public boolean isGatewayServerHeaderEnabled() {
+    return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "true"));
   }
 }
