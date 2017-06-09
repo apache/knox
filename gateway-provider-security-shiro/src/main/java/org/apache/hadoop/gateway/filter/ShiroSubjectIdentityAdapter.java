@@ -93,6 +93,11 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         }
       };
       Subject shiroSubject = SecurityUtils.getSubject();
+
+      if (shiroSubject == null || shiroSubject.getPrincipal() == null) {
+        throw new IllegalStateException("Unable to determine authenticated user from Shiro, please check that your Knox Shiro configuration is correct");
+      }
+
       final String principal = (String) shiroSubject.getPrincipal().toString();
       HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<>();
