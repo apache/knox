@@ -78,6 +78,7 @@
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
+        <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
         <module>gateway-service-rm</module>
@@ -418,6 +419,11 @@
         <dependencies>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-server</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-util-common</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -594,6 +600,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-knoxtoken</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-health</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -1197,6 +1208,11 @@
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
+                <version>${metrics-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-servlets</artifactId>
                 <version>${metrics-version}</version>
             </dependency>
             <dependency>

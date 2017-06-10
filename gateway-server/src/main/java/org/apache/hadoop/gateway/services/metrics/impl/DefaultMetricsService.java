@@ -38,7 +38,7 @@ import java.util.ServiceLoader;
 public class DefaultMetricsService implements MetricsService {
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private final MetricRegistry metrics = new MetricRegistry();
+  private static final MetricRegistry metrics = new MetricRegistry();
 
   public static final String METRICS_REGISTRY = "metrics-registry";
 
@@ -48,7 +48,7 @@ public class DefaultMetricsService implements MetricsService {
 
   private MetricsContext context;
 
-  public MetricRegistry getMetricRegistry() {
+  public static MetricRegistry getMetricRegistry() {
     return metrics;
   }
 
@@ -139,4 +139,5 @@ public class DefaultMetricsService implements MetricsService {
   public MetricsContext getContext() {
     return context;
   }
+
 }

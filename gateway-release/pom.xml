@@ -212,6 +212,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>

@@ -219,5 +219,6 @@ public class DefaultGatewayServices implements GatewayServices {
   public void finalizeContribution(DeploymentContext context) {
     // Tell the provider the location of the descriptor.
     context.getWebAppDescriptor().createListener().listenerClass( GatewayServicesContextListener.class.getName() );
+    context.getWebAppDescriptor().createListener().listenerClass(GatewayMetricsServletContextListener.class.getName());
   }
 }

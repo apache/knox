@@ -397,8 +397,11 @@ public class DeploymentFactoryFuncTest {
       assertThat(web, hasXPath("/web-app/servlet-mapping/url-pattern", equalTo("/*")));
       //testing the order of listener classes generated
       assertThat(web, hasXPath("/web-app/listener[2]/listener-class", equalTo("org.apache.hadoop.gateway.services.GatewayServicesContextListener")));
-      assertThat(web, hasXPath("/web-app/listener[3]/listener-class", equalTo("org.apache.hadoop.gateway.ha.provider.HaServletContextListener")));
-      assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletContextListener")));
+      assertThat(web, hasXPath("/web-app/listener[3]/listener-class", equalTo("org.apache.hadoop.gateway.services.GatewayMetricsServletContextListener")));
+      assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.ha.provider" +
+          ".HaServletContextListener")));
+     assertThat(web, hasXPath("/web-app/listener[5]/listener-class", equalTo("org.apache.hadoop.gateway.filter" +
+         ".rewrite.api.UrlRewriteServletContextListener")));
    }
 
   @Test( timeout = LONG_TIMEOUT )
