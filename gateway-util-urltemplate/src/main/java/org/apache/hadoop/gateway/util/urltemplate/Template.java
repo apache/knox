@@ -312,17 +312,14 @@ public class Template {
   }
 
   public String toString() {
-    String s = image;
-    if( s == null ) {
-      StringBuilder b = new StringBuilder();
-      buildScheme( b );
-      buildAuthority( b );
-      buildPath( b );
-      buildQuery( b );
-      buildFragment( b );
-      s = b.toString();
-      //image = s;
-    }
+    String s = null;
+    StringBuilder b = new StringBuilder();
+    buildScheme( b );
+    buildAuthority( b );
+    buildPath( b );
+    buildQuery( b );
+    buildFragment( b );
+    s = b.toString();
     return s;
   }
 
