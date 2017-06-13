@@ -20,7 +20,6 @@ package org.apache.hadoop.gateway.util.urltemplate;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -264,10 +263,11 @@ public class Parser {
         }
       } else {
         String nameValue[] = split( token, '=' );
-        String queryName = decodeValue(nameValue[ 0 ]);
         if( nameValue.length == 1 ) {
+          String queryName = nameValue[ 0 ];
           builder.addQuery( queryName, new Token( Segment.ANONYMOUS_PARAM, null, builder.isLiteral() ) );
         } else {
+          String queryName = nameValue[ 0 ];
           Token paramPattern = parseTemplateToken( builder, nameValue[ 1 ], Segment.GLOB_PATTERN );
           builder.addQuery( queryName, paramPattern );
         }
@@ -326,19 +326,9 @@ public class Parser {
       actualPattern = s;
       effectivePattern = actualPattern;
     }
-    final Token token = new Token( decodeValue(paramName), decodeValue(actualPattern), decodeValue(effectivePattern), builder.isLiteral() );
+    final Token token = new Token( paramName, actualPattern, effectivePattern, builder.isLiteral() );
     return token;
   }
-
-  private static String decodeValue(String value) {
-    try {
-      value = URLDecoder.decode(value, "UTF-8");
-    } catch ( Exception e ) {
-      //log
-    }
-    return value;
-  }
-
 
   // Using this because String.split is very inefficient.
   private static String[] split( String s, char d ) {
