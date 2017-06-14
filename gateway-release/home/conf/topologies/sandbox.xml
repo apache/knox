@@ -24,9 +24,9 @@
             <name>ShiroProvider</name>
             <enabled>true</enabled>
             <param>
-                <!-- 
+                <!--
                 session timeout in minutes,  this is really idle timeout,
-                defaults to 30mins, if the property value is not defined,, 
+                defaults to 30mins, if the property value is not defined,,
                 current client authentication would expire if client idles contiuosly for more than this value
                 -->
                 <name>sessionTimeout</name>
@@ -152,7 +152,7 @@
         <role>DRUID-ROUTER</role>
         <url>http://localhost:8082</url>
     </service>
-    
+
     <service>
         <role>DRUID-OVERLORD</role>
         <url>http://localhost:8090</url>
@@ -161,6 +161,11 @@
     <service>
         <role>DRUID-OVERLORD-UI</role>
         <url>http://localhost:8090</url>
+    </service>
+
+    <service>
+        <role>NIFI</role>
+        <url>http://localhost:9090</url>
     </service>
 
 </topology>

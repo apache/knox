@@ -216,6 +216,10 @@
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-nifi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>

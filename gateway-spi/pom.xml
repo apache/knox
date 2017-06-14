@@ -151,6 +151,10 @@
             <artifactId>velocity</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+        </dependency>
 
 
     </dependencies>
