@@ -386,7 +386,8 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().ifError()
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
-        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file%E3%83%AC%E3%83%9D%E3%83%BC" );
+        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/fileレポー" );
+//        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file%E3%83%AC%E3%83%9D%E3%83%BC" );
     String location = response.getHeader( "Location" );
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );

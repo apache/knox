@@ -116,7 +116,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( this, input, UrlRewriter.Direction.OUT, rule );
       if( output != null ) {
-        value = output.toEncodedString();
+        value = output.toString();
       }
     } catch( URISyntaxException e ) {
       LOG.failedToParseValueForUrlRewrite( value );

@@ -30,5 +30,5 @@
             <rewrite apply="AMBARI/ambari/api/inbound" to="request.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersNoEncodingDispatch"/>
 </service>

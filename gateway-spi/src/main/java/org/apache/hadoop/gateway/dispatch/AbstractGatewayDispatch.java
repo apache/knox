@@ -133,4 +133,12 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     return REQUEST_EXCLUDE_HEADERS;
   }
 
+  protected void encodeUnwiseCharacters(StringBuffer str) {
+    int pipe = str.indexOf("|");
+    while (pipe > -1) {
+      str.replace(pipe, pipe+1, "%7C");
+      pipe = str.indexOf("|", pipe+1);
+    }
+  }
+
 }

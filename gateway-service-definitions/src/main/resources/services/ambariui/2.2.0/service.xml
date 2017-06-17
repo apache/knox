@@ -87,6 +87,6 @@
 
         <!-- No need to rewrite Slider View -->
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersNoEncodingDispatch"/>
 </service>
 
