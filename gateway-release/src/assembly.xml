@@ -78,6 +78,9 @@
             <includes>
                 <include>**/*</include>
             </includes>
+            <excludes>
+                <exclude>**/*.bundle.map</exclude>
+            </excludes>
         </fileSet>
     </fileSets>
     <dependencySets>
