@@ -29,5 +29,10 @@
     <route path="/ws**">
         <rewrite apply="WEBSOCKET/inbound" to="request.url"/>
     </route>
+
+    <route path="/**/channels**">
+        <rewrite apply="WEBSOCKET/subpath/inbound" to="request.url"/>
+    </route>
+
   </routes>
 </service>

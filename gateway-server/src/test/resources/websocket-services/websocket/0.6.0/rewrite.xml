@@ -23,4 +23,8 @@
   <rule dir="IN" name="WEBSOCKET/inbound" pattern="*://*:*/**/ws{**}">
     <rewrite template="{$serviceUrl[WEBSOCKET]}/ws{**}"/>
   </rule>
+
+  <rule dir="IN" name="WEBSOCKET/subpath/inbound" pattern="*://*:*/{**}/channels{**}">
+    <rewrite template="{$serviceUrl[WEBSOCKET]}/{**}/channels{**}"/>
+  </rule>
 </rules>

@@ -56,10 +56,10 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   public static final String WEBSOCKET_PROTOCOL_STRING = "ws://";
 
   public static final String SECURE_WEBSOCKET_PROTOCOL_STRING = "wss://";
-  
-  static final String REGEX_SPLIT_CLUSTER_NAME = "^((?:[^/]*/){1}[^/]*)";
-  
+
   static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
+
+  final static String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   private static final int POOL_SIZE = 10;
 
@@ -171,6 +171,9 @@ public class GatewayWebsocketHandler extends WebSocketHandler
           String.format("Cannot find service for the given path: %s", path));
     }
 
+    /* Filter out /cluster/topology/service to get endpoint */
+    String[] pathService = path.split(REGEX_SPLIT_SERVICE_PATH);
+
     final File servicesDir = new File(config.getGatewayServicesDir());
 
     final Set<ServiceDefinition> serviceDefs = ServiceDefinitionsLoader
@@ -180,29 +183,38 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     String backendURL = urlFromServiceDefinition(serviceDefs,
         serviceRegistryService, entry, path);
 
+    StringBuffer backend = new StringBuffer();
     try {
 
       /* if we do not find websocket URL we default to HTTP */
       if (!StringUtils.containsAny(backendURL, WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
         URL serviceUrl = new URL(backendURL);
 
-        final StringBuffer backend = new StringBuffer();
         /* Use http host:port if ws url not configured */
         final String protocol = (serviceUrl.getProtocol() == "ws"
-            || serviceUrl.getProtocol() == "wss") ? serviceUrl.getProtocol()
+                || serviceUrl.getProtocol() == "wss") ? serviceUrl.getProtocol()
                 : "ws";
         backend.append(protocol).append("://");
         backend.append(serviceUrl.getHost()).append(":");
         backend.append(serviceUrl.getPort()).append("/");
-        ;
         backend.append(serviceUrl.getPath());
-
-        backendURL = backend.toString();
       }
+      else {
+        URI serviceUri = new URI(backendURL);
+        backend.append(serviceUri);
+        /* Avoid Zeppelin Regression - as this would require ambari changes and break current knox websocket use case*/
+        if (!StringUtils.endsWith(backend.toString(), "/ws") && pathService[1] != null) {
+          backend.append(pathService[1]);
+        }
+      }
+      backendURL = backend.toString();
 
-    } catch (MalformedURLException e) {
-      LOG.badUrlError(e);
-      throw new RuntimeException(e.toString());
+    } catch (MalformedURLException e){
+        LOG.badUrlError(e);
+        throw new RuntimeException(e.toString());
+    } catch (Exception  e1) {
+        LOG.failedCreatingWebSocket(e1);
+        throw new RuntimeException(e1.toString());
     }
 
     return backendURL;
@@ -219,7 +231,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         entry.getName().toUpperCase());
 
     /*
-     * we have a match, if ws:// is present it is returend else http:// is
+     * we have a match, if ws:// is present it is returned else http:// is
      * returned
      */
     return serviceURL;
