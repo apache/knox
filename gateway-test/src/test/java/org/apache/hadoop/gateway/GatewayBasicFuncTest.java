@@ -92,6 +92,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -161,6 +162,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "FALCON", "http://" + TEST_HOST + ":15000", "/cluster/falcon", USE_MOCK_SERVICES );
     driver.setupService( "STORM", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupService( "STORM-LOGVIEWER", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
+    driver.setupService( "SOLR", "http://" + TEST_HOST + ":8983", "/cluster/solr", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
     LOG_EXIT();
   }
@@ -262,6 +264,9 @@ public class GatewayBasicFuncTest {
         .addTag("service")
             .addTag("role").addText("STORM-LOGVIEWER")
             .addTag("url").addText(driver.getRealUrl("STORM-LOGVIEWER")).gotoParent()
+        .addTag("service")
+            .addTag("role").addText("SOLR")
+            .addTag("url").addText(driver.getRealUrl("SOLR")).gotoParent()
         .addTag("service")
         .addTag("role").addText("SERVICE-TEST")
         .gotoRoot();
@@ -3703,6 +3708,38 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testSolrRESTAPI() throws Exception {
+    LOG_ENTER();
+    String resourceName = "solr/query_response.xml";
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    String gatewayPath = driver.getUrl( "SOLR" ) + "/gettingstarted/select?q=author_s:William+Shakespeare";
+    driver.getMock("SOLR")
+        .expect()
+        .method("GET")
+        .pathInfo("/gettingstarted/select")
+        .queryParam("q", "author_s:William+Shakespeare")
+        .respond()
+        .status(HttpStatus.SC_OK)
+        .content(driver.getResourceBytes(resourceName))
+        .contentType(ContentType.XML.toString());
+
+    Response response = given()
+        .auth().preemptive().basic(username, password)
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .header("Accept", ContentType.XML.toString())
+        .expect()
+        .statusCode(HttpStatus.SC_OK)
+        .contentType( ContentType.XML.toString() )
+        .when().get( gatewayPath );
+
+    assertTrue(response.getBody().asString().contains("The Merchant of Venice"));
+
+    driver.assertComplete();
+    LOG_EXIT();
+  }
 
   void setupResource(String serviceRole, String path){
     driver.getMock(serviceRole)
@@ -3750,7 +3787,7 @@ public class GatewayBasicFuncTest {
       System.out.println(e.getMessage());
     }
   }
-  
+
   private String createFileNN( String user, String password, String file, String permsOctal, int status ) throws IOException {
     if( status == HttpStatus.SC_TEMPORARY_REDIRECT ) {
       driver.getMock( "WEBHDFS" )
