@@ -27,9 +27,11 @@ import org.apache.hadoop.gateway.util.urltemplate.Params;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Query;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
+import org.apache.hadoop.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
+import org.junit.Assert;
 
 import java.util.Arrays;
 
@@ -107,5 +109,71 @@ public class SecureQueryEncryptDecryptProcessorTest {
     query = decTemplate.getValue().getQuery().get( "_" );
     assertThat( query, nullValue() );
   }
+
+  @Test
+  public void testEncryptBadDecrypt() throws Exception {
+    Query query;
+    Template origTemplate = Parser.parseLiteral( "http://host:0/path/file?query-param-name=query-param-value" );
+
+    // Test encryption.  Results are left in encTemplate
+
+    AliasService as = EasyMock.createNiceMock( AliasService.class );
+    String secret = "sdkjfhsdkjfhsdfs";
+    EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
+    CryptoService cryptoService = new DefaultCryptoService();
+    ((DefaultCryptoService)cryptoService).setAliasService(as);
+    GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
+    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+
+    UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
+    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
+    UrlRewriteContext encContext = EasyMock.createNiceMock( UrlRewriteContext.class );
+    EasyMock.expect( encContext.getCurrentUrl() ).andReturn( origTemplate );
+    Capture<Template> encTemplate = new Capture<Template>();
+    encContext.setCurrentUrl( EasyMock.capture( encTemplate ) );
+    EasyMock.replay( gatewayServices, as, encEnvironment, encContext );
+
+    SecureQueryEncryptDescriptor descriptor = new SecureQueryEncryptDescriptor();
+    SecureQueryEncryptProcessor processor = new SecureQueryEncryptProcessor();
+    processor.initialize( encEnvironment, descriptor );
+    processor.process( encContext );
+
+    assertThat( encTemplate, notNullValue() );
+    query = encTemplate.getValue().getQuery().get( "_" );
+    assertThat( query.getFirstValue().getPattern().length(), greaterThan( 1 ) );
+    query = encTemplate.getValue().getQuery().get( "query-param-name" );
+    assertThat( query, nullValue() );
+
+    // Test decryption with decode returning null
+
+    gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
+    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    as = EasyMock.createNiceMock( AliasService.class );
+    EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
+
+    UrlRewriteEnvironment decEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
+    EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
+    Params decParams = EasyMock.createNiceMock( Params.class );
+    EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList("test-cluster-name") ).anyTimes();
+    UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
+    EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
+    EasyMock.expect( decContext.getParameters() ).andReturn( decParams );
+    Capture<Template> decTemplate = new Capture<Template>();
+    decContext.setCurrentUrl( EasyMock.capture( decTemplate ) );
+    SecureQueryDecryptDescriptor descriptor1 = new SecureQueryDecryptDescriptor();
+    SecureQueryDecryptProcessor decProcessor =
+       EasyMock.createMockBuilder(
+          SecureQueryDecryptProcessor.class ).addMockedMethod( SecureQueryDecryptProcessor.class.getDeclaredMethod("decode", String.class )).createMock();
+    EasyMock.expect( decProcessor.decode(EasyMock.anyObject(String.class))).andReturn( null );
+    EasyMock.replay( gatewayServices, as, decEnvironment, decParams, decContext, decProcessor );
+
+    decProcessor.initialize( decEnvironment, descriptor1 );
+    UrlRewriteStepStatus status = decProcessor.process( decContext );
+
+    Assert.assertTrue((status == UrlRewriteStepStatus.FAILURE));
+  }
+
 
 }

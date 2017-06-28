@@ -30,7 +30,6 @@ import org.apache.hadoop.gateway.util.urltemplate.Query;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -60,37 +59,51 @@ public class SecureQueryDecryptProcessor implements UrlRewriteStepProcessor<Secu
     Builder newUrl = new Builder( currUrl );
     Map<String,Query> map = newUrl.getQuery();
     Query query = map.remove( ENCRYPTED_PARAMETER_NAME );
+    UrlRewriteStepStatus status = UrlRewriteStepStatus.FAILURE;
+    status = getUrlRewriteStepStatus(context, newUrl, map, query, status);
+    return status;
+  }
+
+  private UrlRewriteStepStatus getUrlRewriteStepStatus(UrlRewriteContext context, Builder newUrl, Map<String, Query> map, Query query, UrlRewriteStepStatus status) throws UnsupportedEncodingException {
     if( query != null ) {
       String value = query.getFirstValue().getPattern();
       value = decode( value );
-      StringTokenizer outerParser = new StringTokenizer( value, "&" );
-      while( outerParser.hasMoreTokens() ) {
-        String pair = outerParser.nextToken();
-        StringTokenizer innerParser = new StringTokenizer( pair, "=" );
-        if( innerParser.hasMoreTokens() ) {
-          String paramName = innerParser.nextToken();
-          if( innerParser.hasMoreTokens() ) {
-            String paramValue = innerParser.nextToken();
-            // Need to remove from the clear parameters any param name in the encoded params.
-            // If we don't then someone could override something in the encoded param.
-            map.remove( paramName );
-            newUrl.addQuery( paramName, "", paramValue, true );
-          } else {
-            newUrl.addQuery( paramName, "", null, true );
-          }
-        }
-      }
-      context.setCurrentUrl( newUrl.build() );
-      context.getParameters().resolve( "gateway.name" );
+      status = getUrlRewriteStepStatus(context, newUrl, map, status, value);
     }
-    return UrlRewriteStepStatus.SUCCESS;
+    return status;
+  }
+
+  private UrlRewriteStepStatus getUrlRewriteStepStatus(UrlRewriteContext context, Builder newUrl, Map<String, Query> map, UrlRewriteStepStatus status, String value) {
+    if( value != null ) {
+       StringTokenizer outerParser = new StringTokenizer( value, "&" );
+       while( outerParser.hasMoreTokens() ) {
+         String pair = outerParser.nextToken();
+         StringTokenizer innerParser = new StringTokenizer( pair, "=" );
+         if( innerParser.hasMoreTokens() ) {
+           String paramName = innerParser.nextToken();
+           if( innerParser.hasMoreTokens() ) {
+             String paramValue = innerParser.nextToken();
+             // Need to remove from the clear parameters any param name in the encoded params.
+             // If we don't then someone could override something in the encoded param.
+             map.remove( paramName );
+             newUrl.addQuery( paramName, "", paramValue, true );
+           } else {
+             newUrl.addQuery( paramName, "", null, true );
+           }
+         }
+       }
+       context.setCurrentUrl( newUrl.build() );
+       context.getParameters().resolve( "gateway.name" );
+       status = UrlRewriteStepStatus.SUCCESS;
+    }
+    return status;
   }
 
   @Override
   public void destroy() {
   }
 
-  private String decode( String string ) throws UnsupportedEncodingException {
+  String decode( String string ) throws UnsupportedEncodingException {
     byte[] bytes = Base64.decodeBase64( string );
     EncryptionResult result = EncryptionResult.fromByteArray(bytes);
     byte[] clear = cryptoService.decryptForCluster(clusterName, 
