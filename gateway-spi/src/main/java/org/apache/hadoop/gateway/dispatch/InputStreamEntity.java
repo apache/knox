@@ -26,7 +26,6 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.Args;
@@ -39,7 +38,6 @@ import java.io.OutputStream;
  * A streamed, non-repeatable entity that obtains its content froman {@link InputStream}.
  * Copied from HttpClient source in order to increase buffer size.
  */
-@NotThreadSafe
 public class InputStreamEntity extends AbstractHttpEntity {
 
   // A value of 16K results in a significant performance improvement due to better HTTP chunking on the wire.

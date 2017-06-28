@@ -19,14 +19,12 @@ package org.apache.hadoop.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.entity.HttpEntityWrapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@NotThreadSafe
 public class CappedBufferHttpEntity extends HttpEntityWrapper {
 
   public static final int DEFAULT_BUFFER_SIZE = 4096;
