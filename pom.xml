@@ -419,11 +419,6 @@
         <dependencies>
             <dependency>
                 <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-server</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-util-common</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
