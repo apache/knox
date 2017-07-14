@@ -22,7 +22,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Apache Knox HDFS Browser</title>
+    <title>Apache KnoxSSO Redirect</title>
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width">
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
@@ -31,17 +31,11 @@
 		<link href="styles/bootstrap.min.css" media="all" rel="stylesheet" type="text/css" id="bootstrap-css">
 		<link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
-		<script src="libs/bower/jquery/js/jquery.js" ></script>
-		
-    <script type="text/javascript" src="js/knoxauth.js"></script>
     <script>
     document.addEventListener("load", redirectOnLoad());
     
     function redirectOnLoad() {
-      var originalUrl = get("originalUrl");
-      if (originalUrl != null) {
-      	redirect(originalUrl);
-      }
+      window.location = window.location.href.replace('/redirecting.html', '/redirecting.jsp');
     }
     </script>
   </head>
@@ -49,11 +43,10 @@
   <body>
 		<section id="signin-container" style="margin-top: 80px;">
       <div style="background: gray;text-color: white;text-align:center;">
-      <h1 style="color: white;">Loading...</h1>
+      <h1 style="color: white;">Redirecting...</h1>
       <div style="background: white;" class="l-logo">
   			<img src="images/loading.gif" alt="Knox logo" style="text-align:center;width: 2%; height: 2%">
   		</div>
-      <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="#" onclick='redirect(get("originalUrl"));' >here</a></p>
   		</div>
     </section>
   </body>

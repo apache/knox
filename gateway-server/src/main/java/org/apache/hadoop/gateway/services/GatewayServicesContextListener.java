@@ -21,6 +21,8 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.apache.hadoop.gateway.GatewayServer;
+import org.apache.hadoop.gateway.services.topology.TopologyService;
+import org.apache.hadoop.gateway.topology.Topology;
 
 public class GatewayServicesContextListener implements ServletContextListener {
 
@@ -28,6 +30,21 @@ public class GatewayServicesContextListener implements ServletContextListener {
   public void contextInitialized(ServletContextEvent sce) {
     GatewayServices gs = GatewayServer.getGatewayServices();
     sce.getServletContext().setAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE, gs);
+    String topologyName = (String) sce.getServletContext().getAttribute("org.apache.hadoop.gateway.gateway.cluster");
+    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    Topology topology = getTopology(ts, topologyName);
+    sce.getServletContext().setAttribute("org.apache.hadoop.gateway.topology", topology);
+  }
+
+  private Topology getTopology(TopologyService ts, String topologyName) {
+    Topology t = null;
+    for (Topology topology : ts.getTopologies()) {
+      if (topology.getName().equals(topologyName)) {
+        t = topology;
+        break;
+      }
+    }
+    return t;
   }
 
   @Override
