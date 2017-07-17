@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <!-- Inbound  rewrite rules   -->
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/jobs" pattern="*://*:*/**/thrift/jobs/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/jobs/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/path" pattern="*://*:*/**/thrift/{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/api" pattern="*://*:*/**/thrift/api/{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/api/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/stages" pattern="*://*:*/**/thrift/stages/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/stages/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/storage" pattern="*://*:*/**/thrift/storage/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/storage/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/environment" pattern="*://*:*/**/thrift/environment/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/environment/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/executors" pattern="*://*:*/**/thrift/executors/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/executors/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/executors/query" pattern="*://*:*/**/thrift/executors/threadDump/?{*}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/executors/threadDump/?{*}"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/pool" pattern="*://*:*/**/thrift/stages/pool/?{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/stages/pool/?{**}"/>
+  </rule>
+
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/SQL" pattern="*://*:*/**/thrift/SQL/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/SQL/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/sqlserver" pattern="*://*:*/**/thrift/sqlserver/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/sqlserver/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/sqlserver/query" pattern="*://*:*/**/thrift/sqlserver/session/?{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/sqlserver/session/?{**}"/>
+  </rule>
+
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/jobs1" pattern="*://*:*/**/thrift/jobs/{**}?{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/jobs/{**}?{**}"/>
+  </rule>
+
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/root" pattern="*://*:*/**/thrift/">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/"/>
+  </rule>
+  <rule dir="IN" name="THRIFTSERVERUI/thrift/inbound/query" pattern="*://*:*/**/thrift/{**}?{**}">
+    <rewrite template="{$serviceUrl[THRIFTSERVERUI]}/{**}?{**}"/>
+  </rule>
+
+
+<!-- matches ouput href="/" so it throws you back to main spark history server page -->
+  <rule dir="OUT" name="THRIFTSERVERUI/thrift/root/OUT">
+    <rewrite template="{$frontend[url]}/thrift/"/>
+  </rule>
+  <filter name="THRIFTSERVERUI/thrift/root/filter/OUT">
+    <content type="*/html">
+      <apply path="^[\/]{1}$" rule="THRIFTSERVERUI/thrift/root/OUT"/>
+      <apply path="\/SQL\/" rule="THRIFTSERVERUI/thrift/SQL/OUT"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="/api/v1" rule="THRIFTSERVERUI/thrift/api/OUT"/>
+      <apply path="/static" rule="THRIFTSERVERUI/thrift/html/OUT"/>
+    </content>
+  </filter>
+
+
+  <rule dir="OUT" name="THRIFTSERVERUI/thrift/api/OUT">
+    <rewrite template="/gateway/thriftserverui/thrift/api/v1"/>
+  </rule>
+
+  <rule dir="OUT" name="THRIFTSERVERUI/thrift/html/OUT">
+    <rewrite template="/gateway/thriftserverui/thrift/static"/>
+  </rule>
+
+  <rule dir="OUT" name="THRIFTSERVERUI/jobs/OUT" pattern="/jobs/">>
+    <rewrite template="{$frontend[url]}/thrift/jobs/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/environment/OUT" pattern="/environment/">>
+    <rewrite template="{$frontend[url]}/thrift/environment/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/stages/OUT" pattern="/stages/">
+    <rewrite template="{$frontend[url]}/thrift/stages/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/storage/OUT" pattern="/storage/">>
+    <rewrite template="{$frontend[url]}/thrift/storage/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/executors/OUT" pattern="/executors/">>
+    <rewrite template="{$frontend[url]}/thrift/executors/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/thrift/SQL/OUT">
+    <rewrite template="{$frontend[url]}/thrift/SQL/"/>
+  </rule>
+  <rule  dir="OUT" name="THRIFTSERVERUI/thrift/outbound/pool" pattern="/stages/pool/?{**}">
+      <rewrite template="{$frontend[url]}/thrift/stages/pool/?{**}"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/sqlserver/OUT" pattern="/sqlserver/">>
+    <rewrite template="{$frontend[url]}/thrift/sqlserver/"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/sqlserver/ext/OUT" pattern="/sqlserver/{*}?{**}">>
+    <rewrite template="{$frontend[url]}/thrift/sqlserver/{*}?{**}"/>
+  </rule>
+
+  
+<!-- static web resources (css, js, png,etc)  in web page rewrite -->
+  <rule dir="OUT" name="THRIFTSERVERUI/static/OUT" pattern="/static/{**}">
+    <rewrite template="{$frontend[url]}/thrift/static/{**}"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/spark/outbound/apps" pattern="/?{page}?{showIncomplete}">
+    <rewrite template="{$frontend[url]}/thrift/?{page}?{showIncomplete}"/>
+  </rule>
+  <rule dir="OUT" name="THRIFTSERVERUI/spark/outbound/threaddump" pattern="threadDump/?{*}">
+    <rewrite template="{$frontend[url]}/thrift/executors/threadDump/?{*}"/>
+  </rule>
+
+
+
+  <filter name="THRIFTSERVERUI/thrift/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="THRIFTSERVERUI/thrift/outbound/headers/location"/>
+    </content>
+  </filter>
+
+  <!-- RULE - redirection (302) response rules -->
+  <rule dir="OUT" name="THRIFTSERVERUI/thrift/outbound/headers/location">
+    <match pattern="*://*:*/jobs/"/>
+    <rewrite template="{$frontend[url]}/thrift/jobs/"/>
+  </rule>
+
+</rules>
