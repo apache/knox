@@ -17,14 +17,36 @@
 -->
 <service role="YARNUI" name="yarn" version="2.7.0">
     <routes>
+        <route path="/yarn/ws/**">
+            <rewrite apply="YARNUI/yarn/inbound/ws" to="request.url"/>
+            <dispatch contributor-name="http-client" />
+        </route>
+        <route path="/yarn/proxy/**">
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
+            <rewrite apply="YARNUI/yarn/outbound/apps1" to="response.body"/>
+        </route>
+
+        <route path="/yarn/cluster/nodes">
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
+            <rewrite apply="YARNUI/yarn/outbound/filter/nodes" to="response.body"/>
+        </route>
+
+        <route path="/yarn/cluster/**?**">
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
+            <rewrite apply="YARNUI/yarn/outbound/filter/cluster" to="response.body"/>
+        </route>
+
         <route path="/yarn/">
             <rewrite apply="YARNUI/yarn/outbound/apps" to="response.body"/>
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
         </route>
         <route path="/yarn/**">
             <rewrite apply="YARNUI/yarn/outbound/apps" to="response.body"/>
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
         </route>
         <route path="/yarn/**?**">
             <rewrite apply="YARNUI/yarn/outbound/apps" to="response.body"/>
+            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
         </route>
         <route path="/yarn/logs?**">
             <rewrite apply="YARNUI/yarn/outbound/headers/logs" to="response.headers"/>
@@ -32,12 +54,7 @@
         <route path="/yarn/conf">
             <rewrite apply="YARNUI/yarn/outbound/configuration" to="response.body"/>
         </route>
-        <route path="/yarn/proxy/**">
-            <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
-        </route>
-        <route path="/yarn/history/**?**">
-            <rewrite apply="YARNUI/yarn/outbound/headers/sparkhistory/job" to="response.headers"/>
-        </route>
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.hadoop.gateway.rm.dispatch.RMUIHaDispatch"/>
+
 </service>
