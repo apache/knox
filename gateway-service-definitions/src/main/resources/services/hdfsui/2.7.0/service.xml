@@ -18,22 +18,22 @@
 <service role="HDFSUI" name="hdfs" version="2.7.0">
     <routes>
         <route path="/hdfs/">
-            <rewrite apply="HDFSUI/hdfs/inbound/namenode/root" to="request.url"/>
-            <rewrite apply="HDFSUI/hdfs/outbound/namenode/dfs" to="response.body"/>
+            <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
         </route>
         <route path="/hdfs/**">
-            <rewrite apply="HDFSUI/hdfs/inbound/namenode/path" to="request.url"/>
-            <rewrite apply="HDFSUI/hdfs/outbound/headers" to="response.headers"/>
-            <rewrite apply="HDFSUI/hdfs/outbound/namenode/dfs" to="response.body"/>
+            <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
         </route>
         <route path="/hdfs/**?**">
-            <rewrite apply="HDFSUI/hdfs/inbound/namenode/query" to="request.url"/>
-            <rewrite apply="HDFSUI/hdfs/outbound/namenode/dfs" to="response.body"/>
+            <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
         </route>
         <route path="/hdfs/logs?**">
-            <rewrite apply="HDFSUI/hdfs/outbound/headers" to="response.headers"/>
-            <rewrite apply="HDFSUI/hdfs/outbound/namenode/dfs" to="response.body"/>
+            <rewrite apply="HDFSUI/hdfs/outbound/headers/logs" to="response.headers"/>
         </route>
+        <route path="/hdfs/dfshealth.html#tab-datanode">
+            <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
+        </route>
+
+
     </routes>
     <dispatch classname="org.apache.hadoop.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
 </service>
