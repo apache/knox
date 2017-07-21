@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<rules>
+<!-- Inbound rules -->
+<!-- Resource manager routing in rules -->
+<!--
+     {$frontend[url] is used through the rewrite and is it equivalent to {$serviceUrl[NODEUI]},  this the endpoint url for the service.
+     e.g. http://host.com:8042
+-->
+
+<rule dir="IN" name="NODEUI/logs" pattern="*://*:*/**/node/logs/?{host}?{port}">
+    <rewrite template="{$serviceScheme[NODEUI]}://{host}:{port}/logs/"/>
+</rule>
+<rule dir="IN" name="NODEUI/logs2" pattern="*://*:*/**/node/logs/{**}?{host}?{port}">
+    <rewrite template="{$serviceScheme[NODEUI]}://{host}:{port}/logs/{**}"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/root1" pattern="*://*:*/**/node/?{host}?{port}">
+    <rewrite template="{$serviceScheme[NODEUI]}://{host}:{port}/node"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/root2" pattern="*://*:*/**/node?{host}?{port}">
+    <rewrite template="{$serviceScheme[NODEUI]}://{host}:{port}/node"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/path" pattern="*://*:*/**/node/{**}?{host}?{port}">
+     <rewrite template="{$serviceScheme[NODEUI]}://{host}:{port}/node/{**}?{host}?{port}"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/query" pattern="*://*:*/**/{**}?{**}?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/node/{**}?{**}"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/static1" pattern="*://*:*/**/node/static/{**}?{host}?{port}">
+    <rewrite template="{$serviceUrl[NODEUI]}/static/{**}?{host}?{port}"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/static2" pattern="*://*:*/**/node/static/{**}">
+    <rewrite template="{$serviceUrl[NODEUI]}/static/{**}"/>
+</rule>
+
+<rule dir="IN" name="nodeconf" pattern="*://*:*/**/node/conf?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/conf"/>
+</rule>
+
+<!-- Node manager Thread Server stacks inbound routing -->
+<rule dir="IN" name="NODEUI/node/inbound/stacks" pattern="*://*:*/**/node/stacks?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/stacks"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/inbound/metrics" pattern="*://*:*/**/node/metrics?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/metrics"/>
+</rule>
+<!-- Node manageNode manager Resource Manager server Metrics JMX inbound routing -->
+<rule dir="IN" name="NODEUI/node/inbound/jmx" pattern="*://*:*/**/node/jmx?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/jmx"/>
+</rule>
+<rule dir="IN" name="NODEUI/node/inbound/jmx/query" pattern="*://*:*/**/node/jmx?{**}?{host}">
+    <rewrite template="{$serviceUrl[NODEUI]}/jmx?{**}"/>
+</rule>
+
+<rule dir="OUT" name="NODEUI/node/out/containerlogs" pattern="*://*:*/**/node/containerlogs/{**}?{**}">
+    <rewrite template="{$frontend[url]/node/{**}?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+</rule>
+
+<rule dir="OUT" name="NODEUI/node/static" pattern="/static/{**}">
+    <rewrite template="{$frontend[url]}/node/static/{**}?host={$inboundurl[host]}"/>
+</rule>
+<rule dir="OUT" name="NODEUI/node/static" pattern="/static/{**}?{**}">
+    <rewrite template="{$frontend[url]}/node/static/{**}?host={$inboundurl[host]}?{**}"/>
+</rule>
+<rule dir="OUT" name="NODEUI/node/nodemanager" pattern="/node/{**}">
+    <rewrite template="{$frontend[url]}/node/{**}?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+</rule>
+<rule dir="OUT" name="nodeconfOut" pattern="/conf">
+    <rewrite template="{$frontend[url]}/node/conf?host={$inboundurl[host]}"/>
+</rule>
+<rule dir="OUT" name="nodelogsOut" pattern="/logs">
+    <rewrite template="{$frontend[url]}/node/logs/?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+</rule>
+<rule dir="OUT" name="nodelogsOut" pattern="/node/{**}">
+    <rewrite template="{$frontend[url]}/node/{**}?host={$inboundurl[host]}"/>
+</rule>
+
+<rule dir="OUT" name="NODEUI/node/outbound/stacks" pattern="/stacks">
+    <rewrite template="{$frontend[url]}/node/stacks?host={$inboundurl[host]}"/>
+</rule>
+    <rule dir="OUT" name="NODEUI/node/outbound/metrics" pattern="/metrics">
+    <rewrite template="{$frontend[url]}/node/metrics?host={$inboundurl[host]}"/>
+</rule>
+<rule dir="OUT" name="NODEUI/node/outbound/jmx" pattern="/jmx?{**}">
+    <rewrite template="{$frontend[url]}/node/jmx?{**}?host={$inboundurl[host]}"/>
+</rule>
+
+<rule dir="OUT" name="NODEUI/nodelink" pattern="{scheme}://{host}:{port}">
+    <rewrite template="{gateway.scheme}://{gateway.host}:{gateway.port}/gateway/yarnui/yarn/"/>
+</rule>
+
+<rule dir="OUT" name="NODEUI/logfiles" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/node/logs/{**}?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+</rule>
+
+<!-- rewrites XML content from configuration link -->
+<filter name="NODEUI/configuration">
+    <content type="*/xml">
+        <buffer path="/configuration/property"/>
+    </content>
+</filter>
+<rule dir="OUT" name="NODEUI/NODE/inbound/jobhistory/logs" pattern="*1; url=*://*:*/jobhistory/logs/{**}">
+    <rewrite template="1; url=/gateway/jobstoryui/jobstory/jobhistory/logs/{**}"/>
+</rule>
+
+</rules>
