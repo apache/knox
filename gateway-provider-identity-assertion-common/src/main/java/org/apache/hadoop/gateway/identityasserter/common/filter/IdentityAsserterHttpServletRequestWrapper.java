@@ -74,36 +74,56 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
   @SuppressWarnings("rawtypes")
   @Override
   public Map getParameterMap() {
-    return getParams();
+    Map map = null;
+    try {
+      map = getParams();
+    } catch (UnsupportedEncodingException e) {
+      log.unableToGetParamsFromQueryString(e);
+    }
+    return map;
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
   public Enumeration getParameterNames() {
-    Map<String, String[]> params = getParams();
-    if (params == null) {
-      params = new HashMap<>();
+    Enumeration<String> e = null;
+    Map<String, List<String>> params;
+    try {
+      params = getParams();
+      if (params == null) {
+        params = new HashMap<>();
+      }
+      e = Collections.enumeration((Collection<String>) params.keySet());
+    } catch (UnsupportedEncodingException e1) {
+      log.unableToGetParamsFromQueryString(e1);
     }
-    Enumeration<String> e = Collections.enumeration((Collection<String>) params.keySet());
 
     return e;
   }
 
   @Override
   public String[] getParameterValues(String name) {
-    Map<String, String[]> params = getParams();
-    if (params == null) {
-      params = new HashMap<>();
+    String[] p = null;
+    Map<String, List<String>> params;
+    try {
+      params = getParams();
+      if (params == null) {
+        params = new HashMap<>();
+      }
+      p = (String[]) params.get(name).toArray();
+    } catch (UnsupportedEncodingException e) {
+      log.unableToGetParamsFromQueryString(e);
     }
 
-    return params.get(name);
+    return p;
   }
 
-  private Map<String, String[]> getParams( String qString ) {
-    Map<String, String[]> params = null;
+  private Map<String, List<String>> getParams( String qString )
+      throws UnsupportedEncodingException {
+    Map<String, List<String>> params = null;
     if (getMethod().equals("GET")) {
       if (qString != null && qString.length() > 0) {
-        params = HttpUtils.parseQueryString( qString );
+        params = HttpUtils.splitQuery( qString );
       }
       else {
         params = new HashMap<>();
@@ -114,43 +134,47 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
         return null;
       }
       else {
-        params = HttpUtils.parseQueryString( qString );
+        params = HttpUtils.splitQuery( qString );
       }
     }  
     return params;
   }
 
-  private Map<String, String[]> getParams() {
+  private Map<String, List<String>> getParams()
+      throws UnsupportedEncodingException {
     return getParams( super.getQueryString() );
   }
 
   @Override
   public String getQueryString() {
     String q = null;
-    Map<String, String[]> params = getParams();
+    Map<String, List<String>> params;
+    try {
+      params = getParams();
+      if (params == null) {
+        params = new HashMap<>();
+      }
+      ArrayList<String> al = new ArrayList<String>();
+      al.add(username);
 
-    if (params == null) {
-      params = new HashMap<>();
+      List<String> principalParamNames = getImpersonationParamNames();
+      params = scrubOfExistingPrincipalParams(params, principalParamNames);
+
+      if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
+        params.put(DOAS_PRINCIPAL_PARAM, al);
+      } else {
+        params.put(PRINCIPAL_PARAM, al);
+      }
+
+      String encoding = getCharacterEncoding();
+      if (encoding == null) {
+        encoding = Charset.defaultCharset().name();
+      }
+      q = urlEncode(params, encoding);
+    } catch (UnsupportedEncodingException e) {
+      log.unableToGetParamsFromQueryString(e);
     }
-    
-    ArrayList<String> al = new ArrayList<String>();
-    al.add(username);
-    String[] a = { "" };
 
-    List<String> principalParamNames = getImpersonationParamNames();
-    params = scrubOfExistingPrincipalParams(params, principalParamNames);
-
-    if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
-      params.put(DOAS_PRINCIPAL_PARAM, al.toArray(a));
-    } else {
-      params.put(PRINCIPAL_PARAM, al.toArray(a));
-    }
-
-    String encoding = getCharacterEncoding();
-    if (encoding == null) {
-      encoding = Charset.defaultCharset().name();
-    }
-    q = urlEncode(params, encoding);
     return q;
   }
 
@@ -165,8 +189,8 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return principalParamNames;
   }
 
-  private Map<String, String[]> scrubOfExistingPrincipalParams(
-      Map<String, String[]> params, List<String> principalParamNames) {
+  private Map<String, List<String>> scrubOfExistingPrincipalParams(
+      Map<String, List<String>> params, List<String> principalParamNames) {
     HashSet<String> remove = new HashSet<>();
     for (String paramKey : params.keySet()) {
       for (String p : principalParamNames) {
@@ -202,7 +226,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
         encoding = Charset.defaultCharset().name();
       }
       String body = IOUtils.toString( super.getInputStream(), encoding );
-      Map<String, String[]> params = getParams( body );
+      Map<String, List<String>> params = getParams( body );
       if (params == null) {
         params = new HashMap<>();
       }
@@ -222,17 +246,17 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     }
   }
 
-  public static String urlEncode( Map<String, String[]> map, String encoding ) {
+  public static String urlEncode( Map<String, List<String>> map, String encoding ) {
     StringBuilder sb = new StringBuilder();
-    for( Map.Entry<String,String[]> entry : map.entrySet() ) {
+    for( Map.Entry<String,List<String>> entry : map.entrySet() ) {
       String name = entry.getKey();
       if( name != null && name.length() > 0 ) {
-        String[] values = entry.getValue();
-        if( values == null || values.length == 0 ) {
+        List<String> values = entry.getValue();
+        if( values == null || values.size() == 0 ) {
           sb.append( entry.getKey() );
         } else {
-          for( int i = 0; i < values.length; i++ ) {
-            String value = values[ i ];
+          for( int i = 0; i < values.size(); i++ ) {
+            String value = values.get(i);
               if( sb.length() > 0 ) {
                 sb.append( "&" );
               }
