@@ -18,6 +18,7 @@
 package org.apache.hadoop.gateway.picketlink.filter;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
@@ -29,10 +30,14 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditService;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 
 public class PicketlinkIdentityAdapter implements Filter {
@@ -59,6 +64,11 @@ public class PicketlinkIdentityAdapter implements Filter {
     Subject subject = new Subject();
     subject.getPrincipals().add(pp);
     
+    Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class);
+    auditService.getContext().setUsername( principal.getName() );
+    String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+    auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+
     doAs(request, response, chain, subject);
   }
   

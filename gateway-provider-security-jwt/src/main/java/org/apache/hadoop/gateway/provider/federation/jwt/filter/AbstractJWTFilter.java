@@ -39,6 +39,15 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditContext;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
@@ -56,6 +65,10 @@ public abstract class AbstractJWTFilter implements Filter {
   protected JWTokenAuthority authority;
   protected String verificationPEM = null;
   protected RSAPublicKey publicKey = null;
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
 
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
@@ -138,6 +151,16 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
+    AuditContext context = auditService.getContext();
+    if (context != null) {
+      context.setUsername( principal.getName() );
+      String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+      if (sourceUri != null) {
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+      }
+    }
+
     try {
       Subject.doAs(
         subject,

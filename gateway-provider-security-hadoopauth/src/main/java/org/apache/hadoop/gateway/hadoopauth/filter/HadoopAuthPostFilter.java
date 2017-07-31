@@ -18,8 +18,6 @@
 package org.apache.hadoop.gateway.hadoopauth.filter;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
@@ -35,12 +33,24 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.hadoopauth.HadoopAuthMessages;
 
 public class HadoopAuthPostFilter implements Filter {
 
   private static HadoopAuthMessages log = MessagesFactory.get( HadoopAuthMessages.class );
-  
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
   }
@@ -58,6 +68,9 @@ public class HadoopAuthPostFilter implements Filter {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         log.hadoopAuthAssertedPrincipal(principal);
+        auditService.getContext().setUsername( principal ); //KM: Audit Fix
+        String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         doAs(httpRequest, response, chain, subject);
     } 
     else {

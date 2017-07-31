@@ -17,6 +17,13 @@
  */
 package org.apache.hadoop.gateway.filter;
 
+import org.apache.hadoop.gateway.audit.api.Action;
+import org.apache.hadoop.gateway.audit.api.ActionOutcome;
+import org.apache.hadoop.gateway.audit.api.AuditService;
+import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
+import org.apache.hadoop.gateway.audit.api.Auditor;
+import org.apache.hadoop.gateway.audit.api.ResourceType;
+import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 
 import java.io.IOException;
@@ -34,6 +41,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class AnonymousAuthFilter implements Filter {
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -49,6 +60,9 @@ public class AnonymousAuthFilter implements Filter {
     }
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal(principal));
+    auditService.getContext().setUsername( principal ); //KM: Audit Fix
+    String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+    auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
     continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, filterChain);
   }
 
