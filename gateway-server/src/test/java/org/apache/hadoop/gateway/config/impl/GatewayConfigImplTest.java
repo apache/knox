@@ -184,8 +184,8 @@ public class GatewayConfigImplTest {
   public void testMetricsSettings() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     //test defaults
-    assertThat(config.isMetricsEnabled(), is(true));
-    assertThat(config.isJmxMetricsReportingEnabled(), is(true));
+    assertThat(config.isMetricsEnabled(), is(false));
+    assertThat(config.isJmxMetricsReportingEnabled(), is(false));
     assertThat(config.isGraphiteMetricsReportingEnabled(), is(false));
     assertThat(config.getGraphiteHost(), is("localhost"));
     assertThat(config.getGraphitePort(), is(32772));

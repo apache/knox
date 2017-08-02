@@ -706,13 +706,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isMetricsEnabled() {
-    String metricsEnabled = get( METRICS_ENABLED, "true" );
+    String metricsEnabled = get( METRICS_ENABLED, "false" );
     return "true".equals(metricsEnabled);
   }
 
   @Override
   public boolean isJmxMetricsReportingEnabled() {
-    String enabled = get( JMX_METRICS_REPORTING_ENABLED, "true" );
+    String enabled = get( JMX_METRICS_REPORTING_ENABLED, "false" );
     return "true".equals(enabled);
   }
 

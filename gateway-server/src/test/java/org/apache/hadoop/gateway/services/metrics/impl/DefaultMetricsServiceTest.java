@@ -46,9 +46,21 @@ public class DefaultMetricsServiceTest {
   }
 
   @Test
-  public void instrumentationProvidersLoading() throws Exception {
+  public void instrumentationProvidersLoadingDefaultIsEmpty() throws Exception {
     DefaultMetricsService service = new DefaultMetricsService();
     service.init(new GatewayConfigImpl(), null);
+    Map<Class<?>, InstrumentationProvider> map = service.getInstrumentationProviders();
+    Assert.assertTrue(map.entrySet().isEmpty());
+    Assert.assertNull(service.getInstrumented(HttpClientBuilder.class));
+
+  }
+
+  @Test
+  public void instrumentationProvidersLoading() throws Exception {
+    DefaultMetricsService service = new DefaultMetricsService();
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    config.set(GatewayConfigImpl.METRICS_ENABLED, "true");
+    service.init(config, null);
     Map<Class<?>, InstrumentationProvider> map = service.getInstrumentationProviders();
     Assert.assertTrue(map.entrySet().size() >= 2);
     Assert.assertNotNull(service.getInstrumented(HttpClientBuilder.class));
@@ -59,6 +71,7 @@ public class DefaultMetricsServiceTest {
   public void reportersLoading() throws Exception {
     DefaultMetricsService service = new DefaultMetricsService();
     GatewayConfigImpl config = new GatewayConfigImpl();
+    config.set(GatewayConfigImpl.METRICS_ENABLED, "true");
     config.set(GatewayConfigImpl.JMX_METRICS_REPORTING_ENABLED, "false");
     service.init(config, null);
     List<MetricsReporter> reporters = service.getMetricsReporters();
