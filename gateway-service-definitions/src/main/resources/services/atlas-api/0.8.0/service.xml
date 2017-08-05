@@ -17,8 +17,16 @@
 
 
 <service role="ATLAS-API" name="atlas-api" version="0.8.0">
+    <policies>
+        <policy role="webappsec"/>
+        <policy role="authentication" name="Anonymous"/>
+        <policy role="rewrite"/>
+        <policy role="authorization"/>
+    </policies>
+
     <routes>
         <route path="/atlas/api/**"/>
     </routes>
+
     <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
 </service>
