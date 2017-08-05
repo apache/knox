@@ -1,4 +1,73 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.13.0
+------------------------------------------------------------------------------
+** New Feature
+   * [KNOX-976] - Add Jupyter Kernel Gateway Service Definitions (Jesus Alvarez via lmccay)
+   * [KNOX-626] - NameNode UI through Knox has various tabs not working
+   * [KNOX-975] - Add NodeManager Service Definition
+   * [KNOX-982] - Datanode JMX REST Knox service
+   * [KNOX-974] - Update HDFS UI services
+   * [KNOX-973] - Update Yarn UI services
+   * [KNOX-786] - Spark Thriftserver UI support through Knox (Chandana Mirashi via lmccay)
+   * [KNOX-981] - Make Topology Instance Available in WebContext for Runtime Access
+   * [KNOX-788] - Apache Atlas Admin UI Support through Knox (Nixon Rodrigues via Sandeep More)
+   * [KNOX-789] - Apache Atlas REST API support (Nixon Rodrigues via Sandeep More)
+   * [KNOX-940] - Support REST access exposing metrics (Mohammad Kamrul Islam via Sandeep More)
+   * [KNOX-932] - Option to remove the server-name from HTTP-header response (Lawrence McCay IV via lmccay)
+   * [KNOX-768] - Apache Kafka REST API Support (Rick Kellogg via Sandeep More)
+   * [KNOX-751] - Need rewrite function to capture href information from single page host to rewrite output of node hosts (Jeffrey E Rodriguez via lmccay)
+   * [KNOX-928] - Support Default Topology Feature and some misc fixes
+   * [KNOX-928] - Topology Port Mapping Feature
+   * [KNOX-938] - JWTProvider to accept Query Param as well as Bearer Token
+   * [KNOX-390] - extended to include proxy provided headers such as X-Forwarded-For
+   * [KNOX-390] - Include client IP and HTTP verb in audit log
+** Improvement
+   * [KNOX-909] - Ambari rewrite update for SmartSense
+   * [KNOX-910] - Move from SHA-1 to SHA-256 (Jeffrey E Rodriguez via Sandeep More)
+   * [KNOX-917] - Fix Pig view in Ambari (Gaurav Nagar via Sandeep More)
+   * [KNOX-920] - Make avatica service use default policies
+   * [KNOX-923] - Add ClientData to KnoxToken Service to Include in JSON Response
+   * [KNOX-911] - Ability to scope cookies to a given Path (Attila Kanto via lmccay)
+   * [KNOX-892] - Fix FindBugs "Dodgy Code" issues (Colm O hEigeartaigh via lmccay)
+   * [KNOX-816] - Make private inner classes static (Colm O hEigeartaigh via lmccay)
+   * [KNOX-849] - Fix SimplePrincipalMapper and CommonIdentityAssertionFilter
+   * [KNOX-930] - ScopingCookies Feature Logging too Much
+   * [KNOX-939] - Missing Licenses Element in POM files
+   * [KNOX-937] - Remove redundant type information from Collections (Colm O hEigeartaigh via Sandeep More)
+   * [KNOX-944] - Make PBE Hashing, Iteration Count and Salt Configurable and Manageable
+   * [KNOX-942] - Remove extraneous spaces around '=' (Colm O hEigeartaigh via lmccay)
+   * [KNOX-948] - Refactor AbstractJWTFilter implementations (Colm O hEigeartaigh via lmccay)
+   * [KNOX-928] - minor fix for templating of ConcurrentHashMap usage
+   * [KNOX-952] - Add common tests for the two JWT filters (Colm O hEigeartaigh via lmccay)
+   * [KNOX-946] - Spelling (Colm O hEigeartaigh via Sandeep More)
+   * [KNOX-954] - Properly handle parsing errors for JWT tokens
+   * [KNOX-956] - Consolidate ldif files in gateway-tests  (Colm O hEigeartaigh via Sandeep More)
+   * [KNOX-957] - Remove hard-coded versions from gateway-test-release (Colm O hEigeartaigh via Sandeep More)
+   * [KNOX-947] - SSOCookieProvider to be configurable for signature verification key/PEM
+   * [KNOX-958] - Consolidate test config/drivers (Colm O hEigeartaigh via Sandeep More)
+   * [KNOX-759] - jansi dependency causes issues starting knox shell (Colm O hEigeartaigh via lmccay)
+   * [KNOX-964] - upgrade to httpclient 4.5.3 to avoid licensing issues HTTPCLIENT-1743/LEGAL-240 (Jeffrey E Rodriguez via lmccay)
+   * [KNOX-965] - SecureQueryDecryptProcessor decode call could return null thus it would get a NPE (Jeffrey E Rodriguez via lmccay)
+   * [KNOX-967] - Duplicate dependencies defined in root pom (Colm O hEigeartaigh via lmccay )
+   * [KNOX-776] - Rewrite rule handling for Websockets (Jesus Alvarez via Sandeep More)
+   * [KNOX-977] - Exclude extraneous bundle.map in admin-ui file from release
+   * [KNOX-789] - Add specific policy definition to Atlas (Nixon Rodrigues via lmccay)
+   * [KNOX-972] - Update Hbase UI service (Jeffrey E Rodriguez via lmccay)
+   * [KNOX-986] - JMX Metric Reporter and OutOfMemory Issues (Zsombor Gegesy via Sandeep More)
+** Bug
+   * [KNOX-908] - Update copyright in NOTICE file
+   * [KNOX-918] - Static Member for redirectToUrl in Shiro RedirectToFilter
+   * [KNOX-913] - Invalid login.jsp redirect for Ranger Admin UI
+   * [KNOX-936] - On websocket error properly close all the sessions and containers.
+   * [KNOX-933] - PicketLink Provider must set Secure and HTTPOnly flags on Cookie (Krishna Pandey via lmccay)
+   * [KNOX-950] - Fix a bug that prevents wss:// protocol from connection to websocket backend.
+   * [KNOX-960] - Fix build failures
+   * [KNOX-966] - NPE when Shiro is misconfigured (Rob Vesse via lmccay)
+   * [KNOX-754] - Revert KNOX-754 scope change to just the Location header"
+   * [KNOX-690] - Revert KNOX-690 fixing the encoding/decoding in the parser and template
+   * [KNOX-949] - WeBHDFS proxy replaces %20 encoded spaces in URL with + encoding
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.12.0
 ------------------------------------------------------------------------------
 ** New Feature
