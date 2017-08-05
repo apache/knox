@@ -16,9 +16,8 @@
    limitations under the License.
 -->
 <rules>
-
-  <rule dir="IN" name="HBASEUI/hbase/inbound/master/root" pattern="*://*:*/**/hbase/webui">
-    <rewrite template="{$serviceUrl[HBASEUI]}/master-status"/>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/master/root" pattern="*://*:*/**/hbase/webui/">
+    <rewrite template="{$serviceUrl[HBASEUI]}/"/>
   </rule>
   <rule dir="IN" name="HBASEUI/hbase/inbound/master/path" pattern="*://*:*/**/hbase/webui/{**}">
     <rewrite template="{$serviceUrl[HBASEUI]}/{**}"/>
@@ -26,80 +25,161 @@
   <rule dir="IN" name="HBASEUI/hbase/inbound/master/query" pattern="*://*:*/**/hbase/webui/{**}?{**}">
     <rewrite template="{$serviceUrl[HBASEUI]}/{**}?{**}"/>
   </rule>
-  <rule dir="IN" name="HBASEUI/hbase/inbound/regionserver/home" pattern="*://*:*/**/hbase/webui/regionserver/rs-status?{host}?{port}">
+  <rule dir="IN" name="HBASEUI/hbase/inbound/regionserver/home" pattern="*://*:*/**//hbase/webui/regionserver?{host}?{port}">
     <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/rs-status"/>
   </rule>
-  <rule dir="IN" name="HBASEUI/hbase/inbound/master/home" pattern="*://*:*/**/hbase/webui/master/master-status?{host}?{port}">
+  <rule dir="IN" name="HBASEUI/hbase/inbound/master/home" pattern="*://*:*/**//hbase/webui/master?{host}?{port}">
     <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/master-status"/>
   </rule>
-
-  <rule dir="IN" name="HBASEUI/hbase/inbound/logs" pattern="*://*:*/**/hbase/webui/logs?{scheme}?{host}?{port}?{**}">
+  <rule dir="IN" name="HBASEUI/hbase/inbound/logs1" pattern="*://*:*/**/hbase/webui/logs?{scheme}?{host}?{port}?{**}">
     <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
   </rule>
-
-  <filter name="HBASEUI/hbase/outbound/headers">
-    <content type="application/x-http-headers">
-      <apply path="Location" rule="HBASEUI/hbase/outbound/headers/location"/>
-    </content>
-  </filter>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/headers/location">
-    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
-    <rewrite template="{$frontend[url]}/hbase/webui/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/masterlogs" pattern="*://*:*/**/hbase/webui/logs">
+    <rewrite template="{$serviceUrl[HBASEUI]}/logs/"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/dump" pattern="*://*:*/**/hbase/webui/dump?{host}?{port}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/dump"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/masterdump" pattern="*://*:*/**/hbase/webui/dump">
+    <rewrite template="{$serviceUrl[HBASEUI]}/dump"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/jmx" pattern="*://*:*/**/hbase/webui/jmx?{host}?{port}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/jmx"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/masterjmx" pattern="*://*:*/**/hbase/webui/jmx">
+    <rewrite template="{$serviceUrl[HBASEUI]}/jmx"/>
   </rule>
 
+  <rule dir="IN" name="HBASEUI/hbase/inbound/zkdump" pattern="*://*:*/**/hbase/webui/zk.jsp">
+    <rewrite template="{$serviceUrl[HBASEUI]}/zk.jsp"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/loglevel" pattern="*://*:*/**/hbase/webui/logLevel?{host}?{port}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/logLevel"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/regions" pattern="*://*:*/**/hbase/webui/region.jsp?{host}?{port}?name={**}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/region.jsp?name={**}"/>
+  </rule>
+  <rule dir="IN" name="HBASEUI/hbase/inbound/storefile" pattern="*://*:*/**/hbase/webui/storeFile.jsp?{host}?{port}?name={**}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/storeFile.jsp?name={**}"/>
+  </rule>
+
+  <rule dir="IN" name="HBASEUI/hbase/inbound/logfile" pattern="*://*:*/**/hbase/webui/{host}/{port}/logs/{**}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/{host}/{port}/logs/{**}"/>
+  </rule>
   <rule dir="OUT" name="HBASEUI/hbase/outbound/regionserver/home" pattern="//{host}:{port}/rs-status/">
-    <rewrite template="{$frontend[url]}/hbase/webui/regionserver/rs-status?host={$hostmap(host)}?{port}"/>
+    <rewrite template="{gateway.url}/hbase/webui/regionserver?host={$hostmap(host)}?{port}"/>
   </rule>
   <rule dir="OUT" name="HBASEUI/hbase/outbound/master/home" pattern="//{host}:{port}/master-status/">
-    <rewrite template="{$frontend[url]}/hbase/webui/master/master-status?host={$hostmap(host)}?{port}"/>
+    <rewrite template="{gateway.url}/hbase/webui/master?host={$hostmap(host)}?{port}"/>
   </rule>
 
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/png" pattern="/static/{hbase*.png}">
-    <rewrite template="{$frontend[url]}/hbase/webui/static/{hbase*.png}"/>
+  <rule dir="OUT" name="HBASEUI/png" pattern="/static/hbase_logo_small.png">
+    <rewrite template="{gateway.url}/hbase/webui/static/hbase_logo_small.png"/>
   </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/static" pattern="/static/{**}">
-    <rewrite template="{$frontend[url]}/hbase/webui/static/{**}"/>
+  <rule dir="OUT" name="HBASEUI/css" pattern="/static/css/{**}">
+    <rewrite template="{gateway.url}/hbase/webui/static/css/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/js" pattern="/static/js/{**}">
+    <rewrite template="{gateway.url}/hbase/webui/static/js/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/static" pattern="/static/{**}">
+    <rewrite template="{gateway.url}/hbase/webui/static/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/master" pattern="/master-status">
+    <rewrite template="{gateway.url}/hbase/webui/master-status"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/webui/outbound/zkdump" pattern="//{host}:{port}/zk.jsp">
+    <rewrite template="{gateway.url}/hbase/webui/zk.jsp"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/webui/outbound/zkdump2" pattern="/zk.jsp">
+    <rewrite template="{gateway.url}/hbase/webui/zk.jsp"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/tables" pattern="//{host}:{port}/tablesDetailed.jsp">
+    <rewrite template="{gateway.url}/hbase/webui/tablesDetailed.jsp"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/tables2" pattern="/tablesDetailed.jsp">
+    <rewrite template="{gateway.url}/hbase/webui/tablesDetailed.jsp"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/procedures" pattern="/procedures.jsp">
+    <rewrite template="{gateway.url}/hbase/webui/procedures.jsp"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/regions" pattern="//{host}:{port}/region.jsp?name={**}">
+    <rewrite template="{gateway.url}/hbase/webui/region.jsp?host={$hostmap(host)}?{port}?name={**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/logs" pattern="//{host}:{port}/{**}/{**}/logs/">
+    <rewrite template="{gateway.url}/hbase/webui/logs?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/logs1" pattern="/logs/">
+    <rewrite template="{gateway.url}/hbase/webui/logs/"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/logs/files" pattern="/{host}/{port}/logs/{**}">
+    <rewrite template="{gateway.url}/hbase/webui/{host}/{port}/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/logs/files1" pattern="/logs/{**}">
+    <rewrite template="{gateway.url}/hbase/webui/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs2" pattern="/logs/">
+    <rewrite template="{$frontend[url]}/hbase/webui/logs/"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs/files2" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/hbase/webui/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/logLevel" pattern="//{host}:{port}/logLevel">
+    <rewrite template="{gateway.url}/hbase/webui/logLevel?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/debug" pattern="//{host}:{port}/dump">
+    <rewrite template="{gateway.url}/hbase/webui/dump?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/jmx" pattern="//{host}:{port}/jmx">
+    <rewrite template="{gateway.url}/hbase/webui/jmx?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/conf" pattern="//{host}:{port}/conf">
+    <rewrite template="{gateway.url}/hbase/webui/conf?host={$hostmap(host)}?{port}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/table" pattern="//{host}:{port}/table.jsp?name={**}">
+    <rewrite template="{gateway.url}/hbase/webui/table.jsp?host={$hostmap(host)}?{port}?name={**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/storefile" pattern="//{host}:{port}/storeFile.jsp?name={**}">
+    <rewrite template="{gateway.url}/hbase/webui/storeFile.jsp?host={$hostmap(host)}?{port}?name={**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/filter" pattern="?{filter}">
+    <rewrite template="{gateway.url}/hbase/webui/master-status?{filter}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/format" pattern="?{format}?{filter}">
+    <rewrite template="{gateway.url}/hbase/webui/master-status?{format}?{filter}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/conf2" pattern="/conf">
+    <rewrite template="{$frontend[url]}/hbase/webui/conf"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/jmx2" pattern="/jmx">
+    <rewrite template="{$frontend[url]}/hbase/webui/jmx"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/debug2" pattern="/dump">
+    <rewrite template="{$frontend[url]}/hbase/webui/dump"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logLevel2" pattern="/logLevel">
+    <rewrite template="{$frontend[url]}/hbase/webui/logLevel"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs/files2" pattern="/logs/{**}">
+    <rewrite template="{$frontend[url]}/hbase/webui/logs/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs2" pattern="/logs/">
+    <rewrite template="{$frontend[url]}/hbase/webui/logs/"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/tables2" pattern="/tablesDetailed.jsp">
+    <rewrite template="{$frontend[url]}/hbase/webui/tablesDetailed.jsp"/>
   </rule>
   <rule dir="OUT" name="HBASEUI/hbase/outbound/master" pattern="/master-status">
     <rewrite template="{$frontend[url]}/hbase/webui/master-status"/>
   </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/tables" pattern="/tablesDetailed.jsp">
-    <rewrite template="{$frontend[url]}/hbase/webui/tablesDetailed.jsp"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs" pattern="/logs/">
-    <rewrite template="{$frontend[url]}/hbase/webui/logs/"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs/files" pattern="/logs/{**}">
-    <rewrite template="{$frontend[url]}/hbase/webui/logs/{**}"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/logLevel" pattern="/logLevel">
-    <rewrite template="{$frontend[url]}/hbase/webui/logLevel"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/debug" pattern="/dump">
-    <rewrite template="{$frontend[url]}/hbase/webui/dump"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/jmx" pattern="/jmx">
-    <rewrite template="{$frontend[url]}/hbase/webui/jmx"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/conf" pattern="/conf">
-    <rewrite template="{$frontend[url]}/hbase/webui/conf"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/table" pattern="table.jsp?{**}">
-    <rewrite template="{$frontend[url]}/hbase/webui/table.jsp?{**}"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/filter" pattern="?{filter}">
-    <rewrite template="{$frontend[url]}/hbase/webui/master-status?{filter}"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/format" pattern="?{format}?{filter}">
-    <rewrite template="{$frontend[url]}/hbase/webui/master-status?{format}?{filter}"/>
-  </rule>
-  <rule dir="OUT" name="HBASEUI/hbase/outbound/zkdump" pattern="/zk.jsp">
-    <rewrite template="{$frontend[url]}/hbase/webui/zk.jsp"/>
-  </rule>
-
-  <filter name="HBASEUI/hbase/outbound/configuration">
-    <content type="*/xml">
-      <buffer path="/configuration/property"/>
+  <filter name="HBASEUI/hbase/outbound/headers/logs">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="HBASEUI/hbase/outbound/headers/logs/location"/>
     </content>
   </filter>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/headers/logs/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{$frontend[url]}/hbase/webui/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+
 </rules>

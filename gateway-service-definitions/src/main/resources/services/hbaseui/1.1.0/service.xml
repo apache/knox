@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="HBASEUI" name="hbase" version="1.1.0">
+<service role="HBASEUI" name="hbase" version="1.2.4">
     <routes>
         <route path="/hbase/webui/">
             <rewrite apply="HBASEUI/hbase/inbound/master/root" to="request.url"/>
@@ -28,14 +28,38 @@
             <rewrite apply="HBASEUI/hbase/inbound/master/query" to="request.url"/>
             <rewrite apply="HBASEUI/hbase/outbound/tasks" to="response.body"/>
         </route>
-        <route path="/hbase/webui/regionserver/**?{host}?{port}">
+        <route path="/hbase/webui/regionserver?**">
             <rewrite apply="HBASEUI/hbase/inbound/regionserver/home" to="request.url"/>
         </route>
-        <route path="/hbase/webui/master/**?{host}?{port}">
+        <route path="/hbase/webui/master?**">
             <rewrite apply="HBASEUI/hbase/inbound/master/home" to="request.url"/>
         </route>
         <route path="/hbase/webui/logs?**">
-            <rewrite apply="HBASEUI/hbase/outbound/headers" to="response.headers"/>
+            <rewrite apply="HBASEUI/hbase/outbound/headers/logs" to="response.headers"/>
+        </route>
+        <route path="/hbase/webui/logs?{host}?{port}">
+            <rewrite apply="HBASEUI/hbase/inbound/logs" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/dump/">
+            <rewrite apply="HBASEUI/hbase/inbound/masterdump" to="request.url"/>
+        </route>
+         <route path="/hbase/webui/dump?{host}?{port}">
+            <rewrite apply="HBASEUI/hbase/inbound/dump" to="request.url"/>
+         </route>
+        <route path="/hbase/webui/jmx?{host}?{port}">
+            <rewrite apply="HBASEUI/hbase/inbound/jmx" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/jmx">
+           <rewrite apply="HBASEUI/hbase/inbound/masterjmx" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/region.jsp?{**}">
+           <rewrite apply="HBASEUI/hbase/inbound/regions" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/storeFile.jsp?{**}">
+           <rewrite apply="HBASEUI/hbase/inbound/storefile" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/{host}/{post}/logs/{**}">
+           <rewrite apply="HBASEUI/hbase/inbound/logfile" to="request.url"/>
         </route>
         <route path="/hbase/webui/conf">
             <rewrite apply="HBASEUI/hbase/outbound/configuration" to="response.body"/>
