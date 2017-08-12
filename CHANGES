@@ -66,7 +66,7 @@ Release Notes - Apache Knox - Version 0.13.0
    * [KNOX-754] - Revert KNOX-754 scope change to just the Location header"
    * [KNOX-690] - Revert KNOX-690 fixing the encoding/decoding in the parser and template
    * [KNOX-949] - WeBHDFS proxy replaces %20 encoded spaces in URL with + encoding
-
+   * [KNOX-995] - KnoxSSO Form IDP Issue with Firefox
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.12.0
 ------------------------------------------------------------------------------
