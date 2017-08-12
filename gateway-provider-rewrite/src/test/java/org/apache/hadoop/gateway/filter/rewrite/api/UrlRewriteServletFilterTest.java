@@ -806,7 +806,47 @@ public class UrlRewriteServletFilterTest {
 //    assertThat( the( content ), hasXPath( "//style/text()", equalTo( "@import \\\"http://0.0.0.0:0/stylesheets/pretty.css\\\";" ) ) );
     assertThat(content, anyOf( is(responseHtmlOne), is(responseHtmlTwo)));
   }
-  
+
+  /**
+   * Test the prefix function
+   * @see KNOX-994
+   * @since 0.14.0
+   */
+  @Test
+  public void testResponseHtmlBodyRewritePrefixFunctionTestPrefix() throws Exception {
+
+    Map<String,String> initParams = new HashMap<>();
+    initParams.put( "response.body", "test-filter-6" );
+    setUp( initParams );
+
+    String responseHtml = "<html><div src=\"'components/navbar/navbar.html?v=1496201914075\"></div></html>";
+    String responseHtmlOne = "<html><div src=\"'http://0.0.0.0:0/zeppelin/components/navbar/navbar.html?v=1496201914075\"></div></html>";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "application/html" )
+        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Content-Type", "application/html" );
+
+    // Execute the request.
+    response = TestUtils.execute( server, request );
+
+    assertThat( response.getStatus(), is( 200 ) );
+    String content = response.getContent();
+
+    assertThat(content,  is(responseHtmlOne));
+
+  }
+
+
   /**
    * See KNOX-791
    * @since 0.11.0

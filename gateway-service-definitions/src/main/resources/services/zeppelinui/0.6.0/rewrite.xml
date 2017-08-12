@@ -115,9 +115,68 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="components/{**}">
     <rewrite template="{$frontend[path]}/zeppelin/components/{**}"/>
   </rule>
-
+    
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="{path=app**}">
     <rewrite template="{$frontend[path]}/zeppelin/{path=app**}"/>
   </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'components/{**}">
+    <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'app/{**}">
+    <rewrite template="{$prefix[&#39;,url]}/zeppelin/app/{**}"/>
+  </rule>
+
+  <!-- Filters -->
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/home/home.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebook" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/notebook/notebook.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/jobmanager" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/jobmanager/jobmanager.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/interpreter" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/interpreter/interpreter.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebookRepos" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/notebook-repository/notebook-repository.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/credential" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/credential/credential.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/helium" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/helium/helium.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/configuration" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/configuration/configuration.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/search/result-list.html"/>
+  </rule>
+  
+  <filter name="ZEPPELINUI/zeppelin/outbound/javascript/filter">
+          <content type="application/javascript">
+              <apply path="app/home/home.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home"/>
+              <apply path="app/notebook/notebook.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebook"/>
+              <apply path="app/jobmanager/jobmanager.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/jobmanager"/>
+              <apply path="app/interpreter/interpreter.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/interpreter"/>
+              <apply path="app/notebook-repository/notebook-repository.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebookRepos"/>
+              <apply path="app/credential/credential.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/credential"/>
+              <apply path="app/helium/helium.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/helium"/>
+              <apply path="app/configuration/configuration.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/configuration"/>
+              <apply path="app/search/result-list.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm"/>
+          </content>
+  </filter>
 
 </rules>
