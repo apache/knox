@@ -106,6 +106,7 @@
                 <exclude>${gateway-group}:gateway-server-launcher</exclude>
                 <exclude>${gateway-group}:gateway-shell-launcher</exclude>
                 <exclude>${gateway-group}:gateway-demo-ldap-launcher</exclude>
+                <exclude>${gateway-group}:gateway-applications</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>

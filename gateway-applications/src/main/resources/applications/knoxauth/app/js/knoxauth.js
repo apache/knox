@@ -18,7 +18,6 @@
 var loginPageSuffix = "/knoxauth/login.html";
 var webssoURL = "/api/v1/websso?originalUrl=";
 var userAgent = navigator.userAgent.toLowerCase();
-var firstLogIn = true;
 
 function get(name){
     //KNOX-820 changing the regex so that multiple query params get included with the 'originalUrl'
@@ -84,13 +83,5 @@ var login = function() {
         }
     }
 
-    if (userAgent.indexOf("firefox") != -1){ //TODO: check version number
-        if (firstLogIn) _login();
-        else logoff(_login);
-    }
-    else{
-        _login();
-    }
-
-    if (firstLogIn) firstLogIn = false;
+    _login();
 }
