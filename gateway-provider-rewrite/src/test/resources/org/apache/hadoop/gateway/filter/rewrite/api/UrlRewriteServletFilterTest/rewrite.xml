@@ -57,6 +57,11 @@
         <rewrite template="{$import[&quot;, url]}/stylesheets/pretty.css&quot;;"/>
     </rule>
 
+    <!-- HTML Prefix attribute tests, since 0.14.0 -->
+    <rule dir="OUT" name="test-rule-html-prefix-attribute-prefix/1" pattern="'components/{**}?{**}">
+        <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}?{**}"/>
+    </rule>
+
     <filter name="test-filter-1">
         <content type="application/json">
             <apply path="$.url" rule="test-rule-1"/>
@@ -100,6 +105,5 @@
             <apply path="(@import)+ .*css.*" rule="test-rule-html-import-attribute"/>
         </content>
     </filter>
-
 
 </rules>

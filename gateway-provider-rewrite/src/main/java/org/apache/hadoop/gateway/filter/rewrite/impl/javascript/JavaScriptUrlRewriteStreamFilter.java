@@ -29,7 +29,7 @@ import java.io.InputStreamReader;
 
 public class JavaScriptUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
 
-  private static String[] TYPES = new String[]{ "application/javascritp", "text/javascript", "*/javascript",
+  private static String[] TYPES = new String[]{ "application/javascript", "text/javascript", "*/javascript",
       "application/x-javascript", "text/x-javascript", "*/x-javascript" };
   private static String[] NAMES = new String[]{ null };
 
@@ -52,6 +52,7 @@ public class JavaScriptUrlRewriteStreamFilter implements UrlRewriteStreamFilter 
       UrlRewriter.Direction direction,
       UrlRewriteFilterContentDescriptor config )
           throws IOException {
+
     if ( config != null ) {
       return new ReaderInputStream(
           new JavaScriptUrlRewriteFilterReader(

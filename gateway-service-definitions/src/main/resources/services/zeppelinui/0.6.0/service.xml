@@ -23,6 +23,11 @@
     <policy role="authorization"/>
   </policies>
   <routes>
+    <!-- Filter -->
+    <route path="/zeppelin/scripts/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/outbound/javascript/filter" to="response.body"/>
+    </route>
+
     <route path="/zeppelin/">
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/root" to="request.url"/>
     </route>
