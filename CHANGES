@@ -67,6 +67,10 @@ Release Notes - Apache Knox - Version 0.13.0
    * [KNOX-690] - Revert KNOX-690 fixing the encoding/decoding in the parser and template
    * [KNOX-949] - WeBHDFS proxy replaces %20 encoded spaces in URL with + encoding
    * [KNOX-995] - KnoxSSO Form IDP Issue with Firefox
+   * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
+   * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
+   * [KNOX-994] - Introducing a new variable that enhances the function, needed for Zeppelin / fix
+
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.12.0
 ------------------------------------------------------------------------------
