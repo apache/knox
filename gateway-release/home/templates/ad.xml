@@ -22,8 +22,8 @@
             <role>authentication</role>
             <name>ShiroProvider</name>
             <enabled>true</enabled>
-            <param name="main.ldapRealm" value="org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm"/>
-            <param name="main.ldapContextFactory" value="org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory"/>
+            <param name="main.ldapRealm" value="org.apache.knox.gateway.shirorealm.KnoxLdapRealm"/>
+            <param name="main.ldapContextFactory" value="org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory"/>
             <param name="main.ldapRealm.contextFactory" value="$ldapContextFactory"/>
 
             <param name="main.ldapRealm.contextFactory.url" value="ldap://ad.qa.your-domain.com:389"/>

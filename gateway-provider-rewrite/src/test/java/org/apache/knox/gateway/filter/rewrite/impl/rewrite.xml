@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <filter>
+        <role>rewrite</role>
+        <name>url-rewrite</name>
+        <class>org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
+        <param><name>url.rule</name><value>{rule-name}</value></param>
+        <param><name>request.filter</name><value>{filters-name}</value></param>
+        <param><name>response.filter</name><value>{filters-name}</value></param>
+    </filter>
+
+    <!--
+    If no filter/rule specified it should attempt to filter everything like it did before.
+    -->
+
+    <filter name="WEBHDFS/request">
+        <content type="http/header">
+            <apply target="Location" rule="{rewrite-rule-name}"/>
+            <apply>...</apply>
+        </content>
+        <content type="http/cookie">
+            <apply target="hadoop.auth" rule="{rewrite-rule-name}"/>
+        </content>
+        <content type="*/json" name="{filter-impl-name}">
+            <select node="/config/property">
+                <choice source="name" pattern="YarnNodeManager ">
+                    <apply target="value[2]" rule="{rewrite-rule-name}"/>
+                    <apply target="value[3]" rule="{rewrite-rule-name}"/>
+                </choice>
+                <choice>...</choice>
+            </select>
+        </content>
+    </filter>
+
+    <!--
+    If there isn't a ContentFilter for the required type it is a failure.
+    The default ContentFilter ie type="*/*" can be present to transparently stream content.
+    The most specific content filter applies.
+
+    The most specific apply choice applies.
+    Missing rule="" uses URL pattern matching.
+    The rule="*" uses URL pattern matching.
+    The rule="-" prevents any rule being applied.
+
+    ContentParser
+    ContentParserFactory
+    ContentParserEvent
+
+    ContentFilter
+    ContentFilterFactory
+    ContentFilterAction
+    ContentFilterApply
+    ContentFilterChoice
+    ContentFilterSelect
+    ContentFilterSelectNode
+
+    ContentPath
+    ContentPathNode
+    ContentPathMatcher
+    ContentPathParser
+    -->
+
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/root/inbound" pattern="*://*:*/**/webhdfs/{version}/?{**}">
+        <rewrite template="http://vm:50070/webhdfs/{version}/?{**}"/>
+    </rule>
+    <rule dir="IN" name="WEBHDFS/webhdfs/namenode/file/inbound" pattern="*://*:*/**/webhdfs/{version}/{path=**}?{**}">
+        <rewrite template="http://vm:50070/webhdfs/{version}/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="WEBHDFS/webhdfs/datanode/inbound" pattern="*://*:*/**/webhdfs/data/{version}/{path=**}?**">
+        <decode-query/>
+        <match pattern="*://*:*/**/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
+        <rewrite template="http://{host}:{port}/{path=**}?{**}"/>
+    </rule>
+    <rule dir="OUT" name="WEBHDFS/webhdfs/datanode/outbound" pattern="*://*:*/**?**">
+        <match pattern="*://{host}:{port}/{path=**}?{**}"/>
+        <rewrite template="{$frontend[url]}/webhdfs/data/{version}/{path=**}?{host}&amp;{port}&amp;{**}"/>
+        <encode-query/>
+    </rule>
+    <rule dir="IN" name="WEBHCAT/webhcat/request" pattern="*://*:*/**/templeton/{version}/{path=**}?{**}">
+        <rewrite template="http://vm:50111/templeton/{version}/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="OOZIE/oozie/root/inbound" pattern="*://*:*/**/oozie/{**}?{**}">
+        <rewrite template="http://vm:11000/oozie/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="OOZIE/oozie/v1/inbound" pattern="*://*:*/**/oozie/v1/{**}?{**}">
+        <rewrite template="http://vm:11000/oozie/v1/{**}?{**}"/>
+    </rule>
+
+</rules>

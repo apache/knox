@@ -23,13 +23,13 @@
         <target>http://org.apache.hadoop-secure.home:50070/</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <!-- <prefix>/gw/vm/webhdfs</prefix> -->
             <rewrite>* webhdfs/{0}</rewrite>
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -38,7 +38,7 @@
         <target>http://org.apache.hadoop-secure.home:50070/{0}</target>
         <filter>
             <name>rewrite</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <!-- <prefix>/gw/vm/webhdfs</prefix> -->
             <rewrite.1>*://*:*/browseDirectory.jsp?* /gw/vm/webhdfs/browseDirectory.jsp/{0}/{1}/{2}?{3}</rewrite.1>
             <rewrite.2>/* /gw/vm/webhdfs/{0}</rewrite.2>
@@ -46,7 +46,7 @@
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.HttpClientDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.HttpClientDispatch</class>
         </filter>
     </service>
     <service>
@@ -55,20 +55,20 @@
         <target>http://org.apache.hadoop-secure.home:50070/webhdfs/v1/{0}</target>
         <filter>
             <name>session</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.SessionFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.SessionFilter</class>
         </filter>
         <filter>
             <name>challenge</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.BasicAuthChallengeFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.BasicAuthChallengeFilter</class>
             <realm>Gateway</realm>
         </filter>
         <filter>
             <name>login</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.UrlConnectionDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.UrlConnectionDispatch</class>
         </filter>
     </service>
     <service>
@@ -77,20 +77,20 @@
         <target>{0}://{1}:{2}/browseDirectory.jsp</target>
         <filter>
             <name>session</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.SessionFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.SessionFilter</class>
         </filter>
         <filter>
             <name>challenge</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.BasicAuthChallengeFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.BasicAuthChallengeFilter</class>
             <realm>Gateway</realm>
         </filter>
         <filter>
             <name>login</name>
-            <class>org.apache.org.apache.hadoop.gateway.filter.JaasLoginFilter</class>
+            <class>org.apache.org.apache.knox.gateway.filter.JaasLoginFilter</class>
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.UrlConnectionDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.UrlConnectionDispatch</class>
         </filter>
     </service>
 </gateway>

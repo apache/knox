@@ -14,9 +14,9 @@
 -->
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.apache.hadoop.gateway.topology.Topology" %>
-<%@ page import="org.apache.hadoop.gateway.topology.Service" %>
-<%@ page import="org.apache.hadoop.gateway.util.RegExUtils" %>
+<%@ page import="org.apache.knox.gateway.topology.Topology" %>
+<%@ page import="org.apache.knox.gateway.topology.Service" %>
+<%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
 
 <!DOCTYPE html>
 <!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
