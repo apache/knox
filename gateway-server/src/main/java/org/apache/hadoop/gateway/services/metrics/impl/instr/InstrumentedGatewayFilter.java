@@ -89,7 +89,7 @@ public class InstrumentedGatewayFilter extends GatewayFilter {
     builder.append(request.getServletContext().getContextPath());
     if (request instanceof HttpServletRequest) {
       HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-      builder.append(httpServletRequest.getPathInfo());
+      builder.append(InstrUtils.getResourcePath(httpServletRequest.getPathInfo()));
       builder.append(".");
       builder.append(httpServletRequest.getMethod());
       builder.append("-requests");
