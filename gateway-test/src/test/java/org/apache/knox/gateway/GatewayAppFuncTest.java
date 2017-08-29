@@ -20,8 +20,6 @@ package org.apache.knox.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -76,18 +74,16 @@ public class GatewayAppFuncTest {
   private static int gatewayPort;
   private static String gatewayUrl;
   private static String clusterUrl;
-  private static SimpleLdapDirectoryServer ldap;
-  private static TcpTransport ldapTransport;
-  private static int ldapPort;
   private static Properties params;
   private static TopologyService topos;
   private static MockServer mockWebHdfs;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
@@ -96,7 +92,7 @@ public class GatewayAppFuncTest {
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
@@ -106,20 +102,6 @@ public class GatewayAppFuncTest {
   public void cleanupTest() throws Exception {
     FileUtils.cleanDirectory( new File( config.getGatewayTopologyDir() ) );
     FileUtils.cleanDirectory( new File( config.getGatewayDeploymentDir() ) );
-  }
-
-  public static void setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    ldapPort = ldapTransport.getAcceptor().getLocalAddress().getPort();
-    LOG.info( "LDAP port = " + ldapPort );
   }
 
   public static void setupGateway() throws Exception {
@@ -178,7 +160,7 @@ public class GatewayAppFuncTest {
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapPort );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
     params.put( "WEBHDFS_URL", "http://localhost:" + mockWebHdfs.getPort() );
   }
 

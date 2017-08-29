@@ -25,8 +25,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,35 +82,21 @@ public class GatewayAdminTopologyFuncTest {
   public static GatewayServer gateway;
   public static String gatewayUrl;
   public static String clusterUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     //appenders = NoOpAppender.setUp();
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway(new GatewayTestConfig());
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
-  }
-
-  public static void setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway(GatewayTestConfig testConfig) throws Exception {
@@ -176,13 +160,13 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "enabled" ).addText( "true" )
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm" )
-        .addTag( "value" ).addText( "KnoxLdapRealm" ).gotoParent()
+        .addTag( "value" ).addText( "org.apache.knox.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() ).gotoParent()
+        .addTag( "value" ).addText( driver.getLdapUrl() ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
         .addTag( "value" ).addText( "simple" ).gotoParent()
@@ -219,13 +203,13 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "enabled" ).addText( "true" )
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm" )
-        .addTag( "value" ).addText( "KnoxLdapRealm" ).gotoParent()
+        .addTag( "value" ).addText( "org.apache.knox.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() ).gotoParent()
+        .addTag( "value" ).addText( driver.getLdapUrl() ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
         .addTag( "value" ).addText( "simple" ).gotoParent()
@@ -462,11 +446,11 @@ public class GatewayAdminTopologyFuncTest {
 
     Param ldapMain = new Param();
     ldapMain.setName("main.ldapRealm");
-    ldapMain.setValue("KnoxLdapRealm");
+    ldapMain.setValue("org.apache.knox.gateway.shirorealm.KnoxLdapRealm");
 
     Param ldapGroupContextFactory = new Param();
     ldapGroupContextFactory.setName("main.ldapGroupContextFactory");
-    ldapGroupContextFactory.setValue("KnoxLdapContextFactory");
+    ldapGroupContextFactory.setValue("org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory");
 
     Param ldapRealmContext = new Param();
     ldapRealmContext.setName("main.ldapRealm.contextFactory");
@@ -474,7 +458,7 @@ public class GatewayAdminTopologyFuncTest {
 
     Param ldapURL = new Param();
     ldapURL.setName("main.ldapRealm.contextFactory.url");
-    ldapURL.setValue("ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort());
+    ldapURL.setValue(driver.getLdapUrl());
 
     Param ldapUserTemplate = new Param();
     ldapUserTemplate.setName("main.ldapRealm.userDnTemplate");

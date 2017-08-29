@@ -96,18 +96,16 @@ public class GatewaySslFuncTest {
   private static String gatewayScheme;
   private static int gatewayPort;
   private static String gatewayUrl;
-  private static SimpleLdapDirectoryServer ldap;
-  private static TcpTransport ldapTransport;
-  private static int ldapPort;
   private static Properties params;
   private static TopologyService topos;
   private static MockServer mockWebHdfs;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
@@ -116,7 +114,7 @@ public class GatewaySslFuncTest {
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
@@ -126,19 +124,6 @@ public class GatewaySslFuncTest {
   public void cleanupTest() throws Exception {
     FileUtils.cleanDirectory( new File( config.getGatewayTopologyDir() ) );
     FileUtils.cleanDirectory( new File( config.getGatewayDeploymentDir() ) );
-  }
-
-  public static void setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -201,7 +186,7 @@ public class GatewaySslFuncTest {
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
     params.put( "WEBHDFS_URL", "http://localhost:" + mockWebHdfs.getPort() );
   }
 

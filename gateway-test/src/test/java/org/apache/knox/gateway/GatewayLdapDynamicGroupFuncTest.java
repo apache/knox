@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -74,16 +73,19 @@ public class GatewayLdapDynamicGroupFuncTest {
   public static String gatewayUrl;
   public static String clusterUrl;
   public static String serviceUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    int port = setupLdap();
-    setupGateway(port);
-    TestUtils.awaitPortOpen( new InetSocketAddress( "localhost", port ), 10000, 100 );
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users-dynamic.ldif");
+    driver.setupLdap( 0, path.toFile() );
+    setupGateway();
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
     LOG_EXIT();
   }
@@ -92,27 +94,13 @@ public class GatewayLdapDynamicGroupFuncTest {
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
   }
 
-  public static int setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users-dynamic.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
-    return ldapTransport.getAcceptor().getLocalAddress().getPort();
-  }
-
-  public static void setupGateway(int ldapPort) throws IOException, Exception {
+  public static void setupGateway() throws IOException, Exception {
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -178,12 +166,12 @@ public class GatewayLdapDynamicGroupFuncTest {
 
     File descriptor = new File( topoDir, "testdg-cluster.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology(ldapPort).toStream( stream );
+    createTopology().toStream( stream );
     stream.close();
 
   }
 
-  private static XMLTag createTopology(int ldapPort) {
+  private static XMLTag createTopology() {
     XMLTag xml = XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -194,10 +182,10 @@ public class GatewayLdapDynamicGroupFuncTest {
         .addTag( "enabled" ).addText( "true" )
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm" )
-        .addTag( "value" ).addText( "KnoxLdapRealm" )
+        .addTag( "value" ).addText( "org.apache.knox.gateway.shirorealm.KnoxLdapRealm" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapGroupContextFactory" )
-        .addTag( "value" ).addText( "KnoxLdapContextFactory" )
+        .addTag( "value" ).addText( "org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory" )
         .addTag( "value" ).addText( "$ldapGroupContextFactory" )
@@ -206,7 +194,7 @@ public class GatewayLdapDynamicGroupFuncTest {
         .addTag( "value" ).addText( "simple" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:"  + ldapPort)
+        .addTag( "value" ).addText( driver.getLdapUrl())
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )
@@ -319,5 +307,5 @@ public class GatewayLdapDynamicGroupFuncTest {
         .when().get( serviceUrl );
     LOG_EXIT();
   }
-  
+
 }
