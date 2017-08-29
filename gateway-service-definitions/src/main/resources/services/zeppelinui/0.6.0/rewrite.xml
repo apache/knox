@@ -119,7 +119,8 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="{path=app**}">
     <rewrite template="{$frontend[path]}/zeppelin/{path=app**}"/>
   </rule>
-  
+
+  <!--
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'components/{**}">
     <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}"/>
   </rule>
@@ -127,6 +128,7 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'app/{**}">
     <rewrite template="{$prefix[&#39;,url]}/zeppelin/app/{**}"/>
   </rule>
+  -->
 
   <!-- Filters -->
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home" >
