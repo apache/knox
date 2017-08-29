@@ -19,9 +19,7 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.test.TestUtils;
@@ -40,10 +38,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -62,14 +57,13 @@ public class GatewayAdminFuncTest {
   public static GatewayServer gateway;
   public static String gatewayUrl;
   public static String clusterUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     TestUtils.LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway();
     TestUtils.LOG_EXIT();
   }
@@ -78,22 +72,10 @@ public class GatewayAdminFuncTest {
   public static void cleanupSuite() throws Exception {
     TestUtils.LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     TestUtils.LOG_EXIT();
-  }
-
-  public static void setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -151,7 +133,7 @@ public class GatewayAdminFuncTest {
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() ).gotoParent()
+        .addTag( "value" ).addText( driver.getLdapUrl() ).gotoParent()
         .addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
         .addTag( "value" ).addText( "simple" ).gotoParent()

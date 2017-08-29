@@ -95,7 +95,7 @@ public class GatewayTestDriver {
     Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
     return setupLdap( port, path.toFile() );
   }
-  
+
   public int setupLdap( int port, File ldifConfig ) throws Exception {
     ldapTransport = new TcpTransport( port );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", ldifConfig, ldapTransport );
@@ -169,13 +169,17 @@ public class GatewayTestDriver {
   }
 
   public void cleanup() throws Exception {
-    gateway.stop();
-    FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
-    FileUtils.deleteQuietly( new File( config.getGatewayServicesDir() ) );
+    if ( gateway != null ) {
+      gateway.stop();
+    }
+    if ( config != null ) {
+      FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayServicesDir() ) );
+    }
 
     for( Service service : services.values() ) {
       service.server.stop();

@@ -19,9 +19,7 @@ package org.apache.hadoop.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -45,8 +43,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -62,7 +58,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
- * Functional test to verify : looking up ldap groups from directory 
+ * Functional test to verify : looking up ldap groups from directory
  * and using them in acl authorization checks
  *
  */
@@ -78,16 +74,15 @@ public class GatewayLdapPosixGroupFuncTest {
   public static String gatewayUrl;
   public static String clusterUrl;
   public static String serviceUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    int port = setupLdap();
-    setupGateway(port);
-    TestUtils.awaitPortOpen( new InetSocketAddress( "localhost", port ), 10000, 100 );
+    URL usersUrl = getResourceUrl( "users.ldif" );
+    driver.setupLdap( 0, new File( usersUrl.toURI() ) );
+    setupGateway();
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
     LOG_EXIT();
   }
@@ -96,22 +91,13 @@ public class GatewayLdapPosixGroupFuncTest {
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
   }
 
-  public static int setupLdap() throws Exception {
-    URL usersUrl = getResourceUrl( "users.ldif" );
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", new File( usersUrl.toURI() ), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
-    return ldapTransport.getAcceptor().getLocalAddress().getPort();
-  }
-
-  public static void setupGateway(int ldapPort) throws Exception {
+  public static void setupGateway() throws Exception {
 
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
@@ -155,12 +141,12 @@ public class GatewayLdapPosixGroupFuncTest {
 
     File descriptor = new File( topoDir, "test-cluster.xml" );
     OutputStream stream = new FileOutputStream( descriptor );
-    createTopology(ldapPort).toStream( stream );
+    createTopology().toStream( stream );
     stream.close();
 
   }
 
-  private static XMLTag createTopology(int ldapPort) {
+  private static XMLTag createTopology() {
     XMLTag xml = XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -183,7 +169,7 @@ public class GatewayLdapPosixGroupFuncTest {
         .addTag( "value" ).addText( "simple" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
-        .addTag( "value" ).addText( "ldap://localhost:" + ldapPort )
+        .addTag( "value" ).addText( driver.getLdapUrl() )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )

@@ -20,8 +20,6 @@ package org.apache.hadoop.gateway;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.util.KnoxCLI;
@@ -42,10 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
-import java.net.ServerSocket;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,8 +62,7 @@ public class KnoxCliLdapFuncTestNegative {
   public static GatewayServer gateway;
   public static String gatewayUrl;
   public static String clusterUrl;
-  public static SimpleLdapDirectoryServer ldap;
-  public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   private static final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
   private static final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
@@ -79,7 +73,7 @@ public class KnoxCliLdapFuncTestNegative {
     LOG_ENTER();
     System.setOut(new PrintStream(outContent));
     System.setErr(new PrintStream(errContent));
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
@@ -87,24 +81,11 @@ public class KnoxCliLdapFuncTestNegative {
   @AfterClass
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
-    ldap.stop( true );
+    driver.cleanup();
 
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
-  }
-
-  public static void setupLdap( ) throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -189,7 +170,7 @@ public class KnoxCliLdapFuncTestNegative {
         .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
         .addTag("param")
         .addTag( "name" ).addText("main.ldapRealm.contextFactory.url")
-        .addTag("value").addText("ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort()).gotoParent()
+        .addTag("value").addText(driver.getLdapUrl()).gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.systemUsername")
         .addTag("value").addText("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
@@ -256,7 +237,7 @@ public class KnoxCliLdapFuncTestNegative {
         .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.url")
-        .addTag("value").addText("ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort()).gotoParent()
+        .addTag("value").addText(driver.getLdapUrl()).gotoParent()
         .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
         .addTag("value").addText("simple").gotoParent()

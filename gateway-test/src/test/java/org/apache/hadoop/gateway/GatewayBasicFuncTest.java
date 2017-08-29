@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.core.MediaType;
 
-import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Cookie;
@@ -113,7 +112,7 @@ public class GatewayBasicFuncTest {
 
   private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
 
-  public static GatewayTestDriver driver = new GatewayTestDriver();
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   // Controls the host name to which the gateway dispatch requests.  This may be the name of a sandbox VM
   // or an EC2 instance.  Currently only a single host is supported.
@@ -147,7 +146,6 @@ public class GatewayBasicFuncTest {
     //Log.setLog( new NoOpLogger() );
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
-    config.setGatewayPath( "gateway" );
     driver.setResourceBase(GatewayBasicFuncTest.class);
     driver.setupLdap(0);
     driver.setupService("WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);

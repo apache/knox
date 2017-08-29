@@ -20,8 +20,6 @@ package org.apache.hadoop.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +29,6 @@ import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.hadoop.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
@@ -86,16 +83,16 @@ public class GatewayMultiFuncTest {
   private static GatewayServer gateway;
   private static int gatewayPort;
   private static String gatewayUrl;
-  private static SimpleLdapDirectoryServer ldap;
   private static TcpTransport ldapTransport;
   private static Properties params;
   private static TopologyService topos;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    setupLdap();
+    driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
@@ -104,23 +101,10 @@ public class GatewayMultiFuncTest {
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    ldap.stop( true );
+    driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
-  }
-
-  public static void setupLdap() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users.ldif");
-
-    ldapTransport = new TcpTransport( 0 );
-    ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", path.toFile(), ldapTransport );
-    ldap.start();
-    LOG.info( "LDAP port = " + ldapTransport.getAcceptor().getLocalAddress().getPort() );
   }
 
   public static void setupGateway() throws Exception {
@@ -172,7 +156,7 @@ public class GatewayMultiFuncTest {
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
@@ -182,7 +166,7 @@ public class GatewayMultiFuncTest {
     MockServer mock = new MockServer( "REPEAT", true );
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
     params.put( "MOCK_SERVER_PORT", mock.getPort() );
 
     String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
@@ -233,7 +217,7 @@ public class GatewayMultiFuncTest {
 
     params = new Properties();
     params.put( "MOCK_SERVER_PORT", mock.getPort() );
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
 
     String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "knox681.xml" );
@@ -324,7 +308,7 @@ public class GatewayMultiFuncTest {
     String invalidPword = "invalid-guest-password";
 
     params = new Properties();
-    params.put( "LDAP_URL", "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort() );
+    params.put( "LDAP_URL", driver.getLdapUrl() );
     params.put( "LDAP_SYSTEM_USERNAME", adminUName );
     params.put( "LDAP_SYSTEM_PASSWORD", adminPWord );
 
