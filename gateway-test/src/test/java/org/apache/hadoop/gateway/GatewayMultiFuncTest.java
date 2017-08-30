@@ -64,7 +64,6 @@ import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -75,7 +74,7 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 public class GatewayMultiFuncTest {
 
   private static Logger LOG = LoggerFactory.getLogger( GatewayMultiFuncTest.class );
-  private static Class DAT = GatewayMultiFuncTest.class;
+  private static Class<?> DAT = GatewayMultiFuncTest.class;
 
   private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;

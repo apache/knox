@@ -22,12 +22,10 @@ import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -37,17 +35,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.DefaultGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
-import org.apache.hadoop.gateway.util.KnoxCLI;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -66,7 +61,6 @@ import com.mycila.xmltool.XMLTag;
  */
 public class Knox242FuncTest {
 
-  private static Class RESOURCE_BASE_CLASS = Knox242FuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( Knox242FuncTest.class );
 
   public static Enumeration<Appender> appenders;
@@ -243,24 +237,6 @@ public class Knox242FuncTest {
         .gotoRoot();
          // System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
-  }
-
-  public static InputStream getResourceStream( String resource ) throws IOException {
-    return getResourceUrl( resource ).openStream();
-  }
-
-  public static URL getResourceUrl( String resource ) {
-    URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
-    assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
-    return url;
-  }
-
-  public static String getResourceName( String resource ) {
-    return getResourceBaseName() + resource;
-  }
-
-  public static String getResourceBaseName() {
-    return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 
   @Ignore

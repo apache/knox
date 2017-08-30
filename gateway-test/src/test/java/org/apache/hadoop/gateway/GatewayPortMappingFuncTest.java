@@ -24,15 +24,12 @@ import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.hadoop.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.jayway.restassured.RestAssured.given;

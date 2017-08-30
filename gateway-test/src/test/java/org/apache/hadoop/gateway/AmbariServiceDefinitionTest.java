@@ -57,7 +57,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 public class AmbariServiceDefinitionTest {
 
   private static Logger LOG = LoggerFactory.getLogger( AmbariServiceDefinitionTest.class );
-  private static Class DAT = AmbariServiceDefinitionTest.class;
+  private static Class<?> DAT = AmbariServiceDefinitionTest.class;
 
   private static GatewayTestConfig config;
   private static DefaultGatewayServices services;

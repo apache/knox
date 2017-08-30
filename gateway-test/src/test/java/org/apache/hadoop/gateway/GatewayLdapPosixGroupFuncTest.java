@@ -29,7 +29,6 @@ import org.apache.hadoop.test.category.ReleaseTest;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -41,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Enumeration;
@@ -54,8 +52,6 @@ import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * Functional test to verify : looking up ldap groups from directory
@@ -65,7 +61,7 @@ import static org.junit.Assert.fail;
 @Category(ReleaseTest.class)
 public class GatewayLdapPosixGroupFuncTest {
 
-  private static Class RESOURCE_BASE_CLASS = GatewayLdapPosixGroupFuncTest.class;
+  private static final Class<?> RESOURCE_BASE_CLASS = GatewayLdapPosixGroupFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayLdapPosixGroupFuncTest.class );
 
   public static Enumeration<Appender> appenders;
@@ -80,7 +76,7 @@ public class GatewayLdapPosixGroupFuncTest {
   public static void setupSuite() throws Exception {
     LOG_ENTER();
     //appenders = NoOpAppender.setUp();
-    URL usersUrl = getResourceUrl( "users.ldif" );
+    URL usersUrl = TestUtils.getResourceUrl( GatewayLdapPosixGroupFuncTest.class, "users.ldif" );
     driver.setupLdap( 0, new File( usersUrl.toURI() ) );
     setupGateway();
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
@@ -225,21 +221,11 @@ public class GatewayLdapPosixGroupFuncTest {
     return xml;
   }
 
-  public static InputStream getResourceStream( String resource ) throws IOException {
-    return getResourceUrl( resource ).openStream();
-  }
-
-  public static URL getResourceUrl( String resource ) {
-    URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
-    assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
-    return url;
-  }
-
-  public static String getResourceName( String resource ) {
+  private static String getResourceName( String resource ) {
     return getResourceBaseName() + resource;
   }
 
-  public static String getResourceBaseName() {
+  private static String getResourceBaseName() {
     return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 

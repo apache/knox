@@ -28,7 +28,6 @@ import org.apache.hadoop.test.log.NoOpAppender;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,9 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,7 +50,6 @@ import static org.junit.Assert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
 
-  private static Class RESOURCE_BASE_CLASS = GatewayLocalServiceFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
 
   public static Enumeration<Appender> appenders;
@@ -180,24 +175,6 @@ public class GatewayLocalServiceFuncTest {
         .body( is( "test-jersey-resource-response" ) )
         .when().get( serviceUrl );
     LOG_EXIT();
-  }
-
-  public static InputStream getResourceStream( String resource ) throws IOException {
-    return getResourceUrl( resource ).openStream();
-  }
-
-  public static URL getResourceUrl( String resource ) {
-    URL url = ClassLoader.getSystemResource( getResourceName( resource ) );
-    assertThat( "Failed to find test resource " + resource, url, Matchers.notNullValue() );
-    return url;
-  }
-
-  public static String getResourceName( String resource ) {
-    return getResourceBaseName() + resource;
-  }
-
-  public static String getResourceBaseName() {
-    return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
   }
 
 }
