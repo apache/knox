@@ -61,41 +61,10 @@
             <artifactId>hamcrest-library</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.xmlmatchers</groupId>
-            <artifactId>xml-matchers</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>uk.co.datumedge</groupId>
-            <artifactId>hamcrest-json</artifactId>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -126,12 +95,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
             <scope>provided</scope>
         </dependency>
 
