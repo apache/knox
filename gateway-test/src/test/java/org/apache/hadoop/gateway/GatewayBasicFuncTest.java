@@ -56,14 +56,16 @@ import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -4338,10 +4340,15 @@ public class GatewayBasicFuncTest {
 
     URL url = new URL( driver.getUrl( "OOZIE" ) + "/v1/jobs?action=start" + ( driver.isUseGateway() ? "" : "&user.name=" + user ) );
     HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
-    DefaultHttpClient client = new DefaultHttpClient();
-    client.getCredentialsProvider().setCredentials(
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
+
+    HttpClientContext context = HttpClientContext.create();
+    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    credsProvider.setCredentials(
         new AuthScope( targetHost ),
         new UsernamePasswordCredentials( user, password ) );
+    context.setCredentialsProvider( credsProvider );
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -4349,15 +4356,14 @@ public class GatewayBasicFuncTest {
     BasicScheme basicAuth = new BasicScheme();
     authCache.put( targetHost, basicAuth );
     // Add AuthCache to the execution context
-    BasicHttpContext localContext = new BasicHttpContext();
-    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+    context.setAuthCache( authCache );
 
     HttpPost post = new HttpPost( url.toURI() );
 //      post.getParams().setParameter( "action", "start" );
     StringEntity entity = new StringEntity( request, org.apache.http.entity.ContentType.create( "application/xml", "UTF-8" ) );
     post.setEntity( entity );
     post.setHeader( "X-XSRF-Header", "ksdjfhdsjkfhds" );
-    HttpResponse response = client.execute( targetHost, post, localContext );
+    HttpResponse response = client.execute( targetHost, post, context );
     assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
     String json = EntityUtils.toString( response.getEntity() );
 
@@ -4428,10 +4434,15 @@ public class GatewayBasicFuncTest {
     //NOTE:  For some reason REST-assured doesn't like this and ends up failing with Content-Length issues.
     URL url = new URL( driver.getUrl( "OOZIE" ) + "/v1/job/" + id + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
     HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
-    DefaultHttpClient client = new DefaultHttpClient();
-    client.getCredentialsProvider().setCredentials(
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
+
+    HttpClientContext context = HttpClientContext.create();
+    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    credsProvider.setCredentials(
         new AuthScope( targetHost ),
         new UsernamePasswordCredentials( user, password ) );
+    context.setCredentialsProvider( credsProvider );
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -4439,12 +4450,11 @@ public class GatewayBasicFuncTest {
     BasicScheme basicAuth = new BasicScheme();
     authCache.put( targetHost, basicAuth );
     // Add AuthCache to the execution context
-    BasicHttpContext localContext = new BasicHttpContext();
-    localContext.setAttribute( ClientContext.AUTH_CACHE, authCache );
+    context.setAuthCache( authCache );
 
     HttpGet request = new HttpGet( url.toURI() );
     request.setHeader("X-XSRF-Header", "ksdhfjkhdsjkf");
-    HttpResponse response = client.execute( targetHost, request, localContext );
+    HttpResponse response = client.execute( targetHost, request, context );
     assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
     String json = EntityUtils.toString( response.getEntity() );
     String jobStatus = JsonPath.from(json).getString( "status" );

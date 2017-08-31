@@ -51,7 +51,8 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.dispatch.DefaultDispatch;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
 import org.apache.hadoop.test.log.CollectAppender;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.spi.LoggingEvent;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -81,7 +82,7 @@ public class AuditLoggingTest {
   @Test
   /**
    * Empty filter chain. Two events with same correlation ID are expected:
-   * 
+   *
    * action=access request_type=uri outcome=unavailable
    * action=access request_type=uri outcome=success message=Response status: 404
    */
@@ -126,7 +127,7 @@ public class AuditLoggingTest {
   @Test
   /**
    * One NoOp filter in chain. Single audit event with same with specified request URI is expected:
-   * 
+   *
    * action=access request_type=uri outcome=unavailable
    */
   public void testNoopFilter() throws ServletException, IOException,
@@ -178,7 +179,7 @@ public class AuditLoggingTest {
   @Test
   /**
    * Dispatching outbound request. Remote host is unreachable. Two log events is expected:
-   * 
+   *
    * action=dispatch request_type=uri outcome=FAILED
    * action=dispatch request_type=uri outcome=unavailable
    */
@@ -194,7 +195,9 @@ public class AuditLoggingTest {
     EasyMock.replay( outboundResponse );
 
     DefaultDispatch dispatch = new DefaultDispatch();
-    dispatch.setHttpClient(new DefaultHttpClient());
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
+    dispatch.setHttpClient(client);
     try {
       dispatch.doGet( new URI( uri ), inboundRequest, outboundResponse );
       fail( "Expected exception while accessing to unreachable host" );

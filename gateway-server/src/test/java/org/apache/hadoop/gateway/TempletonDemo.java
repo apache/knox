@@ -21,10 +21,10 @@ import org.apache.hadoop.test.category.ManualTests;
 import org.apache.hadoop.test.category.SlowTests;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.helpers.Loader;
@@ -53,7 +53,6 @@ public class TempletonDemo {
   }
 
   private void demo( String url ) throws IOException {
-    HttpClient client = new DefaultHttpClient();
     List<NameValuePair> parameters = new ArrayList<NameValuePair>();
     parameters.add( new BasicNameValuePair( "user.name", "hdfs" ) );
     parameters.add( new BasicNameValuePair( "jar", "wordcount/org.apache.hadoop-examples.jar" ) );
@@ -63,6 +62,9 @@ public class TempletonDemo {
     UrlEncodedFormEntity entity = new UrlEncodedFormEntity( parameters, Charset.forName( "UTF-8" ) );
     HttpPost request = new HttpPost( url );
     request.setEntity( entity );
+
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
     HttpResponse response = client.execute( request );
     System.out.println( EntityUtils.toString( response.getEntity() ) );
   }
