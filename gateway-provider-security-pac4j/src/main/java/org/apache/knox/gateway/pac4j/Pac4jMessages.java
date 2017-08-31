@@ -26,7 +26,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
  *
  * @since 0.8.0
  */
-@Messages(logger="org.apache.hadoop.gateway.pac4j")
+@Messages(logger="org.apache.knox.gateway.pac4j")
 public interface Pac4jMessages {
 
   @Message( level = MessageLevel.ERROR, text = "pac4j callback URL required")

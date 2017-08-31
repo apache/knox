@@ -63,14 +63,14 @@ function main {
             echo "Illegal number of parameters."
             printHelp
         else
-          $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh init --gateway $2 || exit 1
+          $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh init --gateway $2 || exit 1
         fi
          ;;
       list)
-        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh list || exit 1
+        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh list || exit 1
          ;;
       destroy)
-        $JAVA -cp $APP_JAR org.apache.hadoop.gateway.shell.KnoxSh destroy || exit 1
+        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh destroy || exit 1
          ;;
       help)
          printHelp

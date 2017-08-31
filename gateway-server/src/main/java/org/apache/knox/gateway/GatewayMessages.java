@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  *
  */
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
 
   @Message( level = MessageLevel.FATAL, text = "Failed to parse command line: {0}" )

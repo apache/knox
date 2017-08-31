@@ -43,7 +43,7 @@ public class KnoxSSOServiceDeploymentContributor extends
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway.service.knoxsso" };
+    return new String[]{ "org.apache.knox.gateway.service.knoxsso" };
   }
 
   /* (non-Javadoc)

@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.hadoop.gateway.shell.job.Job
+import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.job.Job
 
 import static java.util.concurrent.TimeUnit.SECONDS
-import org.apache.hadoop.gateway.shell.Credentials
+import org.apache.knox.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
 

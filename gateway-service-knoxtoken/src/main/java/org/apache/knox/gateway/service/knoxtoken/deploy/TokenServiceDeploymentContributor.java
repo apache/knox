@@ -42,7 +42,7 @@ public class TokenServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway.service.knoxtoken" };
+    return new String[]{ "org.apache.knox.gateway.service.knoxtoken" };
   }
 
   /* (non-Javadoc)

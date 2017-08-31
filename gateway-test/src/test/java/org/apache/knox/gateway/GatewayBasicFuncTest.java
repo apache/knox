@@ -201,7 +201,7 @@ public class GatewayBasicFuncTest {
               .addTag("enabled").addText("true")
               .addTag( "param" )
                 .addTag("name").addText("main.ldapRealm")
-                .addTag("value").addText("KnoxLdapRealm").gotoParent()
+                .addTag("value").addText("org.apache.knox.gateway.shirorealm.KnoxLdapRealm").gotoParent()
               .addTag( "param" )
                 .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
                 .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
@@ -871,27 +871,27 @@ public class GatewayBasicFuncTest {
     deleteFile( user, pass, root, "true", HttpStatus.SC_OK );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
-    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
     createFile( user, pass, null, root+"/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
-    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
     createFile( user, pass, null, root+"/input/changes.txt", "777", "text/plain", "changes.txt", 307, 201, 200 );
 
     /* Create the output directory
-    curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
+    curl -X PUT 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/output?op=MKDIRS&user.name=hdfs'
     */
     createDir( user, pass, null, root+"/output", "777", 200, 200 );
 
     /* Submit the job
-    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.hadoop.gateway/cluster/templeton/v1/mapreduce/jar'
+    curl -d user.name=hdfs -d jar=wordcount/hadoop-examples.jar -d class=org.apache.org.apache.hadoop.examples.WordCount -d arg=wordcount/input -d arg=wordcount/output 'http://localhost:8888/org.apache.org.apache.knox.gateway/cluster/templeton/v1/mapreduce/jar'
     {"id":"job_201210301335_0059"}
     */
     String job = submitJava(
         user, pass,
-        root+"/hadoop-examples.jar", "org.apache.WordCount",
+        root+"/hadoop-examples.jar", "org.apache.org.apache.hadoop.examples.WordCount",
         root+"/input", root+"/output",
         200 );
 
@@ -902,7 +902,7 @@ public class GatewayBasicFuncTest {
 
     // Can't really check for the output here because the job won't be done.
     /* Retrieve results
-    curl 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
+    curl 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input?op=LISTSTATUS'
     */
 
     if( CLEANUP_TEST ) {
@@ -985,12 +985,12 @@ public class GatewayBasicFuncTest {
     createFile( user, pass, group, root+"/workflow.xml", "666", "application/octet-stream", "oozie-workflow.xml", 307, 201, 200 );
 
     /* Put the mapreduce code into HDFS. (hadoop-examples.jar)
-    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @hadoop-examples.jar 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/hadoop-examples.jar?user.name=hdfs&op=CREATE'
      */
     createFile( user, pass, group, root+"/lib/hadoop-examples.jar", "777", "application/octet-stream", findHadoopExamplesJar(), 307, 201, 200 );
 
     /* Put the data file into HDFS (changes.txt)
-    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.hadoop.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
+    curl -X PUT --data-binary @changes.txt 'http://192.168.1.163:8888/org.apache.org.apache.knox.gateway/cluster/webhdfs/v1/user/hdfs/wordcount/input/changes.txt?user.name=hdfs&op=CREATE'
      */
     createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
 

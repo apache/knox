@@ -43,11 +43,11 @@
             <name>rewrite</name>
             <class>org.apache.org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter</class>
             <rewrite>webhdfs://*:*/{path=**}
-                http://{org.apache.org.apache.hadoop.gateway.address}/org.apache.hadoopache.hadoop.gateway/gateway/webhdfs/v1/{path=**}</rewrite>
+                http://{org.apache.org.apache.knox.gateway.address}/org.apache.hadoopache.hadoop.gateway/gateway/webhdfs/v1/{path=**}</rewrite>
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.HdfsDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.HdfsDispatch</class>
         </filter>
     </service>
 

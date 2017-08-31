@@ -56,7 +56,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
 
-  private static final String DEFAULT_HA_DISPATCH_CLASS = "org.apache.hadoop.gateway.ha.dispatch.DefaultHaDispatch";
+  private static final String DEFAULT_HA_DISPATCH_CLASS = "org.apache.knox.gateway.ha.dispatch.DefaultHaDispatch";
 
   private static final String COOKIE_SCOPING_FILTER_NAME = "CookieScopeServletFilter";
 

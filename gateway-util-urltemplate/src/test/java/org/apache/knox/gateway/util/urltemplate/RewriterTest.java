@@ -260,7 +260,7 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     // *://**/webhdfs/v1/{path=**}?**={**}
-    // http://{org.apache.org.apache.hadoop.gateway.address}/gatewaycluster/webhdfs/v1/{path}?**={**}
+    // http://{org.apache.org.apache.knox.gateway.address}/gatewaycluster/webhdfs/v1/{path}?**={**}
     // 1) Should not add query if none in source.
     // 2) Should only add unmatch query parameters
     // Consider chaning = within {} to : and wrapping query fully within {} (e.g. {query=pattern:alias}

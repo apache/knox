@@ -40,7 +40,7 @@
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
 	<%
-        Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.hadoop.gateway.topology");
+        Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
 	    Collection services = topology.getServices();
         for (Object service : services) {

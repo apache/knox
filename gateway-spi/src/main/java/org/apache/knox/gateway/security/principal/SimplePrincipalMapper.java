@@ -29,7 +29,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.filter.PrincipalMapper#loadMappingTable(java.lang.String)
+   * @see org.apache.knox.gateway.filter.PrincipalMapper#loadMappingTable(java.lang.String)
    */
   @Override
   public void loadMappingTable(String principalMapping, String groupMapping) throws PrincipalMappingException {
@@ -74,7 +74,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
+   * @see org.apache.knox.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
    */
   @Override
   public String mapUserPrincipal(String principalName) {
@@ -90,7 +90,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
+   * @see org.apache.knox.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
    */
   @Override
   public String[] mapGroupPrincipal(String principalName) {

@@ -55,7 +55,7 @@ public class DefaultHostMapperService implements HostMapperService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#getHostMapper(java.lang.String)
+   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#getHostMapper(java.lang.String)
    */
   @Override
   public HostMapper getHostMapper( String clusterName ) {
@@ -63,7 +63,7 @@ public class DefaultHostMapperService implements HostMapperService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#registerHostMapperForCluster(java.lang.String, HostMapper)
+   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#registerHostMapperForCluster(java.lang.String, HostMapper)
    */
   @Override
   public void registerHostMapperForCluster( String clusterName, HostMapper hostMapper ) {
@@ -71,7 +71,7 @@ public class DefaultHostMapperService implements HostMapperService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.hostmap.HostMappingService#removeHostMapperForCluster(java.lang.String)
+   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#removeHostMapperForCluster(java.lang.String)
    */
   @Override
   public void removeHostMapperForCluster( String clusterName ) {

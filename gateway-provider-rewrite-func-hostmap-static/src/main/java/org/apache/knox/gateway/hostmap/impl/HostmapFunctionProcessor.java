@@ -74,10 +74,10 @@ public class HostmapFunctionProcessor
       result = new ArrayList<String>( parameters.size() );
       for( String parameter : parameters ) {
         switch( context.getDirection() ) {
-          case UrlRewriter.Direction.IN:
+          case IN:
             parameter = hostMapper.resolveInboundHostName( parameter );
             break;
-          case UrlRewriter.Direction.OUT:
+          case OUT:
             parameter = hostMapper.resolveOutboundHostName( parameter );
             break;
         }

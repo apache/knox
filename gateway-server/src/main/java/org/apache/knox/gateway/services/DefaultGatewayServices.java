@@ -163,7 +163,7 @@ public class DefaultGatewayServices implements GatewayServices {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.GatewayServices#getServiceNames()
+   * @see org.apache.knox.gateway.GatewayServices#getServiceNames()
    */
   @Override
   public Collection<String> getServiceNames() {
@@ -171,7 +171,7 @@ public class DefaultGatewayServices implements GatewayServices {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.GatewayServices#getService(java.lang.String)
+   * @see org.apache.knox.gateway.GatewayServices#getService(java.lang.String)
    */
   @Override
   public <T> T getService(String serviceName) {

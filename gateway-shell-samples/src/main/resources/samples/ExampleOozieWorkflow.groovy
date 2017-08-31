@@ -17,12 +17,12 @@
  */
 import com.jayway.jsonpath.JsonPath
 import groovy.json.JsonSlurper
-import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs
-import org.apache.hadoop.gateway.shell.workflow.Workflow
+import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.hdfs.Hdfs
+import org.apache.knox.gateway.shell.workflow.Workflow
 
 import static java.util.concurrent.TimeUnit.SECONDS
-import org.apache.hadoop.gateway.shell.Credentials
+import org.apache.knox.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
 inputFile = "LICENSE"

@@ -46,6 +46,6 @@
 
     </routes>
 
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch"/>
 
 </service>

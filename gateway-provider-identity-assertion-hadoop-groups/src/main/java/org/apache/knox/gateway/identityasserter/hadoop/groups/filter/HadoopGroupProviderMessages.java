@@ -28,7 +28,7 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
  * @since 0.11
  */
 
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface HadoopGroupProviderMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Error getting groups for principal {0}" )

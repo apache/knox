@@ -88,7 +88,7 @@ public class DeploymentFactoryFuncTest {
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
-//    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
+    //    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
 
     addStacksDir(config, targetDir);
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
@@ -131,11 +131,11 @@ public class DeploymentFactoryFuncTest {
     //by default the first filter will be the X-Forwarded header filter
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "xforwardedheaders" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/name", equalTo( "XForwardedHeaderFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "XForwardedHeaderFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.XForwardedHeaderFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "federation" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/name", equalTo( "HeaderPreAuth" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "HeaderPreAuthFederationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.knox.gateway.preauth.filter.HeaderPreAuthFederationFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/name", equalTo( "filter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "org.opensource.ExistingFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[2]/name", equalTo( "test-param-name" ) ) );
@@ -252,15 +252,15 @@ public class DeploymentFactoryFuncTest {
     topology.addProvider( authorizer );
 
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
-//    File dir = new File( System.getProperty( "user.dir" ) );
-//    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+    //    File dir = new File( System.getProperty( "user.dir" ) );
+    //    File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
     Document web = XmlUtils.readXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
     assertThat( web, hasXPath( "/web-app" ) );
     assertThat( web, hasXPath( "/web-app/servlet" ) );
     assertThat( web, hasXPath( "/web-app/servlet/servlet-name" ) );
     assertThat( web, hasXPath( "/web-app/servlet/servlet-name", equalTo( "test-cluster-knox-gateway-servlet" ) ) );
-    assertThat( web, hasXPath( "/web-app/servlet/servlet-class", equalTo( "GatewayServlet" ) ) );
+    assertThat( web, hasXPath( "/web-app/servlet/servlet-class", equalTo( "org.apache.knox.gateway.GatewayServlet" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet/init-param/param-name", equalTo( "gatewayDescriptorLocation" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet/init-param/param-value", equalTo( "/WEB-INF/gateway.xml" ) ) );
     assertThat( web, hasXPath( "/web-app/servlet-mapping/servlet-name", equalTo( "test-cluster-knox-gateway-servlet" ) ) );
@@ -272,137 +272,137 @@ public class DeploymentFactoryFuncTest {
     //assertThat( gateway, hasXPath( "/gateway/resource[1]/target", equalTo( "http://localhost:50070/webhdfs/v1/?{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "ResponseCookieFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.ResponseCookieFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "ShiroSubjectIdentityAdapter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.ShiroSubjectIdentityAdapter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "UrlRewriteServletFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "IdentityAsserterFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.knox.gateway.identityasserter.filter.IdentityAsserterFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/role", equalTo( "authorization" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/name", equalTo( "AclsAuthz" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "AclsAuthorizationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/name", equalTo( "webhdfs" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/class", equalTo( "GatewayDispatchFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[7]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/pattern", equalTo( "/webhdfs/v1/**?**" ) ) );
     //assertThat( gateway, hasXPath( "/gateway/resource[2]/target", equalTo( "http://localhost:50070/webhdfs/v1/{path=**}?{**}" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "ResponseCookieFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.ResponseCookieFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[2]/class", equalTo( "org.apache.shiro.web.servlet.ShiroFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/role", equalTo( "authentication" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "ShiroSubjectIdentityAdapter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.ShiroSubjectIdentityAdapter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/role", equalTo( "rewrite" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "UrlRewriteServletFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[4]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/class", equalTo( "IdentityAsserterFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[5]/class", equalTo( "org.apache.knox.gateway.identityasserter.filter.IdentityAsserterFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/role", equalTo( "authorization" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/name", equalTo( "AclsAuthz" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "AclsAuthorizationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[6]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
 
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/name", equalTo( "webhdfs" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "GatewayDispatchFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[2]/filter[7]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
     LOG_EXIT();
   }
 
 
-   @Test( timeout = LONG_TIMEOUT )
-   public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
-      LOG_ENTER();
-      GatewayConfig config = new GatewayTestConfig();
-      File targetDir = new File(System.getProperty("user.dir"), "target");
-      File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
-      gatewayDir.mkdirs();
-      ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
-      File deployDir = new File(config.getGatewayDeploymentDir());
-      deployDir.mkdirs();
+  @Test( timeout = LONG_TIMEOUT )
+  public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+    LOG_ENTER();
+    GatewayConfig config = new GatewayTestConfig();
+    File targetDir = new File(System.getProperty("user.dir"), "target");
+    File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    File deployDir = new File(config.getGatewayDeploymentDir());
+    deployDir.mkdirs();
 
-      DefaultGatewayServices srvcs = new DefaultGatewayServices();
-      Map<String, String> options = new HashMap<>();
-      options.put("persist-master", "false");
-      options.put("master", "password");
-      try {
-         DeploymentFactory.setGatewayServices(srvcs);
-         srvcs.init(config, options);
-      } catch (ServiceLifecycleException e) {
-         e.printStackTrace(); // I18N not required.
-      }
+    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    Map<String, String> options = new HashMap<>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
 
-      Topology topology = new Topology();
-      topology.setName("test-cluster");
-      Service service = new Service();
-      service.setRole("WEBHDFS");
-      service.addUrl("http://localhost:50070/webhdfs");
-      topology.addService(service);
-      Provider provider = new Provider();
-      provider.setRole("authentication");
-      provider.setName("ShiroProvider");
-      provider.setEnabled(true);
-      Param param = new Param();
-      param.setName("contextConfigLocation");
-      param.setValue("classpath:app-context-security.xml");
-      provider.addParam(param);
-      topology.addProvider(provider);
-      Provider asserter = new Provider();
-      asserter.setRole("identity-assertion");
-      asserter.setName("Default");
-      asserter.setEnabled(true);
-      topology.addProvider(asserter);
-      Provider authorizer = new Provider();
-      authorizer.setRole("authorization");
-      authorizer.setName("AclsAuthz");
-      authorizer.setEnabled(true);
-      topology.addProvider(authorizer);
-      Provider ha = new Provider();
-      ha.setRole("ha");
-      ha.setName("HaProvider");
-      ha.setEnabled(true);
-      topology.addProvider(ha);
+    Topology topology = new Topology();
+    topology.setName("test-cluster");
+    Service service = new Service();
+    service.setRole("WEBHDFS");
+    service.addUrl("http://localhost:50070/webhdfs");
+    topology.addService(service);
+    Provider provider = new Provider();
+    provider.setRole("authentication");
+    provider.setName("ShiroProvider");
+    provider.setEnabled(true);
+    Param param = new Param();
+    param.setName("contextConfigLocation");
+    param.setValue("classpath:app-context-security.xml");
+    provider.addParam(param);
+    topology.addProvider(provider);
+    Provider asserter = new Provider();
+    asserter.setRole("identity-assertion");
+    asserter.setName("Default");
+    asserter.setEnabled(true);
+    topology.addProvider(asserter);
+    Provider authorizer = new Provider();
+    authorizer.setRole("authorization");
+    authorizer.setName("AclsAuthz");
+    authorizer.setEnabled(true);
+    topology.addProvider(authorizer);
+    Provider ha = new Provider();
+    ha.setRole("ha");
+    ha.setName("HaProvider");
+    ha.setEnabled(true);
+    topology.addProvider(ha);
 
-      for (int i = 0; i < 10; i++) {
-         createAndTestDeployment(config, topology);
-      }
-      LOG_EXIT();
-   }
+    for (int i = 0; i < 10; i++) {
+      createAndTestDeployment(config, topology);
+    }
+    LOG_EXIT();
+  }
 
-   private void createAndTestDeployment(GatewayConfig config, Topology topology) throws IOException, SAXException, ParserConfigurationException {
+  private void createAndTestDeployment(GatewayConfig config, Topology topology) throws IOException, SAXException, ParserConfigurationException {
 
-      EnterpriseArchive war = DeploymentFactory.createDeployment(config, topology);
-//      File dir = new File( System.getProperty( "user.dir" ) );
-//      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
+    EnterpriseArchive war = DeploymentFactory.createDeployment(config, topology);
+    //      File dir = new File( System.getProperty( "user.dir" ) );
+    //      File file = war.as( ExplodedExporter.class ).exportExploded( dir, "test-cluster.war" );
 
-      Document web = XmlUtils.readXml(war.get("%2F/WEB-INF/web.xml").getAsset().openStream());
-      assertThat(web, hasXPath("/web-app/servlet/servlet-class", equalTo("GatewayServlet")));
-      assertThat(web, hasXPath("/web-app/servlet/init-param/param-name", equalTo("gatewayDescriptorLocation")));
-      assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("/WEB-INF/gateway.xml")));
-      assertThat(web, hasXPath("/web-app/servlet-mapping/servlet-name", equalTo("test-cluster-knox-gateway-servlet")));
-      assertThat(web, hasXPath("/web-app/servlet-mapping/url-pattern", equalTo("/*")));
-      //testing the order of listener classes generated
-      assertThat(web, hasXPath("/web-app/listener[2]/listener-class", equalTo("GatewayServicesContextListener")));
-      assertThat(web, hasXPath("/web-app/listener[3]/listener-class", equalTo("GatewayMetricsServletContextListener")));
-      assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.hadoop.gateway.ha.provider" +
-          ".HaServletContextListener")));
-     assertThat(web, hasXPath("/web-app/listener[5]/listener-class", equalTo("org.apache.hadoop.gateway.filter" +
-         ".rewrite.api.UrlRewriteServletContextListener")));
-   }
+    Document web = XmlUtils.readXml(war.get("%2F/WEB-INF/web.xml").getAsset().openStream());
+    assertThat(web, hasXPath("/web-app/servlet/servlet-class", equalTo("org.apache.knox.gateway.GatewayServlet")));
+    assertThat(web, hasXPath("/web-app/servlet/init-param/param-name", equalTo("gatewayDescriptorLocation")));
+    assertThat(web, hasXPath("/web-app/servlet/init-param/param-value", equalTo("/WEB-INF/gateway.xml")));
+    assertThat(web, hasXPath("/web-app/servlet-mapping/servlet-name", equalTo("test-cluster-knox-gateway-servlet")));
+    assertThat(web, hasXPath("/web-app/servlet-mapping/url-pattern", equalTo("/*")));
+    //testing the order of listener classes generated
+    assertThat(web, hasXPath("/web-app/listener[2]/listener-class", equalTo("org.apache.knox.gateway.services.GatewayServicesContextListener")));
+    assertThat(web, hasXPath("/web-app/listener[3]/listener-class", equalTo("org.apache.knox.gateway.services.GatewayMetricsServletContextListener")));
+    assertThat(web, hasXPath("/web-app/listener[4]/listener-class", equalTo("org.apache.knox.gateway.ha.provider" +
+        ".HaServletContextListener")));
+    assertThat(web, hasXPath("/web-app/listener[5]/listener-class", equalTo("org.apache.knox.gateway.filter" +
+        ".rewrite.api.UrlRewriteServletContextListener")));
+  }
 
   @Test( timeout = LONG_TIMEOUT )
   public void testDeploymentWithServiceParams() throws Exception {
@@ -461,7 +461,7 @@ public class DeploymentFactoryFuncTest {
 
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
     Document doc = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
-//    dump( doc );
+    //    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
     String value;

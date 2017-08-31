@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class TraceHandler extends HandlerWrapper {
 
-  static final String HTTP_LOGGER = "org.apache.hadoop.gateway.http";
+  static final String HTTP_LOGGER = "org.apache.knox.gateway.http";
   static final String HTTP_REQUEST_LOGGER = HTTP_LOGGER + ".request";
   static final String HTTP_REQUEST_HEADER_LOGGER = HTTP_REQUEST_LOGGER + ".headers";
   static final String HTTP_REQUEST_BODY_LOGGER = HTTP_REQUEST_LOGGER + ".body";

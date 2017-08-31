@@ -25,7 +25,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.hadoop.gateway.shell.Credentials;
+import org.apache.knox.gateway.shell.Credentials;
 
 public class HiveJDBCSample {
 

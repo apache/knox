@@ -22,7 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.service.knoxsso")
+@Messages(logger="org.apache.knox.gateway.service.knoxsso")
 public interface KnoxSSOMessages {
   @Message( level = MessageLevel.INFO, text = "About to redirect to original URL: {0}")
   void aboutToRedirectToOriginal(String original);

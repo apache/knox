@@ -23,7 +23,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.provider.federation.jwt")
+@Messages(logger="org.apache.knox.gateway.provider.federation.jwt")
 public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute." )
   void failedToValidateAudience();

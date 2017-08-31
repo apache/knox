@@ -17,6 +17,6 @@
  */
 package org.apache.knox.gateway.util.urltemplate;
 
-@org.apache.knox.gateway.i18n.messages.Messages(logger="org.apache.hadoop.gateway")
+@org.apache.knox.gateway.i18n.messages.Messages(logger="org.apache.knox.gateway")
 public interface Messages {
 }

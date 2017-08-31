@@ -32,7 +32,7 @@ public class AnonymousAuthDeploymentContributor extends ProviderDeploymentContri
   private static final String ROLE = "authentication";
   private static final String NAME = "Anonymous";
 
-  private static final String FILTER_CLASSNAME = "AnonymousAuthFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.filter.AnonymousAuthFilter";
 
   @Override
   public String getRole() {

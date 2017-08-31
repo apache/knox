@@ -22,7 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger = "org.apache.hadoop.gateway.service.health")
+@Messages(logger = "org.apache.knox.gateway.service.health")
 public interface HealthServiceMessages {
   @Message(level = MessageLevel.INFO, text = "{0}")
   void basicInfo(String original);

@@ -28,7 +28,7 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
  * @since 0.10
  */
 
-@Messages(logger = "org.apache.hadoop.gateway.websockets")
+@Messages(logger = "org.apache.knox.gateway.websockets")
 public interface WebsocketLogMessages {
 
   @Message(level = MessageLevel.ERROR,

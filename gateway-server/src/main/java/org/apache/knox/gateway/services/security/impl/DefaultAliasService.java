@@ -73,7 +73,7 @@ public class DefaultAliasService implements AliasService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String)
+   * @see org.apache.knox.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String)
    */
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias)
@@ -82,7 +82,7 @@ public class DefaultAliasService implements AliasService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String, boolean)
+   * @see org.apache.knox.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String, boolean)
    */
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
@@ -135,7 +135,7 @@ public class DefaultAliasService implements AliasService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.security.impl.AliasService#addAliasForCluster(java.lang.String, java.lang.String, java.lang.String)
+   * @see org.apache.knox.gateway.services.security.impl.AliasService#addAliasForCluster(java.lang.String, java.lang.String, java.lang.String)
    */
   @Override
   public void addAliasForCluster(String clusterName, String alias, String value) {

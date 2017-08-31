@@ -55,6 +55,6 @@
             <rewrite apply="YARNUI/yarn/outbound/configuration" to="response.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.hadoop.gateway.rm.dispatch.RMUIHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch"/>
 
 </service>

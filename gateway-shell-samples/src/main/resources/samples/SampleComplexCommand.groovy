@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 import com.jayway.jsonpath.JsonPath
-import org.apache.hadoop.gateway.shell.AbstractRequest
-import org.apache.hadoop.gateway.shell.BasicResponse
-import org.apache.hadoop.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.AbstractRequest
+import org.apache.knox.gateway.shell.BasicResponse
+import org.apache.knox.gateway.shell.Hadoop
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.utils.URIBuilder

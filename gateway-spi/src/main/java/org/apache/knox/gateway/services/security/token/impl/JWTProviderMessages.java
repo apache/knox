@@ -29,7 +29,7 @@ import com.nimbusds.jose.JOSEException;
 /**
  *
  */
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface JWTProviderMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Rendering JWT Token for the wire: {0}" )

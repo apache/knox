@@ -53,7 +53,7 @@ public class HadoopGroupProviderDeploymentContributor
   /*
    * (non-Javadoc)
    * 
-   * @see org.apache.hadoop.gateway.identityasserter.common.filter.
+   * @see org.apache.knox.gateway.identityasserter.common.filter.
    * AbstractIdentityAsserterDeploymentContributor#getFilterClassname()
    */
   @Override

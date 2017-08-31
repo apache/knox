@@ -37,9 +37,9 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
   private static final String LISTENER_CLASSNAME = "org.apache.shiro.web.env.EnvironmentLoaderListener";
   private static final String SHIRO_FILTER_CLASSNAME = "org.apache.shiro.web.servlet.ShiroFilter";
-  private static final String POST_FILTER_CLASSNAME = "ShiroSubjectIdentityAdapter";
-  private static final String COOKIE_FILTER_CLASSNAME = "ResponseCookieFilter";
-  private static final String REDIRECT_FILTER_CLASSNAME = "RedirectToUrlFilter";
+  private static final String POST_FILTER_CLASSNAME = "org.apache.knox.gateway.filter.ShiroSubjectIdentityAdapter";
+  private static final String COOKIE_FILTER_CLASSNAME = "org.apache.knox.gateway.filter.ResponseCookieFilter";
+  private static final String REDIRECT_FILTER_CLASSNAME = "org.apache.knox.gateway.filter.RedirectToUrlFilter";
   private static final String SESSION_TIMEOUT = "sessionTimeout";
   private static final String REMEMBER_ME = "rememberme";
   private static final String SHRIO_CONFIG_FILE_NAME = "shiro.ini";

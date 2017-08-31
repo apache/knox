@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.apache.hadoop.gateway.shell.Hadoop
-import org.apache.hadoop.gateway.shell.hdfs.Hdfs
-import org.apache.hadoop.gateway.shell.Credentials
+import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.hdfs.Hdfs
+import org.apache.knox.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
 dataFile = "README"

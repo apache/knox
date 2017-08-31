@@ -18,7 +18,7 @@ or more contributor license agreements.  See the NOTICE file
 -->
 <xml-bindings
     xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/oxm"
-    package-name="org.apache.hadoop.gateway.topology" 
+    package-name="org.apache.knox.gateway.topology"
     xml-mapping-metadata-complete="true">
     <xml-schema
         element-form-default="QUALIFIED"/>

@@ -60,7 +60,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
+   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
    */
   @Override
   public JWTToken issueToken(Subject subject, String algorithm) throws TokenServiceException {
@@ -69,7 +69,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
+   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
    */
   @Override
   public JWTToken issueToken(Principal p, String algorithm) throws TokenServiceException {
@@ -77,7 +77,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
   
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long expires)
+   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long expires)
    */
   @Override
   public JWTToken issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
@@ -90,7 +90,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
+   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
    */
   @Override
   public JWTToken issueToken(Principal p, String audience, String algorithm, long expires)

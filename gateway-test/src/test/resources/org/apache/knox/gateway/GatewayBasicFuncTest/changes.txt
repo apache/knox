@@ -1904,7 +1904,7 @@ Release 0.20.202.0 - unreleased
 
     MAPREDUCE-1754. Replace mapred.persmissions.supergroup with an acl :
     mapreduce.gateway.administrators and HADOOP-6748.: Remove
-    org.apache.hadoop.gateway.administrators. Contributed by Amareshwari Sriramadasu.
+    org.apache.knox.gateway.administrators. Contributed by Amareshwari Sriramadasu.
 
     HADOOP-6701.  Incorrect exit codes for "dfs -chown", "dfs -chgrp"
     (rphulari)

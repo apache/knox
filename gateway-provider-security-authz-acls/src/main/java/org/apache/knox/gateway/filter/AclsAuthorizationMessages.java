@@ -21,7 +21,7 @@ import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface AclsAuthorizationMessages {
 
   @Message( level = MessageLevel.INFO, text = "Initializing AclsAuthz Provider for: {0}" )

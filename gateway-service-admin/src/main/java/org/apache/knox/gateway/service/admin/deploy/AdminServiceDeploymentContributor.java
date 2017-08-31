@@ -45,7 +45,7 @@ public class AdminServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway.service.admin" };
+    return new String[]{ "org.apache.knox.gateway.service.admin" };
   }
 
   /* (non-Javadoc)

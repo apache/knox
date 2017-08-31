@@ -92,7 +92,7 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
     final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
     if (context.getGatewayConfig() != null && context.getGatewayConfig().isXForwardedEnabled()) {
-      resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl("org.apache.hadoop.gateway.filter.XForwardedHeaderFilter");
+      resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl("org.apache.knox.gateway.filter.XForwardedHeaderFilter");
     }
   }
 

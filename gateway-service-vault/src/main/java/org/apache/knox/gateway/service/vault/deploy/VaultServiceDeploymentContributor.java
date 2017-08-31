@@ -46,7 +46,7 @@ public class VaultServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway.service.vault" };
+    return new String[]{ "org.apache.knox.gateway.service.vault" };
   }
 
   /* (non-Javadoc)

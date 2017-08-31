@@ -22,7 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.encrypturi")
+@Messages(logger="org.apache.knox.gateway.encrypturi")
 public interface EncryptUriMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to create or verify the presence of a password for URL encryption: {0}" )

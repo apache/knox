@@ -24,8 +24,8 @@ import org.apache.knox.gateway.deploy.ProviderDeploymentContributor;
 public interface GatewayServices extends Service,
     ProviderDeploymentContributor {
 
-  public static final String GATEWAY_CLUSTER_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.cluster";
-  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.hadoop.gateway.gateway.services";
+  public static final String GATEWAY_CLUSTER_ATTRIBUTE = "org.apache.knox.gateway.gateway.cluster";
+  public static final String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.knox.gateway.gateway.services";
 
   public static final String SSL_SERVICE = "SSLService";
   public static final String CRYPTO_SERVICE = "CryptoService";

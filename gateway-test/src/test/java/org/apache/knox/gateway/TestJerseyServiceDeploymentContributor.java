@@ -24,7 +24,7 @@ public class TestJerseyServiceDeploymentContributor extends
 
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway" };
+    return new String[]{ "org.apache.knox.gateway" };
   }
 
   @Override

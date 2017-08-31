@@ -30,10 +30,10 @@ public class GatewayServicesContextListener implements ServletContextListener {
   public void contextInitialized(ServletContextEvent sce) {
     GatewayServices gs = GatewayServer.getGatewayServices();
     sce.getServletContext().setAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE, gs);
-    String topologyName = (String) sce.getServletContext().getAttribute("org.apache.hadoop.gateway.gateway.cluster");
+    String topologyName = (String) sce.getServletContext().getAttribute("org.apache.knox.gateway.gateway.cluster");
     TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
     Topology topology = getTopology(ts, topologyName);
-    sce.getServletContext().setAttribute("org.apache.hadoop.gateway.topology", topology);
+    sce.getServletContext().setAttribute("org.apache.knox.gateway.topology", topology);
   }
 
   private Topology getTopology(TopologyService ts, String topologyName) {

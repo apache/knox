@@ -1261,8 +1261,8 @@ public class KnoxCLI extends Configured implements Tool {
 //        Build the Ini with minimum requirements
         Ini ini = new Ini();
         ini.addSection("main");
-        ini.setSectionProperty("main", "ldapRealm", "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm");
-        ini.setSectionProperty("main", "ldapContextFactory", "org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory");
+        ini.setSectionProperty("main", "ldapRealm", "org.apache.knox.gateway.shirorealm.KnoxLdapRealm");
+        ini.setSectionProperty("main", "ldapContextFactory", "org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory");
         ini.setSectionProperty("main", "ldapRealm.contextFactory.url", url);
 
         username = getSystemUsername(t);

@@ -19,6 +19,6 @@ package org.apache.knox.gateway.webappsec;
 
 import org.apache.knox.gateway.i18n.messages.Messages;
 
-@Messages(logger="org.apache.hadoop.gateway.provider.global.csrf")
+@Messages(logger="org.apache.knox.gateway.provider.global.csrf")
 public interface WebAppSecMessages {
 }

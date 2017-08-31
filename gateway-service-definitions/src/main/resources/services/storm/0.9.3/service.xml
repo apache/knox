@@ -24,7 +24,7 @@
             <rewrite apply="STORM/storm/logs/outbound" to="response.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.storm.StormDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.storm.StormDispatch"/>
     <testURLs>
         <testURL>/storm/api/v1/cluster/configuration</testURL>
         <testURL>/storm/api/v1/cluster/summary</testURL>

@@ -46,7 +46,7 @@
         </filter>
         <filter>
             <name>dispatch</name>
-            <class>org.apache.org.apache.hadoop.gateway.dispatch.HdfsDispatch</class>
+            <class>org.apache.org.apache.knox.gateway.dispatch.HdfsDispatch</class>
         </filter>
     </service>
 

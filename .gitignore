@@ -31,7 +31,7 @@ target
 install
 patch
 candidate
-org.apache.hadoop.gateway.security.EmbeddedApacheDirectoryServer/
+org.apache.knox.gateway.security.EmbeddedApacheDirectoryServer/
 velocity.log
 *.pyc
 *.py~

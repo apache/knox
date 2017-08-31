@@ -34,14 +34,15 @@ public class WebAppSecContributor extends
   private static final String ROLE = "webappsec";
   private static final String NAME = "WebAppSec";
   private static final String CSRF_SUFFIX = "_CSRF";
-  private static final String CSRF_FILTER_CLASSNAME = "CSRFPreventionFilter";
+  private static final String CSRF_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.CSRFPreventionFilter";
   private static final String CSRF_ENABLED = "csrf.enabled";
   private static final String CORS_SUFFIX = "_CORS";
   private static final String CORS_FILTER_CLASSNAME = "com.thetransactioncompany.cors.CORSFilter";
   private static final String CORS_ENABLED = "cors.enabled";
   private static final String XFRAME_OPTIONS_SUFFIX = "_XFRAMEOPTIONS";
-  private static final String XFRAME_OPTIONS_FILTER_CLASSNAME = "XFrameOptionsFilter";
+  private static final String XFRAME_OPTIONS_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.XFrameOptionsFilter";
   private static final String XFRAME_OPTIONS_ENABLED = "xframe.options.enabled";
+
 
   @Override
   public String getRole() {

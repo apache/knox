@@ -31,7 +31,7 @@ import java.util.Map.Entry;
 
 public class AclsAuthzDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "AclsAuthorizationFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.filter.AclsAuthorizationFilter";
 
   @Override
   public String getRole() {

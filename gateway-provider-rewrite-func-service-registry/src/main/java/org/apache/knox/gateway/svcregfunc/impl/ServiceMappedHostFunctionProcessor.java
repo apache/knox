@@ -66,10 +66,10 @@ public class ServiceMappedHostFunctionProcessor
             String hostStr = host.getFirstValue().getPattern();
             if( hostmap != null ) {
               switch( context.getDirection() ) {
-                case UrlRewriter.Direction.IN:
+                case IN:
                   parameter = hostmap.resolveInboundHostName( hostStr );
                   break;
-                case UrlRewriter.Direction.OUT:
+                case OUT:
                   parameter = hostmap.resolveOutboundHostName( hostStr );
                   break;
               }

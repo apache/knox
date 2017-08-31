@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.provider.federation;
 
 import junit.framework.TestCase;
-import org.apache.hadoop.gateway.preauth.filter.*;
+import org.apache.knox.gateway.preauth.filter.*;
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthService;

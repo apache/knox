@@ -29,7 +29,7 @@ import java.nio.charset.Charset;
 /**
  *
  */
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )

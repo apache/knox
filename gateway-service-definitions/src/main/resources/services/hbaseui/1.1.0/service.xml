@@ -65,5 +65,5 @@
             <rewrite apply="HBASEUI/hbase/outbound/configuration" to="response.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.hbase.HBaseDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.hbase.HBaseDispatch"/>
 </service>

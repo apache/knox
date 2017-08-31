@@ -40,7 +40,7 @@ public class ServiceDefinitionTest {
     assertEquals("1.0.0", definition.getVersion());
     assertEquals("custom-client", definition.getDispatch().getContributorName());
     assertEquals("ha-client", definition.getDispatch().getHaContributorName());
-    assertEquals("org.apache.hadoop.gateway.MockHttpClientFactory", definition.getDispatch().getHttpClientFactory());
+    assertEquals("org.apache.knox.gateway.MockHttpClientFactory", definition.getDispatch().getHttpClientFactory());
     List<Policy> policies = definition.getPolicies();
     assertEquals(5, policies.size());
     String[] policyOrder = new String[]{"webappsec", "authentication", "rewrite", "identity-assertion", "authorization"};
@@ -79,12 +79,12 @@ public class ServiceDefinitionTest {
     url = ClassLoader.getSystemResource("services/hbase/0.98.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
     assertNotNull(definition.getDispatch());
-    assertEquals("org.apache.hadoop.gateway.hbase.HBaseDispatch", definition.getDispatch().getClassName());
+    assertEquals("org.apache.knox.gateway.hbase.HBaseDispatch", definition.getDispatch().getClassName());
     url = ClassLoader.getSystemResource("services/webhdfs/2.4.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
     assertNotNull(definition.getDispatch());
-    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.HdfsHttpClientDispatch", definition.getDispatch().getClassName());
-    assertEquals("org.apache.hadoop.gateway.hdfs.dispatch.WebHdfsHaDispatch", definition.getDispatch().getHaClassName());
+    assertEquals("org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch", definition.getDispatch().getClassName());
+    assertEquals("org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch", definition.getDispatch().getHaClassName());
   }
 
 }

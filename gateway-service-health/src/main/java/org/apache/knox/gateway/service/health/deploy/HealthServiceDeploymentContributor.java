@@ -42,7 +42,7 @@ public class HealthServiceDeploymentContributor extends JerseyServiceDeploymentC
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{"org.apache.hadoop.gateway.service.health"};
+    return new String[]{"org.apache.knox.gateway.service.health"};
   }
 
   /* (non-Javadoc)

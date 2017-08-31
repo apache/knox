@@ -55,7 +55,7 @@ public class ServiceTestDeploymentContributor extends JerseyServiceDeploymentCon
    */
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.hadoop.gateway.service.test" };
+    return new String[]{ "org.apache.knox.gateway.service.test" };
   }
 
   /* (non-Javadoc)

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 import java.sql.DriverManager
-import org.apache.hadoop.gateway.shell.Credentials
+import org.apache.knox.gateway.shell.Credentials
 
 gatewayHost = "localhost";
 gatewayPort = 8443;

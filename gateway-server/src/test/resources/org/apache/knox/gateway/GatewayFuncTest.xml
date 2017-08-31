@@ -48,7 +48,7 @@
         </filter>
         <filter>
             <role>dispatch</role>
-            <class>org.apache.hadoop.gateway.dispatch.HdfsDispatch</class>
+            <class>org.apache.knox.gateway.dispatch.HdfsDispatch</class>
         </filter>
     </resource>
 

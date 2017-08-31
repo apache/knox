@@ -22,7 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.securequery")
+@Messages(logger="org.apache.knox.gateway.securequery")
 public interface SecureQueryMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to create or verify the presence of a password for query string encryption: {0}" )

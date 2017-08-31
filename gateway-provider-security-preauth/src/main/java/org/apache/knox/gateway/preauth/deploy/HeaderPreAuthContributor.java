@@ -33,7 +33,7 @@ public class HeaderPreAuthContributor extends
     ProviderDeploymentContributorBase {
   private static final String ROLE = "federation";
   private static final String NAME = "HeaderPreAuth";
-  private static final String PREAUTH_FILTER_CLASSNAME = "HeaderPreAuthFederationFilter";
+  private static final String PREAUTH_FILTER_CLASSNAME = "org.apache.knox.gateway.preauth.filter.HeaderPreAuthFederationFilter";
 
   @Override
   public String getRole() {

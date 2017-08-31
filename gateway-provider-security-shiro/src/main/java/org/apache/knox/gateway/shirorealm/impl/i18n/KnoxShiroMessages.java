@@ -26,7 +26,7 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 
-@Messages(logger = "org.apache.hadoop.gateway")
+@Messages(logger = "org.apache.knox.gateway")
 public interface KnoxShiroMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Shiro unable to login: {0}")

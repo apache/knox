@@ -23,7 +23,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger = "org.apache.hadoop.gateway")
+@Messages(logger = "org.apache.knox.gateway")
 public interface RMMessages extends HaDispatchMessages {
 
   @Message(level = MessageLevel.INFO, text = "Received an error from a node in Standby: {0}")

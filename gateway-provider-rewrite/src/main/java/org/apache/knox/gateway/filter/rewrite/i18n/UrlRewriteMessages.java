@@ -25,7 +25,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
-@Messages(logger="org.apache.hadoop.gateway")
+@Messages(logger="org.apache.knox.gateway")
 public interface UrlRewriteMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Failed to parse value as URL: {0}" )
