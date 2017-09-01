@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.provider.federation;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.gateway.preauth.filter.IPValidator;
 import org.apache.hadoop.gateway.preauth.filter.PreAuthValidationException;
 import org.junit.Test;
@@ -28,7 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class IPValidatorTest extends TestCase {
+public class IPValidatorTest extends org.junit.Assert {
 
   @Test
   public void testName() {

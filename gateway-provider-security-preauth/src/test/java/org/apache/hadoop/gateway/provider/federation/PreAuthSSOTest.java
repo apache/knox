@@ -18,12 +18,11 @@
  */
 package org.apache.hadoop.gateway.provider.federation;
 
-import junit.framework.TestCase;
 
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
-public class PreAuthSSOTest extends TestCase {
+public class PreAuthSSOTest extends org.junit.Assert {
   @Test
   public void testPreAuth() throws Exception {
     assertTrue(true);

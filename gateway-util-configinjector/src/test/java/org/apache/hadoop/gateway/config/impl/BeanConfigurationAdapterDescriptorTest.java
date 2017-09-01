@@ -25,9 +25,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import static junit.framework.TestCase.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
+import static org.junit.Assert.fail;
 
 public class BeanConfigurationAdapterDescriptorTest {
 

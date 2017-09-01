@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.provider.federation;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.gateway.preauth.filter.DefaultValidator;
 import org.junit.Test;
 
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
-public class DefaultValidatorTest extends TestCase {
+public class DefaultValidatorTest extends org.junit.Assert {
   @Test
   public void testDefault() throws Exception {
     final FilterConfig filterConfig = mock(FilterConfig.class);

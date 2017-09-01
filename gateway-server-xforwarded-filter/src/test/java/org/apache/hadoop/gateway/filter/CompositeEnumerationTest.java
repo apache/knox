@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 public class CompositeEnumerationTest {
 

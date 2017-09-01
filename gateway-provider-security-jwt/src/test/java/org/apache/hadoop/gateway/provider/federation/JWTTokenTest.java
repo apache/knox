@@ -18,12 +18,11 @@
 package org.apache.hadoop.gateway.provider.federation;
 
 import java.util.ArrayList;
-import junit.framework.TestCase;
 
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
-public class JWTTokenTest extends TestCase {
+public class JWTTokenTest extends org.junit.Assert {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
   private static final String HEADER = "{\"alg\":\"RS256\", \"type\":\"JWT\"}";
   private static final String CLAIMS = "{\"iss\": \"gateway\", \"prn\": \"john.doe@example.com\", \"aud\": \"https://login.example.com\", \"exp\": \"1363360913\"}";

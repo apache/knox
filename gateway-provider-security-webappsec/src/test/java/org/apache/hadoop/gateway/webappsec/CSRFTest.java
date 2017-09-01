@@ -17,11 +17,10 @@
  */
 package org.apache.hadoop.gateway.webappsec;
 
-import junit.framework.TestCase;
 
 import org.junit.Test;
 
-public class CSRFTest extends TestCase {
+public class CSRFTest extends org.junit.Assert {
   @Test
   public void testCsrf() throws Exception {
     assertTrue(true);

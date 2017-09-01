@@ -18,12 +18,11 @@
  */
 package org.apache.hadoop.gateway.picketlink;
 
-import junit.framework.TestCase;
 
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
 
-public class PicketlinkTest extends TestCase {
+public class PicketlinkTest extends org.junit.Assert {
   @Test
   public void testPicketlink() throws Exception {
     assertTrue(true);

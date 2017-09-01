@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.gateway.provider.federation;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.gateway.preauth.filter.*;
 import org.junit.Test;
 
@@ -30,7 +29,7 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class HeaderPreAuthFederationFilterTest extends TestCase {
+public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
 
   @Test
   public void testDefaultValidator() throws ServletException, PreAuthValidationException {
