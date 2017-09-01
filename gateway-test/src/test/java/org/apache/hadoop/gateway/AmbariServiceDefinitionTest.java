@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.StringWriter;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -105,20 +104,6 @@ public class AmbariServiceDefinitionTest {
 
     config = new GatewayTestConfig();
     config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-
-    URL svcsFileUrl = TestUtils.getResourceUrl( DAT, "test-svcs/readme.txt" );
-    File svcsFile = new File( svcsFileUrl.getFile() );
-    File svcsDir = svcsFile.getParentFile();
-    config.setGatewayServicesDir( svcsDir.getAbsolutePath() );
-
-    String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
-    File stacksSourceDir = new File( targetDir.getParent(), pathToStacksSource);
-    if (!stacksSourceDir.exists()) {
-      stacksSourceDir = new File( targetDir.getParentFile().getParent(), pathToStacksSource);
-    }
-    if (stacksSourceDir.exists()) {
-      FileUtils.copyDirectoryToDirectory(stacksSourceDir, svcsDir);
-    }
 
     File topoDir = new File( config.getGatewayTopologyDir() );
     topoDir.mkdirs();

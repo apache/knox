@@ -90,7 +90,6 @@ public class DeploymentFactoryFuncTest {
 
 //    ((GatewayTestConfig) config).setDeploymentDir( "clusters" );
 
-    addStacksDir(config, targetDir);
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
@@ -153,7 +152,6 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
-    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -212,7 +210,6 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
-    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -414,7 +411,6 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
-    addStacksDir(config, targetDir);
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();
@@ -505,7 +501,6 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
-    addStacksDir(config, targetDir);
     URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
     File serviceFile = new File( serviceUrl.toURI() );
     File appsDir = serviceFile.getParentFile().getParentFile();
@@ -564,7 +559,6 @@ public class DeploymentFactoryFuncTest {
     ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
-    addStacksDir(config, targetDir);
     URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
     File serviceFile = new File( serviceUrl.toURI() );
     File appsDir = serviceFile.getParentFile().getParentFile();
@@ -634,25 +628,6 @@ public class DeploymentFactoryFuncTest {
     assertThat( "Parse %2Fminimal-test-app-path-two/WEB-INF/gateway.xml", doc, notNullValue() );
 
     LOG_EXIT();
-  }
-
-  private void addStacksDir(GatewayConfig config, File targetDir) {
-    File stacksDir = new File( config.getGatewayServicesDir() );
-    stacksDir.mkdirs();
-    //TODO: [sumit] This is a hack for now, need to find a better way to locate the source resources for 'stacks' to be tested
-    String pathToStacksSource = "gateway-service-definitions/src/main/resources/services";
-    File stacksSourceDir = new File( targetDir.getParent(), pathToStacksSource);
-    if (!stacksSourceDir.exists()) {
-      stacksSourceDir = new File( targetDir.getParentFile().getParent(), pathToStacksSource);
-    }
-    if (stacksSourceDir.exists()) {
-      try {
-        FileUtils.copyDirectoryToDirectory(stacksSourceDir, stacksDir);
-      } catch ( IOException e) {
-        fail(e.getMessage());
-      }
-    }
-
   }
 
   private Node node( Node scope, String expression ) throws XPathExpressionException {
