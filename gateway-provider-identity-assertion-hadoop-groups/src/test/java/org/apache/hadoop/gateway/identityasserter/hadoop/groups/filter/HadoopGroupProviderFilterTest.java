@@ -22,8 +22,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
@@ -38,7 +38,7 @@ import org.junit.Test;
 
 /**
  * Test for {@link HadoopGroupProviderFilter}
- * 
+ *
  * @since 0.11.0
  */
 public class HadoopGroupProviderFilterTest {
@@ -68,7 +68,7 @@ public class HadoopGroupProviderFilterTest {
 
   /**
    * Test that valid groups are retrieved for a legitimate user.
-   * 
+   *
    * @throws ServletException
    */
   @Test
@@ -102,7 +102,7 @@ public class HadoopGroupProviderFilterTest {
 
   /**
    * Test that no groups are retrieved for a dummy user.
-   * 
+   *
    * @throws ServletException
    */
   @Test
@@ -139,7 +139,7 @@ public class HadoopGroupProviderFilterTest {
    * back on {@link ShellBasedUnixGroupsMapping} because we explicitly use
    * {@link LdapGroupsMapping} and in case of bad config we get empty groups
    * (Hadoop way).
-   * 
+   *
    * @throws ServletException
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -189,7 +189,7 @@ public class HadoopGroupProviderFilterTest {
             "(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))")
         .anyTimes();
     EasyMock.expect(config.getInitParameterNames())
-        .andReturn(new Vector(keysList).elements()).anyTimes();
+        .andReturn(Collections.enumeration((keysList))).anyTimes();
 
     EasyMock.replay( config );
     EasyMock.replay( context );

@@ -72,7 +72,7 @@ public class WebAppSecContributor extends
       Map<String, String> providerParams = provider.getParams();
       // CORS support
       String corsEnabled = map.get(CORS_ENABLED);
-      if ( corsEnabled != null && corsEnabled.equals("true")) {
+      if ( corsEnabled != null && "true".equals(corsEnabled)) {
         provisionConfig(resource, providerParams, params, "cors.");
         resource.addFilter().name( getName() + CORS_SUFFIX ).role( getRole() ).impl( CORS_FILTER_CLASSNAME ).params( params );
       }
@@ -80,7 +80,7 @@ public class WebAppSecContributor extends
       // CRSF
       params = new ArrayList<FilterParamDescriptor>();
       String csrfEnabled = map.get(CSRF_ENABLED);
-      if ( csrfEnabled != null && csrfEnabled.equals("true")) {
+      if ( csrfEnabled != null && "true".equals(csrfEnabled)) {
         provisionConfig(resource, providerParams, params, "csrf.");
         resource.addFilter().name( getName() + CSRF_SUFFIX ).role( getRole() ).impl( CSRF_FILTER_CLASSNAME ).params( params );
       }
@@ -88,7 +88,7 @@ public class WebAppSecContributor extends
       // X-Frame-Options - clickjacking protection
       params = new ArrayList<FilterParamDescriptor>();
       String xframeOptionsEnabled = map.get(XFRAME_OPTIONS_ENABLED);
-      if ( xframeOptionsEnabled != null && xframeOptionsEnabled.equals("true")) {
+      if ( xframeOptionsEnabled != null && "true".equals(xframeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xframe.");
         resource.addFilter().name( getName() + XFRAME_OPTIONS_SUFFIX ).role( getRole() ).impl( XFRAME_OPTIONS_FILTER_CLASSNAME ).params( params );
       }

@@ -77,7 +77,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
   @Override
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
     String parameter = "url";
-    if( parameters != null && parameters.size() > 0 ) {
+    if( parameters != null && !parameters.isEmpty() ) {
       String first = parameters.get( 0 );
       if( first != null ) {
         parameter = first;

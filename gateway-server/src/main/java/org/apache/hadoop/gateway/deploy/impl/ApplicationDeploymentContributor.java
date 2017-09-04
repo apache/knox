@@ -199,7 +199,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
         throw new IllegalArgumentException("Policy defined has no role for service " + service.getName());
       }
       role = role.trim().toLowerCase();
-      if ( role.equals("rewrite") ) {
+      if ( "rewrite".equals(role) ) {
         addRewriteFilter(context, service, filterParams, params, resource);
       } else if ( topologyContainsProviderType(context, role) ) {
         context.contributeFilter(service, resource, role, policyBinding.getName(), null);

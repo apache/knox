@@ -131,9 +131,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -162,9 +162,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -195,7 +195,7 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -229,9 +229,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -259,7 +259,7 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -287,9 +287,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -317,7 +317,7 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");

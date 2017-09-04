@@ -225,7 +225,7 @@ public class Template {
         b.append( firstValue.getOriginalPattern() );
       }
     }
-    if( isDirectory && ( !isAbsolute || path.size() > 0 ) ) {
+    if( isDirectory && ( !isAbsolute || !path.isEmpty() ) ) {
       b.append( '/' );
     }
   }

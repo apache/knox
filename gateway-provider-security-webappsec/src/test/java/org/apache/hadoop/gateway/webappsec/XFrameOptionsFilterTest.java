@@ -67,9 +67,9 @@ public class XFrameOptionsFilterTest {
       TestFilterChain chain = new TestFilterChain();
       filter.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.",
-          chain.doFilterCalled == true);
+          chain.doFilterCalled );
       Assert.assertTrue("Options value incorrect should be DENY but is: "
-          + options, options.equals("DENY"));
+          + options, "DENY".equals(options));
 
       Assert.assertTrue("X-Frame-Options count not equal to 1.", headers.size() == 1);
     } catch (ServletException se) {
@@ -96,9 +96,9 @@ public class XFrameOptionsFilterTest {
       TestFilterChain chain = new TestFilterChain();
       filter.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.",
-          chain.doFilterCalled == true);
+          chain.doFilterCalled );
       Assert.assertTrue("Options value incorrect should be SAMEORIGIN but is: "
-          + options, options.equals("SAMEORIGIN"));
+          + options, "SAMEORIGIN".equals(options));
 
       Assert.assertTrue("X-Frame-Options count not equal to 1.", headers.size() == 1);
     } catch (ServletException se) {
@@ -125,9 +125,9 @@ public class XFrameOptionsFilterTest {
 //      TestFilterChain chain = new TestFilterChain();
 //      filter.doFilter(request, response, chain);
 //      Assert.assertTrue("doFilterCalled should not be false.",
-//          chain.doFilterCalled == true);
+//          chain.doFilterCalled );
 //      Assert.assertTrue("Options value incorrect should be SAMEORIGIN but is: "
-//          + options, options.equals("SAMEORIGIN"));
+//          + options, "SAMEORIGIN".equals(options));
 //
 //      Assert.assertTrue("X-Frame-Options count not equal to 1.", headers.size() == 1);
 //    } catch (ServletException se) {

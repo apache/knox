@@ -664,7 +664,7 @@ public class KnoxCLI extends Configured implements Tool {
        out.println(name + " has been successfully created.");
      }
      else {
-       if (generate.equals("true")) {
+       if ("true".equals(generate)) {
          as.generateAliasForCluster(cluster, name);
          out.println(name + " has been successfully generated.");
        }

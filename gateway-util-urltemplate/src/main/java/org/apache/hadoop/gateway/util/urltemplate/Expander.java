@@ -129,14 +129,14 @@ public class Expander {
           break;
       }
     }
-    if( template.isDirectory() && path.size() > 0 ) {
+    if( template.isDirectory() && !path.isEmpty() ) {
       builder.append( "/" );
     }
   }
 
   //TODO: This needs to handle multiple values but only to the limit of the segment.
   private static void expandPathValues( Path segment, List<String> values, StringBuilder builder ) {
-    if( values != null && values.size() > 0 ) {
+    if( values != null && !values.isEmpty() ) {
       int type = segment.getFirstValue().getType();
       if( type == Segment.GLOB || type == Segment.DEFAULT ) {
         for( int i=0, n=values.size(); i<n; i++ ) {

@@ -132,7 +132,7 @@ public class AclsAuthorizationFilter implements Filter {
       // it true if there is an anyGroup acl
       // for AND mode and acls like *;*;127.0.0.* we need to
       // make it pass
-      if (parser.anyGroup && aclProcessingMode.equals("AND")) {
+      if (parser.anyGroup && "AND".equals(aclProcessingMode)) {
         groupAccess = true;
       }
     }
@@ -140,7 +140,7 @@ public class AclsAuthorizationFilter implements Filter {
     ipAddrAccess = checkRemoteIpAcls(req.getRemoteAddr());
     log.remoteIPAddressHasAccess(ipAddrAccess);
     
-    if (aclProcessingMode.equals("OR")) {
+    if ("OR".equals(aclProcessingMode)) {
       // need to interpret '*' as excluded for OR semantics
       // to make sense and not grant access to everyone by mistake.
       // exclusion in OR is equivalent to denied
@@ -151,7 +151,7 @@ public class AclsAuthorizationFilter implements Filter {
       
       return (userAccess || groupAccess || ipAddrAccess);
     }
-    else if (aclProcessingMode.equals("AND")) {
+    else if ("AND".equals(aclProcessingMode)) {
       return (userAccess && groupAccess && ipAddrAccess);
     }
     return false;

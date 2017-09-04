@@ -461,7 +461,7 @@ public class GatewayServer {
 
     handlers.addHandler(logHandler);
 
-    if (config.isWebsocketEnabled()) {      
+    if (config.isWebsocketEnabled()) {
       final GatewayWebsocketHandler websocketHandler = new GatewayWebsocketHandler(
           config, services);
       websocketHandler.setHandler(portMappingHandler);
@@ -501,7 +501,7 @@ public class GatewayServer {
     // if topology name is blank which means we have all topologies listening on this port
     if (StringUtils.isBlank(topologyName)) {
       // If we have Default Topology old and new configuration (Port Mapping) throw error.
-      if (config.getGatewayPortMappings().containsValue(new Integer(port))
+      if (config.getGatewayPortMappings().containsValue(Integer.valueOf(port))
           && !StringUtils.isBlank(config.getDefaultTopologyName())) {
         log.portAlreadyInUse(port);
         throw new IOException(String.format(
@@ -742,7 +742,7 @@ public class GatewayServer {
           originalRoot.appendChild( importedNode );
         }
       }
-      
+
       XmlUtils.writeXml( webXmlDoc, new FileWriter(webXmlFile) );
     }
   }
@@ -1008,7 +1008,7 @@ public class GatewayServer {
 
   private static class FileModificationTimeDescendingComparator implements Comparator<File>, Serializable {
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = -2269785204848916823L;
 

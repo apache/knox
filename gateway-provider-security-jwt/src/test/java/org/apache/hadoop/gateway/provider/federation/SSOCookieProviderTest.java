@@ -89,9 +89,9 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal returned.", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal returned.", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
