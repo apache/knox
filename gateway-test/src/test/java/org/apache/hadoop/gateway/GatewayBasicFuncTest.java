@@ -163,6 +163,7 @@ public class GatewayBasicFuncTest {
     driver.setupService( "STORM", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupService( "STORM-LOGVIEWER", "http://" + TEST_HOST + ":8477", "/cluster/storm", USE_MOCK_SERVICES );
     driver.setupService( "SOLR", "http://" + TEST_HOST + ":8983", "/cluster/solr", USE_MOCK_SERVICES );
+    driver.setupService( "KAFKA", "http://" + TEST_HOST + ":8477", "/cluster/kafka", USE_MOCK_SERVICES );
     driver.setupGateway( config, "cluster", createTopology(), USE_GATEWAY );
     LOG_EXIT();
   }
@@ -267,6 +268,9 @@ public class GatewayBasicFuncTest {
         .addTag("service")
             .addTag("role").addText("SOLR")
             .addTag("url").addText(driver.getRealUrl("SOLR")).gotoParent()
+        .addTag("service")
+            .addTag("role").addText("KAFKA")
+            .addTag("url").addText(driver.getRealUrl("KAFKA")).gotoParent()
         .addTag("service")
         .addTag("role").addText("SERVICE-TEST")
         .gotoRoot();
@@ -3736,6 +3740,31 @@ public class GatewayBasicFuncTest {
         .when().get( gatewayPath );
 
     assertTrue(response.getBody().asString().contains("The Merchant of Venice"));
+
+    driver.assertComplete();
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testKafka() throws IOException {
+    LOG_ENTER();
+    String username = "hdfs";
+    String password = "hdfs-password";
+
+    driver.getMock( "KAFKA" )
+        .expect()
+        .method( "GET" )
+        .pathInfo( "/topics" )
+        .respond()
+        .status( HttpStatus.SC_OK );
+
+    given()
+        .auth().preemptive().basic( username, password )
+        .header("X-XSRF-Header", "jksdhfkhdsf")
+        .queryParam( "op", "GET" )
+        .expect()
+        .statusCode( HttpStatus.SC_OK )
+        .when().get( driver.getUrl( "KAFKA" ) + "/topics" );
 
     driver.assertComplete();
     LOG_EXIT();
