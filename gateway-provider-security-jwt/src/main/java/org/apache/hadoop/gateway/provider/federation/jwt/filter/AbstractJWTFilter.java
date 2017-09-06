@@ -63,7 +63,6 @@ public abstract class AbstractJWTFilter implements Filter {
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   protected List<String> audiences;
   protected JWTokenAuthority authority;
-  protected String verificationPEM = null;
   protected RSAPublicKey publicKey = null;
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -74,7 +73,7 @@ public abstract class AbstractJWTFilter implements Filter {
       throws IOException, ServletException;
 
   /**
-   * 
+   *
    */
   public AbstractJWTFilter() {
     super();
@@ -128,7 +127,7 @@ public abstract class AbstractJWTFilter implements Filter {
    */
   protected boolean validateAudiences(JWTToken jwtToken) {
     boolean valid = false;
-    
+
     String[] tokenAudienceList = jwtToken.getAudienceClaims();
     // if there were no expected audiences configured then just
     // consider any audience acceptable
@@ -195,18 +194,18 @@ public abstract class AbstractJWTFilter implements Filter {
     Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
-      
-    // The newly constructed Sets check whether this Subject has been set read-only 
-    // before permitting subsequent modifications. The newly created Sets also prevent 
+
+    // The newly constructed Sets check whether this Subject has been set read-only
+    // before permitting subsequent modifications. The newly created Sets also prevent
     // illegal modifications by ensuring that callers have sufficient permissions.
     //
-    // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
-    // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
+    // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
+    // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
     javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
     return subject;
   }
-  
+
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain, JWTToken token)
       throws IOException, ServletException {
@@ -221,7 +220,7 @@ public abstract class AbstractJWTFilter implements Filter {
     } catch (TokenServiceException e) {
       log.unableToVerifyToken(e);
     }
-    
+
     if (verified) {
       // confirm that issue matches intended target - which for this filter must be KNOXSSO
       if (token.getIssuer().equals("KNOXSSO")) {
@@ -235,13 +234,13 @@ public abstract class AbstractJWTFilter implements Filter {
           }
           else {
             log.failedToValidateAudience();
-            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST, 
+            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                   "Bad request: missing required token audience");
           }
         }
         else {
           log.tokenHasExpired();
-          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST, 
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                 "Bad request: token has expired");
         }
       }
@@ -256,8 +255,8 @@ public abstract class AbstractJWTFilter implements Filter {
 
     return false;
   }
-  
-  protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status, 
+
+  protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                                 String error) throws IOException;
-  
+
 }

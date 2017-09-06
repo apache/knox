@@ -42,21 +42,19 @@ import com.nimbusds.jwt.SignedJWT;
 
 public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   private static final String SERVICE_URL = "https://localhost:8888/resource";
-  private static final String REDIRECT_LOCATION =
-      "https://localhost:8443/authserver?originalUrl=" + SERVICE_URL;
-  
+
   @Before
   public void setup() throws Exception, NoSuchAlgorithmException {
     super.setup();
     handler = new TestSSOCookieFederationProvider();
-    ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority());
+    ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
   }
-  
+
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
     EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
   }
-  
+
   protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     Cookie cookie = new Cookie("hadoop-jwt", "ljm" + jwt.serialize());
     EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
@@ -65,7 +63,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   protected String getAudienceProperty() {
     return TestSSOCookieFederationProvider.SSO_EXPECTED_AUDIENCES;
   }
-  
+
   @Test
   public void testCustomCookieNameJWT() throws Exception {
     try {
@@ -112,47 +110,6 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       se.getMessage().contains("authentication provider URL is missing");
     }
   }
-  
-/*
-  @Test
-  public void testFailedSignatureValidationJWT() throws Exception {
-    try {
-
-      // Create a public key that doesn't match the one needed to
-      // verify the signature - in order to make it fail verification...
-      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-      kpg.initialize(2048);
-
-      KeyPair kp = kpg.genKeyPair();
-      RSAPublicKey publicKey = (RSAPublicKey) kp.getPublic();
-
-      handler.setPublicKey(publicKey);
-
-      Properties props = getProperties();
-      handler.init(props);
-
-      SignedJWT jwt = getJWT("bob", new Date(new Date().getTime() + 5000),
-          privateKey);
-
-      Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
-      HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-      Mockito.when(request.getCookies()).thenReturn(new Cookie[] { cookie });
-      Mockito.when(request.getRequestURL()).thenReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
-      HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-      Mockito.when(response.encodeRedirectURL(SERVICE_URL)).thenReturn(
-          SERVICE_URL);
-
-      AuthenticationToken token = handler.alternateAuthenticate(request,
-          response);
-      Mockito.verify(response).sendRedirect(REDIRECT_LOCATION);
-    } catch (ServletException se) {
-      fail("alternateAuthentication should NOT have thrown a ServletException");
-    } catch (AuthenticationException ae) {
-      fail("alternateAuthentication should NOT have thrown a AuthenticationException");
-    }
-  }
-*/
 
   @Test
   public void testOrigURLWithQueryString() throws Exception {
@@ -185,7 +142,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
   }
-  
+
 
   @Override
   protected String getVerificationPemProperty() {
@@ -196,7 +153,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     public String testConstructLoginURL(HttpServletRequest req) {
       return constructLoginURL(req);
     }
-    
+
     public void setTokenService(JWTokenAuthority ts) {
       authority = ts;
     }
