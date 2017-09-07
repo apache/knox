@@ -60,14 +60,23 @@ import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
  *
  */
 public abstract class AbstractJWTFilter implements Filter {
+  /**
+   * If specified, this configuration property refers to a value which the issuer of a received
+   * token must match. Otherwise, the default value "KNOXSSO" is used
+   */
+  public static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
+  public static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
+
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
-  protected List<String> audiences;
-  protected JWTokenAuthority authority;
-  protected RSAPublicKey publicKey = null;
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
+
+  protected List<String> audiences;
+  protected JWTokenAuthority authority;
+  protected RSAPublicKey publicKey = null;
+  private String expectedIssuer;
 
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
@@ -87,6 +96,13 @@ public abstract class AbstractJWTFilter implements Filter {
       if (services != null) {
         authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
       }
+    }
+  }
+
+  protected void configureExpectedIssuer(FilterConfig filterConfig) {
+    expectedIssuer = filterConfig.getInitParameter(JWT_EXPECTED_ISSUER);;
+    if (expectedIssuer == null) {
+      expectedIssuer = JWT_DEFAULT_ISSUER;
     }
   }
 
@@ -222,8 +238,8 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     if (verified) {
-      // confirm that issue matches intended target - which for this filter must be KNOXSSO
-      if (token.getIssuer().equals("KNOXSSO")) {
+      // confirm that issue matches intended target
+      if (expectedIssuer.equals(token.getIssuer())) {
         // if there is no expiration data then the lifecycle is tied entirely to
         // the cookie validity - otherwise ensure that the current time is before
         // the designated expiration time
