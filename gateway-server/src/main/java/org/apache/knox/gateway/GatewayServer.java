@@ -459,6 +459,29 @@ public class GatewayServer {
 
     }
 
+    /* KNOX-1205: Topology Domain Mapping */
+    if (config.isGatewayDomainMappingEnabled()) {
+      log.gatewayTopologyDomainMappingEnabled(config.isGatewayDomainMappingEnabled());
+
+      // let end user access service via topology customized domain:
+      // http://{topology-domain}/{serviceUrl}
+      // or
+      // http://{topology}.{gateway-domain}/{serviceUrl}
+      for (final Map.Entry<String, String> entry : config.getGatewayDomainMappings().entrySet()) {
+        log.createJettyHandler(entry.getKey(), entry.getValue());
+        final ContextHandler topologyContextHandler = new ContextHandler();
+
+        final RequestUpdateHandler updateHandler = new RequestUpdateHandler(
+                config, entry.getKey(), services);
+
+        topologyContextHandler.setHandler(updateHandler);
+        topologyContextHandler.setVirtualHosts(
+                new String[] { entry.getValue(), entry.getKey() + "." + config.getGatewayDomain() });
+
+        handlers.addHandler(topologyContextHandler);
+      }
+    }
+
     handlers.addHandler(logHandler);
 
     if (config.isWebsocketEnabled()) {
@@ -573,6 +596,10 @@ public class GatewayServer {
     // log WARN message and continue
     checkMappedTopologiesExist(topologyPortMap, deployedTopologyList);
 
+    // FIXME: 08/09/2017 Check whether the cofigured topologies for domain mapping exist, if not
+    // log WARN message and continue
+    checkDomainMappedTopologiesExist(config.getGatewayDomainMappings(), deployedTopologyList);
+
     final HandlerCollection handlers = createHandlers( config, services, contexts, topologyPortMap);
 
      // Check whether a topology wants dedicated port,
@@ -656,6 +683,29 @@ public class GatewayServer {
       // If the topologies defined in gateway-config.xml are not found in gateway
       if (!topologies.contains(entry.getKey())) {
         log.topologyPortMappingCannotFindTopology(entry.getKey(), entry.getValue());
+      }
+
+    }
+
+  }
+
+  /**
+   * Checks whether the topologies defined in gateway-xml as part of Topology
+   * Domain mapping feature exists. If it does not Log a message and move on.
+   *
+   * @param configTopologies
+   * @param topologies
+   * @return
+   */
+  private void checkDomainMappedTopologiesExist(
+          final Map<String, String> configTopologies,
+          final List<String> topologies) throws IOException {
+
+    for(final Map.Entry<String, String> entry : configTopologies.entrySet()) {
+
+      // If the topologies defined in gateway-config.xml are not found in gateway
+      if (!topologies.contains(entry.getKey())) {
+        log.topologyDomainMappingCannotFindTopology(entry.getKey(), entry.getValue());
       }
 
     }

@@ -84,6 +84,8 @@ public interface GatewayConfig {
 
   int getGatewayPort();
 
+  String getGatewayDomain();
+
   String getGatewayPath();
 
   String getGatewayProvidersConfigDir();
@@ -307,6 +309,18 @@ public interface GatewayConfig {
    * @return
    */
   boolean isGatewayPortMappingEnabled();
+
+  /**
+   * Map of Topology names and their domains.
+   * @return
+   */
+  Map<String, String> getGatewayDomainMappings();
+
+  /**
+   * Is the Domain Mapping feature on
+   * @return
+   */
+  boolean isGatewayDomainMappingEnabled();
 
   /**
    * Is the Server header suppressed

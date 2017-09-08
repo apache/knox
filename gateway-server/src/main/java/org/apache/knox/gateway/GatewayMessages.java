@@ -445,6 +445,15 @@ public interface GatewayMessages {
   void gatewayTopologyPortMappingEnabled(final boolean enabled);
 
   /**
+   * Log whether Topology port mapping feature is enabled/disabled.
+   *
+   * @param enabled
+   */
+  @Message(level = MessageLevel.INFO,
+          text = "Topology domain mapping feature enabled: {0}")
+  void gatewayTopologyDomainMappingEnabled(final boolean enabled);
+
+  /**
    * @param topology
    * @param port
    */
@@ -458,6 +467,14 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a handler for topology {0}.")
   void createJettyHandler(final String topology);
+
+  /**
+   * @param topology
+   */
+  @Message(level = MessageLevel.DEBUG,
+          text = "Creating a handler for topology {0} listening on domain {1}.")
+  void createJettyHandler(final String topology, final String domain);
+
 
   /**
    * @param oldTarget
@@ -612,4 +629,11 @@ public interface GatewayMessages {
                                      final String clusterName,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR,
+          text =
+                  " Could not find topology \"{0}\" mapped to domain \"{1}\" configured in gateway-config.xml. "
+                          + "This invalid topology mapping will be ignored by the gateway. "
+                          + "Gateway restart will be required if in the future \"{0}\" topology is added.")
+  void topologyDomainMappingCannotFindTopology(final String topology,
+                                             final String domain);
 }
