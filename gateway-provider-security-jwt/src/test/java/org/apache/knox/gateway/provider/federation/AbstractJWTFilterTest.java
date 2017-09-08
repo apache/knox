@@ -26,6 +26,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -66,7 +67,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public abstract class AbstractJWTFilterTest  {
   private static final String SERVICE_URL = "https://localhost:8888/resource";
@@ -109,7 +110,7 @@ public abstract class AbstractJWTFilterTest  {
   public void teardown() throws Exception {
     handler.destroy();
   }
-  
+
   @Test
   public void testValidJWT() throws Exception {
     try {
@@ -120,7 +121,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
-      
+
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -131,15 +132,15 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
   }
-  
+
   @Test
   public void testValidAudienceJWT() throws Exception {
     try {
@@ -151,7 +152,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
-      
+
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -162,9 +163,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -184,7 +185,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
-      
+
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -195,7 +196,7 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -206,7 +207,7 @@ public abstract class AbstractJWTFilterTest  {
   public void testValidVerificationPEM() throws Exception {
     try {
       Properties props = getProperties();
-      
+
 //      System.out.println("+" + pem + "+");
 
       props.put(getAudienceProperty(), "bar");
@@ -229,9 +230,9 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -248,7 +249,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
-      
+
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -259,13 +260,13 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
   }
-  
+
   @Test
   public void testValidJWTNoExpiration() throws Exception {
     try {
@@ -276,7 +277,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
-      
+
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -287,22 +288,22 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == true);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
   }
-  
+
   @Test
   public void testUnableToParseJWT() throws Exception {
     try {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("bob",new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT("bob", new Date(new Date().getTime() + 5000), privateKey, props);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setGarbledTokenOnRequest(request, jwt);
@@ -317,8 +318,142 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled == false);
+      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
       Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
+  public void testFailedSignatureValidationJWT() throws Exception {
+    try {
+      // Create a private key to sign the token
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+      kpg.initialize(1024);
+
+      KeyPair kp = kpg.genKeyPair();
+
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("bob", new Date(new Date().getTime() + 5000),
+                             (RSAPrivateKey)kp.getPrivate(), props);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL).anyTimes();
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
+  public void testInvalidVerificationPEM() throws Exception {
+    try {
+      Properties props = getProperties();
+
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+      kpg.initialize(1024);
+
+      KeyPair KPair = kpg.generateKeyPair();
+      String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
+      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      byte[] data = cert.getEncoded();
+      Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+      String failingPem = new String(encoder.encodeToString( data ).getBytes( "ASCII" )).trim();
+
+      props.put(getAudienceProperty(), "bar");
+      props.put(getVerificationPemProperty(), failingPem);
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 50000), privateKey, props);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be true.", chain.doFilterCalled == false);
+      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
+  public void testInvalidIssuer() throws Exception {
+    try {
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("new-issuer", "alice", new Date(new Date().getTime() + 5000), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+         new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
+  public void testValidIssuerViaConfig() throws Exception {
+    try {
+      Properties props = getProperties();
+      props.setProperty(AbstractJWTFilter.JWT_EXPECTED_ISSUER, "new-issuer");
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT("new-issuer", "alice", new Date(new Date().getTime() + 5000), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled);
+      Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -334,11 +469,16 @@ public abstract class AbstractJWTFilterTest  {
 
   protected SignedJWT getJWT(String sub, Date expires, RSAPrivateKey privateKey,
       Properties props) throws Exception {
+    return getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, sub, expires, privateKey);
+  }
+
+  protected SignedJWT getJWT(String issuer, String sub, Date expires, RSAPrivateKey privateKey)
+      throws Exception {
     List<String> aud = new ArrayList<String>();
     aud.add("bar");
 
     JWTClaimsSet claims = new JWTClaimsSet.Builder()
-    .issuer("KNOXSSO")
+    .issuer(issuer)
     .subject(sub)
     .audience(aud)
     .expirationTime(expires)
@@ -348,7 +488,6 @@ public abstract class AbstractJWTFilterTest  {
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
 
     SignedJWT signedJWT = new SignedJWT(header, claims);
-    Base64URL sigInput = Base64URL.encode(signedJWT.getSigningInput());
     JWSSigner signer = new RSASSASigner(privateKey);
 
     signedJWT.sign(signer);
@@ -396,10 +535,16 @@ public abstract class AbstractJWTFilterTest  {
     public Enumeration<String> getInitParameterNames() {
       return null;
     }
-    
+
   }
-  
+
   protected static class TestJWTokenAuthority implements JWTokenAuthority {
+
+    private PublicKey verifyingKey;
+
+    public TestJWTokenAuthority(PublicKey verifyingKey) {
+      this.verifyingKey = verifyingKey;
+    }
 
     /* (non-Javadoc)
      * @see JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
@@ -435,7 +580,8 @@ public abstract class AbstractJWTFilterTest  {
      */
     @Override
     public boolean verifyToken(JWTToken token) throws TokenServiceException {
-      return true;
+      JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) verifyingKey);
+      return token.verify(verifier);
     }
 
     /* (non-Javadoc)
@@ -465,12 +611,12 @@ public abstract class AbstractJWTFilterTest  {
 
     @Override
     public boolean verifyToken(JWTToken token, RSAPublicKey publicKey) throws TokenServiceException {
-      // TODO Auto-generated method stub
-      return true;
+      JWSVerifier verifier = new RSASSAVerifier(publicKey);
+      return token.verify(verifier);
     }
-    
+
   }
-  
+
   protected static class TestFilterChain implements FilterChain {
     boolean doFilterCalled = false;
     Subject subject = null;
@@ -482,9 +628,9 @@ public abstract class AbstractJWTFilterTest  {
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {
       doFilterCalled = true;
-      
+
       subject = Subject.getSubject( AccessController.getContext() );
     }
-    
+
   }
 }

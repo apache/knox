@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.provider.federation;
 
 import junit.framework.TestCase;
-import org.apache.knox.gateway.preauth.filter.*;
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthService;
@@ -36,7 +35,7 @@ import java.util.Map;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class PreAuthServiceTest extends TestCase {
+public class PreAuthServiceTest extends org.junit.Assert {
 
   @Test
   public void testValidatorMap() {

@@ -29,19 +29,19 @@ import org.junit.Before;
 import com.nimbusds.jwt.SignedJWT;
 
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
-    
+
     @Before
     public void setup() throws Exception, NoSuchAlgorithmException {
       super.setup();
       handler = new TestJWTFederationFilter();
-      ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority());
+      ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
     }
-    
+
     protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
       String token = "Bearer " + jwt.serialize();
       EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
     }
-    
+
     protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
       String token = "Bearer " + "ljm" + jwt.serialize();
       EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
@@ -50,18 +50,18 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     protected String getAudienceProperty() {
       return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
     }
-    
+
     private static class TestJWTFederationFilter extends JWTFederationFilter {
 
       public void setTokenService(JWTokenAuthority ts) {
         authority = ts;
       }
-        
+
     }
 
     @Override
     protected String getVerificationPemProperty() {
       return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
     };
-    
+
 }

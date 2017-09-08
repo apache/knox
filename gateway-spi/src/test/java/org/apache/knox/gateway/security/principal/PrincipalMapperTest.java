@@ -70,9 +70,9 @@ public class PrincipalMapperTest {
     assertTrue(mapper.mapUserPrincipal("lmccay").equals("lmccay"));
     assertTrue(mapper.mapGroupPrincipal("hdfs")[0].equals("users"));
     String group = mapper.mapGroupPrincipal("lmccay")[0];
-    assertTrue(group.equals("users") || group.equals("mrgroup"));
+    assertTrue("users".equals(group) || "mrgroup".equals(group));
     group = mapper.mapGroupPrincipal("lmccay")[1];
-    assertTrue(group.equals("users") || group.equals("mrgroup"));
+    assertTrue("users".equals(group) || "mrgroup".equals(group));
   }
 
   @Test
@@ -92,9 +92,9 @@ public class PrincipalMapperTest {
     assertTrue(mapper.mapGroupPrincipal("hdfs")[0].equals("users"));
     assertTrue(mapper.mapGroupPrincipal("lmccay").length == 2);
     String group = mapper.mapGroupPrincipal("lmccay")[0];
-    assertTrue(group.equals("users") || group.equals("mrgroup"));
+    assertTrue("users".equals(group) || "mrgroup".equals(group));
     group = mapper.mapGroupPrincipal("lmccay")[1];
-    assertTrue(group.equals("users") || group.equals("mrgroup"));
+    assertTrue("users".equals(group) || "mrgroup".equals(group));
   }
 
   @Test

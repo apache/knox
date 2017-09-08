@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class IPValidatorTest extends TestCase {
+public class IPValidatorTest extends org.junit.Assert {
 
   @Test
   public void testName() {

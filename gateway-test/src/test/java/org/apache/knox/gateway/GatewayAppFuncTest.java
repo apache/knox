@@ -65,7 +65,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 public class GatewayAppFuncTest {
 
   private static Logger LOG = LoggerFactory.getLogger( GatewayAppFuncTest.class );
-  private static Class DAT = GatewayAppFuncTest.class;
+  private static Class<?> DAT = GatewayAppFuncTest.class;
 
   private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;

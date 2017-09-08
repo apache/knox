@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -164,12 +165,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public void setHadoopKerberosSecured(boolean hadoopKerberosSecured) {
     this.hadoopKerberosSecured = hadoopKerberosSecured;
   }
-  
+
   @Override
   public String getKerberosConfig() {
     return kerberosConfig;
   }
-  
+
   public void setKerberosConfig(String kerberosConfig) {
     this.kerberosConfig = kerberosConfig;
   }
@@ -178,11 +179,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isKerberosDebugEnabled() {
     return kerberosDebugEnabled;
   }
-  
+
   public void setKerberosDebugEnabled(boolean kerberosDebugEnabled) {
     this.kerberosDebugEnabled = kerberosDebugEnabled;
   }
-  
+
   @Override
   public String getKerberosLoginConfig() {
     return kerberosLoginConfig;
@@ -309,7 +310,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     if( gatewayServicesDir != null ) {
       return gatewayServicesDir;
     } else {
-      return getGatewayDataDir() + "/services";
+      File targetDir = new File( System.getProperty( "user.dir" ), "target/services" );
+      return targetDir.getPath();
     }
   }
 

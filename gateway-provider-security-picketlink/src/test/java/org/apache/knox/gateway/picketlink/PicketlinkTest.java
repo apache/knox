@@ -18,11 +18,10 @@
  */
 package org.apache.knox.gateway.picketlink;
 
-import junit.framework.TestCase;
 
 import org.junit.Test;
 
-public class PicketlinkTest extends TestCase {
+public class PicketlinkTest extends org.junit.Assert {
   @Test
   public void testPicketlink() throws Exception {
     assertTrue(true);

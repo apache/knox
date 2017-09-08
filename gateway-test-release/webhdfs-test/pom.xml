@@ -48,6 +48,36 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${failsafe-version}</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-services</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>gateway-service-definitions</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>target</outputDirectory>
+                                    <includes>**/services/**</includes>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputAbsoluteArtifactFilename>true</outputAbsoluteArtifactFilename>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

@@ -125,7 +125,7 @@ public class TopologiesResource {
   @Path("topologies/{id}")
   public Response deleteTopology(@PathParam("id") String id) {
     boolean deleted = false;
-    if(!id.equals("admin")) {
+    if(!"admin".equals(id)) {
       GatewayServices services = (GatewayServices) request.getServletContext()
           .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 

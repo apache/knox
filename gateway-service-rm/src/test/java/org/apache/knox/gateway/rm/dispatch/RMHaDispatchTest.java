@@ -24,9 +24,10 @@ import org.apache.knox.gateway.ha.provider.impl.DefaultHaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorFactory;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHttpResponse;
@@ -107,7 +108,9 @@ public class RMHaDispatchTest {
         EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
         Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
         RMHaDispatch dispatch = new RMHaDispatch();
-        dispatch.setHttpClient(new DefaultHttpClient());
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        CloseableHttpClient client = builder.build();
+        dispatch.setHttpClient(client);
         dispatch.setHaProvider(provider);
         dispatch.init();
         long startTime = System.currentTimeMillis();
@@ -185,7 +188,9 @@ public class RMHaDispatchTest {
         EasyMock.replay(filterConfig, servletContext, inboundResponse, outboundRequest, inboundRequest, outboundResponse);
 
         RMHaDispatch dispatch = new RMHaDispatch();
-        dispatch.setHttpClient(new DefaultHttpClient());
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        CloseableHttpClient client = builder.build();
+        dispatch.setHttpClient(client);
         dispatch.setHaProvider(provider);
         dispatch.init();
         long startTime = System.currentTimeMillis();

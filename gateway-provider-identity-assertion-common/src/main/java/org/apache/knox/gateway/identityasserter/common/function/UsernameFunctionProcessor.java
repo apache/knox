@@ -61,7 +61,7 @@ public class UsernameFunctionProcessor
       results = new ArrayList<String>( 1 );
       String username = SubjectUtils.getEffectivePrincipalName(subject);
       results.add( username );
-    } else if( parameters != null && parameters.size() > 0 ) {
+    } else if( parameters != null && !parameters.isEmpty() ) {
       results = new ArrayList<String>( 1 );
       results.add( parameters.get( 0 ) );
     }

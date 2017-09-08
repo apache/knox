@@ -77,7 +77,7 @@ public class TopologyValidator {
 
       File xml = new File(filePath);
       validator.validate(new StreamSource(xml));
-      if(exceptions.size() > 0) {
+      if(!exceptions.isEmpty()) {
         for (SAXParseException e : exceptions) {
           errors.add("Line: " + e.getLineNumber() + " -- " + e.getMessage());
         }

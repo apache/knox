@@ -93,7 +93,7 @@ public class HtmlPrefixProcessor
 
     final StringBuffer buffer = new StringBuffer();
     buffer.append(prefix);
-    if (frontendValues != null && frontendValues.size() > 0) {
+    if (frontendValues != null && !frontendValues.isEmpty()) {
       for (final String value : frontendValues) {
         buffer.append(value);
       }

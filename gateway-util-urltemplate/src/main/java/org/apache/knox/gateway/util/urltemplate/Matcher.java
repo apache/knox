@@ -490,7 +490,7 @@ public class Matcher<V> {
     }
 
     private boolean hasQueries() {
-      return( queries != null && queries.size() > 0 );
+      return( queries != null && !queries.isEmpty() );
     }
 
     private boolean matches( Segment segment ) {

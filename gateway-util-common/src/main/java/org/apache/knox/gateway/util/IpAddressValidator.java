@@ -87,7 +87,7 @@ public class IpAddressValidator {
       }
       else {
         // check for wildcards if there are wildcardIP acls configured
-        if (wildCardIPs.size() > 0) {
+        if (!wildCardIPs.isEmpty()) {
           for (String ip : wildCardIPs) {
             if (addr.startsWith(ip)) {
               valid = true;

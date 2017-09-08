@@ -44,8 +44,11 @@ import org.apache.hadoop.test.TestUtils;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpVersion;
+import org.apache.http.RequestLine;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.params.BasicHttpParams;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -65,6 +68,11 @@ public class DefaultDispatchTest {
     HttpUriRequest outboundRequest = EasyMock.createNiceMock( HttpUriRequest.class );
     EasyMock.expect( outboundRequest.getMethod() ).andReturn( "GET" ).anyTimes();
     EasyMock.expect( outboundRequest.getURI() ).andReturn( uri  ).anyTimes();
+
+    RequestLine requestLine = EasyMock.createNiceMock( RequestLine.class );
+    EasyMock.expect( requestLine.getMethod() ).andReturn( "GET" ).anyTimes();
+    EasyMock.expect( requestLine.getProtocolVersion() ).andReturn( HttpVersion.HTTP_1_1 ).anyTimes();
+    EasyMock.expect( outboundRequest.getRequestLine() ).andReturn( requestLine ).anyTimes();
     EasyMock.expect( outboundRequest.getParams() ).andReturn( params ).anyTimes();
 
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -82,10 +90,12 @@ public class DefaultDispatchTest {
       }
     });
 
-    EasyMock.replay( outboundRequest, inboundRequest, outboundResponse );
+    EasyMock.replay( outboundRequest, inboundRequest, outboundResponse, requestLine );
 
     DefaultDispatch dispatch = new DefaultDispatch();
-    dispatch.setHttpClient(new DefaultHttpClient());
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
+    dispatch.setHttpClient(client);
     try {
       dispatch.executeRequest( outboundRequest, inboundRequest, outboundResponse );
       fail( "Should have thrown IOException" );

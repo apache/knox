@@ -72,7 +72,7 @@ public class SwitchCaseIdentityAssertionFilter extends
     String[] groupNames = null;
     if ( groupCase != SwitchCase.NONE ) {
       Set<GroupPrincipal> groups = subject.getPrincipals( GroupPrincipal.class );
-      if( groups != null && groups.size() > 0 ) {
+      if( groups != null && !groups.isEmpty() ) {
         groupNames = new String[ groups.size() ];
         int i = 0;
         for( GroupPrincipal group : groups ) {

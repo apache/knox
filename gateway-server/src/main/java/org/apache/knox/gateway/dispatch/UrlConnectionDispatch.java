@@ -66,7 +66,7 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
   @Override
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
     String method = request.getMethod().toUpperCase();
-    if (method.equals("GET")) {
+    if ("GET".equals(method)) {
       try {
         doGet(getDispatchUrl(request), request, response);
       } catch ( URISyntaxException e ) {

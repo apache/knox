@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import junit.framework.TestCase;
-import org.apache.knox.gateway.preauth.filter.*;
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.apache.knox.gateway.preauth.filter.HeaderPreAuthFederationFilter;
 import org.apache.knox.gateway.preauth.filter.IPValidator;
@@ -36,11 +34,10 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class HeaderPreAuthFederationFilterTest extends TestCase {
+public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
 
   @Test
-  public void testDefaultValidator() throws ServletException,
-      PreAuthValidationException {
+  public void testDefaultValidator() throws ServletException, PreAuthValidationException {
     HeaderPreAuthFederationFilter hpaff = new HeaderPreAuthFederationFilter();
     final HttpServletRequest request = mock(HttpServletRequest.class);
     final FilterConfig filterConfig = mock(FilterConfig.class);

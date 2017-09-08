@@ -51,7 +51,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init(filterConfig);
-    
+
     // configured cookieName
     cookieName = filterConfig.getInitParameter(SSO_COOKIE_NAME);
     if (cookieName == null) {
@@ -77,13 +77,15 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    configureExpectedIssuer(filterConfig);
   }
 
   public void destroy() {
   }
 
   @Override
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     String wireToken = null;
     HttpServletRequest req = (HttpServletRequest) request;

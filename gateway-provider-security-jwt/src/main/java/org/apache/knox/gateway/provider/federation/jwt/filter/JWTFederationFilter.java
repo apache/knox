@@ -62,12 +62,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    configureExpectedIssuer(filterConfig);
   }
 
   public void destroy() {
   }
 
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     String header = ((HttpServletRequest) request).getHeader("Authorization");
     String wireToken = null;
@@ -79,7 +81,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // check for query param
       wireToken = ((HttpServletRequest) request).getParameter(paramName);
     }
-    
+
     if (wireToken != null) {
       try {
         JWTToken token = new JWTToken(wireToken);
@@ -100,7 +102,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
     if (error != null) {
-      response.sendError(status, error);   
+      response.sendError(status, error);
     }
     else {
       response.sendError(status);

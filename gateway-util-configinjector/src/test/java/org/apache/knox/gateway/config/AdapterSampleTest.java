@@ -19,21 +19,22 @@ package org.apache.knox.gateway.config;
 
 import org.junit.Test;
 
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AdapterSampleTest {
 
-  public static class Target {
+  private static class Target {
     @Configure
     private String username = null;
   }
 
-  public static class Adapter implements ConfigurationAdapter {
-    private Hashtable config;
-    public Adapter( Hashtable config ) {
+  private static class Adapter implements ConfigurationAdapter {
+    private Map<String, Object> config;
+    public Adapter( Map<String, Object> config ) {
       this.config = config;
     }
     @Override
@@ -43,13 +44,15 @@ public class AdapterSampleTest {
     }
   }
 
-  static Hashtable config = new Hashtable();
-  static{ config.put( "USERNAME", "somebody" ); }
+  private static final Map<String, Object> CONFIG = new ConcurrentHashMap<>();
+  static {
+    CONFIG.put( "USERNAME", "somebody" );
+  }
 
   @Test
   public void sample() {
     Target target = new Target();
-    Adapter adapter = new Adapter( config );
+    Adapter adapter = new Adapter( CONFIG );
     ConfigurationInjectorBuilder.configuration().target( target ).source( adapter ).inject();
     assertThat( target.username, is( "somebody" ) );
   }

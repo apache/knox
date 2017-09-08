@@ -18,11 +18,10 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import junit.framework.TestCase;
 
 import org.junit.Test;
 
-public class PreAuthSSOTest extends TestCase {
+public class PreAuthSSOTest extends org.junit.Assert {
   @Test
   public void testPreAuth() throws Exception {
     assertTrue(true);

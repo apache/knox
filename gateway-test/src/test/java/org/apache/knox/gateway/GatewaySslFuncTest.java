@@ -87,7 +87,7 @@ import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 public class GatewaySslFuncTest {
 
   private static Logger LOG = LoggerFactory.getLogger( GatewaySslFuncTest.class );
-  private static Class DAT = GatewaySslFuncTest.class;
+  private static Class<?> DAT = GatewaySslFuncTest.class;
 
   private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;

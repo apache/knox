@@ -481,7 +481,7 @@ class JsonFilterReader extends Reader {
       for( UrlRewriteFilterPathDescriptor selector : scope.getSelectors() ) {
         JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
         List<JsonPath.Match> matches = path.evaluate( node.scopeNode );
-        if( matches != null && matches.size() > 0 ) {
+        if( matches != null && !matches.isEmpty() ) {
           if( selector instanceof UrlRewriteFilterBufferDescriptor ) {
             bufferingLevel = node;
             bufferingConfig = (UrlRewriteFilterBufferDescriptor)selector;
@@ -508,7 +508,7 @@ class JsonFilterReader extends Reader {
       for( UrlRewriteFilterPathDescriptor selector : scope.getSelectors() ) {
         JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
         List<JsonPath.Match> matches = path.evaluate( node.scopeNode );
-        if( matches != null && matches.size() > 0 ) {
+        if( matches != null && !matches.isEmpty() ) {
           JsonPath.Match match = matches.get( 0 );
           if( match.getNode().isTextual() ) {
             if( selector instanceof UrlRewriteFilterApplyDescriptor ) {

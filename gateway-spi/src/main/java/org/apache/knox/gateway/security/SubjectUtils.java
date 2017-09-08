@@ -35,7 +35,7 @@ public class SubjectUtils {
     String name = null;
 
     Set<PrimaryPrincipal> primaryPrincipals = subject.getPrincipals(PrimaryPrincipal.class);
-    if (primaryPrincipals.size() > 0) {
+    if (!primaryPrincipals.isEmpty()) {
       return ((PrimaryPrincipal)primaryPrincipals.toArray()[0]).getName();
     }
 
@@ -63,7 +63,7 @@ public class SubjectUtils {
     String name = null;
 
     Set<ImpersonatedPrincipal> impPrincipals = subject.getPrincipals(ImpersonatedPrincipal.class);
-    if (impPrincipals.size() > 0) {
+    if (!impPrincipals.isEmpty()) {
       return ((Principal)impPrincipals.toArray()[0]).getName();
     }
     
