@@ -271,28 +271,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.jayway.restassured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
-            <artifactId>json-path</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
-            <artifactId>json-path-assert</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.xmlmatchers</groupId>
-            <artifactId>xml-matchers</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- This must be after restassured otherwise is messes up the hamcrest dependencies. -->
         <dependency>
             <groupId>junit</groupId>

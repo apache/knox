@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.containsString;

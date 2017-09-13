@@ -60,7 +60,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.endsWith;
@@ -187,7 +187,7 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json; charset=UTF-8" )
-        .when().log().ifError().get( gatewayUrl + "/knox678/repeat" ).andReturn().asString();
+        .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asString();
     assertThat( json, is("{\"msg\":\"H\u00eallo\"}") );
     assertThat( mock.isEmpty(), is(true) );
 
@@ -200,7 +200,7 @@ public class GatewayMultiFuncTest {
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/octet-stream" )
-        .when().log().ifError().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
+        .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
     assertThat( bytes, is(equalTo("H\u00eallo".getBytes())) );
     assertThat( mock.isEmpty(), is(true) );
 
@@ -325,7 +325,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
-        .when().log().ifError().get( gatewayUrl + "/knox694-1/test-service-path/test-resource-path" );
+        .when().get( gatewayUrl + "/knox694-1/test-service-path/test-resource-path" );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, invalidPword )
@@ -347,7 +347,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
-        .when().log().ifError().get( gatewayUrl + "/knox694-2/test-service-path/test-resource-path" );
+        .when().get( gatewayUrl + "/knox694-2/test-service-path/test-resource-path" );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, invalidPword )
@@ -369,7 +369,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
-        .when().log().ifError().get( gatewayUrl + "/knox694-3/test-service-path/test-resource-path" );
+        .when().get( gatewayUrl + "/knox694-3/test-service-path/test-resource-path" );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, invalidPword )
@@ -391,7 +391,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
-        .when().log().ifError().get( gatewayUrl + "/knox694-4/test-service-path/test-resource-path" );
+        .when().get( gatewayUrl + "/knox694-4/test-service-path/test-resource-path" );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, invalidPword )
@@ -413,7 +413,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .body( is( "test-service-response" ) )
-        .when().log().ifError().get( gatewayUrl + "/knox694-5/test-service-path/test-resource-path" );
+        .when().get( gatewayUrl + "/knox694-5/test-service-path/test-resource-path" );
     given()
         //.log().all()
         .auth().preemptive().basic( uname, invalidPword )

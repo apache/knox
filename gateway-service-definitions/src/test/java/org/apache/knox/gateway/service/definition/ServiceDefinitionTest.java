@@ -78,8 +78,8 @@ public class ServiceDefinitionTest {
     assertNotNull(routes.get(0).getPath());
     url = ClassLoader.getSystemResource("services/hbase/0.98.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
-    assertNotNull(definition.getDispatch());
-    assertEquals("org.apache.knox.gateway.hbase.HBaseDispatch", definition.getDispatch().getClassName());
+    assertNotNull(definition.getName());
+    assertEquals("webhbase", definition.getName());
     url = ClassLoader.getSystemResource("services/webhdfs/2.4.0/service.xml");
     definition = (ServiceDefinition) unmarshaller.unmarshal(url.openStream());
     assertNotNull(definition.getDispatch());

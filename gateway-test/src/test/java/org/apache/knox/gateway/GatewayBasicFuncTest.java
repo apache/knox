@@ -35,12 +35,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.core.MediaType;
 
-import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.path.json.JsonPath;
-import com.jayway.restassured.response.Cookie;
-import com.jayway.restassured.response.Header;
-import com.jayway.restassured.response.Response;
-import com.jayway.restassured.specification.ResponseSpecification;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.http.Cookie;
+import io.restassured.http.Header;
+import io.restassured.path.json.JsonPath;
+import io.restassured.response.Response;
+import io.restassured.specification.ResponseSpecification;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -85,7 +86,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.*;
@@ -312,12 +313,11 @@ public class GatewayBasicFuncTest {
         .expect()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .header( "Set-Cookie", containsString( "JSESSIONID" ) )
-        .header( "Set-Cookie", containsString( "HttpOnly" ) )
         .contentType( "application/json" )
         .content( "boolean", is( true ) )
         .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" ).getDetailedCookie( "JSESSIONID" );
     assertThat( cookie.isSecured(), is( true ) );
+    assertThat( cookie.isHttpOnly(), is( true ) );
     assertThat( cookie.getPath(), is( "/gateway/cluster" ) );
     assertThat( cookie.getValue().length(), greaterThan( 16 ) );
     driver.assertComplete();
@@ -427,40 +427,47 @@ public class GatewayBasicFuncTest {
         .queryParam( "recursive", "true" )
         .respond()
         .status( HttpStatus.SC_OK );
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .header("X-XSRF-Header", "jksdhfkhdsf")
-        .queryParam( "op", "DELETE" )
-        .queryParam( "recursive", "true" )
-        .expect()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1/~" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
-    driver.assertComplete();
 
-    driver.getMock( "WEBHDFS" )
-        .expect()
-        .method( "PUT" )
-        .pathInfo( "/v1/user/hdfs/dir" )
-        .queryParam( "op", "MKDIRS" )
-        .queryParam( "user.name", username )
-        .respond()
-        .status( HttpStatus.SC_OK )
-        .content( driver.getResourceBytes( "webhdfs-success.json" ) )
-        .contentType("application/json");
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .header("X-XSRF-Header", "jksdhfkhdsf")
-        .queryParam( "op", "MKDIRS" )
-        .expect()
-        //.log().all();
-        .statusCode( HttpStatus.SC_OK )
-        .contentType( "application/json" )
-        .content( "boolean", is( true ) )
-        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1/~/dir" );
-    driver.assertComplete();
+    try {
+      // Need to turn off URL encoding here or otherwise the tilde gets encoded and the rewrite rules fail
+      RestAssured.urlEncodingEnabled = false;
+      given()
+          //.log().all()
+          .auth().preemptive().basic( username, password )
+          .header("X-XSRF-Header", "jksdhfkhdsf")
+          .queryParam( "op", "DELETE" )
+          .queryParam( "recursive", "true" )
+          .expect()
+          //.log().all()
+          .statusCode( HttpStatus.SC_OK )
+          .when().delete( driver.getUrl( "WEBHDFS" ) + "/v1/~" + root + ( driver.isUseGateway() ? "" : "?user.name=" + username ) );
+      driver.assertComplete();
+
+      driver.getMock( "WEBHDFS" )
+          .expect()
+          .method( "PUT" )
+          .pathInfo( "/v1/user/hdfs/dir" )
+          .queryParam( "op", "MKDIRS" )
+          .queryParam( "user.name", username )
+          .respond()
+          .status( HttpStatus.SC_OK )
+          .content( driver.getResourceBytes( "webhdfs-success.json" ) )
+          .contentType("application/json");
+      given()
+          //.log().all()
+          .auth().preemptive().basic( username, password )
+          .header("X-XSRF-Header", "jksdhfkhdsf")
+          .queryParam( "op", "MKDIRS" )
+          .expect()
+          //.log().all();
+          .statusCode( HttpStatus.SC_OK )
+          .contentType( "application/json" )
+          .content( "boolean", is( true ) )
+          .when().put( driver.getUrl( "WEBHDFS" ) + "/v1/~/dir" );
+      driver.assertComplete();
+    } finally {
+      RestAssured.urlEncodingEnabled = true;
+    }
     LOG_EXIT();
   }
 
@@ -2015,7 +2022,6 @@ public class GatewayBasicFuncTest {
     .expect()
     .method("PUT")
     .pathInfo(scannerPath)
-    .header("Content-Type", ContentType.XML.toString())
     .respond()
     .status(HttpStatus.SC_CREATED);
 
@@ -2023,7 +2029,7 @@ public class GatewayBasicFuncTest {
     .auth().preemptive().basic( username, password )
     .header("X-XSRF-Header", "jksdhfkhdsf")
     .header( "Content-Type", ContentType.XML.toString() )
-    .content( driver.getResourceBytes( scannerDefinitionResourceName + ".xml" ) )
+    .body( driver.getResourceBytes( scannerDefinitionResourceName + ".xml" ) )
     .expect()
     //TODO: Add "Location" header check  when issue with incorrect outbound rewrites will be resolved
     //.header( "Location", startsWith( driver.getUrl( "WEBHBASE" ) + createScannerPath ) )

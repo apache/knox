@@ -47,7 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -94,7 +94,9 @@ public class AmbariServiceDefinitionTest {
   @After
   public void cleanupTest() throws Exception {
     FileUtils.cleanDirectory( new File( config.getGatewayTopologyDir() ) );
-    FileUtils.cleanDirectory( new File( config.getGatewayDeploymentDir() ) );
+    // Test run should not fail if deleting deployment files is not successful.
+    // Deletion has been already done by TopologyService.
+    FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
   }
 
   public static void setupGateway() throws Exception {

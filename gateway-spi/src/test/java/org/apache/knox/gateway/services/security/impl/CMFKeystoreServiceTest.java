@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
 *
@@ -57,31 +56,31 @@ public class CMFKeystoreServiceTest {
         public void init(GatewayConfig config, Map<String, String> options)
             throws ServiceLifecycleException {
           // TODO Auto-generated method stub
-          
+
         }
 
         public void start() throws ServiceLifecycleException {
           // TODO Auto-generated method stub
-          
+
         }
 
         public void stop() throws ServiceLifecycleException {
           // TODO Auto-generated method stub
-          
+
         }
 
         public char[] getMasterSecret() {
           // TODO Auto-generated method stub
           return "testmaster".toCharArray();
         }
-        
+
       });
     } catch (ServiceLifecycleException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
-  
+
   @Test
   public void testCreationOfStoreForCredential() throws KeystoreServiceException {
     try {
