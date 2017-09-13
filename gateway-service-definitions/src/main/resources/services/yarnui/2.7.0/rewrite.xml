@@ -210,9 +210,7 @@
 <filter name="YARNUI/yarn/outbound/apps">
     <content type="*/html">
         <apply path="(https?://[^/':,]+:[\d]+)?/proxy/[^']*" rule="YARNUI/yarn/outbound/apps/history"/>
-
         <apply path="(https?:)?//[^/':,]+:[\d]+/node/containerlogs/container(_[^/':,]+)+/[^/':,]+" rule="YARNUI/yarn/outbound/node/containerlogs"/>
-
         <apply path="(https?://[^/':,]+:[\d]+)?/cluster/app" rule="YARNUI/yarn/outbound/apps/app"/>
         <apply path="/cluster/container" rule="YARNUI/yarn/outbound/cluster/container"/>
     </content>
@@ -220,7 +218,6 @@
 <filter name="YARNUI/yarn/outbound/apps1">
     <content type="*/html">
         <apply path="/proxy/[^']*" rule="YARNUI/yarn/outbound/apps/history1"/>
-
         <apply path="(https?:)?//[^/':,]+:[\d]+/node/containerlogs/container(_[^/':,]+)+/[^/':,]+" rule="YARNUI/yarn/outbound/node/containerlogs"/>
 
     </content>
@@ -233,9 +230,7 @@
         <apply path="(https?://[^/':,]+:[\d]+)?/cluster/app/application" rule="YARNUI/yarn/outbound/cluster/app/application"/>
         <apply path="(https?://[^/':,]+:[\d]+)?/proxy/[^']*" rule="YARNUI/yarn/outbound/apps/history"/>
         <apply path="/cluster/appatt" rule="YARNUI/yarn/outbound/apps/appatt"/>
-
-        <apply path="/syslog" rule="YARNUI/yarn/outbound/node/containerlogs"/>
-
+        <apply path="(https?:)?//[^/':,]+:[\d]+/node/containerlogs/container(_[^/':,]+)+/[^/':,]+" rule="YARNUI/yarn/outbound/node/containerlogs"/>
         <apply path="/cluster/container" rule="YARNUI/yarn/outbound/cluster/container"/>
         <apply path="https?://[^/':,]+:[\d][^']*" rule="YARNUI/yarn/outbound/node2"/>
     </content>
