@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services.security.token.impl;
+package org.apache.knox.gateway.services.security.token.impl;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
