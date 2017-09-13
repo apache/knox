@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 
-import com.jayway.restassured.http.ContentType;
+import io.restassured.http.ContentType;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -277,10 +277,11 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_XML)
-        .get(serviceUrl);
+        .when().get(serviceUrl);
 
 
     given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
@@ -364,6 +365,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic(adminUser, adminPass)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
@@ -376,7 +378,7 @@ public class GatewayAdminTopologyFuncTest {
         .body("topologies.topology[1].href", not(nullValue()))
         .body("topologies.topology[0].timestamp", not(nullValue()))
         .body("topologies.topology[1].timestamp", not(nullValue()))
-        .get(url);
+        .when().get(url);
 
     LOG_EXIT();
   }
@@ -395,7 +397,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_FORBIDDEN)
-        .get(url);
+        .when().get(url);
 
     LOG_EXIT();
   }
@@ -534,11 +536,12 @@ public class GatewayAdminTopologyFuncTest {
 
     given()
         .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON)
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
-        .get(url);
+        .when().get(url);
 
     given()
         .auth().preemptive().basic(username, password)
@@ -546,7 +549,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
-        .delete(url);
+        .when().delete(url);
 
     given()
         //.log().all()
@@ -554,7 +557,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         //.log().all()
         .statusCode(HttpStatus.SC_NO_CONTENT)
-        .get(url);
+        .when().get(url);
 
     LOG_EXIT();
   }
@@ -583,7 +586,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         .statusCode(HttpStatus.SC_OK)
         //.log().all()
-        .put(url).getBody().asString();
+        .when().put(url).getBody().asString();
 
     InputSource source = new InputSource( new StringReader( XML ) );
     Document doc = XmlUtils.readXml( source );
@@ -597,7 +600,7 @@ public class GatewayAdminTopologyFuncTest {
             .expect()
             .statusCode(HttpStatus.SC_OK)
             .body(equalTo(XML))
-            .get(url)
+            .when().get(url)
             .getBody().asString();
 
     String XmlPut =
@@ -616,7 +619,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         .statusCode(HttpStatus.SC_OK)
             //.log().all()
-        .put(url).getBody().asString();
+        .when().put(url).getBody().asString();
 
     given()
         .auth().preemptive().basic(username, password)
@@ -624,7 +627,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         .statusCode(HttpStatus.SC_OK)
         .body(equalTo(JSON))
-        .get(url)
+        .when().get(url)
         .getBody().asString();
 
     LOG_EXIT();
@@ -661,7 +664,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(newUrl))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
 
 //     Case 2: add in x-forward headers (host, server, proto, context)
@@ -680,7 +683,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(host))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
 //     Case 3: add in x-forward headers (host, proto, port, context)
     given()
@@ -698,7 +701,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(proto))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
 //     Case 4: add in x-forward headers (host, proto, port, context) no port in host.
     given()
@@ -716,7 +719,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(proto))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
 //     Case 5: add in x-forward headers (host, port)
     given()
@@ -730,7 +733,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(port))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
 //     Case 6: Normal Request
     given()
@@ -741,7 +744,7 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(url))
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
-        .get(url);
+        .when().get(url);
 
     LOG_EXIT();
   }
@@ -760,7 +763,7 @@ public class GatewayAdminTopologyFuncTest {
         .expect()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(url + "/test-cluster"))
-        .get(url);
+        .when().get(url);
 
 
 //     Case 2: Change gateway.path to another String. Ensure HTTP OK resp + valid URL.
@@ -779,7 +782,7 @@ public class GatewayAdminTopologyFuncTest {
          .expect()
          .statusCode(HttpStatus.SC_OK)
          .body(containsString(newUrl + "/test-cluster"))
-         .get(newUrl);
+         .when().get(newUrl);
    } catch(Exception e){
      fail(e.getMessage());
    }

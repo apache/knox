@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import com.jayway.restassured.path.json.JsonPath;
+import io.restassured.path.json.JsonPath;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
@@ -46,7 +46,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class GatewayHealthFuncTest {

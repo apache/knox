@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.gateway;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
@@ -150,7 +150,7 @@ public class GatewayLdapGroupFuncTest {
     AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
     aliasService.addAliasForCluster("test-cluster", "ldcSystemPassword", "guest-password");
 
-    char[] password1 = aliasService.getPasswordFromAliasForCluster( "test-cluster", "ldcSystemPassword");
+    // char[] password1 = aliasService.getPasswordFromAliasForCluster( "test-cluster", "ldcSystemPassword");
     //System.err.println("SETUP password 10: " + ((password1 == null) ? "NULL" : new String(password1)));
 
     File descriptor = new File( topoDir, "test-cluster.xml" );
