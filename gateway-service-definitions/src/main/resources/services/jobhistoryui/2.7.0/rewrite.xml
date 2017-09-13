@@ -81,7 +81,7 @@
   <!-- rewrite map reduce node manager request -->
   <!-- This maps to Nodemanager           -->
   <rule dir="OUT" name="JOBHISTORYUI/nodelink" pattern="{scheme}://{host}:{port}">
-    <rewrite template="{$frontend[scheme]}://{$frontend[address]}/gateway/nodemanagerui/node?{host}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{host}?{port}"/>
   </rule>
 
   <!-- static web resources (css, js, jpeg, etc). -->
@@ -159,7 +159,7 @@
   </rule>
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/node">
     <match pattern="{scheme}://{host}:{port}"/>
-    <rewrite template="{$frontend[scheme]}://{$frontend[address]}/gateway/nodemanagerui/node?host={host}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{scheme}?host={$hostmap(host)}?{port}"/>
   </rule>
 
 </rules>
