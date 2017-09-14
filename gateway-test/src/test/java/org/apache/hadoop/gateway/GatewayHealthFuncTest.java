@@ -194,7 +194,7 @@ public class GatewayHealthFuncTest {
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
         .when().get(serviceUrl).asString();
-    String version = JsonPath.from(body).getString("version");
+    //String version = JsonPath.from(body).getString("version");
     Map<String, String> hm = JsonPath.from(body).getMap("");
     Assert.assertTrue(hm.size() >= 6);
     Assert.assertTrue(hm.keySet().containsAll(new HashSet<String>(Arrays.asList(new String[]{"timers", "histograms",

@@ -187,7 +187,7 @@ public class GatewayPortMappingFuncTest {
         .expect()
         .log().ifError()
         .statusCode(HttpStatus.SC_OK)
-        .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
+        .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
         .when().get(url + "/v1/");
     masterServer.isEmpty();
   }

@@ -155,7 +155,7 @@ public class GatewayLdapDynamicGroupFuncTest {
     AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
     aliasService.addAliasForCluster("testdg-cluster", "ldcSystemPassword", "guest-password");
 
-    char[] password1 = aliasService.getPasswordFromAliasForCluster( "testdg-cluster", "ldcSystemPassword");
+    //char[] password1 = aliasService.getPasswordFromAliasForCluster( "testdg-cluster", "ldcSystemPassword");
     //System.err.println("SETUP password 10: " + ((password1 == null) ? "NULL" : new String(password1)));
 
     File descriptor = new File( topoDir, "testdg-cluster.xml" );

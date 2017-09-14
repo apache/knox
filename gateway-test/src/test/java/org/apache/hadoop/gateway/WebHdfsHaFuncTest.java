@@ -174,7 +174,7 @@ public class WebHdfsHaFuncTest {
             .expect()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
-            .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
+            .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
       LOG_EXIT();
@@ -204,7 +204,7 @@ public class WebHdfsHaFuncTest {
             .expect()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
-            .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
+            .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       standbyServer.isEmpty();
       masterServer.start();
@@ -266,7 +266,7 @@ public class WebHdfsHaFuncTest {
             .expect()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
-            .content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
+            .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
       masterServer.isEmpty();
       standbyServer.isEmpty();
@@ -362,7 +362,7 @@ public class WebHdfsHaFuncTest {
             .expect()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
-            .content("boolean", is(true))
+            .body("boolean", is(true))
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
       masterServer.isEmpty();
       LOG_EXIT();
@@ -399,7 +399,7 @@ public class WebHdfsHaFuncTest {
             .expect()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
-            .content("boolean", is(true))
+            .body("boolean", is(true))
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/new");
       masterServer.isEmpty();
       LOG_EXIT();

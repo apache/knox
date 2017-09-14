@@ -795,6 +795,4 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-  private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();
-
 }
