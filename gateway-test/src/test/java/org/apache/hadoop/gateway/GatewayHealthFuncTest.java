@@ -174,7 +174,7 @@ public class GatewayHealthFuncTest {
     String body = given()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.TEXT_PLAIN)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.TEXT_PLAIN)
         .when().get(serviceUrl).asString();
@@ -190,7 +190,7 @@ public class GatewayHealthFuncTest {
     String serviceUrl = clusterUrl + "/v1/metrics";
     String body = given()
         .auth().preemptive().basic(username, password)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
         .when().get(serviceUrl).asString();

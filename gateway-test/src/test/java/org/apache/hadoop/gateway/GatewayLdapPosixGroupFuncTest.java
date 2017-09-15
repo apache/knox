@@ -234,7 +234,7 @@ public class GatewayLdapPosixGroupFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
@@ -251,7 +251,7 @@ public class GatewayLdapPosixGroupFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         //.log().all()
         .statusCode( HttpStatus.SC_FORBIDDEN )
         .when().get( serviceUrl );

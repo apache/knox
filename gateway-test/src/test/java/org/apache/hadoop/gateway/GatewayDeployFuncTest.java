@@ -244,7 +244,7 @@ public class GatewayDeployFuncTest {
 
     // Make sure the test topology is not accessible.
     given().auth().preemptive().basic( username, password )
-        .expect().statusCode( HttpStatus.SC_NOT_FOUND )
+        .then().statusCode( HttpStatus.SC_NOT_FOUND )
         .when().get( serviceUrl );
 
     // Make sure deployment directory is empty.

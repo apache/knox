@@ -164,7 +164,7 @@ public class GatewayAdminFuncTest {
         //.log().all()
         .auth().preemptive().basic( username, password )
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         //.body( is( "{\"hash\":\"unknown\",\"version\":\"unknown\"}" ) )

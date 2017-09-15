@@ -171,7 +171,7 @@ public class WebHdfsHaFuncTest {
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "LISTSTATUS")
-            .expect()
+            .then()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
@@ -186,7 +186,7 @@ public class WebHdfsHaFuncTest {
       LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
-      //Shutdown master and expect standby to serve the list response
+      //Shutdown master and then standby to serve the list response
       masterServer.stop();
       standbyServer.expect()
             .method("GET")
@@ -201,7 +201,7 @@ public class WebHdfsHaFuncTest {
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "LISTSTATUS")
-            .expect()
+            .then()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
@@ -216,14 +216,14 @@ public class WebHdfsHaFuncTest {
       LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
-      //Shutdown master and expect standby to serve the list response
+      //Shutdown master and then standby to serve the list response
       masterServer.stop();
       standbyServer.stop();
       given()
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "LISTSTATUS")
-            .expect()
+            .then()
 //            .log().ifError()
             .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
@@ -263,7 +263,7 @@ public class WebHdfsHaFuncTest {
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "LISTSTATUS")
-            .expect()
+            .then()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
@@ -319,7 +319,7 @@ public class WebHdfsHaFuncTest {
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "LISTSTATUS")
-            .expect()
+            .then()
 //            .log().ifError()
             .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().get(driver.getUrl("WEBHDFS") + "/v1/");
@@ -359,7 +359,7 @@ public class WebHdfsHaFuncTest {
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "RENAME")
             .queryParam("destination", "/user/hdfs/foo.txt")
-            .expect()
+            .then()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .body("boolean", is(true))
@@ -396,7 +396,7 @@ public class WebHdfsHaFuncTest {
             .auth().preemptive().basic(username, password)
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "MKDIRS")
-            .expect()
+            .then()
             .log().ifError()
             .statusCode(HttpStatus.SC_OK)
             .body("boolean", is(true))
@@ -456,7 +456,7 @@ public class WebHdfsHaFuncTest {
             .header("X-XSRF-Header", "jksdhfkhdsf")
             .queryParam("op", "RENAME")
             .queryParam("destination", "/user/hdfs/foo.txt")
-            .expect()
+            .then()
 //            .log().ifError()
             .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");

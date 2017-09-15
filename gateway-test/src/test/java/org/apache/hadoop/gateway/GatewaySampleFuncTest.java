@@ -166,7 +166,7 @@ public class GatewaySampleFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )

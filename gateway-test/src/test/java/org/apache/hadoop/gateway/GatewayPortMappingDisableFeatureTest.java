@@ -160,7 +160,7 @@ public class GatewayPortMappingDisableFeatureTest {
         .auth().preemptive().basic(username, password)
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam("op", "LISTSTATUS")
-        .expect()
+        .then()
         .log().ifError()
         .statusCode(HttpStatus.SC_OK)
         .body("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))
