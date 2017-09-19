@@ -45,7 +45,6 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
   @Before
   public void setup() throws Exception, NoSuchAlgorithmException {
-    super.setup();
     handler = new TestSSOCookieFederationProvider();
     ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
   }

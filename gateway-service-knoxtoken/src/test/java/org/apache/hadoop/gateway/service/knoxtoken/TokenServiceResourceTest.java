@@ -18,16 +18,62 @@
 package org.apache.hadoop.gateway.service.knoxtoken;
 
 import org.apache.hadoop.gateway.service.knoxtoken.TokenResource;
+import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
+import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
+import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
+import org.easymock.EasyMock;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+
 import java.util.Map;
+
+import javax.security.auth.Subject;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
+
+import static org.junit.Assert.*;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 /**
- *
+ * Some tests for the token service
  */
 public class TokenServiceResourceTest {
+
+  protected static RSAPublicKey publicKey;
+  protected static RSAPrivateKey privateKey;
+
+  @BeforeClass
+  public static void setup() throws Exception, NoSuchAlgorithmException {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(1024);
+    KeyPair KPair = kpg.generateKeyPair();
+
+    publicKey = (RSAPublicKey) KPair.getPublic();
+    privateKey = (RSAPrivateKey) KPair.getPrivate();
+  }
 
   @Test
   public void testTokenService() throws Exception {
@@ -50,4 +96,212 @@ public class TokenServiceResourceTest {
     tr.addClientDataToMap("".split(","), clientDataMap);
     Assert.assertTrue(clientDataMap.size() == 0);
   }
+
+  @Test
+  public void testGetToken() throws Exception {
+    TokenResource tr = new TokenResource();
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    //tr.context = context;
+    // tr.init();
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    tr.request = request;
+    tr.response = response;
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWTToken parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+  }
+
+  @Test
+  public void testAudiences() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWTToken parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    // Verify the audiences
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+  }
+
+  private String getTagValue(String token, String tagName) {
+    String searchString = tagName + "\":";
+    String value = token.substring(token.indexOf(searchString) + searchString.length());
+    if (value.startsWith("\"")) {
+      value = value.substring(1);
+    }
+    if (value.contains("\"")) {
+      return value.substring(0, value.indexOf("\""));
+    } else if (value.contains(",")) {
+      return value.substring(0, value.indexOf(","));
+    } else {
+      return value.substring(0, value.length() - 1);
+    }
+  }
+
+  private static class TestJWTokenAuthority implements JWTokenAuthority {
+
+    private RSAPublicKey publicKey;
+    private RSAPrivateKey privateKey;
+
+    public TestJWTokenAuthority(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
+      this.publicKey = publicKey;
+      this.privateKey = privateKey;
+    }
+
+    @Override
+    public JWTToken issueToken(Subject subject, String algorithm)
+      throws TokenServiceException {
+      Principal p = (Principal) subject.getPrincipals().toArray()[0];
+      return issueToken(p, algorithm);
+    }
+
+    @Override
+    public JWTToken issueToken(Principal p, String algorithm)
+      throws TokenServiceException {
+      return issueToken(p, null, algorithm);
+    }
+
+    @Override
+    public JWTToken issueToken(Principal p, String audience, String algorithm)
+      throws TokenServiceException {
+      return issueToken(p, audience, algorithm, -1);
+    }
+
+    @Override
+    public boolean verifyToken(JWTToken token) throws TokenServiceException {
+      JWSVerifier verifier = new RSASSAVerifier(publicKey);
+      return token.verify(verifier);
+    }
+
+    @Override
+    public JWTToken issueToken(Principal p, String audience, String algorithm,
+                               long expires) throws TokenServiceException {
+      ArrayList<String> audiences = null;
+      if (audience != null) {
+        audiences = new ArrayList<String>();
+        audiences.add(audience);
+      }
+      return issueToken(p, audiences, algorithm, expires);
+    }
+
+    @Override
+    public JWTToken issueToken(Principal p, List<String> audiences, String algorithm,
+                               long expires) throws TokenServiceException {
+      String[] claimArray = new String[4];
+      claimArray[0] = "KNOXSSO";
+      claimArray[1] = p.getName();
+      claimArray[2] = null;
+      if (expires == -1) {
+        claimArray[3] = null;
+      } else {
+        claimArray[3] = String.valueOf(expires);
+      }
+
+      JWTToken token = null;
+      if ("RS256".equals(algorithm)) {
+        token = new JWTToken("RS256", claimArray, audiences);
+        JWSSigner signer = new RSASSASigner(privateKey);
+        token.sign(signer);
+      } else {
+        throw new TokenServiceException("Cannot issue token - Unsupported algorithm");
+      }
+
+      return token;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, String algorithm, long expiry)
+        throws TokenServiceException {
+      return issueToken(p, Collections.<String>emptyList(), algorithm, expiry);
+    }
+
+    @Override
+    public boolean verifyToken(JWTToken token, RSAPublicKey publicKey) throws TokenServiceException {
+      JWSVerifier verifier = new RSASSAVerifier(publicKey);
+      return token.verify(verifier);
+    }
+
+  }
+
+
 }

@@ -22,6 +22,8 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -55,15 +57,15 @@ public class TokenResource {
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
   private long tokenTTL = 30000l;
-  private String[] targetAudiences = null;
+  private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl = null;
   private Map<String,Object> tokenClientDataMap = null;
 
   @Context
-  private HttpServletRequest request;
+  HttpServletRequest request;
 
   @Context
-  private HttpServletResponse response;
+  HttpServletResponse response;
 
   @Context
   ServletContext context;
@@ -73,7 +75,10 @@ public class TokenResource {
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
-      targetAudiences = audiences.split(",");
+      String[] auds = audiences.split(",");
+      for (int i = 0; i < auds.length; i++) {
+        targetAudiences.add(auds[i]);
+      }
     }
 
     String ttl = context.getInitParameter(TOKEN_TTL_PARAM);
@@ -85,7 +90,7 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
-    
+
     tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
 
     String clientData = context.getInitParameter(TOKEN_CLIENT_DATA);
@@ -115,22 +120,18 @@ public class TokenResource {
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
     Principal p = ((HttpServletRequest)request).getUserPrincipal();
     long expires = getExpiry();
-    
+
     try {
       JWT token = null;
-      if (targetAudiences == null || targetAudiences.length == 0) {
-        token = ts.issueToken(p, "RS256", getExpiry());
+      if (targetAudiences.isEmpty()) {
+        token = ts.issueToken(p, "RS256", expires);
       } else {
-        ArrayList<String> aud = new ArrayList<String>();
-        for (int i = 0; i < targetAudiences.length; i++) {
-          aud.add(targetAudiences[i]);
-        }
-        token = ts.issueToken(p, aud, "RS256", expires);
+        token = ts.issueToken(p, targetAudiences, "RS256", expires);
       }
 
       if (token != null) {
         String accessToken = token.toString();
-  
+
         HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
         map.put(TOKEN_TYPE, BEARER);
@@ -141,7 +142,7 @@ public class TokenResource {
         if (tokenClientDataMap != null) {
           map.putAll(tokenClientDataMap);
         }
-  
+
         String jsonResponse = JsonUtils.renderAsJsonString(map);
 
         response.getWriter().write(jsonResponse);

@@ -60,7 +60,7 @@ import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.nimbusds.jose.*;
@@ -74,16 +74,16 @@ public abstract class AbstractJWTFilterTest  {
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
 
   protected AbstractJWTFilter handler = null;
-  protected RSAPublicKey publicKey = null;
-  protected RSAPrivateKey privateKey = null;
-  protected String pem = null;
+  protected static RSAPublicKey publicKey = null;
+  protected static RSAPrivateKey privateKey = null;
+  protected static String pem = null;
 
   protected abstract void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
   protected abstract void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
   protected abstract String getAudienceProperty();
   protected abstract String getVerificationPemProperty();
 
-  private String buildDistinguishedName(String hostname) {
+  private static String buildDistinguishedName(String hostname) {
     MessageFormat headerFormatter = new MessageFormat(dnTemplate);
     String[] paramArray = new String[1];
     paramArray[0] = hostname;
@@ -91,8 +91,8 @@ public abstract class AbstractJWTFilterTest  {
     return dn;
   }
 
-  @Before
-  public void setup() throws Exception, NoSuchAlgorithmException {
+  @BeforeClass
+  public static void generateKeys() throws Exception, NoSuchAlgorithmException {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();
