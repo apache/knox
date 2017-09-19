@@ -548,7 +548,7 @@ public class GatewayAppFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDefaultTopology() throws Exception {
     LOG_ENTER();
 
