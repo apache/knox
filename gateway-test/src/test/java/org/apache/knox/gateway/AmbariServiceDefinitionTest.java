@@ -177,7 +177,7 @@ public class AmbariServiceDefinitionTest {
     String body = given()
 //        .log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
 //        .log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
@@ -212,7 +212,7 @@ public class AmbariServiceDefinitionTest {
 
     String body = given()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .when().get( serviceUrl ).asString();
@@ -247,7 +247,7 @@ public class AmbariServiceDefinitionTest {
      given()
         .auth().preemptive().basic( username, password )
         .queryParam("ServiceComponentInfo/component_name", "APP_TIMELINE_SERVER|ServiceComponentInfo/category=MASTER")
-        .expect()
+        .then()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .when().get( serviceUrl ).asString();
@@ -274,7 +274,7 @@ public class AmbariServiceDefinitionTest {
 
     String body = given()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .when().get( serviceUrl ).asString();
@@ -302,8 +302,8 @@ public class AmbariServiceDefinitionTest {
 
     String body = given()
         .auth().preemptive().basic( username, password )
-        .content(IOUtils.toByteArray(TestUtils.getResourceStream( DAT, "post-data-wrong-type.json")))
-        .expect()
+        .body(IOUtils.toByteArray(TestUtils.getResourceStream( DAT, "post-data-wrong-type.json")))
+        .then()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/x-www-form-urlencoded" )
         .when().post( serviceUrl ).asString();
@@ -335,7 +335,7 @@ public class AmbariServiceDefinitionTest {
 
     String body = given()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
         .when().get( serviceUrl ).asString();

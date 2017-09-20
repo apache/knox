@@ -248,7 +248,7 @@ public class GatewayAdminTopologyFuncTest {
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
         .contentType(MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .body("topologies.topology[0].name", not(nullValue()))
@@ -265,7 +265,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
-        .expect()
+        .then()
         //.log().all()
         .body("topologies.topology.href[1]", equalTo(href1))
         .statusCode(HttpStatus.SC_OK)
@@ -275,7 +275,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic(username, password)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_XML)
@@ -284,7 +284,7 @@ public class GatewayAdminTopologyFuncTest {
 
     given().auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType("application/json")
@@ -305,7 +305,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology[1].href");
@@ -314,7 +314,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType("application/json")
@@ -325,7 +325,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .body("topology.name", equalTo("test-cluster"))
@@ -338,7 +338,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology[1].href");
@@ -347,7 +347,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .when()
@@ -368,7 +368,7 @@ public class GatewayAdminTopologyFuncTest {
         //.log().all()
         .auth().preemptive().basic(adminUser, adminPass)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(ContentType.JSON)
@@ -396,7 +396,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         //.log().all()
         .auth().basic(guestUser, guestPass)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .when().get(url);
@@ -488,13 +488,13 @@ public class GatewayAdminTopologyFuncTest {
 
       given()
           //.log().all()
-          .auth().preemptive().basic( "admin", "admin-password" ).header( "Accept", MediaType.APPLICATION_JSON ).expect()
+          .auth().preemptive().basic( "admin", "admin-password" ).header( "Accept", MediaType.APPLICATION_JSON ).then()
           //.log().all()
           .statusCode( HttpStatus.SC_OK ).body( containsString( "ServerVersion" ) ).when().get( gatewayUrl + "/admin/api/v1/version" );
 
       given()
           //.log().all()
-          .auth().preemptive().basic( user, password ).expect()
+          .auth().preemptive().basic( user, password ).then()
           //.log().all()
           .statusCode( HttpStatus.SC_NOT_FOUND ).when().get( url );
 
@@ -502,7 +502,7 @@ public class GatewayAdminTopologyFuncTest {
 
       given()
           //.log().all()
-          .auth().preemptive().basic( user, password ).expect()
+          .auth().preemptive().basic( user, password ).then()
           //.log().all()
           .statusCode( HttpStatus.SC_OK ).contentType( "text/plain" ).body( is( "test-service-response" ) ).when().get( url ).getBody();
 
@@ -510,7 +510,7 @@ public class GatewayAdminTopologyFuncTest {
 
       given()
           //.log().all()
-          .auth().preemptive().basic( user, password ).expect()
+          .auth().preemptive().basic( user, password ).then()
           //.log().all()
           .statusCode( HttpStatus.SC_NOT_FOUND ).when().get( url );
     } finally {
@@ -539,7 +539,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
@@ -547,7 +547,7 @@ public class GatewayAdminTopologyFuncTest {
 
     given()
         .auth().preemptive().basic(username, password)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_JSON)
@@ -556,7 +556,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic(username, password)
-        .expect()
+        .then()
         //.log().all()
         .statusCode(HttpStatus.SC_NO_CONTENT)
         .when().get(url);
@@ -585,7 +585,7 @@ public class GatewayAdminTopologyFuncTest {
         .contentType(MediaType.APPLICATION_JSON)
         .header("Accept", MediaType.APPLICATION_XML)
         .body(JsonPut)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         //.log().all()
         .when().put(url).getBody().asString();
@@ -599,7 +599,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
             .auth().preemptive().basic(username, password)
             .header("Accept", MediaType.APPLICATION_XML)
-            .expect()
+            .then()
             .statusCode(HttpStatus.SC_OK)
             .body(equalTo(XML))
             .when().get(url)
@@ -618,7 +618,7 @@ public class GatewayAdminTopologyFuncTest {
         .contentType(MediaType.APPLICATION_XML)
         .header("Accept", MediaType.APPLICATION_JSON)
         .body(XmlPut)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
             //.log().all()
         .when().put(url).getBody().asString();
@@ -626,7 +626,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(equalTo(JSON))
         .when().get(url)
@@ -661,7 +661,7 @@ public class GatewayAdminTopologyFuncTest {
         .header("X-Forwarded-Server", server )
         .header("X-Forwarded-Context", context)
         .header("X-Forwarded-Proto", proto)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(newUrl))
         .body(containsString("test-cluster"))
@@ -677,7 +677,7 @@ public class GatewayAdminTopologyFuncTest {
         .header("X-Forwarded-Server", server )
         .header("X-Forwarded-Context", context )
         .header("X-Forwarded-Proto", proto )
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(server))
         .body(containsString(context))
@@ -695,7 +695,7 @@ public class GatewayAdminTopologyFuncTest {
         .header("X-Forwarded-Port", port )
         .header("X-Forwarded-Context", context )
         .header("X-Forwarded-Proto", proto)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(host))
         .body(containsString(port))
@@ -713,7 +713,7 @@ public class GatewayAdminTopologyFuncTest {
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", context)
         .header("X-Forwarded-Proto", proto)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(server))
         .body(containsString(port))
@@ -729,7 +729,7 @@ public class GatewayAdminTopologyFuncTest {
         .header("Accept", MediaType.APPLICATION_XML)
         .header("X-Forwarded-Host", host )
         .header("X-Forwarded-Port", port )
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(host))
         .body(containsString(port))
@@ -741,7 +741,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(url))
         .body(containsString("test-cluster"))
@@ -762,7 +762,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
-        .expect()
+        .then()
         .statusCode(HttpStatus.SC_OK)
         .body(containsString(url + "/test-cluster"))
         .when().get(url);
@@ -781,7 +781,7 @@ public class GatewayAdminTopologyFuncTest {
      given()
          .auth().preemptive().basic(username, password)
          .header("Accept", MediaType.APPLICATION_XML)
-         .expect()
+         .then()
          .statusCode(HttpStatus.SC_OK)
          .body(containsString(newUrl + "/test-cluster"))
          .when().get(newUrl);
@@ -796,7 +796,5 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
-  private static final String CLASS = GatewayAdminTopologyFuncTest.class.getCanonicalName();
 
 }

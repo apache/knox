@@ -64,7 +64,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 @Category(ReleaseTest.class)
 public class GatewayLdapPosixGroupFuncTest {
 
-  private static final Class<?> RESOURCE_BASE_CLASS = GatewayLdapPosixGroupFuncTest.class;
   private static Logger LOG = LoggerFactory.getLogger( GatewayLdapPosixGroupFuncTest.class );
 
   public static Enumeration<Appender> appenders;
@@ -224,14 +223,6 @@ public class GatewayLdapPosixGroupFuncTest {
     return xml;
   }
 
-  private static String getResourceName( String resource ) {
-    return getResourceBaseName() + resource;
-  }
-
-  private static String getResourceBaseName() {
-    return RESOURCE_BASE_CLASS.getName().replaceAll( "\\.", "/" ) + "/";
-  }
-
   @Ignore
   // @Test
   public void waitForManualTesting() throws IOException {
@@ -246,7 +237,7 @@ public class GatewayLdapPosixGroupFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( "text/plain" )
@@ -263,7 +254,7 @@ public class GatewayLdapPosixGroupFuncTest {
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
-        .expect()
+        .then()
         //.log().all()
         .statusCode( HttpStatus.SC_FORBIDDEN )
         .when().get( serviceUrl );

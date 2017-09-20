@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -74,14 +75,14 @@ public class WebSSOResource {
   private long tokenTTL = 30000l;
   private String whitelist = null;
   private String domainSuffix = null;
-  private String[] targetAudiences = null;
+  private List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession = false;
 
   @Context
-  private HttpServletRequest request;
+  HttpServletRequest request;
 
   @Context
-  private HttpServletResponse response;
+  HttpServletResponse response;
 
   @Context
   ServletContext context;
@@ -124,7 +125,10 @@ public class WebSSOResource {
 
     String audiences = context.getInitParameter(SSO_COOKIE_TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
-      targetAudiences = audiences.split(",");
+      String[] auds = audiences.split(",");
+      for (int i = 0; i < auds.length; i++) {
+        targetAudiences.add(auds[i]);
+      }
     }
 
     String ttl = context.getInitParameter(SSO_COOKIE_TOKEN_TTL_PARAM);
@@ -180,14 +184,10 @@ public class WebSSOResource {
 
     try {
       JWT token = null;
-      if (targetAudiences == null || targetAudiences.length == 0) {
+      if (targetAudiences.isEmpty()) {
         token = ts.issueToken(p, "RS256", getExpiry());
       } else {
-        ArrayList<String> aud = new ArrayList<String>();
-        for (int i = 0; i < targetAudiences.length; i++) {
-          aud.add(targetAudiences[i]);
-        }
-        token = ts.issueToken(p, aud, "RS256", getExpiry());
+        token = ts.issueToken(p, targetAudiences, "RS256", getExpiry());
       }
 
       // Coverity CID 1327959

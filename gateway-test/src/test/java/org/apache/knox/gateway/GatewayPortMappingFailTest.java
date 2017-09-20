@@ -136,7 +136,7 @@ public class GatewayPortMappingFailTest {
         .auth().preemptive().basic(username, password)
         .header("X-XSRF-Header", "jksdhfkhdsf")
         .queryParam("op", "LISTSTATUS")
-        .expect()
+        .then()
         //.log().ifError()
         .statusCode(HttpStatus.SC_NOT_FOUND)
         //.content("FileStatuses.FileStatus[0].pathSuffix", is("app-logs"))

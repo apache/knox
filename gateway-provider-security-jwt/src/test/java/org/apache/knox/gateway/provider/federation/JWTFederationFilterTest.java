@@ -32,7 +32,6 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
     @Before
     public void setup() throws Exception, NoSuchAlgorithmException {
-      super.setup();
       handler = new TestJWTFederationFilter();
       ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
     }
