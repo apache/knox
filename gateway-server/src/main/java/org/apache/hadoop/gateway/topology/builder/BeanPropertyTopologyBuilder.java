@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.topology.Topology;
 public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
     private String name;
+    private String defaultService;
     private List<Provider> providers;
     private List<Service> services;
     private List<Application> applications;
@@ -44,6 +45,15 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
     public String name() {
         return name;
+    }
+
+    public BeanPropertyTopologyBuilder defaultService(String defaultService) {
+      this.defaultService = defaultService;
+      return this;
+    }
+
+    public String defaultService() {
+      return defaultService;
     }
 
     public BeanPropertyTopologyBuilder addProvider(Provider provider) {
@@ -76,6 +86,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
     public Topology build() {
         Topology topology = new Topology();
         topology.setName(name);
+        topology.setDefaultServicePath(defaultService);
 
           for (Provider provider : providers) {
             topology.addProvider(provider);

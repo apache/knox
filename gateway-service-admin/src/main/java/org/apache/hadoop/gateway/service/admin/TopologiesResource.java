@@ -245,6 +245,8 @@ public class TopologiesResource {
     @XmlElement
     private String timestamp;
     @XmlElement
+    private String defaultServicePath;
+    @XmlElement
     private String uri;
     @XmlElement
     private String href;
@@ -254,6 +256,7 @@ public class TopologiesResource {
     public SimpleTopology(org.apache.hadoop.gateway.topology.Topology t, String uri, String href) {
       this.name = t.getName();
       this.timestamp = Long.toString(t.getTimestamp());
+      this.defaultServicePath = t.getDefaultServicePath();
       this.uri = uri;
       this.href = href;
     }
@@ -268,6 +271,14 @@ public class TopologiesResource {
 
     public String getTimestamp() {
       return timestamp;
+    }
+
+    public void setDefaultService(String defaultServicePath) {
+      this.defaultServicePath = defaultServicePath;
+    }
+
+    public String getDefaultService() {
+      return defaultServicePath;
     }
 
     public void setTimestamp(String timestamp) {

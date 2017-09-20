@@ -24,10 +24,11 @@ or more contributor license agreements.  See the NOTICE file
         element-form-default="QUALIFIED"/>
     <java-types>
         <java-type name="Topology" xml-accessor-type="NONE">
-            <xml-type prop-order="name providers services applications"/>
+            <xml-type prop-order="name defaultServicePath providers services applications"/>
             <xml-root-element/>
             <java-attributes>
                 <xml-element java-attribute="name" name="name"/>
+                <xml-element java-attribute="defaultServicePath" name="default-service"/>
                 <xml-elements java-attribute="providers">
                     <xml-element name="provider"/>
                     <xml-element-wrapper name="gateway"/>
