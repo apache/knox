@@ -56,7 +56,6 @@ import org.apache.hadoop.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
 import org.apache.hadoop.gateway.services.security.token.impl.JWT;
-import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -550,7 +549,7 @@ public abstract class AbstractJWTFilterTest  {
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
      */
     @Override
-    public JWTToken issueToken(Subject subject, String algorithm)
+    public JWT issueToken(Subject subject, String algorithm)
         throws TokenServiceException {
       // TODO Auto-generated method stub
       return null;
@@ -560,7 +559,7 @@ public abstract class AbstractJWTFilterTest  {
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
      */
     @Override
-    public JWTToken issueToken(Principal p, String algorithm)
+    public JWT issueToken(Principal p, String algorithm)
         throws TokenServiceException {
       // TODO Auto-generated method stub
       return null;
@@ -570,16 +569,16 @@ public abstract class AbstractJWTFilterTest  {
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
      */
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm)
+    public JWT issueToken(Principal p, String audience, String algorithm)
         throws TokenServiceException {
       return null;
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#verifyToken(org.apache.hadoop.gateway.services.security.token.impl.JWTToken)
+     * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#verifyToken(org.apache.hadoop.gateway.services.security.token.impl.JWT)
      */
     @Override
-    public boolean verifyToken(JWTToken token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) verifyingKey);
       return token.verify(verifier);
     }
@@ -588,13 +587,13 @@ public abstract class AbstractJWTFilterTest  {
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String, long)
      */
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm,
+    public JWT issueToken(Principal p, String audience, String algorithm,
         long expires) throws TokenServiceException {
       return null;
     }
 
     @Override
-    public JWTToken issueToken(Principal p, List<String> audiences, String algorithm,
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
         long expires) throws TokenServiceException {
       return null;
     }
@@ -603,14 +602,14 @@ public abstract class AbstractJWTFilterTest  {
      * @see org.apache.hadoop.gateway.services.security.token.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long)
      */
     @Override
-    public JWT issueToken(Principal p, String audience, long l)
+    public JWT issueToken(Principal p, String algorithm, long expires)
         throws TokenServiceException {
       // TODO Auto-generated method stub
       return null;
     }
 
     @Override
-    public boolean verifyToken(JWTToken token, RSAPublicKey publicKey) throws TokenServiceException {
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }

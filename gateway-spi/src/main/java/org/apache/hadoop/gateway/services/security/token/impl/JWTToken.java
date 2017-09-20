@@ -39,10 +39,10 @@ public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
   SignedJWT jwt = null;
-  
+
   private JWTToken(byte[] header, byte[] claims, byte[] signature) throws ParseException {
     try {
-      jwt = new SignedJWT(new Base64URL(new String(header, "UTF8")), new Base64URL(new String(claims, "UTF8")), 
+      jwt = new SignedJWT(new Base64URL(new String(header, "UTF8")), new Base64URL(new String(claims, "UTF8")),
           new Base64URL(new String(signature, "UTF8")));
     } catch (UnsupportedEncodingException e) {
       log.unsupportedEncoding(e);
@@ -79,7 +79,7 @@ public class JWTToken implements JWT {
     if(claimsArray[3] != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }
-    
+
     claims = builder.build();
 
     jwt = new SignedJWT(header, claims);
@@ -151,7 +151,7 @@ public class JWTToken implements JWT {
 //    System.out.println("header: " + token.header);
 //    System.out.println("claims: " + token.claims);
 //    System.out.println("payload: " + new String(token.payload));
-    
+
     return jwt;
   }
 
@@ -161,13 +161,13 @@ public class JWTToken implements JWT {
   @Override
   public String getClaim(String claimName) {
     String claim = null;
-    
+
     try {
       claim = jwt.getJWTClaimsSet().getStringClaim(claimName);
     } catch (ParseException e) {
       log.unableToParseToken(e);
     }
-    
+
     return claim;
   }
 
@@ -246,9 +246,9 @@ public class JWTToken implements JWT {
     return getClaim(JWT.PRINCIPAL);
   }
 
-  
+
   /* (non-Javadoc)
-   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#sign(JWSSigner)
    */
   @Override
   public void sign(JWSSigner signer) {
@@ -259,20 +259,19 @@ public class JWTToken implements JWT {
     }
   }
 
-  /**
-   * @param verifier
-   * @return
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#verify(JWSVerifier)
    */
   public boolean verify(JWSVerifier verifier) {
     boolean rc = false;
-    
+
     try {
       rc = jwt.verify(verifier);
     } catch (JOSEException e) {
       // TODO Auto-generated catch block
       log.unableToVerifyToken(e);
     }
-    
+
     return rc;
-  }  
+  }
 }

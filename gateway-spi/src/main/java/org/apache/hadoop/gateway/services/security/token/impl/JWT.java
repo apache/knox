@@ -20,41 +20,44 @@ package org.apache.hadoop.gateway.services.security.token.impl;
 import java.util.Date;
 
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
 
 public interface JWT {
 
-  public static final String PRINCIPAL = "prn";
-  public static final String SUBJECT = "sub";
-  public static final String ISSUER = "iss";
-  public static final String AUDIENCE = "aud";
-  public static final String EXPIRES = "exp";
+  String PRINCIPAL = "prn";
+  String SUBJECT = "sub";
+  String ISSUER = "iss";
+  String AUDIENCE = "aud";
+  String EXPIRES = "exp";
 
-  public abstract String getPayload();
+  String getPayload();
 
-  public abstract void setSignaturePayload(byte[] payload);
+  void setSignaturePayload(byte[] payload);
 
-  public abstract byte[] getSignaturePayload();
+  byte[] getSignaturePayload();
 
-  public abstract String getClaim(String claimName);
+  String getClaim(String claimName);
 
-  public abstract String getPrincipal();
+  String getPrincipal();
 
-  public abstract String getIssuer();
+  String getIssuer();
 
-  public abstract String getAudience();
+  String getAudience();
 
   public String[] getAudienceClaims();
 
-  public abstract String getExpires();
+  String getExpires();
 
-  public abstract Date getExpiresDate();
+  Date getExpiresDate();
 
-  public abstract String getSubject();
+  String getSubject();
 
-  public abstract String getHeader();
+  String getHeader();
 
-  public abstract String getClaims();
+  String getClaims();
 
-  public abstract void sign(JWSSigner signer);
+  void sign(JWSSigner signer);
+
+  boolean verify(JWSVerifier verifier);
 
 }

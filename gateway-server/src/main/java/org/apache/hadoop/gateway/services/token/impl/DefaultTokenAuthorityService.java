@@ -37,6 +37,7 @@ import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 
 import com.nimbusds.jose.JWSSigner;
@@ -63,28 +64,28 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Subject subject, String algorithm) throws TokenServiceException {
+  public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
     return issueToken(p, algorithm);
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Principal p, String algorithm) throws TokenServiceException {
+  public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
     return issueToken(p, null, algorithm);
   }
-  
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long expires)
    */
   @Override
-  public JWTToken issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
+  public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
     return issueToken(p, (String)null, algorithm, expires);
   }
 
-  public JWTToken issueToken(Principal p, String audience, String algorithm)
+  public JWT issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
     return issueToken(p, audience, algorithm, -1);
   }
@@ -93,7 +94,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @see org.apache.hadoop.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
    */
   @Override
-  public JWTToken issueToken(Principal p, String audience, String algorithm, long expires)
+  public JWT issueToken(Principal p, String audience, String algorithm, long expires)
       throws TokenServiceException {
     ArrayList<String> audiences = null;
     if (audience != null) {
@@ -104,7 +105,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public JWTToken issueToken(Principal p, List<String> audiences, String algorithm, long expires)
+  public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires)
       throws TokenServiceException {
     String[] claimArray = new String[4];
     claimArray[0] = "KNOXSSO";
@@ -159,13 +160,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public boolean verifyToken(JWTToken token)
+  public boolean verifyToken(JWT token)
       throws TokenServiceException {
     return verifyToken(token, null);
   }
 
   @Override
-  public boolean verifyToken(JWTToken token, RSAPublicKey publicKey)
+  public boolean verifyToken(JWT token, RSAPublicKey publicKey)
       throws TokenServiceException {
     boolean rc = false;
     PublicKey key;
