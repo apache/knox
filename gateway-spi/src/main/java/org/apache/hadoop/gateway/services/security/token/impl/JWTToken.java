@@ -40,13 +40,8 @@ public class JWTToken implements JWT {
 
   SignedJWT jwt = null;
 
-  private JWTToken(byte[] header, byte[] claims, byte[] signature) throws ParseException {
-    try {
-      jwt = new SignedJWT(new Base64URL(new String(header, "UTF8")), new Base64URL(new String(claims, "UTF8")),
-          new Base64URL(new String(signature, "UTF8")));
-    } catch (UnsupportedEncodingException e) {
-      log.unsupportedEncoding(e);
-    }
+  private JWTToken(String header, String claims, String signature) throws ParseException {
+    jwt = new SignedJWT(new Base64URL(header), new Base64URL(claims), new Base64URL(signature));
   }
 
   public JWTToken(String serializedJWT) throws ParseException {
@@ -147,12 +142,7 @@ public class JWTToken implements JWT {
   public static JWTToken parseToken(String wireToken) throws ParseException {
     log.parsingToken(wireToken);
     String[] parts = wireToken.split("\\.");
-    JWTToken jwt = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
-//    System.out.println("header: " + token.header);
-//    System.out.println("claims: " + token.claims);
-//    System.out.println("payload: " + new String(token.payload));
-
-    return jwt;
+    return new JWTToken(parts[0], parts[1], parts[2]);
   }
 
   /* (non-Javadoc)
