@@ -20,10 +20,9 @@ package org.apache.hadoop.gateway.util;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -32,7 +31,7 @@ public class HttpUtils {
 
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {
-    final Map<String, List<String>> queryPairs = new LinkedHashMap<String, List<String>>();
+    final Map<String, List<String>> queryPairs = new HashMap<String, List<String>>();
     if (queryString == null || queryString.trim().isEmpty()) {
       return queryPairs;
     }
@@ -41,7 +40,7 @@ public class HttpUtils {
       final int idx = pair.indexOf("=");
       final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
       if (!queryPairs.containsKey(key)) {
-        queryPairs.put(key, new LinkedList<String>());
+        queryPairs.put(key, new ArrayList<String>());
       }
       final String value = idx > 0 && pair.length() > idx + 1 
           ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : "";
