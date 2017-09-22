@@ -22,6 +22,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
@@ -214,7 +216,11 @@ public class JWTToken implements JWT {
    */
   @Override
   public String getExpires() {
-    return getClaim(JWT.EXPIRES);
+    Date expires = getExpiresDate();
+    if (expires != null) {
+      return String.valueOf(expires.getTime());
+    }
+    return null;
   }
 
   @Override

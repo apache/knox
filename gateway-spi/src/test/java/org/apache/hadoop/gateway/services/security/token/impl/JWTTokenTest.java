@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -206,4 +207,17 @@ public class JWTTokenTest extends org.junit.Assert {
     assertTrue(token.verify(verifier));
   }
 
+  @Test
+  public void testTokenExpiry() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "https://login.example.com";
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    JWTToken token = new JWTToken("RS256", claims);
+
+    assertNotNull(token.getExpires());
+    assertNotNull(token.getExpiresDate());
+    assertEquals(token.getExpiresDate(), new Date(Long.valueOf(token.getExpires())));
+  }
 }
