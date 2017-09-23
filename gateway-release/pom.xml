@@ -334,6 +334,10 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-shell-samples</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-discovery-ambari</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
