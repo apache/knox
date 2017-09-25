@@ -15,19 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.services.token.impl;
+package org.apache.knox.gateway.services.token.impl;
 
 import java.io.File;
 import java.security.Principal;
 import java.util.HashMap;
 
-import org.apache.hadoop.gateway.config.GatewayConfig;
-import org.apache.hadoop.gateway.services.security.AliasService;
-import org.apache.hadoop.gateway.services.security.KeystoreService;
-import org.apache.hadoop.gateway.services.security.MasterService;
-import org.apache.hadoop.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
-import org.apache.hadoop.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.Test;
 

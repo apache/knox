@@ -576,7 +576,7 @@ public abstract class AbstractJWTFilterTest  {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.knox.gateway.services.security.token.JWTokenAuthority#verifyToken(org.apache.hadoop.gateway.services.security.token.impl.JWT)
+     * @see org.apache.knox.gateway.services.security.token.JWTokenAuthority#verifyToken(org.apache.knox.gateway.services.security.token.impl.JWT)
      */
     @Override
     public boolean verifyToken(JWT token) throws TokenServiceException {

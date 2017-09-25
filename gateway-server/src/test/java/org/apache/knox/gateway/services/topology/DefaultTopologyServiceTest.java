@@ -94,7 +94,7 @@ public class DefaultTopologyServiceTest {
 
     long time = topologyDir.lastModified();
     try {
-      createFile(topologyDir, "one.xml", "org/apache/hadoop/gateway/topology/file/topology-one.xml", time);
+      createFile(topologyDir, "one.xml", "org/apache/knox/gateway/topology/file/topology-one.xml", time);
 
       TestTopologyListener topoListener = new TestTopologyListener();
       FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
@@ -123,7 +123,7 @@ public class DefaultTopologyServiceTest {
       topoListener.events.clear();
 
       // Add a file to the directory.
-      File two = createFile(dir, "two.xml",
+      File two = createFile(topologyDir, "two.xml",
           "org/apache/knox/gateway/topology/file/topology-two.xml", 1L);
       provider.reloadTopologies();
       topologies = provider.getTopologies();
@@ -145,7 +145,7 @@ public class DefaultTopologyServiceTest {
       assertThat(event.getTopology(), notNullValue());
 
       // Update a file in the directory.
-      two = createFile(dir, "two.xml",
+      two = createFile(topologyDir, "two.xml",
           "org/apache/knox/gateway/topology/file/topology-three.xml", 2L);
       provider.reloadTopologies();
       topologies = provider.getTopologies();
@@ -171,7 +171,7 @@ public class DefaultTopologyServiceTest {
 
       // Add a simple descriptor to the descriptors dir to verify topology generation and loading (KNOX-1006)
       // N.B. This part of the test depends on the DummyServiceDiscovery extension being configured:
-      //         org.apache.hadoop.gateway.topology.discovery.test.extension.DummyServiceDiscovery
+      //         org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscovery
       AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
       EasyMock.expect(aliasService.getPasswordFromAliasForGateway(anyObject(String.class))).andReturn(null).anyTimes();
       EasyMock.replay(aliasService);
@@ -181,14 +181,14 @@ public class DefaultTopologyServiceTest {
       // Write out the referenced provider config first
       File provCfgFile = createFile(sharedProvidersDir,
                                     "ambari-cluster-policy.xml",
-                                    "org/apache/hadoop/gateway/topology/file/ambari-cluster-policy.xml",
+          "org/apache/knox/gateway/topology/file/ambari-cluster-policy.xml",
                                     1L);
       try {
         // Create the simple descriptor in the descriptors dir
         File simpleDesc =
                 createFile(descriptorsDir,
                            "four.json",
-                           "org/apache/hadoop/gateway/topology/file/simple-topology-four.json",
+                    "org/apache/knox/gateway/topology/file/simple-topology-four.json",
                            1L);
 
         // Trigger the topology generation by noticing the simple descriptor
