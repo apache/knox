@@ -275,32 +275,32 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public JWTToken issueToken(Subject subject, String algorithm)
+    public JWT issueToken(Subject subject, String algorithm)
       throws TokenServiceException {
       Principal p = (Principal) subject.getPrincipals().toArray()[0];
       return issueToken(p, algorithm);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String algorithm)
+    public JWT issueToken(Principal p, String algorithm)
       throws TokenServiceException {
       return issueToken(p, null, algorithm);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm)
+    public JWT issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
       return issueToken(p, audience, algorithm, -1);
     }
 
     @Override
-    public boolean verifyToken(JWTToken token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm,
+    public JWT issueToken(Principal p, String audience, String algorithm,
                                long expires) throws TokenServiceException {
       List<String> audiences = null;
       if (audience != null) {
@@ -311,7 +311,7 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public JWTToken issueToken(Principal p, List<String> audiences, String algorithm,
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
                                long expires) throws TokenServiceException {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
@@ -342,7 +342,7 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWTToken token, RSAPublicKey publicKey) throws TokenServiceException {
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }

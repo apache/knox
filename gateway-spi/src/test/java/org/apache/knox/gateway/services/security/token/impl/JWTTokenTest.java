@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -34,8 +35,7 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public class JWTTokenTest extends org.junit.Assert {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
-  private static final String HEADER = "{\"alg\":\"RS256\", \"type\":\"JWT\"}";
-  private static final String CLAIMS = "{\"iss\": \"gateway\", \"prn\": \"john.doe@example.com\", \"aud\": \"https://login.example.com\", \"exp\": \"1363360913\"}";
+  private static final String HEADER = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
 
   private RSAPublicKey publicKey;
   private RSAPrivateKey privateKey;
@@ -49,15 +49,12 @@ public class JWTTokenTest extends org.junit.Assert {
     privateKey = (RSAPrivateKey) kp.getPrivate();
   }
 
+  @Test
   public void testTokenParsing() throws Exception {
     JWTToken token = JWTToken.parseToken(JWT_TOKEN);
     assertEquals(token.getHeader(), HEADER);
-    assertEquals(token.getClaims(), CLAIMS);
 
-    assertEquals(token.getIssuer(), "gateway");
-    assertEquals(token.getPrincipal(), "john.doe@example.com");
-    assertEquals(token.getAudience(), "https://login.example.com");
-    assertEquals(token.getExpires(), "1363360913");
+    assertEquals(token.getClaim("jti"), "aa7f8d0a95c");
   }
 
   @Test
@@ -210,4 +207,17 @@ public class JWTTokenTest extends org.junit.Assert {
     assertTrue(token.verify(verifier));
   }
 
+  @Test
+  public void testTokenExpiry() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "https://login.example.com";
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    JWTToken token = new JWTToken("RS256", claims);
+
+    assertNotNull(token.getExpires());
+    assertNotNull(token.getExpiresDate());
+    assertEquals(token.getExpiresDate(), new Date(Long.valueOf(token.getExpires())));
+  }
 }

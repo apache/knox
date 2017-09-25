@@ -22,6 +22,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
@@ -39,14 +41,9 @@ public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
   SignedJWT jwt = null;
-  
-  private JWTToken(byte[] header, byte[] claims, byte[] signature) throws ParseException {
-    try {
-      jwt = new SignedJWT(new Base64URL(new String(header, "UTF8")), new Base64URL(new String(claims, "UTF8")), 
-          new Base64URL(new String(signature, "UTF8")));
-    } catch (UnsupportedEncodingException e) {
-      log.unsupportedEncoding(e);
-    }
+
+  private JWTToken(String header, String claims, String signature) throws ParseException {
+    jwt = new SignedJWT(new Base64URL(header), new Base64URL(claims), new Base64URL(signature));
   }
 
   public JWTToken(String serializedJWT) throws ParseException {
@@ -79,7 +76,7 @@ public class JWTToken implements JWT {
     if(claimsArray[3] != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }
-    
+
     claims = builder.build();
 
     jwt = new SignedJWT(header, claims);
@@ -147,12 +144,7 @@ public class JWTToken implements JWT {
   public static JWTToken parseToken(String wireToken) throws ParseException {
     log.parsingToken(wireToken);
     String[] parts = wireToken.split("\\.");
-    JWTToken jwt = new JWTToken(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2]));
-//    System.out.println("header: " + token.header);
-//    System.out.println("claims: " + token.claims);
-//    System.out.println("payload: " + new String(token.payload));
-    
-    return jwt;
+    return new JWTToken(parts[0], parts[1], parts[2]);
   }
 
   /* (non-Javadoc)
@@ -161,13 +153,13 @@ public class JWTToken implements JWT {
   @Override
   public String getClaim(String claimName) {
     String claim = null;
-    
+
     try {
       claim = jwt.getJWTClaimsSet().getStringClaim(claimName);
     } catch (ParseException e) {
       log.unableToParseToken(e);
     }
-    
+
     return claim;
   }
 
@@ -224,7 +216,11 @@ public class JWTToken implements JWT {
    */
   @Override
   public String getExpires() {
-    return getClaim(JWT.EXPIRES);
+    Date expires = getExpiresDate();
+    if (expires != null) {
+      return String.valueOf(expires.getTime());
+    }
+    return null;
   }
 
   @Override
@@ -246,9 +242,9 @@ public class JWTToken implements JWT {
     return getClaim(JWT.PRINCIPAL);
   }
 
-  
+
   /* (non-Javadoc)
-   * @see JWT#getPrincipal()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#sign(JWSSigner)
    */
   @Override
   public void sign(JWSSigner signer) {
@@ -259,20 +255,19 @@ public class JWTToken implements JWT {
     }
   }
 
-  /**
-   * @param verifier
-   * @return
+  /* (non-Javadoc)
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#verify(JWSVerifier)
    */
   public boolean verify(JWSVerifier verifier) {
     boolean rc = false;
-    
+
     try {
       rc = jwt.verify(verifier);
     } catch (JOSEException e) {
       // TODO Auto-generated catch block
       log.unableToVerifyToken(e);
     }
-    
+
     return rc;
-  }  
+  }
 }

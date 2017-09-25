@@ -511,6 +511,11 @@ public interface GatewayMessages {
                " Could not find topology \"{0}\" mapped to port \"{1}\" configured in gateway-config.xml. "
                    + "This invalid topology mapping will be ignored by the gateway. "
                    + "Gateway restart will be required if in the future \"{0}\" topology is added.")
-  void topologyPortMappingCannotFindTopology(final String topology,
-      final int port);
+  void topologyPortMappingCannotFindTopology(final String topology, final int port);
+
+
+  @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
+  void simpleDescriptorHandlingError(final String simpleDesc,
+                                     @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
 }

@@ -108,6 +108,8 @@ public interface GatewayConfig {
 
   boolean isClientAuthNeeded();
 
+  boolean isClientAuthWanted();
+
   String getTruststorePath();
 
   boolean getTrustAllCerts();

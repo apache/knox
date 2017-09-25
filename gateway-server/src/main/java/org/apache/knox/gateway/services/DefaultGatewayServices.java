@@ -105,14 +105,13 @@ public class DefaultGatewayServices implements GatewayServices {
     services.put( SERVER_INFO_SERVICE, sis );
 
     DefaultTopologyService tops = new DefaultTopologyService();
+    tops.setAliasService(alias);
     tops.init(  config, options  );
     services.put(  TOPOLOGY_SERVICE, tops  );
 
     DefaultServiceDefinitionRegistry sdr = new DefaultServiceDefinitionRegistry();
     sdr.init( config, options );
     services.put( SERVICE_DEFINITION_REGISTRY, sdr );
-    tops.init( config, options );
-    services.put( TOPOLOGY_SERVICE, tops );
 
     DefaultMetricsService metricsService = new DefaultMetricsService();
     metricsService.init( config, options );

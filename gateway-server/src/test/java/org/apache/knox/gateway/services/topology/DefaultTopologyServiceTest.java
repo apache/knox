@@ -29,6 +29,7 @@ import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -40,6 +41,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
+import static org.easymock.EasyMock.anyObject;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -82,10 +84,17 @@ public class DefaultTopologyServiceTest {
   public void testGetTopologies() throws Exception {
 
     File dir = createDir();
-    long time = dir.lastModified();
+    File topologyDir = new File(dir, "topologies");
+
+    File descriptorsDir = new File(dir, "descriptors");
+    descriptorsDir.mkdirs();
+
+    File sharedProvidersDir = new File(dir, "shared-providers");
+    sharedProvidersDir.mkdirs();
+
+    long time = topologyDir.lastModified();
     try {
-      createFile(dir, "one.xml",
-          "org/apache/knox/gateway/topology/file/topology-one.xml", time);
+      createFile(topologyDir, "one.xml", "org/apache/hadoop/gateway/topology/file/topology-one.xml", time);
 
       TestTopologyListener topoListener = new TestTopologyListener();
       FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
@@ -94,16 +103,15 @@ public class DefaultTopologyServiceTest {
       Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(dir.toString()).anyTimes();
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
       EasyMock.replay(config);
 
       provider.init(config, c);
 
-
       provider.addTopologyChangeListener(topoListener);
 
       provider.reloadTopologies();
-
 
       Collection<Topology> topologies = provider.getTopologies();
       assertThat(topologies, notNullValue());
@@ -160,6 +168,49 @@ public class DefaultTopologyServiceTest {
       topology = topologies.iterator().next();
       assertThat(topology.getName(), is("one"));
       assertThat(topology.getTimestamp(), is(time));
+
+      // Add a simple descriptor to the descriptors dir to verify topology generation and loading (KNOX-1006)
+      // N.B. This part of the test depends on the DummyServiceDiscovery extension being configured:
+      //         org.apache.hadoop.gateway.topology.discovery.test.extension.DummyServiceDiscovery
+      AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+      EasyMock.expect(aliasService.getPasswordFromAliasForGateway(anyObject(String.class))).andReturn(null).anyTimes();
+      EasyMock.replay(aliasService);
+      DefaultTopologyService.DescriptorsMonitor dm =
+                                          new DefaultTopologyService.DescriptorsMonitor(topologyDir, aliasService);
+
+      // Write out the referenced provider config first
+      File provCfgFile = createFile(sharedProvidersDir,
+                                    "ambari-cluster-policy.xml",
+                                    "org/apache/hadoop/gateway/topology/file/ambari-cluster-policy.xml",
+                                    1L);
+      try {
+        // Create the simple descriptor in the descriptors dir
+        File simpleDesc =
+                createFile(descriptorsDir,
+                           "four.json",
+                           "org/apache/hadoop/gateway/topology/file/simple-topology-four.json",
+                           1L);
+
+        // Trigger the topology generation by noticing the simple descriptor
+        dm.onFileChange(simpleDesc);
+
+        // Load the generated topology
+        provider.reloadTopologies();
+        topologies = provider.getTopologies();
+        assertThat(topologies.size(), is(2));
+        names = new HashSet<>(Arrays.asList("one", "four"));
+        iterator = topologies.iterator();
+        topology = iterator.next();
+        assertThat(names, hasItem(topology.getName()));
+        names.remove(topology.getName());
+        topology = iterator.next();
+        assertThat(names, hasItem(topology.getName()));
+        names.remove(topology.getName());
+        assertThat(names.size(), is(0));
+      } finally {
+        provCfgFile.delete();
+
+      }
     } finally {
       FileUtils.deleteQuietly(dir);
     }

@@ -24,29 +24,28 @@ import java.util.List;
 import javax.security.auth.Subject;
 
 import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 public interface JWTokenAuthority {
 
-  JWTToken issueToken(Subject subject, String algorithm)
+  JWT issueToken(Subject subject, String algorithm)
       throws TokenServiceException;
 
-  JWTToken issueToken(Principal p, String algorithm)
+  JWT issueToken(Principal p, String algorithm)
       throws TokenServiceException;
 
-  JWTToken issueToken(Principal p, String audience,
+  JWT issueToken(Principal p, String audience,
       String algorithm) throws TokenServiceException;
 
-  boolean verifyToken(JWTToken token) throws TokenServiceException;
+  boolean verifyToken(JWT token) throws TokenServiceException;
 
-  boolean verifyToken(JWTToken token, RSAPublicKey publicKey)
+  boolean verifyToken(JWT token, RSAPublicKey publicKey)
       throws TokenServiceException;
 
-  JWTToken issueToken(Principal p, String audience, String algorithm,
+  JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException;
+
+  JWT issueToken(Principal p, String audience, String algorithm,
       long expires) throws TokenServiceException;
 
-  JWT issueToken(Principal p, String audience, long l) throws TokenServiceException;
-
-  JWTToken issueToken(Principal p, List<String> audience, String algorithm,
+  JWT issueToken(Principal p, List<String> audience, String algorithm,
       long expires) throws TokenServiceException;
 }

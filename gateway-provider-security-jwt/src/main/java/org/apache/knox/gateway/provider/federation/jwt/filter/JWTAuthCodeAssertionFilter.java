@@ -33,12 +33,12 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.JsonUtils;
 
 public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter {
   private static final String BEARER = "Bearer ";
-  
+
   private JWTokenAuthority authority = null;
 
   private ServiceRegistry sr;
@@ -56,7 +56,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
     sr = (ServiceRegistry) services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
   }
-  
+
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
@@ -64,15 +64,15 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
       principalName = mapper.mapUserPrincipal(principalName);
-      JWTToken authCode;
+      JWT authCode;
       try {
         authCode = authority.issueToken(subject, "RS256");
         // get the url for the token service
-        String url = null; 
+        String url = null;
         if (sr != null) {
           url = sr.lookupServiceURL("token", "TGS");
         }
-        
+
         HashMap<String, Object> map = new HashMap<>();
         // TODO: populate map from JWT authorization code
         // Coverity CID 1327960
@@ -86,9 +86,9 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
         if (url != null) {
           map.put("tke", url);
         }
-        
+
         String jsonResponse = JsonUtils.renderAsJsonString(map);
-        
+
         response.getWriter().write(jsonResponse);
         //KNOX-685: response.getWriter().flush();
       } catch (TokenServiceException e) {

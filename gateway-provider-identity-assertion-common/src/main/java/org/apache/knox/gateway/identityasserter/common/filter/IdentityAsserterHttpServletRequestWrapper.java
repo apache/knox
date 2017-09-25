@@ -71,21 +71,30 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return super.getParameter(name);
   }
   
-  @SuppressWarnings("rawtypes")
   @Override
-  public Map getParameterMap() {
-    Map map = null;
+  public Map<String, String[]> getParameterMap() {
+    Map<String, String[]> map = null;
     try {
-      map = getParams();
+      map = convertValuesToStringArrays(getParams());
     } catch (UnsupportedEncodingException e) {
       log.unableToGetParamsFromQueryString(e);
     }
     return map;
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private Map<String, String[]> convertValuesToStringArrays(Map<String, List<String>> params) {
+    Map<String, String[]> arrayMap = new HashMap<String, String[]>();
+    String name = null;
+    Enumeration<String> names = getParameterNames();
+    while (names.hasMoreElements()) {
+      name = (String) names.nextElement();
+      arrayMap.put(name, getParameterValues(name));
+    }
+    return arrayMap;
+  }
+
   @Override
-  public Enumeration getParameterNames() {
+  public Enumeration<String> getParameterNames() {
     Enumeration<String> e = null;
     Map<String, List<String>> params;
     try {
@@ -103,14 +112,14 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   @Override
   public String[] getParameterValues(String name) {
-    String[] p = null;
+    String[] p = {};
     Map<String, List<String>> params;
     try {
       params = getParams();
       if (params == null) {
         params = new HashMap<>();
       }
-      p = (String[]) params.get(name).toArray();
+      p = (String[]) params.get(name).toArray(p);
     } catch (UnsupportedEncodingException e) {
       log.unableToGetParamsFromQueryString(e);
     }
