@@ -115,6 +115,14 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
+
+  /**
+   * @sine 0.14.0
+   */
+  public void doHead( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
+  }
   
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest) {

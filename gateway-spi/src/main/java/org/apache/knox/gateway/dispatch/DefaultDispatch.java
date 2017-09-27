@@ -36,6 +36,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -311,6 +312,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       copyRequestHeaderFields(method, request);
       executeRequest(method, request, response);
    }
+
+  @Override
+  public void doHead(URI url, HttpServletRequest request, HttpServletResponse response)
+      throws IOException, URISyntaxException {
+    final HttpHead method = new HttpHead(url);
+    copyRequestHeaderFields(method, request);
+    executeRequest(method, request, response);
+  }
 
   public Set<String> getOutboundResponseExcludeHeaders() {
     return outboundResponseExcludeHeaders;

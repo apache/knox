@@ -53,4 +53,10 @@ public interface Dispatch {
   void doOptions( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
 
+  /**
+   * @since 0.14.0
+   */
+  void doHead( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
+
 }
