@@ -41,29 +41,4 @@ public class KnoxLdapContextFactory extends org.apache.knox.gateway.shirorealm.K
     return super.createLdapContext(env);
   }
 
-  @Override
-  public String getSystemAuthenticationMechanism() {
-    return super.getSystemAuthenticationMechanism();
-  }
-
-  @Override
-  public void setSystemAuthenticationMechanism(
-      String systemAuthenticationMechanism) {
-    super.setSystemAuthenticationMechanism(systemAuthenticationMechanism);
-  }
-
-  @Override
-  public void setSystemPassword(String systemPass) {
-    super.setSystemPassword(systemPass);
-  }
-
-  @Override
-  public String getClusterName() {
-    return super.getClusterName();
-  }
-
-  @Override
-  public void setClusterName(String clusterName) {
-    super.setClusterName(clusterName);
-  }
 }

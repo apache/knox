@@ -38,21 +38,6 @@ public class KnoxPamRealm
     super();
   }
 
-  @Override
-  public String getService() {
-    return super.getService();
-  }
-
-  @Override
-  public void setService(String service) {
-    super.setService(service);
-  }
-
-  @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(
-      PrincipalCollection principals) {
-    return super.doGetAuthorizationInfo(principals);
-  }
 
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(

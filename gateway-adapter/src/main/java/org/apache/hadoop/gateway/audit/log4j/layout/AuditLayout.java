@@ -35,18 +35,4 @@ public class AuditLayout
     super();
   }
 
-  @Override
-  public void activateOptions() {
-    super.activateOptions();
-  }
-
-  @Override
-  public String format(LoggingEvent event) {
-    return super.format(event);
-  }
-
-  @Override
-  public boolean ignoresThrowable() {
-    return super.ignoresThrowable();
-  }
 }
