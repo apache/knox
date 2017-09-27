@@ -27,7 +27,14 @@ import java.util.Map;
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-public class KnoxLdapRealm extends org.apache.knox.gateway.shirorealm.KnoxLdapRealm {
+
+/**
+ * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapRealm}
+ * for backwards compatability with package structure.
+ * @since 0.14.0
+ */
+public class KnoxLdapRealm
+    extends org.apache.knox.gateway.shirorealm.KnoxLdapRealm {
 
   /**
    * Create an instance

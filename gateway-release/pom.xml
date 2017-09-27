@@ -338,6 +338,10 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-discovery-ambari</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-adapter</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>

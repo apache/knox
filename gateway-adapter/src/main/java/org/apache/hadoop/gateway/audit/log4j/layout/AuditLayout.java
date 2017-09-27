@@ -1,10 +1,4 @@
-package org.apache.hadoop.gateway.shirorealm;
-
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.subject.PrincipalCollection;
+package org.apache.hadoop.gateway.audit.log4j.layout;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -23,40 +17,36 @@ import org.apache.shiro.subject.PrincipalCollection;
  * the License.
  */
 
+import org.apache.log4j.spi.LoggingEvent;
+
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
+ * An adapter class that deligates calls to {@link org.apache.knox.gateway.audit.log4j.layout.AuditLayout}
  * for backwards compatability with package structure.
+ *
  * @since 0.14.0
  */
-public class KnoxPamRealm
-    extends org.apache.knox.gateway.shirorealm.KnoxPamRealm {
+public class AuditLayout
+    extends org.apache.knox.gateway.audit.log4j.layout.AuditLayout {
 
   /**
    * Create an instance
    */
-  public KnoxPamRealm() {
+  public AuditLayout() {
     super();
   }
 
   @Override
-  public String getService() {
-    return super.getService();
+  public void activateOptions() {
+    super.activateOptions();
   }
 
   @Override
-  public void setService(String service) {
-    super.setService(service);
+  public String format(LoggingEvent event) {
+    return super.format(event);
   }
 
   @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(
-      PrincipalCollection principals) {
-    return super.doGetAuthorizationInfo(principals);
-  }
-
-  @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(
-      AuthenticationToken token) throws AuthenticationException {
-    return super.doGetAuthenticationInfo(token);
+  public boolean ignoresThrowable() {
+    return super.ignoresThrowable();
   }
 }

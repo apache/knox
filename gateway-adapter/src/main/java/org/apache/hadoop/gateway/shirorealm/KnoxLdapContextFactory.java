@@ -1,11 +1,5 @@
 package org.apache.hadoop.gateway.shirorealm;
 
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.subject.PrincipalCollection;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with this
@@ -23,40 +17,53 @@ import org.apache.shiro.subject.PrincipalCollection;
  * the License.
  */
 
+import javax.naming.NamingException;
+import javax.naming.ldap.LdapContext;
+import java.util.Hashtable;
+
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
+ * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
  * for backwards compatability with package structure.
  * @since 0.14.0
  */
-public class KnoxPamRealm
-    extends org.apache.knox.gateway.shirorealm.KnoxPamRealm {
+public class KnoxLdapContextFactory extends org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory {
 
   /**
    * Create an instance
    */
-  public KnoxPamRealm() {
+  public KnoxLdapContextFactory() {
     super();
   }
 
   @Override
-  public String getService() {
-    return super.getService();
+  protected LdapContext createLdapContext(Hashtable env)
+      throws NamingException {
+    return super.createLdapContext(env);
   }
 
   @Override
-  public void setService(String service) {
-    super.setService(service);
+  public String getSystemAuthenticationMechanism() {
+    return super.getSystemAuthenticationMechanism();
   }
 
   @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(
-      PrincipalCollection principals) {
-    return super.doGetAuthorizationInfo(principals);
+  public void setSystemAuthenticationMechanism(
+      String systemAuthenticationMechanism) {
+    super.setSystemAuthenticationMechanism(systemAuthenticationMechanism);
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(
-      AuthenticationToken token) throws AuthenticationException {
-    return super.doGetAuthenticationInfo(token);
+  public void setSystemPassword(String systemPass) {
+    super.setSystemPassword(systemPass);
+  }
+
+  @Override
+  public String getClusterName() {
+    return super.getClusterName();
+  }
+
+  @Override
+  public void setClusterName(String clusterName) {
+    super.setClusterName(clusterName);
   }
 }

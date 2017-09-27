@@ -28,6 +28,14 @@
     <artifactId>gateway-adapter</artifactId>
     <name>gateway-adapter</name>
     <description>Adapter/Shims for old package structure to ensure compatibility.</description>
+    
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
@@ -37,6 +45,12 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
 
