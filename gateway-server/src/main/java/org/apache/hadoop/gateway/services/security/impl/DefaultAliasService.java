@@ -19,12 +19,12 @@ package org.apache.hadoop.gateway.services.security.impl;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import org.apache.hadoop.gateway.GatewayMessages;
 import org.apache.hadoop.gateway.config.GatewayConfig;
@@ -39,7 +39,7 @@ import org.apache.hadoop.gateway.services.security.MasterService;
 public class DefaultAliasService implements AliasService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase"; 
+  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
   protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
@@ -104,21 +104,21 @@ public class DefaultAliasService implements AliasService {
   }
 
   private String generatePassword(int length) {
-    StringBuffer sb = new StringBuffer();
-    Random r = new Random();
+    StringBuilder sb = new StringBuilder();
+    SecureRandom r = new SecureRandom();
     for (int i = 0; i < length; i++) {
       sb.append(chars[r.nextInt(chars.length)]);
     }
     return sb.toString();
   }
-  
+
   public void setKeystoreService(KeystoreService ks) {
     this.keystoreService = ks;
   }
 
   public void setMasterService(MasterService ms) {
     this.masterService = ms;
-    
+
   }
 
   @Override
