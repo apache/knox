@@ -50,7 +50,7 @@ public class TokenResource {
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String TARGET_URL = "target_url";
-  private static final String BEARER = "Bearer ";
+  private static final String BEARER = "Bearer";
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
