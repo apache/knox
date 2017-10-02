@@ -343,6 +343,23 @@ public class ParserTest {
     assertThat( template.toString(), is( text ) );
   }
 
+  /**
+   *  KNOX-1055
+   *  In some cases & could be encoded as &amp;
+   */
+  @Test
+  public void testEncodedChar() throws URISyntaxException {
+    Parser parser = new Parser();
+    String text;
+    Template template;
+
+    text = "stage?id=007&amp;attempt=0";
+    template = parser.parseTemplate( text );
+    assertBasics( template, false, false, true, 1, 2 );
+    assertQuery( template, "id", "", "007" );
+    assertQuery( template, "attempt", "", "0" );
+  }
+
   @Test
   public void testParameterizedPathTemplatesWithWildcardAndRegex() throws URISyntaxException {
     String text;

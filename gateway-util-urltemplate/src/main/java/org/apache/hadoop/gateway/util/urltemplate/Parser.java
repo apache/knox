@@ -238,10 +238,14 @@ public class Parser {
 
   private static void consumeQueryToken( final Builder builder, String token ) {
     if( token != null ) {
-      StringTokenizer tokenizer = new StringTokenizer( token, "?&" );
-      while( tokenizer.hasMoreTokens() ) {
-        consumeQuerySegment( builder, tokenizer.nextToken() );
+      //add "&amp;" as a delimiter
+      String[] tokens = token.split("(&amp;|\\?|&)");
+      if (tokens != null){
+        for (String nextToken : tokens){
+          consumeQuerySegment(builder,nextToken);
+        }
       }
+
     }
   }
 
