@@ -22,7 +22,7 @@ import javax.naming.ldap.LdapContext;
 import java.util.Hashtable;
 
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
  * for backwards compatability with package structure.
  * @since 0.14.0
  */

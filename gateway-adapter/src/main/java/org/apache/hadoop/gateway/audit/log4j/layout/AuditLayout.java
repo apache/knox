@@ -20,7 +20,7 @@ package org.apache.hadoop.gateway.audit.log4j.layout;
 import org.apache.log4j.spi.LoggingEvent;
 
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.audit.log4j.layout.AuditLayout}
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.audit.log4j.layout.AuditLayout}
  * for backwards compatability with package structure.
  *
  * @since 0.14.0

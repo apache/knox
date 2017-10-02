@@ -27,7 +27,7 @@
     </parent>
     <artifactId>gateway-adapter</artifactId>
     <name>gateway-adapter</name>
-    <description>Adapter/Shims for old package structure to ensure compatibility.</description>
+    <description>Adapter for old package structure to ensure compatibility.</description>
     
     <licenses>
         <license>

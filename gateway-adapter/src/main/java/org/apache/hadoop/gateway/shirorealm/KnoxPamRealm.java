@@ -24,7 +24,7 @@ import org.apache.shiro.subject.PrincipalCollection;
  */
 
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
  * for backwards compatability with package structure.
  * @since 0.14.0
  */
@@ -43,5 +43,11 @@ public class KnoxPamRealm
   protected AuthenticationInfo doGetAuthenticationInfo(
       AuthenticationToken token) throws AuthenticationException {
     return super.doGetAuthenticationInfo(token);
+  }
+
+  @Override
+  protected AuthorizationInfo doGetAuthorizationInfo(
+      PrincipalCollection principals) {
+    return super.doGetAuthorizationInfo(principals);
   }
 }

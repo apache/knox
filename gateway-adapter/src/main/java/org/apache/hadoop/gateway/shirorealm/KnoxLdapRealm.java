@@ -29,7 +29,7 @@ import java.util.Map;
  */
 
 /**
- * An adapter class that deligates calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapRealm}
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapRealm}
  * for backwards compatability with package structure.
  * @since 0.14.0
  */
