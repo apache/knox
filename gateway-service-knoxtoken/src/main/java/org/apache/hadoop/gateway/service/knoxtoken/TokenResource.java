@@ -82,7 +82,7 @@ public class TokenResource {
     if (audiences != null) {
       String[] auds = audiences.split(",");
       for (int i = 0; i < auds.length; i++) {
-        targetAudiences.add(auds[i]);
+        targetAudiences.add(auds[i].trim());
       }
     }
 
