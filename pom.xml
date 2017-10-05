@@ -291,8 +291,8 @@
                 <version>3.3</version>
                 <configuration>
                     <compilerId>javac</compilerId>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <debug>true</debug>
                 </configuration>
                 <dependencies>
@@ -351,9 +351,9 @@
                         <requireMavenVersion>
                           <version>[3.0.2,)</version>
                         </requireMavenVersion>
-                        <!--<requireJavaVersion>
+                        <requireJavaVersion>
                           <version>[1.8,)</version>
-                        </requireJavaVersion> -->
+                        </requireJavaVersion>
                       </rules>
                     </configuration>
                   </execution>
