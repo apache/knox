@@ -29,12 +29,18 @@ public interface SimpleDescriptorMessages {
     void failedToDiscoverClusterServices(final String cluster);
 
     @Message(level = MessageLevel.ERROR,
-            text = "No URLs were discovered for {0} in the {1} cluster.")
+            text = "No valid URLs were discovered for {0} in the {1} cluster.")
     void failedToDiscoverClusterServiceURLs(final String serviceName, final String clusterName);
 
     @Message(level = MessageLevel.ERROR,
             text = "Failed to resolve the referenced provider configuration {0}.")
     void failedToResolveProviderConfigRef(final String providerConfigRef);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "URL validation failed for {0} URL {1} : {2}")
+    void serviceURLValidationFailed(final String serviceName,
+                                    final String url,
+                                    @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
     @Message(level = MessageLevel.ERROR,
             text = "Error generating topology {0} from simple descriptor: {1}")

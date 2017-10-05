@@ -27,7 +27,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
     private String name = null;
 
-    private AmbariServiceURLCreator urlCreator = new AmbariServiceURLCreator();
+    private AmbariDynamicServiceURLCreator urlCreator;
 
     private Map<String, Map<String, ServiceConfiguration>> serviceConfigurations = new HashMap<>();
 
@@ -36,7 +36,8 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
     AmbariCluster(String name) {
         this.name = name;
-        components = new HashMap<String, AmbariComponent>();
+        components = new HashMap<>();
+        urlCreator = new AmbariDynamicServiceURLCreator(this);
     }
 
     void addServiceConfiguration(String serviceName, String configurationType, ServiceConfiguration serviceConfig) {
@@ -81,7 +82,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
     @Override
     public List<String> getServiceURLs(String serviceName) {
         List<String> urls = new ArrayList<>();
-        urls.addAll(urlCreator.create(this, serviceName));
+        urls.addAll(urlCreator.create(serviceName));
         return urls;
     }
 
