@@ -241,10 +241,6 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-security-picketlink</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-security-shiro</artifactId>
         </dependency>
         <dependency>
