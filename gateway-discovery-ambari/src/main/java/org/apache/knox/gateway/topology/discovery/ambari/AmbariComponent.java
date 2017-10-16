@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ class AmbariComponent {
     private String name        = null;
     private String version     = null;
 
-    private List<String> hostNames = null;
+    private List<String> hostNames = new ArrayList<>();
 
     private Map<String, String> properties = null;
 
@@ -41,35 +42,43 @@ class AmbariComponent {
         this.serviceName = service;
         this.clusterName = cluster;
         this.version = version;
-        this.hostNames = hostNames;
         this.properties = properties;
+
+        if (hostNames != null) {
+            // Add the hostnames individually to prevent adding any null values
+            for (String hostName : hostNames) {
+                if (hostName != null) {
+                    this.hostNames.add(hostName);
+                }
+            }
+        }
     }
 
-    public String getVersion() {
+    String getVersion() {
         return version;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public String getServiceName() {
+    String getServiceName() {
         return serviceName;
     }
 
-    public String getClusterName() {
+    String getClusterName() {
         return clusterName;
     }
 
-    public List<String> getHostNames() {
+    List<String> getHostNames() {
         return hostNames;
     }
 
-    public Map<String, String> getConfigProperties() {
+    Map<String, String> getConfigProperties() {
         return properties;
     }
 
-    public String getConfigProperty(String propertyName) {
+    String getConfigProperty(String propertyName) {
         return properties.get(propertyName);
     }
 

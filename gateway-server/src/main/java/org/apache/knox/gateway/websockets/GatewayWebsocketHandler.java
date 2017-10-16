@@ -21,6 +21,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,11 +42,13 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
+import javax.websocket.ClientEndpointConfig;
+
 /**
  * Websocket handler that will handle websocket connection request. This class
  * is responsible for creating a proxy socket for inbound and outbound
  * connections. This is also where the http to websocket handoff happens.
- * 
+ *
  * @since 0.10
  */
 public class GatewayWebsocketHandler extends WebSocketHandler
@@ -74,7 +78,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   /**
    * Create an instance
-   * 
+   *
    * @param config
    * @param services
    */
@@ -90,7 +94,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * org.eclipse.jetty.websocket.server.WebSocketHandler#configure(org.eclipse.
    * jetty.websocket.servlet.WebSocketServletFactory)
@@ -119,7 +123,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * org.eclipse.jetty.websocket.servlet.WebSocketCreator#createWebSocket(org.
    * eclipse.jetty.websocket.servlet.ServletUpgradeRequest,
@@ -137,7 +141,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       final String backendURL = getMatchedBackendURL(path);
 
       /* Upgrade happens here */
-      return new ProxyWebSocketAdapter(URI.create(backendURL), pool);
+      return new ProxyWebSocketAdapter(URI.create(backendURL), pool, getClientEndpointConfig(req));
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
       throw e;
@@ -145,11 +149,32 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   }
 
   /**
+   * Returns a {@link ClientEndpointConfig} config that contains the headers
+   * to be passed to the backend.
+   * @since 0.14.0
+   * @param req
+   * @return
+   */
+  private ClientEndpointConfig getClientEndpointConfig(final ServletUpgradeRequest req) {
+
+    return ClientEndpointConfig.Builder.create().configurator( new ClientEndpointConfig.Configurator() {
+
+       @Override
+       public void beforeRequest(final Map<String, List<String>> headers) {
+
+         /* Add request headers */
+         req.getHeaders().forEach(headers::putIfAbsent);
+
+       }
+    }).build();
+  }
+
+  /**
    * This method looks at the context path and returns the backend websocket
    * url. If websocket url is found it is used as is, or we default to
    * ws://{host}:{port} which might or might not be right.
-   * 
-   * @param  The context path
+   *
+   * @param
    * @return Websocket backend url
    */
   private synchronized String getMatchedBackendURL(final String path) {
@@ -203,7 +228,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         URI serviceUri = new URI(backendURL);
         backend.append(serviceUri);
         /* Avoid Zeppelin Regression - as this would require ambari changes and break current knox websocket use case*/
-        if (!StringUtils.endsWith(backend.toString(), "/ws") && pathService[1] != null) {
+        if (!StringUtils.endsWith(backend.toString(), "/ws") && pathService.length > 0 && pathService[1] != null) {
           backend.append(pathService[1]);
         }
       }

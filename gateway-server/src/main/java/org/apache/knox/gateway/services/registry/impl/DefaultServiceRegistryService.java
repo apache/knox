@@ -35,14 +35,14 @@ import org.apache.knox.gateway.services.security.CryptoService;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  
+
   protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
   'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
@@ -53,31 +53,31 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   private Registry registry = new Registry();
 
   private String registryFileName;
-  
+
   public DefaultServiceRegistryService() {
   }
-  
+
   public void setCryptoService(CryptoService crypto) {
     this.crypto = crypto;
   }
-  
+
   public String getRegistrationCode(String clusterName) {
     String code = generateRegCode(16);
     byte[] signature = crypto.sign("SHA256withRSA","gateway-identity",code);
     String encodedSig = Base64.encodeBase64URLSafeString(signature);
-    
+
     return code + "::" + encodedSig;
   }
-  
+
   private String generateRegCode(int length) {
-    StringBuffer sb = new StringBuffer();
-    Random r = new Random();
+    StringBuilder sb = new StringBuilder();
+    SecureRandom r = new SecureRandom();
     for (int i = 0; i < length; i++) {
       sb.append(chars[r.nextInt(chars.length)]);
     }
     return sb.toString();
   }
-  
+
   public void removeClusterServices(String clusterName) {
     registry.remove(clusterName);
   }
@@ -89,7 +89,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       throw new IllegalArgumentException("Registration Code must not be null.");
     }
     String[] parts = regCode.split("::");
-    
+
     // part one is the code and part two is the signature
     boolean verified = crypto.verify("SHA256withRSA", "gateway-identity", parts[0], Base64.decodeBase64(parts[1]));
     if (verified) {
@@ -114,24 +114,24 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
         e.printStackTrace(); //TODO: I18N
       }
     }
-    
+
     return rc;
   }
-  
+
   private String renderAsJsonString(HashMap<String,HashMap<String,RegEntry>> registry) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper();
-    
+
     try {
       // write JSON to a file
       json = mapper.writeValueAsString((Object)registry);
-    
+
     } catch ( JsonProcessingException e ) {
       e.printStackTrace(); //TODO: I18N
     }
     return json;
   }
-  
+
   @Override
   public String lookupServiceURL(String clusterName, String serviceName) {
     List<String> urls = lookupServiceURLs( clusterName, serviceName );
@@ -144,22 +144,22 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   @Override
   public List<String> lookupServiceURLs( String clusterName, String serviceName ) {
     RegEntry entry = null;
-    HashMap clusterServices = registry.get(clusterName);
+    HashMap<String, RegEntry> clusterServices = registry.get(clusterName);
     if (clusterServices != null) {
-      entry = (RegEntry) clusterServices.get(serviceName);
+      entry = clusterServices.get(serviceName);
       if( entry != null ) {
         return entry.getUrls();
       }
     }
     return null;
   }
-  
+
   private HashMap<String, HashMap<String,RegEntry>> getMapFromJsonString(String json) {
     Registry map = null;
-    JsonFactory factory = new JsonFactory(); 
-    ObjectMapper mapper = new ObjectMapper(factory); 
-    TypeReference<Registry> typeRef 
-          = new TypeReference<Registry>() {}; 
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Registry> typeRef
+          = new TypeReference<Registry>() {};
     try {
       map = mapper.readValue(json, typeRef);
     } catch (JsonParseException e) {
@@ -168,9 +168,9 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       LOG.failedToGetMapFromJsonString( json, e );
     } catch (IOException e) {
       LOG.failedToGetMapFromJsonString( json, e );
-    } 
+    }
     return map;
-  }   
+  }
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)

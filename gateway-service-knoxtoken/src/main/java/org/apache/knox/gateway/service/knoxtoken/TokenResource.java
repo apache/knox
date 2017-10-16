@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -55,12 +56,16 @@ public class TokenResource {
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
   private static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
+  private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
+  private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
   private long tokenTTL = 30000l;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl = null;
   private Map<String,Object> tokenClientDataMap = null;
+  private ArrayList<String> allowedDNs = new ArrayList<>();
+  private boolean clientCertRequired = false;
 
   @Context
   HttpServletRequest request;
@@ -78,7 +83,18 @@ public class TokenResource {
     if (audiences != null) {
       String[] auds = audiences.split(",");
       for (int i = 0; i < auds.length; i++) {
-        targetAudiences.add(auds[i]);
+        targetAudiences.add(auds[i].trim());
+      }
+    }
+
+    String clientCert = context.getInitParameter(TOKEN_CLIENT_CERT_REQUIRED);
+    clientCertRequired = "true".equals(clientCert);
+
+    String principals = context.getInitParameter(TOKEN_ALLOWED_PRINCIPALS);
+    if (principals != null) {
+      String[] dns = principals.split(";");
+      for (int i = 0; i < dns.length; i++) {
+        allowedDNs.add(dns[i]);
       }
     }
 
@@ -114,7 +130,26 @@ public class TokenResource {
     return getAuthenticationToken();
   }
 
+  private X509Certificate extractCertificate(HttpServletRequest req) {
+    X509Certificate[] certs = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
+    if (null != certs && certs.length > 0) {
+        return certs[0];
+    }
+    return null;
+  }
+
   private Response getAuthenticationToken() {
+    if (clientCertRequired) {
+      X509Certificate cert = extractCertificate(request);
+      if (cert != null) {
+        if (!allowedDNs.contains(cert.getSubjectDN().getName())) {
+          return Response.status(403).entity("{ \"Unable to get token - untrusted client cert.\" }").build();
+        }
+      }
+      else {
+        return Response.status(403).entity("{ \"Unable to get token - client cert required.\" }").build();
+      }
+    }
     GatewayServices services = (GatewayServices) request.getServletContext()
             .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 

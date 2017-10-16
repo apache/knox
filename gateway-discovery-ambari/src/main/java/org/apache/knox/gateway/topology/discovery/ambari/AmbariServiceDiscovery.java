@@ -16,6 +16,13 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
@@ -34,9 +41,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 
-import java.io.IOException;
-import java.util.*;
-
 
 class AmbariServiceDiscovery implements ServiceDiscovery {
 
@@ -50,30 +54,32 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     static final String AMBARI_SERVICECONFIGS_URI =
             AMBARI_CLUSTERS_URI + "/%s/configurations/service_config_versions?is_current=true";
 
+    private static final String COMPONENT_CONFIG_MAPPING_FILE =
+                                                        "ambari-service-discovery-component-config-mapping.properties";
+
+    private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
+
     // Map of component names to service configuration types
     private static Map<String, String> componentServiceConfigs = new HashMap<>();
     static {
-        componentServiceConfigs.put("NAMENODE", "hdfs-site");
-        componentServiceConfigs.put("RESOURCEMANAGER", "yarn-site");
-        componentServiceConfigs.put("OOZIE_SERVER", "oozie-site");
-        componentServiceConfigs.put("HIVE_SERVER", "hive-site");
-        componentServiceConfigs.put("WEBHCAT_SERVER", "webhcat-site");
-        componentServiceConfigs.put("HBASE_MASTER", "hbase-site");
-    } // TODO: Are there other service components, for which the endpoints can be discovered via Ambari?
+        try {
+            Properties configMapping = new Properties();
+            configMapping.load(AmbariServiceDiscovery.class.getClassLoader().getResourceAsStream(COMPONENT_CONFIG_MAPPING_FILE));
+            for (String componentName : configMapping.stringPropertyNames()) {
+                componentServiceConfigs.put(componentName, configMapping.getProperty(componentName));
+            }
+        } catch (Exception e) {
+            log.failedToLoadServiceDiscoveryConfiguration(COMPONENT_CONFIG_MAPPING_FILE, e);
+        }
+    }
 
     private static final String DEFAULT_USER_ALIAS = "ambari.discovery.user";
     private static final String DEFAULT_PWD_ALIAS  = "ambari.discovery.password";
-
-    private static AmbariServiceURLCreator urlCreator = new AmbariServiceURLCreator();
-
-    private AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
     @GatewayService
     private AliasService aliasService;
 
     private CloseableHttpClient httpClient = null;
-
-    private Map<String, Map<String, String>> serviceConfiguration = new HashMap<>();
 
 
     AmbariServiceDiscovery() {
@@ -141,13 +147,21 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
                         serviceComponents.put(componentName, serviceName);
 
-//                    String hostName = (String) hostRoles.get("host_name");
-                        String hostName = (String) hostRoles.get("public_host_name"); // Assuming public host name is most applicable
-                        log.discoveredServiceHost(serviceName, hostName);
-                        if (!componentHostNames.containsKey(componentName)) {
-                            componentHostNames.put(componentName, new ArrayList<String>());
+                        // Assuming public host name is more applicable than host_name
+                        String hostName = (String) hostRoles.get("public_host_name");
+                        if (hostName == null) {
+                            // Some (even slightly) older versions of Ambari/HDP do not return public_host_name,
+                            // so fall back to host_name in those cases.
+                            hostName = (String) hostRoles.get("host_name");
                         }
-                        componentHostNames.get(componentName).add(hostName);
+
+                        if (hostName != null) {
+                            log.discoveredServiceHost(serviceName, hostName);
+                            if (!componentHostNames.containsKey(componentName)) {
+                                componentHostNames.put(componentName, new ArrayList<String>());
+                            }
+                            componentHostNames.get(componentName).add(hostName);
+                        }
                     }
                 }
             }

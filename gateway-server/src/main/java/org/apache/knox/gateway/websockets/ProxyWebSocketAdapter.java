@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
 
+import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
@@ -59,12 +60,23 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   private ExecutorService pool;
 
   /**
+   * Used to transmit headers from browser to backend server.
+   * @since 0.14
+   */
+  private ClientEndpointConfig clientConfig;
+
+  /**
    * Create an instance
    */
   public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool) {
+    this(backend, pool, null);
+  }
+
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, final ClientEndpointConfig clientConfig) {
     super();
     this.backend = backend;
     this.pool = pool;
+    this.clientConfig = clientConfig;
   }
 
   @Override
@@ -75,14 +87,15 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
      * plumbing takes place
      */
     container = ContainerProvider.getWebSocketContainer();
-    final ProxyInboundSocket backendSocket = new ProxyInboundSocket(
-        getMessageCallback());
+
+    final ProxyInboundClient backendSocket = new ProxyInboundClient(getMessageCallback());
 
     /* build the configuration */
 
     /* Attempt Connect */
     try {
-      backendSession = container.connectToServer(backendSocket, backend);
+      backendSession = container.connectToServer(backendSocket, clientConfig, backend);
+
       LOG.onConnectionOpen(backend.toString());
 
     } catch (DeploymentException e) {

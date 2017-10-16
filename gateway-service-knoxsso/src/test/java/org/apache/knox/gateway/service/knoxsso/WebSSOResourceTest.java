@@ -230,6 +230,64 @@ public class WebSSOResourceTest {
     assertTrue(audiences.contains("recipient2"));
   }
 
+  @Test
+  public void testAudiencesWhitespace() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.domain.suffix")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.redirect.whitelist.regex")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(" recipient1, recipient2 ");
+    EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, request);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    // Issue a token
+    webSSOResponse.doGet();
+
+    // Check the cookie
+    Cookie cookie = responseWrapper.getCookie("hadoop-jwt");
+    assertNotNull(cookie);
+
+    JWTToken parsedToken = new JWTToken(cookie.getValue());
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    // Verify the audiences
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+  }
+
   /**
    * A wrapper for HttpServletResponseWrapper to store the cookies
    */

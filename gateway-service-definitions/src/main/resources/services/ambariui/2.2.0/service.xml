@@ -80,6 +80,11 @@
             <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/noroot" to="response.body"/>
         </route>
 
+        <!-- Wfmanager view -->
+        <route path="/ambari/views/WORKFLOW_MANAGER/*/*/">
+            <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint/html" to="response.body"/>
+        </route>
+
         <!-- SmartSense view -->
         <route path="/ambari/views/SMARTSENSE/**/assets/hstapp-*.js">
             <rewrite apply="AMBARIUI/ambari/outbound/apiendpoint" to="response.body"/>

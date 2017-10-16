@@ -170,6 +170,10 @@
             <artifactId>gateway-shell-samples</artifactId>
         </dependency>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>hadoop-examples</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>

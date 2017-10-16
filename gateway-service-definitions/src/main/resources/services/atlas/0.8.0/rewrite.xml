@@ -66,6 +66,10 @@
 
 
     <filter name="ATLAS/atlas/outbound/links">
+        <content type="*/x-javascript">
+            <apply path="j_spring_security_check" rule="ATLAS/atlas/outbound/extrapath"/>
+            <apply path="index.html" rule="ATLAS/atlas/outbound/index"/>
+        </content>
         <content type="application/javascript">
             <apply path="j_spring_security_check" rule="ATLAS/atlas/outbound/extrapath"/>
             <apply path="index.html" rule="ATLAS/atlas/outbound/index"/>

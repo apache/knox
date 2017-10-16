@@ -19,6 +19,23 @@ package org.apache.knox.gateway.topology.simple;
 
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.apache.commons.io.FileUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -26,13 +43,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
-import java.io.*;
-import java.util.*;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 public class SimpleDescriptorHandlerTest {
@@ -134,7 +149,7 @@ public class SimpleDescriptorHandlerTest {
         serviceURLs.put("WEBHBASE", null);
         serviceURLs.put("HIVE", null);
         serviceURLs.put("RESOURCEMANAGER", null);
-        serviceURLs.put("AMBARIUI", Arrays.asList("http://c6401.ambari.apache.org:8080"));
+        serviceURLs.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
 
         // Write the externalized provider config to a temp file
         File providerConfig = writeProviderConfig("ambari-cluster-policy.xml", TEST_PROVIDER_CONFIG);
@@ -225,14 +240,152 @@ public class SimpleDescriptorHandlerTest {
     }
 
 
+    /**
+     * KNOX-1006
+     *
+     * Verify the behavior of the SimpleDescriptorHandler when service discovery fails to produce a valid URL for
+     * a service.
+     *
+     * N.B. This test depends on the PropertiesFileServiceDiscovery extension being configured:
+     *             org.apache.hadoop.gateway.topology.discovery.test.extension.PropertiesFileServiceDiscovery
+     */
+    @Test
+    public void testInvalidServiceURLFromDiscovery() throws Exception {
+        final String CLUSTER_NAME = "myproperties";
+
+        // Configure the PropertiesFile Service Discovery implementation for this test
+        final String DEFAULT_VALID_SERVICE_URL = "http://localhost:9999/thiswillwork";
+        Properties serviceDiscoverySourceProps = new Properties();
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".NAMENODE",
+                                                DEFAULT_VALID_SERVICE_URL.replace("http", "hdfs"));
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".JOBTRACKER",
+                                                DEFAULT_VALID_SERVICE_URL.replace("http", "rpc"));
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".WEBHDFS",         DEFAULT_VALID_SERVICE_URL);
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".WEBHCAT",         DEFAULT_VALID_SERVICE_URL);
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".OOZIE",           DEFAULT_VALID_SERVICE_URL);
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".WEBHBASE",        DEFAULT_VALID_SERVICE_URL);
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".HIVE",            "{SCHEME}://localhost:10000/");
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".RESOURCEMANAGER", DEFAULT_VALID_SERVICE_URL);
+        serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".AMBARIUI",        DEFAULT_VALID_SERVICE_URL);
+        File serviceDiscoverySource = File.createTempFile("service-discovery", ".properties");
+        serviceDiscoverySourceProps.store(new FileOutputStream(serviceDiscoverySource),
+                                          "Test Service Discovery Source");
+
+        // Prepare a mock SimpleDescriptor
+        final String type = "PROPERTIES_FILE";
+        final String address = serviceDiscoverySource.getAbsolutePath();
+        final Map<String, List<String>> serviceURLs = new HashMap<>();
+        serviceURLs.put("NAMENODE", null);
+        serviceURLs.put("JOBTRACKER", null);
+        serviceURLs.put("WEBHDFS", null);
+        serviceURLs.put("WEBHCAT", null);
+        serviceURLs.put("OOZIE", null);
+        serviceURLs.put("WEBHBASE", null);
+        serviceURLs.put("HIVE", null);
+        serviceURLs.put("RESOURCEMANAGER", null);
+        serviceURLs.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
+
+        // Write the externalized provider config to a temp file
+        File providerConfig = writeProviderConfig("ambari-cluster-policy.xml", TEST_PROVIDER_CONFIG);
+
+        File topologyFile = null;
+        try {
+            File destDir = (new File(".")).getCanonicalFile();
+
+            // Mock out the simple descriptor
+            SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
+            EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
+            EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(address).anyTimes();
+            EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(type).anyTimes();
+            EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
+            EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
+            EasyMock.expect(testDescriptor.getClusterName()).andReturn(CLUSTER_NAME).anyTimes();
+            List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
+            for (String serviceName : serviceURLs.keySet()) {
+                SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
+                EasyMock.expect(svc.getName()).andReturn(serviceName).anyTimes();
+                EasyMock.expect(svc.getURLs()).andReturn(serviceURLs.get(serviceName)).anyTimes();
+                EasyMock.replay(svc);
+                serviceMocks.add(svc);
+            }
+            EasyMock.expect(testDescriptor.getServices()).andReturn(serviceMocks).anyTimes();
+            EasyMock.replay(testDescriptor);
+
+            // Invoke the simple descriptor handler
+            Map<String, File> files =
+                    SimpleDescriptorHandler.handle(testDescriptor,
+                                                   providerConfig.getParentFile(), // simple desc co-located with provider config
+                                                   destDir);
+
+            topologyFile = files.get("topology");
+
+            // Validate the resulting topology descriptor
+            assertTrue(topologyFile.exists());
+
+            // Validate the topology descriptor's correctness
+            TopologyValidator validator = new TopologyValidator( topologyFile.getAbsolutePath() );
+            if( !validator.validateTopology() ){
+                throw new SAXException( validator.getErrorString() );
+            }
+
+            XPathFactory xPathfactory = XPathFactory.newInstance();
+            XPath xpath = xPathfactory.newXPath();
+
+            // Parse the topology descriptor
+            Document topologyXml = XmlUtils.readXml(topologyFile);
+
+            // Validate the provider configuration
+            Document extProviderConf = XmlUtils.readXml(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
+            Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
+            assertTrue("Resulting provider config should be identical to the referenced content.",
+                    extProviderConf.getDocumentElement().isEqualNode(gatewayNode));
+
+            // Validate the service declarations
+            List<String> topologyServices = new ArrayList<>();
+            Map<String, List<String>> topologyServiceURLs = new HashMap<>();
+            NodeList serviceNodes =
+                    (NodeList) xpath.compile("/topology/service").evaluate(topologyXml, XPathConstants.NODESET);
+            for (int serviceNodeIndex=0; serviceNodeIndex < serviceNodes.getLength(); serviceNodeIndex++) {
+                Node serviceNode = serviceNodes.item(serviceNodeIndex);
+                Node roleNode = (Node) xpath.compile("role/text()").evaluate(serviceNode, XPathConstants.NODE);
+                assertNotNull(roleNode);
+                String role = roleNode.getNodeValue();
+                topologyServices.add(role);
+                NodeList urlNodes = (NodeList) xpath.compile("url/text()").evaluate(serviceNode, XPathConstants.NODESET);
+                for(int urlNodeIndex = 0 ; urlNodeIndex < urlNodes.getLength(); urlNodeIndex++) {
+                    Node urlNode = urlNodes.item(urlNodeIndex);
+                    assertNotNull(urlNode);
+                    String url = urlNode.getNodeValue();
+                    assertNotNull("Every declared service should have a URL.", url);
+                    if (!topologyServiceURLs.containsKey(role)) {
+                        topologyServiceURLs.put(role, new ArrayList<String>());
+                    }
+                    topologyServiceURLs.get(role).add(url);
+                }
+            }
+
+            // There should not be a service element for HIVE, since it had no valid URLs
+            assertEquals("Unexpected number of service declarations.", serviceURLs.size() - 1, topologyServices.size());
+            assertFalse("The HIVE service should have been omitted from the generated topology.", topologyServices.contains("HIVE"));
+
+            assertEquals("Unexpected number of service URLs.", serviceURLs.size() - 1, topologyServiceURLs.size());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        } finally {
+            serviceDiscoverySource.delete();
+            providerConfig.delete();
+            if (topologyFile != null) {
+                topologyFile.delete();
+            }
+        }
+    }
+
+
     private File writeProviderConfig(String path, String content) throws IOException {
         File f = new File(path);
-
-        Writer fw = new FileWriter(f);
-        fw.write(content);
-        fw.flush();
-        fw.close();
-
+        FileUtils.write(f, content);
         return f;
     }
 

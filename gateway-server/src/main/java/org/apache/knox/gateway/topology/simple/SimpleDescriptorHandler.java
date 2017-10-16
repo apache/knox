@@ -21,9 +21,22 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.IOException;
 
-import java.io.*;
-import java.util.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 
 /**
@@ -64,8 +77,7 @@ public class SimpleDescriptorHandler {
         DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
         sdc.setUser(desc.getDiscoveryUser());
         sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
-        ServiceDiscovery sd = ServiceDiscoveryFactory
-            .get(desc.getDiscoveryType(), gatewayServices);
+        ServiceDiscovery sd = ServiceDiscoveryFactory.get(desc.getDiscoveryType(), gatewayServices);
         ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
 
         Map<String, List<String>> serviceURLs = new HashMap<>();
@@ -79,19 +91,29 @@ public class SimpleDescriptorHandler {
                     descServiceURLs = cluster.getServiceURLs(serviceName);
                 }
 
-                // If there is at least one URL associated with the service, then add it to the map
+                // Validate the discovered service URLs
+                List<String> validURLs = new ArrayList<>();
                 if (descServiceURLs != null && !descServiceURLs.isEmpty()) {
-                    serviceURLs.put(serviceName, descServiceURLs);
+                    // Validate the URL(s)
+                    for (String descServiceURL : descServiceURLs) {
+                        if (validateURL(serviceName, descServiceURL)) {
+                            validURLs.add(descServiceURL);
+                        }
+                    }
+                }
+
+                // If there is at least one valid URL associated with the service, then add it to the map
+                if (!validURLs.isEmpty()) {
+                    serviceURLs.put(serviceName, validURLs);
                 } else {
                     log.failedToDiscoverClusterServiceURLs(serviceName, cluster.getName());
-                    throw new IllegalStateException("ServiceDiscovery failed to resolve any URLs for " + serviceName +
-                                                    ". Topology update aborted!");
                 }
             }
         } else {
             log.failedToDiscoverClusterServices(desc.getClusterName());
         }
 
+        BufferedWriter fw = null;
         topologyDescriptor = null;
         File providerConfig = null;
         try {
@@ -111,7 +133,7 @@ public class SimpleDescriptorHandler {
                 topologyFilename = desc.getClusterName();
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
-            FileWriter fw = new FileWriter(topologyDescriptor);
+            fw = new BufferedWriter(new FileWriter(topologyDescriptor));
 
             fw.write("<topology>\n");
 
@@ -124,8 +146,12 @@ public class SimpleDescriptorHandler {
             }
             policyReader.close();
 
+            // Sort the service names to write the services alphabetically
+            List<String> serviceNames = new ArrayList<>(serviceURLs.keySet());
+            Collections.sort(serviceNames);
+
             // Write the service declarations
-            for (String serviceName : serviceURLs.keySet()) {
+            for (String serviceName : serviceNames) {
                 fw.write("    <service>\n");
                 fw.write("        <role>" + serviceName + "</role>\n");
                 for (String url : serviceURLs.get(serviceName)) {
@@ -137,16 +163,37 @@ public class SimpleDescriptorHandler {
             fw.write("</topology>\n");
 
             fw.flush();
-            fw.close();
         } catch (IOException e) {
             log.failedToGenerateTopologyFromSimpleDescriptor(topologyDescriptor.getName(), e);
             topologyDescriptor.delete();
+        } finally {
+            if (fw != null) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
 
         result.put("topology", topologyDescriptor);
         return result;
     }
 
+    private static boolean validateURL(String serviceName, String url) {
+        boolean result = false;
+
+        if (url != null && !url.isEmpty()) {
+            try {
+                new URI(url);
+                result = true;
+            } catch (URISyntaxException e) {
+                log.serviceURLValidationFailed(serviceName, url, e);
+            }
+        }
+
+        return result;
+    }
 
     private static File resolveProviderConfigurationReference(String reference, File srcDirectory) {
         File providerConfig;
