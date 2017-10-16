@@ -17,14 +17,11 @@
    */
 package org.apache.hadoop.gateway.services.security.token.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 
 import com.nimbusds.jose.JOSEException;

@@ -116,7 +116,8 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -147,7 +148,8 @@ public abstract class AbstractJWTFilterTest  {
       props.put(getAudienceProperty(), "bar");
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -180,7 +182,8 @@ public abstract class AbstractJWTFilterTest  {
 
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -209,7 +212,8 @@ public abstract class AbstractJWTFilterTest  {
       props.put(getAudienceProperty(), " foo, bar ");
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -245,7 +249,8 @@ public abstract class AbstractJWTFilterTest  {
       props.put(getVerificationPemProperty(), pem);
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 50000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 50000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -275,7 +280,8 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() - 1000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() - 1000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -303,7 +309,7 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", null, privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", null, privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -333,7 +339,8 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("bob", new Date(new Date().getTime() + 5000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "bob",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setGarbledTokenOnRequest(request, jwt);
@@ -367,8 +374,8 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("bob", new Date(new Date().getTime() + 5000),
-                             (RSAPrivateKey)kp.getPrivate(), props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "bob",
+                             new Date(new Date().getTime() + 5000), (RSAPrivateKey)kp.getPrivate());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -409,7 +416,8 @@ public abstract class AbstractJWTFilterTest  {
       props.put(getVerificationPemProperty(), failingPem);
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 50000), privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 50000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -489,6 +497,67 @@ public abstract class AbstractJWTFilterTest  {
     }
   }
 
+  @Test
+  public void testRS512SignatureAlgorithm() throws Exception {
+    try {
+      Properties props = getProperties();
+      props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
+                             privateKey, JWSAlgorithm.RS512.getName());
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
+      Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
+  public void testInvalidSignatureAlgorithm() throws Exception {
+    try {
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
+                             privateKey, JWSAlgorithm.RS384.getName());
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled );
+      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
   protected Properties getProperties() {
     Properties props = new Properties();
     props.setProperty(
@@ -497,12 +566,13 @@ public abstract class AbstractJWTFilterTest  {
     return props;
   }
 
-  protected SignedJWT getJWT(String sub, Date expires, RSAPrivateKey privateKey,
-      Properties props) throws Exception {
-    return getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, sub, expires, privateKey);
+  protected SignedJWT getJWT(String issuer, String sub, Date expires, RSAPrivateKey privateKey)
+      throws Exception {
+    return getJWT(issuer, sub, expires, privateKey, JWSAlgorithm.RS256.getName());
   }
 
-  protected SignedJWT getJWT(String issuer, String sub, Date expires, RSAPrivateKey privateKey)
+  protected SignedJWT getJWT(String issuer, String sub, Date expires, RSAPrivateKey privateKey,
+                             String signatureAlgorithm)
       throws Exception {
     List<String> aud = new ArrayList<String>();
     aud.add("bar");
@@ -515,7 +585,7 @@ public abstract class AbstractJWTFilterTest  {
     .claim("scope", "openid")
     .build();
 
-    JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
+    JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.parse(signatureAlgorithm)).build();
 
     SignedJWT signedJWT = new SignedJWT(header, claims);
     JWSSigner signer = new RSASSASigner(privateKey);

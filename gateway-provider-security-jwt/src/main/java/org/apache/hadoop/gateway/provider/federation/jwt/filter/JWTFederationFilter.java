@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.CertificateUtils;
 
@@ -63,7 +64,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    configureExpectedIssuer(filterConfig);
+    configureExpectedParameters(filterConfig);
   }
 
   public void destroy() {
@@ -84,7 +85,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
     if (wireToken != null) {
       try {
-        JWTToken token = new JWTToken(wireToken);
+        JWT token = new JWTToken(wireToken);
         if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
           Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);

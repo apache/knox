@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -54,7 +55,9 @@ import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
-import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
+
+import com.nimbusds.jose.JWSHeader;
 
 /**
  *
@@ -67,6 +70,13 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
   public static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
+  /**
+   * If specified, this configuration property refers to the signature algorithm which a received
+   * token must match. Otherwise, the default value "RS256" is used
+   */
+  public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
+  public static final String JWT_DEFAULT_SIGALG = "RS256";
+
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -77,6 +87,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected JWTokenAuthority authority;
   protected RSAPublicKey publicKey = null;
   private String expectedIssuer;
+  private String expectedSigAlg;
 
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
@@ -99,10 +110,15 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
-  protected void configureExpectedIssuer(FilterConfig filterConfig) {
-    expectedIssuer = filterConfig.getInitParameter(JWT_EXPECTED_ISSUER);;
+  protected void configureExpectedParameters(FilterConfig filterConfig) {
+    expectedIssuer = filterConfig.getInitParameter(JWT_EXPECTED_ISSUER);
     if (expectedIssuer == null) {
       expectedIssuer = JWT_DEFAULT_ISSUER;
+    }
+
+    expectedSigAlg = filterConfig.getInitParameter(JWT_EXPECTED_SIGALG);
+    if (expectedSigAlg == null) {
+      expectedSigAlg = JWT_DEFAULT_SIGALG;
     }
   }
 
@@ -111,7 +127,7 @@ public abstract class AbstractJWTFilter implements Filter {
    * @return
    */
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
-    ArrayList<String> audList = null;
+    List<String> audList = null;
     // setup the list of valid audiences for token validation
     if (expectedAudiences != null) {
       // parse into the list
@@ -124,7 +140,7 @@ public abstract class AbstractJWTFilter implements Filter {
     return audList;
   }
 
-  protected boolean tokenIsStillValid(JWTToken jwtToken) {
+  protected boolean tokenIsStillValid(JWT jwtToken) {
     // if there is no expiration date then the lifecycle is tied entirely to
     // the cookie validity - otherwise ensure that the current time is before
     // the designated expiration time
@@ -141,7 +157,7 @@ public abstract class AbstractJWTFilter implements Filter {
    *          the JWT token where the allowed audiences will be found
    * @return true if an expected audience is present, otherwise false
    */
-  protected boolean validateAudiences(JWTToken jwtToken) {
+  protected boolean validateAudiences(JWT jwtToken) {
     boolean valid = false;
 
     String[] tokenAudienceList = jwtToken.getAudienceClaims();
@@ -202,7 +218,7 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
-  protected Subject createSubjectFromToken(JWTToken token) {
+  protected Subject createSubjectFromToken(JWT token) {
     final String principal = token.getSubject();
 
     @SuppressWarnings("rawtypes")
@@ -223,7 +239,7 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
-      FilterChain chain, JWTToken token)
+      FilterChain chain, JWT token)
       throws IOException, ServletException {
     boolean verified = false;
     try {
@@ -235,6 +251,19 @@ public abstract class AbstractJWTFilter implements Filter {
       }
     } catch (TokenServiceException e) {
       log.unableToVerifyToken(e);
+    }
+
+    // Check received signature algorithm
+    if (verified) {
+      try {
+        String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
+        if (!receivedSigAlg.equals(expectedSigAlg)) {
+          verified = false;
+        }
+      } catch (ParseException e) {
+        log.unableToVerifyToken(e);
+        verified = false;
+      }
     }
 
     if (verified) {

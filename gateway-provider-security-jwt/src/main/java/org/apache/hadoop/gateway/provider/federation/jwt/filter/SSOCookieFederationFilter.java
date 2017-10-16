@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.CertificateUtils;
 
@@ -78,7 +79,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    configureExpectedIssuer(filterConfig);
+    configureExpectedParameters(filterConfig);
   }
 
   public void destroy() {
@@ -105,7 +106,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     }
     else {
       try {
-        JWTToken token = new JWTToken(wireToken);
+        JWT token = new JWTToken(wireToken);
         if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
           Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);

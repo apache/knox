@@ -60,6 +60,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
+  private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
   private static final String SSO_ENABLE_SESSION_PARAM = "knoxsso.enable.session";
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
@@ -77,6 +78,7 @@ public class WebSSOResource {
   private String domainSuffix = null;
   private List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession = false;
+  private String signatureAlgorithm = "RS256";
 
   @Context
   HttpServletRequest request;
@@ -143,6 +145,11 @@ public class WebSSOResource {
 
     String enableSession = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = ("true".equals(enableSession));
+
+    String sigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
+    if (sigAlg != null) {
+      signatureAlgorithm = sigAlg;
+    }
   }
 
   @GET
@@ -185,9 +192,9 @@ public class WebSSOResource {
     try {
       JWT token = null;
       if (targetAudiences.isEmpty()) {
-        token = ts.issueToken(p, "RS256", getExpiry());
+        token = ts.issueToken(p, signatureAlgorithm, getExpiry());
       } else {
-        token = ts.issueToken(p, targetAudiences, "RS256", getExpiry());
+        token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry());
       }
 
       // Coverity CID 1327959
