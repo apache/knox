@@ -1,4 +1,4 @@
-package org.apache.hadoop.gateway.websockets;
+package org.apache.knox.gateway.websockets;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;

@@ -14,10 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.hadoop.gateway.topology.discovery.ambari;
+package org.apache.knox.gateway.topology.discovery.ambari;
 
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
-import org.apache.hadoop.gateway.util.XmlUtils;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;

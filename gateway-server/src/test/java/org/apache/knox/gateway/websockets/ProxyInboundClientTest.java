@@ -1,4 +1,4 @@
-package org.apache.hadoop.gateway.websockets;
+package org.apache.knox.gateway.websockets;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more

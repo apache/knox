@@ -14,19 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.hadoop.gateway.topology.discovery.ambari;
+package org.apache.knox.gateway.topology.discovery.ambari;
 
 
-class SimpleValueHandler implements ConditionalValueHandler {
-    private String value;
+interface ConditionalValueHandler {
 
-    SimpleValueHandler(String value) {
-        this.value = value;
-    }
+    String evaluate(ServiceURLPropertyConfig config, AmbariCluster cluster);
 
-    @Override
-    public String evaluate(ServiceURLPropertyConfig config, AmbariCluster cluster) {
-        return value;
-    }
 }
-
