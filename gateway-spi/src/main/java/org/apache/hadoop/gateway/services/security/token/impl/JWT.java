@@ -29,6 +29,7 @@ public interface JWT {
   String ISSUER = "iss";
   String AUDIENCE = "aud";
   String EXPIRES = "exp";
+  String NOT_BEFORE = "nbf";
 
   String getPayload();
 
@@ -49,6 +50,8 @@ public interface JWT {
   String getExpires();
 
   Date getExpiresDate();
+
+  Date getNotBeforeDate();
 
   String getSubject();
 

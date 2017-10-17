@@ -34,6 +34,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Access token has expired; a new one must be acquired." )
   void tokenHasExpired();
 
+  @Message( level = MessageLevel.INFO, text = "The NotBefore check failed." )
+  void notBeforeCheckFailed();
+
   @Message( level = MessageLevel.WARN, text = "Expected Bearer token is missing." )
   void missingBearerToken();
 

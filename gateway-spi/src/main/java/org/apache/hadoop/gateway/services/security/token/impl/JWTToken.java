@@ -231,6 +231,17 @@ public class JWTToken implements JWT {
     return date;
   }
 
+  @Override
+  public Date getNotBeforeDate() {
+    Date date = null;
+    try {
+      date = jwt.getJWTClaimsSet().getNotBeforeTime();
+    } catch (ParseException e) {
+      log.unableToParseToken(e);
+    }
+    return date;
+  }
+
   /* (non-Javadoc)
    * @see org.apache.hadoop.gateway.services.security.token.impl.JWT#getPrincipal()
    */

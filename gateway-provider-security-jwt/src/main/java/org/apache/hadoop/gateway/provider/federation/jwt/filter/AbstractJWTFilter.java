@@ -275,7 +275,14 @@ public abstract class AbstractJWTFilter implements Filter {
         if (tokenIsStillValid(token)) {
           boolean audValid = validateAudiences(token);
           if (audValid) {
-            return true;
+              Date nbf = token.getNotBeforeDate();
+              if (nbf == null || new Date().after(nbf)) {
+                return true;
+              } else {
+                log.notBeforeCheckFailed();
+                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                      "Bad request: the NotBefore check failed");
+              }
           }
           else {
             log.failedToValidateAudience();
