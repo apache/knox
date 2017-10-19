@@ -496,6 +496,17 @@ public class DefaultTopologyService
       SharedProviderConfigMonitor spm = new SharedProviderConfigMonitor(dm, descriptorsDirectory);
       initListener(sharedProvidersDirectory, spm, spm);
 
+      // For all the descriptors currently in the descriptors dir at start-up time, trigger topology generation.
+      // This happens prior to the start-up loading of the topologies.
+      String[] descriptorFilenames =  descriptorsDirectory.list();
+      if (descriptorFilenames != null) {
+          for (String descriptorFilename : descriptorFilenames) {
+              if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
+                  dm.onFileChange(new File(descriptorsDirectory, descriptorFilename));
+              }
+          }
+      }
+
     } catch (IOException | SAXException io) {
       throw new ServiceLifecycleException(io.getMessage());
     }
@@ -520,6 +531,10 @@ public class DefaultTopologyService
 
     private Map<String, List<String>> providerConfigReferences = new HashMap<>();
 
+
+    static boolean isDescriptorFile(String filename) {
+      return SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(filename));
+    }
 
     public DescriptorsMonitor(File topologiesDir, AliasService aliasService) {
       this.topologiesDir  = topologiesDir;
