@@ -523,6 +523,7 @@ public class DefaultTopologyService
     static {
       SUPPORTED_EXTENSIONS.add("json");
       SUPPORTED_EXTENSIONS.add("yml");
+      SUPPORTED_EXTENSIONS.add("yaml");
     }
 
     private File topologiesDir;
