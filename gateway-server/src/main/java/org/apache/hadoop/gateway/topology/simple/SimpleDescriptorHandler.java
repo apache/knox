@@ -80,7 +80,10 @@ public class SimpleDescriptorHandler {
         ServiceDiscovery sd = ServiceDiscoveryFactory.get(desc.getDiscoveryType(), gatewayServices);
         ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
 
-        Map<String, List<String>> serviceURLs = new HashMap<>();
+        List<String> validServiceNames = new ArrayList<>();
+
+        Map<String, Map<String, String>> serviceParams = new HashMap<>();
+        Map<String, List<String>>        serviceURLs   = new HashMap<>();
 
         if (cluster != null) {
             for (SimpleDescriptor.Service descService : desc.getServices()) {
@@ -100,6 +103,10 @@ public class SimpleDescriptorHandler {
                             validURLs.add(descServiceURL);
                         }
                     }
+
+                    if (!validURLs.isEmpty()) {
+                        validServiceNames.add(serviceName);
+                    }
                 }
 
                 // If there is at least one valid URL associated with the service, then add it to the map
@@ -108,6 +115,14 @@ public class SimpleDescriptorHandler {
                 } else {
                     log.failedToDiscoverClusterServiceURLs(serviceName, cluster.getName());
                 }
+
+                // Service params
+                if (descService.getParams() != null) {
+                    serviceParams.put(serviceName, descService.getParams());
+                    if (!validServiceNames.contains(serviceName)) {
+                        validServiceNames.add(serviceName);
+                    }
+                }
             }
         } else {
             log.failedToDiscoverClusterServices(desc.getClusterName());
@@ -115,7 +130,7 @@ public class SimpleDescriptorHandler {
 
         BufferedWriter fw = null;
         topologyDescriptor = null;
-        File providerConfig = null;
+        File providerConfig;
         try {
             // Verify that the referenced provider configuration exists before attempting to reading it
             providerConfig = resolveProviderConfigurationReference(desc.getProviderConfig(), srcDirectory);
@@ -147,16 +162,33 @@ public class SimpleDescriptorHandler {
             policyReader.close();
 
             // Sort the service names to write the services alphabetically
-            List<String> serviceNames = new ArrayList<>(serviceURLs.keySet());
+            List<String> serviceNames = new ArrayList<>(validServiceNames);
             Collections.sort(serviceNames);
 
             // Write the service declarations
             for (String serviceName : serviceNames) {
                 fw.write("    <service>\n");
                 fw.write("        <role>" + serviceName + "</role>\n");
-                for (String url : serviceURLs.get(serviceName)) {
-                    fw.write("        <url>" + url + "</url>\n");
+
+                // URLs
+                List<String> urls = serviceURLs.get(serviceName);
+                if (urls != null) {
+                    for (String url : urls) {
+                        fw.write("        <url>" + url + "</url>\n");
+                    }
                 }
+
+                // Params
+                Map<String, String> svcParams = serviceParams.get(serviceName);
+                if (svcParams != null) {
+                    for (String paramName : svcParams.keySet()) {
+                        fw.write("        <param>\n");
+                        fw.write("            <name>" + paramName + "</name>\n");
+                        fw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
+                        fw.write("        </param>\n");
+                    }
+                }
+
                 fw.write("    </service>\n");
             }
 
@@ -194,6 +226,7 @@ public class SimpleDescriptorHandler {
 
         return result;
     }
+
 
     private static File resolveProviderConfigurationReference(String reference, File srcDirectory) {
         File providerConfig;

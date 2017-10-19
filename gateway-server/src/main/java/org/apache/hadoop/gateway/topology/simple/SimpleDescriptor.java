@@ -17,6 +17,7 @@
 package org.apache.hadoop.gateway.topology.simple;
 
 import java.util.List;
+import java.util.Map;
 
 public interface SimpleDescriptor {
 
@@ -40,7 +41,8 @@ public interface SimpleDescriptor {
     interface Service {
         String getName();
 
+        Map<String, String> getParams();
+
         List<String> getURLs();
     }
-
 }
