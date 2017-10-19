@@ -40,6 +40,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditContext;
@@ -129,7 +130,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
     List<String> audList = null;
     // setup the list of valid audiences for token validation
-    if (expectedAudiences != null) {
+    if (!StringUtils.isEmpty(expectedAudiences)) {
       // parse into the list
       String[] audArray = expectedAudiences.split(",");
       audList = new ArrayList<String>();
