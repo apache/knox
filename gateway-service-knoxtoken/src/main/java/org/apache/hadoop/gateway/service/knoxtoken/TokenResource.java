@@ -58,9 +58,10 @@ public class TokenResource {
   private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
   private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
   private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
+  private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
-  private long tokenTTL = 30000l;
+  private long tokenTTL = TOKEN_TTL_DEFAULT;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl = null;
   private Map<String,Object> tokenClientDataMap = null;
@@ -103,6 +104,10 @@ public class TokenResource {
     if (ttl != null) {
       try {
         tokenTTL = Long.parseLong(ttl);
+        if (tokenTTL < -1 || (tokenTTL + System.currentTimeMillis() < 0)) {
+          log.invalidTokenTTLEncountered(ttl);
+          tokenTTL = TOKEN_TTL_DEFAULT;
+        }
       }
       catch (NumberFormatException nfe) {
         log.invalidTokenTTLEncountered(ttl);

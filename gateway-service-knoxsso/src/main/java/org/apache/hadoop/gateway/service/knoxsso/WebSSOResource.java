@@ -68,12 +68,13 @@ public class WebSSOResource {
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
   // default for the whitelist - open up for development - relative paths and localhost only
   private static final String DEFAULT_WHITELIST = "^/.*$;^https?://(localhost|127.0.0.1|0:0:0:0:0:0:0:1|::1):\\d{0,9}/.*$";
+  private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
   private String cookieName = null;
   private boolean secureOnly = true;
   private int maxAge = -1;
-  private long tokenTTL = 30000l;
+  private long tokenTTL = TOKEN_TTL_DEFAULT;
   private String whitelist = null;
   private String domainSuffix = null;
   private List<String> targetAudiences = new ArrayList<>();
@@ -137,6 +138,10 @@ public class WebSSOResource {
     if (ttl != null) {
       try {
         tokenTTL = Long.parseLong(ttl);
+        if (tokenTTL < -1 || (tokenTTL + System.currentTimeMillis() < 0)) {
+          log.invalidTokenTTLEncountered(ttl);
+          tokenTTL = TOKEN_TTL_DEFAULT;
+        }
       }
       catch (NumberFormatException nfe) {
         log.invalidTokenTTLEncountered(ttl);
