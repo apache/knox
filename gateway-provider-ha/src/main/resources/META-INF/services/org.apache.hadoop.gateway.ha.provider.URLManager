@@ -17,3 +17,6 @@
 ##########################################################################
 
 org.apache.hadoop.gateway.ha.provider.impl.HS2ZookeeperURLManager
+org.apache.hadoop.gateway.ha.provider.impl.SOLRZookeeperURLManager
+org.apache.hadoop.gateway.ha.provider.impl.KafkaZookeeperURLManager
+org.apache.hadoop.gateway.ha.provider.impl.HBaseZookeeperURLManager
