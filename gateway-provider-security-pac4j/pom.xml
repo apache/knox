@@ -36,8 +36,8 @@
     </licenses>
 
     <properties>
-        <j2e-pac4j.version>1.2.2</j2e-pac4j.version>
-        <pac4j.version>1.8.9</pac4j.version>
+        <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
+        <pac4j.version>2.1.0</pac4j.version>
     </properties>
 
     <dependencies>
@@ -62,6 +62,33 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-http</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-oidc</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-saml</artifactId>
+            <version>${pac4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-cas</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-oauth</artifactId>
             <version>${pac4j.version}</version>
         </dependency>
 
