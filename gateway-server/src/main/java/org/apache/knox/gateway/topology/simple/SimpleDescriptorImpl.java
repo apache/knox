@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class SimpleDescriptorImpl implements SimpleDescriptor {
 
@@ -94,12 +95,23 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     }
 
     public static class ServiceImpl implements Service {
+        @JsonProperty("name")
         private String name;
+
+        @JsonProperty("params")
+        private Map<String, String> params;
+
+        @JsonProperty("urls")
         private List<String> urls;
 
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public Map<String, String> getParams() {
+            return params;
         }
 
         @Override

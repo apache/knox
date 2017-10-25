@@ -76,16 +76,16 @@ public class Pac4jProviderTest {
         final FilterConfig config = mock(FilterConfig.class);
         when(config.getServletContext()).thenReturn(context);
         when(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).thenReturn(PAC4J_CALLBACK_URL);
-        when(config.getInitParameter(Pac4jConstants.CLIENT_NAME)).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        when(config.getInitParameter("clientName")).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
 
         final Pac4jDispatcherFilter dispatcher = new Pac4jDispatcherFilter();
         dispatcher.init(config);
         final Pac4jIdentityAdapter adapter = new Pac4jIdentityAdapter();
         adapter.init(config);
-        adapter.setAuditor(mock(Auditor.class));
+        Pac4jIdentityAdapter.setAuditor(mock(Auditor.class));
         final AuditService auditService = mock(AuditService.class);
         when(auditService.getContext()).thenReturn(mock(AuditContext.class));
-        adapter.setAuditService(auditService);
+        Pac4jIdentityAdapter.setAuditService(auditService);
 
         // step 1: call the KnoxSSO service with an original url pointing to an Hadoop service (redirected by the SSOCookieProvider)
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -126,7 +126,7 @@ public class Pac4jProviderTest {
             mapCookies.put(cookie.getName(), cookie.getValue());
         }
         assertNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + CLIENT_CLASS + "$attemptedAuthentication"));
-        assertNotNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILE));
+        assertNotNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES));
         assertNull(mapCookies.get(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL));
 
         // step 3: turn pac4j identity into KnoxSSO identity
@@ -143,7 +143,7 @@ public class Pac4jProviderTest {
         assertEquals(1, cookies.size());
         final Cookie userProfileCookie = cookies.get(0);
         // the user profile has been cleaned
-        assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILE, userProfileCookie.getName());
+        assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES, userProfileCookie.getName());
         assertNull(userProfileCookie.getValue());
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }

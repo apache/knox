@@ -51,21 +51,24 @@ public class TokenResource {
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String TARGET_URL = "target_url";
-  private static final String BEARER = "Bearer ";
+  private static final String BEARER = "Bearer";
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
   private static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
   private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
   private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
+  private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
+  private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
-  private long tokenTTL = 30000l;
+  private long tokenTTL = TOKEN_TTL_DEFAULT;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl = null;
   private Map<String,Object> tokenClientDataMap = null;
   private ArrayList<String> allowedDNs = new ArrayList<>();
   private boolean clientCertRequired = false;
+  private String signatureAlgorithm = "RS256";
 
   @Context
   HttpServletRequest request;
@@ -102,6 +105,10 @@ public class TokenResource {
     if (ttl != null) {
       try {
         tokenTTL = Long.parseLong(ttl);
+        if (tokenTTL < -1 || (tokenTTL + System.currentTimeMillis() < 0)) {
+          log.invalidTokenTTLEncountered(ttl);
+          tokenTTL = TOKEN_TTL_DEFAULT;
+        }
       }
       catch (NumberFormatException nfe) {
         log.invalidTokenTTLEncountered(ttl);
@@ -115,6 +122,11 @@ public class TokenResource {
       tokenClientDataMap = new HashMap<>();
       String[] tokenClientData = clientData.split(",");
       addClientDataToMap(tokenClientData, tokenClientDataMap);
+    }
+
+    String sigAlg = context.getInitParameter(TOKEN_SIG_ALG);
+    if (sigAlg != null) {
+      signatureAlgorithm = sigAlg;
     }
   }
 
@@ -160,9 +172,9 @@ public class TokenResource {
     try {
       JWT token = null;
       if (targetAudiences.isEmpty()) {
-        token = ts.issueToken(p, "RS256", expires);
+        token = ts.issueToken(p, signatureAlgorithm, expires);
       } else {
-        token = ts.issueToken(p, targetAudiences, "RS256", expires);
+        token = ts.issueToken(p, targetAudiences, signatureAlgorithm, expires);
       }
 
       if (token != null) {

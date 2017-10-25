@@ -23,8 +23,10 @@ import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
+import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.security.auth.Subject;
 
@@ -48,9 +50,21 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   private static final String SIGNING_KEY_PASSPHRASE = "signing.key.passphrase";
+  private static final Set<String> SUPPORTED_SIG_ALGS = new HashSet<>();
   private AliasService as = null;
   private KeystoreService ks = null;
   String signingKeyAlias = null;
+
+  static {
+      // Only standard RSA signature algorithms are accepted
+      // https://tools.ietf.org/html/rfc7518
+      SUPPORTED_SIG_ALGS.add("RS256");
+      SUPPORTED_SIG_ALGS.add("RS384");
+      SUPPORTED_SIG_ALGS.add("RS512");
+      SUPPORTED_SIG_ALGS.add("PS256");
+      SUPPORTED_SIG_ALGS.add("PS384");
+      SUPPORTED_SIG_ALGS.add("PS512");
+  }
 
   public void setKeystoreService(KeystoreService ks) {
     this.ks = ks;
@@ -96,7 +110,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public JWT issueToken(Principal p, String audience, String algorithm, long expires)
       throws TokenServiceException {
-    ArrayList<String> audiences = null;
+    List<String> audiences = null;
     if (audience != null) {
       audiences = new ArrayList<String>();
       audiences.add(audience);
@@ -118,9 +132,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       claimArray[3] = String.valueOf(expires);
     }
 
-    JWTToken token = null;
-    if ("RS256".equals(algorithm)) {
-      token = new JWTToken("RS256", claimArray, audiences);
+    JWT token = null;
+    if (SUPPORTED_SIG_ALGS.contains(algorithm)) {
+      token = new JWTToken(algorithm, claimArray, audiences);
       RSAPrivateKey key;
       char[] passphrase = null;
       try {

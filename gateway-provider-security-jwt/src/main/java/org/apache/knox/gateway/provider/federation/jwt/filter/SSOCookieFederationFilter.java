@@ -35,6 +35,7 @@ import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_COOKIE_NAME = "sso.cookie.name";
@@ -78,7 +79,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    configureExpectedIssuer(filterConfig);
+    configureExpectedParameters(filterConfig);
   }
 
   public void destroy() {
@@ -105,7 +106,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     }
     else {
       try {
-        JWTToken token = new JWTToken(wireToken);
+        JWT token = new JWTToken(wireToken);
         if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
           Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);

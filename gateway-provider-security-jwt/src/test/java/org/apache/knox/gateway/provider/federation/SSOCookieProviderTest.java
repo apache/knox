@@ -30,6 +30,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -70,8 +71,8 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       props.put("sso.cookie.name", "jowt");
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT("alice", new Date(new Date().getTime() + 5000),
-          privateKey, props);
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
 
       Cookie cookie = new Cookie("jowt", jwt.serialize());
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);

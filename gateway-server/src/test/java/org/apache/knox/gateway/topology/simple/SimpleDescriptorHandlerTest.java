@@ -21,6 +21,7 @@ import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -131,15 +132,37 @@ public class SimpleDescriptorHandlerTest {
     /**
      * KNOX-1006
      *
-     * N.B. This test depends on the DummyServiceDiscovery extension being configured:
-     *             org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscovery
+     * N.B. This test depends on the PropertiesFileServiceDiscovery extension being configured:
+     *             org.apache.knox.gateway.topology.discovery.test.extension.PropertiesFileServiceDiscovery
      */
     @Test
     public void testSimpleDescriptorHandler() throws Exception {
 
-        final String type = "DUMMY";
-        final String address = "http://c6401.ambari.apache.org:8080";
+        final String type = "PROPERTIES_FILE";
         final String clusterName = "dummy";
+
+        // Create a properties file to be the source of service discovery details for this test
+        final File discoveryConfig = File.createTempFile(getClass().getName() + "_discovery-config", ".properties");
+
+        final String address = discoveryConfig.getAbsolutePath();
+
+        final Properties DISCOVERY_PROPERTIES = new Properties();
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".name", clusterName);
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".NAMENODE", "hdfs://namenodehost:8020");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".JOBTRACKER", "rpc://jobtrackerhostname:8050");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHDFS", "http://webhdfshost:1234");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHCAT", "http://webhcathost:50111/templeton");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".OOZIE", "http://ooziehost:11000/oozie");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHBASE", "http://webhbasehost:1234");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".HIVE", "http://hivehostname:10001/clipath");
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".RESOURCEMANAGER", "http://remanhost:8088/ws");
+
+        try {
+            DISCOVERY_PROPERTIES.store(new FileOutputStream(discoveryConfig), null);
+        } catch (FileNotFoundException e) {
+            fail(e.getMessage());
+        }
+
         final Map<String, List<String>> serviceURLs = new HashMap<>();
         serviceURLs.put("NAMENODE", null);
         serviceURLs.put("JOBTRACKER", null);
@@ -150,13 +173,21 @@ public class SimpleDescriptorHandlerTest {
         serviceURLs.put("HIVE", null);
         serviceURLs.put("RESOURCEMANAGER", null);
         serviceURLs.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
+        serviceURLs.put("KNOXSSO", null);
 
         // Write the externalized provider config to a temp file
-        File providerConfig = writeProviderConfig("ambari-cluster-policy.xml", TEST_PROVIDER_CONFIG);
+        File providerConfig = new File(System.getProperty("java.io.tmpdir"), "ambari-cluster-policy.xml");
+        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG);
 
         File topologyFile = null;
         try {
-            File destDir = (new File(".")).getCanonicalFile();
+            File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+
+            Map<String, Map<String, String>> serviceParameters = new HashMap<>();
+            Map<String, String> knoxssoParams = new HashMap<>();
+            knoxssoParams.put("knoxsso.cookie.secure.only", "true");
+            knoxssoParams.put("knoxsso.token.ttl", "100000");
+            serviceParameters.put("KNOXSSO", knoxssoParams);
 
             // Mock out the simple descriptor
             SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
@@ -171,6 +202,7 @@ public class SimpleDescriptorHandlerTest {
                 SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
                 EasyMock.expect(svc.getName()).andReturn(serviceName).anyTimes();
                 EasyMock.expect(svc.getURLs()).andReturn(serviceURLs.get(serviceName)).anyTimes();
+                EasyMock.expect(svc.getParams()).andReturn(serviceParameters.get(serviceName)).anyTimes();
                 EasyMock.replay(svc);
                 serviceMocks.add(svc);
             }
@@ -211,28 +243,51 @@ public class SimpleDescriptorHandlerTest {
                         (NodeList) xpath.compile("/topology/service").evaluate(topologyXml, XPathConstants.NODESET);
             for (int serviceNodeIndex=0; serviceNodeIndex < serviceNodes.getLength(); serviceNodeIndex++) {
                 Node serviceNode = serviceNodes.item(serviceNodeIndex);
+
+                // Validate the role
                 Node roleNode = (Node) xpath.compile("role/text()").evaluate(serviceNode, XPathConstants.NODE);
                 assertNotNull(roleNode);
                 String role = roleNode.getNodeValue();
+
+                // Validate the URLs
                 NodeList urlNodes = (NodeList) xpath.compile("url/text()").evaluate(serviceNode, XPathConstants.NODESET);
                 for(int urlNodeIndex = 0 ; urlNodeIndex < urlNodes.getLength(); urlNodeIndex++) {
                     Node urlNode = urlNodes.item(urlNodeIndex);
                     assertNotNull(urlNode);
                     String url = urlNode.getNodeValue();
-                    assertNotNull("Every declared service should have a URL.", url);
-                    if (!topologyServiceURLs.containsKey(role)) {
-                        topologyServiceURLs.put(role, new ArrayList<String>());
+
+                    // If the service should have a URL (some don't require it)
+                    if (serviceURLs.containsKey(role)) {
+                        assertNotNull("Declared service should have a URL.", url);
+                        if (!topologyServiceURLs.containsKey(role)) {
+                            topologyServiceURLs.put(role, new ArrayList<>());
+                        }
+                        topologyServiceURLs.get(role).add(url); // Add it for validation later
                     }
-                    topologyServiceURLs.get(role).add(url);
                 }
+
+                // If params were declared in the descriptor, then validate them in the resulting topology file
+                Map<String, String> params = serviceParameters.get(role);
+                if (params != null) {
+                    NodeList paramNodes = (NodeList) xpath.compile("param").evaluate(serviceNode, XPathConstants.NODESET);
+                    for (int paramNodeIndex = 0; paramNodeIndex < paramNodes.getLength(); paramNodeIndex++) {
+                        Node paramNode = paramNodes.item(paramNodeIndex);
+                        String paramName = (String) xpath.compile("name/text()").evaluate(paramNode, XPathConstants.STRING);
+                        String paramValue = (String) xpath.compile("value/text()").evaluate(paramNode, XPathConstants.STRING);
+                        assertTrue(params.keySet().contains(paramName));
+                        assertEquals(params.get(paramName), paramValue);
+                    }
+                }
+
             }
-            assertEquals("Unexpected number of service declarations.", serviceURLs.size(), topologyServiceURLs.size());
+            assertEquals("Unexpected number of service declarations.", (serviceURLs.size() - 1), topologyServiceURLs.size());
 
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
         } finally {
             providerConfig.delete();
+            discoveryConfig.delete();
             if (topologyFile != null) {
                 topologyFile.delete();
             }
@@ -358,7 +413,7 @@ public class SimpleDescriptorHandlerTest {
                     String url = urlNode.getNodeValue();
                     assertNotNull("Every declared service should have a URL.", url);
                     if (!topologyServiceURLs.containsKey(role)) {
-                        topologyServiceURLs.put(role, new ArrayList<String>());
+                        topologyServiceURLs.put(role, new ArrayList<>());
                     }
                     topologyServiceURLs.get(role).add(url);
                 }

@@ -17,14 +17,11 @@
    */
 package org.apache.knox.gateway.services.security.token.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.nimbusds.jose.JOSEException;
@@ -83,7 +80,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getPayloadToSign()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
    */
   @Override
   public String getHeader() {
@@ -92,7 +89,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getPayloadToSign()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
    */
   @Override
   public String getClaims() {
@@ -108,7 +105,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getPayloadToSign()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
    */
   @Override
   public String getPayload() {
@@ -121,7 +118,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#setSignaturePayload(byte[])
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#setSignaturePayload(byte[])
    */
   @Override
   public void setSignaturePayload(byte[] payload) {
@@ -129,7 +126,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getSignaturePayload()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getSignaturePayload()
    */
   @Override
   public byte[] getSignaturePayload() {
@@ -148,7 +145,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getClaim(java.lang.String)
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getClaim(java.lang.String)
    */
   @Override
   public String getClaim(String claimName) {
@@ -164,7 +161,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getSubject()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getSubject()
    */
   @Override
   public String getSubject() {
@@ -172,7 +169,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getIssuer()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getIssuer()
    */
   @Override
   public String getIssuer() {
@@ -180,7 +177,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getAudience()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getAudience()
    */
   @Override
   public String getAudience() {
@@ -196,7 +193,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getAudienceClaims()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getAudienceClaims()
    */
   @Override
   public String[] getAudienceClaims() {
@@ -212,7 +209,7 @@ public class JWTToken implements JWT {
   }
 
   /* (non-Javadoc)
-   * @see JWT#getExpires()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getExpires()
    */
   @Override
   public String getExpires() {
@@ -234,8 +231,19 @@ public class JWTToken implements JWT {
     return date;
   }
 
+  @Override
+  public Date getNotBeforeDate() {
+    Date date = null;
+    try {
+      date = jwt.getJWTClaimsSet().getNotBeforeTime();
+    } catch (ParseException e) {
+      log.unableToParseToken(e);
+    }
+    return date;
+  }
+
   /* (non-Javadoc)
-   * @see JWT#getPrincipal()
+   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPrincipal()
    */
   @Override
   public String getPrincipal() {

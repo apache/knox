@@ -42,7 +42,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
     void addServiceConfiguration(String serviceName, String configurationType, ServiceConfiguration serviceConfig) {
         if (!serviceConfigurations.keySet().contains(serviceName)) {
-            serviceConfigurations.put(serviceName, new HashMap<String, ServiceConfiguration>());
+            serviceConfigurations.put(serviceName, new HashMap<>());
         }
         serviceConfigurations.get(serviceName).put(configurationType, serviceConfig);
     }

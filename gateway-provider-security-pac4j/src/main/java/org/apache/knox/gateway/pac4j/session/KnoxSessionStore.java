@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Specific session store where data are saved into cookies (and not in memory).
@@ -92,7 +93,8 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     private String encryptBase64(final Object o) {
-        if (o == null || o.equals("")) {
+        if (o == null || o.equals("")
+            || (o instanceof Map<?,?> && ((Map<?,?>)o).isEmpty())) {
             return null;
         } else {
             final byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
@@ -116,5 +118,29 @@ public class KnoxSessionStore implements SessionStore {
         cookie.setHttpOnly(true);
         cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
         context.addResponseCookie(cookie);
+    }
+
+    @Override
+    public SessionStore buildFromTrackableSession(WebContext arg0, Object arg1) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean destroySession(WebContext arg0) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object getTrackableSession(WebContext arg0) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean renewSession(WebContext arg0) {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

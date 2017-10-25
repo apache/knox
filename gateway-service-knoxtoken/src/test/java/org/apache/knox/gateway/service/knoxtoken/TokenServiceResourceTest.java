@@ -57,6 +57,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -102,11 +103,8 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testGetToken() throws Exception {
-    TokenResource tr = new TokenResource();
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    //tr.context = context;
-    // tr.init();
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
@@ -127,6 +125,7 @@ public class TokenServiceResourceTest {
 
     EasyMock.replay(principal, services, context, request, response);
 
+    TokenResource tr = new TokenResource();
     tr.request = request;
     tr.response = response;
 
@@ -143,7 +142,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
   }
@@ -195,7 +194,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
 
@@ -253,7 +252,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
 
@@ -316,7 +315,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
   }
@@ -406,6 +405,284 @@ public class TokenServiceResourceTest {
     assertEquals(403, retResponse.getStatus());
   }
 
+  @Test
+  public void testSignatureAlgorithm() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.sigalg")).andReturn("RS512");
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+    assertTrue(parsedToken.getHeader().contains("RS512"));
+  }
+
+  @Test
+  public void testDefaultTTL() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    Date expiresDate = parsedToken.getExpiresDate();
+    Date now = new Date();
+    assertTrue(expiresDate.after(now));
+    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+  }
+
+  @Test
+  public void testCustomTTL() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn("60000");
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    Date expiresDate = parsedToken.getExpiresDate();
+    Date now = new Date();
+    assertTrue(expiresDate.after(now));
+    long diff = expiresDate.getTime() - now.getTime();
+    assertTrue(diff < 60000L && diff > 30000L);
+  }
+
+  @Test
+  public void testNegativeTTL() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn("-60000");
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    Date expiresDate = parsedToken.getExpiresDate();
+    Date now = new Date();
+    assertTrue(expiresDate.after(now));
+    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+  }
+
+  @Test
+  public void testOverflowTTL() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    Date expiresDate = parsedToken.getExpiresDate();
+    Date now = new Date();
+    assertTrue(expiresDate.after(now));
+    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+  }
+
   private String getTagValue(String token, String tagName) {
     String searchString = tagName + "\":";
     String value = token.substring(token.indexOf(searchString) + searchString.length());
@@ -480,14 +757,9 @@ public class TokenServiceResourceTest {
         claimArray[3] = String.valueOf(expires);
       }
 
-      JWTToken token = null;
-      if ("RS256".equals(algorithm)) {
-        token = new JWTToken("RS256", claimArray, audiences);
-        JWSSigner signer = new RSASSASigner(privateKey);
-        token.sign(signer);
-      } else {
-        throw new TokenServiceException("Cannot issue token - Unsupported algorithm");
-      }
+      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWSSigner signer = new RSASSASigner(privateKey);
+      token.sign(signer);
 
       return token;
     }

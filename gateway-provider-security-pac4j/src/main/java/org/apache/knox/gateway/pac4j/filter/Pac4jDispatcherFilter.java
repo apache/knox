@@ -31,12 +31,11 @@ import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.config.ConfigSingleton;
 import org.pac4j.core.context.J2EContext;
-import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
 import org.pac4j.j2e.filter.CallbackFilter;
-import org.pac4j.j2e.filter.RequiresAuthenticationFilter;
+import org.pac4j.j2e.filter.SecurityFilter;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -74,7 +73,7 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private CallbackFilter callbackFilter;
 
-  private RequiresAuthenticationFilter requiresAuthenticationFilter;
+  private SecurityFilter securityFilter;
   private MasterService masterService = null;
   private KeystoreService keystoreService = null;
   private AliasService aliasService = null;
@@ -119,7 +118,7 @@ public class Pac4jDispatcherFilter implements Filter {
     final Config config;
     final String clientName;
     // client name from servlet parameter (mandatory)
-    final String clientNameParameter = filterConfig.getInitParameter(Pac4jConstants.CLIENT_NAME);
+    final String clientNameParameter = filterConfig.getInitParameter("clientName");
     if (clientNameParameter == null) {
       log.clientNameParameterRequired();
       throw new ServletException("Required pac4j clientName parameter is missing.");
@@ -154,9 +153,9 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     callbackFilter = new CallbackFilter();
-    requiresAuthenticationFilter = new RequiresAuthenticationFilter();
-    requiresAuthenticationFilter.setClientName(clientName);
-    requiresAuthenticationFilter.setConfig(config);
+    securityFilter = new SecurityFilter();
+    securityFilter.setClients(clientName);
+    securityFilter.setConfig(config);
 
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
@@ -206,7 +205,7 @@ public class Pac4jDispatcherFilter implements Filter {
     } else {
       // otherwise just apply security and requires authentication
       // apply RequiresAuthenticationFilter
-      requiresAuthenticationFilter.doFilter(servletRequest, servletResponse, filterChain);
+      securityFilter.doFilter(servletRequest, servletResponse, filterChain);
     }
   }
 

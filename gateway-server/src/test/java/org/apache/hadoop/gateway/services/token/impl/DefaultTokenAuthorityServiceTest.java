@@ -28,6 +28,8 @@ import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -74,6 +76,8 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
     JWT token = ta.issueToken(principal, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
+
+    assertTrue(ta.verifyToken(token));
   }
 
   @Test
@@ -115,6 +119,8 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
+
+    assertTrue(ta.verifyToken(token));
   }
 
   @Test
@@ -155,6 +161,94 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
     JWT token = ta.issueToken(principal, null, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
+
+    assertTrue(ta.verifyToken(token));
+  }
+
+  @Test
+  public void testTokenCreationSignatureAlgorithm() throws Exception {
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+
+    MasterService ms = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
+
+    AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray());
+
+    EasyMock.replay(principal, config, ms, as);
+
+    KeystoreService ks = new DefaultKeystoreService();
+    ((DefaultKeystoreService)ks).setMasterService(ms);
+
+    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+
+    JWTokenAuthority ta = new DefaultTokenAuthorityService();
+    ((DefaultTokenAuthorityService)ta).setAliasService(as);
+    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+
+    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+
+    JWT token = ta.issueToken(principal, "RS512");
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertTrue(token.getHeader().contains("RS512"));
+
+    assertTrue(ta.verifyToken(token));
+  }
+
+  @Test
+  public void testTokenCreationBadSignatureAlgorithm() throws Exception {
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+
+    MasterService ms = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
+
+    AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray());
+
+    EasyMock.replay(principal, config, ms, as);
+
+    KeystoreService ks = new DefaultKeystoreService();
+    ((DefaultKeystoreService)ks).setMasterService(ms);
+
+    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+
+    JWTokenAuthority ta = new DefaultTokenAuthorityService();
+    ((DefaultTokenAuthorityService)ta).setAliasService(as);
+    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+
+    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+
+    try {
+      ta.issueToken(principal, "none");
+      fail("Failure expected on a bad signature algorithm");
+    } catch (TokenServiceException ex) {
+        // expected
+    }
   }
 
 }

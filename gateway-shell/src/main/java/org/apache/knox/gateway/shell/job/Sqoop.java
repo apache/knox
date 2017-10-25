@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 
 public class Sqoop {
 
-  static class Request extends AbstractRequest<Response> {
+  public static class Request extends AbstractRequest<Response> {
 
     private String statusDir;
     List<NameValuePair> params = new ArrayList<NameValuePair>();
