@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.ha.provider.impl;
+package org.apache.knox.gateway.ha.provider.impl;
 
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;

@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.ha.provider.impl;
+package org.apache.knox.gateway.ha.provider.impl;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingCluster;
-import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
-import org.apache.hadoop.gateway.ha.provider.URLManager;
-import org.apache.hadoop.gateway.ha.provider.URLManagerLoader;
+import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.ha.provider.URLManager;
+import org.apache.knox.gateway.ha.provider.URLManagerLoader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.ha.provider.impl;
+package org.apache.knox.gateway.ha.provider.impl;
 
 import java.io.IOException;
 
@@ -23,21 +23,20 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingCluster;
-import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
-import org.apache.hadoop.gateway.ha.provider.URLManager;
-import org.apache.hadoop.gateway.ha.provider.URLManagerLoader;
+import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.ha.provider.URLManager;
+import org.apache.knox.gateway.ha.provider.URLManagerLoader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Simple unit tests for HBaseZookeeperURLManager.
+ * Simple unit tests for KafkaZookeeperURLManager.
  * 
- * @see HBaseZookeeperURLManager
+ * @see KafkaZookeeperURLManager
  */
-public class HBaseZookeeperURLManagerTest {
-	
+public class KafkaZookeeperURLManagerTest {
   private TestingCluster cluster;
 
   @Before
@@ -50,8 +49,8 @@ public class HBaseZookeeperURLManagerTest {
             .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 
     zooKeeperClient.start();
-    zooKeeperClient.create().forPath("/hbase-unsecure");
-    zooKeeperClient.create().forPath("/hbase-unsecure/rs");
+    zooKeeperClient.create().forPath("/brokers");
+    zooKeeperClient.create().forPath("/brokers/ids");
     zooKeeperClient.close();
   }
 
@@ -59,14 +58,14 @@ public class HBaseZookeeperURLManagerTest {
   public void teardown() throws IOException {
     cluster.stop();
   }
-
+	
   @Test
   public void testHBaseZookeeperURLManagerLoading() {
-    HaServiceConfig config = new DefaultHaServiceConfig("WEBHBASE");
+    HaServiceConfig config = new DefaultHaServiceConfig("KAFKA");
     config.setEnabled(true);
     config.setZookeeperEnsemble(cluster.getConnectString());
     URLManager manager = URLManagerLoader.loadURLManager(config);
     Assert.assertNotNull(manager);
-    Assert.assertTrue(manager instanceof HBaseZookeeperURLManager);
+    Assert.assertTrue(manager instanceof KafkaZookeeperURLManager);
   }
 }

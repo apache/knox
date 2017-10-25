@@ -15,17 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.ha.provider.impl;
+package org.apache.knox.gateway.ha.provider.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.gateway.ha.provider.HaServiceConfig;
-import org.apache.hadoop.gateway.ha.provider.URLManager;
-import org.apache.hadoop.gateway.ha.provider.impl.i18n.HaMessages;
-import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.ha.provider.URLManager;
+import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
