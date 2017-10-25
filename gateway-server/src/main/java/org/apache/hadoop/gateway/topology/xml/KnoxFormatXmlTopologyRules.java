@@ -32,7 +32,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String ROOT_TAG = "topology";
   private static final String NAME_TAG = "name";
   private static final String VERSION_TAG = "version";
-  private static final String DEFAULT_SERVICE_TAG = "default-service";
+  private static final String DEFAULT_SERVICE_TAG = "path";
   private static final String APPLICATION_TAG = "application";
   private static final String SERVICE_TAG = "service";
   private static final String ROLE_TAG = "role";

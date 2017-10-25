@@ -28,7 +28,7 @@ or more contributor license agreements.  See the NOTICE file
             <xml-root-element/>
             <java-attributes>
                 <xml-element java-attribute="name" name="name"/>
-                <xml-element java-attribute="defaultServicePath" name="default-service"/>
+                <xml-element java-attribute="defaultServicePath" name="path"/>
                 <xml-elements java-attribute="providers">
                     <xml-element name="provider"/>
                     <xml-element-wrapper name="gateway"/>
