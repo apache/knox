@@ -97,6 +97,7 @@
         <module>gateway-shell-samples</module>
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
+        <module>gateway-service-nifi</module>
     </modules>
 
     <properties>
@@ -664,6 +665,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-definitions</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-nifi</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
