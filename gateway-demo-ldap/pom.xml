@@ -107,26 +107,6 @@
 
     <dependencies>
 
-        <!--
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-server-integ</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-core-entry</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.directory.shared</groupId>
-            <artifactId>shared-ldap</artifactId>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-jdbm</artifactId>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
@@ -147,20 +127,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId>
-            <version>1.5.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.directory.shared</groupId>
-                    <artifactId>shared-ldap-schema</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        -->
 
         <dependency>
             <groupId>junit</groupId>

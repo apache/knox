@@ -109,20 +109,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!--
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.directory.shared</groupId>
-                    <artifactId>shared-ldap-schema</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>

@@ -25,12 +25,17 @@ import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.partition.Partition;
+import org.apache.directory.server.core.factory.DefaultDirectoryServiceFactory;
 import org.apache.directory.server.core.factory.DirectoryServiceFactory;
+import org.apache.directory.server.core.factory.JdbmPartitionFactory;
+import org.apache.directory.server.core.factory.PartitionFactory;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.apache.log4j.PropertyConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,6 +43,8 @@ import java.net.ServerSocket;
 import java.util.UUID;
 
 public class SimpleLdapDirectoryServer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SimpleLdapDirectoryServer.class);
 
   private DirectoryServiceFactory factory;
 
@@ -50,7 +57,36 @@ public class SimpleLdapDirectoryServer {
       throw new FileNotFoundException( usersLdif.getAbsolutePath() );
     }
 
-    factory = new SimpleDirectoryServiceFactory();
+    DirectoryService directoryService = null;
+    try {
+      // creating the instance here so that
+      // we we can set some properties like accesscontrol, anon access
+      // before starting up the service
+      directoryService = new SimpleDirectoryService();
+
+      // no need to register a shutdown hook during tests because this
+      // starts a lot of threads and slows down test execution
+      directoryService.setShutdownHookEnabled( false );
+    } catch ( Exception e ) {
+      throw new RuntimeException( e );
+    }
+
+    PartitionFactory partitionFactory = null;
+    try {
+      String typeName = System.getProperty( "apacheds.partition.factory" );
+
+      if ( typeName != null ) {
+        Class<? extends PartitionFactory> type = ( Class<? extends PartitionFactory> ) Class.forName( typeName );
+        partitionFactory = type.newInstance();
+      } else {
+        partitionFactory = new JdbmPartitionFactory();
+      }
+    } catch ( Exception e ) {
+      LOG.error( "Error instantiating custom partiton factory", e );
+      throw new RuntimeException( e );
+    }
+
+    factory = new DefaultDirectoryServiceFactory( directoryService, partitionFactory );
     factory.init( UUID.randomUUID().toString() );
     service = factory.getDirectoryService();
 
