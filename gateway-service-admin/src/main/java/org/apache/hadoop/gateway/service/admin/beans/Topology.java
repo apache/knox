@@ -34,7 +34,7 @@ public class Topology {
   private String name;
 
   @XmlElement
-  private String defaultServicePath;
+  private String path;
 
   @XmlElement
   private long timestamp;
@@ -72,12 +72,12 @@ public class Topology {
     return timestamp;
   }
 
-  public void setDefaultService( String defaultServicePath ) {
-    this.defaultServicePath = defaultServicePath;
+  public void setPath( String defaultServicePath ) {
+    this.path = defaultServicePath;
   }
 
-  public String getDefaultService() {
-    return defaultServicePath;
+  public String getPath() {
+    return path;
   }
 
   public void setTimestamp( long timestamp ) {
