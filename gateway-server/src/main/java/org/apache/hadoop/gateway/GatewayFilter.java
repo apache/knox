@@ -128,28 +128,29 @@ public class GatewayFilter implements Filter {
     // if there was no match then look for a default service for the topology
     if (match == null) {
       Topology topology = (Topology) servletRequest.getServletContext().getAttribute("org.apache.hadoop.gateway.topology");
-      String defaultServicePath = topology.getDefaultServicePath();
-      if (defaultServicePath != null) {
-        try {
-          String newPathWithQuery = defaultServicePath + "/" + pathWithQueryTemplate;
-          match = chains.match(Parser.parseLiteral(newPathWithQuery));
-          String origUrl = ((HttpServletRequest) servletRequest).getRequestURL().toString();
-          String url = origUrl;
-          if (path.equals("/")) {
-            url += defaultServicePath;
+      if (topology != null) {
+        String defaultServicePath = topology.getDefaultServicePath();
+        if (defaultServicePath != null) {
+          try {
+            String newPathWithQuery = defaultServicePath + "/" + pathWithQueryTemplate;
+            match = chains.match(Parser.parseLiteral(newPathWithQuery));
+            String origUrl = ((HttpServletRequest) servletRequest).getRequestURL().toString();
+            String url = origUrl;
+            if (path.equals("/")) {
+              url += defaultServicePath;
+            }
+            else {
+              int index = origUrl.indexOf(path);
+              url = origUrl.substring(0, index) + "/" + defaultServicePath + path;
+            }
+            String contextPath = defaultServicePath;
+            servletRequest = new ForwardedRequest((HttpServletRequest) servletRequest, 
+                contextPath, 
+                url);
+          } catch (URISyntaxException e) {
+            throw new ServletException( e );
           }
-          else {
-            int index = origUrl.indexOf(path);
-            url = origUrl.substring(0, index) + "/" + defaultServicePath + path;
-          }
-          String contextPath = defaultServicePath;
-          servletRequest = new ForwardedRequest((HttpServletRequest) servletRequest, 
-              contextPath, 
-              url);
-        } catch (URISyntaxException e) {
-          throw new ServletException( e );
         }
-//        ((HttpServletRequest) servletRequest).getRequestURL();
       }
     }
 
