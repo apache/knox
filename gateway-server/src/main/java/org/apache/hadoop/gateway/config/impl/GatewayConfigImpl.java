@@ -118,6 +118,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
   private static final String TRUST_ALL_CERTS = GATEWAY_CONFIG_FILE_PREFIX + ".trust.all.certs";
   private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
+  private static final String CLIENT_AUTH_WANTED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.wanted";
   private static final String TRUSTSTORE_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.path";
   private static final String TRUSTSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.type";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
@@ -532,6 +533,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isClientAuthNeeded() {
     String clientAuthNeeded = get( CLIENT_AUTH_NEEDED, "false" );
     return "true".equals(clientAuthNeeded);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.gateway.config.GatewayConfig#isClientAuthWanted()
+   */
+  @Override
+  public boolean isClientAuthWanted() {
+    String clientAuthWanted = get( CLIENT_AUTH_WANTED, "false" );
+    return "true".equals(clientAuthWanted);
   }
 
   /* (non-Javadoc)

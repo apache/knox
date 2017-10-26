@@ -45,6 +45,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-discovery-ambari</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
         <module>gateway-server-xforwarded-filter</module>
@@ -67,7 +68,6 @@
         <module>gateway-provider-identity-assertion-hadoop-groups</module>
         <module>gateway-provider-identity-assertion-regex</module>
         <module>gateway-provider-identity-assertion-switchcase</module>
-        <module>gateway-provider-security-picketlink</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
@@ -290,8 +290,8 @@
                 <version>3.3</version>
                 <configuration>
                     <compilerId>javac</compilerId>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <debug>true</debug>
                 </configuration>
                 <dependencies>
@@ -335,6 +335,30 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <executions>
+                  <execution>
+                    <id>enforce-maven</id>
+                    <goals>
+                      <goal>enforce</goal>
+                    </goals>
+                    <configuration>
+                      <rules>
+                        <requireMavenVersion>
+                          <version>[3.0.2,)</version>
+                        </requireMavenVersion>
+                        <requireJavaVersion>
+                          <version>[1.8,)</version>
+                        </requireJavaVersion>
+                      </rules>
+                    </configuration>
+                  </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -470,11 +494,6 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-provider-security-webappsec</artifactId>
-                <version>${gateway-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${gateway-group}</groupId>
-                <artifactId>gateway-provider-security-picketlink</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
@@ -684,6 +703,11 @@
             </dependency>
             <dependency>
                 <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-discovery-ambari</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-release</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
@@ -702,17 +726,6 @@
                 <artifactId>gateway-shell-samples</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
-
-        <dependency>
-            <groupId>org.picketlink</groupId>
-            <artifactId>picketlink-federation</artifactId>
-            <version>2.7.0.CR3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>3.2.0.Final</version>
-        </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet</artifactId>

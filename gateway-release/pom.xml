@@ -241,10 +241,6 @@
 
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-security-picketlink</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-security-shiro</artifactId>
         </dependency>
         <dependency>
@@ -333,6 +329,10 @@
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-shell-samples</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-discovery-ambari</artifactId>
         </dependency>
 
         <dependency>

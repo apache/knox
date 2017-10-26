@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.service.knoxtoken;
 
+import org.apache.hadoop.gateway.security.PrimaryPrincipal;
 import org.apache.hadoop.gateway.service.knoxtoken.TokenResource;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
@@ -49,6 +50,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -99,11 +101,8 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testGetToken() throws Exception {
-    TokenResource tr = new TokenResource();
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    //tr.context = context;
-    // tr.init();
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
@@ -124,6 +123,7 @@ public class TokenServiceResourceTest {
 
     EasyMock.replay(principal, services, context, request, response);
 
+    TokenResource tr = new TokenResource();
     tr.request = request;
     tr.response = response;
 
@@ -140,7 +140,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
   }
@@ -192,7 +192,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     // Verify the token
-    JWTToken parsedToken = new JWTToken(accessToken);
+    JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
 
@@ -201,6 +201,259 @@ public class TokenServiceResourceTest {
     assertEquals(2, audiences.size());
     assertTrue(audiences.contains("recipient1"));
     assertTrue(audiences.contains("recipient2"));
+  }
+
+  @Test
+  public void testAudiencesWhitespace() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn(" recipient1, recipient2 ");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    // Verify the audiences
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+  }
+
+  @Test
+  public void testValidClientCert() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
+    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
+    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
+    ArrayList<X509Certificate> certArrayList = new ArrayList<X509Certificate>();
+    certArrayList.add(trustedCertMock);
+    X509Certificate[] certs = {};
+    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response, trustedCertMock);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+  }
+
+  @Test
+  public void testValidClientCertWrongUser() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
+    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
+    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
+    ArrayList<X509Certificate> certArrayList = new ArrayList<X509Certificate>();
+    certArrayList.add(trustedCertMock);
+    X509Certificate[] certs = {};
+    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response, trustedCertMock);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(403, retResponse.getStatus());
+  }
+
+  @Test
+  public void testMissingClientCert() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
+    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(null).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(403, retResponse.getStatus());
+  }
+
+  @Test
+  public void testSignatureAlgorithm() throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.sigalg")).andReturn("RS512");
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.getWriter()).andReturn(printWriter);
+
+    EasyMock.replay(principal, services, context, request, response);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.response = response;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = writer.toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    String expiry = getTagValue(retString, "expires_in");
+    assertNotNull(expiry);
+
+    // Verify the token
+    JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+    assertTrue(parsedToken.getHeader().contains("RS512"));
   }
 
   private String getTagValue(String token, String tagName) {
@@ -229,32 +482,32 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWTToken issueToken(Subject subject, String algorithm)
+    public JWT issueToken(Subject subject, String algorithm)
       throws TokenServiceException {
       Principal p = (Principal) subject.getPrincipals().toArray()[0];
       return issueToken(p, algorithm);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String algorithm)
+    public JWT issueToken(Principal p, String algorithm)
       throws TokenServiceException {
       return issueToken(p, null, algorithm);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm)
+    public JWT issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
       return issueToken(p, audience, algorithm, -1);
     }
 
     @Override
-    public boolean verifyToken(JWTToken token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
 
     @Override
-    public JWTToken issueToken(Principal p, String audience, String algorithm,
+    public JWT issueToken(Principal p, String audience, String algorithm,
                                long expires) throws TokenServiceException {
       ArrayList<String> audiences = null;
       if (audience != null) {
@@ -265,7 +518,7 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWTToken issueToken(Principal p, List<String> audiences, String algorithm,
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
                                long expires) throws TokenServiceException {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
@@ -277,14 +530,9 @@ public class TokenServiceResourceTest {
         claimArray[3] = String.valueOf(expires);
       }
 
-      JWTToken token = null;
-      if ("RS256".equals(algorithm)) {
-        token = new JWTToken("RS256", claimArray, audiences);
-        JWSSigner signer = new RSASSASigner(privateKey);
-        token.sign(signer);
-      } else {
-        throw new TokenServiceException("Cannot issue token - Unsupported algorithm");
-      }
+      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWSSigner signer = new RSASSASigner(privateKey);
+      token.sign(signer);
 
       return token;
     }
@@ -296,7 +544,7 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWTToken token, RSAPublicKey publicKey) throws TokenServiceException {
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }

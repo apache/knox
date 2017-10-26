@@ -609,4 +609,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isGatewayServerHeaderEnabled() {
 	return false;
   }
+
+  @Override
+  public boolean isClientAuthWanted() {
+    return false;
+  }
 }

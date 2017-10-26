@@ -22,8 +22,12 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.nimbusds.jose.JWSAlgorithm;
@@ -34,13 +38,13 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public class JWTTokenTest extends org.junit.Assert {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
-  private static final String HEADER = "{\"alg\":\"RS256\", \"type\":\"JWT\"}";
-  private static final String CLAIMS = "{\"iss\": \"gateway\", \"prn\": \"john.doe@example.com\", \"aud\": \"https://login.example.com\", \"exp\": \"1363360913\"}";
+  private static final String HEADER = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
 
-  private RSAPublicKey publicKey;
-  private RSAPrivateKey privateKey;
+  private static RSAPublicKey publicKey;
+  private static RSAPrivateKey privateKey;
 
-  public JWTTokenTest() throws Exception, NoSuchAlgorithmException {
+  @BeforeClass
+  public static void setup() throws Exception, NoSuchAlgorithmException {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
 
@@ -49,15 +53,12 @@ public class JWTTokenTest extends org.junit.Assert {
     privateKey = (RSAPrivateKey) kp.getPrivate();
   }
 
+  @Test
   public void testTokenParsing() throws Exception {
     JWTToken token = JWTToken.parseToken(JWT_TOKEN);
     assertEquals(token.getHeader(), HEADER);
-    assertEquals(token.getClaims(), CLAIMS);
 
-    assertEquals(token.getIssuer(), "gateway");
-    assertEquals(token.getPrincipal(), "john.doe@example.com");
-    assertEquals(token.getAudience(), "https://login.example.com");
-    assertEquals(token.getExpires(), "1363360913");
+    assertEquals(token.getClaim("jti"), "aa7f8d0a95c");
   }
 
   @Test
@@ -67,7 +68,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    JWTToken token = new JWTToken("RS256", claims);
+    JWT token = new JWTToken("RS256", claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -81,10 +82,10 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    ArrayList<String> audiences = new ArrayList<String>();
+    List<String> audiences = new ArrayList<String>();
     audiences.add("https://login.example.com");
 
-    JWTToken token = new JWTToken("RS256", claims, audiences);
+    JWT token = new JWTToken("RS256", claims, audiences);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -99,11 +100,11 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    ArrayList<String> audiences = new ArrayList<String>();
+    List<String> audiences = new ArrayList<String>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
 
-    JWTToken token = new JWTToken("RS256", claims, audiences);
+    JWT token = new JWTToken("RS256", claims, audiences);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -137,9 +138,9 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    ArrayList<String> audiences = null;
+    List<String> audiences = null;
 
-    JWTToken token = new JWTToken("RS256", claims, audiences);
+    JWT token = new JWTToken("RS256", claims, audiences);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -169,8 +170,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    JWTToken token = new JWTToken("RS256", claims);
-
+    JWT token = new JWTToken("RS256", claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -193,7 +193,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    JWTToken token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
+    JWT token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -208,6 +208,33 @@ public class JWTTokenTest extends org.junit.Assert {
     // Verify the signature
     JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
     assertTrue(token.verify(verifier));
+  }
+
+  @Test
+  public void testTokenExpiry() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "https://login.example.com";
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    JWT token = new JWTToken("RS256", claims);
+
+    assertNotNull(token.getExpires());
+    assertNotNull(token.getExpiresDate());
+    assertEquals(token.getExpiresDate(), new Date(Long.valueOf(token.getExpires())));
+  }
+
+  @Test
+  public void testUnsignedToken() throws Exception {
+      String unsignedToken = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsImp0aSI6ImY2YmNj"
+          + "MDVjLWI4MTktNGM0Mi1iMGMyLWJlYmY1MDE4YWFiZiJ9.";
+
+      try {
+          new JWTToken(unsignedToken);
+          fail("Failure expected on an unsigned token");
+      } catch (ParseException ex) {
+          // expected
+      }
   }
 
 }

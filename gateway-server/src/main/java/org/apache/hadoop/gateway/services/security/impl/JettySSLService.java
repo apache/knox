@@ -63,6 +63,7 @@ public class JettySSLService implements SSLService {
   private String truststorePath;
   private String keystoreType;
   private String trustStoreType;
+  private boolean clientAuthWanted;
 
   public void setMasterService(MasterService ms) {
     this.ms = ms;
@@ -126,6 +127,7 @@ public class JettySSLService implements SSLService {
     sslExcludeCiphers = config.getExcludedSSLCiphers();
     sslExcludeProtocols = config.getExcludedSSLProtocols();
     clientAuthNeeded = config.isClientAuthNeeded();
+    clientAuthWanted = config.isClientAuthWanted();
     truststorePath = config.getTruststorePath();
     trustAllCerts = config.getTrustAllCerts();
     trustStoreType = config.getTruststoreType();
@@ -186,7 +188,7 @@ public class JettySSLService implements SSLService {
     sslContextFactory.setKeyManagerPassword(new String(keypass));
 
     String truststorePassword = null;
-    if (clientAuthNeeded) {
+    if (clientAuthNeeded || clientAuthWanted) {
       if (truststorePath != null) {
         sslContextFactory.setTrustStore(loadKeyStore(keystoreFileName, keystoreType, master));
         char[] truststorePwd = null;
@@ -212,7 +214,12 @@ public class JettySSLService implements SSLService {
         sslContextFactory.setTrustStoreType(keystoreType);
       }
     }
-    sslContextFactory.setNeedClientAuth( clientAuthNeeded );
+    if (clientAuthNeeded) {
+      sslContextFactory.setNeedClientAuth( clientAuthNeeded );
+    }
+    else {
+      sslContextFactory.setWantClientAuth( clientAuthWanted );
+    }
     sslContextFactory.setTrustAll( trustAllCerts );
     if (sslIncludeCiphers != null && !sslIncludeCiphers.isEmpty()) {
       sslContextFactory.setIncludeCipherSuites( sslIncludeCiphers.toArray(new String[sslIncludeCiphers.size()]) );

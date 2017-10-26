@@ -39,6 +39,7 @@ import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.registry.ServiceRegistry;
 import org.apache.hadoop.gateway.services.security.token.JWTokenAuthority;
 import org.apache.hadoop.gateway.services.security.token.TokenServiceException;
+import org.apache.hadoop.gateway.services.security.token.impl.JWT;
 import org.apache.hadoop.gateway.services.security.token.impl.JWTToken;
 import org.apache.hadoop.gateway.util.JsonUtils;
 
@@ -66,12 +67,12 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
     sr = (ServiceRegistry) services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
   }
-  
+
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
     String jsonResponse = null;
-    
+
     String header = ((HttpServletRequest) request).getHeader("Authorization");
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
@@ -94,7 +95,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       else {
         throw new ServletException("Expected JWT Token not provided as Bearer token");
       }
-      
+
       // authorization of the user for the requested service (and resource?) should have been done by
       // the JWTFederationFilter - once we get here we can assume that it is authorized and we just need
       // to assert the identity via an access token
@@ -102,27 +103,27 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       Subject subject = Subject.getSubject(AccessController.getContext());
       String principalName = getPrincipalName(subject);
       principalName = mapper.mapUserPrincipal(principalName);
-      
+
       // calculate expiration timestamp: validity * 1000 + currentTimeInMillis
       long expires = System.currentTimeMillis() + validity * 1000;
-      
+
       String serviceName = request.getParameter("service-name");
       String clusterName = request.getParameter("cluster-name");
       String accessToken = getAccessToken(principalName, serviceName, expires);
-      
+
       String serviceURL = sr.lookupServiceURL(clusterName, serviceName);
-      
+
       HashMap<String, Object> map = new HashMap<>();
       // TODO: populate map from JWT authorization code
       map.put(ACCESS_TOKEN, accessToken);
       map.put(TOKEN_TYPE, BEARER);
       map.put(EXPIRES_IN, expires);
-      
+
       // TODO: this url needs to be rewritten when in gateway deployments....
       map.put(SVC_URL, serviceURL);
-      
+
       jsonResponse = JsonUtils.renderAsJsonString(map);
-      
+
       response.getWriter().write(jsonResponse);
       //KNOX-685: response.getWriter().flush();
       return; // break filter chain
@@ -147,7 +148,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
         return principalName;
       }
     };
-    JWTToken token = null;
+    JWT token = null;
     try {
       token = authority.issueToken(p, serviceName, "RS256", expires);
       // Coverity CID 1327961

@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- ==================================================================== -->
+<!--  Externalized mapping of Hadoop service URL patterns and the Ambari  -->
+<!--  ServiceDiscovery model properties. This configuration is used by    -->
+<!--  the Ambari ServiceDiscovery implementation to construct service     -->
+<!--  URLs suitable for use in a Knox topology file.                      -->
+<!-- ==================================================================== -->
+<service-discovery-url-mappings>
+
+    <service name="NAMENODE">
+        <url-pattern>hdfs://{DFS_NAMENODE_RPC_ADDRESS}</url-pattern>
+        <properties>
+            <property name="DFS_NAMENODE_RPC_ADDRESS">
+                <component>NAMENODE</component>
+                <config-property>dfs.namenode.rpc-address</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="JOBTRACKER">
+        <url-pattern>rpc://{YARN_RM_ADDRESS}</url-pattern>
+        <properties>
+            <property name="YARN_RM_ADDRESS">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.resourcemanager.address</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="WEBHDFS">
+        <url-pattern>http://{WEBHDFS_ADDRESS}/webhdfs</url-pattern>
+        <properties>
+            <property name="WEBHDFS_ADDRESS">
+                <service-config name="HDFS">hdfs-site</service-config>
+                <config-property>dfs.namenode.http-address</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="WEBHCAT">
+        <url-pattern>http://{HOST}:{PORT}/templeton</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>WEBHCAT_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>WEBHCAT_SERVER</component>
+                <config-property>templeton.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="OOZIE">
+        <url-pattern>{OOZIE_ADDRESS}</url-pattern>
+        <properties>
+            <property name="OOZIE_ADDRESS">
+                <component>OOZIE_SERVER</component>
+                <config-property>oozie.base.url</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="WEBHBASE">
+        <url-pattern>http://{HOST}:60080</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>HBASE_MASTER</component>
+                <hostname/>
+            </property>
+        </properties>
+    </service>
+
+    <service name="RESOURCEMANAGER">
+        <url-pattern>{SCHEME}://{WEBAPP_ADDRESS}/ws</url-pattern>
+        <properties>
+            <property name="WEBAPP_HTTP_ADDRESS">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.resourcemanager.webapp.address</config-property>
+            </property>
+            <property name="WEBAPP_HTTPS_ADDRESS">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.resourcemanager.webapp.https.address</config-property>
+            </property>
+            <property name="HTTP_POLICY">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.http.policy</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="WEBAPP_ADDRESS">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>WEBAPP_HTTPS_ADDRESS</then>
+                        <else>WEBAPP_HTTP_ADDRESS</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="HIVE">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}/{PATH}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>HIVE_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="USE_SSL">
+                <component>HIVE_SERVER</component>
+                <config-property>hive.server2.use.SSL</config-property>
+            </property>
+            <property name="PATH">
+                <component>HIVE_SERVER</component>
+                <config-property>hive.server2.thrift.http.path</config-property>
+            </property>
+            <property name="PORT">
+                <component>HIVE_SERVER</component>
+                <config-property>hive.server2.thrift.http.port</config-property>
+            </property>
+            <property name="SCHEME">
+                 <config-property>
+                    <if property="USE_SSL" value="true">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-COORDINATOR">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_COORDINATOR</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_COORDINATOR</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-BROKER">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_BROKER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_BROKER</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-ROUTER">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_ROUTER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_ROUTER</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-OVERLORD">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_OVERLORD</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_OVERLORD</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="SUPERSET">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_SUPERSET</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_SUPERSET</component>
+                <config-property>SUPERSET_WEBSERVER_PORT</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="ATLAS-API">
+        <url-pattern>{REST_ADDRESS}</url-pattern>
+        <properties>
+            <property name="REST_ADDRESS">
+                <component>ATLAS_SERVER</component>
+                <config-property>atlas.rest.address</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="ATLAS">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>ATLAS_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="TLS_ENABLED">
+                <component>ATLAS_SERVER</component>
+                <config-property>atlas.enableTLS</config-property>
+            </property>
+            <property name="HTTP_PORT">
+                <component>ATLAS_SERVER</component>
+                <config-property>atlas.server.http.port</config-property>
+            </property>
+            <property name="HTTPS_PORT">
+                <component>ATLAS_SERVER</component>
+                <config-property>atlas.server.https.port</config-property>
+            </property>
+            <property name="PORT">
+                <config-property>
+                    <if property="TLS_ENABLED" value="true">
+                        <then>HTTPS_PORT</then>
+                        <else>HTTP_PORT</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="TLS_ENABLED" value="true">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="ZEPPELIN">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>ZEPPELIN_MASTER</component>
+                <hostname/>
+            </property>
+            <property name="SSL">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.ssl</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="HTTPS_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.ssl.port</config-property>
+            </property>
+            <property name="HTTP_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.port</config-property>
+            </property>
+            <property name="PORT">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>HTTPS_PORT</then>
+                        <else>HTTP_PORT</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="ZEPPELINUI">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>ZEPPELIN_MASTER</component>
+                <hostname/>
+            </property>
+            <property name="SSL">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.ssl</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="HTTPS_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.ssl.port</config-property>
+            </property>
+            <property name="HTTP_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.port</config-property>
+            </property>
+            <property name="PORT">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>HTTPS_PORT</then>
+                        <else>HTTP_PORT</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="ZEPPELINWS">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>ZEPPELIN_MASTER</component>
+                <hostname/>
+            </property>
+            <property name="SSL">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.ssl</config-property>
+            </property>
+            <property name="HTTPS_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.ssl.port</config-property>
+            </property>
+            <property name="HTTP_PORT">
+                <component>ZEPPELIN_MASTER</component>
+                <config-property>zeppelin.server.port</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>wss</then>
+                        <else>ws</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="PORT">
+                <config-property>
+                    <if property="SSL" value="true">
+                        <then>HTTPS_PORT</then>
+                        <else>HTTP_PORT</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+
+<!-- TODO:
+    <service name="YARNUI">
+    </service>
+
+    <service name="RANGER">
+    </service>
+
+    <service name="RANGERUI">
+    </service>
+-->
+
+</service-discovery-url-mappings>

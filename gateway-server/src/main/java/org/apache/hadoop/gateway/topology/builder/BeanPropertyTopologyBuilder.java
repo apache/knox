@@ -88,7 +88,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         topology.setName(name);
         topology.setDefaultServicePath(defaultService);
 
-          for (Provider provider : providers) {
+        for (Provider provider : providers) {
             topology.addProvider(provider);
         }
 

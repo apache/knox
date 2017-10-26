@@ -54,6 +54,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     map.put("PUT", new PutAdapter());
     map.put("DELETE", new DeleteAdapter());
     map.put("OPTIONS", new OptionsAdapter());
+    map.put("HEAD", new HeadAdapter());
     return Collections.unmodifiableMap(map);
   }
 
@@ -149,6 +150,13 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doOptions( dispatch.getDispatchUrl(request), request, response);
+    }
+  }
+
+  private static class HeadAdapter implements Adapter {
+    public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
+        throws IOException, ServletException, URISyntaxException {
+      dispatch.doHead( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
