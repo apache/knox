@@ -514,8 +514,40 @@ public interface GatewayMessages {
   void topologyPortMappingCannotFindTopology(final String topology, final int port);
 
 
+  @Message( level = MessageLevel.INFO, text = "Monitoring simple descriptors in directory: {0}" )
+  void monitoringDescriptorChangesInDirectory(String descriptorsDir);
+
+
+  @Message( level = MessageLevel.INFO, text = "Monitoring shared provider configurations in directory: {0}" )
+  void monitoringProviderConfigChangesInDirectory(String sharedProviderDir);
+
+  @Message( level = MessageLevel.INFO, text = "Prevented deletion of shared provider configuration because there are referencing descriptors: {0}" )
+  void preventedDeletionOfSharedProviderConfiguration(String providerConfigurationPath);
+
+  @Message( level = MessageLevel.INFO, text = "Generated topology {0} because the associated descriptor {1} changed." )
+  void generatedTopologyForDescriptorChange(String topologyName, String descriptorName);
+
   @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
   void simpleDescriptorHandlingError(final String simpleDesc,
-                                     @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+                                     @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Successfully wrote configuration: {0}")
+  void wroteConfigurationFile(final String filePath);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to write configuration: {0}")
+  void failedToWriteConfigurationFile(final String filePath,
+                                      @StackTrace(level = MessageLevel.DEBUG) Exception e );
+
+  @Message( level = MessageLevel.INFO, text = "Deleting topology {0} because the associated descriptor {1} was deleted." )
+  void deletingTopologyForDescriptorDeletion(String topologyName, String descriptorName);
+
+  @Message( level = MessageLevel.INFO, text = "Deleting descriptor {0} because the associated topology {1} was deleted." )
+  void deletingDescriptorForTopologyDeletion(String descriptorName, String topologyName);
+
+  @Message( level = MessageLevel.DEBUG, text = "Added descriptor {0} reference to provider configuration {1}." )
+  void addedProviderConfigurationReference(String descriptorName, String providerConfigurationName);
+
+  @Message( level = MessageLevel.DEBUG, text = "Removed descriptor {0} reference to provider configuration {1}." )
+  void removedProviderConfigurationReference(String descriptorName, String providerConfigurationName);
 
 }

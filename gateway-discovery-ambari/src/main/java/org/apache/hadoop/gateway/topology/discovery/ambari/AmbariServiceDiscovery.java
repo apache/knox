@@ -247,10 +247,11 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
 
             if (aliasService != null) {
-                // If not password alias is configured, then try the default alias
+                // If no password alias is configured, then try the default alias
                 if (passwordAlias == null) {
                     passwordAlias = DEFAULT_PWD_ALIAS;
                 }
+
                 try {
                     char[] pwd = aliasService.getPasswordFromAliasForGateway(passwordAlias);
                     if (pwd != null) {

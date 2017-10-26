@@ -1,0 +1,18 @@
+{
+  "discovery-type":"DUMMY",
+  "discovery-address":"http://c6401.ambari.apache.org:8080",
+  "provider-config-ref":"../shared-providers/provider-config-one.xml",
+  "cluster":"dummy",
+  "services":[
+    {"name":"NAMENODE"},
+    {"name":"JOBTRACKER"},
+    {"name":"WEBHDFS"},
+    {"name":"WEBHCAT"},
+    {"name":"OOZIE"},
+    {"name":"WEBHBASE"},
+    {"name":"HIVE"},
+    {"name":"RESOURCEMANAGER"},
+    {"name":"AMBARI", "urls":["http://c6401.ambari.apache.org:8080"]},
+    {"name":"AMBARIUI", "urls":["http://c6401.ambari.apache.org:8080"]}
+  ]
+}

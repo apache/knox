@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.gateway.config.impl;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -250,7 +251,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getGatewayConfDir() {
     String value = getVar( GATEWAY_CONF_HOME_VAR, getGatewayHomeDir() + File.separator + "conf"  );
-    return value;
+    return FilenameUtils.normalize(value);
   }
 
   @Override
