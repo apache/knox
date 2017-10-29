@@ -31,6 +31,7 @@ import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.i18n.resources.ResourcesFactory;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.util.urltemplate.Matcher;
 import org.apache.hadoop.gateway.util.urltemplate.Parser;
 import org.apache.hadoop.gateway.util.urltemplate.Template;
@@ -43,6 +44,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -122,7 +124,36 @@ public class GatewayFilter implements Filter {
         AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME, contextWithPathAndQuery );
 
     Matcher<Chain>.Match match = chains.match( pathWithQueryTemplate );
-    
+
+    // if there was no match then look for a default service for the topology
+    if (match == null) {
+      Topology topology = (Topology) servletRequest.getServletContext().getAttribute("org.apache.hadoop.gateway.topology");
+      if (topology != null) {
+        String defaultServicePath = topology.getDefaultServicePath();
+        if (defaultServicePath != null) {
+          try {
+            String newPathWithQuery = defaultServicePath + "/" + pathWithQueryTemplate;
+            match = chains.match(Parser.parseLiteral(newPathWithQuery));
+            String origUrl = ((HttpServletRequest) servletRequest).getRequestURL().toString();
+            String url = origUrl;
+            if (path.equals("/")) {
+              url += defaultServicePath;
+            }
+            else {
+              int index = origUrl.indexOf(path);
+              url = origUrl.substring(0, index) + "/" + defaultServicePath + path;
+            }
+            String contextPath = defaultServicePath;
+            servletRequest = new ForwardedRequest((HttpServletRequest) servletRequest, 
+                contextPath, 
+                url);
+          } catch (URISyntaxException e) {
+            throw new ServletException( e );
+          }
+        }
+      }
+    }
+
     assignCorrelationRequestId();
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
@@ -387,4 +418,36 @@ public class GatewayFilter implements Filter {
 
   }
 
+  /**
+   * A request wrapper class that wraps a request and adds the context path if
+   * needed.
+   */
+  static class ForwardedRequest extends HttpServletRequestWrapper {
+
+    private String newURL;
+    private String contextpath;
+
+    public ForwardedRequest(final HttpServletRequest request,
+        final String contextpath, final String newURL) {
+      super(request);
+      this.newURL = newURL;
+      this.contextpath = contextpath;
+    }
+
+    @Override
+    public StringBuffer getRequestURL() {
+      return new StringBuffer(newURL);
+    }
+
+    @Override
+    public String getRequestURI() {
+      return newURL;
+    }
+
+    @Override
+    public String getContextPath() {
+      return super.getContextPath() + "/" + this.contextpath;
+    }
+
+  }
 }

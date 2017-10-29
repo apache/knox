@@ -20,6 +20,7 @@ package org.apache.hadoop.gateway;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
+import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.test.category.FastTests;
 import org.apache.hadoop.test.category.UnitTests;
 import org.easymock.EasyMock;
@@ -123,10 +124,17 @@ public class GatewayFilterTest {
   public static class TestRoleFilter extends AbstractGatewayFilter {
 
     public Object role;
+    public String defaultServicePath;
+    public String url;
 
     @Override
     protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
       this.role = request.getAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE );
+      Topology topology = (Topology)request.getServletContext().getAttribute( "org.apache.hadoop.gateway.topology" );
+      if (topology != null) {
+        this.defaultServicePath = (String) topology.getDefaultServicePath();
+        url = new String(request.getRequestURL());
+      }
     }
 
   }
@@ -168,4 +176,45 @@ public class GatewayFilterTest {
 
   }
 
+  @Test
+  public void testDefaultServicePathTopologyRequestAttribute() throws Exception {
+
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.replay( config );
+
+    Topology topology = EasyMock.createNiceMock( Topology.class );
+    topology.setDefaultServicePath("test-role/");
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
+    EasyMock.expect( topology.getDefaultServicePath() ).andReturn( "test-role" ).anyTimes();
+    EasyMock.expect( request.getPathInfo() ).andReturn( "/test-path/test-resource" ).anyTimes();
+    EasyMock.expect( request.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect( context.getAttribute(
+        GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+        "Custom-Forwarded-For").anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer("http://host:8443/gateway/sandbox/test-path/test-resource/") ).anyTimes();
+    
+    EasyMock.expect( context.getAttribute( "org.apache.hadoop.gateway.topology" ) ).andReturn( topology ).anyTimes();
+    EasyMock.replay( request );
+    EasyMock.replay( context );
+    EasyMock.replay( topology );
+    EasyMock.replay( gatewayConfig );
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( response );
+
+    TestRoleFilter filter = new TestRoleFilter();
+
+    GatewayFilter gateway = new GatewayFilter();
+    gateway.addFilter( "test-role/**/**", "test-filter", filter, null, "test-role" );
+    gateway.init( config );
+    gateway.doFilter( request, response );
+    gateway.destroy();
+
+    assertThat( (String)filter.defaultServicePath, is( "test-role" ) );
+    assertThat( (String)filter.url, is("http://host:8443/gateway/sandbox/test-role/test-path/test-resource"));
+
+  }
 }
