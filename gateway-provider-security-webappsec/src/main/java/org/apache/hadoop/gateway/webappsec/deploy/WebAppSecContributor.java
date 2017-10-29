@@ -42,6 +42,9 @@ public class WebAppSecContributor extends
   private static final String XFRAME_OPTIONS_SUFFIX = "_XFRAMEOPTIONS";
   private static final String XFRAME_OPTIONS_FILTER_CLASSNAME = "org.apache.hadoop.gateway.webappsec.filter.XFrameOptionsFilter";
   private static final String XFRAME_OPTIONS_ENABLED = "xframe.options.enabled";
+  private static final String STRICT_TRANSPORT_SUFFIX = "_STRICTTRANSPORT";
+  private static final String STRICT_TRANSPORT_FILTER_CLASSNAME = "org.apache.hadoop.gateway.webappsec.filter.StrictTranportFilter";
+  private static final String STRICT_TRANSPORT_ENABLED = "strict.transport.enabled";
 
   @Override
   public String getRole() {
@@ -91,6 +94,14 @@ public class WebAppSecContributor extends
       if ( xframeOptionsEnabled != null && "true".equals(xframeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xframe.");
         resource.addFilter().name( getName() + XFRAME_OPTIONS_SUFFIX ).role( getRole() ).impl( XFRAME_OPTIONS_FILTER_CLASSNAME ).params( params );
+      }
+
+      // HTTP Strict-Transport-Security
+      params = new ArrayList<FilterParamDescriptor>();
+      String strictTranportEnabled = map.get(STRICT_TRANSPORT_ENABLED);
+      if ( strictTranportEnabled != null && "true".equals(strictTranportEnabled)) {
+        provisionConfig(resource, providerParams, params, "strict.");
+        resource.addFilter().name( getName() + STRICT_TRANSPORT_SUFFIX).role( getRole() ).impl(STRICT_TRANSPORT_FILTER_CLASSNAME).params( params );
       }
     }
   }

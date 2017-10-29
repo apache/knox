@@ -22,6 +22,7 @@
       <enabled>true</enabled>
       <param><name>xframe.options.enabled</name><value>true</value></param>
       <param><name>csrf.enabled</name><value>true</value></param>
+      <param><name>strict.transport.enabled</name><value>true</value></param>
     </provider>
 
     <gateway>
