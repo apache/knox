@@ -29,15 +29,17 @@ public class RegexTemplate {
   Pattern inputPattern;
   String outputTemplate;
   Map<String,String> lookupTable;
+  boolean useOriginalOnLookupFailure;
 
   public RegexTemplate( String regex, String template ) {
-    this( regex, template, null );
+    this( regex, template, null, false );
   }
 
-  public RegexTemplate( String regex, String template, Map<String,String> map ) {
+  public RegexTemplate( String regex, String template, Map<String,String> map, boolean useOriginalOnLookupFailure ) {
     this.inputPattern = Pattern.compile( regex );
     this.outputTemplate = template;
     this.lookupTable = map;
+    this.useOriginalOnLookupFailure = useOriginalOnLookupFailure;
   }
 
   public String apply( String input ) {
@@ -52,6 +54,7 @@ public class RegexTemplate {
   private String expandTemplate( Matcher inputMatcher, String output ) {
     Matcher directMatcher = directPattern.matcher( output );
     while( directMatcher.find() ) {
+      String lookupKey = null;
       String lookupValue = null;
       String lookupStr = directMatcher.group( 1 );
       Matcher indirectMatcher = indirectPattern.matcher( lookupStr );
@@ -59,14 +62,15 @@ public class RegexTemplate {
         lookupStr = indirectMatcher.group( 1 );
         int lookupIndex = Integer.parseInt( lookupStr );
         if( lookupTable != null ) {
-          String lookupKey = inputMatcher.group( lookupIndex );
+          lookupKey = inputMatcher.group( lookupIndex );
           lookupValue = lookupTable.get( lookupKey );
         }
       } else {
         int lookupIndex = Integer.parseInt( lookupStr );
         lookupValue = inputMatcher.group( lookupIndex );
       }
-      output = directMatcher.replaceFirst( lookupValue == null ? "" : lookupValue );
+      String replaceWith = this.useOriginalOnLookupFailure ? lookupKey : "" ;
+      output = directMatcher.replaceFirst( lookupValue == null ? replaceWith : lookupValue );
       directMatcher = directPattern.matcher( output );
     }
     return output;

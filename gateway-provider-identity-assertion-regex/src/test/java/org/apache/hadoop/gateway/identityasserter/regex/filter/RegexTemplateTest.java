@@ -57,7 +57,7 @@ public class RegexTemplateTest {
 
     String actual;
 
-    template = new RegexTemplate( "(.*)@(.*?)\\..*", "prefix_{1}:{[2]}_suffix", map );
+    template = new RegexTemplate( "(.*)@(.*?)\\..*", "prefix_{1}:{[2]}_suffix", map, false );
     actual = template.apply( "member@us.apache.org" );
     assertThat( actual, is( "prefix_member:USA_suffix" ) );
 
@@ -69,4 +69,25 @@ public class RegexTemplateTest {
 
   }
 
+  @Test
+  public void testLookupFailure() {
+
+    RegexTemplate template;
+    Map<String,String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    map.put( "us", "USA" );
+    map.put( "ca", "CANADA" );
+
+    String actual;
+
+    template = new RegexTemplate( "(.*)@(.*?)\\..*", "prefix_{1}:{[2]}_suffix", map, true );
+    actual = template.apply( "member@us.apache.org" );
+    assertThat( actual, is( "prefix_member:USA_suffix" ) );
+
+    actual = template.apply( "member@ca.apache.org" );
+    assertThat( actual, is( "prefix_member:CANADA_suffix" ) );
+
+    actual = template.apply( "member@nj.apache.org" );
+    assertThat( actual, is( "prefix_member:nj_suffix" ) );
+
+  }
 }
