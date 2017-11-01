@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.MediaType;
@@ -44,6 +46,9 @@ import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.XmlUtils;
+import io.restassured.response.ResponseBody;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
@@ -57,6 +62,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import static io.restassured.RestAssured.given;
+import static junit.framework.TestCase.assertTrue;
 import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
 import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -66,6 +72,8 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.xml.HasXPath.hasXPath;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -109,6 +117,12 @@ public class GatewayAdminTopologyFuncTest {
 
     File deployDir = new File( testConfig.getGatewayDeploymentDir() );
     deployDir.mkdirs();
+
+    File providerConfigDir = new File(testConfig.getGatewayConfDir(), "shared-providers");
+    providerConfigDir.mkdirs();
+
+    File descriptorsDir = new File(testConfig.getGatewayConfDir(), "descriptors");
+    descriptorsDir.mkdirs();
 
     File descriptor = new File( topoDir, "admin.xml" );
     FileOutputStream stream = new FileOutputStream( descriptor );
@@ -230,6 +244,84 @@ public class GatewayAdminTopologyFuncTest {
     // System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
   }
+
+  private static XMLTag createProviderConfiguration() {
+    XMLTag xml = XMLDoc.newDocument( true )
+            .addRoot( "gateway" )
+            .addTag( "provider" )
+            .addTag( "role" ).addText( "authentication" )
+            .addTag( "name" ).addText( "ShiroProvider" )
+            .addTag( "enabled" ).addText( "true" )
+            .addTag( "param" )
+            .addTag( "name" ).addText( "main.ldapRealm" )
+            .addTag( "value" ).addText( "org.apache.knox.gateway.shirorealm.KnoxLdapRealm" ).gotoParent()
+            .addTag( "param" )
+            .addTag( "name" ).addText( "main.ldapRealm.userDnTemplate" )
+            .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" ).gotoParent()
+            .addTag( "param" )
+            .addTag( "name" ).addText( "main.ldapRealm.contextFactory.url" )
+            .addTag( "value" ).addText( driver.getLdapUrl() ).gotoParent()
+            .addTag( "param" )
+            .addTag( "name" ).addText( "main.ldapRealm.contextFactory.authenticationMechanism" )
+            .addTag( "value" ).addText( "simple" ).gotoParent()
+            .addTag( "param" )
+            .addTag( "name" ).addText( "urls./**" )
+            .addTag( "value" ).addText( "authcBasic" ).gotoParent().gotoParent()
+            .addTag("provider")
+            .addTag( "role" ).addText( "authorization" )
+            .addTag( "name" ).addText( "AclsAuthz" )
+            .addTag( "enabled" ).addText( "true" )
+            .addTag("param")
+            .addTag("name").addText("knox.acl")
+            .addTag("value").addText("admin;*;*").gotoParent().gotoParent()
+            .addTag("provider")
+            .addTag( "role" ).addText( "identity-assertion" )
+            .addTag( "enabled" ).addText( "true" )
+            .addTag( "name" ).addText( "Default" ).gotoParent()
+            .gotoRoot();
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return xml;
+  }
+
+
+  private static String createDescriptor(String clusterName) {
+    return createDescriptor(clusterName, null);
+  }
+
+
+  private static String createDescriptor(String clusterName, String providerConfigRef) {
+    StringBuilder sb = new StringBuilder();
+    if (providerConfigRef == null) {
+      providerConfigRef = "sandbox-providers";
+    }
+
+    sb.append("{\n");
+    sb.append("  \"discovery-type\":\"AMBARI\",\n");
+    sb.append("  \"discovery-address\":\"http://c6401.ambari.apache.org:8080\",\n");
+    sb.append("  \"discovery-user\":\"ambariuser\",\n");
+    sb.append("  \"discovery-pwd-alias\":\"ambari.discovery.password\",\n");
+    sb.append("  \"provider-config-ref\":\"");
+    sb.append(providerConfigRef);
+    sb.append("\",\n");
+    sb.append("  \"cluster\":\"");
+    sb.append(clusterName);
+    sb.append("\",\n");
+    sb.append("  \"services\":[\n");
+    sb.append("    {\"name\":\"NAMENODE\"},\n");
+    sb.append("    {\"name\":\"JOBTRACKER\"},\n");
+    sb.append("    {\"name\":\"WEBHDFS\"},\n");
+    sb.append("    {\"name\":\"WEBHCAT\"},\n");
+    sb.append("    {\"name\":\"OOZIE\"},\n");
+    sb.append("    {\"name\":\"WEBHBASE\"},\n");
+    sb.append("    {\"name\":\"HIVE\"},\n");
+    sb.append("    {\"name\":\"RESOURCEMANAGER\"},\n");
+    sb.append("    {\"name\":\"AMBARI\", \"urls\":[\"http://c6401.ambari.apache.org:8080\"]}\n");
+    sb.append("  ]\n");
+    sb.append("}\n");
+
+    return sb.toString();
+  }
+
 
   //@Test
   public void waitForManualTesting() throws IOException {
@@ -796,5 +888,499 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testProviderConfigurationCollection() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/providerconfig";
+
+    final File sharedProvidersDir = new File(config.getGatewayConfDir(), "shared-providers");
+    final List<String> configNames = Arrays.asList("sandbox-providers", "custom-providers");
+    final List<String> configFileNames = Arrays.asList(configNames.get(0) + ".xml", configNames.get(1) + ".xml");
+
+    // Request a listing of all the provider configs with an INCORRECT Accept header
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_XML)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+      .when().get(serviceUrl);
+
+    // Request a listing of all the provider configs (with the CORRECT Accept header)
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertTrue("Expected no items since the shared-providers dir is empty.", items.isEmpty());
+
+    // Manually write a file to the shared-providers directory
+    File providerConfig = new File(sharedProvidersDir, configFileNames.get(0));
+    FileOutputStream stream = new FileOutputStream(providerConfig);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+
+    // Request a listing of all the provider configs
+    responseBody = given()
+                      .auth().preemptive().basic(username, password)
+                      .header("Accept", MediaType.APPLICATION_JSON)
+                      .then()
+                      .statusCode(HttpStatus.SC_OK)
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .when().get(serviceUrl).body();
+    items = responseBody.path("items");
+    assertEquals("Expected items to include the new file in the shared-providers dir.", 1, items.size());
+    assertEquals(configFileNames.get(0), responseBody.path("items[0].name"));
+    String href1 = responseBody.path("items[0].href");
+
+    // Manually write another file to the shared-providers directory
+    File anotherProviderConfig = new File(sharedProvidersDir, configFileNames.get(1));
+    stream = new FileOutputStream(anotherProviderConfig);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+
+    // Request a listing of all the provider configs
+    responseBody = given()
+                      .auth().preemptive().basic(username, password)
+                      .header("Accept", MediaType.APPLICATION_JSON)
+                      .then()
+                      .statusCode(HttpStatus.SC_OK)
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .when().get(serviceUrl).body();
+    items = responseBody.path("items");
+    assertEquals(2, items.size());
+    String pcOne = responseBody.path("items[0].name");
+    String pcTwo = responseBody.path("items[1].name");
+    assertTrue(configFileNames.contains(pcOne));
+    assertTrue(configFileNames.contains(pcTwo));
+
+    // Request a specific provider configuration with an INCORRECT Accept header
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_JSON)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+      .when().get(href1).body();
+
+    // Request a specific provider configuration (with the CORRECT Accept header)
+    responseBody = given()
+                      .auth().preemptive().basic(username, password)
+                      .header("Accept", MediaType.APPLICATION_XML)
+                      .then()
+                      .statusCode(HttpStatus.SC_OK)
+                      .contentType(MediaType.APPLICATION_XML)
+                      .when().get(href1).body();
+    String sandboxProvidersConfigContent = responseBody.asString();
+
+    // Parse the result, to make sure it's at least valid XML
+    XmlUtils.readXml(new InputSource(new StringReader(sandboxProvidersConfigContent)));
+
+    providerConfig.delete();
+    anotherProviderConfig.delete();
+
+    // Request a specific provider configuration, which does NOT exist
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_XML)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_FOUND)
+      .when().get(serviceUrl + "/not-a-real-provider-config");
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutProviderConfiguration() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/providerconfig";
+
+    final String newProviderConfigName     = "new-provider-config";
+    final String newProviderConfigFileName = newProviderConfigName + ".xml";
+
+    XMLTag newProviderConfigXML = createProviderConfiguration();
+
+    // Attempt to PUT a provider config with an INCORRECT Content-type header
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body(newProviderConfigXML.toBytes("utf-8"))
+        .then()
+        .statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE)
+        .when().put(serviceUrl + "/" + newProviderConfigName);
+
+    // Attempt to PUT a provider config with the CORRECT Content-type header
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Content-type", MediaType.APPLICATION_XML)
+        .body(newProviderConfigXML.toBytes("utf-8"))
+        .then()
+        .statusCode(HttpStatus.SC_CREATED)
+        .when().put(serviceUrl + "/" + newProviderConfigName);
+
+    // Verify that the provider configuration was written to the expected location
+    File newProviderConfigFile =
+                  new File(new File(config.getGatewayConfDir(), "shared-providers"), newProviderConfigFileName);
+    assertTrue(newProviderConfigFile.exists());
+
+    // Request a listing of all the provider configs to further verify the PUT
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertEquals(1, items.size());
+    assertEquals(newProviderConfigFileName, responseBody.path("items[0].name"));
+    String href = responseBody.path("items[0].href");
+
+    // Get the new provider config content
+    responseBody = given()
+                      .auth().preemptive().basic(username, password)
+                      .header("Accept", MediaType.APPLICATION_XML)
+                      .then()
+                      .statusCode(HttpStatus.SC_OK)
+                      .contentType(MediaType.APPLICATION_XML)
+                      .when().get(href).body();
+    String configContent = responseBody.asString();
+
+    // Parse the result, to make sure it's at least valid XML
+    XmlUtils.readXml(new InputSource(new StringReader(configContent)));
+
+    // Manually delete the provider config
+    newProviderConfigFile.delete();
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testDeleteProviderConfiguration() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/providerconfig";
+
+    final File sharedProvidersDir = new File(config.getGatewayConfDir(), "shared-providers");
+
+    // Manually add two provider config files to the shared-providers directory
+    File providerConfigOneFile = new File(sharedProvidersDir, "deleteme-one-config.xml");
+    FileOutputStream stream = new FileOutputStream(providerConfigOneFile);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+    assertTrue(providerConfigOneFile.exists());
+
+    File providerConfigTwoFile = new File(sharedProvidersDir, "deleteme-two-config.xml");
+    stream = new FileOutputStream(providerConfigTwoFile);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+    assertTrue(providerConfigTwoFile.exists());
+
+    // Request a listing of all the provider configs
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertEquals(2, items.size());
+    String name1 = responseBody.path("items[0].name");
+    String href1 = responseBody.path("items[0].href");
+    String name2 = responseBody.path("items[1].name");
+    String href2 = responseBody.path("items[1].href");
+
+    // Delete one of the provider configs
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href1).body();
+    String deletedMsg = responseBody.path("deleted");
+    assertEquals("provider config " + FilenameUtils.getBaseName(name1), deletedMsg);
+    assertFalse((new File(sharedProvidersDir, name1).exists()));
+
+    assertTrue((new File(sharedProvidersDir, name2).exists()));
+    // Delete the other provider config
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href2).body();
+    deletedMsg = responseBody.path("deleted");
+    assertEquals("provider config " + FilenameUtils.getBaseName(name2), deletedMsg);
+    assertFalse((new File(sharedProvidersDir, name2).exists()));
+
+    // Attempt to delete a provider config that does not exist
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_JSON)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .when().delete(serviceUrl + "/does-not-exist");
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testDescriptorCollection() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/descriptors";
+
+    final File descriptorsDir = new File(config.getGatewayConfDir(), "descriptors");
+    final List<String> clusterNames        = Arrays.asList("clusterOne", "clusterTwo");
+    final List<String> descriptorNames     = Arrays.asList("test-descriptor-one", "test-descriptor-two");
+    final List<String> descriptorFileNames = Arrays.asList(descriptorNames.get(0) + ".json",
+                                                           descriptorNames.get(1) + ".json");
+
+    // Request a listing of all the descriptors with an INCORRECT Accept header
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .then()
+        .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+        .when().get(serviceUrl);
+
+    // Request a listing of all the descriptors (with the CORRECT Accept header)
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertTrue("Expected no items since the descriptors dir is empty.", items.isEmpty());
+
+    // Manually write a file to the descriptors directory
+    File descriptorOneFile = new File(descriptorsDir, descriptorFileNames.get(0));
+    FileUtils.write(descriptorOneFile, createDescriptor(clusterNames.get(0)));
+
+    // Request a listing of all the descriptors
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().get(serviceUrl).body();
+    items = responseBody.path("items");
+    assertEquals("Expected items to include the new file in the shared-providers dir.", 1, items.size());
+    assertEquals(descriptorFileNames.get(0), responseBody.path("items[0].name"));
+    String href1 = responseBody.path("items[0].href");
+
+    // Manually write another file to the descriptors directory
+    File descriptorTwoFile = new File(descriptorsDir, descriptorFileNames.get(1));
+    FileUtils.write(descriptorTwoFile, createDescriptor(clusterNames.get(1)));
+
+    // Request a listing of all the descriptors
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().get(serviceUrl).body();
+    items = responseBody.path("items");
+    assertEquals(2, items.size());
+    String descOne = responseBody.path("items[0].name");
+    String descTwo = responseBody.path("items[1].name");
+    assertTrue(descriptorFileNames.contains(descOne));
+    assertTrue(descriptorFileNames.contains(descTwo));
+
+    // Request a specific descriptor with an INCORRECT Accept header
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
+        .then()
+        .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+        .when().get(href1).body();
+
+    // Request a specific descriptor (with the CORRECT Accept header)
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().get(href1).body();
+    String cluster = responseBody.path("cluster");
+    assertEquals(cluster, clusterNames.get(0));
+
+    // Request a specific descriptor, which does NOT exist
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_JSON)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_FOUND)
+      .when().get(serviceUrl + "/not-a-real-descriptor").body();
+
+    descriptorOneFile.delete();
+    descriptorTwoFile.delete();
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutDescriptor() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/descriptors";
+
+    final String clusterName           = "test-cluster";
+    final String newDescriptorName     = "new-descriptor";
+    final String newDescriptorFileName = newDescriptorName + ".json";
+
+    String newDescriptorJSON = createDescriptor(clusterName);
+
+    // Attempt to PUT a descriptor with an INCORRECT Content-type header
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Content-type", MediaType.APPLICATION_XML)
+      .body(newDescriptorJSON.getBytes("utf-8"))
+      .then()
+      .statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE)
+      .when().put(serviceUrl + "/" + newDescriptorName);
+
+    // Attempt to PUT a descriptor with the CORRECT Content-type header
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Content-type", MediaType.APPLICATION_JSON)
+      .body(newDescriptorJSON.getBytes("utf-8"))
+      .then()
+      .statusCode(HttpStatus.SC_CREATED)
+      .when().put(serviceUrl + "/" + newDescriptorName);
+
+    // Verify that the descriptor was written to the expected location
+    File newDescriptorFile =
+            new File(new File(config.getGatewayConfDir(), "descriptors"), newDescriptorFileName);
+    assertTrue(newDescriptorFile.exists());
+
+    // Request a listing of all the descriptors to verify the PUT
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertEquals(1, items.size());
+    assertEquals(newDescriptorFileName, responseBody.path("items[0].name"));
+    String href = responseBody.path("items[0].href");
+
+    // Get the new descriptor content
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().get(href).body();
+    String cluster = responseBody.path("cluster");
+    assertEquals(clusterName, cluster);
+
+    // Manually delete the descriptor
+    newDescriptorFile.delete();
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testDeleteDescriptor() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/descriptors";
+
+    final File descriptorsDir = new File(config.getGatewayConfDir(), "descriptors");
+
+    // Manually add two descriptor files to the descriptors directory
+    File descriptorOneFile = new File(descriptorsDir, "deleteme-one.json");
+    FileUtils.writeStringToFile(descriptorOneFile, createDescriptor("clusterOne"));
+    assertTrue(descriptorOneFile.exists());
+
+    File descriptorTwoFile = new File(descriptorsDir, "deleteme-two.json");
+    FileUtils.writeStringToFile(descriptorTwoFile, createDescriptor("clusterTwo"));
+    assertTrue(descriptorTwoFile.exists());
+
+    // Request a listing of all the descriptors
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertEquals(2, items.size());
+    String name1 = responseBody.path("items[0].name");
+    String href1 = responseBody.path("items[0].href");
+    String name2 = responseBody.path("items[1].name");
+    String href2 = responseBody.path("items[1].href");
+
+    // Delete one of the descriptors
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href1).body();
+    String deletedMsg = responseBody.path("deleted");
+    assertEquals("descriptor " + FilenameUtils.getBaseName(name1), deletedMsg);
+    assertFalse((new File(descriptorsDir, name1).exists()));
+
+    assertTrue((new File(descriptorsDir, name2).exists()));
+    // Delete the other descriptor
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href2).body();
+    deletedMsg = responseBody.path("deleted");
+    assertEquals("descriptor " + FilenameUtils.getBaseName(name2), deletedMsg);
+    assertFalse((new File(descriptorsDir, name2).exists()));
+
+    // Attempt to delete a descriptor that does not exist
+    given()
+      .auth().preemptive().basic(username, password)
+      .header("Accept", MediaType.APPLICATION_JSON)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .when().delete(serviceUrl + "/does-not-exist");
+
+    LOG_EXIT();
+  }
+
 
 }

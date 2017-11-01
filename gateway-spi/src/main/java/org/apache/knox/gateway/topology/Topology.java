@@ -31,6 +31,7 @@ public class Topology {
 
   private URI uri;
   private String name;
+  private String defaultServicePath = null;
   private long timestamp;
   public List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<>();
@@ -65,6 +66,14 @@ public class Topology {
 
   public void setTimestamp( long timestamp ) {
     this.timestamp = timestamp;
+  }
+
+  public String getDefaultServicePath() {
+    return defaultServicePath;
+  }
+
+  public void setDefaultServicePath(String servicePath) {
+    defaultServicePath = servicePath;
   }
 
   public Collection<Service> getServices() {

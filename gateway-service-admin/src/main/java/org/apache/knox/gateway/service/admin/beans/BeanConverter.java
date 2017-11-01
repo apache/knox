@@ -28,6 +28,7 @@ public class BeanConverter {
     Topology topologyResource = new Topology();
     topologyResource.setName(topology.getName());
     topologyResource.setTimestamp(topology.getTimestamp());
+    topologyResource.setPath(topology.getDefaultServicePath());
     topologyResource.setUri(topology.getUri());
     for ( org.apache.knox.gateway.topology.Provider provider : topology.getProviders() ) {
       topologyResource.getProviders().add( getProvider(provider) );
@@ -45,6 +46,7 @@ public class BeanConverter {
     org.apache.knox.gateway.topology.Topology deploymentTopology = new org.apache.knox.gateway.topology.Topology();
     deploymentTopology.setName(topology.getName());
     deploymentTopology.setTimestamp(topology.getTimestamp());
+    deploymentTopology.setDefaultServicePath(topology.getPath());
     deploymentTopology.setUri(topology.getUri());
     for ( Provider provider : topology.getProviders() ) {
       deploymentTopology.addProvider( getProvider(provider) );

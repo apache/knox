@@ -22,6 +22,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyListener;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -29,22 +30,34 @@ import java.util.Map;
 
 public interface TopologyService extends Service {
 
-  public void reloadTopologies();
+  void reloadTopologies();
 
-  public void deployTopology(Topology t);
+  void deployTopology(Topology t);
 
-  public void redeployTopologies(String topologyName);
+  void redeployTopologies(String topologyName);
 
-  public void addTopologyChangeListener(TopologyListener listener);
+  void addTopologyChangeListener(TopologyListener listener);
 
-  public void startMonitor() throws Exception;
+  void startMonitor() throws Exception;
 
-  public void stopMonitor() throws Exception;
+  void stopMonitor() throws Exception;
 
-  public Collection<Topology> getTopologies();
+  Collection<Topology> getTopologies();
 
-  public void deleteTopology(Topology t);
+  boolean deployProviderConfiguration(String name, String content);
 
-  public Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config);
+  Collection<File> getProviderConfigurations();
 
-  }
+  boolean deployDescriptor(String name, String content);
+
+  Collection<File> getDescriptors();
+
+  void deleteTopology(Topology t);
+
+  boolean deleteDescriptor(String name);
+
+  boolean deleteProviderConfiguration(String name);
+
+  Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config);
+
+}

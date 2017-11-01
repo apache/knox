@@ -32,6 +32,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String ROOT_TAG = "topology";
   private static final String NAME_TAG = "name";
   private static final String VERSION_TAG = "version";
+  private static final String DEFAULT_SERVICE_TAG = "path";
   private static final String APPLICATION_TAG = "application";
   private static final String SERVICE_TAG = "service";
   private static final String ROLE_TAG = "role";
@@ -48,6 +49,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG ).createObject().ofType( BeanPropertyTopologyBuilder.class );
     forPattern( ROOT_TAG + "/" + NAME_TAG ).callMethod("name").usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + VERSION_TAG ).callMethod("version").usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DEFAULT_SERVICE_TAG ).callMethod("defaultService").usingElementBodyAsArgument();
 
     forPattern( ROOT_TAG + "/" + APPLICATION_TAG ).createObject().ofType( Application.class ).then().setNext( "addApplication" );
     forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + ROLE_TAG ).setBeanProperty();

@@ -62,6 +62,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,7 +92,10 @@ public class DefaultTopologyService
   private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules());
   private List<FileAlterationMonitor> monitors = new ArrayList<>();
   private File topologiesDirectory;
+  private File sharedProvidersDirectory;
   private File descriptorsDirectory;
+
+  private DescriptorsMonitor descriptorsMonitor;
 
   private Set<TopologyListener> listeners;
   private volatile Map<File, Topology> topologies;
@@ -211,8 +215,7 @@ public class DefaultTopologyService
   }
 
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {
-    String normalizedTopologyDir = FilenameUtils.normalize(config.getGatewayTopologyDir());
-    File topoDir = new File(normalizedTopologyDir);
+    File topoDir = new File(config.getGatewayTopologyDir());
     topoDir = topoDir.getAbsoluteFile();
     return topoDir;
   }
@@ -220,15 +223,10 @@ public class DefaultTopologyService
   private File calculateAbsoluteConfigDir(GatewayConfig config) {
     File configDir = null;
 
-    String path = FilenameUtils.normalize(config.getGatewayConfDir());
-    if (path != null) {
-      configDir = new File(config.getGatewayConfDir());
-    } else {
-      configDir = (new File(config.getGatewayTopologyDir())).getParentFile();
-    }
-    configDir = configDir.getAbsoluteFile();
+    String path = config.getGatewayConfDir();
+    configDir = (path != null) ? new File(path) : (new File(config.getGatewayTopologyDir())).getParentFile();
 
-    return configDir;
+    return configDir.getAbsoluteFile();
   }
 
   private void  initListener(FileAlterationMonitor  monitor,
@@ -250,31 +248,34 @@ public class DefaultTopologyService
   private Map<File, Topology> loadTopologies(File directory) {
     Map<File, Topology> map = new HashMap<>();
     if (directory.isDirectory() && directory.canRead()) {
-      for (File file : directory.listFiles(this)) {
-        try {
-          Topology loadTopology = loadTopology(file);
-          if (null != loadTopology) {
-            map.put(file, loadTopology);
-          } else {
+      File[] existingTopologies = directory.listFiles(this);
+      if (existingTopologies != null) {
+        for (File file : existingTopologies) {
+          try {
+            Topology loadTopology = loadTopology(file);
+            if (null != loadTopology) {
+              map.put(file, loadTopology);
+            } else {
+              auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+                      ActionOutcome.FAILURE);
+              log.failedToLoadTopology(file.getAbsolutePath());
+            }
+          } catch (IOException e) {
+            // Maybe it makes sense to throw exception
             auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-              ActionOutcome.FAILURE);
-            log.failedToLoadTopology(file.getAbsolutePath());
+                    ActionOutcome.FAILURE);
+            log.failedToLoadTopology(file.getAbsolutePath(), e);
+          } catch (SAXException e) {
+            // Maybe it makes sense to throw exception
+            auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+                    ActionOutcome.FAILURE);
+            log.failedToLoadTopology(file.getAbsolutePath(), e);
+          } catch (Exception e) {
+            // Maybe it makes sense to throw exception
+            auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
+                    ActionOutcome.FAILURE);
+            log.failedToLoadTopology(file.getAbsolutePath(), e);
           }
-        } catch (IOException e) {
-          // Maybe it makes sense to throw exception
-          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-            ActionOutcome.FAILURE);
-          log.failedToLoadTopology(file.getAbsolutePath(), e);
-        } catch (SAXException e) {
-          // Maybe it makes sense to throw exception
-          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-            ActionOutcome.FAILURE);
-          log.failedToLoadTopology(file.getAbsolutePath(), e);
-        } catch (Exception e) {
-          // Maybe it makes sense to throw exception
-          auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-            ActionOutcome.FAILURE);
-          log.failedToLoadTopology(file.getAbsolutePath(), e);
         }
       }
     }
@@ -356,8 +357,7 @@ public class DefaultTopologyService
     File topoDir = topologiesDirectory;
 
     if(topoDir.isDirectory() && topoDir.canRead()) {
-      File[] results = topoDir.listFiles();
-      for (File f : results) {
+      for (File f : listFiles(topoDir)) {
         String fName = FilenameUtils.getBaseName(f.getName());
         if(fName.equals(t.getName())) {
           f.delete();
@@ -381,9 +381,9 @@ public class DefaultTopologyService
   public Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config) {
     File tFile = null;
     Map<String, List<String>> urls = new HashMap<>();
-    if(topologiesDirectory.isDirectory() && topologiesDirectory.canRead()) {
-      for(File f : topologiesDirectory.listFiles()){
-        if(FilenameUtils.removeExtension(f.getName()).equals(t.getName())){
+    if (topologiesDirectory.isDirectory() && topologiesDirectory.canRead()) {
+      for (File f : listFiles(topologiesDirectory)) {
+        if (FilenameUtils.removeExtension(f.getName()).equals(t.getName())) {
           tFile = f;
         }
       }
@@ -402,6 +402,63 @@ public class DefaultTopologyService
   public Collection<Topology> getTopologies() {
     Map<File, Topology> map = topologies;
     return Collections.unmodifiableCollection(map.values());
+  }
+
+  @Override
+  public boolean deployProviderConfiguration(String name, String content) {
+    return writeConfig(sharedProvidersDirectory, name, content);
+  }
+
+  @Override
+  public Collection<File> getProviderConfigurations() {
+    List<File> providerConfigs = new ArrayList<>();
+    for (File providerConfig : listFiles(sharedProvidersDirectory)) {
+      if (SharedProviderConfigMonitor.SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(providerConfig.getName()))) {
+        providerConfigs.add(providerConfig);
+      }
+    }
+    return providerConfigs;
+  }
+
+  @Override
+  public boolean deleteProviderConfiguration(String name) {
+    boolean result = false;
+
+    File providerConfig = getExistingFile(sharedProvidersDirectory, name);
+    if (providerConfig != null) {
+      List<String> references = descriptorsMonitor.getReferencingDescriptors(providerConfig.getAbsolutePath());
+      if (references.isEmpty()) {
+        result = providerConfig.delete();
+      } else {
+        log.preventedDeletionOfSharedProviderConfiguration(providerConfig.getAbsolutePath());
+      }
+    } else {
+      result = true; // If it already does NOT exist, then the delete effectively succeeded
+    }
+
+    return result;
+  }
+
+  @Override
+  public boolean deployDescriptor(String name, String content) {
+    return writeConfig(descriptorsDirectory, name, content);
+  }
+
+  @Override
+  public Collection<File> getDescriptors() {
+    List<File> descriptors = new ArrayList<>();
+    for (File descriptor : listFiles(descriptorsDirectory)) {
+      if (DescriptorsMonitor.SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(descriptor.getName()))) {
+        descriptors.add(descriptor);
+      }
+    }
+    return descriptors;
+  }
+
+  @Override
+  public boolean deleteDescriptor(String name) {
+    File descriptor = getExistingFile(descriptorsDirectory, name);
+    return (descriptor == null) || descriptor.delete();
   }
 
   @Override
@@ -448,6 +505,7 @@ public class DefaultTopologyService
       File simpleDesc =
               new File(descriptorsDirectory, FilenameUtils.getBaseName(file.getName()) + "." + ext);
       if (simpleDesc.exists()) {
+        log.deletingDescriptorForTopologyDeletion(simpleDesc.getName(), file.getName());
         simpleDesc.delete();
       }
     }
@@ -481,20 +539,22 @@ public class DefaultTopologyService
 
       File configDirectory = calculateAbsoluteConfigDir(config);
       descriptorsDirectory = new File(configDirectory, "descriptors");
-      File sharedProvidersDirectory = new File(configDirectory, "shared-providers");
+      sharedProvidersDirectory = new File(configDirectory, "shared-providers");
 
       // Add support for conf/topologies
       initListener(topologiesDirectory, this, this);
 
       // Add support for conf/descriptors
-      DescriptorsMonitor dm = new DescriptorsMonitor(topologiesDirectory, aliasService);
+      descriptorsMonitor = new DescriptorsMonitor(topologiesDirectory, aliasService);
       initListener(descriptorsDirectory,
-                   dm,
-                   dm);
+                   descriptorsMonitor,
+                   descriptorsMonitor);
+      log.monitoringDescriptorChangesInDirectory(descriptorsDirectory.getAbsolutePath());
 
       // Add support for conf/shared-providers
-      SharedProviderConfigMonitor spm = new SharedProviderConfigMonitor(dm, descriptorsDirectory);
+      SharedProviderConfigMonitor spm = new SharedProviderConfigMonitor(descriptorsMonitor, descriptorsDirectory);
       initListener(sharedProvidersDirectory, spm, spm);
+      log.monitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // For all the descriptors currently in the descriptors dir at start-up time, trigger topology generation.
       // This happens prior to the start-up loading of the topologies.
@@ -502,7 +562,7 @@ public class DefaultTopologyService
       if (descriptorFilenames != null) {
           for (String descriptorFilename : descriptorFilenames) {
               if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
-                  dm.onFileChange(new File(descriptorsDirectory, descriptorFilename));
+                  descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
               }
           }
       }
@@ -510,6 +570,70 @@ public class DefaultTopologyService
     } catch (IOException | SAXException io) {
       throw new ServiceLifecycleException(io.getMessage());
     }
+  }
+
+
+  /**
+   * Utility method for listing the files in the specified directory.
+   * This method is "nicer" than the File#listFiles() because it will not return null.
+   *
+   * @param directory The directory whose files should be returned.
+   *
+   * @return A List of the Files on the directory.
+   */
+  private static List<File> listFiles(File directory) {
+    List<File> result = null;
+    File[] files = directory.listFiles();
+    if (files != null) {
+      result = Arrays.asList(files);
+    } else {
+      result = Collections.emptyList();
+    }
+    return result;
+  }
+
+  /**
+   * Search for a file in the specified directory whose base name (filename without extension) matches the
+   * specified basename.
+   *
+   * @param directory The directory in which to search.
+   * @param basename  The basename of interest.
+   *
+   * @return The matching File
+   */
+  private static File getExistingFile(File directory, String basename) {
+    File match = null;
+    for (File file : listFiles(directory)) {
+      if (FilenameUtils.getBaseName(file.getName()).equals(basename)) {
+        match = file;
+        break;
+      }
+    }
+    return match;
+  }
+
+  /**
+   * Write the specified content to a file.
+   *
+   * @param dest    The destination directory.
+   * @param name    The name of the file.
+   * @param content The contents of the file.
+   *
+   * @return true, if the write succeeds; otherwise, false.
+   */
+  private static boolean writeConfig(File dest, String name, String content) {
+    boolean result = false;
+
+    File destFile = new File(dest, name);
+    try {
+      FileUtils.writeStringToFile(destFile, content);
+      log.wroteConfigurationFile(destFile.getAbsolutePath());
+      result = true;
+    } catch (IOException e) {
+      log.failedToWriteConfigurationFile(destFile.getAbsolutePath(), e);
+    }
+
+    return result;
   }
 
 
@@ -543,7 +667,7 @@ public class DefaultTopologyService
     }
 
     List<String> getReferencingDescriptors(String providerConfigPath) {
-      List<String> result = providerConfigReferences.get(providerConfigPath);
+      List<String> result = providerConfigReferences.get(FilenameUtils.normalize(providerConfigPath));
       if (result == null) {
         result = Collections.emptyList();
       }
@@ -562,6 +686,7 @@ public class DefaultTopologyService
         File topologyFile =
                 new File(topologiesDir, FilenameUtils.getBaseName(file.getName()) + "." + ext);
         if (topologyFile.exists()) {
+          log.deletingTopologyForDescriptorDeletion(topologyFile.getName(), file.getName());
           topologyFile.delete();
         }
       }
@@ -574,8 +699,10 @@ public class DefaultTopologyService
           break;
         }
       }
+
       if (reference != null) {
         providerConfigReferences.get(reference).remove(normalizedFilePath);
+        log.removedProviderConfigurationReference(normalizedFilePath, reference);
       }
     }
 
@@ -584,6 +711,7 @@ public class DefaultTopologyService
       try {
         // When a simple descriptor has been created or modified, generate the new topology descriptor
         Map<String, File> result = SimpleDescriptorHandler.handle(file, topologiesDir, aliasService);
+        log.generatedTopologyForDescriptorChange(result.get("topology").getName(), file.getName());
 
         // Add the provider config reference relationship for handling updates to the provider config
         String providerConfig = FilenameUtils.normalize(result.get("reference").getAbsolutePath());
@@ -602,6 +730,7 @@ public class DefaultTopologyService
 
           // Add the current reference relationship
           refs.add(descriptorName);
+          log.addedProviderConfigurationReference(descriptorName, providerConfig);
         }
       } catch (Exception e) {
         log.simpleDescriptorHandlingError(file.getName(), e);
@@ -662,7 +791,7 @@ public class DefaultTopologyService
     private List<File> getReferencingDescriptors(File sharedProviderConfig) {
       List<File> references = new ArrayList<>();
 
-      for (File descriptor : descriptorsDir.listFiles()) {
+      for (File descriptor : listFiles(descriptorsDir)) {
         if (DescriptorsMonitor.SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(descriptor.getName()))) {
           for (String reference : descriptorsMonitor.getReferencingDescriptors(FilenameUtils.normalize(sharedProviderConfig.getAbsolutePath()))) {
             references.add(new File(reference));

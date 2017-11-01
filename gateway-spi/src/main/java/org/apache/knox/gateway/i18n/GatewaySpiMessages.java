@@ -79,7 +79,13 @@ public interface GatewaySpiMessages {
   @Message( level = MessageLevel.ERROR, text = "Gateway has failed to start. Unable to prompt user for master secret setup. Please consider using knoxcli.sh create-master" )
   void unableToPromptForMasterUseKnoxCLI();
 
- @Message( level = MessageLevel.ERROR, text = "Error in generating certificate: {0}" )
- void failedToGenerateCertificate( @StackTrace( level = MessageLevel.ERROR ) Exception e );
+  @Message( level = MessageLevel.ERROR, text = "Error in generating certificate: {0}" )
+  void failedToGenerateCertificate( @StackTrace( level = MessageLevel.ERROR ) Exception e );
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to read configuration: {0}")
+  void failedToReadConfigurationFile(final String filePath, @StackTrace(level = MessageLevel.DEBUG) Exception e );
+
+  @Message(level = MessageLevel.ERROR, text = "Invalid resource URI {0} : {1}")
+  void invalidResourceURI(final String uri, final String reason, @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
 }

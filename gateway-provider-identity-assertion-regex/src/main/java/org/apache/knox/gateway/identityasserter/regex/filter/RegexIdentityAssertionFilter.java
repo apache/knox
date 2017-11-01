@@ -27,6 +27,7 @@ import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.lang.Boolean;
 
 public class RegexIdentityAssertionFilter extends
     CommonIdentityAssertionFilter {
@@ -49,7 +50,8 @@ public class RegexIdentityAssertionFilter extends
         output = "";
       }
       dict = loadDictionary( filterConfig.getInitParameter( "lookup" ) );
-      template = new RegexTemplate( input, output, dict );
+      boolean useOriginalOnLookupFailure = Boolean.parseBoolean(filterConfig.getInitParameter("use.original.on.lookup.failure"));
+      template = new RegexTemplate( input, output, dict, useOriginalOnLookupFailure);
     } catch ( PrincipalMappingException e ) {
       throw new ServletException( e );
     }

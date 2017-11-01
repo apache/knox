@@ -17,11 +17,15 @@
  */
 package org.apache.knox.gateway.security.ldap;
 
-public class SimpleDirectoryService extends BaseDirectoryService {
+import org.apache.directory.server.core.DefaultDirectoryService;
+
+public class SimpleDirectoryService extends DefaultDirectoryService {
 
   public SimpleDirectoryService() throws Exception {
+    super();
   }
 
+  @Override
   protected void showSecurityWarnings() throws Exception {
     // NoOp - This prevents confusing warnings from being output.
   }

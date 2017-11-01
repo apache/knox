@@ -21,6 +21,7 @@ limitations under the License.
             <h:sequence maxOccurs="1">
 
                 <h:element name="name" minOccurs="0" maxOccurs="1"/>
+                <h:element name="path" minOccurs="0" maxOccurs="1"/>
 
                 <h:element name="gateway" minOccurs="0" maxOccurs="1">
                     <h:complexType>
