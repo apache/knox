@@ -196,7 +196,7 @@ public class GatewayFilterTest {
         "Custom-Forwarded-For").anyTimes();
     EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer("http://host:8443/gateway/sandbox/test-path/test-resource/") ).anyTimes();
 
-    EasyMock.expect( context.getAttribute( "org.apache.hadoop.gateway.topology" ) ).andReturn( topology ).anyTimes();
+    EasyMock.expect( context.getAttribute( "org.apache.knox.gateway.topology" ) ).andReturn( topology ).anyTimes();
     EasyMock.replay( request );
     EasyMock.replay( context );
     EasyMock.replay( topology );

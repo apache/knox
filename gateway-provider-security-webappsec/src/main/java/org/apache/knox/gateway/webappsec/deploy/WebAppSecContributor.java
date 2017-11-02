@@ -43,7 +43,7 @@ public class WebAppSecContributor extends
   private static final String XFRAME_OPTIONS_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.XFrameOptionsFilter";
   private static final String XFRAME_OPTIONS_ENABLED = "xframe.options.enabled";
   private static final String STRICT_TRANSPORT_SUFFIX = "_STRICTTRANSPORT";
-  private static final String STRICT_TRANSPORT_FILTER_CLASSNAME = "org.apache.hadoop.gateway.webappsec.filter.StrictTranportFilter";
+  private static final String STRICT_TRANSPORT_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.StrictTranportFilter";
   private static final String STRICT_TRANSPORT_ENABLED = "strict.transport.enabled";
 
 

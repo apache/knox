@@ -25,17 +25,13 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
-import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
-import org.apache.knox.gateway.topology.*;
 import org.apache.hadoop.test.TestUtils;
 import org.apache.knox.gateway.topology.Param;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
-import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -192,7 +188,7 @@ public class DefaultTopologyServiceTest {
    * Test the lifecycle relationship between simple descriptors and topology files.
    *
    * N.B. This test depends on the DummyServiceDiscovery extension being configured:
-   *        org.apache.hadoop.gateway.topology.discovery.test.extension.DummyServiceDiscovery
+   *        org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscovery
    */
   @Test
   public void testSimpleDescriptorsTopologyGeneration() throws Exception {
@@ -313,7 +309,7 @@ public class DefaultTopologyServiceTest {
    * Test the lifecycle relationship between provider configuration files, simple descriptors, and topology files.
    *
    * N.B. This test depends on the DummyServiceDiscovery extension being configured:
-   *        org.apache.hadoop.gateway.topology.discovery.test.extension.DummyServiceDiscovery
+   *        org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscovery
    */
   @Test
   public void testTopologiesUpdateFromProviderConfigChange() throws Exception {
@@ -447,14 +443,16 @@ public class DefaultTopologyServiceTest {
       // "Deploy" the referenced provider configs first
       boolean isDeployed =
         ts.deployProviderConfiguration(provConfOne,
-                FileUtils.readFileToString(new File(ClassLoader.getSystemResource("org/apache/hadoop/gateway/topology/file/provider-config-one.xml").toURI())));
+                FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
+                    "org/apache/knox/gateway/topology/file/provider-config-one.xml").toURI())));
       assertTrue(isDeployed);
       File provConfOneFile = new File(sharedProvidersDir, provConfOne);
       assertTrue(provConfOneFile.exists());
 
       isDeployed =
         ts.deployProviderConfiguration(provConfTwo,
-                FileUtils.readFileToString(new File(ClassLoader.getSystemResource("org/apache/hadoop/gateway/topology/file/ambari-cluster-policy.xml").toURI())));
+                FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
+                    "org/apache/knox/gateway/topology/file/ambari-cluster-policy.xml").toURI())));
       assertTrue(isDeployed);
       File provConfTwoFile = new File(sharedProvidersDir, provConfTwo);
       assertTrue(provConfTwoFile.exists());
@@ -469,7 +467,8 @@ public class DefaultTopologyServiceTest {
       // "Deploy" the simple descriptor, which depends on provConfOne
       isDeployed =
         ts.deployDescriptor(simpleDescName,
-            FileUtils.readFileToString(new File(ClassLoader.getSystemResource("org/apache/hadoop/gateway/topology/file/simple-descriptor-six.json").toURI())));
+            FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
+                "org/apache/knox/gateway/topology/file/simple-descriptor-six.json").toURI())));
       assertTrue(isDeployed);
       File simpleDesc = new File(descriptorsDir, simpleDescName);
       assertTrue(simpleDesc.exists());
@@ -490,7 +489,8 @@ public class DefaultTopologyServiceTest {
       // Overwrite the simple descriptor with content that changes the provider config reference to provConfTwo
       isDeployed =
         ts.deployDescriptor(simpleDescName,
-              FileUtils.readFileToString(new File(ClassLoader.getSystemResource("org/apache/hadoop/gateway/topology/file/simple-descriptor-five.json").toURI())));
+              FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
+                  "org/apache/knox/gateway/topology/file/simple-descriptor-five.json").toURI())));
       assertTrue(isDeployed);
       assertTrue(simpleDesc.exists());
       ts.getProviderConfigurations();

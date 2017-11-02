@@ -302,7 +302,7 @@ public class SimpleDescriptorHandlerTest {
      * a service.
      *
      * N.B. This test depends on the PropertiesFileServiceDiscovery extension being configured:
-     *             org.apache.hadoop.gateway.topology.discovery.test.extension.PropertiesFileServiceDiscovery
+     *             org.apache.knox.gateway.topology.discovery.test.extension.PropertiesFileServiceDiscovery
      */
     @Test
     public void testInvalidServiceURLFromDiscovery() throws Exception {

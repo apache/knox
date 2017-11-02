@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.webappsec;
+package org.apache.knox.gateway.webappsec;
 
 import static org.junit.Assert.fail;
 
@@ -32,7 +32,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.webappsec.filter.StrictTranportFilter;
+import org.apache.knox.gateway.webappsec.filter.StrictTranportFilter;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;

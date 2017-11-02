@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.hadoop.gateway.service.admin;
+package org.apache.knox.gateway.service.admin;
 
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 

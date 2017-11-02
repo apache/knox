@@ -127,7 +127,7 @@ public class GatewayFilter implements Filter {
 
     // if there was no match then look for a default service for the topology
     if (match == null) {
-      Topology topology = (Topology) servletRequest.getServletContext().getAttribute("org.apache.hadoop.gateway.topology");
+      Topology topology = (Topology) servletRequest.getServletContext().getAttribute("org.apache.knox.gateway.topology");
       if (topology != null) {
         String defaultServicePath = topology.getDefaultServicePath();
         if (defaultServicePath != null) {

@@ -461,7 +461,7 @@ public class TopologiesResource {
      return buildHref(t.getName(), req);
   }
 
-  private SimpleTopology getSimpleTopology(org.apache.hadoop.gateway.topology.Topology t, GatewayConfig config) {
+  private SimpleTopology getSimpleTopology(org.apache.knox.gateway.topology.Topology t, GatewayConfig config) {
     String uri = buildURI(t, config, request);
     String href = buildHref(t, request);
     return new SimpleTopology(t, uri, href);

@@ -21,7 +21,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.hadoop.gateway.topology.discovery.ambari")
+@Messages(logger="org.apache.knox.gateway.topology.discovery.ambari")
 public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
