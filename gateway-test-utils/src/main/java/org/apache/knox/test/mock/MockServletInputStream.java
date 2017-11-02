@@ -15,43 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test;
+package org.apache.knox.test.mock;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.IOException;
+import java.io.InputStream;
 
-public class Console {
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 
-  PrintStream oldOut, newOut;
-  PrintStream oldErr, newErr;
-  ByteArrayOutputStream newOutBuf, newErrBuf;
+public class MockServletInputStream extends ServletInputStream {
 
-  public void capture() {
-    oldErr = System.err;
-    newErrBuf = new ByteArrayOutputStream();
-    newErr = new PrintStream( newErrBuf );
+  private InputStream stream;
 
-    oldOut = System.out; // I18N not required.
-    newOutBuf = new ByteArrayOutputStream();
-    newOut = new PrintStream( newOutBuf );
-
-    System.setErr( newErr );
-    System.setOut( newOut );
+  public MockServletInputStream( InputStream stream ) {
+    this.stream = stream;
   }
 
-  public byte[] getOut() {
-    return newOutBuf.toByteArray();
+  @Override
+  public int read() throws IOException {
+    return stream.read();
   }
 
-  public byte[] getErr() {
-    return newErrBuf.toByteArray();
+  @Override
+  public boolean isFinished() {
+    throw new UnsupportedOperationException();
   }
 
-  public void release() {
-    System.setErr( oldErr );
-    System.setOut( oldOut );
-    newErr.close();
-    newOut.close();
+  @Override
+  public boolean isReady() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setReadListener( ReadListener readListener ) {
+    throw new UnsupportedOperationException();
   }
 
 }

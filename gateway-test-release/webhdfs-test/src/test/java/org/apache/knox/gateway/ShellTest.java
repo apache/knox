@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 package org.apache.knox.gateway;
-import org.apache.hadoop.test.category.ReleaseTest;
+import org.apache.knox.test.category.ReleaseTest;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
@@ -35,7 +35,7 @@ import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.ssl.KeyStoreTestUtil;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

@@ -20,7 +20,7 @@ package org.apache.knox.gateway.descriptor.xml;
 import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.knox.gateway.util.XmlUtils;
-import org.apache.hadoop.test.Console;
+import org.apache.knox.test.Console;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;

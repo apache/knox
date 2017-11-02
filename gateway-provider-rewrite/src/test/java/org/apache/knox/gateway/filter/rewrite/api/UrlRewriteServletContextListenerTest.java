@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
-import org.apache.hadoop.test.mock.MockInteraction;
-import org.apache.hadoop.test.mock.MockServlet;
+import org.apache.knox.test.mock.MockInteraction;
+import org.apache.knox.test.mock.MockServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.http.HttpTester;

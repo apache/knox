@@ -40,9 +40,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.FastTests;
-import org.apache.hadoop.test.category.UnitTests;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.FastTests;
+import org.apache.knox.test.category.UnitTests;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.RequestLine;

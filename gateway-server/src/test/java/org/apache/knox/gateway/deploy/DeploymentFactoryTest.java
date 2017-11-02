@@ -27,7 +27,7 @@ import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.XmlUtils;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;

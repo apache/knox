@@ -18,8 +18,8 @@
 package org.apache.knox.gateway;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
@@ -39,7 +39,7 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;

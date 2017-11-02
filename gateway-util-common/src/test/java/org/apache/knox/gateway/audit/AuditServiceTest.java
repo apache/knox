@@ -27,7 +27,7 @@ import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService;
 import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
-import org.apache.hadoop.test.log.CollectAppender;
+import org.apache.knox.test.log.CollectAppender;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.spi.LoggingEvent;

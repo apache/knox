@@ -15,40 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.mock;
+package org.apache.knox.test.category;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-
-public class MockServletInputStream extends ServletInputStream {
-
-  private InputStream stream;
-
-  public MockServletInputStream( InputStream stream ) {
-    this.stream = stream;
-  }
-
-  @Override
-  public int read() throws IOException {
-    return stream.read();
-  }
-
-  @Override
-  public boolean isFinished() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isReady() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setReadListener( ReadListener readListener ) {
-    throw new UnsupportedOperationException();
-  }
-
+public interface UnitTests {
 }

@@ -43,7 +43,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.knox.test.mock.MockServer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;

@@ -23,8 +23,8 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -48,8 +48,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 

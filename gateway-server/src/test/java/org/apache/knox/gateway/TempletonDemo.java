@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.hadoop.test.category.ManualTests;
-import org.apache.hadoop.test.category.SlowTests;
+import org.apache.knox.test.category.ManualTests;
+import org.apache.knox.test.category.SlowTests;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;

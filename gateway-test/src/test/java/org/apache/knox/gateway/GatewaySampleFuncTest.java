@@ -19,12 +19,10 @@ package org.apache.knox.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -43,8 +41,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 

@@ -1,6 +1,6 @@
 package org.apache.knox.gateway.config.impl;
 
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 

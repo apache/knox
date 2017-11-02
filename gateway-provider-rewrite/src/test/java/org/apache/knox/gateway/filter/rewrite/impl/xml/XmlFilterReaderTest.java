@@ -37,7 +37,7 @@ import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptorExt;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteActionDescriptorBase;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;

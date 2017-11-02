@@ -15,19 +15,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.mock;
+package org.apache.knox.test;
 
-public class MockInteraction {
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
-  private MockResponseProvider response = new MockResponseProvider();
-  private MockRequestMatcher request = new MockRequestMatcher( response );
+public class Console {
 
-  public MockRequestMatcher expect() {
-    return request;
+  PrintStream oldOut, newOut;
+  PrintStream oldErr, newErr;
+  ByteArrayOutputStream newOutBuf, newErrBuf;
+
+  public void capture() {
+    oldErr = System.err;
+    newErrBuf = new ByteArrayOutputStream();
+    newErr = new PrintStream( newErrBuf );
+
+    oldOut = System.out; // I18N not required.
+    newOutBuf = new ByteArrayOutputStream();
+    newOut = new PrintStream( newOutBuf );
+
+    System.setErr( newErr );
+    System.setOut( newOut );
   }
 
-  public MockResponseProvider respond() {
-    return response;
+  public byte[] getOut() {
+    return newOutBuf.toByteArray();
+  }
+
+  public byte[] getErr() {
+    return newErrBuf.toByteArray();
+  }
+
+  public void release() {
+    System.setErr( oldErr );
+    System.setOut( oldOut );
+    newErr.close();
+    newOut.close();
   }
 
 }

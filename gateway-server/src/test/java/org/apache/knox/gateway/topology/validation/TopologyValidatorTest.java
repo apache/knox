@@ -18,7 +18,7 @@ package org.apache.knox.gateway.topology.validation;
 
 import java.net.URL;
 
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;

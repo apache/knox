@@ -18,8 +18,6 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -42,15 +40,13 @@ import javax.net.ssl.X509TrustManager;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.ReleaseTest;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.ReleaseTest;
+import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -75,8 +71,8 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;

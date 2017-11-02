@@ -30,14 +30,12 @@ import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
@@ -49,8 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.arrayWithSize;

@@ -15,37 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.log;
+package org.apache.knox.test.category;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
-
-public class CollectAppender extends AppenderSkeleton {
-
-  public CollectAppender() {
-    super();
-  }
-
-  public static BlockingQueue<LoggingEvent> queue = new LinkedBlockingQueue<LoggingEvent>();
-  public static boolean closed = false;
-
-  @Override
-  protected void append( LoggingEvent event ) {
-    event.getProperties();
-    queue.add( event );
-  }
-
-  @Override
-  public void close() {
-    closed = true;
-  }
-
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
+public interface ReleaseTest {
 }

@@ -26,7 +26,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDetectDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.junit.Test;
 
 import java.io.IOException;

@@ -31,7 +31,7 @@ import org.apache.knox.gateway.services.hostmap.HostMapperService;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 

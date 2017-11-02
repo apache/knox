@@ -20,9 +20,9 @@ package org.apache.knox.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.ReleaseTest;
-import org.apache.hadoop.test.mock.MockServer;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.ReleaseTest;
+import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -33,8 +33,8 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static io.restassured.RestAssured.given;
-import static org.apache.hadoop.test.TestUtils.LOG_ENTER;
-import static org.apache.hadoop.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LOG_ENTER;
+import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 
 /**

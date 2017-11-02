@@ -25,7 +25,7 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

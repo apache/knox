@@ -192,13 +192,13 @@
                 </plugins>
             </build>
             <properties>
-                <failsafe.group>org.apache.hadoop.test.category.VerifyTest</failsafe.group>
+                <failsafe.group>org.apache.knox.test.category.VerifyTest</failsafe.group>
             </properties>
         </profile>
         <profile>
             <id>release</id>
             <properties>
-                <failsafe.group>org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest</failsafe.group>
+                <failsafe.group>org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest</failsafe.group>
             </properties>
         </profile>
         <profile>
@@ -207,7 +207,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <failsafe.group>org.apache.hadoop.test.category.VerifyTest</failsafe.group>
+                <failsafe.group>org.apache.knox.test.category.VerifyTest</failsafe.group>
             </properties>
         </profile>
     </profiles>
@@ -308,7 +308,7 @@
                 <version>${surefire-version}</version>
                 <configuration>
                     <excludedGroups>
-                        org.apache.hadoop.test.category.SlowTests,org.apache.hadoop.test.category.ManualTests,org.apache.hadoop.test.category.VerifyTest,org.apache.hadoop.test.category.ReleaseTest
+                        org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
                     </excludedGroups>
                     <systemPropertyVariables>
                         <gateway-version>${gateway-version}</gateway-version>

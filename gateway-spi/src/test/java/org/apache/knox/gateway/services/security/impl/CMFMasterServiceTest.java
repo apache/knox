@@ -20,8 +20,8 @@ package org.apache.knox.gateway.services.security.impl;
 import java.io.File;
 
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.test.category.FastTests;
-import org.apache.hadoop.test.category.UnitTests;
+import org.apache.knox.test.category.FastTests;
+import org.apache.knox.test.category.UnitTests;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

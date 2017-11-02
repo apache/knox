@@ -20,8 +20,8 @@ package org.apache.knox.gateway.i18n.messages;
 import org.apache.knox.gateway.i18n.messages.loggers.test.TestMessageLogger;
 import org.apache.knox.gateway.i18n.messages.loggers.test.TestMessageLoggerFactory;
 import org.apache.knox.gateway.i18n.messages.loggers.test.TestMessageRecord;
-import org.apache.hadoop.test.category.FastTests;
-import org.apache.hadoop.test.category.UnitTests;
+import org.apache.knox.test.category.FastTests;
+import org.apache.knox.test.category.UnitTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

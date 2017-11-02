@@ -20,7 +20,7 @@ import java.util.Enumeration;
 
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.builder.property.Property;
-import org.apache.hadoop.test.log.NoOpAppender;
+import org.apache.knox.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

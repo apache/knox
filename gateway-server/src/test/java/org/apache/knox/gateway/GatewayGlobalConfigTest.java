@@ -19,7 +19,7 @@ package org.apache.knox.gateway;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 

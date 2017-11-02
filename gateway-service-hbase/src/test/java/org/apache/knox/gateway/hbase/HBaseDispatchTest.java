@@ -21,9 +21,9 @@ import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.dispatch.Dispatch;
-import org.apache.hadoop.test.TestUtils;
-import org.apache.hadoop.test.category.FastTests;
-import org.apache.hadoop.test.category.UnitTests;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.FastTests;
+import org.apache.knox.test.category.UnitTests;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

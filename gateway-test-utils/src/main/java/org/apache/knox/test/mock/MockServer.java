@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.mock;
+package org.apache.knox.test.mock;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;

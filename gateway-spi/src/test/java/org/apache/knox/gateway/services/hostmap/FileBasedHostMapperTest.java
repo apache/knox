@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.services.hostmap;
 
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.junit.Test;
 
 import java.net.URL;

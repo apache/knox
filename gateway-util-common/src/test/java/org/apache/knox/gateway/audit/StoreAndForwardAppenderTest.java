@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.audit;
 
-import org.apache.hadoop.test.log.CollectAppender;
+import org.apache.knox.test.log.CollectAppender;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;

@@ -15,32 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.test.mock;
+package org.apache.knox.test.mock;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import java.util.Enumeration;
+public class MockInteraction {
 
-public class MockFilterConfig implements FilterConfig {
+  private MockResponseProvider response = new MockResponseProvider();
+  private MockRequestMatcher request = new MockRequestMatcher( response );
 
-  @Override
-  public String getFilterName() {
-    return null;
+  public MockRequestMatcher expect() {
+    return request;
   }
 
-  @Override
-  public ServletContext getServletContext() {
-    return null;
-  }
-
-  @Override
-  public String getInitParameter( String s ) {
-    return null;
-  }
-
-  @Override
-  public Enumeration<String> getInitParameterNames() {
-    return null;
+  public MockResponseProvider respond() {
+    return response;
   }
 
 }

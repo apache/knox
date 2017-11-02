@@ -22,7 +22,7 @@ import com.mycila.xmltool.XMLTag;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.hadoop.test.TestUtils;
+import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;

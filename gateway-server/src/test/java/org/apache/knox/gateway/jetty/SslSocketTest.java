@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.jetty;
 
-import org.apache.hadoop.test.category.MediumTests;
-import org.apache.hadoop.test.category.ManualTests;
+import org.apache.knox.test.category.MediumTests;
+import org.apache.knox.test.category.ManualTests;
 import org.apache.http.HttpVersion;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.params.BasicHttpParams;
