@@ -139,6 +139,11 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[1]/value", equalTo( "org.opensource.ExistingFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[2]/name", equalTo( "test-param-name" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/param[2]/value", equalTo( "test-param-value" ) ) );
+
+    // testing for the adding of missing identity assertion provider - since it isn't explicitly added above
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "identity-assertion" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/name", equalTo( "Default" ) ) );
+
     LOG_EXIT();
   }
 

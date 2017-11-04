@@ -239,9 +239,32 @@ public abstract class DeploymentFactory {
   // list add it.
   private static Map<String,List<ProviderDeploymentContributor>> selectContextProviders( Topology topology ) {
     Map<String,List<ProviderDeploymentContributor>> providers = new LinkedHashMap<String, List<ProviderDeploymentContributor>>();
+    addMissingDefaultProviders(topology);
     collectTopologyProviders( topology, providers );
     collectDefaultProviders( providers );
     return providers;
+  }
+
+  private static void addMissingDefaultProviders(Topology topology) {
+    Collection<Provider> providers = topology.getProviders();
+    HashMap<String, String> providerMap = new HashMap<>();
+    for (Provider provider : providers) {
+      providerMap.put(provider.getRole(), provider.getName());
+    }
+    // first make sure that the required provider is available from the serviceloaders
+    // for some tests the number of providers are limited to the classpath of the module
+    // and exceptions will be thrown as topologies are deployed even though they will
+    // work fine at actual server runtime.
+    if (PROVIDER_CONTRIBUTOR_MAP.get("identity-assertion") != null) {
+      // check for required providers and add the defaults if missing
+      if (!providerMap.containsKey("identity-assertion")) {
+        Provider idassertion = new Provider();
+        idassertion.setRole("identity-assertion");
+        idassertion.setName("Default");
+        idassertion.setEnabled(true);
+        providers.add(idassertion);
+      }
+    }
   }
 
   private static void collectTopologyProviders(
