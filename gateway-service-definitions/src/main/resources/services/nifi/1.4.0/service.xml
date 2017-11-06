@@ -26,5 +26,5 @@
             <rewrite apply="NIFI/nifi/inbound/path/query-other" to="request.url"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.NiFiDispatch" use-two-way-ssl="false"/>
+    <dispatch classname="org.apache.hadoop.gateway.dispatch.NiFiDispatch" ha-classname="org.apache.hadoop.gateway.dispatch.NiFiHaDispatch" />
 </service>
