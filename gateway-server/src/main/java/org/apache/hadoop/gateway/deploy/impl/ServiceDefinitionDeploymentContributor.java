@@ -187,11 +187,12 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       String haContributorName = customDispatch.getHaContributorName();
       String haClassName = customDispatch.getHaClassName();
       String httpClientFactory = customDispatch.getHttpClientFactory();
+      boolean useTwoWaySsl = customDispatch.getUseTwoWaySsl();
       if ( isHaEnabled) {
         if (haContributorName != null) {
           addDispatchFilter(context, service, resource, DISPATCH_ROLE, haContributorName);
         } else if (haClassName != null) {
-          addDispatchFilterForClass(context, service, resource, haClassName, httpClientFactory);
+          addDispatchFilterForClass(context, service, resource, haClassName, httpClientFactory, useTwoWaySsl);
         } else {
           addDefaultHaDispatchFilter(context, service, resource);
         }
@@ -202,7 +203,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
         } else {
           String className = customDispatch.getClassName();
           if ( className != null ) {
-            addDispatchFilterForClass(context, service, resource, className, httpClientFactory);
+            addDispatchFilterForClass(context, service, resource, className, httpClientFactory, useTwoWaySsl);
           } else {
             //final fallback to the default dispatch
             addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client");
@@ -221,12 +222,15 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory) {
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory, boolean useTwoWaySsl) {
     FilterDescriptor filter = resource.addFilter().name(getName()).role(DISPATCH_ROLE).impl(GatewayDispatchFilter.class);
     filter.param().name(DISPATCH_IMPL_PARAM).value(dispatchClass);
     if (httpClientFactory != null) {
       filter.param().name(HTTP_CLIENT_FACTORY_PARAM).value(httpClientFactory);
     }
+    // let's take the value of useTwoWaySsl which is derived from the service definition
+    // then allow it to be overridden by service params from the topology
+    filter.param().name("useTwoWaySsl").value(Boolean.toString(useTwoWaySsl));
     for ( Map.Entry<String, String> serviceParam : service.getParams().entrySet() ) {
       filter.param().name(serviceParam.getKey()).value(serviceParam.getValue());
     }
@@ -238,6 +242,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       filter.param().name("basicAuthPreemptive").value("true");
     }
     return filter;
+  }
+
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory) {
+    return addDispatchFilterForClass(context, service, resource, dispatchClass, httpClientFactory, false);
   }
 
   private boolean isHaEnabled(DeploymentContext context) {

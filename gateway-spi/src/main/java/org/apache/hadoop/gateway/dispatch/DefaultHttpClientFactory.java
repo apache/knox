@@ -17,9 +17,23 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.net.ssl.SSLContext;
+import javax.servlet.FilterConfig;
+
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.metrics.MetricsService;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.AliasServiceException;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
@@ -36,6 +50,8 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -43,16 +59,10 @@ import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContexts;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-
-import javax.servlet.FilterConfig;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 public class DefaultHttpClientFactory implements HttpClientFactory {
 
@@ -60,13 +70,40 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
   public HttpClient createHttpClient(FilterConfig filterConfig) {
     HttpClientBuilder builder = null;
     GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    GatewayServices services = (GatewayServices) filterConfig.getServletContext()
+        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (gatewayConfig != null && gatewayConfig.isMetricsEnabled()) {
-      GatewayServices services = (GatewayServices) filterConfig.getServletContext()
-          .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       MetricsService metricsService = services.getService(GatewayServices.METRICS_SERVICE);
       builder = metricsService.getInstrumented(HttpClientBuilder.class);
     } else {
       builder = HttpClients.custom();
+    }
+    if (Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"))) {
+      char[] keypass = null;
+      MasterService ms = services.getService("MasterService");
+      AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+      try {
+        keypass = as.getGatewayIdentityPassphrase();
+      } catch (AliasServiceException e) {
+        // nop - default passphrase will be used
+      }
+      if (keypass == null) {
+        // there has been no alias created for the key - let's assume it is the same as the keystore password
+        keypass = ms.getMasterSecret();
+      }
+
+      KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+      final SSLContext sslcontext;
+      try {
+        KeyStore keystoreForGateway = ks.getKeystoreForGateway();
+        sslcontext = SSLContexts.custom()
+            .loadTrustMaterial(keystoreForGateway, new TrustSelfSignedStrategy())
+            .loadKeyMaterial(keystoreForGateway, keypass)
+            .build();
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Unable to create SSLContext", e);
+      }
+      builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslcontext));
     }
     if ( "true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED)) ) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
