@@ -46,6 +46,9 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     @JsonProperty("services")
     private List<ServiceImpl> services;
 
+    @JsonProperty("applications")
+    private List<ApplicationImpl> applications;
+
     private String name = null;
 
     void setName(String name) {
@@ -90,11 +93,48 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     @Override
     public List<Service> getServices() {
         List<Service> result = new ArrayList<>();
-        result.addAll(services);
+        if (services != null) {
+            result.addAll(services);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Application> getApplications() {
+        List<Application> result = new ArrayList<>();
+        if (applications != null) {
+            result.addAll(applications);
+        }
         return result;
     }
 
     public static class ServiceImpl implements Service {
+        @JsonProperty("name")
+        private String name;
+
+        @JsonProperty("params")
+        private Map<String, String> params;
+
+        @JsonProperty("urls")
+        private List<String> urls;
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public Map<String, String> getParams() {
+            return params;
+        }
+
+        @Override
+        public List<String> getURLs() {
+            return urls;
+        }
+    }
+
+    public static class ApplicationImpl implements Application {
         @JsonProperty("name")
         private String name;
 

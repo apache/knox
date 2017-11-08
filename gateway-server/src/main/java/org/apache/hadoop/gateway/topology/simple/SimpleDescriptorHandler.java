@@ -161,6 +161,7 @@ public class SimpleDescriptorHandler {
             }
             policyReader.close();
 
+            // Services
             // Sort the service names to write the services alphabetically
             List<String> serviceNames = new ArrayList<>(validServiceNames);
             Collections.sort(serviceNames);
@@ -190,6 +191,36 @@ public class SimpleDescriptorHandler {
                 }
 
                 fw.write("    </service>\n");
+            }
+
+            // Applications
+            List<SimpleDescriptor.Application> apps = desc.getApplications();
+            if (apps != null) {
+                for (SimpleDescriptor.Application app : apps) {
+                    fw.write("    <application>\n");
+                    fw.write("        <name>" + app.getName() + "</name>\n");
+
+                    // URLs
+                    List<String> urls = app.getURLs();
+                    if (urls != null) {
+                        for (String url : urls) {
+                            fw.write("        <url>" + url + "</url>\n");
+                        }
+                    }
+
+                    // Params
+                    Map<String, String> appParams = app.getParams();
+                    if (appParams != null) {
+                        for (String paramName : appParams.keySet()) {
+                            fw.write("        <param>\n");
+                            fw.write("            <name>" + paramName + "</name>\n");
+                            fw.write("            <value>" + appParams.get(paramName) + "</value>\n");
+                            fw.write("        </param>\n");
+                        }
+                    }
+
+                    fw.write("    </application>\n");
+                }
             }
 
             fw.write("</topology>\n");
