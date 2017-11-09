@@ -44,9 +44,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import static org.hamcrest.Matchers.hasXPath;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -230,6 +233,11 @@ public class SimpleDescriptorHandlerTest {
 
             // Parse the topology descriptor
             Document topologyXml = XmlUtils.readXml(topologyFile);
+
+            // KNOX-1105 Mark generated topology files
+            assertThat("Expected the \"generated\" marker element in the topology XML, with value of \"true\".",
+                       topologyXml,
+                       hasXPath("/topology/generated", is("true")));
 
             // Validate the provider configuration
             Document extProviderConf = XmlUtils.readXml(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));

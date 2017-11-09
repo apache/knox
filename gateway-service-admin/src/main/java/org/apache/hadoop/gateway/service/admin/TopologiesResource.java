@@ -135,16 +135,33 @@ public class TopologiesResource {
   @Consumes({APPLICATION_JSON, APPLICATION_XML})
   @Path(SINGLE_TOPOLOGY_API_PATH)
   public Topology uploadTopology(@PathParam("id") String id, Topology t) {
+    Topology result = null;
 
-    GatewayServices gs = (GatewayServices) request.getServletContext()
-        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayServices gs =
+                (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     t.setName(id);
     TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    ts.deployTopology(BeanConverter.getTopology(t));
+    // Check for existing topology with the same name, to see if it had been generated
+    boolean existingGenerated = false;
+    for (org.apache.hadoop.gateway.topology.Topology existingTopology : ts.getTopologies()) {
+      if(existingTopology.getName().equals(id)) {
+        existingGenerated = existingTopology.isGenerated();
+        break;
+      }
+    }
 
-    return getTopology(id);
+    // If a topology with the same ID exists, which had been generated, then DO NOT overwrite it because it will be
+    // out of sync with the source descriptor. Otherwise, deploy the updated version.
+    if (!existingGenerated) {
+      ts.deployTopology(BeanConverter.getTopology(t));
+      result = getTopology(id);
+    } else {
+      log.disallowedOverwritingGeneratedTopology(id);
+    }
+
+    return result;
   }
 
   @DELETE

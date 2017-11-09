@@ -39,6 +39,9 @@ public class Topology {
   @XmlElement
   private long timestamp;
 
+  @XmlElement(name="generated")
+  private boolean isGenerated;
+
   @XmlElement(name="provider")
   @XmlElementWrapper(name="gateway")
   public List<Provider> providers;
@@ -82,6 +85,14 @@ public class Topology {
 
   public void setTimestamp( long timestamp ) {
     this.timestamp = timestamp;
+  }
+
+  public boolean isGenerated() {
+    return isGenerated;
+  }
+
+  public void setGenerated(boolean isGenerated) {
+    this.isGenerated = isGenerated;
   }
 
   public List<Service> getServices() {

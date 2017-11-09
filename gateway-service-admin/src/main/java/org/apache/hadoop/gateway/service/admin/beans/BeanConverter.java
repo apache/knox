@@ -29,6 +29,7 @@ public class BeanConverter {
     topologyResource.setTimestamp(topology.getTimestamp());
     topologyResource.setPath(topology.getDefaultServicePath());
     topologyResource.setUri(topology.getUri());
+    topologyResource.setGenerated(topology.isGenerated());
     for ( org.apache.hadoop.gateway.topology.Provider provider : topology.getProviders() ) {
       topologyResource.getProviders().add( getProvider(provider) );
     }
@@ -47,6 +48,7 @@ public class BeanConverter {
     deploymentTopology.setTimestamp(topology.getTimestamp());
     deploymentTopology.setDefaultServicePath(topology.getPath());
     deploymentTopology.setUri(topology.getUri());
+    deploymentTopology.setGenerated(topology.isGenerated());
     for ( Provider provider : topology.getProviders() ) {
       deploymentTopology.addProvider( getProvider(provider) );
     }
