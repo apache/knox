@@ -1,4 +1,89 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 0.14.0
+------------------------------------------------------------------------------
+** New Feature
+   * [KNOX-1014] - Service Discovery and Topology Generation Framework (Phil Zampino via lmccay)
+   * [KNOX-1062] - Service-Level Parameter Support in Service Discovery and Topology Generation (Phil Zampino via lmccay)
+   * [KNOX-1077] - Knox should notice simple descriptors on startup (Phil Zampino via lmccay)
+   * [KNOX-1063] - Simple Descriptor discovery should notice YAML file with .yaml extension (Phil Zampino via lmccay)
+   * [KNOX-1105] - Provide indication that topologies were generated from simple descriptors (Phil Zampino via lmccay)
+   * [KNOX-1110] - Simple Descriptors Must Accommodate Application elements (Phil Zampino via lmccay)
+   * [KNOX-1039] - Added admin APIs for managing shared provider configurations and descriptors (Phil Zampino via Sandeep More)
+   * [KNOX-970] - Add NiFi HA dispatch to service def (Jeff Storck via lmccay)
+   * [KNOX-970] - Add support for proxying NiFi (Jeff Storck via lmccay)
+   * [KNOX-842] - Add support for Livy (Spark REST Service).
+   * [KNOX-1017] - Add support for enabling "Strict-Transport-Security" header in Knox responses (Latha Appanna via lmccay)
+   * [KNOX-1049] - Default Service or App Context for Topologies
+   * [KNOX-1049] - change BeanConverter for path element
+   * [KNOX-1049] - marshaling changes
+   * [KNOX-1049] - change defaultServicePath to path
+   * [KNOX-1041] - High Availability Support For Apache SOLR, HBase & Kafka (Rick Kellogg via Sandeep More)
+   * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
+   * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
+
+** Improvement
+   * [KNOX-921] - Httpclient max connections are always set to default values
+   * [KNOX-1106] - Tighten the rewrite rule on oozieui to reduce false positives (Wei Han via Sandeep More)
+   * [KNOX-1104] - Test to verify behavior of HaProvider service with only a single URL ( Phil Zampino via Sandeep More)
+   * [KNOX-1034] - Make Default identity-assertion provider actually be the default
+   * [KNOX-1078] - Add option to preserve original string when lookup fails in regex based identity assertion provider (Wei Han via Sandeep More)
+   * [KNOX-1049] - add unit test to gatewayfiltertest
+   * [KNOX-1076] - Update nimbus-jose-jwt to 4.41.2
+   * [KNOX-1049] - check for null topology to avoid NPE in tests
+   * [KNOX-1088] - Remove LDAP BaseDirectoryService*
+   * [KNOX-1073] - Upgrade PAC4J to a more recent version
+   * [KNOX-1001] - Knox Shell Sqoop.Request class is Package Private (Andrei Viaryshka via lmccay)
+   * [KNOX-1021] - Should handle empty string for endpoint token service audience list
+   * [KNOX-1082] - Add support to validate the "nbf" claim for JWTs
+   * [KNOX-1067] - Support different signature algorithms for JWTs
+   * [KNOX-1045] - Knox Token Service has a trailing whitespace for the token_type attribute
+   * [KNOX-1081] - Remove Picketlink Provider Module
+   * [KNOX-895] - Pass Headers and Cookies to websocket backend
+   * [KNOX-1064] - Externalize Hadoop Service Configuration Details and Service URL Creation (Phil Zampino via Sandeep More)
+   * [KNOX-1070] - Drop support for Java 7 (Rick Kellogg via Sandeep More)
+   * [KNOX-1075 and KNOX-1070] - Enforce minimum maven and Java version (Rick Kellogg via Sandeep More)
+   * [KNOX-1048] - Knoxshell samples missing hadoop-examples.jar
+   * [KNOX-1069] - KnoxSSO token audience config should trim values
+   * [KNOX-1055] - Spark page characters &amp; should be treated as a delimiter (Mars via Sandeep More)
+   * [KNOX-1074] - Workflow Manager view fails to load when using ambari through KNOX (Venkatasairam Lanka via lmccay)
+   * [KNOX-1071] - Replace java.util.Random with SecureRandom
+   * [KNOX-1014] - remove extraneous directory
+   * [KNOX-1065] - Add some unit tests for the DefaultTokenAuthorityService
+   * [KNOX-1060] - JWT.getExpires() returns null
+   * [KNOX-1058] - Fix JWTToken.parseToken
+   * [KNOX-1036] - Fix a number of issues relating to JWTokenAuthority
+   * [KNOX-1054] - Make DefaultURLManager thread-safe (Phil Zampino via Sandeep More)
+   * [KNOX-1052] - Add some tests for the Knox SSO Service
+   * [KNOX-1049] - Default Service or App Context for Topologies
+   * [KNOX-1042] - Fix test timeout (Phil Zampino via Sandeep More)
+   * [KNOX-1047] - Add some tests for the Knox Token Service
+   * [KNOX-1044] - Change Rest Assured "expect" to "then"
+   * [KNOX-1038] - Replace deprecated rest-assured "content" call with "body"
+   * [KNOX-1037] - Upgrade rest-assured dependency
+   * [KNOX-1035] - Move JWTTokenTest to gateway-spi module + add more tests
+   * [KNOX-1027] - Add support to configure the issuer for the JWT filters
+   * [KNOX-1028] - X-Frame-Options and other security headers are ineffective
+   * [KNOX-962] - Add signature validation tests for the JWT filters
+   * [KNOX-1024] - Add Kafka test to GatewayBasicFuncTest
+   * [KNOX-1020] - Minor code improvements
+   * [KNOX-1019] - Remove test-driver "hack" to copy services
+   * [KNOX-1018] - Remove junit.framework calls
+   * [KNOX-738] - Remove references to deprecated httpclient class DefaultHttpClient
+   * [KNOX-963] - Use GatewayTestDriver to configure LDAP in gateway-tests
+   * [KNOX-978] - Add a test for the SOLR REST API
+   * [KNOX-989] - Report metrics at service level (/webhdfs/v1) instead of url with args (/webhdfs/v1/?op=LISTSTATUS) (Mohammad Kamrul Islam via Sandeep More)
+   * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
+   * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
+** Bug
+   * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
+   * [KNOX-1004] - Failing (flaky) Knox unit tests
+   * [KNOX-1005] - WebHbase get rid of extra decoding
+   * [KNOX-1061] - KnoxSSO Redirects with Query Params in the OriginalUrl Broken
+   * [KNOX-1068] - Add support for HTTP Head request
+   * [KNOX-1079] - Regression: proxy for Atlas fails with j_spring_security_check during login (Madhan Neethiraj via lmccay)
+   * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.13.0
 ------------------------------------------------------------------------------
 ** New Feature
