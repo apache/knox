@@ -43,6 +43,25 @@ public class DefaultURLManagerTest {
       assertEquals(url1, manager.getActiveURL());
    }
 
+   /**
+    * KNOX-1104
+    * Verify that a service with HaProvider configuration, but only a single URL does not break the HaProvider.
+    */
+   @Test
+   public void testSingleURLManagement() {
+      ArrayList<String> urls = new ArrayList<>();
+      String url1 = "http://host1";
+      urls.add(url1);
+      DefaultURLManager manager = new DefaultURLManager();
+      manager.setURLs(urls);
+      assertTrue(manager.getURLs().containsAll(urls));
+      assertEquals(url1, manager.getActiveURL());
+      manager.markFailed(url1);
+      assertEquals(url1, manager.getActiveURL());
+      manager.markFailed(url1);
+      assertEquals(url1, manager.getActiveURL());
+   }
+
    @Test
    public void testMarkingFailedURL() {
       ArrayList<String> urls = new ArrayList<>();

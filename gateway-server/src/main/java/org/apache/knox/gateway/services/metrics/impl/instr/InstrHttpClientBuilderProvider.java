@@ -38,8 +38,7 @@ public class InstrHttpClientBuilderProvider implements
   @Override
   public HttpClientBuilder getInstrumented(MetricsContext metricsContext) {
     MetricRegistry registry = (MetricRegistry) metricsContext.getProperty(DefaultMetricsService.METRICS_REGISTRY);
-    return  HttpClientBuilder.create().setRequestExecutor(new InstrumentedHttpRequestExecutor(registry, TOPOLOGY_URL_AND_METHOD)).
-        setConnectionManager(new PoolingHttpClientConnectionManager());
+    return  HttpClientBuilder.create().setRequestExecutor(new InstrumentedHttpRequestExecutor(registry, TOPOLOGY_URL_AND_METHOD));
   }
 
   @Override

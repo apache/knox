@@ -33,6 +33,8 @@ public class CustomDispatch {
 
   private String httpClientFactory;
 
+  private boolean useTwoWaySsl = false;
+
   @XmlAttribute(name = "contributor-name")
   public String getContributorName() {
     return contributorName;
@@ -76,5 +78,14 @@ public class CustomDispatch {
 
   public void setHttpClientFactory(String httpClientFactory) {
     this.httpClientFactory = httpClientFactory;
+  }
+
+  @XmlAttribute(name = "use-two-way-ssl")
+  public boolean getUseTwoWaySsl() {
+    return useTwoWaySsl;
+  }
+
+  public void setUseTwoWaySsl(boolean useTwoWaySsl) {
+    this.useTwoWaySsl = useTwoWaySsl;
   }
 }

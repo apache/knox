@@ -28,6 +28,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
     private String name;
     private String defaultService;
+    private boolean isGenerated;
     private List<Provider> providers;
     private List<Service> services;
     private List<Application> applications;
@@ -45,6 +46,15 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
     public String name() {
         return name;
+    }
+
+    public BeanPropertyTopologyBuilder generated(String isGenerated) {
+        this.isGenerated = Boolean.valueOf(isGenerated);
+        return this;
+    }
+
+    public boolean isGenerated() {
+        return isGenerated;
     }
 
     public BeanPropertyTopologyBuilder defaultService(String defaultService) {
@@ -87,6 +97,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         Topology topology = new Topology();
         topology.setName(name);
         topology.setDefaultServicePath(defaultService);
+        topology.setGenerated(isGenerated);
 
         for (Provider provider : providers) {
             topology.addProvider(provider);

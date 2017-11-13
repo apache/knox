@@ -77,7 +77,14 @@ public class SimpleDescriptorHandler {
         DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
         sdc.setUser(desc.getDiscoveryUser());
         sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
-        ServiceDiscovery sd = ServiceDiscoveryFactory.get(desc.getDiscoveryType(), gatewayServices);
+
+        // Use the discovery type from the descriptor. If it's unspecified, employ the default type.
+        String discoveryType = desc.getDiscoveryType();
+        if (discoveryType == null) {
+            discoveryType = "AMBARI";
+        }
+
+        ServiceDiscovery sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
         ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
 
         List<String> validServiceNames = new ArrayList<>();
@@ -148,9 +155,19 @@ public class SimpleDescriptorHandler {
                 topologyFilename = desc.getClusterName();
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
+
             fw = new BufferedWriter(new FileWriter(topologyDescriptor));
 
+            fw.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+
+            fw.write("<!--==============================================-->\n");
+            fw.write("<!-- DO NOT EDIT. This is an auto-generated file. -->\n");
+            fw.write("<!--==============================================-->\n");
+
             fw.write("<topology>\n");
+
+            // KNOX-1105 Indicate that this topology was auto-generated
+            fw.write("    <generated>true</generated>\n");
 
             // Copy the externalized provider configuration content into the topology descriptor in-line
             InputStreamReader policyReader = new InputStreamReader(new FileInputStream(providerConfig));
@@ -161,6 +178,7 @@ public class SimpleDescriptorHandler {
             }
             policyReader.close();
 
+            // Services
             // Sort the service names to write the services alphabetically
             List<String> serviceNames = new ArrayList<>(validServiceNames);
             Collections.sort(serviceNames);
@@ -192,6 +210,36 @@ public class SimpleDescriptorHandler {
                 fw.write("    </service>\n");
             }
 
+            // Applications
+            List<SimpleDescriptor.Application> apps = desc.getApplications();
+            if (apps != null) {
+                for (SimpleDescriptor.Application app : apps) {
+                    fw.write("    <application>\n");
+                    fw.write("        <name>" + app.getName() + "</name>\n");
+
+                    // URLs
+                    List<String> urls = app.getURLs();
+                    if (urls != null) {
+                        for (String url : urls) {
+                            fw.write("        <url>" + url + "</url>\n");
+                        }
+                    }
+
+                    // Params
+                    Map<String, String> appParams = app.getParams();
+                    if (appParams != null) {
+                        for (String paramName : appParams.keySet()) {
+                            fw.write("        <param>\n");
+                            fw.write("            <name>" + paramName + "</name>\n");
+                            fw.write("            <value>" + appParams.get(paramName) + "</value>\n");
+                            fw.write("        </param>\n");
+                        }
+                    }
+
+                    fw.write("    </application>\n");
+                }
+            }
+
             fw.write("</topology>\n");
 
             fw.flush();
@@ -211,6 +259,7 @@ public class SimpleDescriptorHandler {
         result.put("topology", topologyDescriptor);
         return result;
     }
+
 
     private static boolean validateURL(String serviceName, String url) {
         boolean result = false;

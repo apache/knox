@@ -33,6 +33,7 @@ public class Topology {
   private String name;
   private String defaultServicePath = null;
   private long timestamp;
+  private boolean isGenerated;
   public List<Provider> providerList = new ArrayList<Provider>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<>();
   public List<Service> services = new ArrayList<Service>();
@@ -74,6 +75,14 @@ public class Topology {
 
   public void setDefaultServicePath(String servicePath) {
     defaultServicePath = servicePath;
+  }
+
+  public void setGenerated(boolean isGenerated) {
+    this.isGenerated = isGenerated;
+  }
+
+  public boolean isGenerated() {
+    return isGenerated;
   }
 
   public Collection<Service> getServices() {

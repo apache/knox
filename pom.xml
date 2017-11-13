@@ -26,7 +26,7 @@
     </parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>0.14.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -98,6 +98,7 @@
         <module>gateway-shell-samples</module>
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
+        <module>gateway-service-nifi</module>
     </modules>
 
     <properties>
@@ -108,7 +109,7 @@
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
-        <gateway-version>0.14.0-SNAPSHOT</gateway-version>
+        <gateway-version>1.0.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.knox</gateway-group>
         <groovy-version>2.4.6</groovy-version>
         <hadoop-version>2.7.3</hadoop-version>
@@ -665,6 +666,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-definitions</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-nifi</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>

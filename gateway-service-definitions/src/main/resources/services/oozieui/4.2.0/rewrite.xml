@@ -16,13 +16,28 @@
    limitations under the License.
 -->
 <rules>
-    <rule dir="IN" name="OOZIEUI/oozie/inbound/root" pattern="*://*:*/**/oozie/">
-        <rewrite template="{$serviceUrl[OOZIEUI]}/"/>
+    <rule dir="IN" name="OOZIEUI/oozie/inbound/root" flow="OR">
+        <match pattern="http://*:*/**/oozie/">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/"/>
+        </match>
     </rule>
-    <rule dir="IN" name="OOZIEUI/oozie/inbound/path" pattern="*://*:*/**/oozie/{**}">
-        <rewrite template="{$serviceUrl[OOZIEUI]}/{**}"/>
+    <rule dir="IN" name="OOZIEUI/oozie/inbound/path" flow="OR">
+        <match pattern="http://*:*/**/oozie/{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/{**}"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/{**}"/>
+        </match>
     </rule>
-    <rule dir="IN" name="OOZIEUI/oozie/inbound/query" pattern="*://*:*/**/oozie/{**}?{**}">
-        <rewrite template="{$serviceUrl[OOZIEUI]}/{**}?{**}"/>
+    <rule dir="IN" name="OOZIEUI/oozie/inbound/query" flow="OR">
+        <match pattern="http://*:*/**/oozie/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/{**}?{**}"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/{**}?{**}"/>
+        </match>
     </rule>
 </rules>

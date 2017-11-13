@@ -37,8 +37,18 @@ public interface SimpleDescriptor {
 
     List<Service> getServices();
 
+    List<Application> getApplications();
+
 
     interface Service {
+        String getName();
+
+        Map<String, String> getParams();
+
+        List<String> getURLs();
+    }
+
+    interface Application {
         String getName();
 
         Map<String, String> getParams();
