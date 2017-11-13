@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.dispatch;
+package org.apache.knox.gateway.dispatch;
 
 class NiFiHeaders {
   static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";

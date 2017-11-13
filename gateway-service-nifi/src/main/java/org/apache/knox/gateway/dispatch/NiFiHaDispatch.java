@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.dispatch;
+package org.apache.knox.gateway.dispatch;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,14 +24,19 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.gateway.util.MimeTypes;
+import org.apache.knox.gateway.ha.dispatch.DefaultHaDispatch;
+import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 
-public class NiFiDispatch extends DefaultDispatch {
+public class NiFiHaDispatch extends DefaultHaDispatch {
+
+  public NiFiHaDispatch() {
+    setServiceRole("NIFI");
+  }
 
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
@@ -87,19 +92,19 @@ public class NiFiDispatch extends DefaultDispatch {
           final String entityMimeType = entityContentType.getMimeType();
           final String defaultCharset = MimeTypes.getDefaultCharsetForMimeType( entityMimeType );
           if( defaultCharset != null ) {
-            LOG.usingDefaultCharsetForEntity( entityMimeType, defaultCharset );
+            DefaultDispatch.LOG.usingDefaultCharsetForEntity( entityMimeType, defaultCharset );
             entityContentType = entityContentType.withCharset( defaultCharset );
           }
         } else {
-          LOG.usingExplicitCharsetForEntity( entityContentType.getMimeType(), entityContentType.getCharset() );
+          DefaultDispatch.LOG.usingExplicitCharsetForEntity( entityContentType.getMimeType(), entityContentType.getCharset() );
         }
         fullContentType = entityContentType.toString();
       }
     }
     if( fullContentType == null ) {
-      LOG.unknownResponseEntityContentType();
+      DefaultDispatch.LOG.unknownResponseEntityContentType();
     } else {
-      LOG.inboundResponseEntityContentType( fullContentType );
+      DefaultDispatch.LOG.inboundResponseEntityContentType( fullContentType );
     }
     return fullContentType;
   }

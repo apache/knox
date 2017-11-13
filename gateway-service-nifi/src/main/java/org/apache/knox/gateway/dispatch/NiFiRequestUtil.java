@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.gateway.dispatch;
+package org.apache.knox.gateway.dispatch;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;

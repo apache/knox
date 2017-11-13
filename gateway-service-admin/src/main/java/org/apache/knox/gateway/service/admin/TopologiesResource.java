@@ -145,7 +145,7 @@ public class TopologiesResource {
 
     // Check for existing topology with the same name, to see if it had been generated
     boolean existingGenerated = false;
-    for (org.apache.hadoop.gateway.topology.Topology existingTopology : ts.getTopologies()) {
+    for (org.apache.knox.gateway.topology.Topology existingTopology : ts.getTopologies()) {
       if(existingTopology.getName().equals(id)) {
         existingGenerated = existingTopology.isGenerated();
         break;
