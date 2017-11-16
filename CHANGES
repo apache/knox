@@ -82,6 +82,7 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1068] - Add support for HTTP Head request
    * [KNOX-1079] - Regression: proxy for Atlas fails with j_spring_security_check during login (Madhan Neethiraj via lmccay)
    * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
+   * [KNOX-1118] - Remove POC Service Definition for AmbariUI
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.13.0
