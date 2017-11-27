@@ -20,6 +20,7 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1041] - High Availability Support For Apache SOLR, HBase & Kafka (Rick Kellogg via Sandeep More)
    * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
    * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
+   * [KNOX-1107] - Remote Configuration Registry Client Service (Phil Zampino via lmccay)
 
 ** Improvement
    * [KNOX-921] - Httpclient max connections are always set to default values
