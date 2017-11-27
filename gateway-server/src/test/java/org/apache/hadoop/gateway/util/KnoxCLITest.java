@@ -20,8 +20,11 @@ package org.apache.hadoop.gateway.util;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.gateway.config.impl.GatewayConfigImpl;
 import org.apache.hadoop.gateway.services.GatewayServices;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.MasterService;
 import org.junit.Before;
@@ -42,6 +45,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -60,7 +64,27 @@ public class KnoxCLITest {
   }
 
   @Test
-  public void testSuccessfulAlaisLifecycle() throws Exception {
+  public void testRemoteConfigurationRegistryClientService() throws Exception {
+    outContent.reset();
+    KnoxCLI cli = new KnoxCLI();
+    Configuration config = new GatewayConfigImpl();
+    config.set("gateway.remote.config.registry.test_client", "type=ZooKeeper;address=localhost:2181");
+    cli.setConf(config);
+
+    // This is only to get the gateway services initialized
+    cli.run(new String[]{"version"});
+
+    RemoteConfigurationRegistryClientService service =
+                                   cli.getGatewayServices().getService(GatewayServices.REMOTE_REGISTRY_CLIENT_SERVICE);
+    assertNotNull(service);
+    RemoteConfigurationRegistryClient client = service.get("test_client");
+    assertNotNull(client);
+
+    assertNull(service.get("bogus"));
+  }
+
+  @Test
+  public void testSuccessfulAliasLifecycle() throws Exception {
     outContent.reset();
     String[] args1 = {"create-alias", "alias1", "--value", "testvalue1", "--master", "master"};
     int rc = 0;

@@ -46,6 +46,8 @@ import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
 import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
+import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitor;
+import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
 import org.apache.hadoop.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
@@ -101,6 +103,7 @@ public class DefaultTopologyService
   private volatile Map<File, Topology> topologies;
   private AliasService aliasService;
 
+  private RemoteConfigurationMonitor remoteMonitor = null;
 
   private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
     final long TIMEOUT = 250; //ms
@@ -214,6 +217,16 @@ public class DefaultTopologyService
     return events;
   }
 
+  private File calculateAbsoluteProvidersConfigDir(GatewayConfig config) {
+    File pcDir = new File(config.getGatewayProvidersConfigDir());
+    return pcDir.getAbsoluteFile();
+  }
+
+  private File calculateAbsoluteDescriptorsDir(GatewayConfig config) {
+    File descDir = new File(config.getGatewayDescriptorsDir());
+    return descDir.getAbsoluteFile();
+  }
+
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {
     File topoDir = new File(config.getGatewayTopologyDir());
     topoDir = topoDir.getAbsoluteFile();
@@ -221,7 +234,7 @@ public class DefaultTopologyService
   }
 
   private File calculateAbsoluteConfigDir(GatewayConfig config) {
-    File configDir = null;
+    File configDir;
 
     String path = config.getGatewayConfDir();
     configDir = (path != null) ? new File(path) : (new File(config.getGatewayTopologyDir())).getParentFile();
@@ -468,15 +481,31 @@ public class DefaultTopologyService
 
   @Override
   public void startMonitor() throws Exception {
+    // Start the local configuration monitors
     for (FileAlterationMonitor monitor : monitors) {
       monitor.start();
+    }
+
+    // Start the remote configuration monitor, if it has been initialized
+    if (remoteMonitor != null) {
+      try {
+        remoteMonitor.start();
+      } catch (Exception e) {
+        log.remoteConfigurationMonitorStartFailure(remoteMonitor.getClass().getTypeName(), e.getLocalizedMessage(), e);
+      }
     }
   }
 
   @Override
   public void stopMonitor() throws Exception {
+    // Stop the local configuration monitors
     for (FileAlterationMonitor monitor : monitors) {
       monitor.stop();
+    }
+
+    // Stop the remote configuration monitor, if it has been initialized
+    if (remoteMonitor != null) {
+      remoteMonitor.stop();
     }
   }
 
@@ -532,7 +561,7 @@ public class DefaultTopologyService
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
 
     try {
-      listeners = new HashSet<>();
+      listeners  = new HashSet<>();
       topologies = new HashMap<>();
 
       topologiesDirectory = calculateAbsoluteTopologiesDir(config);
@@ -567,6 +596,9 @@ public class DefaultTopologyService
           }
       }
 
+      // Initialize the remote configuration monitor, if it has been configured
+      remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
+
     } catch (IOException | SAXException io) {
       throw new ServiceLifecycleException(io.getMessage());
     }
@@ -582,7 +614,7 @@ public class DefaultTopologyService
    * @return A List of the Files on the directory.
    */
   private static List<File> listFiles(File directory) {
-    List<File> result = null;
+    List<File> result;
     File[] files = directory.listFiles();
     if (files != null) {
       result = Arrays.asList(files);

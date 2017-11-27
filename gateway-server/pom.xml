@@ -188,6 +188,10 @@
             <artifactId>gateway-server-xforwarded-filter</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-remoteconfig</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.lingala.zip4j</groupId>
             <artifactId>zip4j</artifactId>
         </dependency>
@@ -316,6 +320,11 @@
             <artifactId>metrics-servlets</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

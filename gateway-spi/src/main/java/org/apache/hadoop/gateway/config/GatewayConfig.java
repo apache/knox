@@ -42,6 +42,16 @@ public interface GatewayConfig {
   public static final String SIGNING_KEYSTORE_NAME = "gateway.signing.keystore.name";
   public static final String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
 
+  String REMOTE_CONFIG_REGISTRY_TYPE = "type";
+  String REMOTE_CONFIG_REGISTRY_ADDRESS = "address";
+  String REMOTE_CONFIG_REGISTRY_NAMESPACE = "namespace";
+  String REMOTE_CONFIG_REGISTRY_AUTH_TYPE = "authType";
+  String REMOTE_CONFIG_REGISTRY_PRINCIPAL = "principal";
+  String REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS = "credentialAlias";
+  String REMOTE_CONFIG_REGISTRY_KEYTAB = "keytab";
+  String REMOTE_CONFIG_REGISTRY_USE_KEYTAB = "useKeytab";
+  String REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE = "useTicketCache";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -75,6 +85,10 @@ public interface GatewayConfig {
   int getGatewayPort();
 
   String getGatewayPath();
+
+  String getGatewayProvidersConfigDir();
+
+  String getGatewayDescriptorsDir();
 
   String getGatewayTopologyDir();
 
@@ -299,4 +313,24 @@ public interface GatewayConfig {
    * @return
    */
   boolean isGatewayServerHeaderEnabled();
+
+  /**
+   * @return The list of the names of any remote registry configurations defined herein.
+   */
+  List<String> getRemoteRegistryConfigurationNames();
+
+  /**
+   *
+   * @param name The name of the remote registry configuration
+   *
+   * @return The configuration associated with the specified name.
+   */
+  String getRemoteRegistryConfiguration(String name);
+
+  /**
+   *
+   * @return The name of a remote configuration registry client
+   */
+  String getRemoteConfigurationMonitorClientName();
+
 }

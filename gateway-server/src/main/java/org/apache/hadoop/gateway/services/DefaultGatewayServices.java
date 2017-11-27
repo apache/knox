@@ -23,6 +23,8 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.hadoop.gateway.services.metrics.impl.DefaultMetricsService;
 import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
@@ -104,6 +106,12 @@ public class DefaultGatewayServices implements GatewayServices {
     sis.init( config, options );
     services.put( SERVER_INFO_SERVICE, sis );
 
+    RemoteConfigurationRegistryClientService registryClientService =
+                                                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(alias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.setAliasService(alias);
     tops.init(  config, options  );
@@ -117,7 +125,7 @@ public class DefaultGatewayServices implements GatewayServices {
     metricsService.init( config, options );
     services.put( METRICS_SERVICE, metricsService );
   }
-  
+
   public void start() throws ServiceLifecycleException {
     ms.start();
 
@@ -131,6 +139,10 @@ public class DefaultGatewayServices implements GatewayServices {
 
     ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
     sis.start();
+
+    RemoteConfigurationRegistryClientService clientService =
+                            (RemoteConfigurationRegistryClientService)services.get(REMOTE_REGISTRY_CLIENT_SERVICE);
+    clientService.start();
 
     DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
     tops.start();

@@ -25,6 +25,7 @@ import java.lang.management.MemoryMXBean;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -283,6 +284,12 @@ public class WebsocketMultipleConnectionTest {
     EasyMock.expect(gatewayConfig.getGatewayTopologyDir())
         .andReturn(topoDir.toString()).anyTimes();
 
+    EasyMock.expect(gatewayConfig.getGatewayProvidersConfigDir())
+            .andReturn(topoDir.getAbsolutePath() + "/shared-providers").anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayDescriptorsDir())
+            .andReturn(topoDir.getAbsolutePath() + "/descriptors").anyTimes();
+
     EasyMock.expect(gatewayConfig.getGatewayServicesDir())
         .andReturn(serviceUrl.getFile()).anyTimes();
 
@@ -324,6 +331,10 @@ public class WebsocketMultipleConnectionTest {
 
     EasyMock.expect(gatewayConfig.getWebsocketIdleTimeout())
         .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_IDLE_TIMEOUT).anyTimes();
+
+    EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
+            .andReturn(Collections.emptyList())
+            .anyTimes();
 
     EasyMock.replay(gatewayConfig);
 
