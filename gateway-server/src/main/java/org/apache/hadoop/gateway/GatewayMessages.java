@@ -514,18 +514,56 @@ public interface GatewayMessages {
   void topologyPortMappingCannotFindTopology(final String topology, final int port);
 
 
+  @Message( level = MessageLevel.WARN, text = "There is no registry client defined for remote configuration monitoring." )
+  void missingClientConfigurationForRemoteMonitoring();
+
+  @Message( level = MessageLevel.WARN, text = "Could not resolve a remote configuration registry client for {0}." )
+  void unresolvedClientConfigurationForRemoteMonitoring(final String clientName);
+
   @Message( level = MessageLevel.INFO, text = "Monitoring simple descriptors in directory: {0}" )
   void monitoringDescriptorChangesInDirectory(String descriptorsDir);
 
-
   @Message( level = MessageLevel.INFO, text = "Monitoring shared provider configurations in directory: {0}" )
   void monitoringProviderConfigChangesInDirectory(String sharedProviderDir);
+
+  @Message( level = MessageLevel.ERROR, text = "Error registering listener for remote configuration path {0} : {1}" )
+  void errorAddingRemoteConfigurationListenerForPath(final String path,
+                                                     @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Error unregistering listener for remote configuration path {0} : {1}" )
+  void errorRemovingRemoteConfigurationListenerForPath(final String path,
+                                                       @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Error downloading remote configuration {0} : {1}" )
+  void errorDownloadingRemoteConfiguration(final String path,
+                                           @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
   @Message( level = MessageLevel.INFO, text = "Prevented deletion of shared provider configuration because there are referencing descriptors: {0}" )
   void preventedDeletionOfSharedProviderConfiguration(String providerConfigurationPath);
 
   @Message( level = MessageLevel.INFO, text = "Generated topology {0} because the associated descriptor {1} changed." )
   void generatedTopologyForDescriptorChange(String topologyName, String descriptorName);
+
+  @Message( level = MessageLevel.WARN, text = "An error occurred while attempting to initialize the remote configuration monitor: {0}" )
+  void remoteConfigurationMonitorInitFailure(final String errorMessage,
+                                             @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.WARN, text = "An error occurred while attempting to start the remote configuration monitor {0} : {1}" )
+  void remoteConfigurationMonitorStartFailure(final String monitorType,
+                                              final String errorMessage,
+                                              @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.INFO, text = "Starting remote configuration monitor for source {0} ..." )
+  void startingRemoteConfigurationMonitor(final String address);
+
+  @Message( level = MessageLevel.INFO, text = "Monitoring remote configuration source {0}" )
+  void monitoringRemoteConfigurationSource(final String address);
+
+  @Message( level = MessageLevel.INFO, text = "Remote configuration monitor downloaded {0} configuration file {1}" )
+  void downloadedRemoteConfigFile(final String type, final String configFileName);
+
+  @Message( level = MessageLevel.INFO, text = "Remote configuration monitor deleted {0} configuration file {1} based on remote change." )
+  void deletedRemoteConfigFile(final String type, final String configFileName);
 
   @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
   void simpleDescriptorHandlingError(final String simpleDesc,

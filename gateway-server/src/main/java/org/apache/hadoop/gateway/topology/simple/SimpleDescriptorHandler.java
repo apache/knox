@@ -185,6 +185,7 @@ public class SimpleDescriptorHandler {
 
             // Write the service declarations
             for (String serviceName : serviceNames) {
+                fw.write("\n");
                 fw.write("    <service>\n");
                 fw.write("        <role>" + serviceName + "</role>\n");
 

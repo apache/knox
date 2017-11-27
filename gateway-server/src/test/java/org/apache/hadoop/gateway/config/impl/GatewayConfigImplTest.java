@@ -11,6 +11,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -215,6 +219,30 @@ public class GatewayConfigImplTest {
     config.set( GatewayConfigImpl.SERVER_HEADER_ENABLED, "false");
     serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
     assertThat( serverHeaderEnabled, is(false));
+  }
+
+
+  @Test
+  public void testGetRemoteConfigurationRegistryNames() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    List<String> registryNames = config.getRemoteRegistryConfigurationNames();
+    assertNotNull(registryNames);
+    assertTrue(registryNames.isEmpty());
+
+    config.set(GatewayConfigImpl.CONFIG_REGISTRY_PREFIX + ".test1",
+               "type=ZooKeeper;address=host1:2181;authType=digest;principal=itsme;credentialAlias=testAlias");
+    registryNames = config.getRemoteRegistryConfigurationNames();
+    assertNotNull(registryNames);
+    assertFalse(registryNames.isEmpty());
+    assertEquals(1, registryNames.size());
+
+    config.set(GatewayConfigImpl.CONFIG_REGISTRY_PREFIX + ".test2",
+               "type=ZooKeeper;address=host2:2181,host3:2181,host4:2181");
+    registryNames = config.getRemoteRegistryConfigurationNames();
+    assertNotNull(registryNames);
+    assertFalse(registryNames.isEmpty());
+    assertEquals(registryNames.size(), 2);
   }
 
 }

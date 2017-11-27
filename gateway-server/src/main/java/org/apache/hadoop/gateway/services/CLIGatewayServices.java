@@ -23,6 +23,8 @@ import org.apache.hadoop.gateway.deploy.DeploymentContext;
 import org.apache.hadoop.gateway.descriptor.FilterParamDescriptor;
 import org.apache.hadoop.gateway.descriptor.ResourceDescriptor;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultAliasService;
 import org.apache.hadoop.gateway.services.security.impl.DefaultCryptoService;
@@ -71,6 +73,12 @@ public class CLIGatewayServices implements GatewayServices {
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.init(  config, options  );
     services.put(TOPOLOGY_SERVICE, tops);
+
+    RemoteConfigurationRegistryClientService registryClientService =
+                                                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(alias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
   }
   
   public void start() throws ServiceLifecycleException {
@@ -83,6 +91,8 @@ public class CLIGatewayServices implements GatewayServices {
 
     DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
     tops.start();
+
+    (services.get(REMOTE_REGISTRY_CLIENT_SERVICE)).start();
   }
 
   public void stop() throws ServiceLifecycleException {

@@ -184,6 +184,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   public static final String DEFAULT_SECURITY_DIR = "security";
   public static final String DEFAULT_DATA_DIR = "data";
+  private static final String PROVIDERCONFIG_DIR_NAME = "shared-providers";
+  private static final String DESCRIPTORS_DIR_NAME = "descriptors";
 
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
@@ -213,6 +215,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CRYPTO_ITERATION_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.iteration.count";
   private static final String CRYPTO_KEY_LENGTH = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.key.length";
   public static final String SERVER_HEADER_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".server.header.enabled";
+
+  /* @since 0.15 Remote configuration monitoring */
+  static final String CONFIG_REGISTRY_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.registry";
+  static final String REMOTE_CONFIG_MONITOR_CLIENT_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.client";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -264,7 +270,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     } else {
       dataDir = get(DATA_DIR, getGatewayHomeDir() + File.separator + DEFAULT_DATA_DIR);
     }
-    return dataDir;
+    return FilenameUtils.normalize(dataDir);
   }
 
   @Override
@@ -409,6 +415,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getGatewayPath() {
     return get( HTTP_PATH, DEFAULT_HTTP_PATH );
+  }
+
+  @Override
+  public String getGatewayProvidersConfigDir() {
+    return getGatewayConfDir() + File.separator + PROVIDERCONFIG_DIR_NAME;
+  }
+
+  @Override
+  public String getGatewayDescriptorsDir() {
+    return getGatewayConfDir() + File.separator + DESCRIPTORS_DIR_NAME;
   }
 
   @Override
@@ -923,4 +939,33 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isGatewayServerHeaderEnabled() {
     return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "true"));
   }
+
+  @Override
+  public List<String> getRemoteRegistryConfigurationNames() {
+    List<String> result = new ArrayList<>();
+
+    // Iterate over all the properties in this configuration
+    for (Map.Entry<String, String> entry : this) {
+      String propertyName = entry.getKey();
+
+      // Search for all the remote config registry properties
+      if (propertyName.startsWith(CONFIG_REGISTRY_PREFIX)) {
+        String registryName = propertyName.substring(CONFIG_REGISTRY_PREFIX.length() + 1);
+        result.add(registryName);
+      }
+    }
+
+    return result;
+  }
+
+  @Override
+  public String getRemoteRegistryConfiguration(String name) {
+    return get(CONFIG_REGISTRY_PREFIX + "." + name );
+  }
+
+  @Override
+  public String getRemoteConfigurationMonitorClientName() {
+    return get(REMOTE_CONFIG_MONITOR_CLIENT_NAME);
+  }
+
 }

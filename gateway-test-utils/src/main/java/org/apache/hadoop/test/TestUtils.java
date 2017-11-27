@@ -50,7 +50,7 @@ public class TestUtils {
   private static Logger LOG = Logger.getLogger(TestUtils.class);
 
   public static final long SHORT_TIMEOUT = 1000L;
-  public static final long MEDIUM_TIMEOUT = 20 * 1000L;
+  public static final long MEDIUM_TIMEOUT = 30 * 1000L;
   public static final long LONG_TIMEOUT = 60 * 1000L;
 
   public static String getResourceName( Class clazz, String name ) {

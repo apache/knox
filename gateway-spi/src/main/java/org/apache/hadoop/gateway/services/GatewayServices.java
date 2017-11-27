@@ -39,6 +39,8 @@ public interface GatewayServices extends Service, ProviderDeploymentContributor 
   public static final String SERVICE_DEFINITION_REGISTRY = "ServiceDefinitionRegistry";
   public static final String METRICS_SERVICE = "MetricsService";
 
+  String REMOTE_REGISTRY_CLIENT_SERVICE = "RemoteConfigRegistryClientService";
+
   public abstract Collection<String> getServiceNames();
 
   public abstract <T> T getService( String serviceName );
