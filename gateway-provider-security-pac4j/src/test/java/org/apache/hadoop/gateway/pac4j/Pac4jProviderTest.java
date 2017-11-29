@@ -37,7 +37,6 @@ import javax.servlet.http.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
@@ -77,6 +76,7 @@ public class Pac4jProviderTest {
         when(config.getServletContext()).thenReturn(context);
         when(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).thenReturn(PAC4J_CALLBACK_URL);
         when(config.getInitParameter("clientName")).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        when(config.getInitParameter(Pac4jIdentityAdapter.PAC4J_ID_ATTRIBUTE)).thenReturn("username");
 
         final Pac4jDispatcherFilter dispatcher = new Pac4jDispatcherFilter();
         dispatcher.init(config);
