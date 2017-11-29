@@ -75,6 +75,7 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-989] - Report metrics at service level (/webhdfs/v1) instead of url with args (/webhdfs/v1/?op=LISTSTATUS) (Mohammad Kamrul Islam via Sandeep More)
    * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
    * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
+   * [KNOX-1119] - Pac4J OAuth/OpenID Principal Needs to be Configurable (Andreas Hildebrandt via lmccay)
 ** Bug
    * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
    * [KNOX-1004] - Failing (flaky) Knox unit tests
