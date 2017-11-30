@@ -18,28 +18,35 @@ import { Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import { Topology } from './topology';
 import {TopologyService} from "./topology.service";
 import { ModalComponent } from 'ng2-bs3-modal/ng2-bs3-modal';
+import { ViewChildren } from '@angular/core/src/metadata/di';
+
+import 'brace/theme/monokai';
+import 'brace/mode/xml';
 
 @Component({
     selector: 'topology-detail',
     template: `
      <div class="panel panel-default">
         <div class="panel-heading">
-            <h4 class="panel-title">{{title}} <span class="label label-default pull-right">{{titleSuffix}}</span></h4>
+            <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;" class="text-danger text-center" > Ready Only (generated file) </span> <span class="label label-default pull-right">{{titleSuffix}}</span></h4>
          </div>
      <div *ngIf="topologyContent" class="panel-body">
-      <div ace-editor
-       [readOnly]="false" [text]="topologyContent | xml" [mode]="'xml'" [options]="options" 
-        [theme]="'monokai'"
-         style="min-height: 300px; width:100%; overflow: auto;" (textChanged)="onChange($event)">
-      </div>
-       <div class="panel-footer">
-        <button (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm" type="submit">
+      <ace-editor
+        [(text)]="topologyContent" 
+        [mode]="'xml'" 
+        [options]="options" 
+        [theme]="theme"
+        style="min-height: 430px; width:100%; overflow: auto;" 
+        (textChanged)="onChange($event)">
+      </ace-editor>
+       <div *ngIf="showEditOptions" class="panel-footer">
+        <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
             <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
         </button>
-        <button (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit">
+        <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
         </button>
-       <button (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit">
+       <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit" >
             <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
         </button>
        </div>
@@ -83,6 +90,9 @@ export class TopologyDetailComponent implements OnInit {
     topologyContent: string;
     changedTopology: string;
     newTopologyName: string;
+    readOnly: boolean;
+    showEditOptions:boolean = true;
+    theme: String = "monokai";
     options:any = {useWorker: false, printMargin: false};
 
     @ViewChild('duplicateModal')
@@ -90,6 +100,8 @@ export class TopologyDetailComponent implements OnInit {
 
     @ViewChild('deleteConfirmModal')
     deleteConfirmModal: ModalComponent;
+
+    @ViewChild('editor') editor;
 
     constructor(private topologyService : TopologyService) {
     }
@@ -130,9 +142,30 @@ export class TopologyDetailComponent implements OnInit {
         this.setTitle(topology.name);
         if (this.topology) {
             if (this.topology.href) {
-                this.topologyService.getTopology(this.topology.href).then( content => this.topologyContent = content);
+              this.topologyService.getTopology(this.topology.href).then( content => this.topologyContent = content).then(() => this.makeReadOnly(this.topologyContent, 'generated') );
             }
         }
+    }
+
+    /*
+    * Parse the XML and depending on the  
+    * provided tag value make the editor read only
+    */
+    makeReadOnly(text, tag) {
+        var parser = new DOMParser();
+        var parsed = parser.parseFromString(text,"text/xml");
+
+        var tagValue = parsed.getElementsByTagName(tag);
+        var result = tagValue[0].childNodes[0].nodeValue;
+        
+        if(result === 'true') {
+            this.showEditOptions = false;
+            this.options = {readOnly: true, useWorker: false, printMargin: false, highlightActiveLine: false, highlightGutterLine: false}; 
+        } else {
+            this.showEditOptions = true;
+            this.options = {readOnly: false, useWorker: false, printMargin: false}; 
+        }
+
     }
 
 

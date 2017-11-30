@@ -36,7 +36,7 @@ import { Subscription }   from 'rxjs/Subscription';
           [class.selected]="topology === selectedTopology"
         (click)="onSelect(topology)">
          <td>{{topology.name}}</td> 
-         <td>{{topology.timestamp | date:'yMMMdjms'}}</td> 
+         <td>{{topology.timestamp | date:'medium'}}</td> 
          </tr>
         </tbody>
         </table>
