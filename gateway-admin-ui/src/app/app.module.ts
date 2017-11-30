@@ -30,20 +30,20 @@ import {JsonPrettyPipe} from "./utils/json-pretty.pipe";
 import { TabComponent } from './utils/tab.component';
 import { TabsComponent } from './utils/tabs.component';
 
-import { AceEditorDirective } from 'ng2-ace-editor'; 
+import { AceEditorModule } from 'ng2-ace-editor';
 import { Ng2Bs3ModalModule } from 'ng2-bs3-modal/ng2-bs3-modal'
 
 @NgModule({
   imports: [ BrowserModule,
     HttpModule,
     FormsModule,
-    Ng2Bs3ModalModule
+    Ng2Bs3ModalModule,
+    AceEditorModule
     ],
   declarations: [ AppComponent,
     TopologyComponent,
       TopologyDetailComponent,
     GatewayVersionComponent,
-    AceEditorDirective,
     XmlPipe,
     JsonPrettyPipe,
     TabsComponent,

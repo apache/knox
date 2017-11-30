@@ -64,6 +64,7 @@ e2e/*.js
 e2e/*.map
 gateway-admin-ui/src/app/**/*.js
 gateway-admin-ui/src/app/**/*.map
+gateway-admin-ui/package-lock.json
 
 #System Files
 Thumbs.db
