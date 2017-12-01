@@ -21,7 +21,7 @@ import org.apache.hadoop.gateway.audit.api.*;
 import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.filter.AbstractGatewayFilter;
 import org.apache.hadoop.gateway.security.PrimaryPrincipal;
-import org.pac4j.core.config.ConfigSingleton;
+import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
@@ -47,6 +47,7 @@ public class Pac4jIdentityAdapter implements Filter {
   private static final Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
 
   public static final String PAC4J_ID_ATTRIBUTE = "pac4j.id_attribute";
+  private static final String PAC4J_CONFIG = "pac4j.config";
 
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -70,7 +71,8 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
+    final J2EContext context = new J2EContext(request, response,
+        ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
     final ProfileManager<CommonProfile> manager = new ProfileManager<CommonProfile>(context);
     final Optional<CommonProfile> optional = manager.get(true);
     if (optional.isPresent()) {
