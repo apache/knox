@@ -29,8 +29,6 @@ import org.apache.hadoop.gateway.services.security.CryptoService;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.config.ConfigSingleton;
-import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
@@ -70,6 +68,8 @@ public class Pac4jDispatcherFilter implements Filter {
   public static final String PAC4J_CALLBACK_PARAMETER = "pac4jCallback";
 
   private static final String PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM = "pac4j.cookie.domain.suffix";
+
+  private static final String PAC4J_CONFIG = "pac4j.config";
 
   private CallbackFilter callbackFilter;
 
@@ -153,13 +153,13 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     callbackFilter = new CallbackFilter();
+    callbackFilter.setConfigOnly(config);
     securityFilter = new SecurityFilter();
     securityFilter.setClients(clientName);
-    securityFilter.setConfig(config);
+    securityFilter.setConfigOnly(config);
 
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
-    ConfigSingleton.setConfig(config);
   }
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
@@ -196,7 +196,8 @@ public class Pac4jDispatcherFilter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
+    request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
+//    final J2EContext context = new J2EContext(request, response, securityFilter.getConfig().getSessionStore());
 
     // it's a callback from an identity provider
     if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null) {
