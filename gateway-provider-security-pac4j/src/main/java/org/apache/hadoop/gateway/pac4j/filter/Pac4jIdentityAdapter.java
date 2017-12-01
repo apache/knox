@@ -78,8 +78,11 @@ public class Pac4jIdentityAdapter implements Filter {
       logger.debug("User authenticated as: {}", profile);
       manager.remove(true);
       String id = null;
-      if (idAttribute == null) {
-        id = profile.getAttribute(idAttribute).toString();
+      if (idAttribute != null) {
+        Object attribute = profile.getAttribute(idAttribute);
+        if (attribute != null) {
+          id = attribute.toString();
+        }
         if (id == null) {
           logger.error("Invalid attribute_id: {} configured to be used as principal"
               + " falling back to default id", idAttribute);
