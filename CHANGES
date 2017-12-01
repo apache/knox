@@ -21,7 +21,7 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
    * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
    * [KNOX-1107] - Remote Configuration Registry Client Service (Phil Zampino via lmccay)
-
+   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
 ** Improvement
    * [KNOX-921] - Httpclient max connections are always set to default values
    * [KNOX-1106] - Tighten the rewrite rule on oozieui to reduce false positives (Wei Han via Sandeep More)
@@ -76,6 +76,8 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
    * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
    * [KNOX-1119] - Pac4J OAuth/OpenID Principal Needs to be Configurable (Andreas Hildebrandt via lmccay)
+   * [KNOX-1120] - Pac4J Stop Using ConfigSingleton
+   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
 ** Bug
    * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
    * [KNOX-1004] - Failing (flaky) Knox unit tests
@@ -85,6 +87,7 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1079] - Regression: proxy for Atlas fails with j_spring_security_check during login (Madhan Neethiraj via lmccay)
    * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
    * [KNOX-1118] - Remove POC Service Definition for AmbariUI
+   * [KNOX-1134] - Regression due to KNOX-1119
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.13.0
