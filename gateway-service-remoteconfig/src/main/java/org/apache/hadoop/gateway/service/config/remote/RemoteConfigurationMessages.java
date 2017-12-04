@@ -42,5 +42,8 @@ public interface RemoteConfigurationMessages {
     void errorHandlingRemoteConfigACL(final String path,
                                       @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR, text = "An error occurred setting the ACL for remote configuration {0} : {1}")
+    void errorSettingEntryACL(final String path,
+                              @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }

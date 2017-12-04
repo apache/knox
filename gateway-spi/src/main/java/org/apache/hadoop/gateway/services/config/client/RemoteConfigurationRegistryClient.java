@@ -22,9 +22,13 @@ public interface RemoteConfigurationRegistryClient {
 
     String getAddress();
 
+    boolean isAuthenticationConfigured();
+
     boolean entryExists(String path);
 
     List<EntryACL> getACL(String path);
+
+    void setACL(String path, List<EntryACL> acls);
 
     List<String> listChildEntries(String path);
 
@@ -69,6 +73,8 @@ public interface RemoteConfigurationRegistryClient {
         String getId();
         String getType();
         Object getPermissions();
+        boolean canRead();
+        boolean canWrite();
     }
 
 }
