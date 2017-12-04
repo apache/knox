@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegis
 import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.MasterService;
+import org.apache.hadoop.test.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,9 +67,11 @@ public class KnoxCLITest {
   @Test
   public void testRemoteConfigurationRegistryClientService() throws Exception {
     outContent.reset();
+
     KnoxCLI cli = new KnoxCLI();
     Configuration config = new GatewayConfigImpl();
-    config.set("gateway.remote.config.registry.test_client", "type=ZooKeeper;address=localhost:2181");
+    // Configure a client for the test local filesystem registry implementation
+    config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=/test");
     cli.setConf(config);
 
     // This is only to get the gateway services initialized
@@ -81,6 +84,345 @@ public class KnoxCLITest {
     assertNotNull(client);
 
     assertNull(service.get("bogus"));
+  }
+
+  @Test
+  public void testListRemoteConfigurationRegistryClients() throws Exception {
+    outContent.reset();
+
+    KnoxCLI cli = new KnoxCLI();
+    String[] args = { "list-registry-clients", "--master","master" };
+
+    Configuration config = new GatewayConfigImpl();
+    cli.setConf(config);
+
+    // Test with no registry clients configured
+    int rc = cli.run(args);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().isEmpty());
+
+    // Test with a single client configured
+    // Configure a client for the test local filesystem registry implementation
+    config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=/test1");
+    cli.setConf(config);
+    outContent.reset();
+    rc = cli.run(args);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("test_client"));
+
+    // Configure another client for the test local filesystem registry implementation
+    config.set("gateway.remote.config.registry.another_client", "type=LocalFileSystem;address=/test2");
+    cli.setConf(config);
+    outContent.reset();
+    rc = cli.run(args);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(), outContent.toString().contains("test_client"));
+    assertTrue(outContent.toString(), outContent.toString().contains("another_client"));
+  }
+
+  @Test
+  public void testRemoteConfigurationRegistryGetACLs() throws Exception {
+    outContent.reset();
+
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+
+      final String providerConfigName = "my-provider-config.xml";
+      final String providerConfigContent = "<gateway/>\n";
+      final File testProviderConfig = new File(testRoot, providerConfigName);
+      final String[] uploadArgs = {"upload-provider-config", testProviderConfig.getAbsolutePath(),
+                                   "--registry-client", "test_client",
+                                   "--master", "master"};
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+
+
+      final String[] args = {"get-registry-acl", "/knox/config/shared-providers",
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      int rc = cli.run(uploadArgs);
+      assertEquals(0, rc);
+
+      // Run the test command
+      rc = cli.run(args);
+
+      // Validate the result
+      assertEquals(0, rc);
+      String result = outContent.toString();
+      assertEquals(result, 3, result.split("\n").length);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+
+  @Test
+  public void testRemoteConfigurationRegistryUploadProviderConfig() throws Exception {
+    outContent.reset();
+
+    final String providerConfigName = "my-provider-config.xml";
+    final String providerConfigContent = "<gateway/>\n";
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testProviderConfig = new File(testRoot, providerConfigName);
+
+      final String[] args = {"upload-provider-config", testProviderConfig.getAbsolutePath(),
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(args);
+
+      // Validate the result
+      assertEquals(0, rc);
+      File registryFile = new File(testRegistry, "knox/config/shared-providers/" + providerConfigName);
+      assertTrue(registryFile.exists());
+      assertEquals(FileUtils.readFileToString(registryFile), providerConfigContent);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+
+  @Test
+  public void testRemoteConfigurationRegistryUploadProviderConfigWithDestinationOverride() throws Exception {
+    outContent.reset();
+
+    final String providerConfigName = "my-provider-config.xml";
+    final String entryName = "my-providers.xml";
+    final String providerConfigContent = "<gateway/>\n";
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testProviderConfig = new File(testRoot, providerConfigName);
+
+      final String[] args = {"upload-provider-config", testProviderConfig.getAbsolutePath(),
+                             "--entry-name", entryName,
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(args);
+
+      // Validate the result
+      assertEquals(0, rc);
+      assertFalse((new File(testRegistry, "knox/config/shared-providers/" + providerConfigName)).exists());
+      File registryFile = new File(testRegistry, "knox/config/shared-providers/" + entryName);
+      assertTrue(registryFile.exists());
+      assertEquals(FileUtils.readFileToString(registryFile), providerConfigContent);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+
+  @Test
+  public void testRemoteConfigurationRegistryUploadDescriptor() throws Exception {
+    outContent.reset();
+
+    final String descriptorName = "my-topology.json";
+    final String descriptorContent = testDescriptorContentJSON;
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testDescriptor = new File(testRoot, descriptorName);
+
+      final String[] args = {"upload-descriptor", testDescriptor.getAbsolutePath(),
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(args);
+
+      // Validate the result
+      assertEquals(0, rc);
+      File registryFile = new File(testRegistry, "knox/config/descriptors/" + descriptorName);
+      assertTrue(registryFile.exists());
+      assertEquals(FileUtils.readFileToString(registryFile), descriptorContent);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+  @Test
+  public void testRemoteConfigurationRegistryUploadDescriptorWithDestinationOverride() throws Exception {
+    outContent.reset();
+
+    final String descriptorName = "my-topology.json";
+    final String entryName = "different-topology.json";
+    final String descriptorContent = testDescriptorContentJSON;
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testDescriptor = new File(testRoot, descriptorName);
+
+      final String[] args = {"upload-descriptor", testDescriptor.getAbsolutePath(),
+                             "--entry-name", entryName,
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(args);
+
+      // Validate the result
+      assertEquals(0, rc);
+      assertFalse((new File(testRegistry, "knox/config/descriptors/" + descriptorName)).exists());
+      File registryFile = new File(testRegistry, "knox/config/descriptors/" + entryName);
+      assertTrue(registryFile.exists());
+      assertEquals(FileUtils.readFileToString(registryFile), descriptorContent);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+  @Test
+  public void testRemoteConfigurationRegistryDeleteProviderConfig() throws Exception {
+    outContent.reset();
+
+    // Create a provider config
+    final String providerConfigName = "my-provider-config.xml";
+    final String providerConfigContent = "<gateway/>\n";
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testProviderConfig = new File(testRoot, providerConfigName);
+
+      final String[] createArgs = {"upload-provider-config", testProviderConfig.getAbsolutePath(),
+                                   "--registry-client", "test_client",
+                                   "--master", "master"};
+
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(createArgs);
+
+      // Validate the result
+      assertEquals(0, rc);
+      File registryFile = new File(testRegistry, "knox/config/shared-providers/" + providerConfigName);
+      assertTrue(registryFile.exists());
+
+      outContent.reset();
+
+      // Delete the created provider config
+      final String[] deleteArgs = {"delete-provider-config", providerConfigName,
+                                   "--registry-client", "test_client",
+                                   "--master", "master"};
+      rc = cli.run(deleteArgs);
+      assertEquals(0, rc);
+      assertFalse(registryFile.exists());
+
+      // Try to delete a provider config that does not exist
+      rc = cli.run(new String[]{"delete-provider-config", "imaginary-providers.xml",
+                                "--registry-client", "test_client",
+                                "--master", "master"});
+      assertEquals(0, rc);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
+  }
+
+  @Test
+  public void testRemoteConfigurationRegistryDeleteDescriptor() throws Exception {
+    outContent.reset();
+
+    final String descriptorName = "my-topology.json";
+    final String descriptorContent = testDescriptorContentJSON;
+
+    final File testRoot = TestUtils.createTempDir(this.getClass().getName());
+    try {
+      final File testRegistry = new File(testRoot, "registryRoot");
+      final File testDescriptor = new File(testRoot, descriptorName);
+
+      final String[] createArgs = {"upload-descriptor", testDescriptor.getAbsolutePath(),
+                             "--registry-client", "test_client",
+                             "--master", "master"};
+
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+
+      KnoxCLI cli = new KnoxCLI();
+      Configuration config = new GatewayConfigImpl();
+      // Configure a client for the test local filesystem registry implementation
+      config.set("gateway.remote.config.registry.test_client", "type=LocalFileSystem;address=" + testRegistry);
+      cli.setConf(config);
+
+      // Run the test command
+      int rc = cli.run(createArgs);
+
+      // Validate the result
+      assertEquals(0, rc);
+      File registryFile = new File(testRegistry, "knox/config/descriptors/" + descriptorName);
+      assertTrue(registryFile.exists());
+
+      outContent.reset();
+
+      // Delete the created provider config
+      final String[] deleteArgs = {"delete-descriptor", descriptorName,
+                                   "--registry-client", "test_client",
+                                   "--master", "master"};
+      rc = cli.run(deleteArgs);
+      assertEquals(0, rc);
+      assertFalse(registryFile.exists());
+
+      // Try to delete a descriptor that does not exist
+      rc = cli.run(new String[]{"delete-descriptor", "bogus.json",
+                                "--registry-client", "test_client",
+                                "--master", "master"});
+      assertEquals(0, rc);
+    } finally {
+      FileUtils.forceDelete(testRoot);
+    }
   }
 
   @Test
@@ -670,4 +1012,21 @@ public class KnoxCLITest {
 
   }
 
+  private static final String testDescriptorContentJSON = "{\n" +
+                                                          "  \"discovery-address\":\"http://localhost:8080\",\n" +
+                                                          "  \"discovery-user\":\"maria_dev\",\n" +
+                                                          "  \"discovery-pwd-alias\":\"sandbox.discovery.password\",\n" +
+                                                          "  \"provider-config-ref\":\"my-provider-config\",\n" +
+                                                          "  \"cluster\":\"Sandbox\",\n" +
+                                                          "  \"services\":[\n" +
+                                                          "    {\"name\":\"NAMENODE\"},\n" +
+                                                          "    {\"name\":\"JOBTRACKER\"},\n" +
+                                                          "    {\"name\":\"WEBHDFS\"},\n" +
+                                                          "    {\"name\":\"WEBHCAT\"},\n" +
+                                                          "    {\"name\":\"OOZIE\"},\n" +
+                                                          "    {\"name\":\"WEBHBASE\"},\n" +
+                                                          "    {\"name\":\"HIVE\"},\n" +
+                                                          "    {\"name\":\"RESOURCEMANAGER\"}\n" +
+                                                          "  ]\n" +
+                                                          "}";
 }

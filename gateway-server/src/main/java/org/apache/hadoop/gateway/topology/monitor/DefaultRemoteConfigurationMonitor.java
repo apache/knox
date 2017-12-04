@@ -101,6 +101,8 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
 
     @Override
     public void stop() throws Exception {
+        client.removeEntryListener(NODE_KNOX_PROVIDERS);
+        client.removeEntryListener(NODE_KNOX_DESCRIPTORS);
     }
 
 

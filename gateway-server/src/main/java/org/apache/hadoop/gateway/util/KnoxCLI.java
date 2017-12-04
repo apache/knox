@@ -20,7 +20,6 @@ package org.apache.hadoop.gateway.util;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +27,6 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +49,8 @@ import org.apache.hadoop.gateway.services.CLIGatewayServices;
 import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.security.KeystoreService;
 import org.apache.hadoop.gateway.services.security.KeystoreServiceException;
@@ -82,6 +82,7 @@ import org.apache.shiro.util.ThreadContext;
 import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+
 /**
  *
  */
@@ -102,7 +103,13 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + ValidateTopologyCommand.USAGE + "]\n" +
       "   [" + LDAPAuthCommand.USAGE + "]\n" +
       "   [" + LDAPSysBindCommand.USAGE + "]\n" +
-      "   [" + ServiceTestCommand.USAGE + "]\n";
+      "   [" + ServiceTestCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryClientsListCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryUploadProviderConfigCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryUploadDescriptorCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryDeleteProviderConfigCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryDeleteDescriptorCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -122,6 +129,9 @@ public class KnoxCLI extends Configured implements Tool {
   private String user = null;
   private String pass = null;
   private boolean groups = false;
+
+  private String remoteRegistryClient = null;
+  private String remoteRegistryEntryName = null;
 
   // For testing only
   private String master = null;
@@ -187,7 +197,12 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli user-auth-test [--cluster clustername] [--u username] [--p password]
    * % knoxcli system-user-auth-test [--cluster clustername] [--d]
    * % knoxcli service-test [--u user] [--p password] [--cluster clustername] [--hostname name] [--port port]
-   *
+   * % knoxcli list-registry-clients
+   * % knoxcli get-registry-acl entryName --registry-client name
+   * % knoxcli upload-provider-config filePath --registry-client name [--entry-name entryName]
+   * % knoxcli upload-descriptor filePath --registry-client name [--entry-name entryName]
+   * % knoxcli delete-provider-config providerConfig --registry-client name
+   * % knoxcli delete-descriptor descriptor --registry-client name
    * </pre>
    * @param args
    * @return
@@ -282,7 +297,7 @@ public class KnoxCLI extends Configured implements Tool {
         }
         this.cluster = args[++i];
       } else if (args[i].equals("service-test")) {
-        if( i + 1 >= args[i].length()) {
+        if( i + 1 >= args.length) {
           printKnoxShellUsage();
           return -1;
         } else {
@@ -348,6 +363,63 @@ public class KnoxCLI extends Configured implements Tool {
         }
       } else if (args[i].equals("--g")) {
         this.groups = true;
+      } else if (args[i].equals("list-registry-clients")) {
+        command = new RemoteRegistryClientsListCommand();
+      } else if (args[i].equals("--registry-client")) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.remoteRegistryClient = args[++i];
+      } else if (args[i].equalsIgnoreCase("upload-provider-config")) {
+        String fileName;
+        if (i <= (args.length - 1)) {
+          fileName = args[++i];
+          command = new RemoteRegistryUploadProviderConfigCommand(fileName);
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equals("upload-descriptor")) {
+        String fileName;
+        if (i <= (args.length - 1)) {
+          fileName = args[++i];
+          command = new RemoteRegistryUploadDescriptorCommand(fileName);
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equals("--entry-name")) {
+        if (i <= (args.length - 1)) {
+          remoteRegistryEntryName = args[++i];
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equals("delete-descriptor")) {
+        if (i <= (args.length - 1)) {
+          String entry = args[++i];
+          command = new RemoteRegistryDeleteDescriptorCommand(entry);
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equals("delete-provider-config")) {
+        if (i <= (args.length - 1)) {
+          String entry = args[++i];
+          command = new RemoteRegistryDeleteProviderConfigCommand(entry);
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equalsIgnoreCase("get-registry-acl")) {
+        if (i <= (args.length - 1)) {
+          String entry = args[++i];
+          command = new RemoteRegistryGetACLCommand(entry);
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
       } else {
         printKnoxShellUsage();
         //ToolRunner.printGenericCommandUsage(System.err);
@@ -406,6 +478,24 @@ public class KnoxCLI extends Configured implements Tool {
       out.println(ServiceTestCommand.USAGE + "\n\n" + ServiceTestCommand.DESC);
       out.println();
       out.println( div );
+      out.println(RemoteRegistryClientsListCommand.USAGE + "\n\n" + RemoteRegistryClientsListCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryGetACLCommand.USAGE + "\n\n" + RemoteRegistryGetACLCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryUploadProviderConfigCommand.USAGE + "\n\n" + RemoteRegistryUploadProviderConfigCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryUploadDescriptorCommand.USAGE + "\n\n" + RemoteRegistryUploadDescriptorCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryDeleteProviderConfigCommand.USAGE + "\n\n" + RemoteRegistryDeleteProviderConfigCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryDeleteDescriptorCommand.USAGE + "\n\n" + RemoteRegistryDeleteDescriptorCommand.DESC);
+      out.println();
+      out.println( div );
     }
   }
 
@@ -439,6 +529,11 @@ public class KnoxCLI extends Configured implements Tool {
       TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
       return ts;
     }
+
+    protected RemoteConfigurationRegistryClientService getRemoteConfigRegistryClientService() {
+      return services.getService(GatewayServices.REMOTE_REGISTRY_CLIENT_SERVICE);
+    }
+
   }
 
  private class AliasListCommand extends Command {
@@ -1598,9 +1693,10 @@ public class KnoxCLI extends Configured implements Tool {
   public class ServiceTestCommand extends Command {
     public static final String USAGE = "service-test [--u username] [--p password] [--cluster clustername] [--hostname name] " +
         "[--port port]";
-    public static final String DESC = "This command requires a running instance of Knox to be present on the same " +
-        "machine. It will execute a test to make sure all services are accessible through the gateway URLs. Errors are " +
-        "reported and suggestions to resolve any problems are returned. JSON formatted.";
+    public static final String DESC =
+                        "This command requires a running instance of Knox to be present on the same machine.\n" +
+                        "It will execute a test to make sure all services are accessible through the gateway URLs.\n" +
+                        "Errors are reported and suggestions to resolve any problems are returned. JSON formatted.\n";
 
     private boolean ssl = true;
     private int attempts = 0;
@@ -1752,6 +1848,285 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
   }
+
+  public class RemoteRegistryClientsListCommand extends Command {
+
+    static final String USAGE = "list-registry-clients";
+    static final String DESC = "Lists all of the remote configuration registry clients defined in gateway-site.xml.\n";
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     */
+    @Override
+    public void execute() throws Exception {
+      GatewayConfig config = getGatewayConfig();
+      List<String> remoteConfigRegistryClientNames = config.getRemoteRegistryConfigurationNames();
+      if (!remoteConfigRegistryClientNames.isEmpty()) {
+        out.println("Listing remote configuration registry clients:");
+        for (String name : remoteConfigRegistryClientNames) {
+          out.println(name);
+        }
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     */
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+ }
+
+
+  /**
+   * Base class for remote config registry upload commands
+   */
+  public abstract class RemoteRegistryUploadCommand extends Command {
+    protected static final String ROOT_ENTRY = "/knox";
+    protected static final String CONFIG_ENTRY = ROOT_ENTRY + "/config";
+    protected static final String PROVIDER_CONFIG_ENTRY = CONFIG_ENTRY + "/shared-providers";
+    protected static final String DESCRIPTORS__ENTRY = CONFIG_ENTRY + "/descriptors";
+
+    private File sourceFile = null;
+    protected String filename = null;
+
+    protected RemoteRegistryUploadCommand(String sourceFileName) {
+      this.filename = sourceFileName;
+    }
+
+    private void upload(RemoteConfigurationRegistryClient client, String entryPath, File source) throws Exception {
+      String content = FileUtils.readFileToString(source);
+      if (client.entryExists(entryPath)) {
+        // If it exists, then we're going to set the data
+        client.setEntryData(entryPath, content);
+      } else {
+        // If it does not exist, then create it and set the data
+        client.createEntry(entryPath, content);
+      }
+    }
+
+    File getSourceFile() {
+      if (sourceFile == null) {
+        sourceFile = new File(filename);
+      }
+      return sourceFile;
+    }
+
+    String getEntryName(String prefixPath) {
+      String entryName = remoteRegistryEntryName;
+      if (entryName == null) {
+        File sourceFile = getSourceFile();
+        if (sourceFile.exists()) {
+          String path = sourceFile.getAbsolutePath();
+          entryName = path.substring(path.lastIndexOf(File.separator) + 1);
+        } else {
+          out.println("Could not locate source file: " + filename);
+        }
+      }
+      return prefixPath + "/" + entryName;
+    }
+
+    protected void execute(String entryName, File sourceFile) throws Exception {
+      if (remoteRegistryClient != null) {
+        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
+        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
+        if (client != null) {
+          if (entryName != null) {
+            upload(client, entryName, sourceFile);
+          }
+        } else {
+          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+        }
+      } else {
+        out.println("Missing required argument : --registry-client\n");
+      }
+    }
+
+  }
+
+
+  public class RemoteRegistryUploadProviderConfigCommand extends RemoteRegistryUploadCommand {
+
+    static final String USAGE = "upload-provider-config providerConfigFile --registry-client name [--entry-name entryName]";
+    static final String DESC = "Uploads a provider configuration to the specified remote registry client, optionally " +
+                               "renaming the entry.\nIf the entry name is not specified, the name of the uploaded " +
+                               "file is used.\n";
+
+    RemoteRegistryUploadProviderConfigCommand(String fileName) {
+      super(fileName);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     */
+    @Override
+    public void execute() throws Exception {
+      super.execute(getEntryName(PROVIDER_CONFIG_ENTRY), getSourceFile());
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     */
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+
+  public class RemoteRegistryUploadDescriptorCommand extends RemoteRegistryUploadCommand {
+
+    static final String USAGE = "upload-descriptor descriptorFile --registry-client name [--entry-name entryName]";
+    static final String DESC = "Uploads a simple descriptor using the specified remote registry client, optionally " +
+                               "renaming the entry.\nIf the entry name is not specified, the name of the uploaded " +
+                               "file is used.\n";
+
+    RemoteRegistryUploadDescriptorCommand(String fileName) {
+      super(fileName);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     */
+    @Override
+    public void execute() throws Exception {
+      super.execute(getEntryName(DESCRIPTORS__ENTRY), getSourceFile());
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     */
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+
+  public class RemoteRegistryGetACLCommand extends Command {
+
+    static final String USAGE = "get-registry-acl entry --registry-client name";
+    static final String DESC = "Presents the ACL settings for the specified remote registry entry.\n";
+
+    private String entry = null;
+
+    RemoteRegistryGetACLCommand(String entry) {
+      this.entry = entry;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     */
+    @Override
+    public void execute() throws Exception {
+      if (remoteRegistryClient != null) {
+        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
+        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
+        if (client != null) {
+          if (entry != null) {
+            List<RemoteConfigurationRegistryClient.EntryACL> acls = client.getACL(entry);
+            for (RemoteConfigurationRegistryClient.EntryACL acl : acls) {
+              out.println(acl.getType() + ":" + acl.getId() + ":" + acl.getPermissions());
+            }
+          }
+        } else {
+          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+        }
+      } else {
+        out.println("Missing required argument : --registry-client\n");
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     */
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+
+  /**
+   * Base class for remote config registry delete commands
+   */
+  public abstract class RemoteRegistryDeleteCommand extends Command {
+    protected static final String ROOT_ENTRY = "/knox";
+    protected static final String CONFIG_ENTRY = ROOT_ENTRY + "/config";
+    protected static final String PROVIDER_CONFIG_ENTRY = CONFIG_ENTRY + "/shared-providers";
+    protected static final String DESCRIPTORS__ENTRY = CONFIG_ENTRY + "/descriptors";
+
+    protected String entryName = null;
+
+    protected RemoteRegistryDeleteCommand(String entryName) {
+      this.entryName = entryName;
+    }
+
+    private void delete(RemoteConfigurationRegistryClient client, String entryPath) throws Exception {
+      if (client.entryExists(entryPath)) {
+        // If it exists, then delete it
+        client.deleteEntry(entryPath);
+      }
+    }
+
+    protected void execute(String entryName) throws Exception {
+      if (remoteRegistryClient != null) {
+        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
+        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
+        if (client != null) {
+          if (entryName != null) {
+            delete(client, entryName);
+          }
+        } else {
+          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+        }
+      } else {
+        out.println("Missing required argument : --registry-client\n");
+      }
+    }
+  }
+
+
+  public class RemoteRegistryDeleteProviderConfigCommand extends RemoteRegistryDeleteCommand {
+    static final String USAGE = "delete-provider-config providerConfig --registry-client name";
+    static final String DESC = "Deletes a shared provider configuration from the specified remote registry.\n";
+
+    public RemoteRegistryDeleteProviderConfigCommand(String entryName) {
+      super(entryName);
+    }
+
+    @Override
+    public void execute() throws Exception {
+      execute(PROVIDER_CONFIG_ENTRY + "/" + entryName);
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+
+  public class RemoteRegistryDeleteDescriptorCommand extends RemoteRegistryDeleteCommand {
+    static final String USAGE = "delete-descriptor descriptor --registry-client name";
+    static final String DESC = "Deletes a simple descriptor from the specified remote registry.\n";
+
+    public RemoteRegistryDeleteDescriptorCommand(String entryName) {
+      super(entryName);
+    }
+
+    @Override
+    public void execute() throws Exception {
+      execute(DESCRIPTORS__ENTRY + "/" + entryName);
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
