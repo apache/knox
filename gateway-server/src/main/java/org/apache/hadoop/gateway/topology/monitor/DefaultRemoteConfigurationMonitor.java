@@ -24,9 +24,12 @@ import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegis
 import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClient.EntryListener;
 import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import org.apache.zookeeper.ZooDefs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -38,6 +41,32 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
     private static final String NODE_KNOX_DESCRIPTORS = NODE_KNOX_CONFIG + "/descriptors";
 
     private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
+
+    // N.B. This is ZooKeeper-specific, and should be abstracted when another registry is supported
+    private static final RemoteConfigurationRegistryClient.EntryACL AUTHENTICATED_USERS_ALL;
+    static {
+        AUTHENTICATED_USERS_ALL = new RemoteConfigurationRegistryClient.EntryACL() {
+            public String getId() {
+                return "";
+            }
+
+            public String getType() {
+                return "auth";
+            }
+
+            public Object getPermissions() {
+                return ZooDefs.Perms.ALL;
+            }
+
+            public boolean canRead() {
+                return true;
+            }
+
+            public boolean canWrite() {
+                return true;
+            }
+        };
+    }
 
     private RemoteConfigurationRegistryClient client = null;
 
@@ -75,6 +104,9 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
         final String monitorSource = client.getAddress();
         log.startingRemoteConfigurationMonitor(monitorSource);
 
+        // Ensure the existence of the expected entries and their associated ACLs
+        ensureEntries();
+
         // Confirm access to the remote provider configs directory znode
         List<String> providerConfigs = client.listChildEntries(NODE_KNOX_PROVIDERS);
         if (providerConfigs == null) {
@@ -105,6 +137,37 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
         client.removeEntryListener(NODE_KNOX_DESCRIPTORS);
     }
 
+    private void ensureEntries() {
+        ensureEntry(NODE_KNOX);
+        ensureEntry(NODE_KNOX_CONFIG);
+        ensureEntry(NODE_KNOX_PROVIDERS);
+        ensureEntry(NODE_KNOX_DESCRIPTORS);
+    }
+
+    private void ensureEntry(String name) {
+        if (!client.entryExists(name)) {
+            client.createEntry(name);
+        } else {
+            // Validate the ACL
+            List<RemoteConfigurationRegistryClient.EntryACL> entryACLs = client.getACL(name);
+            for (RemoteConfigurationRegistryClient.EntryACL entryACL : entryACLs) {
+                // N.B. This is ZooKeeper-specific, and should be abstracted when another registry is supported
+                // For now, check for ZooKeeper world:anyone with ANY permissions (even read-only)
+                if (entryACL.getType().equals("world") && entryACL.getId().equals("anyone")) {
+                    log.suspectWritableRemoteConfigurationEntry(name);
+
+                    // If the client is authenticated, but "anyone" can write the content, then the content may not
+                    // be trustworthy.
+                    if (client.isAuthenticationConfigured()) {
+                        log.correctingSuspectWritableRemoteConfigurationEntry(name);
+
+                        // Replace the existing ACL with one that permits only authenticated users
+                        client.setACL(name, Collections.singletonList(AUTHENTICATED_USERS_ALL));
+                  }
+                }
+            }
+        }
+    }
 
     private static class ConfigDirChildEntryListener implements ChildEntryListener {
         File localDir;

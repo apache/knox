@@ -33,13 +33,16 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +51,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -66,8 +70,15 @@ public class RemoteConfigurationMonitorTest {
     private static final String PATH_KNOX_PROVIDERS = PATH_KNOX_CONFIG + "/shared-providers";
     private static final String PATH_KNOX_DESCRIPTORS = PATH_KNOX_CONFIG + "/descriptors";
 
+    private static final String PATH_AUTH_TEST = "/auth_test/child_node";
+
+
+    private static final String ALT_USERNAME = "notyou";
     private static final String ZK_USERNAME = "testsasluser";
     private static final String ZK_PASSWORD = "testsaslpwd";
+
+    private static final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
+    private static final ACL SASL_TESTUSER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("sasl", ZK_USERNAME));
 
     private static File testTmp;
     private static File providersDir;
@@ -80,11 +91,34 @@ public class RemoteConfigurationMonitorTest {
     @BeforeClass
     public static void setupSuite() throws Exception {
         testTmp = TestUtils.createTempDir(RemoteConfigurationMonitorTest.class.getName());
-        File confDir   = TestUtils.createTempDir(testTmp + "/conf");
-        providersDir   = TestUtils.createTempDir(confDir + "/shared-providers");
+        File confDir = TestUtils.createTempDir(testTmp + "/conf");
+        providersDir = TestUtils.createTempDir(confDir + "/shared-providers");
         descriptorsDir = TestUtils.createTempDir(confDir + "/descriptors");
+    }
 
+    @AfterClass
+    public static void tearDownSuite() throws Exception {
+        // Delete the working dir
+        testTmp.delete();
+    }
+
+    @Before
+    public void setupTest() throws Exception {
         configureAndStartZKCluster();
+    }
+
+    @After
+    public void tearDownTest() throws Exception {
+        // Clean up the ZK nodes, and close the client
+        if (client != null) {
+            if (client.checkExists().forPath(PATH_KNOX) != null) {
+                client.delete().deletingChildrenIfNeeded().forPath(PATH_KNOX);
+            }
+            client.close();
+        }
+
+        // Shutdown the ZK cluster
+        zkCluster.close();
     }
 
     /**
@@ -102,7 +136,7 @@ public class RemoteConfigurationMonitorTest {
         fw.write("Server {\n" +
                 "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
                 "    user_" + username + " =\"" + password + "\";\n" +
-                "};\n"+
+                "};\n" +
                 "Client {\n" +
                 "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
                 "    username=\"" + username + "\"\n" +
@@ -141,42 +175,43 @@ public class RemoteConfigurationMonitorTest {
 
         // Create the client for the test cluster
         client = CuratorFrameworkFactory.builder()
-                .connectString(zkCluster.getConnectString())
-                .retryPolicy(new ExponentialBackoffRetry(100, 3))
-                .build();
+                                        .connectString(zkCluster.getConnectString())
+                                        .retryPolicy(new ExponentialBackoffRetry(100, 3))
+                                        .build();
         assertNotNull(client);
         client.start();
 
-        // Create the knox config paths with an ACL for the sasl user configured for the client
-        List<ACL> acls = new ArrayList<>();
-        acls.add(new ACL(ZooDefs.Perms.ALL, new Id("sasl", ZK_USERNAME)));
-
-        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_DESCRIPTORS);
-        assertNotNull("Failed to create node:" + PATH_KNOX_DESCRIPTORS,
-                client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
-        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);
-        assertNotNull("Failed to create node:" + PATH_KNOX_PROVIDERS,
-                client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+        // Create test config nodes with an ACL for a sasl user that is NOT configured for the test client
+        List<ACL> acls = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("sasl", ALT_USERNAME)),
+                                       new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_AUTH_TEST);
+        assertNotNull("Failed to create node:" + PATH_AUTH_TEST,
+                      client.checkExists().forPath(PATH_AUTH_TEST));
     }
 
-    @AfterClass
-    public static void tearDownSuite() throws Exception {
-        // Clean up the ZK nodes, and close the client
-        if (client != null) {
-            client.delete().deletingChildrenIfNeeded().forPath(PATH_KNOX);
-            client.close();
+
+    private static void validateKnoxConfigNodeACLs(List<ACL> expectedACLS, List<ACL> actualACLs) throws Exception {
+        assertEquals(expectedACLS.size(), actualACLs.size());
+        int matchedCount = 0;
+        for (ACL expected : expectedACLS) {
+            for (ACL actual : actualACLs) {
+                Id expectedId = expected.getId();
+                Id actualId = actual.getId();
+                if (actualId.getScheme().equals(expectedId.getScheme()) && actualId.getId().equals(expectedId.getId())) {
+                    matchedCount++;
+                    assertEquals(expected.getPerms(), actual.getPerms());
+                    break;
+                }
+            }
         }
-
-        // Shutdown the ZK cluster
-        zkCluster.close();
-
-        // Delete the working dir
-        testTmp.delete();
+        assertEquals("ACL mismatch despite being same quantity.", expectedACLS.size(), matchedCount);
     }
+
 
     @Test
-    public void testZooKeeperConfigMonitorSASL() throws Exception {
+    public void testZooKeeperConfigMonitorSASLNodesExistWithUnacceptableACL() throws Exception {
         final String configMonitorName = "zkConfigClient";
+        final String alias = "zkPass";
 
         // Setup the base GatewayConfig mock
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
@@ -186,14 +221,20 @@ public class RemoteConfigurationMonitorTest {
                 .andReturn(Collections.singletonList(configMonitorName))
                 .anyTimes();
         final String registryConfig =
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
         EasyMock.expect(gc.getRemoteRegistryConfiguration(configMonitorName))
                 .andReturn(registryConfig).anyTimes();
         EasyMock.expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(configMonitorName).anyTimes();
         EasyMock.replay(gc);
 
         AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForGateway(alias))
+                .andReturn(ZK_PASSWORD.toCharArray())
+                .anyTimes();
         EasyMock.replay(aliasService);
 
         RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
@@ -206,12 +247,177 @@ public class RemoteConfigurationMonitorTest {
         RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
         assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
 
+        final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
+        List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL, new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_CONFIG);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_DESCRIPTORS);
+
+        // Make sure both ACLs were applied
+        List<ACL> preACLs = client.getACL().forPath(PATH_KNOX);
+        assertEquals(2, preACLs.size());
+
+        // Check that the config nodes really do exist (the monitor will NOT create them if they're present)
+        assertNotNull(client.checkExists().forPath(PATH_KNOX));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_CONFIG));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
+
         try {
             cm.start();
         } catch (Exception e) {
             fail("Failed to start monitor: " + e.getMessage());
         }
 
+        // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
+        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+    }
+
+
+    @Test
+    public void testZooKeeperConfigMonitorSASLNodesExistWithAcceptableACL() throws Exception {
+        final String configMonitorName = "zkConfigClient";
+        final String alias = "zkPass";
+
+        // Setup the base GatewayConfig mock
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getGatewayDescriptorsDir()).andReturn(descriptorsDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getRemoteRegistryConfigurationNames())
+                .andReturn(Collections.singletonList(configMonitorName))
+                .anyTimes();
+        final String registryConfig =
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
+                        GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
+        EasyMock.expect(gc.getRemoteRegistryConfiguration(configMonitorName))
+                .andReturn(registryConfig).anyTimes();
+        EasyMock.expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(configMonitorName).anyTimes();
+        EasyMock.replay(gc);
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForGateway(alias))
+                .andReturn(ZK_PASSWORD.toCharArray())
+                .anyTimes();
+        EasyMock.replay(aliasService);
+
+        RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+        clientService.setAliasService(aliasService);
+        clientService.init(gc, Collections.emptyMap());
+        clientService.start();
+
+        RemoteConfigurationMonitorFactory.setClientService(clientService);
+
+        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
+        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+
+        List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_CONFIG);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_DESCRIPTORS);
+
+        // Check that the config nodes really do exist (the monitor will NOT create them if they're present)
+        assertNotNull(client.checkExists().forPath(PATH_KNOX));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_CONFIG));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
+
+        try {
+            cm.start();
+        } catch (Exception e) {
+            fail("Failed to start monitor: " + e.getMessage());
+        }
+
+        // Test auth violation
+        clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
+        assertNull("Creation should have been prevented since write access is not granted to the test client.",
+                client.checkExists().forPath("/auth_test/child_node/test1"));
+        assertTrue("Creation should have been prevented since write access is not granted to the test client.",
+                client.getChildren().forPath("/auth_test/child_node").isEmpty());
+
+        // Validate the expected ACLs on the Knox config znodes (make sure the monitor didn't change them)
+        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+    }
+
+
+    @Test
+    public void testZooKeeperConfigMonitorSASLCreateNodes() throws Exception {
+        final String configMonitorName = "zkConfigClient";
+        final String alias = "zkPass";
+
+        // Setup the base GatewayConfig mock
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getGatewayDescriptorsDir()).andReturn(descriptorsDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getRemoteRegistryConfigurationNames())
+                .andReturn(Collections.singletonList(configMonitorName))
+                .anyTimes();
+        final String registryConfig =
+                            GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                            GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                            GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
+                            GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
+                            GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
+        EasyMock.expect(gc.getRemoteRegistryConfiguration(configMonitorName))
+                .andReturn(registryConfig).anyTimes();
+        EasyMock.expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(configMonitorName).anyTimes();
+        EasyMock.replay(gc);
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForGateway(alias))
+                .andReturn(ZK_PASSWORD.toCharArray())
+                .anyTimes();
+        EasyMock.replay(aliasService);
+
+        RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+        clientService.setAliasService(aliasService);
+        clientService.init(gc, Collections.emptyMap());
+        clientService.start();
+
+        RemoteConfigurationMonitorFactory.setClientService(clientService);
+
+        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
+        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+
+        // Check that the config nodes really don't yet exist (the monitor will create them if they're not present)
+        assertNull(client.checkExists().forPath(PATH_KNOX));
+        assertNull(client.checkExists().forPath(PATH_KNOX_CONFIG));
+        assertNull(client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+        assertNull(client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
+
+        try {
+            cm.start();
+        } catch (Exception e) {
+            fail("Failed to start monitor: " + e.getMessage());
+        }
+
+        // Test auth violation
+        clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
+        assertNull("Creation should have been prevented since write access is not granted to the test client.",
+                   client.checkExists().forPath("/auth_test/child_node/test1"));
+        assertTrue("Creation should have been prevented since write access is not granted to the test client.",
+                   client.getChildren().forPath("/auth_test/child_node").isEmpty());
+
+        // Validate the expected ACLs on the Knox config znodes (make sure the monitor created them correctly)
+        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+
+        // Test the Knox config nodes, for which authentication should be sufficient for access
         try {
             final String pc_one_znode = getProviderPath("providers-config1.xml");
             final File pc_one         = new File(providersDir, "providers-config1.xml");

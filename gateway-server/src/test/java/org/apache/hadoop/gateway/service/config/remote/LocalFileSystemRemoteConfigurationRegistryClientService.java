@@ -129,6 +129,16 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
                             public Object getPermissions() {
                                 return collected.get(id).toString();
                             }
+
+                            @Override
+                            public boolean canRead() {
+                                return true;
+                            }
+
+                            @Override
+                            public boolean canWrite() {
+                                return true;
+                            }
                         };
                         result.add(acl);
                     }
@@ -213,6 +223,16 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
                     }
                 }
                 return 0;
+            }
+
+            @Override
+            public boolean isAuthenticationConfigured() {
+                return false;
+            }
+
+            @Override
+            public void setACL(String path, List<EntryACL> acls) {
+                //
             }
 
             @Override

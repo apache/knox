@@ -45,6 +45,7 @@ import org.apache.zookeeper.data.Stat;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,7 +116,7 @@ class CuratorClientService implements ZooKeeperClientService {
         ACLProvider aclProvider;
         if (config.isSecureRegistry()) {
             configureSasl(config);
-            aclProvider = new SASLOwnerACLProvider(config.getPrincipal());
+            aclProvider = new SASLOwnerACLProvider();
         } else {
             // Clear SASL system property
             System.clearProperty(LOGIN_CONTEXT_NAME_PROPERTY);
@@ -163,6 +164,11 @@ class CuratorClientService implements ZooKeeperClientService {
         }
 
         @Override
+        public boolean isAuthenticationConfigured() {
+            return config.isSecureRegistry();
+        }
+
+        @Override
         public boolean entryExists(String path) {
             Stat s = null;
             try {
@@ -188,6 +194,30 @@ class CuratorClientService implements ZooKeeperClientService {
                 log.errorHandlingRemoteConfigACL(path, e);
             }
             return acl;
+        }
+
+        @Override
+        public void setACL(String path, List<EntryACL> entryACLs) {
+            // Translate the abstract ACLs into ZooKeeper ACLs
+            List<ACL> delegateACLs = new ArrayList<>();
+            for (EntryACL entryACL : entryACLs) {
+                String scheme = entryACL.getType();
+                String id = entryACL.getId();
+                int permissions = 0;
+                if (entryACL.canWrite()) {
+                    permissions = ZooDefs.Perms.ALL;
+                } else if (entryACL.canRead()){
+                    permissions = ZooDefs.Perms.READ;
+                }
+                delegateACLs.add(new ACL(permissions, new Id(scheme, id)));
+            }
+
+            try {
+                // Set the ACLs for the path
+                delegate.setACL().withACL(delegateACLs).forPath(path);
+            } catch (Exception e) {
+                log.errorSettingEntryACL(path, e);
+            }
         }
 
         @Override
@@ -305,8 +335,8 @@ class CuratorClientService implements ZooKeeperClientService {
 
         private final List<ACL> saslACL;
 
-        private SASLOwnerACLProvider(String principal) {
-            this.saslACL = Collections.singletonList(new ACL(ZooDefs.Perms.ALL, new Id("sasl", principal)));
+        private SASLOwnerACLProvider() {
+            this.saslACL = ZooDefs.Ids.CREATOR_ALL_ACL; // All permissions for any authenticated user
         }
 
         @Override
@@ -396,7 +426,7 @@ class CuratorClientService implements ZooKeeperClientService {
     private static final class ZooKeeperACLAdapter implements RemoteConfigurationRegistryClient.EntryACL {
         private String type;
         private String id;
-        private Object permissions;
+        private int permissions;
 
         ZooKeeperACLAdapter(ACL acl) {
             this.permissions = acl.getPerms();
@@ -417,6 +447,16 @@ class CuratorClientService implements ZooKeeperClientService {
         @Override
         public Object getPermissions() {
             return permissions;
+        }
+
+        @Override
+        public boolean canRead() {
+            return (permissions >= ZooDefs.Perms.READ);
+        }
+
+        @Override
+        public boolean canWrite() {
+            return (permissions >= ZooDefs.Perms.WRITE);
         }
     }
 
