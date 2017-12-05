@@ -32,8 +32,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.gateway.GatewayServer;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.Service;
+import org.apache.hadoop.gateway.services.security.AliasService;
+import org.apache.hadoop.gateway.services.security.KeystoreService;
+import org.apache.hadoop.gateway.services.security.MasterService;
 import org.apache.hadoop.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
 import org.apache.hadoop.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.hadoop.gateway.topology.discovery.ServiceDiscoveryFactory;
@@ -133,6 +138,14 @@ public class SimpleDescriptorHandler {
             }
         } else {
             log.failedToDiscoverClusterServices(desc.getClusterName());
+        }
+
+        // Provision the query param encryption password here, rather than relying on the random password generated
+        // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
+        // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
+        // query params with the same credentials. (KNOX-1136)
+        if (!provisionQueryParamEncryptionCredential(desc.getName())) {
+            log.unableCreatePasswordForEncryption(desc.getName());
         }
 
         BufferedWriter fw = null;
@@ -258,6 +271,51 @@ public class SimpleDescriptorHandler {
         }
 
         result.put("topology", topologyDescriptor);
+        return result;
+    }
+
+
+    /**
+     * KNOX-1136
+     *
+     * Provision the query string encryption password prior to it being randomly generated during the topology
+     * deployment.
+     *
+     * @param topologyName The name of the topology for which the credential will be provisioned.
+     *
+     * @return true if the credential was successfully provisioned; otherwise, false.
+     */
+    private static boolean provisionQueryParamEncryptionCredential(String topologyName) {
+        boolean result = false;
+
+        try {
+            GatewayServices services = GatewayServer.getGatewayServices();
+            if (services != null) {
+                MasterService ms = services.getService("MasterService");
+                if (ms != null) {
+                    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+                    if (ks != null) {
+                        if (!ks.isCredentialStoreForClusterAvailable(topologyName)) {
+                            ks.createCredentialStoreForCluster(topologyName);
+                        }
+
+                        // If the credential store existed, or it was just successfully created
+                        if (ks.getCredentialStoreForCluster(topologyName) != null) {
+                            AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+                            if (aliasService != null) {
+                                // Derive and set the query param encryption password
+                                String queryEncryptionPass = new String(ms.getMasterSecret()) + topologyName;
+                                aliasService.addAliasForCluster(topologyName, "encryptQueryString", queryEncryptionPass);
+                                result = true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.exceptionCreatingPasswordForEncryption(topologyName, e);
+        }
+
         return result;
     }
 
