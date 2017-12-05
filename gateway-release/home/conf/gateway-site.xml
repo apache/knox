@@ -73,4 +73,16 @@ limitations under the License.
         <description>Enable/Disable cookie scoping feature.</description>
     </property>
 
+    <property>
+        <name>gateway.cluster.config.monitor.ambari.enabled</name>
+        <value>false</value>
+        <description>Enable/disable Ambari cluster configuration monitoring.</description>
+    </property>
+
+    <property>
+        <name>gateway.cluster.config.monitor.ambari.interval</name>
+        <value>60</value>
+        <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
+    </property>
+
 </configuration>

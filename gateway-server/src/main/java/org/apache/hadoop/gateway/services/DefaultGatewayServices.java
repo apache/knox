@@ -27,6 +27,7 @@ import org.apache.hadoop.gateway.service.config.remote.RemoteConfigurationRegist
 import org.apache.hadoop.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.hadoop.gateway.services.metrics.impl.DefaultMetricsService;
+import org.apache.hadoop.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.hadoop.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.hadoop.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.hadoop.gateway.services.registry.impl.DefaultServiceRegistryService;
@@ -112,6 +113,11 @@ public class DefaultGatewayServices implements GatewayServices {
     registryClientService.init(config, options);
     services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
 
+    DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
+    ccs.setAliasService(alias);
+    ccs.init(config, options);
+    services.put(CLUSTER_CONFIGURATION_MONITOR_SERVICE, ccs);
+
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.setAliasService(alias);
     tops.init(  config, options  );
@@ -144,6 +150,8 @@ public class DefaultGatewayServices implements GatewayServices {
                             (RemoteConfigurationRegistryClientService)services.get(REMOTE_REGISTRY_CLIENT_SERVICE);
     clientService.start();
 
+    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).start();
+
     DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
     tops.start();
 
@@ -155,6 +163,8 @@ public class DefaultGatewayServices implements GatewayServices {
     ms.stop();
 
     ks.stop();
+
+    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).stop();
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.stop();

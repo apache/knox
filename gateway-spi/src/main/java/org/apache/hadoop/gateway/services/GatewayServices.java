@@ -41,6 +41,8 @@ public interface GatewayServices extends Service, ProviderDeploymentContributor 
 
   String REMOTE_REGISTRY_CLIENT_SERVICE = "RemoteConfigRegistryClientService";
 
+  String CLUSTER_CONFIGURATION_MONITOR_SERVICE = "ClusterConfigurationMonitorService";
+
   public abstract Collection<String> getServiceNames();
 
   public abstract <T> T getService( String serviceName );

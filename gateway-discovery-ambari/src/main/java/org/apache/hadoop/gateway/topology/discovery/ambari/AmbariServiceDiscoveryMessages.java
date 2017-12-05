@@ -25,24 +25,44 @@ import org.apache.hadoop.gateway.i18n.messages.StackTrace;
 public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
-            text = "Failed to load service discovery configuration: {1}")
-    void failedToLoadServiceDiscoveryConfiguration(@StackTrace(level = MessageLevel.ERROR) Exception e);
+             text = "Failed to persist data for cluster configuration monitor {0} {1}: {2}")
+    void failedToPersistClusterMonitorData(final String monitor,
+                                           final String filename,
+                                           @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
-             text = "Failed to load service discovery configuration {0}: {1}")
-    void failedToLoadServiceDiscoveryConfiguration(final String configuration,
-                               @StackTrace(level = MessageLevel.ERROR) Exception e);
+             text = "Failed to load persisted service discovery configuration for cluster monitor {0} : {1}")
+    void failedToLoadClusterMonitorServiceDiscoveryConfig(final String monitor,
+                                                          @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Failed to load persisted cluster configuration version data for cluster monitor {0} : {1}")
+    void failedToLoadClusterMonitorConfigVersions(final String monitor,
+                                                  @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR,
+             text = "Unable to access the Ambari Configuration Change Monitor: {0}")
+    void errorAccessingConfigurationChangeMonitor(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR,
+             text = "Failed to load service discovery URL definition configuration: {1}")
+    void failedToLoadServiceDiscoveryURLDefConfiguration(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR,
+             text = "Failed to load service discovery URL definition configuration {0}: {1}")
+    void failedToLoadServiceDiscoveryURLDefConfiguration(final String configuration,
+                                                         @StackTrace(level = MessageLevel.ERROR) Exception e);
 
     @Message(level = MessageLevel.ERROR,
              text = "Encountered an error during cluster {0} discovery: {1}")
     void clusterDiscoveryError(final String clusterName,
-                               @StackTrace(level = MessageLevel.ERROR) Exception e);
+                               @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 
     @Message(level = MessageLevel.DEBUG,
              text = "REST invocation {0} failed: {1}")
     void restInvocationError(final String url,
-                             @StackTrace(level = MessageLevel.ERROR) Exception e);
+                             @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 
     @Message(level = MessageLevel.ERROR,
@@ -75,20 +95,23 @@ public interface AmbariServiceDiscoveryMessages {
     void noJSON(final String url);
 
 
-    @Message(level = MessageLevel.DEBUG,
+    @Message(level = MessageLevel.TRACE,
              text = "REST invocation result: {0}")
     void debugJSON(final String json);
 
+
     @Message(level = MessageLevel.DEBUG,
-            text = "Loaded component configuration mappings: {0}")
+             text = "Loaded component configuration mappings: {0}")
     void loadedComponentConfigMappings(final String mappings);
+
 
     @Message(level = MessageLevel.ERROR,
              text = "Failed to load component configuration property mappings {0}: {1}")
     void failedToLoadComponentConfigMappings(final String mappings,
-                                             @StackTrace(level = MessageLevel.ERROR) Exception e);
+                                             @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-    @Message(level = MessageLevel.DEBUG,
+
+    @Message(level = MessageLevel.TRACE,
              text = "Discovered: Service: {0}, Host: {1}")
     void discoveredServiceHost(final String serviceName, final String hostName);
 
@@ -114,8 +137,12 @@ public interface AmbariServiceDiscoveryMessages {
 
 
     @Message(level = MessageLevel.DEBUG,
-            text = "Determined the service URL mapping property {0} value: {1}")
+             text = "Determined the service URL mapping property {0} value: {1}")
     void determinedPropertyValue(final String propertyName, final String propertyValue);
 
+
+    @Message(level = MessageLevel.INFO,
+             text = "Started Ambari cluster configuration monitor (checking every {0} seconds)")
+    void startedAmbariConfigMonitor(final long pollingInterval);
 
 }
