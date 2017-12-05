@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The configuration for the Gateway.
@@ -619,7 +620,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getHttpClientConnectionTimeout() {
     int t = -1;
-    String s = get( HTTP_CLIENT_CONNECTION_TIMEOUT, null );
+    String s = get( HTTP_CLIENT_CONNECTION_TIMEOUT, String.valueOf(TimeUnit.SECONDS.toMillis(20)));
     if ( s != null ) {
       try {
         t = (int)parseNetworkTimeout( s );
@@ -633,7 +634,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getHttpClientSocketTimeout() {
     int t = -1;
-    String s = get( HTTP_CLIENT_SOCKET_TIMEOUT, null );
+    String s = get( HTTP_CLIENT_SOCKET_TIMEOUT, String.valueOf(TimeUnit.SECONDS.toMillis(20)) );
     if ( s != null ) {
       try {
         t = (int)parseNetworkTimeout( s );
