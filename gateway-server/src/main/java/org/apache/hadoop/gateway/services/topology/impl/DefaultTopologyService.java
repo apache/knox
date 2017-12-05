@@ -28,6 +28,7 @@ import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.hadoop.gateway.GatewayMessages;
+import org.apache.hadoop.gateway.GatewayServer;
 import org.apache.hadoop.gateway.audit.api.Action;
 import org.apache.hadoop.gateway.audit.api.ActionOutcome;
 import org.apache.hadoop.gateway.audit.api.AuditServiceFactory;
@@ -37,15 +38,18 @@ import org.apache.hadoop.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.hadoop.gateway.config.GatewayConfig;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
 import org.apache.hadoop.gateway.service.definition.ServiceDefinition;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.ServiceLifecycleException;
 import org.apache.hadoop.gateway.services.security.AliasService;
 import org.apache.hadoop.gateway.services.topology.TopologyService;
+import org.apache.hadoop.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.hadoop.gateway.topology.Topology;
 import org.apache.hadoop.gateway.topology.TopologyEvent;
 import org.apache.hadoop.gateway.topology.TopologyListener;
 import org.apache.hadoop.gateway.topology.TopologyMonitor;
 import org.apache.hadoop.gateway.topology.TopologyProvider;
 import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
+import org.apache.hadoop.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
 import org.apache.hadoop.gateway.topology.simple.SimpleDescriptorHandler;
@@ -554,7 +558,10 @@ public class DefaultTopologyService
 
   @Override
   public void start() {
-
+    // Register a cluster configuration monitor listener for change notifications
+    ClusterConfigurationMonitorService ccms =
+                  GatewayServer.getGatewayServices().getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+    ccms.addListener(new TopologyDiscoveryTrigger(this));
   }
 
   @Override
@@ -589,11 +596,17 @@ public class DefaultTopologyService
       // This happens prior to the start-up loading of the topologies.
       String[] descriptorFilenames =  descriptorsDirectory.list();
       if (descriptorFilenames != null) {
-          for (String descriptorFilename : descriptorFilenames) {
-              if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
-                  descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
-              }
+        for (String descriptorFilename : descriptorFilenames) {
+          if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
+            // If there isn't a corresponding topology file, or if the descriptor has been modified since the
+            // corresponding topology file was generated, then trigger generation of one
+            File matchingTopologyFile = getExistingFile(topologiesDirectory, FilenameUtils.getBaseName(descriptorFilename));
+            if (matchingTopologyFile == null ||
+                    matchingTopologyFile.lastModified() < (new File(descriptorsDirectory, descriptorFilename)).lastModified()) {
+              descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
+            }
           }
+        }
       }
 
       // Initialize the remote configuration monitor, if it has been configured
@@ -603,7 +616,6 @@ public class DefaultTopologyService
       throw new ServiceLifecycleException(io.getMessage());
     }
   }
-
 
   /**
    * Utility method for listing the files in the specified directory.
@@ -844,6 +856,39 @@ public class DefaultTopologyService
         }
       }
       return accept;
+    }
+  }
+
+  /**
+   * Listener for Ambari config change events, which will trigger re-generation (including re-discovery) of the
+   * affected topologies.
+   */
+  private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
+
+    private TopologyService topologyService = null;
+
+    TopologyDiscoveryTrigger(TopologyService topologyService) {
+      this.topologyService = topologyService;
+    }
+
+    @Override
+    public void onConfigurationChange(String source, String clusterName) {
+      log.noticedClusterConfigurationChange(source, clusterName);
+      try {
+        // Identify any descriptors associated with the cluster configuration change
+        for (File descriptor : topologyService.getDescriptors()) {
+          String descriptorContent = FileUtils.readFileToString(descriptor);
+          if (descriptorContent.contains(source)) {
+            if (descriptorContent.contains(clusterName)) {
+              log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
+              // 'Touch' the descriptor to trigger re-generation of the associated topology
+              descriptor.setLastModified(System.currentTimeMillis());
+            }
+          }
+        }
+      } catch (Exception e) {
+        log.errorRespondingToConfigChange(source, clusterName, e);
+      }
     }
   }
 

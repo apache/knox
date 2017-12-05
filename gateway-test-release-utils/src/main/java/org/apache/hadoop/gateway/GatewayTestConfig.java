@@ -640,4 +640,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public String getRemoteConfigurationMonitorClientName() {
     return null;
   }
+
+  @Override
+  public int getClusterMonitorPollingInterval(String type) {
+    return 600;
+  }
+
+  @Override
+  public boolean isClusterMonitorEnabled(String type) {
+    return false;
+  }
 }

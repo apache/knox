@@ -110,7 +110,7 @@ class ServiceURLPropertyConfig {
                 }
             }
         } catch (Exception e) {
-            log.failedToLoadServiceDiscoveryConfiguration(e);
+            log.failedToLoadServiceDiscoveryURLDefConfiguration(e);
         } finally {
             try {
                 source.close();

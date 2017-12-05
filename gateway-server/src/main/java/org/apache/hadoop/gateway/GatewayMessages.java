@@ -596,4 +596,20 @@ public interface GatewayMessages {
             text = "Correcting the suspect permissions for the remote configuration registry entry \"{0}\"." )
   void correctingSuspectWritableRemoteConfigurationEntry(String entryPath);
 
+  @Message(level = MessageLevel.INFO,
+           text = "A cluster configuration change was noticed for {1} @ {0}")
+  void noticedClusterConfigurationChange(final String source, final String clusterName);
+
+
+  @Message(level = MessageLevel.INFO,
+           text = "Triggering topology regeneration for descriptor {2} because of change to the {1} @ {0} configuration.")
+  void triggeringTopologyRegeneration(final String source, final String clusterName, final String affected);
+
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Encountered an error while responding to {1} @ {0} configuration change: {2}")
+  void errorRespondingToConfigChange(final String source,
+                                     final String clusterName,
+                                     @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
 }

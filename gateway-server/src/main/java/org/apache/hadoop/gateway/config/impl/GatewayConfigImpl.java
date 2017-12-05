@@ -170,6 +170,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String MIME_TYPES_TO_COMPRESS = GATEWAY_CONFIG_FILE_PREFIX
       + ".gzip.compress.mime.types";
 
+  public static final String CLUSTER_CONFIG_MONITOR_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".cluster.config.monitor.";
+  public static final String CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX = ".interval";
+  public static final String CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX = ".enabled";
+
+
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
   // backward compatibility. 
@@ -939,6 +944,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayServerHeaderEnabled() {
     return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "true"));
+  }
+
+  @Override
+  public int getClusterMonitorPollingInterval(String type) {
+    return getInt(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase() + CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX, -1);
+  }
+  
+  @Override
+  public boolean isClusterMonitorEnabled(String type) {
+    return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase() + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, true);
   }
 
   @Override

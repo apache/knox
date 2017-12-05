@@ -54,6 +54,8 @@ public class SimpleDescriptorHandler {
 
     private static final SimpleDescriptorMessages log = MessagesFactory.get(SimpleDescriptorMessages.class);
 
+    private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
+
     public static Map<String, File> handle(File desc) throws IOException {
         return handle(desc, NO_GATEWAY_SERVICES);
     }
@@ -89,7 +91,12 @@ public class SimpleDescriptorHandler {
             discoveryType = "AMBARI";
         }
 
-        ServiceDiscovery sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+        // Use the cached discovery object for the required type, if it has already been loaded
+        ServiceDiscovery sd = discoveryInstances.get(discoveryType);
+        if (sd == null) {
+            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            discoveryInstances.put(discoveryType, sd);
+        }
         ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
 
         List<String> validServiceNames = new ArrayList<>();

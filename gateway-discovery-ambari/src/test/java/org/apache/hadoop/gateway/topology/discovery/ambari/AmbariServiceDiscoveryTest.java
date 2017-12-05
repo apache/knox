@@ -119,26 +119,38 @@ public class AmbariServiceDiscoveryTest {
      */
     private static final class TestAmbariServiceDiscovery extends AmbariServiceDiscovery {
 
+        final static String CLUSTER_PLACEHOLDER = TestRESTInvoker.CLUSTER_PLACEHOLDER;
+
+        TestAmbariServiceDiscovery(String clusterName) {
+            super(new TestRESTInvoker(clusterName));
+        }
+
+    }
+
+    private static final class TestRESTInvoker extends RESTInvoker {
+
         final static String CLUSTER_PLACEHOLDER = "CLUSTER_NAME";
 
         private Map<String, JSONObject> cannedResponses = new HashMap<>();
 
-        TestAmbariServiceDiscovery(String clusterName) {
+        TestRESTInvoker(String clusterName) {
+            super(null);
+
             cannedResponses.put(AmbariServiceDiscovery.AMBARI_CLUSTERS_URI,
-                                (JSONObject) JSONValue.parse(CLUSTERS_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
-                                                                                               clusterName)));
+                    (JSONObject) JSONValue.parse(CLUSTERS_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
+                            clusterName)));
 
             cannedResponses.put(String.format(AmbariServiceDiscovery.AMBARI_HOSTROLES_URI, clusterName),
-                                (JSONObject) JSONValue.parse(HOSTROLES_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
-                                                                                                clusterName)));
+                    (JSONObject) JSONValue.parse(HOSTROLES_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
+                            clusterName)));
 
             cannedResponses.put(String.format(AmbariServiceDiscovery.AMBARI_SERVICECONFIGS_URI, clusterName),
-                                (JSONObject) JSONValue.parse(SERVICECONFIGS_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
-                                                                                                     clusterName)));
+                    (JSONObject) JSONValue.parse(SERVICECONFIGS_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,
+                            clusterName)));
         }
 
         @Override
-        protected JSONObject invokeREST(String url, String username, String passwordAlias) {
+        JSONObject invoke(String url, String username, String passwordAlias) {
             return cannedResponses.get(url.substring(url.indexOf("/api")));
         }
     }

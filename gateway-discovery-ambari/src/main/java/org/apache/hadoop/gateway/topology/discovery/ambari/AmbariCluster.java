@@ -63,6 +63,11 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
     }
 
 
+    Map<String, Map<String, ServiceConfiguration>> getServiceConfigurations() {
+        return serviceConfigurations;
+    }
+
+
     Map<String, AmbariComponent> getComponents() {
         return components;
     }

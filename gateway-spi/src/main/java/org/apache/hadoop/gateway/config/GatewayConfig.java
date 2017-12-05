@@ -313,7 +313,23 @@ public interface GatewayConfig {
    * @return
    */
   boolean isGatewayServerHeaderEnabled();
-
+  
+  /**
+   *
+   * @param type The type of cluster configuration monitor for which the interval should be returned.
+   *
+   * @return The polling interval configuration value, or -1 if it has not been configured.
+   */
+  int getClusterMonitorPollingInterval(String type);
+  
+  /**
+   *
+   * @param type The type of cluster configuration monitor for which the interval should be returned.
+   *
+   * @return The enabled status of the specified type of cluster configuration monitor.
+   */
+  boolean isClusterMonitorEnabled(String type);
+  
   /**
    * @return The list of the names of any remote registry configurations defined herein.
    */

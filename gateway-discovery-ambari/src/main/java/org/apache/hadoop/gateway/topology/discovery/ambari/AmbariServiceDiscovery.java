@@ -16,7 +16,7 @@
  */
 package org.apache.hadoop.gateway.topology.discovery.ambari;
 
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,37 +25,31 @@ import java.util.Properties;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-import org.apache.hadoop.gateway.config.ConfigurationException;
 import org.apache.hadoop.gateway.i18n.messages.MessagesFactory;
+import org.apache.hadoop.gateway.services.GatewayServices;
 import org.apache.hadoop.gateway.services.security.AliasService;
-import org.apache.hadoop.gateway.services.security.AliasServiceException;
+import org.apache.hadoop.gateway.topology.ClusterConfigurationMonitorService;
+import org.apache.hadoop.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.hadoop.gateway.topology.discovery.GatewayService;
 import org.apache.hadoop.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.hadoop.gateway.topology.discovery.ServiceDiscoveryConfig;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.util.EntityUtils;
 
 
 class AmbariServiceDiscovery implements ServiceDiscovery {
 
     static final String TYPE = "AMBARI";
 
-    static final String AMBARI_CLUSTERS_URI = "/api/v1/clusters";
+    static final String AMBARI_CLUSTERS_URI = AmbariClientCommon.AMBARI_CLUSTERS_URI;
 
-    static final String AMBARI_HOSTROLES_URI =
-                                       AMBARI_CLUSTERS_URI + "/%s/services?fields=components/host_components/HostRoles";
+    static final String AMBARI_HOSTROLES_URI = AmbariClientCommon.AMBARI_HOSTROLES_URI;
 
-    static final String AMBARI_SERVICECONFIGS_URI =
-            AMBARI_CLUSTERS_URI + "/%s/configurations/service_config_versions?is_current=true";
+    static final String AMBARI_SERVICECONFIGS_URI = AmbariClientCommon.AMBARI_SERVICECONFIGS_URI;
 
     private static final String COMPONENT_CONFIG_MAPPING_FILE =
                                                         "ambari-service-discovery-component-config-mapping.properties";
+
+    private static final String GATEWAY_SERVICES_ACCESSOR_CLASS  = "org.apache.hadoop.gateway.GatewayServer";
+    private static final String GATEWAY_SERVICES_ACCESSOR_METHOD = "getGatewayServices";
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
@@ -69,21 +63,76 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                 componentServiceConfigs.put(componentName, configMapping.getProperty(componentName));
             }
         } catch (Exception e) {
-            log.failedToLoadServiceDiscoveryConfiguration(COMPONENT_CONFIG_MAPPING_FILE, e);
+            log.failedToLoadServiceDiscoveryURLDefConfiguration(COMPONENT_CONFIG_MAPPING_FILE, e);
         }
     }
-
-    private static final String DEFAULT_USER_ALIAS = "ambari.discovery.user";
-    private static final String DEFAULT_PWD_ALIAS  = "ambari.discovery.password";
 
     @GatewayService
     private AliasService aliasService;
 
-    private CloseableHttpClient httpClient = null;
+    private RESTInvoker restClient;
+    private AmbariClientCommon ambariClient;
 
+    // This is used to update the monitor when new cluster configuration details are discovered.
+    private AmbariConfigurationMonitor configChangeMonitor;
+
+    private boolean isInitialized = false;
 
     AmbariServiceDiscovery() {
-        httpClient = org.apache.http.impl.client.HttpClients.createDefault();
+    }
+
+
+    AmbariServiceDiscovery(RESTInvoker restClient) {
+        this.restClient = restClient;
+    }
+
+
+    /**
+     * Initialization must be subsequent to construction because the AliasService member isn't assigned until after
+     * construction time. This is called internally prior to discovery invocations to make sure the clients have been
+     * initialized.
+     */
+    private void init() {
+        if (!isInitialized) {
+            if (this.restClient == null) {
+                this.restClient = new RESTInvoker(aliasService);
+            }
+            this.ambariClient = new AmbariClientCommon(restClient);
+            this.configChangeMonitor = getConfigurationChangeMonitor();
+
+            isInitialized = true;
+        }
+    }
+
+
+    /**
+     * Get the Ambari configuration change monitor from the associated gateway service.
+     */
+    private AmbariConfigurationMonitor getConfigurationChangeMonitor() {
+        AmbariConfigurationMonitor ambariMonitor = null;
+        try {
+            Class clazz = Class.forName(GATEWAY_SERVICES_ACCESSOR_CLASS);
+            if (clazz != null) {
+                Method m = clazz.getDeclaredMethod(GATEWAY_SERVICES_ACCESSOR_METHOD);
+                if (m != null) {
+                    Object obj = m.invoke(null);
+                    if (GatewayServices.class.isAssignableFrom(obj.getClass())) {
+                        ClusterConfigurationMonitorService clusterMonitorService =
+                              ((GatewayServices) obj).getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+                        ClusterConfigurationMonitor monitor =
+                                                 clusterMonitorService.getMonitor(AmbariConfigurationMonitor.getType());
+                        if (monitor != null) {
+                            if (AmbariConfigurationMonitor.class.isAssignableFrom(monitor.getClass())) {
+                                ambariMonitor = (AmbariConfigurationMonitor) monitor;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.errorAccessingConfigurationChangeMonitor(e);
+        }
+        return ambariMonitor;
     }
 
 
@@ -95,14 +144,16 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
     @Override
     public Map<String, Cluster> discover(ServiceDiscoveryConfig config) {
-        Map<String, Cluster> clusters = new HashMap<String, Cluster>();
+        Map<String, Cluster> clusters = new HashMap<>();
+
+        init();
 
         String discoveryAddress = config.getAddress();
 
         // Invoke Ambari REST API to discover the available clusters
         String clustersDiscoveryURL = String.format("%s" + AMBARI_CLUSTERS_URI, discoveryAddress);
 
-        JSONObject json = invokeREST(clustersDiscoveryURL, config.getUser(), config.getPasswordAlias());
+        JSONObject json = restClient.invoke(clustersDiscoveryURL, config.getUser(), config.getPasswordAlias());
 
         // Parse the cluster names from the response, and perform the cluster discovery
         JSONArray clusterItems = (JSONArray) json.get("items");
@@ -126,13 +177,15 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
         Map<String, String> serviceComponents = new HashMap<>();
 
+        init();
+
         String discoveryAddress = config.getAddress();
         String discoveryUser = config.getUser();
         String discoveryPwdAlias = config.getPasswordAlias();
 
         Map<String, List<String>> componentHostNames = new HashMap<>();
         String hostRolesURL = String.format("%s" + AMBARI_HOSTROLES_URI, discoveryAddress, clusterName);
-        JSONObject hostRolesJSON = invokeREST(hostRolesURL, discoveryUser, discoveryPwdAlias);
+        JSONObject hostRolesJSON = restClient.invoke(hostRolesURL, discoveryUser, discoveryPwdAlias);
         if (hostRolesJSON != null) {
             // Process the host roles JSON
             JSONArray items = (JSONArray) hostRolesJSON.get("items");
@@ -158,7 +211,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                         if (hostName != null) {
                             log.discoveredServiceHost(serviceName, hostName);
                             if (!componentHostNames.containsKey(componentName)) {
-                                componentHostNames.put(componentName, new ArrayList<String>());
+                                componentHostNames.put(componentName, new ArrayList<>());
                             }
                             componentHostNames.get(componentName).add(hostName);
                         }
@@ -167,31 +220,15 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
         }
 
+        // Service configurations
         Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations =
-                                                 new HashMap<String, Map<String, AmbariCluster.ServiceConfiguration>>();
-        String serviceConfigsURL = String.format("%s" + AMBARI_SERVICECONFIGS_URI, discoveryAddress, clusterName);
-        JSONObject serviceConfigsJSON = invokeREST(serviceConfigsURL, discoveryUser, discoveryPwdAlias);
-        if (serviceConfigsJSON != null) {
-            // Process the service configurations
-            JSONArray serviceConfigs = (JSONArray) serviceConfigsJSON.get("items");
-            for (Object serviceConfig : serviceConfigs) {
-                String serviceName = (String) ((JSONObject) serviceConfig).get("service_name");
-                JSONArray configurations = (JSONArray) ((JSONObject) serviceConfig).get("configurations");
-                for (Object configuration : configurations) {
-                    String configType = (String) ((JSONObject) configuration).get("type");
-                    String configVersion = String.valueOf(((JSONObject) configuration).get("version"));
-
-                    Map<String, String> configProps = new HashMap<String, String>();
-                    JSONObject configProperties = (JSONObject) ((JSONObject) configuration).get("properties");
-                    for (String propertyName : configProperties.keySet()) {
-                        configProps.put(propertyName, String.valueOf(((JSONObject) configProperties).get(propertyName)));
-                    }
-                    if (!serviceConfigurations.containsKey(serviceName)) {
-                        serviceConfigurations.put(serviceName, new HashMap<String, AmbariCluster.ServiceConfiguration>());
-                    }
-                    serviceConfigurations.get(serviceName).put(configType, new AmbariCluster.ServiceConfiguration(configType, configVersion, configProps));
-                    cluster.addServiceConfiguration(serviceName, configType, new AmbariCluster.ServiceConfiguration(configType, configVersion, configProps));
-                }
+                                                        ambariClient.getActiveServiceConfigurations(discoveryAddress,
+                                                                                                    clusterName,
+                                                                                                    discoveryUser,
+                                                                                                    discoveryPwdAlias);
+        for (String serviceName : serviceConfigurations.keySet()) {
+            for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfigurations.get(serviceName).entrySet()) {
+                cluster.addServiceConfiguration(serviceName, serviceConfig.getKey(), serviceConfig.getValue());
             }
         }
 
@@ -214,93 +251,12 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
         }
 
+        if (configChangeMonitor != null) {
+            // Notify the cluster config monitor about these cluster configuration details
+            configChangeMonitor.addClusterConfigVersions(cluster, config);
+        }
+
         return cluster;
     }
-
-
-    protected JSONObject invokeREST(String url, String username, String passwordAlias) {
-        JSONObject result = null;
-
-        CloseableHttpResponse response = null;
-        try {
-            HttpGet request = new HttpGet(url);
-
-            // If no configured username, then use default username alias
-            String password = null;
-            if (username == null) {
-                if (aliasService != null) {
-                    try {
-                        char[] defaultUser = aliasService.getPasswordFromAliasForGateway(DEFAULT_USER_ALIAS);
-                        if (defaultUser != null) {
-                            username = new String(defaultUser);
-                        }
-                    } catch (AliasServiceException e) {
-                        log.aliasServiceUserError(DEFAULT_USER_ALIAS, e.getLocalizedMessage());
-                    }
-                }
-
-                // If username is still null
-                if (username == null) {
-                    log.aliasServiceUserNotFound();
-                    throw new ConfigurationException("No username is configured for Ambari service discovery.");
-                }
-            }
-
-            if (aliasService != null) {
-                // If no password alias is configured, then try the default alias
-                if (passwordAlias == null) {
-                    passwordAlias = DEFAULT_PWD_ALIAS;
-                }
-
-                try {
-                    char[] pwd = aliasService.getPasswordFromAliasForGateway(passwordAlias);
-                    if (pwd != null) {
-                        password = new String(pwd);
-                    }
-
-                } catch (AliasServiceException e) {
-                    log.aliasServicePasswordError(passwordAlias, e.getLocalizedMessage());
-                }
-            }
-
-            // If the password could not be determined
-            if (password == null) {
-                log.aliasServicePasswordNotFound();
-                throw new ConfigurationException("No password is configured for Ambari service discovery.");
-            }
-
-            // Add an auth header if credentials are available
-            String encodedCreds =
-                    org.apache.commons.codec.binary.Base64.encodeBase64String((username + ":" + password).getBytes());
-            request.addHeader(new BasicHeader("Authorization", "Basic " + encodedCreds));
-
-            response = httpClient.execute(request);
-
-            if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    result = (JSONObject) JSONValue.parse((EntityUtils.toString(entity)));
-                    log.debugJSON(result.toJSONString());
-                } else {
-                    log.noJSON(url);
-                }
-            } else {
-                log.unexpectedRestResponseStatusCode(url, response.getStatusLine().getStatusCode());
-            }
-
-        } catch (IOException e) {
-            log.restInvocationError(url, e);
-        } finally {
-            if(response != null) {
-                try {
-                    response.close();
-                } catch (IOException e) {
-                    // Ignore
-                }
-            }
-        }
-        return result;
-    }
-
 
 }
