@@ -3646,7 +3646,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testCLIServiceTest() throws Exception {
     LOG_ENTER();
 
