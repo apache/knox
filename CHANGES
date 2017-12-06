@@ -14,14 +14,15 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-842] - Add support for Livy (Spark REST Service).
    * [KNOX-1017] - Add support for enabling "Strict-Transport-Security" header in Knox responses (Latha Appanna via lmccay)
    * [KNOX-1049] - Default Service or App Context for Topologies
-   * [KNOX-1049] - change BeanConverter for path element
-   * [KNOX-1049] - marshaling changes
-   * [KNOX-1049] - change defaultServicePath to path
    * [KNOX-1041] - High Availability Support For Apache SOLR, HBase & Kafka (Rick Kellogg via Sandeep More)
    * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
    * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
    * [KNOX-1107] - Remote Configuration Registry Client Service (Phil Zampino via lmccay)
    * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
+   * [KNOX-1013] - Monitor Ambari for Cluster Topology changes (Phil Zampino via lmccay)
+   * [KNOX-1136] - Provision Consistent Credentials For Generated Topologies (phil zampino via lmccay)
+   * [KNOX-1129] - Remote Configuration Monitor Should Define The Entries It Monitors If They're Not Yet Defined (Phil Zampino via lmccay)
+   * [KNOX-1125] - KNOXCLI Additions to Support Management of Knox config in remote registry (Phil Zampino via Sandeep More)
 ** Improvement
    * [KNOX-921] - Httpclient max connections are always set to default values
    * [KNOX-1106] - Tighten the rewrite rule on oozieui to reduce false positives (Wei Han via Sandeep More)
@@ -78,6 +79,11 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1119] - Pac4J OAuth/OpenID Principal Needs to be Configurable (Andreas Hildebrandt via lmccay)
    * [KNOX-1120] - Pac4J Stop Using ConfigSingleton
    * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
+   * [KNOX-1083] - HttpClient default timeout will be 20 sec
+   * [KNOX-1124] - Service Discovery Doesn't Work For Simple Descriptors With .yaml Extension (Phil Zampino  via Sandeep More)
+   * [KNOX-1117] - HostMap Provider configuration comment in topologies included with Knox has typos (Phil Zampino via Sandeep More)
+   * [KNOX-1119] - Add missing tests for valid and invalid id attributes
+   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
 ** Bug
    * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
    * [KNOX-1004] - Failing (flaky) Knox unit tests
@@ -88,6 +94,8 @@ Release Notes - Apache Knox - Version 0.14.0
    * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
    * [KNOX-1118] - Remove POC Service Definition for AmbariUI
    * [KNOX-1134] - Regression due to KNOX-1119
+   * [KNOX-1132] - Address Coverity Defects in gateway-service-remoteconfig (Phil Zampino via lmccay)
+   * [KNOX-1139] - Fix threapool size for UnitTests (Attila Csoma via Sandeep More)
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.13.0
