@@ -367,7 +367,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public int getThreadPoolMax() {
-    return 16;
+    return 254;
   }
 
   @Override
