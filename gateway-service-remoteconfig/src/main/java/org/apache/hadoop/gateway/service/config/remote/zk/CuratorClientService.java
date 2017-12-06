@@ -366,9 +366,10 @@ class CuratorClientService implements ZooKeeperClientService {
                 throws Exception {
             ChildData childData = pathChildrenCacheEvent.getData();
             if (childData != null) {
-                delegate.childEvent(client,
-                                    adaptType(pathChildrenCacheEvent.getType()),
-                                    childData.getPath());
+                ChildEntryListener.Type eventType = adaptType(pathChildrenCacheEvent.getType());
+                if (eventType != null) {
+                    delegate.childEvent(client, eventType, childData.getPath());
+                }
             }
         }
 

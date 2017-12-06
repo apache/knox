@@ -36,6 +36,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
 
     // Underlying SASL mechanisms supported
     enum SASLMechanism {
+        Unsupported,
         Kerberos,
         Digest
     }
@@ -92,9 +93,16 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
     }
 
     private AppConfigurationEntry[] createEntries(RemoteConfigurationRegistryConfig config) {
-        // Only supporting a single app config entry per configuration/context
-        AppConfigurationEntry[] result = new AppConfigurationEntry[1];
-        result[0] = createEntry(config);
+        AppConfigurationEntry[] result = null;
+
+        AppConfigurationEntry entry = createEntry(config);
+        if (entry != null) {
+            // Only supporting a single app config entry per configuration/context
+            result = new AppConfigurationEntry[1];
+            result[0] = createEntry(config);
+        } else {
+            result = new AppConfigurationEntry[0];
+        }
         return result;
     }
 
@@ -130,9 +138,11 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
                 opts.put("principal", config.getPrincipal());
         }
 
-        entry = new AppConfigurationEntry(getLoginModuleName(config.getRegistryType(), saslMechanism),
-                                          AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
-                                          opts);
+        if (!opts.isEmpty()) {
+            entry = new AppConfigurationEntry(getLoginModuleName(config.getRegistryType(), saslMechanism),
+                                              AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                                              opts);
+        }
 
         return entry;
     }
@@ -155,7 +165,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
     }
 
     private static SASLMechanism getSASLMechanism(String authType) {
-        SASLMechanism result = null;
+        SASLMechanism result = SASLMechanism.Unsupported;
         for (SASLMechanism at : SASLMechanism.values()) {
             if (at.name().equalsIgnoreCase(authType)) {
                 result = at;
