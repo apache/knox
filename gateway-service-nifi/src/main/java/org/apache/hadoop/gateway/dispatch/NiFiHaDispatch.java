@@ -40,9 +40,15 @@ public class NiFiHaDispatch extends DefaultHaDispatch {
 
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
-    outboundRequest = NiFiRequestUtil.modifyOutboundRequest(outboundRequest, inboundRequest);
-    HttpResponse inboundResponse = executeOutboundRequest(outboundRequest);
-    writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
+    HttpResponse inboundResponse = null;
+    try {
+      outboundRequest = NiFiRequestUtil.modifyOutboundRequest(outboundRequest, inboundRequest);
+      inboundResponse = executeOutboundRequest(outboundRequest);
+      writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
+    } catch (IOException e) {
+      LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
+      failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+    }
   }
 
   /**
