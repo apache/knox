@@ -52,6 +52,8 @@ import org.apache.hadoop.gateway.topology.builder.TopologyBuilder;
 import org.apache.hadoop.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.hadoop.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
+import org.apache.hadoop.gateway.topology.simple.SimpleDescriptor;
+import org.apache.hadoop.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.hadoop.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.hadoop.gateway.topology.validation.TopologyValidator;
 import org.apache.hadoop.gateway.topology.xml.AmbariFormatXmlTopologyRules;
@@ -592,18 +594,39 @@ public class DefaultTopologyService
       initListener(sharedProvidersDirectory, spm, spm);
       log.monitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
-      // For all the descriptors currently in the descriptors dir at start-up time, trigger topology generation.
+      // For all the descriptors currently in the descriptors dir at start-up time, determine if topology regeneration
+      // is required.
       // This happens prior to the start-up loading of the topologies.
       String[] descriptorFilenames =  descriptorsDirectory.list();
       if (descriptorFilenames != null) {
         for (String descriptorFilename : descriptorFilenames) {
           if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
+            String topologyName = FilenameUtils.getBaseName(descriptorFilename);
+            File existingDescriptorFile = getExistingFile(descriptorsDirectory, topologyName);
+
             // If there isn't a corresponding topology file, or if the descriptor has been modified since the
             // corresponding topology file was generated, then trigger generation of one
-            File matchingTopologyFile = getExistingFile(topologiesDirectory, FilenameUtils.getBaseName(descriptorFilename));
-            if (matchingTopologyFile == null ||
-                    matchingTopologyFile.lastModified() < (new File(descriptorsDirectory, descriptorFilename)).lastModified()) {
-              descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
+            File matchingTopologyFile = getExistingFile(topologiesDirectory, topologyName);
+            if (matchingTopologyFile == null || matchingTopologyFile.lastModified() < existingDescriptorFile.lastModified()) {
+              descriptorsMonitor.onFileChange(existingDescriptorFile);
+            } else {
+              // If regeneration is NOT required, then we at least need to report the provider configuration
+              // reference relationship (KNOX-1144)
+              String normalizedDescriptorPath = FilenameUtils.normalize(existingDescriptorFile.getAbsolutePath());
+
+              // Parse the descriptor to determine the provider config reference
+              SimpleDescriptor sd = SimpleDescriptorFactory.parse(normalizedDescriptorPath);
+              if (sd != null) {
+                File referencedProviderConfig =
+                           getExistingFile(sharedProvidersDirectory, FilenameUtils.getBaseName(sd.getProviderConfig()));
+                if (referencedProviderConfig != null) {
+                  List<String> references =
+                         descriptorsMonitor.getReferencingDescriptors(referencedProviderConfig.getAbsolutePath());
+                  if (!references.contains(normalizedDescriptorPath)) {
+                    references.add(normalizedDescriptorPath);
+                  }
+                }
+              }
             }
           }
         }
@@ -711,11 +734,8 @@ public class DefaultTopologyService
     }
 
     List<String> getReferencingDescriptors(String providerConfigPath) {
-      List<String> result = providerConfigReferences.get(FilenameUtils.normalize(providerConfigPath));
-      if (result == null) {
-        result = Collections.emptyList();
-      }
-      return result;
+      String normalizedPath = FilenameUtils.normalize(providerConfigPath);
+      return providerConfigReferences.computeIfAbsent(normalizedPath, p -> new ArrayList<>());
     }
 
     @Override
