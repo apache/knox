@@ -105,7 +105,9 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + LDAPSysBindCommand.USAGE + "]\n" +
       "   [" + ServiceTestCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryClientsListCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryListProviderConfigsCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryUploadProviderConfigCommand.USAGE + "]\n" +
+      "   [" + RemoteRegistryListDescriptorsCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryUploadDescriptorCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryDeleteProviderConfigCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryDeleteDescriptorCommand.USAGE + "]\n" +
@@ -199,7 +201,9 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli service-test [--u user] [--p password] [--cluster clustername] [--hostname name] [--port port]
    * % knoxcli list-registry-clients
    * % knoxcli get-registry-acl entryName --registry-client name
+   * % knoxcli list-provider-configs --registry-client
    * % knoxcli upload-provider-config filePath --registry-client name [--entry-name entryName]
+   * % knoxcli list-descriptors --registry-client
    * % knoxcli upload-descriptor filePath --registry-client name [--entry-name entryName]
    * % knoxcli delete-provider-config providerConfig --registry-client name
    * % knoxcli delete-descriptor descriptor --registry-client name
@@ -371,6 +375,10 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.remoteRegistryClient = args[++i];
+      } else if (args[i].equalsIgnoreCase("list-provider-configs")) {
+        command = new RemoteRegistryListProviderConfigsCommand();
+      } else if (args[i].equalsIgnoreCase("list-descriptors")) {
+        command = new RemoteRegistryListDescriptorsCommand();
       } else if (args[i].equalsIgnoreCase("upload-provider-config")) {
         String fileName;
         if (i <= (args.length - 1)) {
@@ -482,6 +490,12 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println(RemoteRegistryGetACLCommand.USAGE + "\n\n" + RemoteRegistryGetACLCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryListProviderConfigsCommand.USAGE + "\n\n" + RemoteRegistryListProviderConfigsCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(RemoteRegistryListDescriptorsCommand.USAGE + "\n\n" + RemoteRegistryListDescriptorsCommand.DESC);
       out.println();
       out.println( div );
       out.println(RemoteRegistryUploadProviderConfigCommand.USAGE + "\n\n" + RemoteRegistryUploadProviderConfigCommand.DESC);
@@ -1878,16 +1892,80 @@ public class KnoxCLI extends Configured implements Tool {
     }
  }
 
+  private abstract class RemoteRegistryCommand extends Command {
+    static final String ROOT_ENTRY = "/knox";
+    static final String CONFIG_ENTRY = ROOT_ENTRY + "/config";
+    static final String PROVIDER_CONFIG_ENTRY = CONFIG_ENTRY + "/shared-providers";
+    static final String DESCRIPTORS_ENTRY = CONFIG_ENTRY + "/descriptors";
+
+    protected RemoteConfigurationRegistryClient getClient() {
+      RemoteConfigurationRegistryClient client = null;
+      if (remoteRegistryClient != null) {
+        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
+        client = cs.get(remoteRegistryClient);
+        if (client == null) {
+          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+        }
+      } else {
+        out.println("Missing required argument : --registry-client\n");
+      }
+      return client;
+    }
+  }
+
+
+  public class RemoteRegistryListProviderConfigsCommand extends RemoteRegistryCommand {
+    static final String USAGE = "list-provider-configs --registry-client name";
+    static final String DESC = "Lists the provider configurations present in the specified remote registry\n";
+
+    @Override
+    public void execute() {
+      RemoteConfigurationRegistryClient client = getClient();
+      if (client != null) {
+        out.println("Provider Configurations (@" + client.getAddress() + ")");
+        List<String> entries = client.listChildEntries(PROVIDER_CONFIG_ENTRY);
+        for (String entry : entries) {
+          out.println(entry);
+        }
+        out.println();
+      }
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+
+  public class RemoteRegistryListDescriptorsCommand extends RemoteRegistryCommand {
+    static final String USAGE = "list-descriptors --registry-client name";
+    static final String DESC = "Lists the descriptors present in the specified remote registry\n";
+
+    @Override
+    public void execute() {
+      RemoteConfigurationRegistryClient client = getClient();
+      if (client != null) {
+        out.println("Descriptors (@" + client.getAddress() + ")");
+        List<String> entries = client.listChildEntries(DESCRIPTORS_ENTRY);
+        for (String entry : entries) {
+          out.println(entry);
+        }
+        out.println();
+      }
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
 
   /**
    * Base class for remote config registry upload commands
    */
-  public abstract class RemoteRegistryUploadCommand extends Command {
-    protected static final String ROOT_ENTRY = "/knox";
-    protected static final String CONFIG_ENTRY = ROOT_ENTRY + "/config";
-    protected static final String PROVIDER_CONFIG_ENTRY = CONFIG_ENTRY + "/shared-providers";
-    protected static final String DESCRIPTORS__ENTRY = CONFIG_ENTRY + "/descriptors";
-
+  public abstract class RemoteRegistryUploadCommand extends RemoteRegistryCommand {
     private File sourceFile = null;
     protected String filename = null;
 
@@ -1928,21 +2006,13 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     protected void execute(String entryName, File sourceFile) throws Exception {
-      if (remoteRegistryClient != null) {
-        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
-        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
-        if (client != null) {
-          if (entryName != null) {
-            upload(client, entryName, sourceFile);
-          }
-        } else {
-          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+      RemoteConfigurationRegistryClient client = getClient();
+      if (client != null) {
+        if (entryName != null) {
+          upload(client, entryName, sourceFile);
         }
-      } else {
-        out.println("Missing required argument : --registry-client\n");
       }
     }
-
   }
 
 
@@ -1991,7 +2061,7 @@ public class KnoxCLI extends Configured implements Tool {
      */
     @Override
     public void execute() throws Exception {
-      super.execute(getEntryName(DESCRIPTORS__ENTRY), getSourceFile());
+      super.execute(getEntryName(DESCRIPTORS_ENTRY), getSourceFile());
     }
 
     /* (non-Javadoc)
@@ -2004,7 +2074,7 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
 
-  public class RemoteRegistryGetACLCommand extends Command {
+  public class RemoteRegistryGetACLCommand extends RemoteRegistryCommand {
 
     static final String USAGE = "get-registry-acl entry --registry-client name";
     static final String DESC = "Presents the ACL settings for the specified remote registry entry.\n";
@@ -2020,21 +2090,14 @@ public class KnoxCLI extends Configured implements Tool {
      */
     @Override
     public void execute() throws Exception {
-      if (remoteRegistryClient != null) {
-        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
-        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
-        if (client != null) {
-          if (entry != null) {
-            List<RemoteConfigurationRegistryClient.EntryACL> acls = client.getACL(entry);
-            for (RemoteConfigurationRegistryClient.EntryACL acl : acls) {
-              out.println(acl.getType() + ":" + acl.getId() + ":" + acl.getPermissions());
-            }
+      RemoteConfigurationRegistryClient client = getClient();
+      if (client != null) {
+        if (entry != null) {
+          List<RemoteConfigurationRegistryClient.EntryACL> acls = client.getACL(entry);
+          for (RemoteConfigurationRegistryClient.EntryACL acl : acls) {
+            out.println(acl.getType() + ":" + acl.getId() + ":" + acl.getPermissions());
           }
-        } else {
-          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
         }
-      } else {
-        out.println("Missing required argument : --registry-client\n");
       }
     }
 
@@ -2051,12 +2114,7 @@ public class KnoxCLI extends Configured implements Tool {
   /**
    * Base class for remote config registry delete commands
    */
-  public abstract class RemoteRegistryDeleteCommand extends Command {
-    protected static final String ROOT_ENTRY = "/knox";
-    protected static final String CONFIG_ENTRY = ROOT_ENTRY + "/config";
-    protected static final String PROVIDER_CONFIG_ENTRY = CONFIG_ENTRY + "/shared-providers";
-    protected static final String DESCRIPTORS__ENTRY = CONFIG_ENTRY + "/descriptors";
-
+  public abstract class RemoteRegistryDeleteCommand extends RemoteRegistryCommand {
     protected String entryName = null;
 
     protected RemoteRegistryDeleteCommand(String entryName) {
@@ -2071,18 +2129,11 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     protected void execute(String entryName) throws Exception {
-      if (remoteRegistryClient != null) {
-        RemoteConfigurationRegistryClientService cs = getRemoteConfigRegistryClientService();
-        RemoteConfigurationRegistryClient client = cs.get(remoteRegistryClient);
-        if (client != null) {
-          if (entryName != null) {
-            delete(client, entryName);
-          }
-        } else {
-          out.println("No remote configuration registry identified by '" + remoteRegistryClient + "' could be found.");
+      RemoteConfigurationRegistryClient client = getClient();
+      if (client != null) {
+        if (entryName != null) {
+          delete(client, entryName);
         }
-      } else {
-        out.println("Missing required argument : --registry-client\n");
       }
     }
   }
@@ -2118,7 +2169,7 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() throws Exception {
-      execute(DESCRIPTORS__ENTRY + "/" + entryName);
+      execute(DESCRIPTORS_ENTRY + "/" + entryName);
     }
 
     @Override
