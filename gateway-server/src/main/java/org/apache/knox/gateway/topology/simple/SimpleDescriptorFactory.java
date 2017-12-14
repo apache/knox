@@ -39,7 +39,7 @@ public class SimpleDescriptorFactory {
 
         if (path.endsWith(".json")) {
             sd = parseJSON(path);
-        } else if (path.endsWith(".yml")) {
+        } else if (path.endsWith(".yml") || path.endsWith(".yaml")) {
             sd = parseYAML(path);
         } else {
            throw new IllegalArgumentException("Unsupported simple descriptor format: " + path.substring(path.lastIndexOf('.')));

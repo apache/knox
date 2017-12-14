@@ -31,6 +31,7 @@ public class MockHttpServletRequest extends HttpServletRequestWrapper {
     private String serverName;
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
+    private Map<String, Object> attributes = new HashMap<>();
 
     public MockHttpServletRequest() {
         super(mock(HttpServletRequest.class));
@@ -82,7 +83,12 @@ public class MockHttpServletRequest extends HttpServletRequestWrapper {
     }
 
     @Override
+    public void setAttribute(String name, Object value) {
+        attributes.put(name, value);
+    }
+
+    @Override
     public Object getAttribute(String name) {
-        return null;
+        return attributes.get(name);
     }
 }

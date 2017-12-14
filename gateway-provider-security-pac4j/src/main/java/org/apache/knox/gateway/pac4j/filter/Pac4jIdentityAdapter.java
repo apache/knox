@@ -17,16 +17,11 @@
  */
 package org.apache.knox.gateway.pac4j.filter;
 
-import org.apache.knox.gateway.audit.api.Action;
-import org.apache.knox.gateway.audit.api.ActionOutcome;
-import org.apache.knox.gateway.audit.api.AuditService;
-import org.apache.knox.gateway.audit.api.AuditServiceFactory;
-import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.api.*;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.pac4j.core.config.ConfigSingleton;
+import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
@@ -56,6 +51,9 @@ public class Pac4jIdentityAdapter implements Filter {
 
   private static final Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
 
+  public static final String PAC4J_ID_ATTRIBUTE = "pac4j.id_attribute";
+  private static final String PAC4J_CONFIG = "pac4j.config";
+
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -63,8 +61,11 @@ public class Pac4jIdentityAdapter implements Filter {
 
   private String testIdentifier;
 
+  private String idAttribute;
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
+    idAttribute = filterConfig.getInitParameter(PAC4J_ID_ATTRIBUTE);
   }
 
   public void destroy() {
@@ -75,14 +76,28 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final J2EContext context = new J2EContext(request, response, ConfigSingleton.getConfig().getSessionStore());
+    final J2EContext context = new J2EContext(request, response,
+        ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
     final ProfileManager<CommonProfile> manager = new ProfileManager<CommonProfile>(context);
     final Optional<CommonProfile> optional = manager.get(true);
     if (optional.isPresent()) {
       CommonProfile profile = optional.get();
       logger.debug("User authenticated as: {}", profile);
       manager.remove(true);
-      final String id = profile.getId();
+      String id = null;
+      if (idAttribute != null) {
+        Object attribute = profile.getAttribute(idAttribute);
+        if (attribute != null) {
+          id = attribute.toString();
+        }
+        if (id == null) {
+          logger.error("Invalid attribute_id: {} configured to be used as principal"
+              + " falling back to default id", idAttribute);
+        }
+      }
+      if (id == null) {
+        id = profile.getId();
+      }
       testIdentifier = id;
       PrimaryPrincipal pp = new PrimaryPrincipal(id);
       Subject subject = new Subject();

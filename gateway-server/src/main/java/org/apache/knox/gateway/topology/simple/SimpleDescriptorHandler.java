@@ -16,11 +16,6 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.Service;
-import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
-import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +32,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
+import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
 
 
 /**
@@ -48,6 +53,8 @@ public class SimpleDescriptorHandler {
     private static final Service[] NO_GATEWAY_SERVICES = new Service[]{};
 
     private static final SimpleDescriptorMessages log = MessagesFactory.get(SimpleDescriptorMessages.class);
+
+    private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
     public static Map<String, File> handle(File desc) throws IOException {
         return handle(desc, NO_GATEWAY_SERVICES);
@@ -84,7 +91,12 @@ public class SimpleDescriptorHandler {
             discoveryType = "AMBARI";
         }
 
-        ServiceDiscovery sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+        // Use the cached discovery object for the required type, if it has already been loaded
+        ServiceDiscovery sd = discoveryInstances.get(discoveryType);
+        if (sd == null) {
+            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            discoveryInstances.put(discoveryType, sd);
+        }
         ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
 
         List<String> validServiceNames = new ArrayList<>();
@@ -133,6 +145,14 @@ public class SimpleDescriptorHandler {
             }
         } else {
             log.failedToDiscoverClusterServices(desc.getClusterName());
+        }
+
+        // Provision the query param encryption password here, rather than relying on the random password generated
+        // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
+        // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
+        // query params with the same credentials. (KNOX-1136)
+        if (!provisionQueryParamEncryptionCredential(desc.getName())) {
+            log.unableCreatePasswordForEncryption(desc.getName());
         }
 
         BufferedWriter fw = null;
@@ -185,6 +205,7 @@ public class SimpleDescriptorHandler {
 
             // Write the service declarations
             for (String serviceName : serviceNames) {
+                fw.write("\n");
                 fw.write("    <service>\n");
                 fw.write("        <role>" + serviceName + "</role>\n");
 
@@ -257,6 +278,51 @@ public class SimpleDescriptorHandler {
         }
 
         result.put("topology", topologyDescriptor);
+        return result;
+    }
+
+
+    /**
+     * KNOX-1136
+     *
+     * Provision the query string encryption password prior to it being randomly generated during the topology
+     * deployment.
+     *
+     * @param topologyName The name of the topology for which the credential will be provisioned.
+     *
+     * @return true if the credential was successfully provisioned; otherwise, false.
+     */
+    private static boolean provisionQueryParamEncryptionCredential(String topologyName) {
+        boolean result = false;
+
+        try {
+            GatewayServices services = GatewayServer.getGatewayServices();
+            if (services != null) {
+                MasterService ms = services.getService("MasterService");
+                if (ms != null) {
+                    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+                    if (ks != null) {
+                        if (!ks.isCredentialStoreForClusterAvailable(topologyName)) {
+                            ks.createCredentialStoreForCluster(topologyName);
+                        }
+
+                        // If the credential store existed, or it was just successfully created
+                        if (ks.getCredentialStoreForCluster(topologyName) != null) {
+                            AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+                            if (aliasService != null) {
+                                // Derive and set the query param encryption password
+                                String queryEncryptionPass = new String(ms.getMasterSecret()) + topologyName;
+                                aliasService.addAliasForCluster(topologyName, "encryptQueryString", queryEncryptionPass);
+                                result = true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.exceptionCreatingPasswordForEncryption(topologyName, e);
+        }
+
         return result;
     }
 

@@ -23,8 +23,11 @@ import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
+import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.knox.gateway.services.registry.impl.DefaultServiceRegistryService;
@@ -104,6 +107,17 @@ public class DefaultGatewayServices implements GatewayServices {
     sis.init( config, options );
     services.put( SERVER_INFO_SERVICE, sis );
 
+    RemoteConfigurationRegistryClientService registryClientService =
+                                                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(alias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
+    DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
+    ccs.setAliasService(alias);
+    ccs.init(config, options);
+    services.put(CLUSTER_CONFIGURATION_MONITOR_SERVICE, ccs);
+
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.setAliasService(alias);
     tops.init(  config, options  );
@@ -117,7 +131,7 @@ public class DefaultGatewayServices implements GatewayServices {
     metricsService.init( config, options );
     services.put( METRICS_SERVICE, metricsService );
   }
-  
+
   public void start() throws ServiceLifecycleException {
     ms.start();
 
@@ -132,6 +146,12 @@ public class DefaultGatewayServices implements GatewayServices {
     ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
     sis.start();
 
+    RemoteConfigurationRegistryClientService clientService =
+                            (RemoteConfigurationRegistryClientService)services.get(REMOTE_REGISTRY_CLIENT_SERVICE);
+    clientService.start();
+
+    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).start();
+
     DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
     tops.start();
 
@@ -143,6 +163,8 @@ public class DefaultGatewayServices implements GatewayServices {
     ms.stop();
 
     ks.stop();
+
+    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).stop();
 
     DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
     alias.stop();

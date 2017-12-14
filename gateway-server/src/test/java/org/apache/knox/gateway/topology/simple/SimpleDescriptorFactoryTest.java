@@ -29,7 +29,8 @@ public class SimpleDescriptorFactoryTest {
 
     private enum FileType {
         JSON,
-        YAML
+        YAML,
+        YML
     }
 
     @Test
@@ -39,6 +40,7 @@ public class SimpleDescriptorFactoryTest {
 
     @Test
     public void testParseYAMLSimpleDescriptor() throws Exception {
+        testParseSimpleDescriptor(FileType.YML);
         testParseSimpleDescriptor(FileType.YAML);
     }
 
@@ -49,6 +51,7 @@ public class SimpleDescriptorFactoryTest {
 
     @Test
     public void testParseYAMLSimpleDescriptorWithServiceParams() throws Exception {
+        testParseSimpleDescriptorWithServiceParams(FileType.YML);
         testParseSimpleDescriptorWithServiceParams(FileType.YAML);
     }
 
@@ -59,6 +62,7 @@ public class SimpleDescriptorFactoryTest {
 
     @Test
     public void testParseYAMLSimpleDescriptorApplications() throws Exception {
+        testParseSimpleDescriptorWithApplications(FileType.YML);
         testParseSimpleDescriptorWithApplications(FileType.YAML);
     }
 
@@ -70,6 +74,7 @@ public class SimpleDescriptorFactoryTest {
 
     @Test
     public void testParseYAMLSimpleDescriptorWithServicesAndApplications() throws Exception {
+        testParseSimpleDescriptorWithServicesAndApplications(FileType.YML);
         testParseSimpleDescriptorWithServicesAndApplications(FileType.YAML);
     }
 
@@ -327,8 +332,11 @@ public class SimpleDescriptorFactoryTest {
             case JSON:
                 extension = "json";
                 break;
-            case YAML:
+            case YML:
                 extension = "yml";
+                break;
+            case YAML:
+                extension = "yaml";
                 break;
         }
         return extension;
@@ -402,6 +410,7 @@ public class SimpleDescriptorFactoryTest {
                                    appParams);
                 break;
             case YAML:
+            case YML:
                 result = writeYAML(path,
                                    discoveryType,
                                    discoveryAddress,

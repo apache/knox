@@ -28,6 +28,7 @@ import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -37,20 +38,25 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.gateway.topology.TopologyMonitor;
 import org.apache.knox.gateway.topology.TopologyProvider;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
+import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
+import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
+import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
+import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.knox.gateway.topology.xml.KnoxFormatXmlTopologyRules;
 import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
 
@@ -101,6 +107,7 @@ public class DefaultTopologyService
   private volatile Map<File, Topology> topologies;
   private AliasService aliasService;
 
+  private RemoteConfigurationMonitor remoteMonitor = null;
 
   private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
     final long TIMEOUT = 250; //ms
@@ -214,6 +221,16 @@ public class DefaultTopologyService
     return events;
   }
 
+  private File calculateAbsoluteProvidersConfigDir(GatewayConfig config) {
+    File pcDir = new File(config.getGatewayProvidersConfigDir());
+    return pcDir.getAbsoluteFile();
+  }
+
+  private File calculateAbsoluteDescriptorsDir(GatewayConfig config) {
+    File descDir = new File(config.getGatewayDescriptorsDir());
+    return descDir.getAbsoluteFile();
+  }
+
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {
     File topoDir = new File(config.getGatewayTopologyDir());
     topoDir = topoDir.getAbsoluteFile();
@@ -221,7 +238,7 @@ public class DefaultTopologyService
   }
 
   private File calculateAbsoluteConfigDir(GatewayConfig config) {
-    File configDir = null;
+    File configDir;
 
     String path = config.getGatewayConfDir();
     configDir = (path != null) ? new File(path) : (new File(config.getGatewayTopologyDir())).getParentFile();
@@ -468,15 +485,31 @@ public class DefaultTopologyService
 
   @Override
   public void startMonitor() throws Exception {
+    // Start the local configuration monitors
     for (FileAlterationMonitor monitor : monitors) {
       monitor.start();
+    }
+
+    // Start the remote configuration monitor, if it has been initialized
+    if (remoteMonitor != null) {
+      try {
+        remoteMonitor.start();
+      } catch (Exception e) {
+        log.remoteConfigurationMonitorStartFailure(remoteMonitor.getClass().getTypeName(), e.getLocalizedMessage(), e);
+      }
     }
   }
 
   @Override
   public void stopMonitor() throws Exception {
+    // Stop the local configuration monitors
     for (FileAlterationMonitor monitor : monitors) {
       monitor.stop();
+    }
+
+    // Stop the remote configuration monitor, if it has been initialized
+    if (remoteMonitor != null) {
+      remoteMonitor.stop();
     }
   }
 
@@ -525,14 +558,17 @@ public class DefaultTopologyService
 
   @Override
   public void start() {
-
+    // Register a cluster configuration monitor listener for change notifications
+    ClusterConfigurationMonitorService ccms =
+                  GatewayServer.getGatewayServices().getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+    ccms.addListener(new TopologyDiscoveryTrigger(this));
   }
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
 
     try {
-      listeners = new HashSet<>();
+      listeners  = new HashSet<>();
       topologies = new HashMap<>();
 
       topologiesDirectory = calculateAbsoluteTopologiesDir(config);
@@ -560,18 +596,26 @@ public class DefaultTopologyService
       // This happens prior to the start-up loading of the topologies.
       String[] descriptorFilenames =  descriptorsDirectory.list();
       if (descriptorFilenames != null) {
-          for (String descriptorFilename : descriptorFilenames) {
-              if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
-                  descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
-              }
+        for (String descriptorFilename : descriptorFilenames) {
+          if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
+            // If there isn't a corresponding topology file, or if the descriptor has been modified since the
+            // corresponding topology file was generated, then trigger generation of one
+            File matchingTopologyFile = getExistingFile(topologiesDirectory, FilenameUtils.getBaseName(descriptorFilename));
+            if (matchingTopologyFile == null ||
+                    matchingTopologyFile.lastModified() < (new File(descriptorsDirectory, descriptorFilename)).lastModified()) {
+              descriptorsMonitor.onFileChange(new File(descriptorsDirectory, descriptorFilename));
+            }
           }
+        }
       }
+
+      // Initialize the remote configuration monitor, if it has been configured
+      remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
 
     } catch (IOException | SAXException io) {
       throw new ServiceLifecycleException(io.getMessage());
     }
   }
-
 
   /**
    * Utility method for listing the files in the specified directory.
@@ -582,7 +626,7 @@ public class DefaultTopologyService
    * @return A List of the Files on the directory.
    */
   private static List<File> listFiles(File directory) {
-    List<File> result = null;
+    List<File> result;
     File[] files = directory.listFiles();
     if (files != null) {
       result = Arrays.asList(files);
@@ -812,6 +856,39 @@ public class DefaultTopologyService
         }
       }
       return accept;
+    }
+  }
+
+  /**
+   * Listener for Ambari config change events, which will trigger re-generation (including re-discovery) of the
+   * affected topologies.
+   */
+  private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
+
+    private TopologyService topologyService = null;
+
+    TopologyDiscoveryTrigger(TopologyService topologyService) {
+      this.topologyService = topologyService;
+    }
+
+    @Override
+    public void onConfigurationChange(String source, String clusterName) {
+      log.noticedClusterConfigurationChange(source, clusterName);
+      try {
+        // Identify any descriptors associated with the cluster configuration change
+        for (File descriptor : topologyService.getDescriptors()) {
+          String descriptorContent = FileUtils.readFileToString(descriptor);
+          if (descriptorContent.contains(source)) {
+            if (descriptorContent.contains(clusterName)) {
+              log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
+              // 'Touch' the descriptor to trigger re-generation of the associated topology
+              descriptor.setLastModified(System.currentTimeMillis());
+            }
+          }
+        }
+      } catch (Exception e) {
+        log.errorRespondingToConfigChange(source, clusterName, e);
+      }
     }
   }
 

@@ -89,7 +89,10 @@
             <role>hostmap</role>
             <name>static</name>
             <enabled>true</enabled>
-            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>
+            <param>
+                <name>localhost</name>
+                <value>sandbox,sandbox.hortonworks.com</value>
+            </param>
         </provider>
 
     </gateway>

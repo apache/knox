@@ -25,6 +25,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -366,7 +367,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public int getThreadPoolMax() {
-    return 16;
+    return 254;
   }
 
   @Override
@@ -612,6 +613,41 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isClientAuthWanted() {
+    return false;
+  }
+
+  @Override
+  public String getGatewayProvidersConfigDir() {
+    return null;
+  }
+
+  @Override
+  public String getGatewayDescriptorsDir() {
+    return null;
+  }
+
+  @Override
+  public List<String> getRemoteRegistryConfigurationNames() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public String getRemoteRegistryConfiguration(String s) {
+    return null;
+  }
+
+  @Override
+  public String getRemoteConfigurationMonitorClientName() {
+    return null;
+  }
+
+  @Override
+  public int getClusterMonitorPollingInterval(String type) {
+    return 600;
+  }
+
+  @Override
+  public boolean isClusterMonitorEnabled(String type) {
     return false;
   }
 }

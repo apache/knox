@@ -47,4 +47,13 @@ public interface SimpleDescriptorMessages {
     void failedToGenerateTopologyFromSimpleDescriptor(final String topologyFile,
                                                       @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
+    @Message( level = MessageLevel.ERROR,
+              text = "Error creating a password for query string encryption for {0}: {1}" )
+    void exceptionCreatingPasswordForEncryption(String topologyName,
+                                                @StackTrace( level = MessageLevel.DEBUG) Exception e);
+
+    @Message( level = MessageLevel.ERROR,
+            text = "Failed to create a password for query string encryption for {0}." )
+    void unableCreatePasswordForEncryption(String topologyName);
+
 }

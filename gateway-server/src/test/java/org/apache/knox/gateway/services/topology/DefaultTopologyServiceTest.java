@@ -100,6 +100,12 @@ public class DefaultTopologyServiceTest {
     File dir = createDir();
     File topologyDir = new File(dir, "topologies");
 
+    File descriptorsDir = new File(dir, "descriptors");
+    descriptorsDir.mkdirs();
+
+    File sharedProvidersDir = new File(dir, "shared-providers");
+    sharedProvidersDir.mkdirs();
+
     long time = topologyDir.lastModified();
     try {
       createFile(topologyDir, "one.xml", "org/apache/knox/gateway/topology/file/topology-one.xml", time);
@@ -112,7 +118,9 @@ public class DefaultTopologyServiceTest {
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
-      EasyMock.expect(config.getGatewayConfDir()).andReturn(topologyDir.getParentFile().getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayProvidersConfigDir()).andReturn(sharedProvidersDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayDescriptorsDir()).andReturn(descriptorsDir.getAbsolutePath()).anyTimes();
       EasyMock.replay(config);
 
       provider.init(config, c);
