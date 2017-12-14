@@ -20,7 +20,7 @@ package org.apache.knox.gateway.util;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
-import org.apache.knox.conf.Configuration;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;

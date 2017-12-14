@@ -1855,7 +1855,7 @@ public class KnoxCLI extends Configured implements Tool {
     static final String DESC = "Lists all of the remote configuration registry clients defined in gateway-site.xml.\n";
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
      */
     @Override
     public void execute() throws Exception {
@@ -1870,7 +1870,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
      */
     @Override
     public String getUsage() {
@@ -1958,7 +1958,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
      */
     @Override
     public void execute() throws Exception {
@@ -1966,7 +1966,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
      */
     @Override
     public String getUsage() {
@@ -1987,7 +1987,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
      */
     @Override
     public void execute() throws Exception {
@@ -1995,7 +1995,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
      */
     @Override
     public String getUsage() {
@@ -2016,7 +2016,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#execute()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
      */
     @Override
     public void execute() throws Exception {
@@ -2039,7 +2039,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /* (non-Javadoc)
-     * @see org.apache.hadoop.gateway.util.KnoxCLI.Command#getUsage()
+     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
      */
     @Override
     public String getUsage() {
