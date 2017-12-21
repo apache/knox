@@ -277,7 +277,12 @@ class ServiceURLPropertyConfig {
             if (ifNode != null) {
                 NamedNodeMap attrs = ifNode.getAttributes();
                 String comparisonPropName = attrs.getNamedItem(ATTR_PROPERTY).getNodeValue();
-                String comparisonValue = attrs.getNamedItem(ATTR_VALUE).getNodeValue();
+
+                String comparisonValue = null;
+                Node valueNode = attrs.getNamedItem(ATTR_VALUE);
+                if (valueNode != null) {
+                    comparisonValue = attrs.getNamedItem(ATTR_VALUE).getNodeValue();
+                }
 
                 ConditionalValueHandler affirmativeResult = null;
                 Node thenNode = (Node) THEN.evaluate(ifNode, XPathConstants.NODE);
