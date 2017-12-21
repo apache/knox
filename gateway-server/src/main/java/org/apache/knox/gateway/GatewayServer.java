@@ -231,12 +231,16 @@ public class GatewayServer {
   }
 
   private static void configureKerberosSecurity( GatewayConfig config ) {
-    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
-    System.setProperty(GatewayConfig.KRB5_CONFIG, config.getKerberosConfig());
-    System.setProperty(GatewayConfig.KRB5_DEBUG,
-        Boolean.toString(config.isKerberosDebugEnabled()));
-    System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
-    System.setProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
+    setSystemProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    setSystemProperty(GatewayConfig.KRB5_CONFIG, config.getKerberosConfig());
+    setSystemProperty(GatewayConfig.KRB5_DEBUG, Boolean.toString(config.isKerberosDebugEnabled()));
+    setSystemProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
+    setSystemProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
+  }
+
+  private static void setSystemProperty(String name, String value) {
+	  System.setProperty(name, value);
+    log.logSysProp(name, System.getProperty(name));
   }
 
   private static Properties loadBuildProperties() {
