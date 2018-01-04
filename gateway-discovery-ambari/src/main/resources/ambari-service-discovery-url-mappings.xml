@@ -24,11 +24,23 @@
 <service-discovery-url-mappings>
 
     <service name="NAMENODE">
-        <url-pattern>hdfs://{DFS_NAMENODE_RPC_ADDRESS}</url-pattern>
+        <url-pattern>hdfs://{DFS_NAMENODE_ADDRESS}</url-pattern>
         <properties>
             <property name="DFS_NAMENODE_RPC_ADDRESS">
                 <component>NAMENODE</component>
                 <config-property>dfs.namenode.rpc-address</config-property>
+            </property>
+            <property name="DFS_NAMESERVICES">
+                <component>NAMENODE</component>
+                <config-property>dfs.nameservices</config-property>
+            </property>
+            <property name="DFS_NAMENODE_ADDRESS">
+                <config-property>
+                    <if property="DFS_NAMESERVICES">
+                        <then>DFS_NAMESERVICES</then>
+                        <else>DFS_NAMENODE_RPC_ADDRESS</else>
+                    </if>
+                </config-property>
             </property>
         </properties>
     </service>
@@ -39,16 +51,6 @@
             <property name="YARN_RM_ADDRESS">
                 <component>RESOURCEMANAGER</component>
                 <config-property>yarn.resourcemanager.address</config-property>
-            </property>
-        </properties>
-    </service>
-
-    <service name="WEBHDFS">
-        <url-pattern>http://{WEBHDFS_ADDRESS}/webhdfs</url-pattern>
-        <properties>
-            <property name="WEBHDFS_ADDRESS">
-                <service-config name="HDFS">hdfs-site</service-config>
-                <config-property>dfs.namenode.http-address</config-property>
             </property>
         </properties>
     </service>
