@@ -53,10 +53,16 @@ class AmbariClientCommon {
 
     Map<String, Map<String, AmbariCluster.ServiceConfiguration>> getActiveServiceConfigurations(String clusterName,
                                                                                                 ServiceDiscoveryConfig config) {
-        return getActiveServiceConfigurations(config.getAddress(),
-                                              clusterName,
-                                              config.getUser(),
-                                              config.getPasswordAlias());
+        Map<String, Map<String, AmbariCluster.ServiceConfiguration>> activeConfigs = null;
+
+        if (config != null) {
+            activeConfigs = getActiveServiceConfigurations(config.getAddress(),
+                                                           clusterName,
+                                                           config.getUser(),
+                                                           config.getPasswordAlias());
+        }
+
+        return activeConfigs;
     }
 
 
