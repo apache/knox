@@ -96,7 +96,7 @@ public class PortMappingHelperHandler extends HandlerWrapper {
       throws IOException, ServletException {
 
     String newTarget = target;
-    String baseURI = baseRequest.getUri().toString();
+    String baseURI = baseRequest.getRequestURI();
 
     // If Port Mapping feature enabled
     if (config.isGatewayPortMappingEnabled()) {
