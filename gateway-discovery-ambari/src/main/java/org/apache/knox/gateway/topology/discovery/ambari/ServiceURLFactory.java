@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.hadoop.gateway.topology.discovery.ambari;
+package org.apache.knox.gateway.topology.discovery.ambari;
 
 import java.util.ArrayList;
 import java.util.HashMap;
