@@ -93,6 +93,7 @@
             <excludes>
                 <exclude>${gateway-group}:gateway-*</exclude>
                 <exclude>${gateway-group}:hadoop-examples</exclude>
+                <exclude>org.apache.kerby:*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
