@@ -34,6 +34,7 @@ import java.util.Map;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 
@@ -111,6 +112,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals(HOSTNAMES.length, urls.size());
         validateServiceURLs(urls, HOSTNAMES, expectedScheme, HTTP_PORT, HTTP_PATH);
     }
+
 
     @Test
     public void testResourceManagerURLFromInternalMapping() throws Exception {
@@ -213,6 +215,35 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals("hdfs://" + ADDRESS, url);
     }
 
+
+    @Test
+    public void testNameNodeHAURLFromInternalMapping() throws Exception {
+        testNameNodeURLHA(null);
+    }
+
+    @Test
+    public void testNameNodeHAURLFromExternalMapping() throws Exception {
+        testNameNodeURLHA(TEST_MAPPING_CONFIG);
+    }
+
+    private void testNameNodeURLHA(Object mappingConfiguration) throws Exception {
+        final String NAMESERVICE = "myNSCluster";
+
+        AmbariComponent namenode = EasyMock.createNiceMock(AmbariComponent.class);
+        EasyMock.expect(namenode.getConfigProperty("dfs.nameservices")).andReturn(NAMESERVICE).anyTimes();
+        EasyMock.replay(namenode);
+
+        AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+        EasyMock.expect(cluster.getComponent("NAMENODE")).andReturn(namenode).anyTimes();
+        EasyMock.replay(cluster);
+
+        // Run the test
+        AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, mappingConfiguration);
+        String url = builder.create("NAMENODE").get(0);
+        assertEquals("hdfs://" + NAMESERVICE, url);
+    }
+
+
     @Test
     public void testWebHCatURLFromInternalMapping() throws Exception {
         testWebHCatURL(null);
@@ -309,29 +340,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         testWebHdfsURL(TEST_MAPPING_CONFIG);
     }
 
-    @Test
-    public void testWebHdfsURLFromSystemPropertyOverride() throws Exception {
-        // Write the test mapping configuration to a temp file
-        File mappingFile = File.createTempFile("mapping-config", "xml");
-        FileUtils.write(mappingFile, OVERRIDE_MAPPING_FILE_CONTENTS, "utf-8");
-
-        // Set the system property to point to the temp file
-        System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY,
-                           mappingFile.getAbsolutePath());
-        try {
-            final String ADDRESS = "host3:1357";
-            // The URL creator should apply the file contents, and create the URL accordingly
-            String url = getTestWebHdfsURL(ADDRESS, null);
-
-            // Verify the URL matches the pattern from the file
-            assertEquals("http://" + ADDRESS + "/webhdfs/OVERRIDE", url);
-        } finally {
-            // Reset the system property, and delete the temp file
-            System.clearProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY);
-            mappingFile.delete();
-        }
-    }
-
     private void testWebHdfsURL(Object mappingConfiguration) throws Exception {
         final String ADDRESS = "host3:1357";
         assertEquals("http://" + ADDRESS + "/webhdfs", getTestWebHdfsURL(ADDRESS, mappingConfiguration));
@@ -350,8 +358,42 @@ public class AmbariDynamicServiceURLCreatorTest {
         EasyMock.replay(cluster);
 
         // Create the URL
-        AmbariDynamicServiceURLCreator creator = newURLCreator(cluster, mappingConfiguration);
-        return creator.create("WEBHDFS").get(0);
+        List<String> urls = ServiceURLFactory.newInstance(cluster).create("WEBHDFS");
+        assertNotNull(urls);
+        assertFalse(urls.isEmpty());
+        return urls.get(0);
+    }
+
+    @Test
+    public void testWebHdfsURLHA() throws Exception {
+        final String NAMESERVICES   = "myNameServicesCluster";
+        final String HTTP_ADDRESS_1 = "host1:50070";
+        final String HTTP_ADDRESS_2 = "host2:50077";
+
+        final String EXPECTED_ADDR_1 = "http://" + HTTP_ADDRESS_1 + "/webhdfs";
+        final String EXPECTED_ADDR_2 = "http://" + HTTP_ADDRESS_2 + "/webhdfs";
+
+        AmbariComponent namenode = EasyMock.createNiceMock(AmbariComponent.class);
+        EasyMock.expect(namenode.getConfigProperty("dfs.nameservices")).andReturn(NAMESERVICES).anyTimes();
+        EasyMock.replay(namenode);
+
+        AmbariCluster.ServiceConfiguration hdfsSC = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+        Map<String, String> hdfsProps = new HashMap<>();
+        hdfsProps.put("dfs.namenode.http-address." + NAMESERVICES + ".nn1", HTTP_ADDRESS_1);
+        hdfsProps.put("dfs.namenode.http-address." + NAMESERVICES + ".nn2", HTTP_ADDRESS_2);
+        EasyMock.expect(hdfsSC.getProperties()).andReturn(hdfsProps).anyTimes();
+        EasyMock.replay(hdfsSC);
+
+        AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+        EasyMock.expect(cluster.getComponent("NAMENODE")).andReturn(namenode).anyTimes();
+        EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site")).andReturn(hdfsSC).anyTimes();
+        EasyMock.replay(cluster);
+
+        // Create the URL
+        List<String> webhdfsURLs = ServiceURLFactory.newInstance(cluster).create("WEBHDFS");
+        assertEquals(2, webhdfsURLs.size());
+        assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_1));
+        assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
 
@@ -731,11 +773,23 @@ public class AmbariDynamicServiceURLCreatorTest {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<service-discovery-url-mappings>\n" +
             "  <service name=\"NAMENODE\">\n" +
-            "    <url-pattern>hdfs://{DFS_NAMENODE_RPC_ADDRESS}</url-pattern>\n" +
+            "    <url-pattern>hdfs://{DFS_NAMENODE_ADDRESS}</url-pattern>\n" +
             "    <properties>\n" +
             "      <property name=\"DFS_NAMENODE_RPC_ADDRESS\">\n" +
             "        <component>NAMENODE</component>\n" +
             "        <config-property>dfs.namenode.rpc-address</config-property>\n" +
+            "      </property>\n" +
+            "      <property name=\"DFS_NAMESERVICES\">\n" +
+            "        <component>NAMENODE</component>\n" +
+            "        <config-property>dfs.nameservices</config-property>\n" +
+            "      </property>\n" +
+            "      <property name=\"DFS_NAMENODE_ADDRESS\">\n" +
+            "        <config-property>\n" +
+            "          <if property=\"DFS_NAMESERVICES\">\n" +
+            "            <then>DFS_NAMESERVICES</then>\n" +
+            "            <else>DFS_NAMENODE_RPC_ADDRESS</else>\n" +
+            "          </if>\n" +
+            "        </config-property>\n" +
             "      </property>\n" +
             "    </properties>\n" +
             "  </service>\n" +
@@ -746,16 +800,6 @@ public class AmbariDynamicServiceURLCreatorTest {
             "      <property name=\"YARN_RM_ADDRESS\">\n" +
             "        <component>RESOURCEMANAGER</component>\n" +
             "        <config-property>yarn.resourcemanager.address</config-property>\n" +
-            "      </property>\n" +
-            "    </properties>\n" +
-            "  </service>\n" +
-            "\n" +
-            "  <service name=\"WEBHDFS\">\n" +
-            "    <url-pattern>http://{WEBHDFS_ADDRESS}/webhdfs</url-pattern>\n" +
-            "    <properties>\n" +
-            "      <property name=\"WEBHDFS_ADDRESS\">\n" +
-            "        <service-config name=\"HDFS\">hdfs-site</service-config>\n" +
-            "        <config-property>dfs.namenode.http-address</config-property>\n" +
             "      </property>\n" +
             "    </properties>\n" +
             "  </service>\n" +

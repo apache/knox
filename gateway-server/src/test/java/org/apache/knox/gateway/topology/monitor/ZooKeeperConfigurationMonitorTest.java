@@ -113,10 +113,10 @@ public class ZooKeeperConfigurationMonitorTest {
 
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_DESCRIPTORS);
         assertNotNull("Failed to create node:" + PATH_KNOX_DESCRIPTORS,
-                client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
+                      client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);
         assertNotNull("Failed to create node:" + PATH_KNOX_PROVIDERS,
-                client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+                      client.checkExists().forPath(PATH_KNOX_PROVIDERS));
     }
 
     @AfterClass
@@ -164,11 +164,24 @@ public class ZooKeeperConfigurationMonitorTest {
 
         DefaultRemoteConfigurationMonitor cm = new DefaultRemoteConfigurationMonitor(gc, clientService);
 
+        // Create a provider configuration in the test ZK, prior to starting the monitor, to make sure that the monitor
+        // will download existing entries upon starting.
+        final String preExistingProviderConfig = getProviderPath("pre-existing-providers.xml");
+        client.create().withMode(CreateMode.PERSISTENT).forPath(preExistingProviderConfig,
+                                                                TEST_PROVIDERS_CONFIG_1.getBytes());
+        File preExistingProviderConfigLocalFile = new File(providersDir, "pre-existing-providers.xml");
+        assertFalse("This file should not exist locally prior to monitor starting.",
+                    preExistingProviderConfigLocalFile.exists());
+
         try {
             cm.start();
         } catch (Exception e) {
             fail("Failed to start monitor: " + e.getMessage());
         }
+
+        assertTrue("This file should exist locally immediately after monitor starting.",
+                    preExistingProviderConfigLocalFile.exists());
+
 
         try {
             final String pc_one_znode = getProviderPath("providers-config1.xml");

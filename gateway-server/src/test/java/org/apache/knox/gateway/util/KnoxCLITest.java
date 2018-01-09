@@ -193,6 +193,14 @@ public class KnoxCLITest {
 
       // Validate the result
       assertEquals(0, rc);
+
+      outContent.reset();
+      final String[] listArgs = {"list-provider-configs", "--registry-client", "test_client"};
+      cli.run(listArgs);
+      String outStr =  outContent.toString().trim();
+      assertTrue(outStr.startsWith("Provider Configurations"));
+      assertTrue(outStr.endsWith(")\n"+providerConfigName));
+
       File registryFile = new File(testRegistry, "knox/config/shared-providers/" + providerConfigName);
       assertTrue(registryFile.exists());
       assertEquals(FileUtils.readFileToString(registryFile), providerConfigContent);
@@ -272,6 +280,14 @@ public class KnoxCLITest {
 
       // Validate the result
       assertEquals(0, rc);
+
+      outContent.reset();
+      final String[] listArgs = {"list-descriptors", "--registry-client", "test_client"};
+      cli.run(listArgs);
+      String outStr =  outContent.toString().trim();
+      assertTrue(outStr.startsWith("Descriptors"));
+      assertTrue(outStr.endsWith(")\n"+descriptorName));
+
       File registryFile = new File(testRegistry, "knox/config/descriptors/" + descriptorName);
       assertTrue(registryFile.exists());
       assertEquals(FileUtils.readFileToString(registryFile), descriptorContent);

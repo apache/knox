@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 
-class AmbariDynamicServiceURLCreator {
+class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
 
     static final String MAPPING_CONFIG_OVERRIDE_PROPERTY = "org.apache.gateway.topology.discovery.ambari.config";
 
@@ -69,7 +69,7 @@ class AmbariDynamicServiceURLCreator {
         config = new ServiceURLPropertyConfig(new ByteArrayInputStream(mappings.getBytes()));
     }
 
-    List<String> create(String serviceName) {
+    public List<String> create(String serviceName) {
         List<String> urls = new ArrayList<>();
 
         Map<String, String> placeholderValues = new HashMap<>();

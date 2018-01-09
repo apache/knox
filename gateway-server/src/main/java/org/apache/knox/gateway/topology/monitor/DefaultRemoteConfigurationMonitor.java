@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZooDefs;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -112,6 +113,19 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
         if (providerConfigs == null) {
             // Either the ZNode does not exist, or there is an authentication problem
             throw new IllegalStateException("Unable to access remote path: " + NODE_KNOX_PROVIDERS);
+        } else {
+            // Download any existing provider configs in the remote registry, which either do not exist locally, or have
+            // been modified, so that they are certain to be present when this monitor downloads any descriptors that
+            // reference them.
+            for (String providerConfig : providerConfigs) {
+                File localFile = new File(providersDir, providerConfig);
+
+                byte[] remoteContent = client.getEntryData(NODE_KNOX_PROVIDERS + "/" + providerConfig).getBytes();
+                if (!localFile.exists() || !Arrays.equals(remoteContent, FileUtils.readFileToByteArray(localFile))) {
+                    FileUtils.writeByteArrayToFile(localFile, remoteContent);
+                    log.downloadedRemoteConfigFile(providersDir.getName(), providerConfig);
+                }
+            }
         }
 
         // Confirm access to the remote descriptors directory znode
@@ -213,8 +227,12 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
             File localFile = new File(localDir, path.substring(path.lastIndexOf("/")));
             if (data != null) {
                 try {
-                    FileUtils.writeByteArrayToFile(localFile, data);
-                    log.downloadedRemoteConfigFile(localDir.getName(), localFile.getName());
+                    // If there is no corresponding local file, or the content is different from the existing local
+                    // file, write the data to the local file.
+                    if (!localFile.exists() || !Arrays.equals(FileUtils.readFileToByteArray(localFile), data)) {
+                        FileUtils.writeByteArrayToFile(localFile, data);
+                        log.downloadedRemoteConfigFile(localDir.getName(), localFile.getName());
+                    }
                 } catch (IOException e) {
                     log.errorDownloadingRemoteConfiguration(path, e);
                 }
