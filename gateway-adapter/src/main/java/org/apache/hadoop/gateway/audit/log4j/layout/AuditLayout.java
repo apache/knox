@@ -17,14 +17,16 @@ package org.apache.hadoop.gateway.audit.log4j.layout;
  * the License.
  */
 
-import org.apache.log4j.spi.LoggingEvent;
-
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.audit.log4j.layout.AuditLayout}
  * for backwards compatability with package structure.
  *
+ * This is class is deprecated and only used for backwards compatibility
+ * please use
+ * org.apache.knox.gateway.audit.log4j.layout.AuditLayout
  * @since 0.14.0
  */
+@Deprecated
 public class AuditLayout
     extends org.apache.knox.gateway.audit.log4j.layout.AuditLayout {
 
