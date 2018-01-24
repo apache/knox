@@ -24,8 +24,13 @@ import java.util.Hashtable;
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
  * for backwards compatability with package structure.
+ *
+ * This is class is deprecated and only used for backwards compatibility
+ * please use
+ * org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
  * @since 0.14.0
  */
+@Deprecated
 public class KnoxLdapContextFactory extends org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory {
 
   /**

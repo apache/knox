@@ -25,9 +25,14 @@ import org.apache.shiro.subject.PrincipalCollection;
 
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
- * for backwards compatability with package structure.
- * @since 0.14.0
+ * for backwards compatibility with package structure.
+ *
+ * This is class is deprecated and only used for backwards compatibility
+ * please use
+ * org.apache.knox.gateway.shirorealm.KnoxPamRealm
+ * @since 1.0.0
  */
+@Deprecated
 public class KnoxPamRealm
     extends org.apache.knox.gateway.shirorealm.KnoxPamRealm {
 
