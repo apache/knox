@@ -32,7 +32,7 @@ import java.util.Map.Entry;
 public class JWTFederationContributor extends
     ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "JWTFederationFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter";
 
   @Override
   public String getRole() {

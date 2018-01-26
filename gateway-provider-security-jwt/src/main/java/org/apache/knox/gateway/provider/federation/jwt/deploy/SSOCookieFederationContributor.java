@@ -32,7 +32,7 @@ import java.util.Map.Entry;
 public class SSOCookieFederationContributor extends
     ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "SSOCookieFederationFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter";
 
   @Override
   public String getRole() {

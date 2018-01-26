@@ -35,8 +35,8 @@ public class HadoopAuthDeploymentContributor extends
   private static final String ROLE = "authentication";
   private static final String NAME = "HadoopAuth";
 
-  private static final String HADOOPAUTH_FILTER_CLASSNAME = "HadoopAuthFilter";
-  private static final String HADOOPAUTH_POSTFILTER_CLASSNAME = "HadoopAuthPostFilter";
+  private static final String HADOOPAUTH_FILTER_CLASSNAME = "org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter";
+  private static final String HADOOPAUTH_POSTFILTER_CLASSNAME = "org.apache.knox.gateway.hadoopauth.filter.HadoopAuthPostFilter";
 
   @Override
   public String getRole() {
