@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {Topology} from './topology';
-import {TopologyService} from "./topology.service";
+import { Component, OnInit } from '@angular/core';
+import { Topology } from './topology';
+import { TopologyService } from './topology.service';
 import { Subscription }   from 'rxjs/Subscription';
 
 

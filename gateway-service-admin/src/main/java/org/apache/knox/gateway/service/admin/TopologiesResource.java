@@ -210,7 +210,7 @@ public class TopologiesResource {
   }
 
   @GET
-  @Produces({APPLICATION_XML})
+  @Produces({APPLICATION_XML, APPLICATION_JSON, TEXT_PLAIN})
   @Path(SINGLE_PROVIDERCONFIG_API_PATH)
   public Response getProviderConfiguration(@PathParam("name") String name) {
     Response response;

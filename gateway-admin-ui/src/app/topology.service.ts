@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 import { Injectable }    from '@angular/core';
-import { Headers, Http } from '@angular/http';
+import { HttpHeaders, HttpClient } from '@angular/common/http';
 
 import 'rxjs/add/operator/toPromise';
 import { Subject }    from 'rxjs/Subject';
-import { Observable }    from 'rxjs/Observable';
-
 import { Topology } from './topology';
 
 @Injectable()
@@ -33,37 +31,37 @@ export class TopologyService {
     changedTopologySource = new Subject<string>();
     changedTopology$ = this.changedTopologySource.asObservable();
 
-    constructor(private http: Http) { }
+    constructor(private http: HttpClient) { }
 
     getTopologies(): Promise<Topology[]> {
-        let headers = new Headers();
+        let headers = new HttpHeaders();
         this.addJsonHeaders(headers);
         return this.http.get(this.topologiesUrl, {
             headers: headers
         } )
             .toPromise()
-            .then(response => response.json().topologies.topology as Topology[])
+            .then(response => response['topologies'].topology as Topology[])
             .catch(this.handleError);
     }
 
     getTopology(href : string): Promise<string> {
-        let headers = new Headers();
-        this.addXmlHeaders(headers);
+        let headers = new HttpHeaders();
+        headers = this.addXmlHeaders(headers);
         return this.http.get(href, {
-            headers: headers
+            headers: headers, responseType: 'text'
         } )
             .toPromise()
-            .then(response => response.text())
+            .then(response => response)
             .catch(this.handleError);
 
     }
 
     saveTopology(url: string, xml : string): Promise<string> {
-        let xheaders = new Headers();
-        this.addXmlHeaders(xheaders);
-        this.addCsrfHeaders(xheaders);
+        let xheaders = new HttpHeaders();
+        xheaders = this.addXmlHeaders(xheaders);
+        xheaders = this.addCsrfHeaders(xheaders);
         return this.http
-            .put(url, xml, {headers: xheaders})
+            .put(url, xml, { headers: xheaders, responseType: 'text' })
             .toPromise()
             .then(() => xml)
             .catch(this.handleError);
@@ -71,41 +69,41 @@ export class TopologyService {
     }
 
     createTopology(name: string, xml : string): Promise<string> {
-        let xheaders = new Headers();
-        this.addXmlHeaders(xheaders);
-        this.addCsrfHeaders(xheaders);
+        let xheaders = new HttpHeaders();
+        xheaders = this.addXmlHeaders(xheaders);
+        xheaders = this.addCsrfHeaders(xheaders);
         let url = this.topologiesUrl + "/" + name;
         return this.http
-            .put(url, xml, {headers: xheaders})
+            .put(url, xml, { headers: xheaders, responseType: 'text' })
             .toPromise()
             .then(() => xml)
             .catch(this.handleError);
     }
 
     deleteTopology(href: string): Promise<string> {
-        let headers = new Headers();
-        this.addJsonHeaders(headers);
-        this.addCsrfHeaders(headers);
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        headers = this.addCsrfHeaders(headers);
         return this.http.delete(href, {
-            headers: headers
+            headers: headers, responseType: 'text'
         } )
             .toPromise()
-            .then(response => response.text())
+            .then(response => response)
             .catch(this.handleError);
     }
 
-    addJsonHeaders(headers: Headers) {
-        headers.append('Accept', 'application/json');
-        headers.append('Content-Type', 'application/json');
+    addJsonHeaders(headers: HttpHeaders): HttpHeaders {
+        return headers.append('Accept', 'application/json')
+                      .append('Content-Type', 'application/json');
     }
 
-    addXmlHeaders(headers: Headers) {
-        headers.append('Accept', 'application/xml');
-        headers.append('Content-Type', 'application/xml');
+    addXmlHeaders(headers: HttpHeaders): HttpHeaders {
+        return headers.append('Accept', 'application/xml')
+                      .append('Content-Type', 'application/xml');
     }
 
-    addCsrfHeaders(headers: Headers) {
-        headers.append('X-XSRF-Header', 'admin-ui');
+    addCsrfHeaders(headers: HttpHeaders): HttpHeaders {
+        return headers.append('X-XSRF-Header', 'admin-ui');
     }
 
     selectedTopology(value: Topology) {

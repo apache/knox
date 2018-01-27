@@ -1,0 +1,151 @@
+<div *ngIf="resourceType && resourceType !== 'Topologies'" class="panel panel-default">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      {{ getTitleSubject() }} Detail <span *ngIf="hasSelectedResource()" class="pull-right">{{resourceService.getResourceDisplayName(resource)}}</span>
+    </h4>
+  </div>
+
+  <!-- Provider Configuration Details -->
+  <div class="panel-body" *ngIf="hasSelectedResource() && resourceType === 'Provider Configurations'">
+    <div *ngIf="hasSelectedResource()">
+      <div class="panel panel-default" *ngFor="let provider of providers">
+        <span [class]="'clickable glyhpicon glyphicon-' + (provider.show ? 'minus' : 'plus')"
+                 (click)="provider.show = !provider.show"></span>
+        <span><b>{{ provider.name }}</b></span>
+        <span class="glyphicon glyphicon-remove-sign pull-right" data-toggle="tooltip" [title]="'Remove ' + provider.name"></span>
+        <div *ngIf="provider.show">
+          &nbsp;&nbsp;&nbsp;<b>Role</b> {{ provider.role }}<br>
+          &nbsp;&nbsp;&nbsp;<b>Enabled</b> {{ provider.enabled }}<br>
+          <div>
+            <span>&nbsp;&nbsp;&nbsp;</span>
+            <span [class]="'clickable glyhpicon glyphicon-' + (provider.paramDetails ? 'minus' : 'plus')"
+                  (click)="provider.paramDetails = !provider.paramDetails"></span>
+            <span><b>Params</b></span>
+            <span class="glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Param"></span>
+
+            <div class="panel panel-default table-responsive" *ngIf="provider.paramDetails">
+              <table class="table table-sm">
+                <tr *ngFor="let key of getParamKeys(provider)">
+                  <td>
+                    <span class="glyphicon glyphicon-remove-sign"></span>
+                  </td>
+                  <td><b>{{ key }}</b></td>
+                  <td>{{ provider.params[key] }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- Descriptor Details -->
+  <div class="panel-body" *ngIf="hasSelectedResource() && resourceType === 'Descriptors'">
+    <!-- The resource name is undefined if it's the empty descriptor because none has been selected yet. -->
+    <div *ngIf="hasSelectedResource()">
+      <div>
+        <div class="panel panel-default col-md-12">
+          <span class="col-md-4"><b>Provider Configuration</b></span>
+          <span class="col-md-7">
+            <input type="text" class="col-md-sm form-control input-sm" [(ngModel)]="descriptor.providerConfig" id="textbox"/>
+          </span>
+          <span class="col-md-1 pull-left">
+            <button id="chooseProviderConfig" (click)="chooseProviderConfigModal.open('sm')" class="btn btn-default btn-xs glyphicon glyphicon-edit" type="submit">
+              <!--            <span class="glyphicon glyphicon-edit"></span>-->
+            </button>
+          </span>
+        </div>
+        <bs-modal (onClose)="descriptor.setProviderConfig(newProviderConfigRef)" #chooseProviderConfigModal>
+          <!--<bs-modal-header [show-close]="true">-->
+          <bs-modal-header>
+            <label class="modal-title">Choose a Provider Configuration</label>
+          </bs-modal-header>
+          <bs-modal-body>
+            <div class="form-group">
+              <select autofocus required class="md-select form-control" required [(ngModel)]="newProviderConfigRef" id="select" >
+                <option *ngFor="let pc of availableProviderConfigs"
+                        class="md-option"
+                        [value]="pc.name"
+                        [selected]="pc.name === descriptor.providerConfig">{{pc.name}}</option>
+              </select>
+            </div>
+          </bs-modal-body>
+          <bs-modal-footer>
+            <button type="button" class="btn btn-default btn-sm" data-dismiss="chooseProviderConfigModal" (click)="chooseProviderConfigModal.dismiss()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="!newProviderConfigRef" (click)="chooseProviderConfigModal.close()">Ok</button>
+          </bs-modal-footer>
+        </bs-modal>
+      </div>
+
+      <br><br>
+
+      <div class="panel panel-default col-md-12">
+        <span [class]="'clickable glyhpicon glyphicon-' + (showServiceDetails ? 'minus' : 'plus')"
+              (click)="showServiceDetails = !showServiceDetails"></span>
+        <span><b>Services</b></span>
+        <span class="glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Service"></span>
+      <div class="col-md-12 table-responsive" *ngIf="showServiceDetails">
+        <table class="table table-striped table-sm">
+          <tr *ngFor="let service of descriptor.services">
+            <td>
+              <div>
+                <span><b>{{ service.name }}</b></span>
+                <span class="glyphicon glyphicon-remove-sign pull-right"  data-toggle="tooltip" [title]="'Remove ' + service.name"></span>
+              </div>
+              <div>
+                <span [class]="'clickable glyhpicon glyphicon-' + (service.showParams ? 'minus' : 'plus')"
+                      (click)="service.showParams = !service.showParams"></span>
+                <span>Params</span><span>&nbsp;</span><span class="glyphicon glyphicon-plus-sign" data-toggle="tooltip" title="Add param"></span>
+                <!--<span class="btn btn-default btn-xs" data-toggle="tooltip" title="Add param">add</span>-->
+              </div>
+              <div class="table-responsive" *ngIf="service.showParams">
+                <table class="table table-sm" *ngIf="descriptor.getServiceParamKeys(service).length > 0">
+                  <tr *ngFor="let paramKey of descriptor.getServiceParamKeys(service)">
+                    <td width="5%"><span class="glyphicon glyphicon-remove-sign"></span></td>
+                    <td width="30%"><b>{{ paramKey }}</b></td>
+                    <td width="65%" align="left">{{ descriptor.getServiceParamValue(service, paramKey) }}</td>
+                  </tr>
+                </table>
+              </div>
+              <div>
+                <span [class]="'clickable glyhpicon glyphicon-' + (service.showUrls ? 'minus' : 'plus')"
+                      (click)="service.showUrls = !service.showUrls"></span>
+                <span>URLs</span><span>&nbsp;</span><span class="glyphicon glyphicon-plus-sign" data-toggle="tooltip" title="Add URL"></span>
+              </div>
+              <div class="table-responsive" *ngIf="service.showUrls">
+                <table class="table table-sm" *ngIf="service.urls && service.urls.length > 0">
+                  <tr *ngFor="let url of service.urls">
+                    <td width="5%"><span class="glyphicon glyphicon-remove-sign"></span></td>
+                    <td width="95%">{{ url }}</td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+      <br><br>
+      <div class="panel panel-default col-md-12">
+        <span [class]="'clickable glyhpicon glyphicon-' + (showDiscDetails ? 'minus' : 'plus')"
+              (click)="showDiscDetails = !showDiscDetails"></span>
+        <span><b>Discovery Details</b></span>
+        <div class="col-md-12" *ngIf="showDiscDetails">
+          <table class="table table-sm">
+            <tr><td>Discovery Address</td><td>{{ descriptor.discoveryAddress }}</td></tr>
+            <tr><td>Discovery User</td><td>{{ descriptor.discoveryUser }}</td></tr>
+            <tr><td>Discovery Password Alias</td><td>{{ descriptor.discoveryPassAlias }}</td></tr>
+            <tr><td>Discovery Cluster</td><td>{{ descriptor.discoveryCluster }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Topology Details -->
+<div *ngIf="resourceType === 'Topologies'">
+  <topology-detail></topology-detail>
+</div>

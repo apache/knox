@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { Injectable }    from '@angular/core';
-import { Headers, Http } from '@angular/http';
+import { HttpHeaders, HttpClient } from '@angular/common/http';
 
 import 'rxjs/add/operator/toPromise';
 
@@ -26,22 +26,22 @@ export class GatewayVersionService {
 
     private apiUrl = '/gateway/manager/api/v1/version';
 
-    constructor(private http: Http) { }
+    constructor(private http: HttpClient) { }
 
     getVersion(): Promise<GatewayVersion> {
-        let headers = new Headers();
-        this.addHeaders(headers);
-        return this.http.get(this.apiUrl, {
-            headers: headers
-        } )
-            .toPromise()
-            .then(response => response.json().ServerVersion as GatewayVersion)
-            .catch(this.handleError);
+        let headers = new HttpHeaders();
+        headers = this.addHeaders(headers);
+        return this.http.get(this.apiUrl, { headers: headers } )
+                        .toPromise()
+                        .then(response => {
+                            return response['ServerVersion'] as GatewayVersion;
+                        })
+                        .catch(this.handleError);
     }
 
-    addHeaders(headers: Headers) {
-        headers.append('Accept', 'application/json');
-        headers.append('Content-Type', 'application/json');
+    addHeaders(headers: HttpHeaders) {
+        return headers.append('Accept', 'application/json')
+                      .append('Content-Type', 'application/json');
     }
 
     private handleError(error: any): Promise<any> {

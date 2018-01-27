@@ -1,0 +1,22 @@
+<div>
+  <div class="table-responsive" style="max-height: 400px; width:100%; overflow: auto;">
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th>{{ getResourceTypeSingularDisplayName(resourceType) }}</th>
+        <th *ngIf="resourceType === 'Topologies'">Timestamp</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let resource of resources"
+          [class.selected]="resource === selectedResource"
+          [class.active]="resource === selectedResource"
+          (click)="onSelect(resource)"
+          class="clickable">
+        <td>{{resourceService.getResourceDisplayName(resource)}}</td>
+        <td *ngIf="resourceType === 'Topologies'">{{resource.timestamp | date:'medium'}}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

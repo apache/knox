@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Topology } from './topology';
-import {TopologyService} from "./topology.service";
-import { ModalComponent } from 'ng2-bs3-modal/ng2-bs3-modal';
-import { ViewChildren } from '@angular/core/src/metadata/di';
+import { TopologyService } from "./topology.service";
+import { BsModalComponent } from 'ng2-bs3-modal/ng2-bs3-modal';
+import { ResourceService } from "./resource/resource.service";
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
@@ -27,59 +27,62 @@ import 'brace/mode/xml';
     selector: 'topology-detail',
     template: `
      <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;" class="text-danger text-center" > Ready Only (generated file) </span> <span class="label label-default pull-right">{{titleSuffix}}</span></h4>
-         </div>
-     <div *ngIf="topologyContent" class="panel-body">
-      <ace-editor
-        [(text)]="topologyContent" 
-        [mode]="'xml'" 
-        [options]="options" 
-        [theme]="theme"
-        style="min-height: 430px; width:100%; overflow: auto;" 
-        (textChanged)="onChange($event)">
-      </ace-editor>
-       <div *ngIf="showEditOptions" class="panel-footer">
-        <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
-            <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
-        </button>
-        <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
-            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-        </button>
-       <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit" >
-            <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
-        </button>
+       <div class="panel-heading">
+         <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;" class="text-danger text-center" > Ready Only (generated file) </span> <span class="pull-right">{{titleSuffix}}</span></h4>
        </div>
+       <div *ngIf="topologyContent" class="panel-body">
+         <ace-editor
+            [(text)]="topologyContent" 
+            [mode]="'xml'" 
+            [options]="options" 
+            [theme]="theme"
+            [readOnly]="!showEditOptions"
+            style="min-height: 430px; width:100%; overflow: auto;" 
+            (textChanged)="onChange($event)">
+         </ace-editor>
+         <div *ngIf="showEditOptions" class="panel-footer">
+           <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
+             <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
+           </button>
+           <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
+             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+           </button>
+           <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit" >
+             <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+           </button>
+         </div>
          
-    </div>
-    <modal (onClose)="createTopology()" #duplicateModal>
-
-        <modal-header [show-close]="true">
-            <h4 class="modal-title">Create a copy</h4>
-        </modal-header>
-        <modal-body>
-            <div class="form-group">
-                <label for="textbox">Name the new topology</label>
-                <input autofocus type="text" class="form-control" required [(ngModel)]="newTopologyName" id="textbox">
-            </div> 
-        </modal-body>
-        <modal-footer>
-            <button type="button" class="btn btn-default btn-sm" data-dismiss="duplicateModal" (click)="duplicateModal.dismiss()">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" [disabled]="!newTopologyName" (click)="duplicateModal.close()">Ok</button>
-        </modal-footer>
-    </modal>
-    <modal (onClose)="deleteTopology()" #deleteConfirmModal>
-        <modal-header [show-close]="true">
-            <h4 class="modal-title">Deleting Topology {{titleSuffix}}</h4>
-        </modal-header>
-        <modal-body>
-            Are you sure you want to delete the topology?
-        </modal-body>
-        <modal-footer>
-            <button type="button" class="btn btn-default btn-sm" data-dismiss="deleteConfirmModal" (click)="deleteConfirmModal.dismiss()">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" (click)="deleteConfirmModal.close()">Ok</button>
-        </modal-footer>
-    </modal>
+       </div>
+       <bs-modal (onClose)="createTopology()" #duplicateModal>
+         <!--<bs-modal-header [show-close]="true">-->
+         <bs-modal-header>
+           <h4 class="modal-title">Create a copy</h4>
+         </bs-modal-header>
+         <bs-modal-body>
+           <div class="form-group">
+             <label for="textbox">Name the new topology</label>
+             <input autofocus type="text" class="form-control" required [(ngModel)]="newTopologyName" id="textbox">
+           </div> 
+         </bs-modal-body>
+         <bs-modal-footer>
+           <button type="button" class="btn btn-default btn-sm" data-dismiss="duplicateModal" (click)="duplicateModal.dismiss()">Cancel</button>
+           <button type="button" class="btn btn-primary btn-sm" [disabled]="!newTopologyName" (click)="duplicateModal.close()">Ok</button>
+         </bs-modal-footer>
+       </bs-modal>
+       <bs-modal (onClose)="deleteTopology()" #deleteConfirmModal>
+         <!--<bs-modal-header [show-close]="true">-->
+         <bs-modal-header>
+           <h4 class="modal-title">Deleting Topology {{titleSuffix}}</h4>
+         </bs-modal-header>
+         <bs-modal-body>
+           Are you sure you want to delete the topology?
+         </bs-modal-body>
+         <bs-modal-footer>
+           <button type="button" class="btn btn-default btn-sm" data-dismiss="deleteConfirmModal" (click)="deleteConfirmModal.dismiss()">Cancel</button>
+           <button type="button" class="btn btn-primary btn-sm" (click)="deleteConfirmModal.close()">Ok</button>
+         </bs-modal-footer>
+       </bs-modal>
+     </div>
    `
 })
 export class TopologyDetailComponent implements OnInit {
@@ -96,14 +99,14 @@ export class TopologyDetailComponent implements OnInit {
     options:any = {useWorker: false, printMargin: false};
 
     @ViewChild('duplicateModal')
-    duplicateModal: ModalComponent;
+    duplicateModal: BsModalComponent;
 
     @ViewChild('deleteConfirmModal')
-    deleteConfirmModal: ModalComponent;
+    deleteConfirmModal: BsModalComponent;
 
     @ViewChild('editor') editor;
 
-    constructor(private topologyService : TopologyService) {
+    constructor(private topologyService : TopologyService, private resourceService: ResourceService) {
     }
 
     ngOnInit(): void {
@@ -152,12 +155,12 @@ export class TopologyDetailComponent implements OnInit {
     * provided tag value make the editor read only
     */
     makeReadOnly(text, tag) {
-        var parser = new DOMParser();
-        var parsed = parser.parseFromString(text,"text/xml");
+        let parser = new DOMParser();
+        let parsed = parser.parseFromString(text,"text/xml");
 
-        var tagValue = parsed.getElementsByTagName(tag);
-        var result = tagValue[0].childNodes[0].nodeValue;
-        
+        let tagValue = parsed.getElementsByTagName(tag);
+        let result = tagValue[0].childNodes[0].nodeValue;
+
         if(result === 'true') {
             this.showEditOptions = false;
             this.options = {readOnly: true, useWorker: false, printMargin: false, highlightActiveLine: false, highlightGutterLine: false}; 

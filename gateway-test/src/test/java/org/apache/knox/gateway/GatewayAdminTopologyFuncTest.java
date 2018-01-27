@@ -959,14 +959,6 @@ public class GatewayAdminTopologyFuncTest {
     assertTrue(configFileNames.contains(pcOne));
     assertTrue(configFileNames.contains(pcTwo));
 
-    // Request a specific provider configuration with an INCORRECT Accept header
-    given()
-      .auth().preemptive().basic(username, password)
-      .header("Accept", MediaType.APPLICATION_JSON)
-      .then()
-      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-      .when().get(href1).body();
-
     // Request a specific provider configuration (with the CORRECT Accept header)
     responseBody = given()
                       .auth().preemptive().basic(username, password)
