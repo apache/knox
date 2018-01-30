@@ -3,16 +3,16 @@ Release Notes - Apache Knox - Version 1.0.0
 ------------------------------------------------------------------------------
 ** New Feature
 ** Improvement
-   * [KNOX-998] - Rename class packages to org.apache.knox.gateway
+   * [KNOX-998]  - Rename class packages to org.apache.knox.gateway
    * [KNOX-1161] - Update hadoop dependencies to Hadoop 3 (Colm O hEigeartaigh, reviewed by Sandeep More)
-   * [ KNOX-1043] - Ambari Service Discovery Support for HA-Enabled Services
-   * [ KNOX-1144] - Change Rest Assured "expect" to "then"
-   * [ KNOX-1137] - KnoxCLI For Listing Provider Configurations and Descriptors in a Remote Configuration Registry
-   * [ KNOX-1145] - Upgrade Jackson due to CVE-2017-7525
+   * [KNOX-1043] - Ambari Service Discovery Support for HA-Enabled Services
+   * [KNOX-1144] - Establish provider configuration reference relationships for existing descriptors at gateway startup
+   * [KNOX-1137] - KnoxCLI For Listing Provider Configurations and Descriptors in a Remote Configuration Registry
+   * [KNOX-1145] - Upgrade Jackson due to CVE-2017-7525
 ** Bug
-   * [ KNOX-1151] - Need Explicit curator-recipes dependency in pom
-   * [ KNOX-1141] - Coverity Issues Reported For AmbariConfigurationMonitor
-   * [ KNOX-1116] - Builds of src distributions result in unexpected result from gateway version API.
+   * [KNOX-1151] - Need Explicit curator-recipes dependency in pom
+   * [KNOX-1141] - Coverity Issues Reported For AmbariConfigurationMonitor
+   * [KNOX-1116] - Builds of src distributions result in unexpected result from gateway version API.
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.14.0
