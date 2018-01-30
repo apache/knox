@@ -31,7 +31,7 @@ public class JWTAccessTokenAssertionContributor extends
     ProviderDeploymentContributorBase {
   private static final String ENCRYPT_ACCESS_TOKENS = "encrypt_access_tokens";
   private static final String GATEWAY = "__gateway";
-  private static final String FILTER_CLASSNAME = "JWTAccessTokenAssertionFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.JWTAccessTokenAssertionFilter";
   private CryptoService crypto;
 
   @Override
