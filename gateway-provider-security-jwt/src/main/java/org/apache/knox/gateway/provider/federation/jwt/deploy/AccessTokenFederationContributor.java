@@ -28,7 +28,7 @@ import java.util.List;
 
 public class AccessTokenFederationContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "AccessTokenFederationFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.AccessTokenFederationFilter";
 
   @Override
   public String getRole() {

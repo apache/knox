@@ -28,7 +28,7 @@ import java.util.List;
 
 public class JWTAuthCodeAssertionContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "JWTAuthCodeAssertionFilter";
+  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.JWTAuthCodeAssertionFilter";
 
   @Override
   public String getRole() {
