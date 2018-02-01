@@ -70,6 +70,21 @@ public interface ServiceDiscovery {
          * @return The URLs for the specified service in this cluster.
          */
         List<String> getServiceURLs(String serviceName);
+
+        /**
+         * @param serviceName The name of the service
+         * @return The HA configuration properties for the specified service in this cluster.
+         */
+        ZooKeeperConfig getZooKeeperConfiguration(String serviceName);
+
+        interface ZooKeeperConfig {
+
+            boolean isEnabled();
+
+            String getEnsemble();
+
+            String getNamespace();
+        }
     }
 
 

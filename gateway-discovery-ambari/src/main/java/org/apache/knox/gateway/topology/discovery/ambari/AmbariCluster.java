@@ -16,22 +16,64 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 class AmbariCluster implements ServiceDiscovery.Cluster {
 
-    private String name = null;
+    private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
+
+    private static final String ZK_CONFIG_MAPPING_FILE = "ambari-service-discovery-zk-config-mapping.properties";
+
+    static final String ZK_CONFIG_MAPPING_SYSTEM_PROPERTY =
+                                                     "org.apache.knox.gateway.topology.discovery.ambari.zk.mapping";
+
+    // Mapping of service roles to Hadoop service configurations and ZooKeeper property names
+    private static final Properties zooKeeperHAConfigMappings = new Properties();
+    static {
+        try {
+            // Load all the default mappings
+            Properties defaults = new Properties();
+            defaults.load(AmbariServiceDiscovery.class.getClassLoader().getResourceAsStream(ZK_CONFIG_MAPPING_FILE));
+            for (String name : defaults.stringPropertyNames()) {
+                zooKeeperHAConfigMappings.setProperty(name, defaults.getProperty(name));
+            }
+
+            // Attempt to apply overriding or additional mappings
+            String overridesPath = System.getProperty(ZK_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            if (overridesPath != null) {
+                Properties overrides = new Properties();
+                InputStream in = new FileInputStream(overridesPath);
+                try {
+                    overrides.load(in);
+                } finally {
+                    in.close();
+                }
+
+                for (String name : overrides.stringPropertyNames()) {
+                    zooKeeperHAConfigMappings.setProperty(name, overrides.getProperty(name));
+                }
+            }
+        } catch (Exception e) {
+            log.failedToLoadZooKeeperConfigurationMapping(e);
+        }
+    }
+
+    private String name;
 
     private ServiceURLFactory urlFactory;
 
     private Map<String, Map<String, ServiceConfiguration>> serviceConfigurations = new HashMap<>();
 
-    private Map<String, AmbariComponent> components = null;
+    private Map<String, AmbariComponent> components;
 
 
     AmbariCluster(String name) {
@@ -91,6 +133,33 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
         return urls;
     }
 
+    @Override
+    public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
+        ZooKeeperConfig result = null;
+
+        String config = zooKeeperHAConfigMappings.getProperty(serviceName + ".config");
+        if (config != null) {
+            String[] parts = config.split(":");
+            if (parts.length == 2) {
+                ServiceConfiguration sc = getServiceConfiguration(parts[0], parts[1]);
+                if (sc != null) {
+                    String enabledProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".enabled");
+                    String ensembleProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".ensemble");
+                    String namespaceProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".namespace");
+                    Map<String, String> scProps = sc.getProperties();
+                    if (scProps != null) {
+                        result =
+                            new ZooKeeperConfiguration(enabledProp != null ? scProps.get(enabledProp) : null,
+                                                       ensembleProp != null ? scProps.get(ensembleProp) : null,
+                                                       namespaceProp != null ? scProps.get(namespaceProp) : null);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
 
     static class ServiceConfiguration {
 
@@ -117,4 +186,31 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
         }
     }
 
+
+    static class ZooKeeperConfiguration implements ServiceDiscovery.Cluster.ZooKeeperConfig {
+        boolean isEnabled;
+        String ensemble;
+        String namespace;
+
+        ZooKeeperConfiguration(String enabled, String ensemble, String namespace) {
+            this.namespace = namespace;
+            this.ensemble = ensemble;
+            this.isEnabled = (enabled != null ? Boolean.valueOf(enabled) : true);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return isEnabled;
+        }
+
+        @Override
+        public String getEnsemble() {
+            return ensemble;
+        }
+
+        @Override
+        public String getNamespace() {
+            return namespace;
+        }
+    }
 }

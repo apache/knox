@@ -42,6 +42,11 @@ public class DummyServiceDiscovery implements ServiceDiscovery {
         public List<String> getServiceURLs(String serviceName) {
             return Collections.singletonList("http://servicehost:9999/dummy");
         }
+
+        @Override
+        public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
+            return null;
+        }
     };
 
     private static final Map<String, Cluster> CLUSTERS = new HashMap<>();

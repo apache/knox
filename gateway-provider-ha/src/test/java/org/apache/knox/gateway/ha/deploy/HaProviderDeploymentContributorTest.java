@@ -17,13 +17,35 @@
  */
 package org.apache.knox.gateway.ha.deploy;
 
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributor;
+import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
+import org.apache.knox.gateway.descriptor.GatewayDescriptor;
+import org.apache.knox.gateway.descriptor.ResourceDescriptor;
+import org.apache.knox.gateway.ha.provider.HaDescriptor;
+import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.topology.Provider;
+import org.apache.knox.gateway.topology.Service;
+import org.apache.knox.gateway.topology.Topology;
+import org.easymock.EasyMock;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.junit.Test;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 
@@ -43,4 +65,347 @@ public class HaProviderDeploymentContributorTest {
       fail( "Failed to find " + HaProviderDeploymentContributor.class.getName() + " via service loader." );
    }
 
+   /**
+    * Basically, a backward-compatibility test to ensure that HaProvider service params specified ONLY at the provider
+    * level still work.
+    */
+   @Test
+   public void testProviderLevelParams() throws Exception {
+      // Define some provider params
+      Map<String, String> providerParams = new HashMap<>();
+
+      // Specify all the possible params at the HaProvider level for TestRoleTwo
+      providerParams.put("TestRoleOne",
+                         "enabled=false;" +
+                         "maxRetryAttempts=5;"+
+                         "retrySleep=50;"+
+                         "maxFailoverAttempts=4;"+
+                         "failoverSleep=40;"+
+                         "zookeeperNamespace=testRoleOne;"+
+                         "zookeeperEnsemble=http://host1:2181,http://host2:2181");
+
+      Provider haProvider = createHaProvider(providerParams);
+
+      // Define the topology content (e.g., services)
+      Collection<Service> topologyServices = new HashSet<>();
+
+      // A service with no param overrides
+      Service testRoleOneService = EasyMock.createNiceMock(Service.class);
+      EasyMock.expect(testRoleOneService.getRole()).andReturn("TestRoleOne").anyTimes();
+      EasyMock.expect(testRoleOneService.getName()).andReturn("TestRoleOneService").anyTimes();
+      EasyMock.expect(testRoleOneService.getParams()).andReturn(Collections.emptyMap()).anyTimes();
+      EasyMock.replay(testRoleOneService);
+      topologyServices.add(testRoleOneService);
+
+      Topology topology = EasyMock.createNiceMock(Topology.class);
+      EasyMock.expect(topology.getServices()).andReturn(topologyServices).anyTimes();
+      EasyMock.replay(topology);
+
+      WebArchive war = EasyMock.createNiceMock(WebArchive.class);
+      EasyMock.replay(war);
+
+      DeploymentContext context = new DescriptorCaptureDeploymentContext(topology, war);
+
+      // Invoke the contributor
+      HaProviderDeploymentContributor haPDC = new HaProviderDeploymentContributor();
+      haPDC.contributeProvider(context, haProvider);
+
+      HaDescriptor descriptor = context.getDescriptor("ha.provider.descriptor");
+      assertNotNull(descriptor);
+      assertEquals(1, descriptor.getServiceConfigs().size());
+
+      validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
+                              false, 40, 4, 50, 5, "testRoleOne", "http://host1:2181,http://host2:2181");
+   }
+
+   /**
+    * Simple test verifying that HaProvider service params specified ONLY at the service level works.
+    */
+   @Test
+   public void testServiceLevelParamOverrides_NoProviderParams() throws Exception {
+      // Define some provider params
+      Map<String, String> providerParams = new HashMap<>();
+
+      // Specify all the possible params at the HaProvider level for TestRoleTwo
+      providerParams.put("TestRoleOne","");
+
+      Provider haProvider = createHaProvider(providerParams);
+
+      // Define the topology content (e.g., services)
+      Collection<Service> topologyServices = new HashSet<>();
+
+      // Specify all the possible params in the TestRoleOne service level
+      Map<String, String> testRoleOneParams = new HashMap<>();
+      testRoleOneParams.put("enabled", "true");
+      testRoleOneParams.put("maxRetryAttempts", "6");
+      testRoleOneParams.put("retrySleep", "60");
+      testRoleOneParams.put("maxFailoverAttempts", "8");
+      testRoleOneParams.put("failoverSleep", "80");
+      testRoleOneParams.put("zookeeperNamespace", "testRoleOneOverride");
+      testRoleOneParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+
+      // A service with all the params overriden
+      Service testRoleOneService = EasyMock.createNiceMock(Service.class);
+      EasyMock.expect(testRoleOneService.getRole()).andReturn("TestRoleOne").anyTimes();
+      EasyMock.expect(testRoleOneService.getName()).andReturn("TestRoleOneService").anyTimes();
+      EasyMock.expect(testRoleOneService.getParams()).andReturn(testRoleOneParams).anyTimes();
+      EasyMock.replay(testRoleOneService);
+      topologyServices.add(testRoleOneService);
+
+      Topology topology = EasyMock.createNiceMock(Topology.class);
+      EasyMock.expect(topology.getServices()).andReturn(topologyServices).anyTimes();
+      EasyMock.replay(topology);
+
+      WebArchive war = EasyMock.createNiceMock(WebArchive.class);
+      EasyMock.replay(war);
+
+      DeploymentContext context = new DescriptorCaptureDeploymentContext(topology, war);
+
+      // Invoke the contributor
+      HaProviderDeploymentContributor haPDC = new HaProviderDeploymentContributor();
+      haPDC.contributeProvider(context, haProvider);
+
+      HaDescriptor descriptor = context.getDescriptor("ha.provider.descriptor");
+      assertNotNull(descriptor);
+      assertEquals(1, descriptor.getServiceConfigs().size());
+
+      validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
+                              true, 80, 8, 60, 6, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
+   }
+
+   /**
+    * Verify a mixture of provider-level params and service-level params.
+    */
+   @Test
+   public void testServiceLevelParamOverrides_SubsetProviderParams() throws Exception {
+      // Define some provider params
+      Map<String, String> providerParams = new HashMap<>();
+
+      // Specify all the possible params at the HaProvider level for TestRoleTwo
+      providerParams.put("TestRoleOne",
+                         "enabled=false;" +
+                         "maxRetryAttempts=5;"+
+                         "maxFailoverAttempts=4;"+
+                         "failoverSleep=40");
+
+      Provider haProvider = createHaProvider(providerParams);
+
+      // Define the topology content (e.g., services)
+      Collection<Service> topologyServices = new HashSet<>();
+
+      // Specify all the possible params in the TestRoleOne service level
+      Map<String, String> testRoleOneParams = new HashMap<>();
+      testRoleOneParams.put("enabled", "true");
+      testRoleOneParams.put("retrySleep", "60");
+      testRoleOneParams.put("zookeeperNamespace", "testRoleOneOverride");
+      testRoleOneParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+
+      // A service with all the params overriden
+      Service testRoleOneService = EasyMock.createNiceMock(Service.class);
+      EasyMock.expect(testRoleOneService.getRole()).andReturn("TestRoleOne").anyTimes();
+      EasyMock.expect(testRoleOneService.getName()).andReturn("TestRoleOneService").anyTimes();
+      EasyMock.expect(testRoleOneService.getParams()).andReturn(testRoleOneParams).anyTimes();
+      EasyMock.replay(testRoleOneService);
+      topologyServices.add(testRoleOneService);
+
+      Topology topology = EasyMock.createNiceMock(Topology.class);
+      EasyMock.expect(topology.getServices()).andReturn(topologyServices).anyTimes();
+      EasyMock.replay(topology);
+
+      WebArchive war = EasyMock.createNiceMock(WebArchive.class);
+      EasyMock.replay(war);
+
+      DeploymentContext context = new DescriptorCaptureDeploymentContext(topology, war);
+
+      // Invoke the contributor
+      HaProviderDeploymentContributor haPDC = new HaProviderDeploymentContributor();
+      haPDC.contributeProvider(context, haProvider);
+
+      HaDescriptor descriptor = context.getDescriptor("ha.provider.descriptor");
+      assertNotNull(descriptor);
+      assertEquals(1, descriptor.getServiceConfigs().size());
+
+      validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
+                              true, 40, 4, 60, 5, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
+   }
+
+
+   @Test
+   public void testServiceLevelParamOverrides_MultipleMixed() throws Exception {
+
+      // Define some provider params
+      Map<String, String> providerParams = new HashMap<>();
+
+      // Specify a subset of the possible HaProvider-level params for TestRoleOne
+      providerParams.put("TestRoleOne",
+                         "enabled=true;maxRetryAttempts=1;retrySleep=10;maxFailoverAttempts=2;failoverSleep=20");
+
+      // Specify all the possible params at the HaProvider level for TestRoleTwo
+      providerParams.put("TestRoleTwo",
+                         "enabled=false;" +
+                         "maxRetryAttempts=3;"+
+                         "retrySleep=30;"+
+                         "maxFailoverAttempts=4;"+
+                         "failoverSleep=40;"+
+                         "zookeeperNamespace=testRoleTwo;"+
+                         "zookeeperEnsemble=http://host1:2181,http://host2:2181");
+
+      Provider testHaProvider = createHaProvider(providerParams);
+
+      // Define the topology content (e.g., services)
+      Collection<Service> topologyServices = new HashSet<>();
+
+      // A service with no param overrides
+      Service testRoleOneService = EasyMock.createNiceMock(Service.class);
+      EasyMock.expect(testRoleOneService.getRole()).andReturn("TestRoleOne").anyTimes();
+      EasyMock.expect(testRoleOneService.getName()).andReturn("TestRoleOneService").anyTimes();
+      EasyMock.expect(testRoleOneService.getParams()).andReturn(Collections.emptyMap()).anyTimes();
+      EasyMock.replay(testRoleOneService);
+      topologyServices.add(testRoleOneService);
+
+      // Override all the possible params in the TestRoleTwo service level
+      Map<String, String> testRoleTwoParams = new HashMap<>();
+      testRoleTwoParams.put("enabled", "true");
+      testRoleTwoParams.put("maxRetryAttempts", "6");
+      testRoleTwoParams.put("retrySleep", "60");
+      testRoleTwoParams.put("maxFailoverAttempts", "8");
+      testRoleTwoParams.put("failoverSleep", "80");
+      testRoleTwoParams.put("zookeeperNamespace", "testRoleTwoOverride");
+      testRoleTwoParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+
+      Service testRoleTwoService = EasyMock.createNiceMock(Service.class);
+      EasyMock.expect(testRoleTwoService.getRole()).andReturn("TestRoleTwo").anyTimes();
+      EasyMock.expect(testRoleTwoService.getName()).andReturn("TestRoleTwoService").anyTimes();
+      EasyMock.expect(testRoleTwoService.getParams()).andReturn(testRoleTwoParams).anyTimes();
+      EasyMock.replay(testRoleTwoService);
+      topologyServices.add(testRoleTwoService);
+
+      Topology topology = EasyMock.createNiceMock(Topology.class);
+      EasyMock.expect(topology.getServices()).andReturn(topologyServices).anyTimes();
+      EasyMock.replay(topology);
+
+      WebArchive war = EasyMock.createNiceMock(WebArchive.class);
+      EasyMock.replay(war);
+
+      DeploymentContext context = new DescriptorCaptureDeploymentContext(topology, war);
+
+      // Invoke the contributor
+      HaProviderDeploymentContributor haPDC = new HaProviderDeploymentContributor();
+      haPDC.contributeProvider(context, testHaProvider);
+
+      HaDescriptor descriptor = context.getDescriptor("ha.provider.descriptor");
+      assertNotNull(descriptor);
+      assertEquals(2, descriptor.getServiceConfigs().size());
+
+      // Validate the service with no-overrides, checking that the provider-level defaults are applied
+      validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
+                              true, 20, 2, 10, 1, null, null);
+
+      // Validate the service with all-overrides, checking that the service-level defaults are applied
+      validateServiceHaConfig(descriptor.getServiceConfig("TestRoleTwo"),
+                              true, 80, 8, 60, 6, "testRoleTwoOverride", "http://host3:2181,http://host4:2181");
+   }
+
+
+   /**
+    *
+    * @param config              The HaServiceConfig to validate
+    * @param isEnabled           The expected enabled param value
+    * @param failoverSleep       The expected failoverSleep param value
+    * @param maxFailoverAttempts The expected maxFailoverAttempts param value
+    * @param retrySleep          The expected retrySleep param value
+    * @param maxRetryAttempts    The expected maxRetryAttempts param value
+    * @param zookeeperNamespace  The expected zookeeperNamespace param value
+    * @param zookeeperEnsemble   The expected zookeeperEnsemble param value
+    */
+   private static void validateServiceHaConfig(HaServiceConfig config,
+                                               boolean         isEnabled,
+                                               int             failoverSleep,
+                                               int             maxFailoverAttempts,
+                                               int             retrySleep,
+                                               int             maxRetryAttempts,
+                                               String          zookeeperNamespace,
+                                               String          zookeeperEnsemble) throws Exception {
+      assertNotNull(config);
+      assertEquals(isEnabled, config.isEnabled());
+      assertEquals(failoverSleep, config.getFailoverSleep());
+      assertEquals(maxFailoverAttempts, config.getMaxFailoverAttempts());
+      assertEquals(retrySleep, config.getRetrySleep());
+      assertEquals(maxRetryAttempts, config.getMaxRetryAttempts());
+
+      if (zookeeperNamespace == null) {
+         assertNull(config.getZookeeperNamespace());
+      } else {
+         assertEquals(zookeeperNamespace, config.getZookeeperNamespace());
+      }
+
+      if (zookeeperEnsemble== null) {
+         assertNull(config.getZookeeperEnsemble());
+      } else {
+         assertEquals(zookeeperEnsemble, config.getZookeeperEnsemble());
+      }
+   }
+
+   private static Provider createHaProvider(Map<String, String> params) {
+      Provider provider = EasyMock.createNiceMock(Provider.class);
+      EasyMock.expect(provider.getRole()).andReturn("ha").anyTimes();
+      EasyMock.expect(provider.getName()).andReturn("HaProvider").anyTimes();
+      EasyMock.expect(provider.getParams()).andReturn(params).anyTimes();
+      EasyMock.replay(provider);
+      return provider;
+   }
+
+
+   private static class DescriptorCaptureDeploymentContext implements DeploymentContext {
+
+      private Topology topology;
+      private WebArchive war;
+      private Map<String, Object> descriptors = new HashMap<>();
+
+      DescriptorCaptureDeploymentContext(Topology topology, WebArchive war) {
+         this.topology = topology;
+         this.war      = war;
+      }
+
+      @Override
+      public GatewayConfig getGatewayConfig() {
+         return null;
+      }
+
+      @Override
+      public Topology getTopology() {
+         return topology;
+      }
+
+      @Override
+      public WebArchive getWebArchive() {
+         return war;
+      }
+
+      @Override
+      public WebAppDescriptor getWebAppDescriptor() {
+         return null;
+      }
+
+      @Override
+      public GatewayDescriptor getGatewayDescriptor() {
+         return null;
+      }
+
+      @Override
+      public void contributeFilter(Service service, ResourceDescriptor resource, String role, String name, List<FilterParamDescriptor> params) {
+
+      }
+
+      @Override
+      public void addDescriptor(String name, Object descriptor) {
+         descriptors.put(name, descriptor);
+      }
+
+      @Override
+      public <T> T getDescriptor(String name) {
+         return (T)descriptors.get(name);
+      }
+
+   }
 }

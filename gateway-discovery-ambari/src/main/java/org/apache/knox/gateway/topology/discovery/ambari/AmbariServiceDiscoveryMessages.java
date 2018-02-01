@@ -49,6 +49,10 @@ public interface AmbariServiceDiscoveryMessages {
     void failedToLoadServiceDiscoveryURLDefConfiguration(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
+             text = "Failed to load ZooKeeper configuration property mappings: {1}")
+    void failedToLoadZooKeeperConfigurationMapping(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR,
              text = "Failed to load service discovery URL definition configuration {0}: {1}")
     void failedToLoadServiceDiscoveryURLDefConfiguration(final String configuration,
                                                          @StackTrace(level = MessageLevel.ERROR) Exception e);

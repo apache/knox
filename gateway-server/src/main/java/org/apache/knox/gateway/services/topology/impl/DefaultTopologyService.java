@@ -52,6 +52,7 @@ import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
+import org.apache.knox.gateway.topology.simple.ProviderConfigurationParser;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
@@ -775,10 +776,12 @@ public class DefaultTopologyService
       try {
         // When a simple descriptor has been created or modified, generate the new topology descriptor
         Map<String, File> result = SimpleDescriptorHandler.handle(file, topologiesDir, aliasService);
-        log.generatedTopologyForDescriptorChange(result.get("topology").getName(), file.getName());
+        log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
+                                                 file.getName());
 
         // Add the provider config reference relationship for handling updates to the provider config
-        String providerConfig = FilenameUtils.normalize(result.get("reference").getAbsolutePath());
+        String providerConfig =
+                      FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
         if (!providerConfigReferences.containsKey(providerConfig)) {
           providerConfigReferences.put(providerConfig, new ArrayList<String>());
         }
@@ -817,13 +820,9 @@ public class DefaultTopologyService
   /**
    * Change handler for shared provider configurations
    */
-  public static class SharedProviderConfigMonitor extends FileAlterationListenerAdaptor
-          implements FileFilter {
+  public static class SharedProviderConfigMonitor extends FileAlterationListenerAdaptor implements FileFilter {
 
-    static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
-    static {
-      SUPPORTED_EXTENSIONS.add("xml");
-    }
+    static final List<String> SUPPORTED_EXTENSIONS = ProviderConfigurationParser.SUPPORTED_EXTENSIONS;
 
     private DescriptorsMonitor descriptorsMonitor;
     private File descriptorsDir;

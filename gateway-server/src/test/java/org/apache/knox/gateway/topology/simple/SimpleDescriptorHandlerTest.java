@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
@@ -40,6 +45,7 @@ import org.apache.commons.io.FileUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -58,78 +64,55 @@ public class SimpleDescriptorHandlerTest {
 
     private static final String TEST_PROVIDER_CONFIG =
             "    <gateway>\n" +
-                    "        <provider>\n" +
-                    "            <role>authentication</role>\n" +
-                    "            <name>ShiroProvider</name>\n" +
-                    "            <enabled>true</enabled>\n" +
-                    "            <param>\n" +
-                    "                <!-- \n" +
-                    "                session timeout in minutes,  this is really idle timeout,\n" +
-                    "                defaults to 30mins, if the property value is not defined,, \n" +
-                    "                current client authentication would expire if client idles contiuosly for more than this value\n" +
-                    "                -->\n" +
-                    "                <name>sessionTimeout</name>\n" +
-                    "                <value>30</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapRealm</name>\n" +
-                    "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapContextFactory</name>\n" +
-                    "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapRealm.contextFactory</name>\n" +
-                    "                <value>$ldapContextFactory</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapRealm.userDnTemplate</name>\n" +
-                    "                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapRealm.contextFactory.url</name>\n" +
-                    "                <value>ldap://localhost:33389</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>\n" +
-                    "                <value>simple</value>\n" +
-                    "            </param>\n" +
-                    "            <param>\n" +
-                    "                <name>urls./**</name>\n" +
-                    "                <value>authcBasic</value>\n" +
-                    "            </param>\n" +
-                    "        </provider>\n" +
-                    "\n" +
-                    "        <provider>\n" +
-                    "            <role>identity-assertion</role>\n" +
-                    "            <name>Default</name>\n" +
-                    "            <enabled>true</enabled>\n" +
-                    "        </provider>\n" +
-                    "\n" +
-                    "        <!--\n" +
-                    "        Defines rules for mapping host names internal to a Hadoop cluster to externally accessible host names.\n" +
-                    "        For example, a hadoop service running in AWS may return a response that includes URLs containing the\n" +
-                    "        some AWS internal host name.  If the client needs to make a subsequent request to the host identified\n" +
-                    "        in those URLs they need to be mapped to external host names that the client Knox can use to connect.\n" +
-                    "\n" +
-                    "        If the external hostname and internal host names are same turn of this provider by setting the value of\n" +
-                    "        enabled parameter as false.\n" +
-                    "\n" +
-                    "        The name parameter specifies the external host names in a comma separated list.\n" +
-                    "        The value parameter specifies corresponding internal host names in a comma separated list.\n" +
-                    "\n" +
-                    "        Note that when you are using Sandbox, the external hostname needs to be localhost, as seen in out\n" +
-                    "        of box sandbox.xml.  This is because Sandbox uses port mapping to allow clients to connect to the\n" +
-                    "        Hadoop services using localhost.  In real clusters, external host names would almost never be localhost.\n" +
-                    "        -->\n" +
-                    "        <provider>\n" +
-                    "            <role>hostmap</role>\n" +
-                    "            <name>static</name>\n" +
-                    "            <enabled>true</enabled>\n" +
-                    "            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>\n" +
-                    "        </provider>\n" +
-                    "    </gateway>\n";
+            "        <provider>\n" +
+            "            <role>authentication</role>\n" +
+            "            <name>ShiroProvider</name>\n" +
+            "            <enabled>true</enabled>\n" +
+            "            <param>\n" +
+            "                <name>sessionTimeout</name>\n" +
+            "                <value>30</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm</name>\n" +
+            "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapContextFactory</name>\n" +
+            "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory</name>\n" +
+            "                <value>$ldapContextFactory</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.userDnTemplate</name>\n" +
+            "                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory.url</name>\n" +
+            "                <value>ldap://localhost:33389</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>\n" +
+            "                <value>simple</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>urls./**</name>\n" +
+            "                <value>authcBasic</value>\n" +
+            "            </param>\n" +
+            "        </provider>\n" +
+            "        <provider>\n" +
+            "            <role>identity-assertion</role>\n" +
+            "            <name>Default</name>\n" +
+            "            <enabled>true</enabled>\n" +
+            "        </provider>\n" +
+            "        <provider>\n" +
+            "            <role>hostmap</role>\n" +
+            "            <name>static</name>\n" +
+            "            <enabled>true</enabled>\n" +
+            "            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>\n" +
+            "        </provider>\n" +
+            "    </gateway>\n";
 
 
     /**
@@ -240,10 +223,10 @@ public class SimpleDescriptorHandlerTest {
                        hasXPath("/topology/generated", is("true")));
 
             // Validate the provider configuration
-            Document extProviderConf = XmlUtils.readXml(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
             Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
-            assertTrue("Resulting provider config should be identical to the referenced content.",
-                       extProviderConf.getDocumentElement().isEqualNode(gatewayNode));
+            ProviderConfiguration testProviderConfiguration =
+                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
+            validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
             Map<String, List<String>> topologyServiceURLs = new HashMap<>();
@@ -398,10 +381,10 @@ public class SimpleDescriptorHandlerTest {
             Document topologyXml = XmlUtils.readXml(topologyFile);
 
             // Validate the provider configuration
-            Document extProviderConf = XmlUtils.readXml(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
             Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
-            assertTrue("Resulting provider config should be identical to the referenced content.",
-                    extProviderConf.getDocumentElement().isEqualNode(gatewayNode));
+            ProviderConfiguration testProviderConfiguration =
+                ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
+            validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
             List<String> topologyServices = new ArrayList<>();
@@ -451,5 +434,65 @@ public class SimpleDescriptorHandlerTest {
         FileUtils.write(f, content);
         return f;
     }
+
+
+    private void validateGeneratedProviderConfiguration(ProviderConfiguration expected, Node generatedGatewayNode) throws Exception {
+        assertNotNull(expected);
+
+        // Parse a ProviderConfiguration from the specified XML node
+        StringWriter writer = new StringWriter();
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.transform(new DOMSource(generatedGatewayNode), new StreamResult(writer));
+        ProviderConfiguration generatedProviderConfiguration =
+                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(writer.toString().getBytes()));
+        assertNotNull(generatedProviderConfiguration);
+
+        // Compare the generated ProviderConfiguration to the expected one
+        List<ProviderConfiguration.Provider> expectedProviders = expected.getProviders();
+        List<ProviderConfiguration.Provider> actualProviders = generatedProviderConfiguration.getProviders();
+        assertEquals("The number of providers should be the same.", expectedProviders.size(), actualProviders.size());
+
+        for (ProviderConfiguration.Provider expectedProvider : expectedProviders) {
+            assertTrue("Failed to validate provider with role " + expectedProvider.getRole(),
+                       validateProvider(expectedProvider, actualProviders));
+        }
+    }
+
+    /**
+     * Verify that the expected provider is included in the specified set of actual providers.
+     *
+     * @param expected        A Provider that should be among the specified actual providers
+     * @param actualProviders The set of actual providers.
+     */
+    private boolean validateProvider(ProviderConfiguration.Provider expected, List<ProviderConfiguration.Provider> actualProviders) {
+        boolean foundMatch = false;
+
+        for (ProviderConfiguration.Provider actual : actualProviders) {
+            if (expected.getRole().equals(actual.getRole())) {
+                if (expected.getName().equals(actual.getName())) {
+                    if (expected.isEnabled() == actual.isEnabled()) {
+                        Map<String, String> expectedParams = expected.getParams();
+                        Map<String, String> actualParams = actual.getParams();
+                        if (expectedParams.size() == actualParams.size()) {
+                            int matchingParamCount = 0;
+                            for (String expectedParamKey : expectedParams.keySet()) {
+                                if (actualParams.containsKey(expectedParamKey) && expectedParams.get(expectedParamKey).equals(actualParams.get(expectedParamKey))) {
+                                    matchingParamCount++;
+                                }
+                            }
+                            foundMatch = (matchingParamCount == expectedParams.size());
+                        }
+                    }
+                }
+            }
+
+            if (foundMatch) {
+                break;
+            }
+        }
+
+        return foundMatch;
+    }
+
 
 }

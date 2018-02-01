@@ -26,10 +26,12 @@ import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.HaServletContextListener;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorFactory;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorManager;
+import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
+import org.apache.knox.gateway.topology.Topology;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 
 import java.io.IOException;
@@ -60,10 +62,29 @@ public class HaProviderDeploymentContributor extends ProviderDeploymentContribut
 
    @Override
    public void contributeProvider(DeploymentContext context, Provider provider) {
+      Topology topology = context.getTopology();
       Map<String, String> params = provider.getParams();
       HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
       for (Entry<String, String> entry : params.entrySet()) {
-         HaServiceConfig config = HaDescriptorFactory.createServiceConfig(entry.getKey(), entry.getValue());
+         String role = entry.getKey();
+         String roleParams = entry.getValue();
+
+         // Create the config based on whatever is specified at the provider level
+         HaServiceConfig config = HaDescriptorFactory.createServiceConfig(role, roleParams);
+
+         // Check for service-level param overrides
+         Map<String, String> serviceLevelParams = null;
+         for (Service s : topology.getServices()) {
+            if (s.getRole().equals(role)) {
+               serviceLevelParams = s.getParams();
+               break;
+            }
+         }
+
+         // Apply any service-level param overrides
+         applyParamOverrides(config, serviceLevelParams);
+
+         // Add the reconciled HA service config to the descriptor
          descriptor.addServiceConfig(config);
       }
       StringWriter writer = new StringWriter();
@@ -77,6 +98,51 @@ public class HaProviderDeploymentContributor extends ProviderDeploymentContribut
             new StringAsset(asset),
             HaServletContextListener.DESCRIPTOR_DEFAULT_FILE_NAME);
       context.addDescriptor(HA_DESCRIPTOR_NAME, descriptor);
+   }
+
+   /**
+    * Apply the param values from the specified map to the specified HaServiceConfig.
+    *
+    * @param config             An HaServiceConfig
+    * @param serviceLevelParams Service-level param overrides.
+    */
+   private void applyParamOverrides(HaServiceConfig config, Map<String, String> serviceLevelParams) {
+      if (serviceLevelParams != null && !serviceLevelParams.isEmpty()) {
+         String enabled = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ENABLED);
+         if (enabled != null) {
+            config.setEnabled(Boolean.valueOf(enabled));
+         }
+
+         String failOverSleep = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP);
+         if (failOverSleep != null) {
+            config.setFailoverSleep(Integer.valueOf(failOverSleep));
+         }
+
+         String failOverAttempts = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
+         if (failOverAttempts != null) {
+            config.setMaxFailoverAttempts(Integer.valueOf(failOverAttempts));
+         }
+
+         String retrySleep = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
+         if (retrySleep != null) {
+            config.setRetrySleep(Integer.valueOf(retrySleep));
+         }
+
+         String retryAttempts = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
+         if (retryAttempts != null) {
+            config.setMaxRetryAttempts(Integer.valueOf(retryAttempts));
+         }
+
+         String zkEnsemble = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
+         if (zkEnsemble != null) {
+            config.setZookeeperEnsemble(zkEnsemble);
+         }
+
+         String zkNamespace = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
+         if (zkNamespace != null) {
+            config.setZookeeperNamespace(zkNamespace);
+         }
+      }
    }
 
    @Override

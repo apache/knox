@@ -103,6 +103,11 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
         public List<String> getServiceURLs(String serviceName) {
             return serviceURLS.get(serviceName);
         }
+
+        @Override
+        public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
+            return null; // TODO: PJZ: Implement me
+        }
     }
 
 }

@@ -43,30 +43,31 @@ public class WebHdfsUrlCreator implements ServiceURLCreator {
 
     if (SERVICE.equals(service)) {
       AmbariCluster.ServiceConfiguration sc = cluster.getServiceConfiguration("HDFS", "hdfs-site");
-
-      // First, check if it's HA config
-      String nameServices = null;
-      AmbariComponent nameNodeComp = cluster.getComponent("NAMENODE");
-      if (nameNodeComp != null) {
-        nameServices = nameNodeComp.getConfigProperty("dfs.nameservices");
-      }
-
-      if (nameServices != null && !nameServices.isEmpty()) {
-        // If it is an HA configuration
-        Map<String, String> props = sc.getProperties();
-
-        // Name node HTTP addresses are defined as properties of the form:
-        //      dfs.namenode.http-address.<NAMESERVICES>.nn<INDEX>
-        // So, this iterates over the nn<INDEX> properties until there is no such property (since it cannot be known how
-        // many are defined by any other means).
-        int i = 1;
-        String propertyValue = getHANameNodeHttpAddress(props, nameServices, i++);
-        while (propertyValue != null) {
-          urls.add(createURL(propertyValue));
-          propertyValue = getHANameNodeHttpAddress(props, nameServices, i++);
+      if (sc != null) {
+        // First, check if it's HA config
+        String nameServices = null;
+        AmbariComponent nameNodeComp = cluster.getComponent("NAMENODE");
+        if (nameNodeComp != null) {
+          nameServices = nameNodeComp.getConfigProperty("dfs.nameservices");
         }
-      } else { // If it's not an HA configuration, get the single name node HTTP address
-        urls.add(createURL(sc.getProperties().get("dfs.namenode.http-address")));
+
+        if (nameServices != null && !nameServices.isEmpty()) {
+          // If it is an HA configuration
+          Map<String, String> props = sc.getProperties();
+
+          // Name node HTTP addresses are defined as properties of the form:
+          //      dfs.namenode.http-address.<NAMESERVICES>.nn<INDEX>
+          // So, this iterates over the nn<INDEX> properties until there is no such property (since it cannot be known how
+          // many are defined by any other means).
+          int i = 1;
+          String propertyValue = getHANameNodeHttpAddress(props, nameServices, i++);
+          while (propertyValue != null) {
+            urls.add(createURL(propertyValue));
+            propertyValue = getHANameNodeHttpAddress(props, nameServices, i++);
+          }
+        } else { // If it's not an HA configuration, get the single name node HTTP address
+          urls.add(createURL(sc.getProperties().get("dfs.namenode.http-address")));
+        }
       }
     }
 

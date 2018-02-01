@@ -18,11 +18,10 @@ package org.apache.knox.gateway.topology.simple;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.InputStreamReader;
 import java.io.IOException;
 
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -31,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -49,6 +49,28 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
  * gateway.
  */
 public class SimpleDescriptorHandler {
+
+    /**
+     * The name of the property in the result Map for the topology file.
+     */
+    public static final String RESULT_TOPOLOGY  = "topology";
+
+    /**
+     * The name of the property in the result Map for the provider configuration file applied to the generated topology.
+     */
+    public static final String RESULT_REFERENCE = "reference";
+
+    private static final String DEFAULT_DISCOVERY_TYPE = "AMBARI";
+
+    private static final String[] PROVIDER_CONFIG_FILE_EXTENSIONS;
+    static {
+
+        PROVIDER_CONFIG_FILE_EXTENSIONS = new String[ProviderConfigurationParser.SUPPORTED_EXTENSIONS.size()];
+        int i = 0;
+        for (String ext : ProviderConfigurationParser.SUPPORTED_EXTENSIONS) {
+            PROVIDER_CONFIG_FILE_EXTENSIONS[i++] = "." + ext;
+        }
+    }
 
     private static final Service[] NO_GATEWAY_SERVICES = new Service[]{};
 
@@ -77,33 +99,13 @@ public class SimpleDescriptorHandler {
     }
 
     public static Map<String, File> handle(SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
-        Map<String, File> result = new HashMap<>();
 
-        File topologyDescriptor;
+        List<String>                     validServiceNames = new ArrayList<>();
+        Map<String, Map<String, String>> serviceParams     = new HashMap<>();
+        Map<String, List<String>>        serviceURLs       = new HashMap<>();
 
-        DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
-        sdc.setUser(desc.getDiscoveryUser());
-        sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
-
-        // Use the discovery type from the descriptor. If it's unspecified, employ the default type.
-        String discoveryType = desc.getDiscoveryType();
-        if (discoveryType == null) {
-            discoveryType = "AMBARI";
-        }
-
-        // Use the cached discovery object for the required type, if it has already been loaded
-        ServiceDiscovery sd = discoveryInstances.get(discoveryType);
-        if (sd == null) {
-            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
-            discoveryInstances.put(discoveryType, sd);
-        }
-        ServiceDiscovery.Cluster cluster = sd.discover(sdc, desc.getClusterName());
-
-        List<String> validServiceNames = new ArrayList<>();
-
-        Map<String, Map<String, String>> serviceParams = new HashMap<>();
-        Map<String, List<String>>        serviceURLs   = new HashMap<>();
-
+        // Discover the cluster details required by the descriptor
+        ServiceDiscovery.Cluster cluster = performDiscovery(desc, gatewayServices);
         if (cluster != null) {
             for (SimpleDescriptor.Service descService : desc.getServices()) {
                 String serviceName = descService.getName();
@@ -155,132 +157,52 @@ public class SimpleDescriptorHandler {
             log.unableCreatePasswordForEncryption(desc.getName());
         }
 
-        BufferedWriter fw = null;
-        topologyDescriptor = null;
-        File providerConfig;
-        try {
-            // Verify that the referenced provider configuration exists before attempting to reading it
-            providerConfig = resolveProviderConfigurationReference(desc.getProviderConfig(), srcDirectory);
-            if (providerConfig == null) {
-                log.failedToResolveProviderConfigRef(desc.getProviderConfig());
-                throw new IllegalArgumentException("Unresolved provider configuration reference: " +
-                                                   desc.getProviderConfig() + " ; Topology update aborted!");
-            }
-            result.put("reference", providerConfig);
-
-            // TODO: Should the contents of the provider config be validated before incorporating it into the topology?
-
-            String topologyFilename = desc.getName();
-            if (topologyFilename == null) {
-                topologyFilename = desc.getClusterName();
-            }
-            topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
-
-            fw = new BufferedWriter(new FileWriter(topologyDescriptor));
-
-            fw.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-
-            fw.write("<!--==============================================-->\n");
-            fw.write("<!-- DO NOT EDIT. This is an auto-generated file. -->\n");
-            fw.write("<!--==============================================-->\n");
-
-            fw.write("<topology>\n");
-
-            // KNOX-1105 Indicate that this topology was auto-generated
-            fw.write("    <generated>true</generated>\n");
-
-            // Copy the externalized provider configuration content into the topology descriptor in-line
-            InputStreamReader policyReader = new InputStreamReader(new FileInputStream(providerConfig));
-            char[] buffer = new char[1024];
-            int count;
-            while ((count = policyReader.read(buffer)) > 0) {
-                fw.write(buffer, 0, count);
-            }
-            policyReader.close();
-
-            // Services
-            // Sort the service names to write the services alphabetically
-            List<String> serviceNames = new ArrayList<>(validServiceNames);
-            Collections.sort(serviceNames);
-
-            // Write the service declarations
-            for (String serviceName : serviceNames) {
-                fw.write("\n");
-                fw.write("    <service>\n");
-                fw.write("        <role>" + serviceName + "</role>\n");
-
-                // URLs
-                List<String> urls = serviceURLs.get(serviceName);
-                if (urls != null) {
-                    for (String url : urls) {
-                        fw.write("        <url>" + url + "</url>\n");
-                    }
-                }
-
-                // Params
-                Map<String, String> svcParams = serviceParams.get(serviceName);
-                if (svcParams != null) {
-                    for (String paramName : svcParams.keySet()) {
-                        fw.write("        <param>\n");
-                        fw.write("            <name>" + paramName + "</name>\n");
-                        fw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
-                        fw.write("        </param>\n");
-                    }
-                }
-
-                fw.write("    </service>\n");
-            }
-
-            // Applications
-            List<SimpleDescriptor.Application> apps = desc.getApplications();
-            if (apps != null) {
-                for (SimpleDescriptor.Application app : apps) {
-                    fw.write("    <application>\n");
-                    fw.write("        <name>" + app.getName() + "</name>\n");
-
-                    // URLs
-                    List<String> urls = app.getURLs();
-                    if (urls != null) {
-                        for (String url : urls) {
-                            fw.write("        <url>" + url + "</url>\n");
-                        }
-                    }
-
-                    // Params
-                    Map<String, String> appParams = app.getParams();
-                    if (appParams != null) {
-                        for (String paramName : appParams.keySet()) {
-                            fw.write("        <param>\n");
-                            fw.write("            <name>" + paramName + "</name>\n");
-                            fw.write("            <value>" + appParams.get(paramName) + "</value>\n");
-                            fw.write("        </param>\n");
-                        }
-                    }
-
-                    fw.write("    </application>\n");
-                }
-            }
-
-            fw.write("</topology>\n");
-
-            fw.flush();
-        } catch (IOException e) {
-            log.failedToGenerateTopologyFromSimpleDescriptor(topologyDescriptor.getName(), e);
-            topologyDescriptor.delete();
-        } finally {
-            if (fw != null) {
-                try {
-                    fw.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-        }
-
-        result.put("topology", topologyDescriptor);
-        return result;
+        // Generate the topology file
+        return generateTopology(desc, srcDirectory, destDirectory, cluster, validServiceNames, serviceURLs, serviceParams);
     }
 
+
+    private static ServiceDiscovery.Cluster performDiscovery(SimpleDescriptor desc, Service...gatewayServices) {
+        DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
+        sdc.setUser(desc.getDiscoveryUser());
+        sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
+
+        // Use the discovery type from the descriptor. If it's unspecified, employ the default type.
+        String discoveryType = desc.getDiscoveryType();
+        if (discoveryType == null) {
+            discoveryType = DEFAULT_DISCOVERY_TYPE;
+        }
+
+        // Use the cached discovery object for the required type, if it has already been loaded
+        ServiceDiscovery sd = discoveryInstances.get(discoveryType);
+        if (sd == null) {
+            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            discoveryInstances.put(discoveryType, sd);
+        }
+
+        return sd.discover(sdc, desc.getClusterName());
+    }
+
+
+    private static ProviderConfiguration handleProviderConfiguration(SimpleDescriptor desc, File providerConfig) {
+        // Verify that the referenced provider configuration exists before attempting to read it
+        if (providerConfig == null) {
+            log.failedToResolveProviderConfigRef(desc.getProviderConfig());
+            throw new IllegalArgumentException("Unresolved provider configuration reference: " +
+                                               desc.getProviderConfig() + " ; Topology update aborted!");
+        }
+
+        // Parse the contents of the referenced provider config
+        ProviderConfiguration parsedConfig = null;
+
+        try {
+            parsedConfig = ProviderConfigurationParser.parse(providerConfig);
+        } catch (Exception e) {
+            log.failedToParseProviderConfig(providerConfig.getAbsolutePath(), e);
+        }
+
+        return parsedConfig;
+    }
 
     /**
      * KNOX-1136
@@ -292,7 +214,7 @@ public class SimpleDescriptorHandler {
      *
      * @return true if the credential was successfully provisioned; otherwise, false.
      */
-    private static boolean provisionQueryParamEncryptionCredential(String topologyName) {
+    private static boolean provisionQueryParamEncryptionCredential(final String topologyName) {
         boolean result = false;
 
         try {
@@ -327,7 +249,7 @@ public class SimpleDescriptorHandler {
     }
 
 
-    private static boolean validateURL(String serviceName, String url) {
+    private static boolean validateURL(final String serviceName, final String url) {
         boolean result = false;
 
         if (url != null && !url.isEmpty()) {
@@ -343,7 +265,7 @@ public class SimpleDescriptorHandler {
     }
 
 
-    private static File resolveProviderConfigurationReference(String reference, File srcDirectory) {
+    private static File resolveProviderConfigurationReference(final String reference, final File srcDirectory) {
         File providerConfig;
 
         // If the reference includes a path
@@ -364,11 +286,15 @@ public class SimpleDescriptorHandler {
                 // Check the shared-providers config location
                 File sharedProvidersDir = new File(srcDirectory, "../shared-providers");
                 if (sharedProvidersDir.exists()) {
+                    // Check if it's a valid name without the extension
                     providerConfig = new File(sharedProvidersDir, reference);
                     if (!providerConfig.exists()) {
-                        // Check if it's a valid name without the extension
-                        providerConfig = new File(sharedProvidersDir, reference + ".xml");
-                        if (!providerConfig.exists()) {
+                        // Check the supported file extensions to see if the reference can be resolved
+                        for (String ext : PROVIDER_CONFIG_FILE_EXTENSIONS) {
+                            providerConfig = new File(sharedProvidersDir, reference + ext);
+                            if (providerConfig.exists()) {
+                                break;
+                            }
                             providerConfig = null;
                         }
                     }
@@ -377,6 +303,211 @@ public class SimpleDescriptorHandler {
         }
 
         return providerConfig;
+    }
+
+
+    /**
+     * Generate a topology file, driven by the specified simple descriptor.
+     *
+     * @param desc              The simple descriptor driving the topology generation.
+     * @param srcDirectory      The source directory of the simple descriptor.
+     * @param destDirectory     The destination directory for the generated topology file.
+     * @param cluster           The discovery details for the referenced cluster.
+     * @param validServiceNames The validated service names.
+     * @param serviceURLs       The URLs associated with the valid service names.
+     * @param serviceParams     The params associated with the valid service names.
+     *
+     * @return A Map with the generated topology file and the referenced provider configuration.
+     */
+    private static Map<String, File> generateTopology(final SimpleDescriptor desc,
+                                                      final File srcDirectory,
+                                                      final File destDirectory,
+                                                      final ServiceDiscovery.Cluster cluster,
+                                                      final List<String> validServiceNames,
+                                                      final Map<String, List<String>> serviceURLs,
+                                                      final Map<String, Map<String, String>> serviceParams) {
+        Map<String, File> result = new HashMap<>();
+
+        BufferedWriter fw = null;
+        File topologyDescriptor = null;
+        try {
+            // Resolve and parse the referenced provider configuration
+            File providerConfigFile = resolveProviderConfigurationReference(desc.getProviderConfig(), srcDirectory);
+            ProviderConfiguration providerConfiguration = handleProviderConfiguration(desc, providerConfigFile);
+            if (providerConfiguration == null) {
+                throw new IllegalArgumentException("Invalid provider configuration.");
+            }
+            result.put(RESULT_REFERENCE, providerConfigFile);
+
+            ProviderConfiguration.Provider haProvider = null;
+            for (ProviderConfiguration.Provider provider : providerConfiguration.getProviders()) {
+                if ("ha".equals(provider.getRole())) {
+                    haProvider = provider;
+                    break;
+                }
+            }
+
+            // Collect HA-related service parameters
+            Map<String, ServiceDiscovery.Cluster.ZooKeeperConfig> haServiceParams = new HashMap<>();
+            if (cluster != null) {
+                if (haProvider != null) {
+                    // Collect tne roles declared by the HaProvider
+                    Map<String, String> haProviderParams = haProvider.getParams();
+                    if (haProviderParams != null) {
+                        Set<String> haProviderRoles = haProviderParams.keySet();
+                        for (String haProviderRole : haProviderRoles) {
+                            // For each role declared by the HaProvider, which supports ZooKeeper, try to get
+                            // the ZK ensemble and namespace from the cluster.
+                            ServiceDiscovery.Cluster.ZooKeeperConfig zkConfig =
+                                cluster.getZooKeeperConfiguration(haProviderRole);
+                            if (zkConfig != null) {
+                                haServiceParams.put(haProviderRole, zkConfig);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Generate the topology content
+            StringWriter sw = new StringWriter();
+
+            sw.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+            sw.write("<!--==============================================-->\n");
+            sw.write("<!-- DO NOT EDIT. This is an auto-generated file. -->\n");
+            sw.write("<!--==============================================-->\n");
+
+            sw.write("<topology>\n");
+
+            // KNOX-1105 Indicate that this topology was auto-generated
+            sw.write("    <generated>true</generated>\n");
+
+            // Incorporate the externalized provider configuration content into the topology descriptor
+            sw.write("    <gateway>\n");
+            for (ProviderConfiguration.Provider provider : providerConfiguration.getProviders()) {
+                sw.write("        <provider>\n");
+                sw.write("            <role>" + provider.getRole() + "</role>\n");
+                sw.write("            <name>" + provider.getName() + "</name>\n");
+                sw.write("            <enabled>" + provider.isEnabled() + "</enabled>\n");
+
+                for (Map.Entry<String, String> param : provider.getParams().entrySet()) {
+                    sw.write("            <param>\n");
+                    sw.write("                <name>" + param.getKey() + "</name>\n");
+                    sw.write("                <value>" + param.getValue() + "</value>\n");
+                    sw.write("            </param>\n");
+                }
+
+                sw.write("        </provider>\n");
+            }
+            sw.write("    </gateway>\n");
+
+            // Services
+            // Sort the service names to write the services alphabetically
+            List<String> serviceNames = new ArrayList<>(validServiceNames);
+            Collections.sort(serviceNames);
+
+            // Write the service declarations
+            for (String serviceName : serviceNames) {
+                sw.write("\n");
+                sw.write("    <service>\n");
+                sw.write("        <role>" + serviceName + "</role>\n");
+
+                // If the service is configured for ZooKeeper-based HA
+                ServiceDiscovery.Cluster.ZooKeeperConfig zkConf = haServiceParams.get(serviceName);
+                if (zkConf != null && zkConf.isEnabled() && zkConf.getEnsemble() != null) {
+                    // Add the zookeeper params to the map for serialization
+                    Map<String,String> params = serviceParams.computeIfAbsent(serviceName, k -> new HashMap<>());
+
+                    String ensemble = zkConf.getEnsemble();
+                    if (ensemble != null) {
+                        params.put("zookeeperEnsemble", ensemble);
+                    }
+
+                    String namespace = zkConf.getNamespace();
+                    if (namespace != null) {
+                        params.put("zookeeperNamespace", namespace);
+                    }
+                } else {
+                    // Serialize the service URLs
+                    List<String> urls = serviceURLs.get(serviceName);
+                    if (urls != null) {
+                        for (String url : urls) {
+                            sw.write("        <url>" + url + "</url>\n");
+                        }
+                    }
+                }
+
+                // Params
+                Map<String, String> svcParams = serviceParams.get(serviceName);
+                if (svcParams != null) {
+                    for (String paramName : svcParams.keySet()) {
+                        sw.write("        <param>\n");
+                        sw.write("            <name>" + paramName + "</name>\n");
+                        sw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
+                        sw.write("        </param>\n");
+                    }
+                }
+
+                sw.write("    </service>\n");
+            }
+
+            // Applications
+            List<SimpleDescriptor.Application> apps = desc.getApplications();
+            if (apps != null) {
+                for (SimpleDescriptor.Application app : apps) {
+                    sw.write("    <application>\n");
+                    sw.write("        <name>" + app.getName() + "</name>\n");
+
+                    // URLs
+                    List<String> urls = app.getURLs();
+                    if (urls != null) {
+                        for (String url : urls) {
+                            sw.write("        <url>" + url + "</url>\n");
+                        }
+                    }
+
+                    // Params
+                    Map<String, String> appParams = app.getParams();
+                    if (appParams != null) {
+                        for (String paramName : appParams.keySet()) {
+                            sw.write("        <param>\n");
+                            sw.write("            <name>" + paramName + "</name>\n");
+                            sw.write("            <value>" + appParams.get(paramName) + "</value>\n");
+                            sw.write("        </param>\n");
+                        }
+                    }
+
+                    sw.write("    </application>\n");
+                }
+            }
+
+            sw.write("</topology>\n");
+
+            // Write the generated content to a file
+            String topologyFilename = desc.getName();
+            if (topologyFilename == null) {
+                topologyFilename = desc.getClusterName();
+            }
+            topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
+
+            fw = new BufferedWriter(new FileWriter(topologyDescriptor));
+            fw.write(sw.toString());
+            fw.flush();
+        } catch (IOException e) {
+            log.failedToGenerateTopologyFromSimpleDescriptor(topologyDescriptor.getName(), e);
+            topologyDescriptor.delete();
+        } finally {
+            if (fw != null) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+
+        result.put(RESULT_TOPOLOGY, topologyDescriptor);
+
+        return result;
     }
 
 }
