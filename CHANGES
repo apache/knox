@@ -10,6 +10,8 @@ Release Notes - Apache Knox - Version 1.0.0
    * [KNOX-1137] - KnoxCLI For Listing Provider Configurations and Descriptors in a Remote Configuration Registry
    * [KNOX-1145] - Upgrade Jackson due to CVE-2017-7525
 ** Bug
+   * [KNOX-998]  - Fixes for KnoxSSO filter
+   * [KNOX-1168] - Adding few adapter classes (dispatch classes) for backward compatibility
    * [KNOX-1151] - Need Explicit curator-recipes dependency in pom
    * [KNOX-1141] - Coverity Issues Reported For AmbariConfigurationMonitor
    * [KNOX-1116] - Builds of src distributions result in unexpected result from gateway version API.
