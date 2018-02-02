@@ -75,7 +75,15 @@ public class DefaultClusterConfigurationMonitorService implements ClusterConfigu
         }
     }
 
+    @Override
+    public void clearCache(String source, String clusterName) {
+        for (ClusterConfigurationMonitor monitor : monitors.values()) {
+            monitor.clearCache(source, clusterName);
+        }
+    }
+
     public void setAliasService(AliasService aliasService) {
         this.aliasService = aliasService;
     }
+
 }

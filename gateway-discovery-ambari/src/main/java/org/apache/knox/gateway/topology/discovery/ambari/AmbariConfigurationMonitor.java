@@ -303,6 +303,11 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         changeListeners.add(listener);
     }
 
+    @Override
+    public void clearCache(String source, String clusterName) {
+        this.removeClusterConfigVersions(source, clusterName);
+    }
+
     /**
      * Add discovery configuration details for the specified cluster, so the monitor knows how to connect to check for
      * changes.

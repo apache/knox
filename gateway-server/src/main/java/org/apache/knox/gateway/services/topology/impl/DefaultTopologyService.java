@@ -564,7 +564,7 @@ public class DefaultTopologyService
     // Register a cluster configuration monitor listener for change notifications
     ClusterConfigurationMonitorService ccms =
                   GatewayServer.getGatewayServices().getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
-    ccms.addListener(new TopologyDiscoveryTrigger(this));
+    ccms.addListener(new TopologyDiscoveryTrigger(this, ccms));
   }
 
   @Override
@@ -885,25 +885,34 @@ public class DefaultTopologyService
   private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
 
     private TopologyService topologyService = null;
+    private ClusterConfigurationMonitorService ccms = null;
 
-    TopologyDiscoveryTrigger(TopologyService topologyService) {
+    TopologyDiscoveryTrigger(TopologyService topologyService, ClusterConfigurationMonitorService ccms) {
       this.topologyService = topologyService;
+      this.ccms = ccms;
     }
 
     @Override
     public void onConfigurationChange(String source, String clusterName) {
       log.noticedClusterConfigurationChange(source, clusterName);
       try {
+        boolean affectedDescriptors = false;
         // Identify any descriptors associated with the cluster configuration change
         for (File descriptor : topologyService.getDescriptors()) {
           String descriptorContent = FileUtils.readFileToString(descriptor);
           if (descriptorContent.contains(source)) {
             if (descriptorContent.contains(clusterName)) {
+              affectedDescriptors = true;
               log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
               // 'Touch' the descriptor to trigger re-generation of the associated topology
               descriptor.setLastModified(System.currentTimeMillis());
             }
           }
+        }
+
+        if (!affectedDescriptors) {
+          // If not descriptors are affected by this configuration, then clear the cache to prevent future notifications
+          ccms.clearCache(source, clusterName);
         }
       } catch (Exception e) {
         log.errorRespondingToConfigChange(source, clusterName, e);

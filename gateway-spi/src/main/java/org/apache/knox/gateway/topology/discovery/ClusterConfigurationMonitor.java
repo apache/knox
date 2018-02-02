@@ -40,6 +40,11 @@ public interface ClusterConfigurationMonitor {
     void addListener(ConfigurationChangeListener listener);
 
     /**
+     * Clear the configuration data cache for the specified source and cluster name.
+     */
+    void clearCache(String source, String clusterName);
+
+    /**
      * Monitor listener interface for receiving notifications that a configuration has changed.
      */
     interface ConfigurationChangeListener {

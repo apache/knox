@@ -40,4 +40,12 @@ public interface ClusterConfigurationMonitorService extends Service {
      */
     void addListener(ClusterConfigurationMonitor.ConfigurationChangeListener listener);
 
+    /**
+     * Clear the cluster configuration data cache for the specified source and cluster.
+     *
+     * @param source      The identifier of configuration source being monitored.
+     * @param clusterName The name of an associated cluster being monitored.
+     */
+    void clearCache(String source, String clusterName);
+
 }

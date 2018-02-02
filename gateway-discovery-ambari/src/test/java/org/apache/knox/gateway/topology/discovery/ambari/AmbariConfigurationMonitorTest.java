@@ -33,8 +33,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class AmbariConfigurationMonitorTest {
 
@@ -199,6 +201,21 @@ public class AmbariConfigurationMonitorTest {
 
         assertNull("Expected changes to have been reported.",
                    changeNotifications.get(addr2).get(cluster1Name));
+
+        // Verify the cache clearing behavior
+        Map<String, Map<String, String>> src2ClustersData = monitor.ambariClusterConfigVersions.get(addr2);
+        assertTrue("Expected data for this cluster.", src2ClustersData.containsKey(cluster1Name));
+        assertTrue("Expected data for this cluster.", src2ClustersData.containsKey(cluster2Name));
+
+        // Clear the cache for this source
+        monitor.clearCache(addr2, cluster1Name);
+
+        assertFalse("Expected NO data for this cluster.", src2ClustersData.containsKey(cluster1Name));
+        assertTrue("Expected data for this cluster.", src2ClustersData.containsKey(cluster2Name));
+
+        // Make sure the cache for the other source is unaffected
+        Map<String, Map<String, String>> src1ClustersData = monitor.ambariClusterConfigVersions.get(addr1);
+        assertTrue("Expected data for this cluster.", src1ClustersData.containsKey(cluster1Name));
     }
 
 
