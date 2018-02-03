@@ -46,6 +46,11 @@ export class ResourceComponent implements OnInit {
 
 
   setResourceType(resType: string) {
+    //console.debug('ResourceComponent--> setResourceType --> ' + resType);
+
+    // Clear the selected resource, so it can be removed from the list on refresh if necessary
+    this.selectedResource = null;
+
     this.resourceType = resType;
     this.resourceService.selectedResourceType(this.resourceType);
     this.resources = []; // Clear the table before loading the new resources

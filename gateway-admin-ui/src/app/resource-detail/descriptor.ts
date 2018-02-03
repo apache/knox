@@ -25,6 +25,8 @@ export class Descriptor {
     providerConfig: string;
     services: Service[];
 
+    private dirty: boolean = false;
+
     getServiceParamKeys(service: Service): string[] {
         let result = [];
         for(let key in service.params){
@@ -40,7 +42,19 @@ export class Descriptor {
     }
 
     setProviderConfig(providerConfigRef: string) {
+      console.debug('Descriptor --> setProviderConfig() --> ' + providerConfigRef);
+      if (providerConfigRef !== this.providerConfig) {
         this.providerConfig = providerConfigRef;
+        this.setDirty();
+      }
+    }
+
+    setDirty() {
+        this.dirty = true;
+    }
+
+    public isDirty(): boolean {
+        return this.dirty;
     }
 
 }

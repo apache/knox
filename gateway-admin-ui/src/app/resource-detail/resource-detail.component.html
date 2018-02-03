@@ -10,24 +10,30 @@
     <div *ngIf="hasSelectedResource()">
       <div class="panel panel-default" *ngFor="let provider of providers">
         <span [class]="'clickable glyhpicon glyphicon-' + (provider.show ? 'minus' : 'plus')"
-                 (click)="provider.show = !provider.show"></span>
+              (click)="provider.show = !provider.show"></span>
         <span><b>{{ provider.name }}</b></span>
-        <span class="glyphicon glyphicon-remove-sign pull-right" data-toggle="tooltip" [title]="'Remove ' + provider.name"></span>
+        <span class="clickable glyphicon glyphicon-remove-sign pull-right"
+              [title]="'Remove ' + provider.name"
+              (click)="onRemoveProvider(provider.name)"
+              data-toggle="tooltip"></span>
         <div *ngIf="provider.show">
           &nbsp;&nbsp;&nbsp;<b>Role</b> {{ provider.role }}<br>
           &nbsp;&nbsp;&nbsp;<b>Enabled</b> {{ provider.enabled }}<br>
           <div>
             <span>&nbsp;&nbsp;&nbsp;</span>
-            <span [class]="'clickable glyhpicon glyphicon-' + (provider.paramDetails ? 'minus' : 'plus')"
-                  (click)="provider.paramDetails = !provider.paramDetails"></span>
+            <span [class]="'clickable glyhpicon glyphicon-' + (provider.showParamDetails ? 'minus' : 'plus')"
+                  (click)="provider.showParamDetails = !provider.showParamDetails"></span>
             <span><b>Params</b></span>
-            <span class="glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Param"></span>
+            <span class="clickable glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Param"></span>
 
-            <div class="panel panel-default table-responsive" *ngIf="provider.paramDetails">
+            <div class="panel panel-default table-responsive" *ngIf="provider.showParamDetails">
               <table class="table table-sm">
                 <tr *ngFor="let key of getParamKeys(provider)">
                   <td>
-                    <span class="glyphicon glyphicon-remove-sign"></span>
+                    <span class="clickable glyphicon glyphicon-remove-sign"
+                          title="Remove Param"
+                          (click)="onRemoveProviderParam(provider, key)"
+                          data-toggle="tooltip"></span>
                   </td>
                   <td><b>{{ key }}</b></td>
                   <td>{{ provider.params[key] }}</td>
@@ -39,6 +45,35 @@
         <br><br>
       </div>
     </div>
+
+    <div> <!-- Provider Configuration Modification Buttons -->
+      <button type="button"
+              title="Remove Provider Configuration"
+              class="btn btn-default btn-sm pull-left"
+              (click)="deleteConfirmModal.open('md')"
+              data-toggle="tooltip">
+        <span class="clickable glyphicon glyphicon-trash"></span>
+      </button>
+      <span class="pull-right">
+        <button type="button"
+                title="Discard Changes"
+                class="btn btn-default btn-sm"
+                [disabled]="!changedProviders"
+                (click)="discardConfirmModal.open('md')"
+                data-toggle="tooltip">
+          <span class="glyphicon glyphicon-refresh"></span>
+        </button>
+        <span>&nbsp;</span>
+        <button type="button"
+                title="Update Provider Configuration"
+                class="btn btn-default btn-sm"
+                [disabled]="!changedProviders"
+                (click)="persistChanges()"
+                data-toggle="tooltip">
+          <span class="glyphicon glyphicon-floppy-disk"></span>
+        </button>
+      </span>
+    </div>
   </div>
 
   <!-- Descriptor Details -->
@@ -49,13 +84,19 @@
         <div class="panel panel-default col-md-12">
           <span class="col-md-4"><b>Provider Configuration</b></span>
           <span class="col-md-7">
-            <input type="text" class="col-md-sm form-control input-sm" [(ngModel)]="descriptor.providerConfig" id="textbox"/>
+            <input type="text"
+                   id="textbox"
+                   class="col-md-sm form-control input-sm"
+                   (input)="descriptor.setDirty()"
+                   [(ngModel)]="descriptor.providerConfig"/>
           </span>
           <span class="col-md-1 pull-left">
             <button id="chooseProviderConfig"
                     class="btn btn-default btn-xs glyphicon glyphicon-edit"
                     (click)="chooseProviderConfigModal.open(descriptor, 'sm')"
-                    type="submit">
+                    type="submit"
+                    data-toggle="tooltip"
+                    title="Choose Provider Configuration">
             </button>
           </span>
         </div>
@@ -68,25 +109,32 @@
         <span [class]="'clickable glyhpicon glyphicon-' + (showServiceDetails ? 'minus' : 'plus')"
               (click)="showServiceDetails = !showServiceDetails"></span>
         <span><b>Services</b></span>
-        <span class="glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Service"></span>
+        <span class="clickable glyphicon glyphicon-plus-sign pull-right" data-toggle="tooltip" title="Add Service"></span>
       <div class="col-md-12 table-responsive" *ngIf="showServiceDetails">
         <table class="table table-striped table-sm">
           <tr *ngFor="let service of descriptor.services">
             <td>
               <div>
                 <span><b>{{ service.name }}</b></span>
-                <span class="glyphicon glyphicon-remove-sign pull-right"  data-toggle="tooltip" [title]="'Remove ' + service.name"></span>
+                <span class="clickable glyphicon glyphicon-remove-sign pull-right"
+                      [title]="'Remove ' + service.name"
+                      (click)="onRemoveDescriptorService(service.name)"
+                      data-toggle="tooltip"></span>
               </div>
               <div>
                 <span [class]="'clickable glyhpicon glyphicon-' + (service.showParams ? 'minus' : 'plus')"
                       (click)="service.showParams = !service.showParams"></span>
                 <span>Params</span><span>&nbsp;</span><span class="glyphicon glyphicon-plus-sign" data-toggle="tooltip" title="Add param"></span>
-                <!--<span class="btn btn-default btn-xs" data-toggle="tooltip" title="Add param">add</span>-->
               </div>
               <div class="table-responsive" *ngIf="service.showParams">
                 <table class="table table-sm" *ngIf="descriptor.getServiceParamKeys(service).length > 0">
                   <tr *ngFor="let paramKey of descriptor.getServiceParamKeys(service)">
-                    <td width="5%"><span class="glyphicon glyphicon-remove-sign"></span></td>
+                    <td width="5%">
+                      <span class="clickable glyphicon glyphicon-remove-sign"
+                            title="Remove Param"
+                            (click)="onRemoveDescriptorServiceParam(service.name, paramKey)"
+                            data-toggle="tooltip"></span>
+                    </td>
                     <td width="30%"><b>{{ paramKey }}</b></td>
                     <td width="65%" align="left">{{ descriptor.getServiceParamValue(service, paramKey) }}</td>
                   </tr>
@@ -100,7 +148,12 @@
               <div class="table-responsive" *ngIf="service.showUrls">
                 <table class="table table-sm" *ngIf="service.urls && service.urls.length > 0">
                   <tr *ngFor="let url of service.urls">
-                    <td width="5%"><span class="glyphicon glyphicon-remove-sign"></span></td>
+                    <td width="5%">
+                      <span class="clickable glyphicon glyphicon-remove-sign"
+                            title="Remove URL"
+                            (click)="onRemoveDescriptorServiceURL(service.name, url)"
+                            data-toggle="tooltip"></span>
+                    </td>
                     <td width="95%">{{ url }}</td>
                   </tr>
                 </table>
@@ -125,6 +178,69 @@
         </div>
       </div>
     </div>
+
+    <div> <!-- Descriptor Modification Buttons -->
+      <button type="button"
+              title="Remove Descriptor"
+              class="btn btn-default btn-sm pull-left"
+              (click)="deleteConfirmModal.open('md')"
+              data-toggle="tooltip">
+        <span class="clickable glyphicon glyphicon-trash"></span>
+      </button>
+      <span class="pull-right">
+        <button type="button"
+                title="Discard Changes"
+                class="btn btn-default btn-sm"
+                [disabled]="!descriptor.isDirty()"
+                (click)="discardConfirmModal.open('md')"
+                data-toggle="tooltip">
+          <span class="glyphicon glyphicon-refresh"></span>
+        </button>
+        <span>&nbsp;</span>
+        <button type="button"
+                title="Update Descriptor"
+                class="btn btn-default btn-sm"
+                [disabled]="!descriptor.isDirty()"
+                (click)="persistChanges()"
+                data-toggle="tooltip">
+          <span class="glyphicon glyphicon-floppy-disk"></span>
+        </button>
+      </span>
+    </div>
+  </div>
+
+  <div> <!-- Confirmation Modal Dialogs -->
+    <bs-modal (onClose)="deleteResource()" #deleteConfirmModal>
+      <bs-modal-header [showDismiss]="true">
+        <h4 class="modal-title">Deleting {{getTitleSubject()}}</h4>
+      </bs-modal-header>
+      <bs-modal-body>Are you sure you want to delete <b>{{resourceService.getResourceDisplayName(resource)}}</b>?</bs-modal-body>
+      <bs-modal-footer>
+        <button type="button"
+                class="btn btn-default btn-sm"
+                data-dismiss="deleteConfirmModal"
+                (click)="deleteConfirmModal.dismiss()">Cancel</button>
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                (click)="deleteConfirmModal.close()">Ok</button>
+      </bs-modal-footer>
+    </bs-modal>
+
+    <bs-modal (onClose)="discardChanges()" #discardConfirmModal>
+      <bs-modal-header [showDismiss]="true">
+        <h4 class="modal-title">Discard {{getTitleSubject()}} Changes</h4>
+      </bs-modal-header>
+      <bs-modal-body>Are you sure you want to discard <b>{{resourceService.getResourceDisplayName(resource)}}</b> changes?</bs-modal-body>
+      <bs-modal-footer>
+        <button type="button"
+                class="btn btn-default btn-sm"
+                data-dismiss="revertConfirmModal"
+                (click)="discardConfirmModal.dismiss()">Cancel</button>
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                (click)="discardConfirmModal.close()">Ok</button>
+      </bs-modal-footer>
+    </bs-modal>
   </div>
 </div>
 

@@ -37,6 +37,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -50,7 +52,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -67,6 +71,7 @@ public class TopologiesResource {
 
   private static final String XML_EXT  = ".xml";
   private static final String JSON_EXT = ".json";
+  private static final String YAML_EXT = ".yml";
 
   private static final String TOPOLOGIES_API_PATH    = "topologies";
   private static final String SINGLE_TOPOLOGY_API_PATH = TOPOLOGIES_API_PATH + "/{id}";
@@ -76,6 +81,13 @@ public class TopologiesResource {
   private static final String SINGLE_DESCRIPTOR_API_PATH = DESCRIPTORS_API_PATH + "/{name}";
 
   private static GatewaySpiMessages log = MessagesFactory.get(GatewaySpiMessages.class);
+
+  private static final Map<MediaType, String> mediaTypeFileExtensions = new HashMap<>();
+  static {
+    mediaTypeFileExtensions.put(MediaType.APPLICATION_XML_TYPE, XML_EXT);
+    mediaTypeFileExtensions.put(MediaType.APPLICATION_JSON_TYPE, JSON_EXT);
+    mediaTypeFileExtensions.put(MediaType.TEXT_PLAIN_TYPE, YAML_EXT);
+  }
 
   @Context
   private HttpServletRequest request;
@@ -288,9 +300,9 @@ public class TopologiesResource {
 
 
   @PUT
-  @Consumes({APPLICATION_XML})
+  @Consumes({APPLICATION_XML, APPLICATION_JSON, TEXT_PLAIN})
   @Path(SINGLE_PROVIDERCONFIG_API_PATH)
-  public Response uploadProviderConfiguration(@PathParam("name") String name, String content) {
+  public Response uploadProviderConfiguration(@PathParam("name") String name, @Context HttpHeaders headers, String content) {
     Response response = null;
 
     GatewayServices gs =
@@ -298,14 +310,18 @@ public class TopologiesResource {
 
     TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    boolean isUpdate = configFileExists(ts.getProviderConfigurations(), name);
+    File existing = getExistingConfigFile(ts.getProviderConfigurations(), name);
+    boolean isUpdate = (existing != null);
 
-    String filename = name.endsWith(XML_EXT) ? name : name + XML_EXT;
+    // If it's an update, then use the matching existing filename; otherwise, use the media type to determine the file
+    // extension.
+    String filename = isUpdate ? existing.getName() : getFileNameForResource(name, headers);
+
     if (ts.deployProviderConfiguration(filename, content)) {
       try {
         if (isUpdate) {
           response = Response.noContent().build();
-        } else{
+        } else {
           response = created(new URI(buildHref(request))).build();
         }
       } catch (URISyntaxException e) {
@@ -317,23 +333,10 @@ public class TopologiesResource {
     return response;
   }
 
-
-  private boolean configFileExists(Collection<File> existing, String candidateName) {
-    boolean result = false;
-    for (File exists : existing) {
-      if (FilenameUtils.getBaseName(exists.getName()).equals(candidateName)) {
-        result = true;
-        break;
-      }
-    }
-    return result;
-  }
-
-
   @PUT
-  @Consumes({APPLICATION_JSON})
+  @Consumes({APPLICATION_JSON, TEXT_PLAIN})
   @Path(SINGLE_DESCRIPTOR_API_PATH)
-  public Response uploadSimpleDescriptor(@PathParam("name") String name, String content) {
+  public Response uploadSimpleDescriptor(@PathParam("name") String name, @Context HttpHeaders headers, String content) {
     Response response = null;
 
     GatewayServices gs =
@@ -341,9 +344,13 @@ public class TopologiesResource {
 
     TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    boolean isUpdate = configFileExists(ts.getDescriptors(), name);
+    File existing = getExistingConfigFile(ts.getDescriptors(), name);
+    boolean isUpdate = (existing != null);
 
-    String filename = name.endsWith(JSON_EXT) ? name : name + JSON_EXT;
+    // If it's an update, then use the matching existing filename; otherwise, use the media type to determine the file
+    // extension.
+    String filename = isUpdate ? existing.getName() : getFileNameForResource(name, headers);
+
     if (ts.deployDescriptor(filename, content)) {
       try {
         if (isUpdate) {
@@ -423,6 +430,43 @@ public class TopologiesResource {
     }
 
     return response;
+  }
+
+
+  private String getFileNameForResource(String resourceName, HttpHeaders headers) {
+    String filename;
+    String extension = FilenameUtils.getExtension(resourceName);
+    if (extension != null && !extension.isEmpty()) {
+      filename = resourceName;
+    } else {
+      extension = getExtensionForMediaType(headers.getMediaType());
+      filename = (extension != null) ? (resourceName + extension) : (resourceName + JSON_EXT);
+    }
+    return filename;
+  }
+
+  private String getExtensionForMediaType(MediaType type) {
+    String extension = null;
+
+    for (MediaType key : mediaTypeFileExtensions.keySet()) {
+      if (type.isCompatible(key)) {
+        extension = mediaTypeFileExtensions.get(key);
+        break;
+      }
+    }
+
+    return extension;
+  }
+
+  private File getExistingConfigFile(Collection<File> existing, String candidateName) {
+    File result = null;
+    for (File exists : existing) {
+      if (FilenameUtils.getBaseName(exists.getName()).equals(candidateName)) {
+        result = exists;
+        break;
+      }
+    }
+    return result;
   }
 
 

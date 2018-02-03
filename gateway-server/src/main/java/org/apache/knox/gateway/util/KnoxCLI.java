@@ -1924,8 +1924,10 @@ public class KnoxCLI extends Configured implements Tool {
       if (client != null) {
         out.println("Provider Configurations (@" + client.getAddress() + ")");
         List<String> entries = client.listChildEntries(PROVIDER_CONFIG_ENTRY);
-        for (String entry : entries) {
-          out.println(entry);
+        if (entries != null) {
+          for (String entry : entries) {
+            out.println(entry);
+          }
         }
         out.println();
       }
@@ -1948,8 +1950,10 @@ public class KnoxCLI extends Configured implements Tool {
       if (client != null) {
         out.println("Descriptors (@" + client.getAddress() + ")");
         List<String> entries = client.listChildEntries(DESCRIPTORS_ENTRY);
-        for (String entry : entries) {
-          out.println(entry);
+        if (entries != null) {
+          for (String entry : entries) {
+            out.println(entry);
+          }
         }
         out.println();
       }

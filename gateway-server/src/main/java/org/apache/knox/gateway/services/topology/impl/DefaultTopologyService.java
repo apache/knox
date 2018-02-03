@@ -40,6 +40,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
@@ -426,7 +427,22 @@ public class DefaultTopologyService
 
   @Override
   public boolean deployProviderConfiguration(String name, String content) {
-    return writeConfig(sharedProvidersDirectory, name, content);
+    boolean result;
+
+    // Whether the remote configuration registry is being employed or not, write the file locally
+    result =  writeConfig(sharedProvidersDirectory, name, content);
+
+    // If the remote configuration registry is being employed, persist it there also
+    if (remoteMonitor != null) {
+      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
+      if (client != null) {
+        String entryPath = "/knox/config/shared-providers/" + name;
+        client.createEntry(entryPath, content);
+        result = (client.getEntryData(entryPath) != null);
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -444,16 +460,29 @@ public class DefaultTopologyService
   public boolean deleteProviderConfiguration(String name) {
     boolean result = false;
 
+    // Determine if the file exists, and if so, if there are any descriptors referencing it
+    boolean hasReferences = false;
     File providerConfig = getExistingFile(sharedProvidersDirectory, name);
     if (providerConfig != null) {
       List<String> references = descriptorsMonitor.getReferencingDescriptors(providerConfig.getAbsolutePath());
-      if (references.isEmpty()) {
-        result = providerConfig.delete();
-      } else {
-        log.preventedDeletionOfSharedProviderConfiguration(providerConfig.getAbsolutePath());
-      }
+      hasReferences = !references.isEmpty();
     } else {
       result = true; // If it already does NOT exist, then the delete effectively succeeded
+    }
+
+    // If the local file does not exist, or it does exist and there are NOT any referencing descriptors
+    if (providerConfig == null || !hasReferences) {
+
+      // If the remote config monitor is configured, attempt to delete the provider configuration from the remote
+      // registry, even if it does not exist locally.
+      deleteRemoteEntry("/knox/config/shared-providers", name);
+
+      if (providerConfig != null) {
+        // Whether the remote configuration registry is being employed or not, delete the local file if it exists
+        result = providerConfig.delete();
+      }
+    } else {
+      log.preventedDeletionOfSharedProviderConfiguration(providerConfig.getAbsolutePath());
     }
 
     return result;
@@ -461,7 +490,22 @@ public class DefaultTopologyService
 
   @Override
   public boolean deployDescriptor(String name, String content) {
-    return writeConfig(descriptorsDirectory, name, content);
+    boolean result;
+
+    // Whether the remote configuration registry is being employed or not, write the file locally
+    result = writeConfig(descriptorsDirectory, name, content);
+
+    // If the remote configuration registry is being employed, persist it there also
+    if (remoteMonitor != null) {
+      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
+      if (client != null) {
+        String entryPath = "/knox/config/descriptors/" + name;
+        client.createEntry(entryPath, content);
+        result = (client.getEntryData(entryPath) != null);
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -477,8 +521,16 @@ public class DefaultTopologyService
 
   @Override
   public boolean deleteDescriptor(String name) {
+    boolean result;
+
+    // If the remote config monitor is configured, delete the descriptor from the remote registry
+    deleteRemoteEntry("/knox/config/descriptors", name);
+
+    // Whether the remote configuration registry is being employed or not, delete the local file
     File descriptor = getExistingFile(descriptorsDirectory, name);
-    return (descriptor == null) || descriptor.delete();
+    result = (descriptor == null) || descriptor.delete();
+
+    return result;
   }
 
   @Override
@@ -639,6 +691,38 @@ public class DefaultTopologyService
     } catch (IOException | SAXException io) {
       throw new ServiceLifecycleException(io.getMessage());
     }
+  }
+
+  /**
+   * Delete the entry in the remote configuration registry, which matches the specified resource name.
+   *
+   * @param entryParent The remote registry path in which the entry exists.
+   * @param name        The name of the entry (typically without any file extension).
+   *
+   * @return true, if the entry is deleted, or did not exist; otherwise, false.
+   */
+  private boolean deleteRemoteEntry(String entryParent, String name) {
+    boolean result = true;
+
+    if (remoteMonitor != null) {
+      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
+      if (client != null) {
+        List<String> existingProviderConfigs = client.listChildEntries(entryParent);
+        for (String entryName : existingProviderConfigs) {
+          if (FilenameUtils.getBaseName(entryName).equals(name)) {
+            String entryPath = entryParent + "/" + entryName;
+            client.deleteEntry(entryPath);
+            result = !client.entryExists(entryPath);
+            if (!result) {
+              log.failedToDeletedRemoteConfigFile("descriptor", name);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   /**

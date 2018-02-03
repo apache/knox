@@ -565,6 +565,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Remote configuration monitor deleted {0} configuration file {1} based on remote change." )
   void deletedRemoteConfigFile(final String type, final String configFileName);
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to delete remote {0} file {1}." )
+  void failedToDeletedRemoteConfigFile(final String type, final String configFileName);
+
   @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
   void simpleDescriptorHandlingError(final String simpleDesc,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);

@@ -1000,15 +1000,6 @@ public class GatewayAdminTopologyFuncTest {
 
     XMLTag newProviderConfigXML = createProviderConfiguration();
 
-    // Attempt to PUT a provider config with an INCORRECT Content-type header
-    given()
-        .auth().preemptive().basic(username, password)
-        .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(newProviderConfigXML.toBytes("utf-8"))
-        .then()
-        .statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE)
-        .when().put(serviceUrl + "/" + newProviderConfigName);
-
     // Attempt to PUT a provider config with the CORRECT Content-type header
     given()
         .auth().preemptive().basic(username, password)

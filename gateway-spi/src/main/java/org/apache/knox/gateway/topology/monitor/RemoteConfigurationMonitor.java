@@ -16,9 +16,14 @@
  */
 package org.apache.knox.gateway.topology.monitor;
 
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
+
 public interface RemoteConfigurationMonitor {
 
     void start() throws Exception;
 
     void stop() throws Exception;
+
+    RemoteConfigurationRegistryClient getClient();
+
 }

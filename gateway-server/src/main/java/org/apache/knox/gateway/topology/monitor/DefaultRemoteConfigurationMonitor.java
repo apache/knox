@@ -97,6 +97,11 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
     }
 
     @Override
+    public RemoteConfigurationRegistryClient getClient() {
+        return client;
+    }
+
+    @Override
     public void start() throws Exception {
         if (client == null) {
             throw new IllegalStateException("Failed to acquire a remote configuration registry client.");
