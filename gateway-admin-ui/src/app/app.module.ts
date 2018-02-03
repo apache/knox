@@ -37,7 +37,8 @@ import { ResourceTypesService } from './resourcetypes/resourcetypes.service';
 import { ResourceComponent } from './resource/resource.component';
 import { ResourceService } from './resource/resource.service';
 import { DescriptorComponent } from './descriptor/descriptor.component';
-import { ResourceDetailComponent } from './resource-detail/resource-detail.component'
+import { ResourceDetailComponent } from './resource-detail/resource-detail.component';
+import { ProviderConfigSelectorComponent } from './provider-config-selector/provider-config-selector.component'
 
 @NgModule({
   imports: [ BrowserModule,
@@ -57,7 +58,8 @@ import { ResourceDetailComponent } from './resource-detail/resource-detail.compo
                   ResourcetypesComponent,
                   ResourceComponent,
                   DescriptorComponent,
-                  ResourceDetailComponent
+                  ResourceDetailComponent,
+                  ProviderConfigSelectorComponent
     ],
   providers: [ TopologyService,
                GatewayVersionService,

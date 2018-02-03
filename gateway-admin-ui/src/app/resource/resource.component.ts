@@ -51,10 +51,12 @@ export class ResourceComponent implements OnInit {
     this.resources = []; // Clear the table before loading the new resources
     this.resourceService.getResources(resType).then(resources => {
         this.resources = resources;
-        console.log('Found ' + resources.length + ' ' + this.resourceType + ' resources');
-        for (let resource of resources) {
-            console.log('Resource: ' + resource.name);
+
+        let debugMsg = 'ResourceComponent --> Found ' + resources.length + ' ' + resType + ' resources\n';
+        for (let res of resources) {
+            debugMsg += '  ' + res.name + '\n';
         }
+        console.debug(debugMsg);
     });
   }
 

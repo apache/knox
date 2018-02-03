@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ResourceService } from '../resource/resource.service';
 import { Resource } from '../resource/resource';
 import { ProviderConfig } from './provider-config';
@@ -24,6 +24,9 @@ import { parseString } from 'xml2js';
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
+
+import { ProviderConfigSelectorComponent } from "../provider-config-selector/provider-config-selector.component";
+
 
 @Component({
   selector: 'app-resource-detail',
@@ -48,6 +51,9 @@ export class ResourceDetailComponent implements OnInit {
   descriptor: Descriptor;
 
   availableProviderConfigs: Resource[];
+
+  @ViewChild('choosePC')
+  chooseProviderConfigModal: ProviderConfigSelectorComponent;
 
   constructor(private resourceService: ResourceService) {
   }
@@ -133,7 +139,7 @@ export class ResourceDetailComponent implements OnInit {
                 });
             }
           } catch (e) {
-            console.log('Error parsing resource content: ' + e);
+            console.error('Error parsing ' + res.name + ' content: ' + e);
           }
       }
   }
@@ -142,7 +148,7 @@ export class ResourceDetailComponent implements OnInit {
     this.resourceContent = content;
     if (this.resourceContent) {
       try {
-        console.log('Parsing descriptor ' + res.name);
+        console.debug('ResourceDetailComponent --> setDescriptorContent() --> Parsing descriptor ' + res.name);
         let contentObj;
         if (res.name.endsWith('json')) {
           contentObj = JSON.parse(this.resourceContent);
@@ -161,7 +167,7 @@ export class ResourceDetailComponent implements OnInit {
         }
         this.descriptor = tempDesc;
       } catch (e) {
-        console.log('Error parsing resource content: ' + e);
+        console.error('Error parsing '+ res.name + ' content: ' + e);
       }
     }
   }

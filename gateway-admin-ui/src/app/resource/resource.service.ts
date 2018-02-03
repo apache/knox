@@ -55,8 +55,8 @@ export class ResourceService {
     }
 
     getProviderConfigResources(): Promise<Resource[]> {
-        let headers = new HttpHeaders();
-        headers = this.addJsonHeaders(headers);
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        this.logHeaders(headers);
         return this.http.get(this.providersUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['items'] as Resource[])
@@ -64,8 +64,8 @@ export class ResourceService {
     }
 
     getDescriptorResources(): Promise<Resource[]> {
-        let headers = new HttpHeaders();
-        headers = this.addJsonHeaders(headers);
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        this.logHeaders(headers);
         return this.http.get(this.descriptorsUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['items'] as Resource[])
@@ -73,8 +73,8 @@ export class ResourceService {
     }
 
     getTopologyResources(): Promise<Resource[]> {
-        let headers = new HttpHeaders();
-        headers = this.addJsonHeaders(headers);
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        this.logHeaders(headers);
         return this.http.get(this.topologiesUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['topologies'].topology as Resource[])
@@ -84,38 +84,45 @@ export class ResourceService {
     getResource(resType: string, res : Resource): Promise<string> {
         let headers = new HttpHeaders();
         headers = (resType === 'Topologies') ? this.addXmlHeaders(headers) : this.addHeaders(headers, res.name);
+        this.logHeaders(headers);
 
         return this.http.get(res.href, { headers: headers, responseType: 'text' })
                         .toPromise()
-                        .then(response => { return response; })
+                        .then(response => {
+                            console.debug('ResourceService --> getResource() --> response: ' + response);
+                            return response;
+                        })
                         .catch(this.handleError);
     }
 
     saveResource(url: string, xml : string): Promise<string> {
-        let xheaders = new HttpHeaders();
-        this.addXmlHeaders(xheaders);
-        this.addCsrfHeaders(xheaders);
-        return this.http.put(url, xml, {headers: xheaders})
+        let headers = this.addXmlHeaders(new HttpHeaders());
+        headers = this.addCsrfHeaders(headers);
+        this.logHeaders(headers);
+
+        return this.http.put(url, xml, {headers: headers})
                         .toPromise()
                         .then(() => xml)
                         .catch(this.handleError);
     }
 
     createResource(name: string, xml : string): Promise<string> {
-        let xheaders = new HttpHeaders();
-        this.addXmlHeaders(xheaders);
-        this.addCsrfHeaders(xheaders);
+        let headers = this.addXmlHeaders(new HttpHeaders());
+        headers = this.addCsrfHeaders(headers);
+        this.logHeaders(headers);
+
         let url = this.topologiesUrl + "/" + name;
-        return this.http.put(url, xml, {headers: xheaders})
+        return this.http.put(url, xml, {headers: headers})
                         .toPromise()
                         .then(() => xml)
                         .catch(this.handleError);
     }
 
     deleteResource(href: string): Promise<string> {
-        let headers = new HttpHeaders();
-        this.addJsonHeaders(headers);
-        this.addCsrfHeaders(headers);
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        headers = this.addCsrfHeaders(headers);
+        this.logHeaders(headers);
+
         return this.http.delete(href, { headers: headers } )
                         .toPromise()
                         .then(response => response)
@@ -184,15 +191,16 @@ export class ResourceService {
     }
 
     private handleError(error: any): Promise<any> {
-        console.error('An error occurred', error); // for demo purposes only
+        console.error('ResourceService --> An error occurred', error);
         return Promise.reject(error.message || error);
     }
 
     private logHeaders(headers: HttpHeaders) {
-        console.log('Header count: ' + headers.keys().length);
+        let debugMsg = 'ResourceService --> Request header count: ' + headers.keys().length + '\n';
         headers.keys().forEach(key => {
-            console.log('Header: ' + key + '=' + headers.get(key));
+            debugMsg += '  ' + key + '=' + headers.get(key) + '\n';
         });
+        console.debug(debugMsg);
     }
 
 }

@@ -54,8 +54,7 @@ import 'brace/mode/xml';
          
        </div>
        <bs-modal (onClose)="createTopology()" #duplicateModal>
-         <!--<bs-modal-header [show-close]="true">-->
-         <bs-modal-header>
+         <bs-modal-header [showDismiss]="true">
            <h4 class="modal-title">Create a copy</h4>
          </bs-modal-header>
          <bs-modal-body>
@@ -70,8 +69,7 @@ import 'brace/mode/xml';
          </bs-modal-footer>
        </bs-modal>
        <bs-modal (onClose)="deleteTopology()" #deleteConfirmModal>
-         <!--<bs-modal-header [show-close]="true">-->
-         <bs-modal-header>
+         <bs-modal-header [showDismiss]="true">
            <h4 class="modal-title">Deleting Topology {{titleSuffix}}</h4>
          </bs-modal-header>
          <bs-modal-body>

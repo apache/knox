@@ -52,31 +52,14 @@
             <input type="text" class="col-md-sm form-control input-sm" [(ngModel)]="descriptor.providerConfig" id="textbox"/>
           </span>
           <span class="col-md-1 pull-left">
-            <button id="chooseProviderConfig" (click)="chooseProviderConfigModal.open('sm')" class="btn btn-default btn-xs glyphicon glyphicon-edit" type="submit">
-              <!--            <span class="glyphicon glyphicon-edit"></span>-->
+            <button id="chooseProviderConfig"
+                    class="btn btn-default btn-xs glyphicon glyphicon-edit"
+                    (click)="chooseProviderConfigModal.open(descriptor, 'sm')"
+                    type="submit">
             </button>
           </span>
         </div>
-        <bs-modal (onClose)="descriptor.setProviderConfig(newProviderConfigRef)" #chooseProviderConfigModal>
-          <!--<bs-modal-header [show-close]="true">-->
-          <bs-modal-header>
-            <label class="modal-title">Choose a Provider Configuration</label>
-          </bs-modal-header>
-          <bs-modal-body>
-            <div class="form-group">
-              <select autofocus required class="md-select form-control" required [(ngModel)]="newProviderConfigRef" id="select" >
-                <option *ngFor="let pc of availableProviderConfigs"
-                        class="md-option"
-                        [value]="pc.name"
-                        [selected]="pc.name === descriptor.providerConfig">{{pc.name}}</option>
-              </select>
-            </div>
-          </bs-modal-body>
-          <bs-modal-footer>
-            <button type="button" class="btn btn-default btn-sm" data-dismiss="chooseProviderConfigModal" (click)="chooseProviderConfigModal.dismiss()">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" [disabled]="!newProviderConfigRef" (click)="chooseProviderConfigModal.close()">Ok</button>
-          </bs-modal-footer>
-        </bs-modal>
+        <app-provider-config-selector #choosePC></app-provider-config-selector>
       </div>
 
       <br><br>

@@ -1,0 +1,25 @@
+<bs-modal (onClose)="onClose()" #chooseProviderConfigModal>
+  <bs-modal-header [showDismiss]="true">
+    <label class="modal-title">Choose a Provider Configuration</label>
+  </bs-modal-header>
+  <bs-modal-body>
+    <div class="form-group">
+      <select autofocus required class="md-select form-control" [(ngModel)]="selectedName" id="select" >
+        <option *ngFor="let pc of getProviderConfigs()"
+                class="md-option"
+                [value]="getReferenceName(pc.name)"
+                [selected]="getReferenceName(pc.name) === selectedName">{{getReferenceName(pc.name)}}</option>
+      </select>
+    </div>
+  </bs-modal-body>
+  <bs-modal-footer>
+    <button type="button"
+            class="btn btn-default btn-sm"
+            data-dismiss="chooseProviderConfigModal"
+            (click)="chooseProviderConfigModal.dismiss()">Cancel</button>
+    <button type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="!selectedName"
+            (click)="chooseProviderConfigModal.close()">Ok</button>
+  </bs-modal-footer>
+</bs-modal>
