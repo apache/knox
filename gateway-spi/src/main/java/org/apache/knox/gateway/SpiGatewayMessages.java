@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway;
 
+import org.apache.http.cookie.Cookie;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
@@ -73,4 +74,8 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Error ocurred while accessing params in query string: {0}" )
   void unableToGetParamsFromQueryString(@StackTrace(level=MessageLevel.WARN) Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Accepting service cookie: {0}" )
+  void acceptingServiceCookie( Cookie cookie );
+
 }
