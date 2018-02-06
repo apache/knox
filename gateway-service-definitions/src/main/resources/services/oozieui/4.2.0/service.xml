@@ -15,10 +15,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="OOZIEUI" name="oozie" version="4.2.0">
+<service role="OOZIEUI" name="oozieui" version="4.2.0">
     <routes>
-        <route path="/oozie/"/>
-        <route path="/oozie/**"/>
+        <route path="/oozie?**"/>
         <route path="/oozie/**?**"/>
     </routes>
 </service>
