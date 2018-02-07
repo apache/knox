@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpHeaders, HttpClient} from '@angular/common/http';
+import { HttpHeaders, HttpClient, HttpErrorResponse } from '@angular/common/http';
 import 'rxjs/add/operator/toPromise';
 import { Subject } from 'rxjs/Subject';
 import { Resource } from './resource';
@@ -68,7 +68,10 @@ export class ResourceService {
         return this.http.get(this.providersUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['items'] as Resource[])
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> getProviderConfigResources() --> error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     getDescriptorResources(): Promise<Resource[]> {
@@ -77,7 +80,10 @@ export class ResourceService {
         return this.http.get(this.descriptorsUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['items'] as Resource[])
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> getDescriptorResources() --> error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     getTopologyResources(): Promise<Resource[]> {
@@ -86,21 +92,31 @@ export class ResourceService {
         return this.http.get(this.topologiesUrl, { headers: headers })
                         .toPromise()
                         .then(response => response['topologies'].topology as Resource[])
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> getTopologyResources() --> error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     getResource(resType: string, res : Resource): Promise<string> {
-        let headers = new HttpHeaders();
-        headers = (resType === 'Topologies') ? this.addXmlHeaders(headers) : this.addHeaders(headers, res.name);
-        //this.logHeaders(headers);
+        if (res) {
+            let headers = new HttpHeaders();
+            headers = (resType === 'Topologies') ? this.addXmlHeaders(headers) : this.addHeaders(headers, res.name);
+            //this.logHeaders(headers);
 
-        return this.http.get(res.href, {headers: headers, responseType: 'text'})
-            .toPromise()
-            .then(response => {
-                console.debug('ResourceService --> Loading resource ' + res.name + ' :\n' + response);
-                return response;
-            })
-            .catch(this.handleError);
+            return this.http.get(res.href, {headers: headers, responseType: 'text'})
+                .toPromise()
+                .then(response => {
+                    console.debug('ResourceService --> Loading resource ' + res.name + ' :\n' + response);
+                    return response;
+                })
+                .catch((err: HttpErrorResponse) => {
+                    console.debug('ResourceService --> getResource() ' + res.name + '\n  error: ' + err.message);
+                    return this.handleError(err);
+                });
+        } else {
+            return Promise.resolve(null);
+        }
     }
 
     saveResource(resource: Resource, content: string): Promise<string> {
@@ -113,7 +129,10 @@ export class ResourceService {
         return this.http.put(resource.href, content, {headers: headers})
                         .toPromise()
                         .then(() => content)
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> saveResource() ' + resource.name + '\n  error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     createResource(resType: string, resource: Resource, content : string): Promise<string> {
@@ -125,7 +144,10 @@ export class ResourceService {
         return this.http.put(url, content, {headers: headers})
                         .toPromise()
                         .then(() => content)
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> createResource() --> ' + resource.name + '\n  error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     deleteResource(href: string): Promise<string> {
@@ -136,7 +158,10 @@ export class ResourceService {
         return this.http.delete(href, { headers: headers } )
                         .toPromise()
                         .then(response => response)
-                        .catch(this.handleError);
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> deleteResource() --> ' + href + '\n  error: ' + err.message);
+                return this.handleError(err);
+            });
     }
 
     addHeaders(headers: HttpHeaders, resName: string): HttpHeaders {
@@ -183,6 +208,7 @@ export class ResourceService {
     }
 
     selectedResource(value: Resource) {
+        //console.debug('ResourceService --> selectedResource() --> ' + value.name);
         this.selectedResourceSource.next(value);
     }
 
@@ -199,17 +225,16 @@ export class ResourceService {
     }
 
     public getResourceDisplayName(res: Resource): string {
-        if (res.name) {
-            let idx = res.name.lastIndexOf('.');
-            return idx >0 ? res.name.substring(0, res.name.lastIndexOf('.')) : res.name;
+        if (res && res.name) {
+            let index = res.name.lastIndexOf('.');
+            return index > 0 ? res.name.substring(0, index) : res.name;
         } else {
             return null;
         }
     }
 
     private handleError(error: any): Promise<any> {
-        console.error('ResourceService --> An error occurred', error);
-        return Promise.reject(error.message || error);
+        return Promise.reject(error);
     }
 
     private logHeaders(headers: HttpHeaders) {

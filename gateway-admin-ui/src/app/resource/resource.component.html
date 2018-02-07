@@ -10,7 +10,7 @@
       <tbody>
       <tr *ngFor="let resource of resources"
           [class.selected]="resource === selectedResource"
-          [class.active]="resource === selectedResource"
+          [class.active]="isSelectedResource(resource)"
           (click)="onSelect(resource)"
           class="clickable">
         <td>{{resourceService.getResourceDisplayName(resource)}}</td>

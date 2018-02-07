@@ -20,6 +20,7 @@ import { ResourceService } from './resource.service';
 import { Resource } from './resource';
 import {TopologyService} from "../topology.service";
 import {Topology} from "../topology";
+import {HttpErrorResponse} from "@angular/common/http";
 
 
 @Component({
@@ -41,7 +42,7 @@ export class ResourceComponent implements OnInit {
 
 
   ngOnInit() {
-    this.resourceTypesService.selectedResourceType$.subscribe(value => this.setResourceType(value));
+    this.resourceTypesService.selectedResourceType$.subscribe(resourceType => this.setResourceType(resourceType));
   }
 
 
@@ -54,7 +55,8 @@ export class ResourceComponent implements OnInit {
     this.resourceType = resType;
     this.resourceService.selectedResourceType(this.resourceType);
     this.resources = []; // Clear the table before loading the new resources
-    this.resourceService.getResources(resType).then(resources => {
+    this.resourceService.getResources(resType)
+      .then(resources => {
         this.resources = resources;
 
         let debugMsg = 'ResourceComponent --> Found ' + resources.length + ' ' + resType + ' resources\n';
@@ -62,7 +64,10 @@ export class ResourceComponent implements OnInit {
             debugMsg += '  ' + res.name + '\n';
         }
         console.debug(debugMsg);
-    });
+      })
+      .catch((err: HttpErrorResponse) => {
+        console.debug('Error accessing ' + resType + ' : ' + err.message);
+      });
   }
 
   onSelect(resource: Resource) {
@@ -80,6 +85,9 @@ export class ResourceComponent implements OnInit {
     }
   }
 
+  isSelectedResource(res: Resource): boolean {
+      return (res && this.selectedResource) ? (res.name === this.selectedResource.name) : false;
+  }
 
   getResourceTypeSingularDisplayName(resType: string): string {
       switch(resType) {

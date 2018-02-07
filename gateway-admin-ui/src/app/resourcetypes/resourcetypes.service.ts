@@ -32,6 +32,7 @@ export class ResourceTypesService {
     }
 
     selectResourceType(resType: string) {
+      //console.debug('ResourceTypeService --> selectResourceType() --> ' + resType);
       this.selectedResourceTypeSource.next(resType);
     }
 }

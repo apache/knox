@@ -27,6 +27,7 @@ import 'brace/mode/xml';
 
 import { ProviderConfigSelectorComponent } from "../provider-config-selector/provider-config-selector.component";
 import { ResourceTypesService } from "../resourcetypes/resourcetypes.service";
+import {HttpErrorResponse} from "@angular/common/http";
 
 
 @Component({
@@ -75,9 +76,18 @@ export class ResourceDetailComponent implements OnInit {
   }
 
   setResource(res: Resource) {
+      //console.debug('ResourceDetailComponent --> setResource() --> ' + ((res) ? res.name : 'null'));
       this.resource = res;
       this.providers = [];
-      this.resourceService.getResource(this.resourceType, res).then(content => this.setResourceContent(res, content));
+      this.changedProviders = null;
+      this.descriptor = null;
+      if (res) {
+        this.resourceService.getResource(this.resourceType, res)
+                            .then(content => this.setResourceContent(res, content))
+                            .catch((error: HttpErrorResponse) => {
+                                console.debug('Error accessing content for ' + res.name + ' : ' + error);
+                            });
+      }
   }
 
   setResourceContent(res: Resource, content: string) {
@@ -109,31 +119,37 @@ export class ResourceDetailComponent implements OnInit {
                 this.providers = contentObj['providers'];
             } else if (res.name.endsWith('xml')) {
                 // Parse the XML representation
-                parseString(this.resourceContent, (err, result) => {
-                    // Parsing the XML is a bit less straight-forward
-                    let tempProviders = new Array<ProviderConfig>();
-                    result['gateway'].provider.forEach(entry => {
-                       let providerConfig: ProviderConfig = new ProviderConfig();
-                       providerConfig.role = entry.role[0];
-                       providerConfig.name = entry.name[0];
-                       providerConfig.enabled = entry.enabled[0];
+                parseString(this.resourceContent,
+                  (error, result) => {
+                    if (error) {
+                      console.log('Error parsing ' + res.name + ' error: ' + error);
+                    } else {
+                        // Parsing the XML is a bit less straight-forward
+                        let tempProviders = new Array<ProviderConfig>();
+                        result['gateway'].provider.forEach(entry => {
+                            let providerConfig: ProviderConfig = new ProviderConfig();
+                            providerConfig.role = entry.role[0];
+                            providerConfig.name = entry.name[0];
+                            providerConfig.enabled = entry.enabled[0];
 
-                       // There may not be params
-                       if (entry.param) {
-                         let params = {};
-                         for (let i = 0; i < entry.param.length; i++) {
-                           let param = entry.param[i];
-                           params[param.name[0]] = param.value[0];
-                         }
-                         providerConfig.params = params;
-                       }
-                       tempProviders.push(providerConfig);
-                    });
-                    this.providers = tempProviders;
+                            // There may not be params
+                            if (entry.param) {
+                                let params = {};
+                                for (let i = 0; i < entry.param.length; i++) {
+                                    let param = entry.param[i];
+                                    params[param.name[0]] = param.value[0];
+                                }
+                                providerConfig.params = params;
+                            }
+                            tempProviders.push(providerConfig);
+                        });
+                        this.providers = tempProviders;
+                    }
                 });
             }
           } catch (e) {
             console.error('ResourceDetailComponent --> setProviderConfigContent() --> Error parsing ' + res.name + ' content: ' + e);
+            this.providers = null; // Clear detail display
           }
       }
   }
@@ -142,7 +158,7 @@ export class ResourceDetailComponent implements OnInit {
     this.resourceContent = content;
     if (this.resourceContent) {
       try {
-        console.debug('ResourceDetailComponent --> setDescriptorContent() --> Parsing descriptor ' + res.name);
+        //console.debug('ResourceDetailComponent --> setDescriptorContent() --> Parsing descriptor ' + res.name);
         let contentObj;
         if (res.name.endsWith('json')) {
           contentObj = JSON.parse(this.resourceContent);
@@ -176,7 +192,6 @@ export class ResourceDetailComponent implements OnInit {
             this.persistDescriptor();
         }
     }
-    this.setResource(this.resource); // Refresh the detail presentation to reflect the saved state
   }
 
   persistProviderConfiguration() {
@@ -205,12 +220,17 @@ export class ResourceDetailComponent implements OnInit {
         replacementResource.href = this.resource.href;
 
         // Delete the XML resource
-        this.resourceService.deleteResource(this.resource.href).then(() => {
+        this.resourceService.deleteResource(this.resource.href)
+          .then(() => {
           // Save the updated content
           this.resourceService.saveResource(replacementResource, content).then(() => {
-            // Refresh the presentation
-            this.changedProviders = null;
-            this.setResource(replacementResource);
+            // Update the list of provider configuration to ensure that the XML one is replaced with the JSON one
+            this.resourceTypesService.selectResourceType(this.resourceType);
+            // Update the detail view
+            this.resourceService.selectedResource(replacementResource);
+          })
+          .catch(err => {
+              console.error('Error persisting ' + replacementResource.name + ' : ' + err);
           });
         });
         break;
@@ -220,11 +240,14 @@ export class ResourceDetailComponent implements OnInit {
     // For the non-XML provider configuration cases, simply save the changes
     if (ext !== 'xml') {
         // Save the updated content
-        this.resourceService.saveResource(this.resource, content).then(result => {
-            // Refresh the presentation
-            this.changedProviders = null;
-            this.setResource(this.resource);
-        });
+        this.resourceService.saveResource(this.resource, content)
+          .then(() => {
+              // Refresh the presentation
+              this.resourceService.selectedResource(this.resource);
+          })
+          .catch(err => {
+              console.error('Error persisting ' + this.resource.name + ' : ' + err);
+          });
     }
   }
 
@@ -246,7 +269,7 @@ export class ResourceDetailComponent implements OnInit {
     this.resourceService.saveResource(this.resource, content);
 
     // Refresh the presentation
-    this.setResource(this.resource);
+    this.resourceService.selectedResource(this.resource);
   }
 
 
@@ -322,19 +345,24 @@ export class ResourceDetailComponent implements OnInit {
 
 
   discardChanges() {
-    this.changedProviders = null;
-    this.setResource(this.resource); // Reset the resource to refresh to the original content
+    this.resourceService.selectedResource(this.resource);
   }
 
 
   deleteResource() {
-    this.resourceService.deleteResource(this.resource.href);
-    this.resourceTypesService.selectResourceType(this.resourceType); // This refreshes the list of resources
+    let resourceName = this.resource.name;
+    this.resourceService.deleteResource(this.resource.href)
+                        .then(() => {
+                            console.debug('Deleted ' + resourceName);
+                            // This refreshes the list of resources
+                            this.resourceTypesService.selectResourceType(this.resourceType);
+                        })
+                        .catch(err => console.error('Error deleting ' + resourceName + ' : ' + err));
   }
 
 
   onRemoveProvider(name: string) {
-    console.debug('ResourceDetailComponent --> onRemoveProvider() --> ' + name);
+    //console.debug('ResourceDetailComponent --> onRemoveProvider() --> ' + name);
     for(let i = 0; i < this.providers.length; i++) {
       if(this.providers[i].name === name) {
         this.providers.splice(i, 1);
@@ -346,7 +374,7 @@ export class ResourceDetailComponent implements OnInit {
 
 
   onRemoveProviderParam(pc: ProviderConfig, paramName: string) {
-    console.debug('ResourceDetailComponent --> onRemoveProviderParam() --> ' + pc.name + ' --> ' + paramName);
+    //console.debug('ResourceDetailComponent --> onRemoveProviderParam() --> ' + pc.name + ' --> ' + paramName);
     if(pc.params.hasOwnProperty(paramName)) {
         delete pc.params[paramName];
     }
@@ -355,7 +383,7 @@ export class ResourceDetailComponent implements OnInit {
 
 
   onRemoveDescriptorService(serviceName: string) {
-    console.debug('ResourceDetailComponent --> onRemoveDescriptorService() --> ' + serviceName);
+    //console.debug('ResourceDetailComponent --> onRemoveDescriptorService() --> ' + serviceName);
     for(let i = 0; i < this.descriptor.services.length; i++) {
       if(this.descriptor.services[i].name === serviceName) {
         this.descriptor.services.splice(i, 1);
@@ -367,7 +395,7 @@ export class ResourceDetailComponent implements OnInit {
 
 
   onRemoveDescriptorServiceParam(serviceName: string, paramName: string) {
-    console.debug('ResourceDetailComponent --> onRemoveDescriptorServiceParam() --> ' + serviceName + ' : ' + paramName);
+    //console.debug('ResourceDetailComponent --> onRemoveDescriptorServiceParam() --> ' + serviceName + ' : ' + paramName);
     let done: boolean = false;
     for(let i = 0; i < this.descriptor.services.length; i++) {
       if(this.descriptor.services[i].name === serviceName) {
@@ -387,7 +415,7 @@ export class ResourceDetailComponent implements OnInit {
 
 
   onRemoveDescriptorServiceURL(serviceName: string, serviceUrl: string) {
-    console.debug('ResourceDetailComponent --> onRemoveDescriptorServiceParam() --> ' + serviceName + ' : ' + serviceUrl);
+    //console.debug('ResourceDetailComponent --> onRemoveDescriptorServiceParam() --> ' + serviceName + ' : ' + serviceUrl);
     let done: boolean = false;
     for(let i = 0; i < this.descriptor.services.length; i++) {
       if(this.descriptor.services[i].name === serviceName) {

@@ -3,6 +3,7 @@ import { ResourceService } from "../resource/resource.service";
 import { Resource } from "../resource/resource";
 import { BsModalComponent } from "ng2-bs3-modal";
 import { Descriptor } from "../resource-detail/descriptor";
+import {HttpErrorResponse} from "@angular/common/http";
 
 
 @Component({
@@ -32,7 +33,9 @@ export class ProviderConfigSelectorComponent implements OnInit {
     this.selectedName = desc.providerConfig; // Set the default selection based on the current ref in the descriptor
 
     // Load the available provider configs every time this modal is open
-    this.resourceService.getResources('Provider Configurations').then(result => this.providerConfigs = result);
+    this.resourceService.getResources('Provider Configurations')
+                        .then(result => this.providerConfigs = result)
+                        .catch((err: HttpErrorResponse) => console.debug('Error access provider configurations: ' + err));
 
     this.childModal.open(size);
   }
