@@ -52,7 +52,6 @@ export class ResourceDetailComponent implements OnInit {
   changedProviders: Array<ProviderConfig>;
 
   descriptor: Descriptor;
-  changedDescriptor: Descriptor;
 
   @ViewChild('choosePC')
   chooseProviderConfigModal: ProviderConfigSelectorComponent;
@@ -80,7 +79,7 @@ export class ResourceDetailComponent implements OnInit {
       this.resource = res;
       this.providers = [];
       this.changedProviders = null;
-      this.descriptor = null;
+      this.descriptor = ResourceDetailComponent.emptyDescriptor;
       if (res) {
         this.resourceService.getResource(this.resourceType, res)
                             .then(content => this.setResourceContent(res, content))
@@ -266,10 +265,16 @@ export class ResourceDetailComponent implements OnInit {
         break;
       }
     }
-    this.resourceService.saveResource(this.resource, content);
 
-    // Refresh the presentation
-    this.resourceService.selectedResource(this.resource);
+    // Save the updated content
+    this.resourceService.saveResource(this.resource, content)
+      .then(() => {
+          // Refresh the presentation
+          this.resourceService.selectedResource(this.resource);
+      })
+      .catch(err => {
+          console.error('Error persisting ' + this.resource.name + ' : ' + err);
+      });
   }
 
 
@@ -372,6 +377,10 @@ export class ResourceDetailComponent implements OnInit {
     this.changedProviders = this.providers;
   }
 
+  onProviderEnabled(provider: ProviderConfig) {
+      provider.enabled = this.isProviderEnabled(provider) ? 'false' : 'true';
+      this.changedProviders = this.providers;
+  }
 
   onRemoveProviderParam(pc: ProviderConfig, paramName: string) {
     //console.debug('ResourceDetailComponent --> onRemoveProviderParam() --> ' + pc.name + ' --> ' + paramName);
@@ -435,6 +444,11 @@ export class ResourceDetailComponent implements OnInit {
     }
   }
 
+  onUpdateDescriptorProperty(desc: Descriptor, propertyName: string, value: string) {
+      desc[propertyName] = value;
+      desc.setDirty();
+  }
+
   getParamKeys(provider: ProviderConfig): string[] {
     let result = [];
     for(let key in provider.params){
@@ -456,6 +470,21 @@ export class ResourceDetailComponent implements OnInit {
     return result;
   }
 
+
+  isProviderEnabled(pc: ProviderConfig): boolean {
+      let result: boolean = false;
+
+      if (pc) {
+          if (typeof(pc.enabled) === 'string') {
+              let lowered = pc.enabled.toLowerCase().trim();
+              result = (lowered === 'true');
+          } else if (typeof(pc.enabled) === 'boolean') {
+              result = pc.enabled;
+          }
+      }
+
+      return result;
+  }
 
   hasSelectedResource(): boolean {
     return Boolean(this.resource) && Boolean(this.resource.name);

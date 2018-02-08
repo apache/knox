@@ -42,7 +42,7 @@ export class Descriptor {
     }
 
     setProviderConfig(providerConfigRef: string) {
-      console.debug('Descriptor --> setProviderConfig() --> ' + providerConfigRef);
+      //console.debug('Descriptor --> setProviderConfig() --> ' + providerConfigRef);
       if (providerConfigRef !== this.providerConfig) {
         this.providerConfig = providerConfigRef;
         this.setDirty();

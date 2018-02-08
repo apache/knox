@@ -20,7 +20,6 @@ import 'rxjs/add/operator/toPromise';
 import { Subject } from 'rxjs/Subject';
 import { Resource } from './resource';
 import {ProviderConfig} from "../resource-detail/provider-config";
-import {Descriptor} from "../resource-detail/descriptor";
 
 
 @Injectable()
@@ -42,9 +41,6 @@ export class ResourceService {
 
     changedProviderConfigurationSource = new Subject<Array<ProviderConfig>>();
     changedProviderConfiguration$ = this.changedProviderConfigurationSource.asObservable();
-
-    changedDescriptorSource = new Subject<Descriptor>();
-    changedDescriptor = this.changedDescriptorSource.asObservable();
 
     constructor(private http: HttpClient) { }
 
@@ -218,10 +214,6 @@ export class ResourceService {
 
     providerConfigurationChanged(pc: Array<ProviderConfig>) {
         this.changedProviderConfigurationSource.next(pc);
-    }
-
-    descriptorChanged(desc: Descriptor) {
-        this.changedDescriptorSource.next(desc);
     }
 
     public getResourceDisplayName(res: Resource): string {

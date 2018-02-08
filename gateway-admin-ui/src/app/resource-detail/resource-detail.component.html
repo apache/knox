@@ -18,7 +18,9 @@
               data-toggle="tooltip"></span>
         <div *ngIf="provider.show">
           &nbsp;&nbsp;&nbsp;<b>Role</b> {{ provider.role }}<br>
-          &nbsp;&nbsp;&nbsp;<b>Enabled</b> {{ provider.enabled }}<br>
+          &nbsp;&nbsp;&nbsp;<b>Enabled</b>&nbsp;<input type="checkbox"
+                                                       [checked]="isProviderEnabled(provider)"
+                                                       (click)="onProviderEnabled(provider)"><br>
           <div>
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span [class]="'clickable glyhpicon glyphicon-' + (provider.showParamDetails ? 'minus' : 'plus')"
@@ -82,21 +84,28 @@
     <div *ngIf="hasSelectedResource()">
       <div>
         <div class="panel panel-default col-md-12">
-          <span class="col-md-4"><b>Provider Configuration</b></span>
-          <span class="col-md-7">
-            <input type="text"
-                   id="textbox"
-                   class="col-md-sm form-control input-sm"
-                   (input)="descriptor.setDirty()"
-                   [(ngModel)]="descriptor.providerConfig"/>
-          </span>
-          <span class="col-md-1 pull-left">
+          <span class="col-md-12 pull-left">
+            <span class="col-md-sm"><b>Provider Configuration</b>&nbsp;</span>
+            <span class="col-md-sm clickable" (click)="editModePC=true" *ngIf="!editModePC">{{ descriptor.providerConfig}}</span>
+            <span class="col-md-sm" *ngIf="editModePC">
+              <input type="text" [(ngModel)]="descriptor.providerConfig" #providerConfig>
+              <button class="btn btn-xs"
+                      (click)="editModePC=false;onUpdateDescriptorProperty(descriptor,'providerConfig', providerConfig.value)">
+                <span class="glyphicon glyphicon-ok"></span>
+              </button>
+              <button class="btn btn-xs" (click)="editModePC=false">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+            </span>
+            &nbsp;
             <button id="chooseProviderConfig"
-                    class="btn btn-default btn-xs glyphicon glyphicon-edit"
+                    class="btn btn-xs"
                     (click)="chooseProviderConfigModal.open(descriptor, 'sm')"
+                    [disabled]="editModePC"
                     type="submit"
                     data-toggle="tooltip"
                     title="Choose Provider Configuration">
+              <span class="glyphicon glyphicon-edit"></span>
             </button>
           </span>
         </div>
@@ -170,10 +179,70 @@
         <span><b>Discovery Details</b></span>
         <div class="col-md-12" *ngIf="showDiscDetails">
           <table class="table table-sm">
-            <tr><td>Discovery Address</td><td>{{ descriptor.discoveryAddress }}</td></tr>
-            <tr><td>Discovery User</td><td>{{ descriptor.discoveryUser }}</td></tr>
-            <tr><td>Discovery Password Alias</td><td>{{ descriptor.discoveryPassAlias }}</td></tr>
-            <tr><td>Discovery Cluster</td><td>{{ descriptor.discoveryCluster }}</td></tr>
+            <tr>
+              <td>Discovery Address</td>
+              <td>
+                <span class="clickable" (click)="editModeAddress=true" *ngIf="!editModeAddress">{{ descriptor.discoveryAddress }}</span>
+                <span *ngIf="editModeAddress">
+                  <input type="text" [ngModel]="descriptor.discoveryAddress" #discoveryAddress>
+                  <button class="btn btn-xs"
+                          (click)="editModeAddress=false;onUpdateDescriptorProperty(descriptor,'discoveryAddress', discoveryAddress.value)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                  </button>
+                  <button class="btn btn-xs" (click)="editModeAddress=false">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>Discovery User</td>
+              <td>
+                <span class="clickable" (click)="editModeUser=true" *ngIf="!editModeUser">{{ descriptor.discoveryUser}}</span>
+                <span *ngIf="editModeUser">
+                  <input type="text" [ngModel]="descriptor.discoveryUser" #discoveryUser>
+                  <button class="btn btn-xs"
+                          (click)="editModeUser=false;onUpdateDescriptorProperty(descriptor,'discoveryUser', discoveryUser.value)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                  </button>
+                  <button class="btn btn-xs" (click)="editModeUser=false">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>Discovery Password Alias</td>
+              <td>
+                <span class="clickable" (click)="editModeAlias=true" *ngIf="!editModeAlias">{{ descriptor.discoveryPassAlias}}</span>
+                <span *ngIf="editModeAlias">
+                  <input type="text" [ngModel]="descriptor.discoveryPassAlias" #discoveryAlias>
+                  <button class="btn btn-xs"
+                          (click)="editModeAlias=false;onUpdateDescriptorProperty(descriptor,'discoveryPassAlias', discoveryAlias.value)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                  </button>
+                  <button class="btn btn-xs" (click)="editModeAlias=false">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>Discovery Cluster</td>
+              <td>
+                <span class="clickable" (click)="editModeCluster=true" *ngIf="!editModeCluster">{{ descriptor.discoveryCluster}}</span>
+                <span *ngIf="editModeCluster">
+                  <input type="text" [ngModel]="descriptor.discoveryCluster" #discoveryCluster>
+                  <button class="btn btn-xs"
+                          (click)="editModeCluster=false;onUpdateDescriptorProperty(descriptor,'discoveryCluster', discoveryCluster.value)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                  </button>
+                  <button class="btn btn-xs" (click)="editModeCluster=false">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </span>
+              </td>
+            </tr>
           </table>
         </div>
       </div>
