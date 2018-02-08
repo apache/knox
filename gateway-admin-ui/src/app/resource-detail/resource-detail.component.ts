@@ -291,16 +291,6 @@ export class ResourceDetailComponent implements OnInit {
       tmp['provider-config-ref'] = desc.providerConfig;
       tmp['services'] = desc.services;
 
-      // Scrub any UI-specific service properties
-      for(let service of tmp['services']) {
-        if(service.hasOwnProperty('showParams')) {
-          delete service.showParams;
-        }
-        if(service.hasOwnProperty('showUrls')) {
-          delete service.showUrls;
-        }
-      }
-
       switch(format) {
           case 'json': {
               serialized = JSON.stringify(tmp, null, 2);
@@ -322,16 +312,6 @@ export class ResourceDetailComponent implements OnInit {
 
     let tmp = {};
     tmp['providers'] = providers;
-
-    // Scrub any UI-specific provider properties
-    for(let pc of tmp['providers']) {
-      if(pc.hasOwnProperty('show')) {
-        delete pc.show;
-      }
-      if(pc.hasOwnProperty('showParamDetails')) {
-        delete pc.showParamDetails;
-      }
-    }
 
     switch(format) {
         case 'json': {
@@ -362,7 +342,13 @@ export class ResourceDetailComponent implements OnInit {
                             // This refreshes the list of resources
                             this.resourceTypesService.selectResourceType(this.resourceType);
                         })
-                        .catch(err => console.error('Error deleting ' + resourceName + ' : ' + err));
+                        .catch((err: HttpErrorResponse) => {
+                            if (err.status === 304) { // Not Modified
+                                console.log(resourceName + ' cannot be deleted while there are descriptors actively referencing it.');
+                            } else {
+                                console.error('Error deleting ' + resourceName + ' : ' + err.message)
+                            }
+                        });
   }
 
 
@@ -444,9 +430,104 @@ export class ResourceDetailComponent implements OnInit {
     }
   }
 
-  onUpdateDescriptorProperty(desc: Descriptor, propertyName: string, value: string) {
-      desc[propertyName] = value;
-      desc.setDirty();
+  toggleShowProvider(provider: ProviderConfig) {
+      this[this.resource.name + provider.name + 'Show'] = !this.isShowProvider(provider);
+  }
+
+  isShowProvider(provider: ProviderConfig): boolean {
+      return this[this.resource.name + provider.name + 'Show'];
+  }
+
+  toggleShowProviderParams(provider: ProviderConfig) {
+      this[this.resource.name + provider.name + 'ShowParams'] = !this.isShowProviderParams(provider);
+  }
+
+  isShowProviderParams(provider: ProviderConfig): boolean {
+      return this[this.resource.name + provider.name + 'ShowParams'];
+  }
+
+  toggleShowServices() {
+      this[this.resource.name + 'ShowServices'] = !this.isShowServices();
+  }
+
+  isShowServices(): boolean {
+      return this[this.resource.name + 'ShowServices'];
+  }
+
+  toggleShowServiceDiscovery() {
+      this[this.resource.name + 'ShowDiscovery'] = !this.isShowServiceDiscovery();
+  }
+
+  isShowServiceDiscovery(): boolean {
+      return this[this.resource.name + 'ShowDiscovery'];
+  }
+
+  toggleShowServiceParams(service: Service) {
+      this[this.resource.name + service.name + 'ShowParams'] = !this.isShowServiceParams(service);
+  }
+
+  isShowServiceParams(service: Service): boolean {
+      return this[this.resource.name + service.name + 'ShowParams'];
+  }
+
+  toggleShowServiceURLs(service: Service) {
+      this[this.resource.name + service.name + 'ShowURLs'] = !this.isShowServiceURLs(service);
+  }
+
+  isShowServiceURLs(service: Service): boolean {
+      return this[this.resource.name + service.name + 'ShowURLs'];
+  }
+
+  setProviderParamEditFlag(provider: ProviderConfig, paramName: string, value: boolean) {
+      this[provider.name+paramName+'EditMode'] = value;
+      this.changedProviders = this.providers;
+  }
+
+  getProviderParamEditFlag(provider: ProviderConfig, paramName: string): boolean {
+      return this[provider.name+paramName+'EditMode'];
+  }
+
+  getInputElementValue(id: string): string {
+      return (<HTMLInputElement>document.getElementById(id)).value;
+  }
+
+  setServiceParamEditFlag(service: Service, paramName: string, value: boolean) {
+      this[service.name + paramName + 'EditMode'] = value;
+      this.descriptor.setDirty();
+  }
+
+  getServiceParamEditFlag(service: Service, paramName: string): boolean {
+      return this[service.name + paramName + 'EditMode'];
+  }
+
+  setServiceURLEditFlag(service: Service, index: number, value: boolean) {
+      this[service.name + index + 'EditMode'] = value;
+      this.descriptor.setDirty();
+  }
+
+  getServiceURLEditFlag(service: Service, index: number): boolean {
+      return this[service.name + index + 'EditMode'];
+  }
+
+  onUpdateServiceParam(service: Service, paramName: string, value: string) {
+      service.params[paramName] = value;
+      this.descriptor.setDirty();
+  }
+
+  onUpdateServiceURL(service: Service, urlIndex: number, value: string) {
+      service.urls[urlIndex] = value;
+      this.descriptor.setDirty();
+  }
+
+  onUpdateDescriptorProperty(propertyName: string, value: string) {
+      //console.log('Setting descriptor ' + this.resource.name + ' property ' + propertyName + ' to value ' + value);
+      this.descriptor[propertyName] = value;
+      this.descriptor.setDirty();
+  }
+
+  onUpdateProviderConfigParam(provider: ProviderConfig, propertyName: string, value: string) {
+    provider.params[propertyName] = value;
+    this.changedProviders = this.providers;
   }
 
   getParamKeys(provider: ProviderConfig): string[] {
