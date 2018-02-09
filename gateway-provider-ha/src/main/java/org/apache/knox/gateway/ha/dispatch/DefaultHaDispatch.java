@@ -43,7 +43,7 @@ public class DefaultHaDispatch extends DefaultDispatch {
 
   protected static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
 
-  private static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
+  protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
 
   private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
 
@@ -96,7 +96,7 @@ public class DefaultHaDispatch extends DefaultDispatch {
   }
 
 
-  private void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
+  protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
     LOG.failingOverRequest(outboundRequest.getURI().toString());
     AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
     if ( counter == null ) {
