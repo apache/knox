@@ -127,4 +127,30 @@ public class RegexIdentityAssertionFilterTest {
     assertThat( actual, is( "prefix_member3_suffix:" ) );
   }
 
+  @Test
+  public void testOrRegexInputForEmailAndSimple() throws Exception {
+    FilterConfig config;
+    ServletContext context;
+    String actual;
+    RegexIdentityAssertionFilter filter = new RegexIdentityAssertionFilter();
+
+    // Test non-match of principal.
+    config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "([^@]*)(@.*)?" ).anyTimes();
+    EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix" ).anyTimes();
+    EasyMock.replay( config );
+    EasyMock.replay( context );
+    filter.init( config );
+    actual = filter.mapUserPrincipal( "test-simple-name" );
+    assertThat( actual, is("prefix_test-simple-name_suffix" ) );
+
+    actual = filter.mapUserPrincipal( "test-simple-name@test-email-domain" );
+    assertThat( actual, is("prefix_test-simple-name_suffix" ) );
+
+  }
+
 }
