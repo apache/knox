@@ -56,6 +56,9 @@ export class ResourceDetailComponent implements OnInit {
   @ViewChild('choosePC')
   chooseProviderConfigModal: ProviderConfigSelectorComponent;
 
+  referencedProviderConfigError: boolean = false;
+
+
   constructor(private resourceService: ResourceService, private resourceTypesService: ResourceTypesService) {
   }
 
@@ -345,6 +348,7 @@ export class ResourceDetailComponent implements OnInit {
                         .catch((err: HttpErrorResponse) => {
                             if (err.status === 304) { // Not Modified
                                 console.log(resourceName + ' cannot be deleted while there are descriptors actively referencing it.');
+                                this.referencedProviderConfigError = true;
                             } else {
                                 console.error('Error deleting ' + resourceName + ' : ' + err.message)
                             }
@@ -487,10 +491,6 @@ export class ResourceDetailComponent implements OnInit {
       return this[provider.name+paramName+'EditMode'];
   }
 
-  getInputElementValue(id: string): string {
-      return (<HTMLInputElement>document.getElementById(id)).value;
-  }
-
   setServiceParamEditFlag(service: Service, paramName: string, value: boolean) {
       this[service.name + paramName + 'EditMode'] = value;
       this.descriptor.setDirty();
@@ -509,46 +509,9 @@ export class ResourceDetailComponent implements OnInit {
       return this[service.name + index + 'EditMode'];
   }
 
-  onUpdateServiceParam(service: Service, paramName: string, value: string) {
-      service.params[paramName] = value;
-      this.descriptor.setDirty();
-  }
 
-  onUpdateServiceURL(service: Service, urlIndex: number, value: string) {
-      service.urls[urlIndex] = value;
-      this.descriptor.setDirty();
-  }
-
-  onUpdateDescriptorProperty(propertyName: string, value: string) {
-      //console.log('Setting descriptor ' + this.resource.name + ' property ' + propertyName + ' to value ' + value);
-      this.descriptor[propertyName] = value;
-      this.descriptor.setDirty();
-  }
-
-  onUpdateProviderConfigParam(provider: ProviderConfig, propertyName: string, value: string) {
-    provider.params[propertyName] = value;
-    this.changedProviders = this.providers;
-  }
-
-  getParamKeys(provider: ProviderConfig): string[] {
-    let result = [];
-    for(let key in provider.params){
-      if (provider.params.hasOwnProperty(key)){
-          result.push(key);
-      }
-    }
-    return result;
-  }
-
-
-  getServiceParamKeys(service: Service): string[] {
-    let result = [];
-    for(let key in service.params){
-      if (service.params.hasOwnProperty(key)){
-        result.push(key);
-      }
-    }
-    return result;
+  getProviderParamNames(provider: ProviderConfig): string[] {
+      return Object.getOwnPropertyNames(provider.params);
   }
 
 
@@ -565,6 +528,11 @@ export class ResourceDetailComponent implements OnInit {
       }
 
       return result;
+  }
+
+  // This method is required to maintain focus on descriptor service URLs when they're being edited.
+  trackByServiceURLIndex(index: any, item: any) {
+      return index;
   }
 
   hasSelectedResource(): boolean {

@@ -27,18 +27,12 @@ export class Descriptor {
 
     private dirty: boolean = false;
 
-    getServiceParamKeys(service: Service): string[] {
-        let result = [];
-        for(let key in service.params){
-            if (service.params.hasOwnProperty(key)){
-                result.push(key);
-            }
-        }
-        return result;
+    getServiceParamNames(service: Service): string[] {
+      return Object.getOwnPropertyNames(service.params);
     }
 
     getServiceParamValue(service: Service, name: string): string {
-       return  service.params[name];
+       return service.params[name];
     }
 
     setProviderConfig(providerConfigRef: string) {

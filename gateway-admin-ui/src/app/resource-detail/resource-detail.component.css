@@ -1,0 +1,62 @@
+.inline-editable {
+    text-decoration: none;
+    cursor: pointer;
+    line-height: 1;
+    margin: 0;
+}
+
+.inline-editable.editable-empty{
+    display: inline-block;
+    width: 50px;
+    line-height: 1;
+}
+
+.inline-editable:hover {
+    padding: 0px;
+}
+.inline-editable:hover:after {
+    font-family: 'Glyphicons Halflings';
+    content: "\270f";
+    position: relative;
+    left: 10px;
+}
+
+.inline-editable.editable-empty,
+.inline-editable.editable-empty:hover,
+.inline-editable.editable-empty:focus {
+    font-style: italic;
+    text-decoration: none;
+}
+
+.inline-editor.inlineEditForm {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+#inlineEditWrapper {
+    display: inline-block;
+}
+
+.inline-editor.inlineEditForm input,
+.inline-editor.select {
+    width: auto;
+    display: inline;
+    border-radius: 5px;
+}
+
+.inline-editor.inline-editable-button-group {
+    display: inline-block;
+}
+
+.inline-editor.editInvalid {
+    color: #a94442;
+    margin-bottom: 0;
+}
+
+.inline-editor.error {
+    border-color: #a94442;
+}
+
+[hidden].inline-editor {
+    display: none;
+}

@@ -8,47 +8,53 @@
   <!-- Provider Configuration Details -->
   <div class="panel-body" *ngIf="hasSelectedResource() && resourceType === 'Provider Configurations'">
     <div *ngIf="hasSelectedResource()">
+      <div *ngIf="referencedProviderConfigError" class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close" (click)="referencedProviderConfigError=false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        Cannot remove <strong>{{resourceService.getResourceDisplayName(resource)}}</strong> because it is referenced by one or more descriptors
+      </div>
       <div class="panel panel-default" *ngFor="let provider of providers">
         <span [class]="'clickable glyhpicon glyphicon-' + (isShowProvider(provider) ? 'minus' : 'plus')"
               (click)="toggleShowProvider(provider)"></span>
-        <span><b>{{ provider.name }}</b></span>
+        <span><strong>{{ provider.name }}</strong></span>
         <span class="clickable glyphicon glyphicon-remove pull-right btn btn-xs"
               [title]="'Remove ' + provider.name"
               (click)="onRemoveProvider(provider.name)"
               data-toggle="tooltip"></span>
         <div *ngIf="isShowProvider(provider)">
-          &nbsp;&nbsp;&nbsp;<b>Role</b> {{ provider.role }}<br>
-          &nbsp;&nbsp;&nbsp;<b>Enabled</b>&nbsp;<input type="checkbox"
+          &nbsp;&nbsp;&nbsp;<strong>Role</strong> {{ provider.role }}<br>
+          &nbsp;&nbsp;&nbsp;<strong>Enabled</strong>&nbsp;<input type="checkbox"
                                                        [checked]="isProviderEnabled(provider)"
                                                        (click)="onProviderEnabled(provider)"><br>
           <div>
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span [class]="'clickable glyhpicon glyphicon-' + (isShowProviderParams(provider) ? 'minus' : 'plus')"
                   (click)="toggleShowProviderParams(provider)"></span>
-            <span><b>Params</b></span>
+            <span><strong>Params</strong></span>
             <span class="clickable glyphicon glyphicon-plus-sign btn btn-xs pull-right" data-toggle="tooltip" title="Add Param"></span>
 
             <div class="panel panel-default table-responsive" *ngIf="isShowProviderParams(provider)">
               <table class="table table-sm">
-                <tr *ngFor="let key of getParamKeys(provider)">
+                <tr *ngFor="let paramName of getProviderParamNames(provider)">
                   <td>
                     <span class="clickable glyphicon glyphicon-remove btn btn-xs"
                           title="Remove Param"
-                          (click)="onRemoveProviderParam(provider, key)"
+                          (click)="onRemoveProviderParam(provider, paramName)"
                           data-toggle="tooltip"></span>
                   </td>
-                  <td><b>{{ key }}</b></td>
+                  <td><strong>{{ paramName }}</strong></td>
                   <td>
-                    <span class="clickable"
-                          (click)="setProviderParamEditFlag(provider, key, true)"
-                          *ngIf="!getProviderParamEditFlag(provider, key)">{{provider.params[key]}}</span>
-                    <span *ngIf="getProviderParamEditFlag(provider, key)">
-                      <input type="text" [ngModel]="provider.params[key]" id="{{provider.name}}{{key}}Value">
+                    <span class="inline-editable"
+                          (click)="setProviderParamEditFlag(provider, paramName, true)"
+                          *ngIf="!getProviderParamEditFlag(provider, paramName)">{{provider.params[paramName]}}</span>
+                    <span *ngIf="getProviderParamEditFlag(provider, paramName)" class="inline-editor inlineEditForm">
+                      <input type="text" size="30" [(ngModel)]="provider.params[paramName]">
                       <button class="btn btn-xs"
-                              (click)="setProviderParamEditFlag(provider, key, false);onUpdateProviderConfigParam(provider, key, getInputElementValue(provider.name+key+'Value'))">
+                              (click)="setProviderParamEditFlag(provider, paramName, false);changedProviders=providers">
                         <span class="glyphicon glyphicon-ok"></span>
                       </button>
-                      <button class="btn btn-xs" (click)="setProviderParamEditFlag(provider, key, false)">
+                      <button class="btn btn-xs" (click)="setProviderParamEditFlag(provider, paramName, false)">
                         <span class="glyphicon glyphicon-remove"></span>
                       </button>
                     </span>
@@ -99,12 +105,11 @@
       <div>
         <div class="panel panel-default col-md-12">
           <span class="col-md-12 pull-left">
-            <span class="col-md-sm"><b>Provider Configuration</b>&nbsp;</span>
-            <span class="col-md-sm clickable" (click)="editModePC=true" *ngIf="!editModePC">{{ descriptor.providerConfig}}</span>
-            <span class="col-md-sm" *ngIf="editModePC">
-              <input type="text" [(ngModel)]="descriptor.providerConfig" #providerConfig>
-              <button class="btn btn-xs"
-                      (click)="editModePC=false;onUpdateDescriptorProperty('providerConfig', providerConfig.value)">
+            <span class="col-md-sm"><strong>Provider Configuration</strong>&nbsp;</span>
+            <span class="col-md-sm inline-editable" (click)="editModePC=true" *ngIf="!editModePC">{{ descriptor.providerConfig}}</span>
+            <span class="col-md-sm inline-editor inlineEditForm" *ngIf="editModePC">
+              <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
+              <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
                 <span class="glyphicon glyphicon-ok"></span>
               </button>
               <button class="btn btn-xs" (click)="editModePC=false">
@@ -131,14 +136,14 @@
       <div class="panel panel-default col-md-12">
         <span [class]="'clickable glyhpicon glyphicon-' + (isShowServices() ? 'minus' : 'plus')"
               (click)="toggleShowServices()"></span>
-        <span><b>Services</b></span>
+        <span><strong>Services</strong></span>
         <span class="clickable glyphicon glyphicon-plus-sign btn btn-xs pull-right" data-toggle="tooltip" title="Add Service"></span>
       <div class="col-md-12 table-responsive" *ngIf="isShowServices()">
         <table class="table table-striped table-sm">
           <tr *ngFor="let service of descriptor.services">
             <td>
               <div>
-                <span><b>{{ service.name }}</b></span>
+                <span><strong>{{ service.name }}</strong></span>
                 <span class="clickable glyphicon glyphicon-remove btn btn-xs pull-right"
                       [title]="'Remove ' + service.name"
                       (click)="onRemoveDescriptorService(service.name)"
@@ -150,23 +155,22 @@
                 <span>Params</span><span>&nbsp;</span><span class="glyphicon glyphicon-plus-sign btn btn-xs" data-toggle="tooltip" title="Add param"></span>
               </div>
               <div class="table-responsive" *ngIf="isShowServiceParams(service)">
-                <table class="table table-sm" *ngIf="descriptor.getServiceParamKeys(service).length > 0">
-                  <tr *ngFor="let paramKey of descriptor.getServiceParamKeys(service)">
+                <table class="table table-sm" *ngIf="descriptor.getServiceParamNames(service).length > 0">
+                  <tr *ngFor="let paramKey of descriptor.getServiceParamNames(service)">
                     <td width="5%">
                       <span class="clickable glyphicon glyphicon-remove btn btn-xs"
                             title="Remove Param"
                             (click)="onRemoveDescriptorServiceParam(service.name, paramKey)"
                             data-toggle="tooltip"></span>
                     </td>
-                    <td width="30%"><b>{{ paramKey }}</b></td>
+                    <td width="30%"><strong>{{ paramKey }}</strong></td>
                     <td width="65%" align="left">
-                      <span class="clickable"
+                      <span class="inline-editable"
                             (click)="setServiceParamEditFlag(service, paramKey, true)"
                             *ngIf="!getServiceParamEditFlag(service, paramKey)">{{descriptor.getServiceParamValue(service, paramKey)}}</span>
-                      <span *ngIf="getServiceParamEditFlag(service, paramKey)">
-                      <input type="text" [ngModel]="descriptor.getServiceParamValue(service, paramKey)" id="{{service.name}}{{paramKey}}Value">
-                      <button class="btn btn-xs"
-                              (click)="setServiceParamEditFlag(service, paramKey, false);onUpdateServiceParam(service, paramKey, getInputElementValue(service.name+paramKey+'Value'))">
+                      <span *ngIf="getServiceParamEditFlag(service, paramKey)" class="inline-editor inlineEditForm">
+                      <input type="text" size="40" [(ngModel)]="service.params[paramKey]">
+                      <button class="btn btn-xs" (click)="setServiceParamEditFlag(service, paramKey, false);descriptor.setDirty()">
                         <span class="glyphicon glyphicon-ok"></span>
                       </button>
                       <button class="btn btn-xs" (click)="setServiceParamEditFlag(service, paramKey, false)">
@@ -184,7 +188,7 @@
               </div>
               <div class="table-responsive" *ngIf="isShowServiceURLs(service)">
                 <table class="table table-sm" *ngIf="service.urls && service.urls.length > 0">
-                  <tr *ngFor="let url of service.urls; let i = index">
+                  <tr *ngFor="let url of service.urls; let i = index; trackBy:trackByServiceURLIndex">
                     <td width="5%">
                       <span class="clickable glyphicon glyphicon-remove btn btn-xs"
                             title="Remove URL"
@@ -192,13 +196,12 @@
                             data-toggle="tooltip"></span>
                     </td>
                     <td width="95%">
-                      <span class="clickable"
+                      <span class="inline-editable"
                               (click)="setServiceURLEditFlag(service, i, true)"
                               *ngIf="!getServiceURLEditFlag(service, i)">{{url}}</span>
-                      <span *ngIf="getServiceURLEditFlag(service, i)">
-                        <input type="text" [ngModel]="service.urls[i]" id="{{service.name + i}}URL">
-                        <button class="btn btn-xs"
-                                (click)="setServiceURLEditFlag(service, i, false);onUpdateServiceURL(service, i, getInputElementValue(service.name+i+'URL'))">
+                      <span *ngIf="getServiceURLEditFlag(service, i)" class="inline-editor inlineEditForm">
+                        <input type="text" size="50" [(ngModel)]="service.urls[i]">
+                        <button class="btn btn-xs" (click)="setServiceURLEditFlag(service, i, false);descriptor.setDirty()">
                           <span class="glyphicon glyphicon-ok"></span>
                         </button>
                         <button class="btn btn-xs" (click)="setServiceURLEditFlag(service, i, false)">
@@ -218,17 +221,16 @@
       <div class="panel panel-default col-md-12">
         <span [class]="'clickable glyhpicon glyphicon-' + (isShowServiceDiscovery() ? 'minus' : 'plus')"
               (click)="toggleShowServiceDiscovery()"></span>
-        <span><b>Discovery Details</b></span>
+        <span><strong>Discovery Details</strong></span>
         <div class="col-md-12" *ngIf="isShowServiceDiscovery()">
           <table class="table table-sm">
             <tr>
-              <td>Discovery Address</td>
+              <td width="20%"><strong>Address</strong></td>
               <td>
-                <span class="clickable" (click)="editModeAddress=true" *ngIf="!editModeAddress">{{ descriptor.discoveryAddress }}</span>
-                <span *ngIf="editModeAddress">
-                  <input type="text" [ngModel]="descriptor.discoveryAddress" #discoveryAddress>
-                  <button class="btn btn-xs"
-                          (click)="editModeAddress=false;onUpdateDescriptorProperty('discoveryAddress', discoveryAddress.value)">
+                <span class="inline-editable" (click)="editModeAddress=true" *ngIf="!editModeAddress">{{ descriptor.discoveryAddress }}</span>
+                <span *ngIf="editModeAddress" class="inline-editor inlineEditForm">
+                  <input type="text" size="40" [(ngModel)]="descriptor.discoveryAddress">
+                  <button class="btn btn-xs" (click)="editModeAddress=false;descriptor.setDirty()">
                     <span class="glyphicon glyphicon-ok"></span>
                   </button>
                   <button class="btn btn-xs" (click)="editModeAddress=false">
@@ -238,13 +240,12 @@
               </td>
             </tr>
             <tr>
-              <td>Discovery Cluster</td>
+              <td width="20%"><strong>Cluster</strong></td>
               <td>
-                <span class="clickable" (click)="editModeCluster=true" *ngIf="!editModeCluster">{{ descriptor.discoveryCluster}}</span>
-                <span *ngIf="editModeCluster">
-                  <input type="text" [ngModel]="descriptor.discoveryCluster" #discoveryCluster>
-                  <button class="btn btn-xs"
-                          (click)="editModeCluster=false;onUpdateDescriptorProperty('discoveryCluster', discoveryCluster.value)">
+                <span class="inline-editable" (click)="editModeCluster=true" *ngIf="!editModeCluster">{{ descriptor.discoveryCluster}}</span>
+                <span *ngIf="editModeCluster" class="inline-editor inlineEditForm">
+                  <input type="text" size="40" [(ngModel)]="descriptor.discoveryCluster">
+                  <button class="btn btn-xs" (click)="editModeCluster=false;descriptor.setDirty()">
                     <span class="glyphicon glyphicon-ok"></span>
                   </button>
                   <button class="btn btn-xs" (click)="editModeCluster=false">
@@ -254,15 +255,14 @@
               </td>
             </tr>
             <tr>
-              <td>Discovery User</td>
+              <td width="20%"><strong>Username</strong></td>
               <td>
                 <span *ngIf="!editModeUser"
-                      class="clickable"
-                      (click)="editModeUser=true">{{(descriptor.discoveryUser) ? descriptor.discoveryUser : 'ambari.discovery.user' }}</span>
-                <span *ngIf="editModeUser">
-                  <input type="text" [ngModel]="descriptor.discoveryUser" #discoveryUser>
-                  <button class="btn btn-xs"
-                          (click)="editModeUser=false;onUpdateDescriptorProperty('discoveryUser', discoveryUser.value)">
+                      class="inline-editable"
+                      (click)="editModeUser=true">{{(descriptor.discoveryUser) ? descriptor.discoveryUser : '' }}</span>
+                <span *ngIf="editModeUser" class="inline-editor inlineEditForm">
+                  <input type="text" size="40" [(ngModel)]="descriptor.discoveryUser">
+                  <button class="btn btn-xs" (click)="editModeUser=false;descriptor.setDirty()">
                     <span class="glyphicon glyphicon-ok"></span>
                   </button>
                   <button class="btn btn-xs" (click)="editModeUser=false">
@@ -272,15 +272,14 @@
               </td>
             </tr>
             <tr>
-              <td>Discovery Password Alias</td>
+              <td width="20%"><strong>Password Alias</strong></td>
               <td>
-                <span class="clickable"
+                <span class="inline-editable"
                       (click)="editModeAlias=true"
                       *ngIf="!editModeAlias">{{ (descriptor.discoveryPassAlias) ? descriptor.discoveryPassAlias : 'ambari.discovery.password' }}</span>
-                <span *ngIf="editModeAlias">
-                  <input type="text" [ngModel]="descriptor.discoveryPassAlias" #discoveryAlias>
-                  <button class="btn btn-xs"
-                          (click)="editModeAlias=false;onUpdateDescriptorProperty('discoveryPassAlias', discoveryAlias.value)">
+                <span *ngIf="editModeAlias" class="inline-editor inlineEditForm">
+                  <input type="text" size="40" [(ngModel)]="descriptor.discoveryPassAlias">
+                  <button class="btn btn-xs" (click)="editModeAlias=false;descriptor.setDirty()">
                     <span class="glyphicon glyphicon-ok"></span>
                   </button>
                   <button class="btn btn-xs" (click)="editModeAlias=false">
@@ -329,7 +328,7 @@
       <bs-modal-header [showDismiss]="true">
         <h4 class="modal-title">Deleting {{getTitleSubject()}}</h4>
       </bs-modal-header>
-      <bs-modal-body>Are you sure you want to delete <b>{{resourceService.getResourceDisplayName(resource)}}</b>?</bs-modal-body>
+      <bs-modal-body>Are you sure you want to delete <strong>{{resourceService.getResourceDisplayName(resource)}}</strong>?</bs-modal-body>
       <bs-modal-footer>
         <button type="button"
                 class="btn btn-default btn-sm"
@@ -345,7 +344,7 @@
       <bs-modal-header [showDismiss]="true">
         <h4 class="modal-title">Discard {{getTitleSubject()}} Changes</h4>
       </bs-modal-header>
-      <bs-modal-body>Are you sure you want to discard <b>{{resourceService.getResourceDisplayName(resource)}}</b> changes?</bs-modal-body>
+      <bs-modal-body>Are you sure you want to discard <strong>{{resourceService.getResourceDisplayName(resource)}}</strong> changes?</bs-modal-body>
       <bs-modal-footer>
         <button type="button"
                 class="btn btn-default btn-sm"
