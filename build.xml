@@ -171,19 +171,19 @@ Release build file for the Apache Knox Gateway
         <get username="${username}" password="${password}" dest="${candidate.dir}">
             <url url="${build-url}/knox-${gateway-version}.zip"/>
             <url url="${build-url}/knox-${gateway-version}.zip.md5"/>
-            <url url="${build-url}/knox-${gateway-version}.zip.sha"/>
+            <url url="${build-url}/knox-${gateway-version}.zip.sha1"/>
             <url url="${build-url}/knox-${gateway-version}-src.zip"/>
             <url url="${build-url}/knox-${gateway-version}-src.zip.md5"/>
-            <url url="${build-url}/knox-${gateway-version}-src.zip.sha"/>
+            <url url="${build-url}/knox-${gateway-version}-src.zip.sha1"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz"/>
             <url url="${build-url}/knox-${gateway-version}.tar.gz.md5"/>
-            <url url="${build-url}/knox-${gateway-version}.tar.gz.sha"/>
+            <url url="${build-url}/knox-${gateway-version}.tar.gz.sha1"/>
             <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip"/>
             <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip.md5"/>
-            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip.sha"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.zip.sha1"/>
             <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz"/>
             <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz.md5"/>
-            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha"/>
+            <url url="${build-url}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha1"/>
             <url url="${build-url}/CHANGES"/>
         </get>
     </target>
@@ -193,23 +193,23 @@ Release build file for the Apache Knox Gateway
         <get dest="${install.dir}" username="${username}" password="${password}">
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.sha1"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.zip.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.sha1"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}-src.zip.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.sha1"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/knox-${gateway-version}.tar.gz.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.sha1"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.zip.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.md5"/>
-            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha"/>
+            <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.sha1"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/${knoxshell-artifact}-${gateway-version}.tar.gz.asc"/>
             <url url="${svn.staging.path}/knox-${gateway-version}/CHANGES"/>
         </get>
@@ -223,7 +223,7 @@ Release build file for the Apache Knox Gateway
         </exec>
         <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" verifyproperty="zip.md5.ok"/>
         <fail message="MD5 Invalid"><condition><isfalse value="${zip.md5.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA" verifyproperty="zip.sha.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA1" verifyproperty="zip.sha.ok"/>
         <fail message="SHA Invalid"><condition><isfalse value="${zip.sha.ok}"/></condition></fail>
 
         <echo>Verify ${gateway-artifact}-${gateway-version}-src.zip</echo>
@@ -233,7 +233,7 @@ Release build file for the Apache Knox Gateway
         </exec>
         <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" verifyproperty="src.md5.ok"/>
         <fail message="MD5 Invalid"><condition><isfalse value="${src.md5.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA" verifyproperty="src.sha.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA1" verifyproperty="src.sha.ok"/>
         <fail message="SHA Invalid"><condition><isfalse value="${src.sha.ok}"/></condition></fail>
 
         <echo>Verify ${gateway-artifact}-${gateway-version}.tar.gz</echo>
@@ -243,7 +243,7 @@ Release build file for the Apache Knox Gateway
         </exec>
         <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" verifyproperty="tar.md5.ok"/>
         <fail message="MD5 Invalid"><condition><isfalse value="${tar.md5.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA" verifyproperty="tar.sha.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA1" verifyproperty="tar.sha.ok"/>
         <fail message="SHA Invalid"><condition><isfalse value="${tar.sha.ok}"/></condition></fail>
 
     </target>

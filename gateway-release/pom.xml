@@ -77,7 +77,7 @@
                                                 <include name="*.tar.gz" />
                                             </fileset>
                                         </checksum>
-                                        <checksum algorithm="SHA1" fileext=".sha">
+                                        <checksum algorithm="SHA1" fileext=".sha1">
                                             <fileset dir="../target/${gateway-version}">
                                                 <include name="*.zip" />
                                                 <include name="*.tar.gz" />

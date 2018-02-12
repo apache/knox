@@ -100,7 +100,7 @@
                                                 <include name="knoxshell-${gateway-version}.tar.gz" />
                                             </fileset>
                                         </checksum>
-                                        <checksum algorithm="SHA1" fileext=".sha">
+                                        <checksum algorithm="SHA1" fileext=".sha1">
                                             <fileset dir="../target/${gateway-version}">
                                                 <include name="knoxshell-${gateway-version}.zip" />
                                                 <include name="knoxshell-${gateway-version}.tar.gz" />
