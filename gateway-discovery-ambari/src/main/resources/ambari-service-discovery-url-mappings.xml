@@ -385,16 +385,38 @@
         </properties>
     </service>
 
+    <service name="RANGER">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>RANGER_ADMIN</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>RANGER_ADMIN</component>
+                <config-property>ranger.service.http.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="RANGERUI">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>RANGER_ADMIN</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>RANGER_ADMIN</component>
+                <config-property>ranger.service.http.port</config-property>
+            </property>
+        </properties>
+    </service>
 
 <!-- TODO:
     <service name="YARNUI">
     </service>
 
-    <service name="RANGER">
-    </service>
-
-    <service name="RANGERUI">
-    </service>
 -->
 
 </service-discovery-url-mappings>
