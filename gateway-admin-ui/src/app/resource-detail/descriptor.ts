@@ -28,6 +28,9 @@ export class Descriptor {
     private dirty: boolean = false;
 
     getServiceParamNames(service: Service): string[] {
+      if (!service.params) {
+        service.params = {};
+      }
       return Object.getOwnPropertyNames(service.params);
     }
 
@@ -41,6 +44,34 @@ export class Descriptor {
         this.providerConfig = providerConfigRef;
         this.setDirty();
       }
+    }
+
+    addService(name: string) {
+        if (!this.services) {
+            this.services = [];
+        }
+        let s = new Service();
+        s.name = name;
+        s.params = {};
+        s.urls = [];
+        this.services.push(s);
+        this.setDirty();
+    }
+
+    addServiceParam(service: Service, name: string, value: string) {
+        if (!service.params) {
+            service.params = {};
+        }
+        service.params[name] = value;
+        this.setDirty();
+    }
+
+    addServiceURL(service: Service, url: string) {
+        if (!service.urls) {
+            service.urls = [];
+        }
+        service.urls.push(url);
+        this.setDirty();
     }
 
     setDirty() {

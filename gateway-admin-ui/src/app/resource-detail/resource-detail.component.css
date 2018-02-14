@@ -44,7 +44,7 @@
     border-radius: 5px;
 }
 
-.inline-editor.inline-editable-button-group {
+.inline-editor.inline-editor-button-group {
     display: inline-block;
 }
 
@@ -59,4 +59,8 @@
 
 [hidden].inline-editor {
     display: none;
+}
+
+.inline-glyph {
+    vertical-align: 2%;
 }

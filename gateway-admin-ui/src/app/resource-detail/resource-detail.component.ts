@@ -446,12 +446,20 @@ export class ResourceDetailComponent implements OnInit {
       this[this.resource.name + provider.name + 'ShowParams'] = !this.isShowProviderParams(provider);
   }
 
+  showProviderParams(provider: ProviderConfig) {
+    this[this.resource.name + provider.name + 'ShowParams'] = true;
+  }
+
   isShowProviderParams(provider: ProviderConfig): boolean {
       return this[this.resource.name + provider.name + 'ShowParams'];
   }
 
   toggleShowServices() {
       this[this.resource.name + 'ShowServices'] = !this.isShowServices();
+  }
+
+  showServices() {
+    this[this.resource.name + 'ShowServices'] = true;
   }
 
   isShowServices(): boolean {
@@ -470,12 +478,20 @@ export class ResourceDetailComponent implements OnInit {
       this[this.resource.name + service.name + 'ShowParams'] = !this.isShowServiceParams(service);
   }
 
+  showServiceParams(service: Service) {
+      this[this.resource.name + service.name + 'ShowParams'] = true;
+  }
+
   isShowServiceParams(service: Service): boolean {
       return this[this.resource.name + service.name + 'ShowParams'];
   }
 
   toggleShowServiceURLs(service: Service) {
       this[this.resource.name + service.name + 'ShowURLs'] = !this.isShowServiceURLs(service);
+  }
+
+  showServiceURLs(service: Service) {
+      this[this.resource.name + service.name + 'ShowURLs'] = true;
   }
 
   isShowServiceURLs(service: Service): boolean {
@@ -509,8 +525,50 @@ export class ResourceDetailComponent implements OnInit {
       return this[service.name + index + 'EditMode'];
   }
 
+  isAddingServiceParam(service: Service): boolean {
+      return this['addParam' + service.name];
+  }
+
+  setAddingServiceParam(service: Service, value: boolean) {
+      this['addParam' + service.name] = value;
+  }
+
+  isAddingServiceURL(service: Service): boolean {
+    return this['addURL' + service.name];
+  }
+
+  setAddingServiceURL(service: Service, value: boolean) {
+    this['addURL' + service.name] = value;
+  }
+
+  isAddingProviderParam(provider: ProviderConfig): boolean {
+    return this['addParam' + provider.name];
+  }
+
+  setAddingProviderParam(provider: ProviderConfig, value: boolean) {
+    this['addParam' + provider.name] = value;
+  }
+
+  addProvider(name: string, role: string) {
+      let p = new ProviderConfig();
+      p.name = name;
+      p.role = role;
+      this.providers.push(p);
+      this.changedProviders = this.providers;
+  }
+
+  addProviderParam(provider: ProviderConfig, name: string, value: string) {
+      if (!provider.params) {
+          provider.params = {};
+      }
+      provider.params[name] = value;
+      this.changedProviders = this.providers;
+  }
 
   getProviderParamNames(provider: ProviderConfig): string[] {
+      if (!provider.params) {
+          provider.params = {};
+      }
       return Object.getOwnPropertyNames(provider.params);
   }
 
