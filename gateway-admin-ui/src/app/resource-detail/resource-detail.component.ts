@@ -286,7 +286,9 @@ export class ResourceDetailComponent implements OnInit {
 
       let tmp = {};
       tmp['discovery-address'] = desc.discoveryAddress;
-      tmp['discovery-user'] = desc.discoveryUser;
+      if (desc.discoveryUser) {
+        tmp['discovery-user'] = desc.discoveryUser;
+      }
       if (desc.discoveryPassAlias) {
         tmp['discovery-pwd-alias'] = desc.discoveryPassAlias;
       }

@@ -347,7 +347,7 @@
             <td>
               <span class="inline-editable"
                     (click)="editModeUser=true"
-                    *ngIf="!editModeUser">{{(descriptor.discoveryUser) ? descriptor.discoveryUser : '' }}</span>
+                    *ngIf="!editModeUser">{{(descriptor.discoveryUser) ? descriptor.discoveryUser : 'unspecified'}}</span>
               <span *ngIf="editModeUser" class="inline-editor inlineEditForm">
                 <input type="text" size="40" [(ngModel)]="descriptor.discoveryUser">
                 <button class="btn btn-xs" (click)="editModeUser=false;descriptor.setDirty()">
