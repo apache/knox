@@ -44,6 +44,11 @@ public class DummyServiceDiscovery implements ServiceDiscovery {
         }
 
         @Override
+        public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
+            return getServiceURLs(serviceName);
+        }
+
+        @Override
         public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
             return null;
         }

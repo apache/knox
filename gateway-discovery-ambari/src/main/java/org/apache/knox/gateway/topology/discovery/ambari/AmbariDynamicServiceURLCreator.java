@@ -69,7 +69,7 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
         config = new ServiceURLPropertyConfig(new ByteArrayInputStream(mappings.getBytes()));
     }
 
-    public List<String> create(String serviceName) {
+    public List<String> create(String serviceName, Map<String, String> serviceParams) {
         List<String> urls = new ArrayList<>();
 
         Map<String, String> placeholderValues = new HashMap<>();

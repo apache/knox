@@ -23,28 +23,6 @@
 <!-- ==================================================================== -->
 <service-discovery-url-mappings>
 
-    <service name="NAMENODE">
-        <url-pattern>hdfs://{DFS_NAMENODE_ADDRESS}</url-pattern>
-        <properties>
-            <property name="DFS_NAMENODE_RPC_ADDRESS">
-                <component>NAMENODE</component>
-                <config-property>dfs.namenode.rpc-address</config-property>
-            </property>
-            <property name="DFS_NAMESERVICES">
-                <component>NAMENODE</component>
-                <config-property>dfs.nameservices</config-property>
-            </property>
-            <property name="DFS_NAMENODE_ADDRESS">
-                <config-property>
-                    <if property="DFS_NAMESERVICES">
-                        <then>DFS_NAMESERVICES</then>
-                        <else>DFS_NAMENODE_RPC_ADDRESS</else>
-                    </if>
-                </config-property>
-            </property>
-        </properties>
-    </service>
-
     <service name="JOBTRACKER">
         <url-pattern>rpc://{YARN_RM_ADDRESS}</url-pattern>
         <properties>

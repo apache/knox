@@ -76,6 +76,8 @@ public class SimpleDescriptorHandler {
 
     private static final SimpleDescriptorMessages log = MessagesFactory.get(SimpleDescriptorMessages.class);
 
+    private static final String DISCOVERY_PARAM_PREFIX = "discovery-";
+
     private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
     public static Map<String, File> handle(File desc) throws IOException {
@@ -112,7 +114,7 @@ public class SimpleDescriptorHandler {
 
                 List<String> descServiceURLs = descService.getURLs();
                 if (descServiceURLs == null || descServiceURLs.isEmpty()) {
-                    descServiceURLs = cluster.getServiceURLs(serviceName);
+                    descServiceURLs = cluster.getServiceURLs(serviceName, descService.getParams());
                 }
 
                 // Validate the discovered service URLs
@@ -440,10 +442,12 @@ public class SimpleDescriptorHandler {
                 Map<String, String> svcParams = serviceParams.get(serviceName);
                 if (svcParams != null) {
                     for (String paramName : svcParams.keySet()) {
-                        sw.write("        <param>\n");
-                        sw.write("            <name>" + paramName + "</name>\n");
-                        sw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
-                        sw.write("        </param>\n");
+                        if (!(paramName.toLowerCase()).startsWith(DISCOVERY_PARAM_PREFIX)) {
+                            sw.write("        <param>\n");
+                            sw.write("            <name>" + paramName + "</name>\n");
+                            sw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
+                            sw.write("        </param>\n");
+                        }
                     }
                 }
 

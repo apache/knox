@@ -101,6 +101,11 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
 
         @Override
         public List<String> getServiceURLs(String serviceName) {
+            return getServiceURLs(serviceName, null);
+        }
+
+        @Override
+        public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
             return serviceURLS.get(serviceName);
         }
 

@@ -36,6 +36,7 @@ public class ServiceURLFactory {
     defaultURLCreator = new AmbariDynamicServiceURLCreator(cluster);
 
     // Custom (internal) URL creators
+    urlCreators.put("NAMENODE", new NameNodeUrlCreator(cluster));
     urlCreators.put("WEBHDFS", new WebHdfsUrlCreator(cluster));
   }
 
@@ -55,11 +56,12 @@ public class ServiceURLFactory {
   /**
    * Create one or more cluster-specific URLs for the specified service.
    *
-   * @param service The service.
+   * @param service       The service identifier.
+   * @param serviceParams A map of parameters and their corresponding values for the specified service.
    *
    * @return A List of service URL strings; the list may be empty.
    */
-  public List<String> create(String service) {
+  public List<String> create(String service, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
 
     ServiceURLCreator creator = urlCreators.get(service);
@@ -67,7 +69,7 @@ public class ServiceURLFactory {
       creator = defaultURLCreator;
     }
 
-    urls.addAll(creator.create(service));
+    urls.addAll(creator.create(service, serviceParams));
 
     return urls;
   }

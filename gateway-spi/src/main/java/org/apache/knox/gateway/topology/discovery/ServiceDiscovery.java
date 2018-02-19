@@ -67,12 +67,22 @@ public interface ServiceDiscovery {
 
         /**
          * @param serviceName The name of the service
+         *
          * @return The URLs for the specified service in this cluster.
          */
         List<String> getServiceURLs(String serviceName);
 
         /**
+         * @param serviceName   The name of the service.
+         * @param serviceParams A map of parameters and their corresponding values for the specified service.
+         *
+         * @return The URLs for the specified service in this cluster.
+         */
+        List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams);
+
+        /**
          * @param serviceName The name of the service
+         *
          * @return The HA configuration properties for the specified service in this cluster.
          */
         ZooKeeperConfig getZooKeeperConfiguration(String serviceName);

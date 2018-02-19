@@ -128,8 +128,13 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
     @Override
     public List<String> getServiceURLs(String serviceName) {
+        return getServiceURLs(serviceName, null);
+    }
+
+    @Override
+    public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
         List<String> urls = new ArrayList<>();
-        urls.addAll(urlFactory.create(serviceName));
+        urls.addAll(urlFactory.create(serviceName, serviceParams));
         return urls;
     }
 

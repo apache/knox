@@ -149,4 +149,9 @@ public interface AmbariServiceDiscoveryMessages {
              text = "Started Ambari cluster configuration monitor (checking every {0} seconds)")
     void startedAmbariConfigMonitor(final long pollingInterval);
 
+
+    @Message(level = MessageLevel.WARN,
+             text = "The declared nameservice {0} is not defined in the HDFS configuration.")
+    void undefinedHDFSNameService(final String nameservice);
+
 }
