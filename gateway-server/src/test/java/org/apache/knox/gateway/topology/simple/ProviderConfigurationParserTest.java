@@ -106,7 +106,11 @@ public class ProviderConfigurationParserTest {
         Map<String, String> params = provider.getParams();
         assertNotNull(params);
         assertEquals(3, params.size());
+
+        // KNOX-1188
+        int index = 1;
         for (String name : params.keySet()) {
+          assertEquals("Param out of order", "param" + index++, name);
           assertEquals(name + "-value", params.get(name));
         }
       }
@@ -168,45 +172,7 @@ public class ProviderConfigurationParserTest {
     assertEquals(4, providers.size());
 
     // Validate the providers
-    for (ProviderConfiguration.Provider provider : providers) {
-      String role = provider.getRole();
-      if ("authentication".equals(role)) {
-        assertEquals("ShiroProvider", provider.getName());
-        assertTrue(provider.isEnabled());
-        Map<String, String> params = provider.getParams();
-        assertNotNull(params);
-        assertEquals(8, params.size());
-        assertEquals(params.get("sessionTimeout"), "30");
-        assertEquals(params.get("main.ldapRealm"), "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm");
-        assertEquals(params.get("main.ldapContextFactory"), "org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory");
-        assertEquals(params.get("main.ldapRealm.contextFactory"), "$ldapContextFactory");
-        assertEquals(params.get("main.ldapRealm.userDnTemplate"), "uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
-        assertEquals(params.get("main.ldapRealm.contextFactory.url"), "ldap://localhost:33389");
-        assertEquals(params.get("main.ldapRealm.contextFactory.authenticationMechanism"), "simple");
-        assertEquals(params.get("urls./**"), "authcBasic");
-      } else if ("hostmap".equals(role)) {
-        assertEquals("static", provider.getName());
-        assertTrue(provider.isEnabled());
-        Map<String, String> params = provider.getParams();
-        assertNotNull(params);
-        assertEquals(1, params.size());
-        assertEquals(params.get("localhost"), "sandbox,sandbox.hortonworks.com");
-      } else if ("ha".equals(role)) {
-        assertEquals("HaProvider", provider.getName());
-        assertFalse(provider.isEnabled());
-        Map<String, String> params = provider.getParams();
-        assertNotNull(params);
-        assertEquals(2, params.size());
-        assertEquals(params.get("WEBHDFS"), "maxFailoverAttempts=3;failoverSleep=1000;maxRetryAttempts=300;retrySleep=1000;enabled=true");
-        assertEquals(params.get("HIVE"), "maxFailoverAttempts=3;failoverSleep=1000;enabled=true");
-      } else if ("dummy".equals(provider.getRole())) {
-        assertEquals("NoParamsDummyProvider", provider.getName());
-        assertTrue(provider.isEnabled());
-        Map<String, String> params = provider.getParams();
-        assertNotNull(params);
-        assertTrue(params.isEmpty());
-      }
-    }
+    validateParsedProviders(providers);
   }
 
 
@@ -263,6 +229,12 @@ public class ProviderConfigurationParserTest {
     assertEquals(4, providers.size());
 
     // Validate the providers
+    validateParsedProviders(providers);
+  }
+
+
+  private void validateParsedProviders(List<ProviderConfiguration.Provider> providers) throws Exception {
+    // Validate the providers
     for (ProviderConfiguration.Provider provider : providers) {
       String role = provider.getRole();
       if ("authentication".equals(role)) {
@@ -279,6 +251,20 @@ public class ProviderConfigurationParserTest {
         assertEquals(params.get("main.ldapRealm.contextFactory.url"), "ldap://localhost:33389");
         assertEquals(params.get("main.ldapRealm.contextFactory.authenticationMechanism"), "simple");
         assertEquals(params.get("urls./**"), "authcBasic");
+
+        // Verify the param order was maintained during parsing (KNOX-1188)
+        String[] expectedParameterOrder = new String[] {"sessionTimeout",
+                                                        "main.ldapRealm",
+                                                        "main.ldapContextFactory",
+                                                        "main.ldapRealm.contextFactory",
+                                                        "main.ldapRealm.userDnTemplate",
+                                                        "main.ldapRealm.contextFactory.url",
+                                                        "main.ldapRealm.contextFactory.authenticationMechanism",
+                                                        "urls./**"};
+        int index = 0;
+        for (String name : params.keySet()) {
+          assertEquals("Param out of order", expectedParameterOrder[index++], name);
+        }
       } else if ("hostmap".equals(role)) {
         assertEquals("static", provider.getName());
         assertTrue(provider.isEnabled());

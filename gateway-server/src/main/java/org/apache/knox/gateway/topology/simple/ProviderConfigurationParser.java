@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -170,7 +171,7 @@ public class ProviderConfigurationParser {
 
       @Override
       public Map<String, String> getParams() {
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new LinkedHashMap<>();
         if (params != null) {
           for (XMLParam p : params) {
             result.put(p.name, p.value);
@@ -246,7 +247,7 @@ public class ProviderConfigurationParser {
 
       @Override
       public Map<String, String> getParams() {
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new LinkedHashMap<>();
         if (params != null) {
           result.putAll(params);
         }
