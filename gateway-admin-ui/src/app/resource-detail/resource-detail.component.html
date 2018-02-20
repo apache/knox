@@ -191,7 +191,21 @@
           <tr *ngFor="let service of descriptor.services">
             <td>
               <div>
-                <span><strong>{{ service.name }}</strong></span>
+                <span [class]="!getServiceVersionEditFlag(service) && !service.version ? 'inline-editable' : ''"
+                      (click)="setServiceVersionEditFlag(service, true)"><strong>{{ service.name }}</strong></span>
+                <span *ngIf="!getServiceVersionEditFlag(service) && service.version"
+                      (click)="setServiceVersionEditFlag(service, true)"
+                      [class]="service.version ? 'inline-editable' : ''">({{service.version}})</span>
+                <span *ngIf="getServiceVersionEditFlag(service)" class="inline-editor inlineEditForm">
+                  <input type="text" size="40" [(ngModel)]="service.version">
+                  <button class="btn btn-xs" (click)="setServiceVersionEditFlag(service, false);descriptor.onVersionChanged(service)">
+                    <span class="glyphicon glyphicon-ok"></span>
+                  </button>
+                  <button class="btn btn-xs" (click)="setServiceVersionEditFlag(service, false)">
+                    <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </span>
+
                 <span class="clickable inline-glyph glyphicon glyphicon-remove btn btn-xs pull-right"
                       [title]="'Remove ' + service.name"
                       (click)="onRemoveDescriptorService(service.name)"

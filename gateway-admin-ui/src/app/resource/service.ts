@@ -17,6 +17,7 @@
 
 export class Service {
     name: string;
+    version: string;
     params: Object;
     urls: string[];
 }

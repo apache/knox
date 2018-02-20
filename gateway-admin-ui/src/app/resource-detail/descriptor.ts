@@ -74,6 +74,13 @@ export class Descriptor {
         this.setDirty();
     }
 
+    onVersionChanged(service: Service) {
+      if (!service.version || service.version.length == 0) {
+        delete service.version;
+      }
+      this.setDirty();
+    }
+
     setDirty() {
         this.dirty = true;
     }

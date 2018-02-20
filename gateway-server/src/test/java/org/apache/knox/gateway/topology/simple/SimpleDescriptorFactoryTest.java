@@ -45,6 +45,17 @@ public class SimpleDescriptorFactoryTest {
     }
 
     @Test
+    public void testParseJSONSimpleDescriptorWithServiceVersions() throws Exception {
+        testParseSimpleDescriptorWithServiceVersions(FileType.JSON);
+    }
+
+    @Test
+    public void testParseYAMLSimpleDescriptorWithServiceVersions() throws Exception {
+        testParseSimpleDescriptorWithServiceVersions(FileType.YML);
+        testParseSimpleDescriptorWithServiceVersions(FileType.YAML);
+    }
+
+    @Test
     public void testParseJSONSimpleDescriptorWithServiceParams() throws Exception {
         testParseSimpleDescriptorWithServiceParams(FileType.JSON);
     }
@@ -90,7 +101,9 @@ public class SimpleDescriptorFactoryTest {
         services.put("NODEMANAGER", null);
         services.put("JOBTRACKER", null);
         services.put("RESOURCEMANAGER", null);
-        services.put("HIVE", Arrays.asList("http://c6401.ambari.apache.org", "http://c6402.ambari.apache.org", "http://c6403.ambari.apache.org"));
+        services.put("HIVE", Arrays.asList("http://c6401.ambari.apache.org",
+                                           "http://c6402.ambari.apache.org",
+                                           "http://c6403.ambari.apache.org"));
         services.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
 
         String fileName = "test-topology." + getFileExtensionForType(type);
@@ -118,6 +131,55 @@ public class SimpleDescriptorFactoryTest {
             }
         }
     }
+
+    private void testParseSimpleDescriptorWithServiceVersions(FileType type) throws Exception {
+        final String   discoveryType    = "AMBARI";
+        final String   discoveryAddress = "http://c6401.ambari.apache.org:8080";
+        final String   discoveryUser    = "joeblow";
+        final String   providerConfig   = "ambari-cluster-policy.xml";
+        final String   clusterName      = "myCluster";
+
+        final Map<String, List<String>> services = new HashMap<>();
+        services.put("NODEMANAGER", null);
+        services.put("JOBTRACKER", null);
+        services.put("RESOURCEMANAGER", null);
+        services.put("WEBHDFS", null);
+        services.put("HIVE", Arrays.asList("http://c6401.ambari.apache.org",
+                                           "http://c6402.ambari.apache.org",
+                                           "http://c6403.ambari.apache.org"));
+        services.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
+
+        Map<String, String> serviceVersions = new HashMap<>();
+        serviceVersions.put("HIVE", "0.13.0");
+        serviceVersions.put("WEBHDFS", "2.4.0");
+
+        String fileName = "test-topology." + getFileExtensionForType(type);
+        File testFile = null;
+        try {
+            testFile = writeDescriptorFile(type,
+                                           fileName,
+                                           discoveryType,
+                                           discoveryAddress,
+                                           discoveryUser,
+                                           providerConfig,
+                                           clusterName,
+                                           services,
+                                           serviceVersions);
+            SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
+            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services, serviceVersions);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (testFile != null) {
+                try {
+                    testFile.delete();
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+        }
+    }
+
 
     private void testParseSimpleDescriptorWithServiceParams(FileType type) throws Exception {
 
@@ -165,9 +227,10 @@ public class SimpleDescriptorFactoryTest {
                                            providerConfig,
                                            clusterName,
                                            services,
+                                           null,
                                            serviceParams);
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
-            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services, serviceParams);
+            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services, null, serviceParams);
         } finally {
             if (testFile != null) {
                 try {
@@ -216,6 +279,7 @@ public class SimpleDescriptorFactoryTest {
                                            clusterName,
                                            null,
                                            null,
+                                           null,
                                            apps,
                                            appParams);
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
@@ -224,6 +288,7 @@ public class SimpleDescriptorFactoryTest {
                                      discoveryAddress,
                                      providerConfig,
                                      clusterName,
+                                     null,
                                      null,
                                      null,
                                      apps,
@@ -302,6 +367,7 @@ public class SimpleDescriptorFactoryTest {
                                            providerConfig,
                                            clusterName,
                                            services,
+                                           null,
                                            serviceParams,
                                            apps,
                                            appParams);
@@ -312,6 +378,7 @@ public class SimpleDescriptorFactoryTest {
                                      providerConfig,
                                      clusterName,
                                      services,
+                                     null,
                                      serviceParams,
                                      apps,
                                      appParams);
@@ -342,14 +409,14 @@ public class SimpleDescriptorFactoryTest {
         return extension;
     }
 
-    private File writeDescriptorFile(FileType type,
-                                     String                           path,
-                                     String                           discoveryType,
-                                     String                           discoveryAddress,
-                                     String                           discoveryUser,
-                                     String                           providerConfig,
-                                     String                           clusterName,
-                                     Map<String, List<String>>        services) throws Exception {
+    private File writeDescriptorFile(FileType                  type,
+                                     String                    path,
+                                     String                    discoveryType,
+                                     String                    discoveryAddress,
+                                     String                    discoveryUser,
+                                     String                    providerConfig,
+                                     String                    clusterName,
+                                     Map<String, List<String>> services) throws Exception {
         return writeDescriptorFile(type,
                                    path,
                                    discoveryType,
@@ -361,7 +428,28 @@ public class SimpleDescriptorFactoryTest {
                                    null);
     }
 
-    private File writeDescriptorFile(FileType type,
+    private File writeDescriptorFile(FileType                  type,
+                                     String                    path,
+                                     String                    discoveryType,
+                                     String                    discoveryAddress,
+                                     String                    discoveryUser,
+                                     String                    providerConfig,
+                                     String                    clusterName,
+                                     Map<String, List<String>> services,
+                                     Map<String, String>       serviceVersions) throws Exception {
+        return writeDescriptorFile(type,
+                                   path,
+                                   discoveryType,
+                                   discoveryAddress,
+                                   discoveryUser,
+                                   providerConfig,
+                                   clusterName,
+                                   services,
+                                   serviceVersions,
+                                   null);
+    }
+
+    private File writeDescriptorFile(FileType                         type,
                                      String                           path,
                                      String                           discoveryType,
                                      String                           discoveryAddress,
@@ -369,6 +457,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                           providerConfig,
                                      String                           clusterName,
                                      Map<String, List<String>>        services,
+                                     Map<String, String>              serviceVersions,
                                      Map<String, Map<String, String>> serviceParams) throws Exception {
         return writeDescriptorFile(type,
                                    path,
@@ -378,13 +467,14 @@ public class SimpleDescriptorFactoryTest {
                                    providerConfig,
                                    clusterName,
                                    services,
+                                   serviceVersions,
                                    serviceParams,
                                    null,
                                    null);
     }
 
 
-    private File writeDescriptorFile(FileType type,
+    private File writeDescriptorFile(FileType                         type,
                                      String                           path,
                                      String                           discoveryType,
                                      String                           discoveryAddress,
@@ -392,6 +482,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                           providerConfig,
                                      String                           clusterName,
                                      Map<String, List<String>>        services,
+                                     Map<String, String>              serviceVersions,
                                      Map<String, Map<String, String>> serviceParams,
                                      Map<String, List<String>>        apps,
                                      Map<String, Map<String, String>> appParams) throws Exception {
@@ -405,6 +496,7 @@ public class SimpleDescriptorFactoryTest {
                                    providerConfig,
                                    clusterName,
                                    services,
+                                   serviceVersions,
                                    serviceParams,
                                    apps,
                                    appParams);
@@ -418,6 +510,7 @@ public class SimpleDescriptorFactoryTest {
                                    providerConfig,
                                    clusterName,
                                    services,
+                                   serviceVersions,
                                    serviceParams,
                                    apps,
                                    appParams);
@@ -427,15 +520,16 @@ public class SimpleDescriptorFactoryTest {
     }
 
 
-    private File writeJSON(String path,
-                           String discoveryType,
-                           String discoveryAddress,
-                           String discoveryUser,
-                           String providerConfig,
-                           String clusterName,
-                           Map<String, List<String>> services,
+    private File writeJSON(String                           path,
+                           String                           discoveryType,
+                           String                           discoveryAddress,
+                           String                           discoveryUser,
+                           String                           providerConfig,
+                           String                           clusterName,
+                           Map<String, List<String>>        services,
+                           Map<String, String>              serviceVersions,
                            Map<String, Map<String, String>> serviceParams,
-                           Map<String, List<String>> apps,
+                           Map<String, List<String>>        apps,
                            Map<String, Map<String, String>> appParams) throws Exception {
         File f = new File(path);
 
@@ -449,13 +543,13 @@ public class SimpleDescriptorFactoryTest {
 
         if (services != null && !services.isEmpty()) {
             fw.write(",\n\"services\":[\n");
-            writeServiceOrApplicationJSON(fw, services, serviceParams);
+            writeServiceOrApplicationJSON(fw, services, serviceParams, serviceVersions);
             fw.write("]\n");
         }
 
         if (apps != null && !apps.isEmpty()) {
             fw.write(",\n\"applications\":[\n");
-            writeServiceOrApplicationJSON(fw, apps, appParams);
+            writeServiceOrApplicationJSON(fw, apps, appParams, null);
             fw.write("]\n");
         }
 
@@ -467,12 +561,20 @@ public class SimpleDescriptorFactoryTest {
     }
 
     private void writeServiceOrApplicationJSON(Writer fw,
-                                               Map<String, List<String>> elementURLs,
-                                               Map<String, Map<String, String>> elementParams) throws Exception {
+                                               Map<String, List<String>>        elementURLs,
+                                               Map<String, Map<String, String>> elementParams,
+                                               Map<String, String>              serviceVersions) throws Exception {
         if (elementURLs != null) {
             int i = 0;
             for (String name : elementURLs.keySet()) {
                 fw.write("{\"name\":\"" + name + "\"");
+
+                if (serviceVersions != null) {
+                    String ver = serviceVersions.get(name);
+                    if (ver != null) {
+                        fw.write(",\n\"version\":\"" + ver + "\"");
+                    }
+                }
 
                 // Service params
                 if (elementParams != null && !elementParams.isEmpty()) {
@@ -520,6 +622,7 @@ public class SimpleDescriptorFactoryTest {
                            String                           providerConfig,
                            String                           clusterName,
                            Map<String, List<String>>        services,
+                           Map<String, String>              serviceVersions,
                            Map<String, Map<String, String>> serviceParams,
                            Map<String, List<String>>        apps,
                            Map<String, Map<String, String>> appParams) throws Exception {
@@ -536,12 +639,12 @@ public class SimpleDescriptorFactoryTest {
 
         if (services != null && !services.isEmpty()) {
             fw.write("services:\n");
-            writeServiceOrApplicationYAML(fw, services, serviceParams);
+            writeServiceOrApplicationYAML(fw, services, serviceParams, serviceVersions);
         }
 
         if (apps != null && !apps.isEmpty()) {
             fw.write("applications:\n");
-            writeServiceOrApplicationYAML(fw, apps, appParams);
+            writeServiceOrApplicationYAML(fw, apps, appParams, null);
         }
 
         fw.flush();
@@ -552,9 +655,17 @@ public class SimpleDescriptorFactoryTest {
 
     private void writeServiceOrApplicationYAML(Writer                           fw,
                                                Map<String, List<String>>        elementURLs,
-                                               Map<String, Map<String, String>> elementParams) throws Exception {
+                                               Map<String, Map<String, String>> elementParams,
+                                               Map<String, String>              serviceVersions) throws Exception {
         for (String name : elementURLs.keySet()) {
             fw.write("    - name: " + name + "\n");
+
+            if (serviceVersions != null) {
+                String ver = serviceVersions.get(name);
+                if (ver != null) {
+                    fw.write("      version: " + ver + "\n");
+                }
+            }
 
             // Service params
             if (elementParams != null && !elementParams.isEmpty()) {
@@ -589,12 +700,24 @@ public class SimpleDescriptorFactoryTest {
     }
 
 
+    private void validateSimpleDescriptor(SimpleDescriptor          sd,
+                                          String                    discoveryType,
+                                          String                    discoveryAddress,
+                                          String                    providerConfig,
+                                          String                    clusterName,
+                                          Map<String, List<String>> expectedServices,
+                                          Map<String, String>       expectedServiceVersions) {
+        validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, expectedServices, expectedServiceVersions, null);
+    }
+
+
     private void validateSimpleDescriptor(SimpleDescriptor                 sd,
                                           String                           discoveryType,
                                           String                           discoveryAddress,
                                           String                           providerConfig,
                                           String                           clusterName,
                                           Map<String, List<String>>        expectedServices,
+                                          Map<String, String>              expectedServiceVersions,
                                           Map<String, Map<String, String>> expectedServiceParameters) {
         validateSimpleDescriptor(sd,
                                  discoveryType,
@@ -602,6 +725,7 @@ public class SimpleDescriptorFactoryTest {
                                  providerConfig,
                                  clusterName,
                                  expectedServices,
+                                 expectedServiceVersions,
                                  expectedServiceParameters,
                                  null,
                                  null);
@@ -613,6 +737,7 @@ public class SimpleDescriptorFactoryTest {
                                           String                           providerConfig,
                                           String                           clusterName,
                                           Map<String, List<String>>        expectedServices,
+                                          Map<String, String>              expectedServiceVersions,
                                           Map<String, Map<String, String>> expectedServiceParameters,
                                           Map<String, List<String>>        expectedApps,
                                           Map<String, Map<String, String>> expectedAppParameters) {
@@ -632,6 +757,17 @@ public class SimpleDescriptorFactoryTest {
             for (SimpleDescriptor.Service actualService : actualServices) {
                 assertTrue(expectedServices.containsKey(actualService.getName()));
                 assertEquals(expectedServices.get(actualService.getName()), actualService.getURLs());
+
+                if (expectedServiceVersions != null) {
+                    String expectedVersion = expectedServiceVersions.get(actualService.getName());
+                    if (expectedVersion != null) {
+                        String actualVersion = actualService.getVersion();
+                        assertNotNull(actualVersion);
+                        assertEquals("Unexpected version for " + actualService.getName(),
+                                     expectedVersion,
+                                     actualVersion);
+                    }
+                }
 
                 // Validate service parameters
                 if (expectedServiceParameters != null) {

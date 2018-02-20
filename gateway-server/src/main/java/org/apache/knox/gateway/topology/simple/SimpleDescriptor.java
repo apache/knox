@@ -43,6 +43,8 @@ public interface SimpleDescriptor {
     interface Service {
         String getName();
 
+        String getVersion();
+
         Map<String, String> getParams();
 
         List<String> getURLs();

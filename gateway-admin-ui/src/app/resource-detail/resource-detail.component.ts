@@ -509,6 +509,15 @@ export class ResourceDetailComponent implements OnInit {
       return this[provider.name+paramName+'EditMode'];
   }
 
+  setServiceVersionEditFlag(service: Service, value: boolean) {
+      this[service.name + 'EditMode'] = value;
+      this.descriptor.setDirty();
+  }
+
+  getServiceVersionEditFlag(service: Service): boolean {
+      return this[service.name + 'EditMode'];
+  }
+
   setServiceParamEditFlag(service: Service, paramName: string, value: boolean) {
       this[service.name + paramName + 'EditMode'] = value;
       this.descriptor.setDirty();

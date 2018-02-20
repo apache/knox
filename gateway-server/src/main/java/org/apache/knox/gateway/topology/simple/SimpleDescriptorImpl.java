@@ -112,6 +112,9 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         @JsonProperty("name")
         private String name;
 
+        @JsonProperty("version")
+        private String version;
+
         @JsonProperty("params")
         private Map<String, String> params;
 
@@ -121,6 +124,11 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public String getVersion() {
+            return version;
         }
 
         @Override

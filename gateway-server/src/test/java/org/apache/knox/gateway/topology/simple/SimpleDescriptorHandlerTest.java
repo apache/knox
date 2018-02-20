@@ -187,6 +187,7 @@ public class SimpleDescriptorHandlerTest {
             for (String serviceName : serviceURLs.keySet()) {
                 SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
                 EasyMock.expect(svc.getName()).andReturn(serviceName).anyTimes();
+                EasyMock.expect(svc.getVersion()).andReturn("WEBHDFS".equals(serviceName) ? "2.4.0" : null).anyTimes();
                 EasyMock.expect(svc.getURLs()).andReturn(serviceURLs.get(serviceName)).anyTimes();
                 EasyMock.expect(svc.getParams()).andReturn(serviceParameters.get(serviceName)).anyTimes();
                 EasyMock.replay(svc);
@@ -239,6 +240,14 @@ public class SimpleDescriptorHandlerTest {
                 Node roleNode = (Node) xpath.compile("role/text()").evaluate(serviceNode, XPathConstants.NODE);
                 assertNotNull(roleNode);
                 String role = roleNode.getNodeValue();
+
+                // Validate the explicit version for the WEBHDFS service
+                if ("WEBHDFS".equals(role)) {
+                    Node versionNode = (Node) xpath.compile("version/text()").evaluate(serviceNode, XPathConstants.NODE);
+                    assertNotNull(versionNode);
+                    String version = versionNode.getNodeValue();
+                    assertEquals("2.4.0", version);
+                }
 
                 // Validate the URLs
                 NodeList urlNodes = (NodeList) xpath.compile("url/text()").evaluate(serviceNode, XPathConstants.NODESET);
