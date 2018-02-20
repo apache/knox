@@ -288,16 +288,22 @@ public class GatewayAdminTopologyFuncTest {
 
 
   private static String createDescriptor(String clusterName, String providerConfigRef) {
+    return createDescriptor(clusterName, providerConfigRef, true);
+  }
+
+  private static String createDescriptor(String clusterName, String providerConfigRef, boolean discovery) {
     StringBuilder sb = new StringBuilder();
     if (providerConfigRef == null) {
       providerConfigRef = "sandbox-providers";
     }
 
     sb.append("{\n");
-    sb.append("  \"discovery-type\":\"AMBARI\",\n");
-    sb.append("  \"discovery-address\":\"http://c6401.ambari.apache.org:8080\",\n");
-    sb.append("  \"discovery-user\":\"ambariuser\",\n");
-    sb.append("  \"discovery-pwd-alias\":\"ambari.discovery.password\",\n");
+    if (discovery) {
+      sb.append("  \"discovery-type\":\"AMBARI\",\n");
+      sb.append("  \"discovery-address\":\"http://c6401.ambari.apache.org:8080\",\n");
+      sb.append("  \"discovery-user\":\"ambariuser\",\n");
+      sb.append("  \"discovery-pwd-alias\":\"ambari.discovery.password\",\n");
+    }
     sb.append("  \"provider-config-ref\":\"");
     sb.append(providerConfigRef);
     sb.append("\",\n");
@@ -1095,9 +1101,9 @@ public class GatewayAdminTopologyFuncTest {
                     .when().delete(href1).body();
     String deletedMsg = responseBody.path("deleted");
     assertEquals("provider config " + FilenameUtils.getBaseName(name1), deletedMsg);
-    assertFalse((new File(sharedProvidersDir, name1).exists()));
+    assertFalse((new File(sharedProvidersDir, name1)).exists());
 
-    assertTrue((new File(sharedProvidersDir, name2).exists()));
+    assertTrue((new File(sharedProvidersDir, name2)).exists());
     // Delete the other provider config
     responseBody = given()
                     .auth().preemptive().basic(username, password)
@@ -1108,7 +1114,7 @@ public class GatewayAdminTopologyFuncTest {
                     .when().delete(href2).body();
     deletedMsg = responseBody.path("deleted");
     assertEquals("provider config " + FilenameUtils.getBaseName(name2), deletedMsg);
-    assertFalse((new File(sharedProvidersDir, name2).exists()));
+    assertFalse((new File(sharedProvidersDir, name2)).exists());
 
     // Attempt to delete a provider config that does not exist
     given()
@@ -1117,6 +1123,141 @@ public class GatewayAdminTopologyFuncTest {
       .then()
       .statusCode(HttpStatus.SC_OK)
       .when().delete(serviceUrl + "/does-not-exist");
+
+    LOG_EXIT();
+  }
+
+
+  /**
+   * KNOX-1176
+   */
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testDeleteReferencedProviderConfiguration() throws Exception {
+    LOG_ENTER();
+
+    final String username = "admin";
+    final String password = "admin-password";
+    final String serviceUrl = clusterUrl + "/api/v1/providerconfig";
+    final String descriptorsUrl = clusterUrl + "/api/v1/descriptors";
+
+    final File sharedProvidersDir = new File(config.getGatewayConfDir(), "shared-providers");
+
+    // Manually add two provider config files to the shared-providers directory
+    File providerConfigOneFile = new File(sharedProvidersDir, "deleteme-one-config.xml");
+    FileOutputStream stream = new FileOutputStream(providerConfigOneFile);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+    assertTrue(providerConfigOneFile.exists());
+
+    File providerConfigTwoFile = new File(sharedProvidersDir, "deleteme-two-config.xml");
+    stream = new FileOutputStream(providerConfigTwoFile);
+    createProviderConfiguration().toStream(stream);
+    stream.close();
+    assertTrue(providerConfigTwoFile.exists());
+
+    // Request a listing of all the provider configs
+    ResponseBody responseBody = given()
+                                  .auth().preemptive().basic(username, password)
+                                  .header("Accept", MediaType.APPLICATION_JSON)
+                                  .then()
+                                  .statusCode(HttpStatus.SC_OK)
+                                  .contentType(MediaType.APPLICATION_JSON)
+                                  .when().get(serviceUrl).body();
+    List<String> items = responseBody.path("items");
+    assertEquals(2, items.size());
+    String name1 = responseBody.path("items[0].name");
+    String href1 = responseBody.path("items[0].href");
+    String name2 = responseBody.path("items[1].name");
+    String href2 = responseBody.path("items[1].href");
+
+    /////////////////////////////////////////////////////////////
+    // PUT a descriptor, which references one of the provider configurations, which should make that provider
+    // configuration ineligible for deletion.
+    String descriptorName = "mycluster";
+    String newDescriptorJSON = createDescriptor(descriptorName, name1, false);
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body(newDescriptorJSON.getBytes("utf-8"))
+        .then()
+        .statusCode(HttpStatus.SC_CREATED)
+        .when().put(descriptorsUrl + "/" + descriptorName);
+
+    try { // Wait for the reference relationship to be established
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      //
+    }
+
+    // Attempt to delete the referenced provider configs, and verify that it is NOT deleted
+    responseBody = given()
+                      .auth().preemptive().basic(username, password)
+                      .then()
+                      .statusCode(HttpStatus.SC_NOT_MODIFIED)
+                      .when().delete(href1).body();
+    assertTrue("Provider config deletion should have been prevented.",
+               (new File(sharedProvidersDir, name1)).exists());
+
+    /////////////////////////////////////////////////////////////
+    // Update the descriptor to reference the other provider config, such that the first one should become eligible for
+    // deletion.
+    String updatedDescriptorJSON = createDescriptor(descriptorName, name2, false);
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body(updatedDescriptorJSON.getBytes("utf-8"))
+        .then()
+        .statusCode(HttpStatus.SC_NO_CONTENT)
+        .when().put(descriptorsUrl + "/" + descriptorName);
+
+    try { // Wait for the reference relationship to be established
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      //
+    }
+
+    // Delete the originally-referenced provider config, and verify that it has been deleted
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href1).body();
+    String deletedMsg = responseBody.path("deleted");
+    assertEquals("provider config " + FilenameUtils.getBaseName(name1), deletedMsg);
+    assertFalse((new File(sharedProvidersDir, name1)).exists());
+
+    /////////////////////////////////////////////////////////////
+    // (KNOX-1176) Update the descriptor to reference an invalid provider config, which should remove the prior
+    // provider configuration reference relationship (even though the new reference could not be resolved), and make
+    // that previously-referenced provider configuration eligible for deletion.
+    updatedDescriptorJSON = createDescriptor(descriptorName, "invalid-provider-config", false);
+    given()
+        .auth().preemptive().basic(username, password)
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body(updatedDescriptorJSON.getBytes("utf-8"))
+        .then()
+        .statusCode(HttpStatus.SC_NO_CONTENT)
+        .when().put(descriptorsUrl + "/" + descriptorName);
+
+    try { // Wait for the reference relationship to be established
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      //
+    }
+
+    // Delete the previously-referenced provider config, and verify that it has been deleted
+    responseBody = given()
+                    .auth().preemptive().basic(username, password)
+                    .header("Accept", MediaType.APPLICATION_JSON)
+                    .then()
+                    .statusCode(HttpStatus.SC_OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .when().delete(href2).body();
+    deletedMsg = responseBody.path("deleted");
+    assertEquals("provider config " + FilenameUtils.getBaseName(name2), deletedMsg);
+    assertFalse((new File(sharedProvidersDir, name2)).exists());
 
     LOG_EXIT();
   }
@@ -1337,9 +1478,9 @@ public class GatewayAdminTopologyFuncTest {
                     .when().delete(href1).body();
     String deletedMsg = responseBody.path("deleted");
     assertEquals("descriptor " + FilenameUtils.getBaseName(name1), deletedMsg);
-    assertFalse((new File(descriptorsDir, name1).exists()));
+    assertFalse((new File(descriptorsDir, name1)).exists());
 
-    assertTrue((new File(descriptorsDir, name2).exists()));
+    assertTrue((new File(descriptorsDir, name2)).exists());
     // Delete the other descriptor
     responseBody = given()
                     .auth().preemptive().basic(username, password)

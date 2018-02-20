@@ -102,59 +102,64 @@ public class SimpleDescriptorHandler {
 
     public static Map<String, File> handle(SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
 
-        List<String>                     validServiceNames = new ArrayList<>();
-        Map<String, String>              serviceVersions   = new HashMap<>();
-        Map<String, Map<String, String>> serviceParams     = new HashMap<>();
-        Map<String, List<String>>        serviceURLs       = new HashMap<>();
+        List<String> validServiceNames = new ArrayList<>();
+        Map<String, String> serviceVersions = new HashMap<>();
+        Map<String, Map<String, String>> serviceParams = new HashMap<>();
+        Map<String, List<String>> serviceURLs = new HashMap<>();
 
-        // Discover the cluster details required by the descriptor
-        ServiceDiscovery.Cluster cluster = performDiscovery(desc, gatewayServices);
-        if (cluster != null) {
-            for (SimpleDescriptor.Service descService : desc.getServices()) {
-                String serviceName = descService.getName();
+        ServiceDiscovery.Cluster cluster = null;
+        if (desc.getDiscoveryAddress() != null) {
+            // Discover the cluster details required by the descriptor
+            cluster = performDiscovery(desc, gatewayServices);
+            if (cluster == null) {
+                log.failedToDiscoverClusterServices(desc.getClusterName());
+            }
+        }
 
-                String serviceVer = descService.getVersion();
-                if (serviceVer != null) {
-                    serviceVersions.put(serviceName, serviceVer);
-                }
+        for (SimpleDescriptor.Service descService : desc.getServices()) {
+            String serviceName = descService.getName();
 
-                List<String> descServiceURLs = descService.getURLs();
-                if (descServiceURLs == null || descServiceURLs.isEmpty()) {
+            String serviceVer = descService.getVersion();
+            if (serviceVer != null) {
+                serviceVersions.put(serviceName, serviceVer);
+            }
+
+            List<String> descServiceURLs = descService.getURLs();
+            if (descServiceURLs == null || descServiceURLs.isEmpty()) {
+                if (cluster != null) {
                     descServiceURLs = cluster.getServiceURLs(serviceName, descService.getParams());
                 }
+            }
 
-                // Validate the discovered service URLs
-                List<String> validURLs = new ArrayList<>();
-                if (descServiceURLs != null && !descServiceURLs.isEmpty()) {
-                    // Validate the URL(s)
-                    for (String descServiceURL : descServiceURLs) {
-                        if (validateURL(serviceName, descServiceURL)) {
-                            validURLs.add(descServiceURL);
-                        }
-                    }
-
-                    if (!validURLs.isEmpty()) {
-                        validServiceNames.add(serviceName);
+            // Validate the discovered service URLs
+            List<String> validURLs = new ArrayList<>();
+            if (descServiceURLs != null && !descServiceURLs.isEmpty()) {
+                // Validate the URL(s)
+                for (String descServiceURL : descServiceURLs) {
+                    if (validateURL(serviceName, descServiceURL)) {
+                        validURLs.add(descServiceURL);
                     }
                 }
 
-                // If there is at least one valid URL associated with the service, then add it to the map
                 if (!validURLs.isEmpty()) {
-                    serviceURLs.put(serviceName, validURLs);
-                } else {
-                    log.failedToDiscoverClusterServiceURLs(serviceName, cluster.getName());
-                }
-
-                // Service params
-                if (descService.getParams() != null) {
-                    serviceParams.put(serviceName, descService.getParams());
-                    if (!validServiceNames.contains(serviceName)) {
-                        validServiceNames.add(serviceName);
-                    }
+                    validServiceNames.add(serviceName);
                 }
             }
-        } else {
-            log.failedToDiscoverClusterServices(desc.getClusterName());
+
+            // If there is at least one valid URL associated with the service, then add it to the map
+            if (!validURLs.isEmpty()) {
+                serviceURLs.put(serviceName, validURLs);
+            } else {
+                log.failedToDiscoverClusterServiceURLs(serviceName, (cluster != null ? cluster.getName() : ""));
+            }
+
+            // Service params
+            if (descService.getParams() != null) {
+                serviceParams.put(serviceName, descService.getParams());
+                if (!validServiceNames.contains(serviceName)) {
+                    validServiceNames.add(serviceName);
+                }
+            }
         }
 
         // Provision the query param encryption password here, rather than relying on the random password generated
@@ -194,10 +199,9 @@ public class SimpleDescriptorHandler {
 
     private static ProviderConfiguration handleProviderConfiguration(SimpleDescriptor desc, File providerConfig) {
         // Verify that the referenced provider configuration exists before attempting to read it
-        if (providerConfig == null) {
+        if (providerConfig == null || !providerConfig.exists()) {
             log.failedToResolveProviderConfigRef(desc.getProviderConfig());
-            throw new IllegalArgumentException("Unresolved provider configuration reference: " +
-                                               desc.getProviderConfig() + " ; Topology update aborted!");
+            throw new IllegalArgumentException("Unresolved provider configuration reference: " + desc.getProviderConfig());
         }
 
         // Parse the contents of the referenced provider config
@@ -345,7 +349,7 @@ public class SimpleDescriptorHandler {
             File providerConfigFile = resolveProviderConfigurationReference(desc.getProviderConfig(), srcDirectory);
             ProviderConfiguration providerConfiguration = handleProviderConfiguration(desc, providerConfigFile);
             if (providerConfiguration == null) {
-                throw new IllegalArgumentException("Invalid provider configuration.");
+                throw new IllegalArgumentException("Invalid provider configuration: " + desc.getProviderConfig());
             }
             result.put(RESULT_REFERENCE, providerConfigFile);
 

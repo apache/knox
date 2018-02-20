@@ -323,7 +323,13 @@
       <div class="panel-body" *ngIf="isShowServiceDiscovery()">
         <table class="table table-sm">
           <tr>
-            <td width="20%"><strong>Address</strong></td>
+            <td width="20%">
+              <span [class]="!editModeAddress && !descriptor.discoveryAddress ? 'inline-editable' : ''"
+                    (click)="editModeAddress=true">
+                <strong>Address</strong>
+              </span>
+              <span *ngIf="!editModeAddress && !descriptor.discoveryAddress">&nbsp;&nbsp;</span>
+            </td>
             <td>
               <span class="inline-editable"
                     (click)="editModeAddress=true"
@@ -340,7 +346,13 @@
             </td>
           </tr>
           <tr>
-            <td width="20%"><strong>Cluster</strong></td>
+            <td width="20%">
+              <span [class]="!editModeCluster && !descriptor.discoveryCluster ? 'inline-editable' : ''"
+                    (click)="editModeCluster=true">
+                <strong>Cluster</strong>
+              </span>
+              <span *ngIf="!editModeCluster && !descriptor.discoveryCluster">&nbsp;&nbsp;</span>
+            </td>
             <td>
               <span class="inline-editable"
                     (click)="editModeCluster=true"
@@ -357,11 +369,17 @@
             </td>
           </tr>
           <tr>
-            <td width="20%"><strong>Username</strong></td>
+            <td width="20%">
+              <span [class]="!editModeUser && !descriptor.discoveryUser ? 'inline-editable' : ''"
+                    (click)="editModeUser=true">
+                  <strong>Username</strong>
+              </span>
+              <span *ngIf="!editModeUser && !descriptor.discoveryUser">&nbsp;&nbsp;</span>
+            </td>
             <td>
               <span class="inline-editable"
                     (click)="editModeUser=true"
-                    *ngIf="!editModeUser">{{(descriptor.discoveryUser) ? descriptor.discoveryUser : 'unspecified'}}</span>
+                    *ngIf="!editModeUser">{{ descriptor.discoveryUser }}</span>
               <span *ngIf="editModeUser" class="inline-editor inlineEditForm">
                 <input type="text" size="40" [(ngModel)]="descriptor.discoveryUser">
                 <button class="btn btn-xs" (click)="editModeUser=false;descriptor.setDirty()">
@@ -374,11 +392,17 @@
             </td>
           </tr>
           <tr>
-            <td width="20%"><strong>Password Alias</strong></td>
+            <td width="20%">
+              <span [class]="!editModeAlias && !descriptor.discoveryPassAlias ? 'inline-editable' : ''"
+                    (click)="editModeAlias=true">
+                  <strong>Password Alias</strong>
+              </span>
+              <span *ngIf="!editModeAlias && !descriptor.discoveryPassAlias">&nbsp;&nbsp;</span>
+            </td>
             <td>
               <span class="inline-editable"
                     (click)="editModeAlias=true"
-                    *ngIf="!editModeAlias">{{ (descriptor.discoveryPassAlias) ? descriptor.discoveryPassAlias : 'ambari.discovery.password' }}</span>
+                    *ngIf="!editModeAlias">{{ descriptor.discoveryPassAlias }}</span>
               <span *ngIf="editModeAlias" class="inline-editor inlineEditForm">
                 <input type="text" size="40" [(ngModel)]="descriptor.discoveryPassAlias">
                 <button class="btn btn-xs" (click)="editModeAlias=false;descriptor.setDirty()">
