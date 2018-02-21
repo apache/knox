@@ -17,7 +17,7 @@
 -->
 <rules>
     <rule dir="IN" name="OOZIEUI/oozieui/inbound/request/root">
-        <match pattern="http://*:*/**/oozie?{**}">
+        <match pattern="*://*:*/**/oozie?{**}">
             <rewrite template="{$serviceUrl[OOZIEUI]}?{**}"/>
         </match>
     </rule>
