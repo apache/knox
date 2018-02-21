@@ -17,7 +17,11 @@
 -->
 <service role="OOZIEUI" name="oozieui" version="4.2.0">
     <routes>
-        <route path="/oozie?**"/>
-        <route path="/oozie/**?**"/>
+        <route path="/oozie?**">
+            <rewrite apply="OOZIEUI/oozieui/inbound/request/root" to="request.url"/>
+        </route>
+        <route path="/oozie/**?**">
+            <rewrite apply="OOZIEUI/oozieui/inbound/request/path" to="request.url"/>
+        </route>
     </routes>
 </service>

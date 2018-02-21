@@ -16,10 +16,14 @@
    limitations under the License.
 -->
 <rules>
-    <rule dir="IN" name="OOZIEUI/oozie/root" pattern="*://*:*/**/oozie?{**}">
-        <rewrite template="{$serviceUrl[OOZIEUI]}/?{**}"/>
+    <rule dir="IN" name="OOZIEUI/oozieui/inbound/request/root">
+        <match pattern="http://*:*/**/oozie?{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}?{**}"/>
+        </match>
     </rule>
-    <rule dir="IN" name="OOZIEUI/oozie/path" pattern="*://*:*/**/oozie/{**}?{**}">
-        <rewrite template="{$serviceUrl[OOZIEUI]}/{**}?{**}"/>
+    <rule dir="IN" name="OOZIEUI/oozieui/inbound/request/path">
+        <match pattern="*://*:*/**/oozie/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIEUI]}/{**}?{**}"/>
+        </match>
     </rule>
 </rules>
