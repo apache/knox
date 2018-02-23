@@ -192,7 +192,9 @@
             <td>
               <div>
                 <span [class]="!getServiceVersionEditFlag(service) && !service.version ? 'inline-editable' : ''"
-                      (click)="setServiceVersionEditFlag(service, true)"><strong>{{ service.name }}</strong></span>
+                      (click)="setServiceVersionEditFlag(service, true)"
+                      title="Set version"
+                      data-toggle="tooltip"><strong>{{ service.name }}</strong></span>
                 <span *ngIf="!getServiceVersionEditFlag(service) && service.version"
                       (click)="setServiceVersionEditFlag(service, true)"
                       [class]="service.version ? 'inline-editable' : ''">({{service.version}})</span>
