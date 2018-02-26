@@ -153,6 +153,7 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     callbackFilter = new CallbackFilter();
+    callbackFilter.init(filterConfig);
     callbackFilter.setConfigOnly(config);
     securityFilter = new SecurityFilter();
     securityFilter.setClients(clientName);
