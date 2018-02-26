@@ -38,6 +38,7 @@ public class ServiceURLFactory {
     // Custom (internal) URL creators
     urlCreators.put("NAMENODE", new NameNodeUrlCreator(cluster));
     urlCreators.put("WEBHDFS", new WebHdfsUrlCreator(cluster));
+    urlCreators.put("HDFSUI", new HdfsUIUrlCreator(cluster));
   }
 
 

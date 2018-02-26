@@ -82,36 +82,38 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
                 ServiceURLPropertyConfig.Property configProperty = config.getConfigProperty(serviceName, propertyName);
 
                 String propertyValue = null;
-                String propertyType = configProperty.getType();
-                if (ServiceURLPropertyConfig.Property.TYPE_SERVICE.equals(propertyType)) {
-                    log.lookingUpServiceConfigProperty(configProperty.getService(), configProperty.getServiceConfig(), configProperty.getValue());
-                    AmbariCluster.ServiceConfiguration svcConfig =
-                        cluster.getServiceConfiguration(configProperty.getService(), configProperty.getServiceConfig());
-                    if (svcConfig != null) {
-                        propertyValue = svcConfig.getProperties().get(configProperty.getValue());
-                    }
-                } else if (ServiceURLPropertyConfig.Property.TYPE_COMPONENT.equals(propertyType)) {
-                    String compName = configProperty.getComponent();
-                    if (compName != null) {
-                        AmbariComponent component = cluster.getComponent(compName);
-                        if (component != null) {
-                            if (ServiceURLPropertyConfig.Property.PROP_COMP_HOSTNAME.equals(configProperty.getValue())) {
-                                log.lookingUpComponentHosts(compName);
-                                componentHostnames.addAll(component.getHostNames());
-                                hostNamePlaceholder = propertyName; // Remember the host name placeholder
-                            } else {
-                                log.lookingUpComponentConfigProperty(compName, configProperty.getValue());
-                                propertyValue = component.getConfigProperty(configProperty.getValue());
+                if (configProperty != null) {
+                    String propertyType = configProperty.getType();
+                    if (ServiceURLPropertyConfig.Property.TYPE_SERVICE.equals(propertyType)) {
+                        log.lookingUpServiceConfigProperty(configProperty.getService(), configProperty.getServiceConfig(), configProperty.getValue());
+                        AmbariCluster.ServiceConfiguration svcConfig =
+                            cluster.getServiceConfiguration(configProperty.getService(), configProperty.getServiceConfig());
+                        if (svcConfig != null) {
+                            propertyValue = svcConfig.getProperties().get(configProperty.getValue());
+                        }
+                    } else if (ServiceURLPropertyConfig.Property.TYPE_COMPONENT.equals(propertyType)) {
+                        String compName = configProperty.getComponent();
+                        if (compName != null) {
+                            AmbariComponent component = cluster.getComponent(compName);
+                            if (component != null) {
+                                if (ServiceURLPropertyConfig.Property.PROP_COMP_HOSTNAME.equals(configProperty.getValue())) {
+                                    log.lookingUpComponentHosts(compName);
+                                    componentHostnames.addAll(component.getHostNames());
+                                    hostNamePlaceholder = propertyName; // Remember the host name placeholder
+                                } else {
+                                    log.lookingUpComponentConfigProperty(compName, configProperty.getValue());
+                                    propertyValue = component.getConfigProperty(configProperty.getValue());
+                                }
                             }
                         }
-                    }
-                } else { // Derived property
-                    log.handlingDerivedProperty(serviceName, configProperty.getType(), configProperty.getName());
-                    ServiceURLPropertyConfig.Property p = config.getConfigProperty(serviceName, configProperty.getName());
-                    propertyValue = p.getValue();
-                    if (propertyValue == null) {
-                        if (p.getConditionHandler() != null) {
-                            propertyValue = p.getConditionHandler().evaluate(config, cluster);
+                    } else { // Derived property
+                        log.handlingDerivedProperty(serviceName, configProperty.getType(), configProperty.getName());
+                        ServiceURLPropertyConfig.Property p = config.getConfigProperty(serviceName, configProperty.getName());
+                        propertyValue = p.getValue();
+                        if (propertyValue == null) {
+                            if (p.getConditionHandler() != null) {
+                                propertyValue = p.getConditionHandler().evaluate(config, cluster);
+                            }
                         }
                     }
                 }

@@ -17,14 +17,14 @@
 package org.apache.knox.gateway.topology.discovery.ambari;
 
 /**
- * A ServiceURLCreator implementation for WEBHDFS.
+ * A ServiceURLCreator implementation for HDFSUI.
  */
-public class WebHdfsUrlCreator extends HDFSURLCreatorBase {
+public class HdfsUIUrlCreator extends HDFSURLCreatorBase {
 
-  private static final String SERVICE = "WEBHDFS";
+  private static final String SERVICE = "HDFSUI";
 
 
-  WebHdfsUrlCreator(AmbariCluster cluster) {
+  HdfsUIUrlCreator(AmbariCluster cluster) {
     super(cluster);
   }
 
@@ -35,7 +35,7 @@ public class WebHdfsUrlCreator extends HDFSURLCreatorBase {
 
   @Override
   protected String createURL(String address) {
-    return getURLScheme() + "://" + address + "/webhdfs";
+    return getURLScheme() + "://" + address;
   }
 
 }

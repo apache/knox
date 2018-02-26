@@ -57,12 +57,40 @@
         </properties>
     </service>
 
+    <service name="OOZIEUI">
+        <url-pattern>{OOZIE_URL}</url-pattern>
+        <properties>
+            <property name="OOZIE_URL">
+                <component>OOZIE_SERVER</component>
+                <config-property>oozie.base.url</config-property>
+            </property>
+        </properties>
+    </service>
+
     <service name="WEBHBASE">
-        <url-pattern>http://{HOST}:60080</url-pattern>
+        <url-pattern>http://{HOST}:{MASTER_PORT}</url-pattern>
         <properties>
             <property name="HOST">
                 <component>HBASE_MASTER</component>
                 <hostname/>
+            </property>
+            <property name="MASTER_PORT">
+                <component>HBASE_MASTER</component>
+                <config-property>hbase.master.info.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="HBASEUI">
+        <url-pattern>http://{HOST}:{MASTER_PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>HBASE_MASTER</component>
+                <hostname/>
+            </property>
+            <property name="MASTER_PORT">
+                <component>HBASE_MASTER</component>
+                <config-property>hbase.master.info.port</config-property>
             </property>
         </properties>
     </service>
@@ -131,7 +159,55 @@
         </properties>
     </service>
 
+    <service name="HDFSUI"> <!-- TODO: Custom ServiceURLCreator for this due to NN federation for HDP 3.0-->
+        <url-pattern>{SCHEME}://{WEBAPP_ADDRESS}</url-pattern>
+        <properties>
+            <property name="WEBAPP_HTTP_ADDRESS">
+                <component>NAMENODE</component>
+                <config-property>dfs.namenode.http-address</config-property>
+            </property>
+            <property name="WEBAPP_HTTPS_ADDRESS">
+                <component>NAMENODE</component>
+                <config-property>dfs.namenode.https-address</config-property>
+            </property>
+            <property name="HTTP_POLICY">
+                <component>NAMENODE</component>
+                <config-property>dfs.http.policy</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="WEBAPP_ADDRESS">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>WEBAPP_HTTPS_ADDRESS</then>
+                        <else>WEBAPP_HTTP_ADDRESS</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
     <service name="DRUID-COORDINATOR">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_COORDINATOR</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_COORDINATOR</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-COORDINATOR-UI">
         <url-pattern>http://{HOST}:{PORT}</url-pattern>
         <properties>
             <property name="HOST">
@@ -174,6 +250,20 @@
     </service>
 
     <service name="DRUID-OVERLORD">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>DRUID_OVERLORD</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>DRUID_OVERLORD</component>
+                <config-property>druid.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="DRUID-OVERLORD-UI">
         <url-pattern>http://{HOST}:{PORT}</url-pattern>
         <properties>
             <property name="HOST">
@@ -391,10 +481,91 @@
         </properties>
     </service>
 
-<!-- TODO:
-    <service name="YARNUI">
+    <service name="FALCON">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>FALCON_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>FALCON_SERVER</component>
+                <config-property>falcon_port</config-property>
+            </property>
+        </properties>
     </service>
 
--->
+
+    <service name="YARNUI">
+        <url-pattern>{SCHEME}://{YARN_RM_WEBAPP_ADDRESS}</url-pattern>
+        <properties>
+            <property name="HTTP_ADDRESS">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.resourcemanager.webapp.address</config-property>
+            </property>
+            <property name="HTTPS_ADDRESS">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.resourcemanager.webapp.https.address</config-property>
+            </property>
+            <property name="HTTP_POLICY">
+                <component>RESOURCEMANAGER</component>
+                <config-property>yarn.http.policy</config-property>
+            </property>
+            <property name="SCHEME">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>https</then>
+                        <else>http</else>
+                    </if>
+                </config-property>
+            </property>
+            <property name="YARN_RM_WEBAPP_ADDRESS">
+                <config-property>
+                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
+                        <then>HTTPS_ADDRESS</then>
+                        <else>HTTP_ADDRESS</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="JOBHISTORYUI">
+        <url-pattern>{JOBHISTORY_WEBAPP_ADDRESS}</url-pattern>
+        <properties>
+            <property name="JOBHISTORY_WEBAPP_ADDRESS">
+                <component>HISTORYSERVER</component>
+                <config-property>mapreduce.jobhistory.webapp.address</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="SPARKHISTORYUI">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>SPARK_JOBHISTORYSERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>SPARK_JOBHISTORYSERVER</component>
+                <config-property>spark.history.ui.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="LIVYSERVER">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>LIVY_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>LIVY_SERVER</component>
+                <config-property>livy.server.port</config-property>
+            </property>
+        </properties>
+    </service>
 
 </service-discovery-url-mappings>
