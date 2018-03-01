@@ -18,14 +18,18 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -82,6 +86,73 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
 
 //        printServiceURLs(cluster, "NAMENODE", "WEBHCAT", "OOZIE", "RESOURCEMANAGER");
+    }
+
+
+    @Test
+    public void testClusterDiscoveryWithExternalComponentConfigAugmentation() throws Exception {
+        final String discoveryAddress = "http://ambarihost:8080";
+        final String clusterName = "myCluster";
+
+        // Create component config mapping override
+        Properties compConfOverrideProps = new Properties();
+        compConfOverrideProps.setProperty("DISCOVERY_TEST", "test-site");
+        File compConfOverrides = File.createTempFile(getClass().getName()+"component-conf-overrides", ".properties");
+        compConfOverrideProps.store(new FileOutputStream(compConfOverrides), "Test Config Overrides");
+        System.setProperty(AmbariServiceDiscovery.COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY,
+                           compConfOverrides.getAbsolutePath());
+
+        // Create URL mapping override
+        final String URL_MAPPING_OVERRIDES =
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                "<service-discovery-url-mappings>\n" +
+                "  <service name=\"DISCOVERYTEST\">\n" +
+                "    <url-pattern>{TEST_ADDRESS}/discoveryTest</url-pattern>\n" +
+                "    <properties>\n" +
+                "      <property name=\"TEST_ADDRESS\">\n" +
+                "        <component>DISCOVERY_TEST</component>\n" +
+                "        <config-property>discovery.test.base.url</config-property>\n" +
+                "      </property>\n" +
+                "    </properties>\n" +
+                "  </service>\n" +
+                "</service-discovery-url-mappings>\n";
+
+        File urlMappingOverrides = File.createTempFile(getClass().getName()+"_url-overrides", ".xml");
+        FileUtils.writeStringToFile(urlMappingOverrides,
+                                    URL_MAPPING_OVERRIDES,
+                                    java.nio.charset.Charset.forName("utf-8"));
+        System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY,
+                           urlMappingOverrides.getAbsolutePath());
+
+        // Re-initialize the component config mappings to include the extension
+        AmbariServiceDiscovery.initializeComponentConfigMappings();
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getAddress()).andReturn(discoveryAddress).anyTimes();
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        try {
+            ServiceDiscovery.Cluster cluster = sd.discover(sdc, clusterName);
+            assertNotNull(cluster);
+            assertEquals(clusterName, cluster.getName());
+            assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
+            assertEquals(7, ((AmbariCluster) cluster).getComponents().size());
+
+            List<String> discTestURLs = cluster.getServiceURLs("DISCOVERYTEST");
+            assertNotNull(discTestURLs);
+            assertEquals(1, discTestURLs.size());
+            assertEquals("http://c6402.ambari.apache.org:11999/discoveryTest", discTestURLs.get(0));
+        } finally {
+            System.clearProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY);
+            System.clearProperty(AmbariServiceDiscovery.COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            FileUtils.deleteQuietly(compConfOverrides);
+
+            // Re-initialize the component config mappings without the extension
+            AmbariServiceDiscovery.initializeComponentConfigMappings();
+        }
     }
 
 
@@ -478,6 +549,36 @@ public class AmbariServiceDiscoveryTest {
     "      ]\n" +
     "    },\n" +
     "    {\n" +
+    "      \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/services/DISCOVERYTEST\",\n" +
+    "      \"ServiceInfo\" : {\n" +
+    "        \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
+    "        \"service_name\" : \"DISCOVERYTEST\"\n" +
+    "      },\n" +
+    "      \"components\" : [\n" +
+    "        {\n" +
+    "          \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/services/DISCOVERYTEST/components/DISCOVERY_TEST\",\n" +
+    "          \"ServiceComponentInfo\" : {\n" +
+    "            \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
+    "            \"component_name\" : \"DISCOVERY_TEST\",\n" +
+    "            \"service_name\" : \"DISCOVERYTEST\"\n" +
+    "          },\n" +
+    "          \"host_components\" : [\n" +
+    "            {\n" +
+    "              \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/hosts/c6402.ambari.apache.org/host_components/DISCOVERY_TEST\",\n" +
+    "              \"HostRoles\" : {\n" +
+    "                \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
+    "                \"component_name\" : \"DISCOVERY_TEST\",\n" +
+    "                \"host_name\" : \"c6402.ambari.apache.org\",\n" +
+    "                \"public_host_name\" : \"c6402.ambari.apache.org\",\n" +
+    "                \"service_name\" : \"DISCOVERYTEST\",\n" +
+    "                \"stack_id\" : \"HDP-2.6\"\n" +
+    "              }\n" +
+    "            }\n" +
+    "          ]\n" +
+    "        }\n" +
+    "      ]\n" +
+    "    },\n" +
+    "    {\n" +
     "      \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/services/ZOOKEEPER\",\n" +
     "      \"ServiceInfo\" : {\n" +
     "        \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
@@ -796,6 +897,30 @@ public class AmbariServiceDiscoveryTest {
     "      \"user\" : \"admin\"\n" +
     "    },\n" +
     "    {\n" +
+    "      \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/configurations/service_config_versions?service_name=DISCOVERYTEST&service_config_version=3\",\n" +
+    "      \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
+    "      \"configurations\" : [\n" +
+    "        {\n" +
+    "          \"Config\" : {\n" +
+    "            \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
+    "            \"stack_id\" : \"HDP-2.6\"\n" +
+    "          },\n" +
+    "          \"type\" : \"test-site\",\n" +
+    "          \"tag\" : \"version1502131137103\",\n" +
+    "          \"version\" : 3,\n" +
+    "          \"properties\" : {\n" +
+    "            \"discovery.test.base.url\" : \"http://c6402.ambari.apache.org:11999\",\n" +
+    "          },\n" +
+    "          \"properties_attributes\" : { }\n" +
+    "        }\n" +
+    "      ],\n" +
+    "      \"is_current\" : true,\n" +
+    "      \"service_config_version\" : 3,\n" +
+    "      \"service_name\" : \"DISCOVERYTEST\",\n" +
+    "      \"stack_id\" : \"HDP-2.6\",\n" +
+    "      \"user\" : \"admin\"\n" +
+    "    },\n" +
+    "    {\n" +
     "      \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/configurations/service_config_versions?service_name=TEZ&service_config_version=1\",\n" +
     "      \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
     "      \"configurations\" : [\n" +
@@ -866,5 +991,6 @@ public class AmbariServiceDiscoveryTest {
     "    }\n" +
     "  ]\n" +
     "}";
+
 
 }

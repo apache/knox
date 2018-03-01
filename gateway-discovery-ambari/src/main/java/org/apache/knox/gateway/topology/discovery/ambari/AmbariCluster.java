@@ -47,19 +47,15 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
                 zooKeeperHAConfigMappings.setProperty(name, defaults.getProperty(name));
             }
 
-            // Attempt to apply overriding or additional mappings
+            // Attempt to apply overriding or additional mappings from external source
             String overridesPath = System.getProperty(ZK_CONFIG_MAPPING_SYSTEM_PROPERTY);
             if (overridesPath != null) {
                 Properties overrides = new Properties();
-                InputStream in = new FileInputStream(overridesPath);
-                try {
+                try (InputStream in = new FileInputStream(overridesPath)) {
                     overrides.load(in);
-                } finally {
-                    in.close();
-                }
-
-                for (String name : overrides.stringPropertyNames()) {
-                    zooKeeperHAConfigMappings.setProperty(name, overrides.getProperty(name));
+                    for (String name : overrides.stringPropertyNames()) {
+                        zooKeeperHAConfigMappings.setProperty(name, overrides.getProperty(name));
+                    }
                 }
             }
         } catch (Exception e) {

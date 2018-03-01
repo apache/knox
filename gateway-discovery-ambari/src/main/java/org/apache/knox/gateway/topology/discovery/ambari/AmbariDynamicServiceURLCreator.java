@@ -40,22 +40,22 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
     AmbariDynamicServiceURLCreator(AmbariCluster cluster) {
         this.cluster = cluster;
 
+        // Load the default internal configuration
+        config = new ServiceURLPropertyConfig();
+
+        // Attempt to apply overriding or additional mappings from external source
         String mappingConfiguration = System.getProperty(MAPPING_CONFIG_OVERRIDE_PROPERTY);
         if (mappingConfiguration != null) {
             File mappingConfigFile = new File(mappingConfiguration);
             if (mappingConfigFile.exists()) {
                 try {
-                    config = new ServiceURLPropertyConfig(mappingConfigFile);
+                    ServiceURLPropertyConfig overrides = new ServiceURLPropertyConfig(mappingConfigFile);
                     log.loadedComponentConfigMappings(mappingConfigFile.getAbsolutePath());
+                    config.setAll(overrides); // Apply overrides/additions
                 } catch (Exception e) {
                     log.failedToLoadComponentConfigMappings(mappingConfigFile.getAbsolutePath(), e);
                 }
             }
-        }
-
-        // If there is no valid override configured, fall-back to the internal mapping configuration
-        if (config == null) {
-            config = new ServiceURLPropertyConfig();
         }
     }
 

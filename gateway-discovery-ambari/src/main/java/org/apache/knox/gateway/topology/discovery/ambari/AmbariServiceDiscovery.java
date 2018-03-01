@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +47,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
     static final String AMBARI_SERVICECONFIGS_URI = AmbariClientCommon.AMBARI_SERVICECONFIGS_URI;
 
+    static final String COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY =
+                                                  "org.apache.knox.gateway.topology.discovery.ambari.component.mapping";
+
     private static final String COMPONENT_CONFIG_MAPPING_FILE =
                                                         "ambari-service-discovery-component-config-mapping.properties";
 
@@ -56,15 +61,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     // Map of component names to service configuration types
     private static Map<String, String> componentServiceConfigs = new HashMap<>();
     static {
-        try {
-            Properties configMapping = new Properties();
-            configMapping.load(AmbariServiceDiscovery.class.getClassLoader().getResourceAsStream(COMPONENT_CONFIG_MAPPING_FILE));
-            for (String componentName : configMapping.stringPropertyNames()) {
-                componentServiceConfigs.put(componentName, configMapping.getProperty(componentName));
-            }
-        } catch (Exception e) {
-            log.failedToLoadServiceDiscoveryURLDefConfiguration(COMPONENT_CONFIG_MAPPING_FILE, e);
-        }
+        initializeComponentConfigMappings();
     }
 
     @GatewayService
@@ -77,6 +74,34 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private AmbariConfigurationMonitor configChangeMonitor;
 
     private boolean isInitialized = false;
+
+    //
+    static void initializeComponentConfigMappings(){
+        try {
+            componentServiceConfigs.clear();
+
+            Properties configMapping = new Properties();
+            configMapping.load(AmbariServiceDiscovery.class.getClassLoader().getResourceAsStream(COMPONENT_CONFIG_MAPPING_FILE));
+            for (String componentName : configMapping.stringPropertyNames()) {
+                componentServiceConfigs.put(componentName, configMapping.getProperty(componentName));
+            }
+
+            // Attempt to apply overriding or additional mappings from external source
+            String overridesPath = System.getProperty(COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            if (overridesPath != null) {
+                Properties overrides = new Properties();
+                try (InputStream in = new FileInputStream(overridesPath)) {
+                    overrides.load(in);
+                    for (String name : overrides.stringPropertyNames()) {
+                        componentServiceConfigs.put(name, overrides.getProperty(name));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.failedToLoadServiceDiscoveryURLDefConfiguration(COMPONENT_CONFIG_MAPPING_FILE, e);
+        }
+    }
+
 
     AmbariServiceDiscovery() {
     }

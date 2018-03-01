@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import org.apache.commons.io.FileUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -312,11 +313,28 @@ public class AmbariDynamicServiceURLCreatorTest {
     }
 
     @Test
+    public void testOozieURLFromInternalMappingWithExternalOverrides() throws Exception {
+        File tmpFile = File.createTempFile("knox-discovery-external-url-mapping", ".xml");
+        System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY, tmpFile.getAbsolutePath());
+        try {
+            FileUtils.writeStringToFile(tmpFile, OOZIE_OVERRIDE_MAPPING_FILE_CONTENTS, java.nio.charset.Charset.forName("utf-8"));
+            testOozieURL(null, "OOZIE", "http://host3:2222/OVERRIDE");
+        } finally {
+            System.clearProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY);
+            FileUtils.deleteQuietly(tmpFile);
+        }
+    }
+
+    @Test
     public void testOozieUIURLFromInternalMapping() throws Exception {
         testOozieURL(null, "OOZIEUI");
     }
 
     private void testOozieURL(Object mappingConfiguration, String serviceName) throws Exception {
+        testOozieURL(mappingConfiguration, serviceName, null);
+    }
+
+    private void testOozieURL(Object mappingConfiguration, String serviceName, String altExpectation) throws Exception {
         final String URL = "http://host3:2222";
 
         AmbariComponent oozieServer = EasyMock.createNiceMock(AmbariComponent.class);
@@ -333,7 +351,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertNotNull(urls);
         assertFalse(urls.isEmpty());
         String url = urls.get(0);
-        assertEquals(URL, url);
+        assertEquals((altExpectation != null ? altExpectation : URL), url);
     }
 
     @Test
@@ -1209,6 +1227,42 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals("http://{HOST}:{PORT}/{PATH}", urls.get(0));
     }
 
+    @Test
+    public void testExtensionServiceURLFromOverride() throws Exception {
+        File tmpFile = File.createTempFile("knox-discovery-url-mapping-extension", ".xml");
+        System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY, tmpFile.getAbsolutePath());
+        try {
+            FileUtils.writeStringToFile(tmpFile, CUSTOM_AUGMENT_MAPPING_FILE_CONTENTS, java.nio.charset.Charset.forName("utf-8"));
+
+            final String[] HOSTNAMES = {"host2", "host4"};
+
+            // The extension service URL mapping leverages the HBase master config properties for convenience
+            final String HBASE_MASTER_PORT_PROPERTY = "hbase.master.info.port";
+
+            AmbariComponent hbaseMaster = EasyMock.createNiceMock(AmbariComponent.class);
+            Map<String, String> hbaseMasterConfig = new HashMap<>();
+            hbaseMasterConfig.put(HBASE_MASTER_PORT_PROPERTY, "60080");
+            EasyMock.expect(hbaseMaster.getConfigProperties()).andReturn(hbaseMasterConfig).anyTimes();
+            EasyMock.expect(hbaseMaster.getConfigProperty(HBASE_MASTER_PORT_PROPERTY))
+                .andReturn(hbaseMasterConfig.get(HBASE_MASTER_PORT_PROPERTY)).anyTimes();
+            List<String> hbaseMasterHosts = Arrays.asList(HOSTNAMES);
+            EasyMock.expect(hbaseMaster.getHostNames()).andReturn(hbaseMasterHosts).anyTimes();
+            EasyMock.replay(hbaseMaster);
+
+            AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+            EasyMock.expect(cluster.getComponent("HBASE_MASTER")).andReturn(hbaseMaster).anyTimes();
+            EasyMock.replay(cluster);
+
+            // Run the test
+            AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, null);
+            List<String> urls = builder.create("DISCOVERYTEST", null);
+            validateServiceURLs(urls, HOSTNAMES, "http", "1234", "discoveryTest");
+        } finally {
+            System.clearProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY);
+            FileUtils.deleteQuietly(tmpFile);
+        }
+    }
+
 
     /**
      * Convenience method for creating AmbariDynamicServiceURLCreator instances from different mapping configuration
@@ -1415,18 +1469,32 @@ public class AmbariDynamicServiceURLCreatorTest {
             "</service-discovery-url-mappings>\n";
 
 
-    private static final String OVERRIDE_MAPPING_FILE_CONTENTS =
+    private static final String OOZIE_OVERRIDE_MAPPING_FILE_CONTENTS =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<service-discovery-url-mappings>\n" +
-            "  <service name=\"WEBHDFS\">\n" +
-            "    <url-pattern>http://{WEBHDFS_ADDRESS}/webhdfs/OVERRIDE</url-pattern>\n" +
+            "  <service name=\"OOZIE\">\n" +
+            "    <url-pattern>{OOZIE_URL}/OVERRIDE</url-pattern>\n" +
             "    <properties>\n" +
-            "      <property name=\"WEBHDFS_ADDRESS\">\n" +
-            "        <service-config name=\"HDFS\">hdfs-site</service-config>\n" +
-            "        <config-property>dfs.namenode.http-address</config-property>\n" +
+            "      <property name=\"OOZIE_URL\">\n" +
+            "        <component>OOZIE_SERVER</component>\n" +
+            "        <config-property>oozie.base.url</config-property>\n" +
             "      </property>\n" +
             "    </properties>\n" +
             "  </service>\n" +
             "</service-discovery-url-mappings>\n";
 
+    private static final String CUSTOM_AUGMENT_MAPPING_FILE_CONTENTS =
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<service-discovery-url-mappings>\n" +
+            "  <service name=\"DISCOVERYTEST\">\n" +
+            "    <url-pattern>http://{HOST}:1234/discoveryTest</url-pattern>\n" +
+            "    <properties>\n" +
+            "      <property name=\"HOST\">\n" +
+            "        <component>HBASE_MASTER</component>\n" +
+            "        <hostname/>\n" +
+            "      </property>\n" +
+            "    </properties>\n" +
+            "  </service>\n" +
+            "</service-discovery-url-mappings>\n";
 }
+

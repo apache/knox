@@ -131,8 +131,56 @@ class ServiceURLPropertyConfig {
         return urlPatterns.get(service);
     }
 
+
+    void setAll(ServiceURLPropertyConfig overrides) {
+        if (overrides != null) {
+            // URL patterns
+            if (overrides.urlPatterns != null) {
+                for (String service : overrides.urlPatterns.keySet()) {
+                    URLPattern overridePattern = overrides.urlPatterns.get(service);
+                    if (this.urlPatterns.containsKey(service)) {
+                        this.urlPatterns.replace(service, overridePattern);
+                    } else {
+                        this.urlPatterns.put(service, overridePattern);
+                    }
+                }
+            }
+
+            // Properties
+            for (String service : overrides.properties.keySet()) {
+                Map<String, Property> serviceProperties = overrides.properties.get(service);
+                if (serviceProperties != null) {
+                    // Remove the original property set for this service
+                    Map<String, Property> existingServiceProps = this.properties.get(service);
+                    if (existingServiceProps != null) {
+                        existingServiceProps.clear();
+                    }
+
+                    // Add the override properties
+                    for (String propertyName : serviceProperties.keySet()) {
+                        setConfigProperty(service, propertyName, serviceProperties.get(propertyName));
+                    }
+                }
+            }
+        }
+    }
+
+    void setConfigProperty(String service, String name, Property value) {
+        Map<String, Property> serviceProperties = properties.get(service);
+        if (serviceProperties == null) {
+            serviceProperties = new HashMap<>();
+            properties.put(service, serviceProperties);
+        }
+        serviceProperties.put(name, value);
+    }
+
     Property getConfigProperty(String service, String property) {
-        return properties.get(service).get(property);
+        Property result = null;
+        Map<String, Property> serviceProperties = properties.get(service);
+        if (serviceProperties != null) {
+            result = serviceProperties.get(property);
+        }
+        return result;
     }
 
     static class URLPattern {
