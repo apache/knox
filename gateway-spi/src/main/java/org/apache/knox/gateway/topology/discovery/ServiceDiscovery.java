@@ -26,6 +26,8 @@ import java.util.Map;
  */
 public interface ServiceDiscovery {
 
+    String CONFIG_DIR_PROPERTY = "org.apache.knox.gateway.conf.dir";
+
     /**
      * This is the type specified in a simple descriptor to indicate which ServiceDiscovery implementation to employ.
      *

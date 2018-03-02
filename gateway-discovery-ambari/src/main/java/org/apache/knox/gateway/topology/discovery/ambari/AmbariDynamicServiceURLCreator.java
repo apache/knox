@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.discovery.ambari;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -29,6 +30,8 @@ import java.util.Map;
 
 
 class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
+
+    static final String MAPPING_CONFIG_OVERRIDE_FILE = "ambari-discovery-url-mappings.xml";
 
     static final String MAPPING_CONFIG_OVERRIDE_PROPERTY = "org.apache.gateway.topology.discovery.ambari.config";
 
@@ -44,7 +47,23 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
         config = new ServiceURLPropertyConfig();
 
         // Attempt to apply overriding or additional mappings from external source
-        String mappingConfiguration = System.getProperty(MAPPING_CONFIG_OVERRIDE_PROPERTY);
+        String mappingConfiguration = null;
+
+        // First, check for the well-known override mapping file
+        String gatewayConfDir = System.getProperty(ServiceDiscovery.CONFIG_DIR_PROPERTY);
+        if (gatewayConfDir != null) {
+            File overridesFile = new File(gatewayConfDir, MAPPING_CONFIG_OVERRIDE_FILE);
+            if (overridesFile.exists()) {
+                mappingConfiguration = overridesFile.getAbsolutePath();
+            }
+        }
+
+        // If no file in the config dir, check for the system property reference
+        if (mappingConfiguration == null) {
+            mappingConfiguration = System.getProperty(MAPPING_CONFIG_OVERRIDE_PROPERTY);
+        }
+
+        // If there is an overrides configuration file specified either way, then apply it
         if (mappingConfiguration != null) {
             File mappingConfigFile = new File(mappingConfiguration);
             if (mappingConfigFile.exists()) {

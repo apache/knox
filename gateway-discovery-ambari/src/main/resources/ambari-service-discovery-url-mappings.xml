@@ -568,4 +568,46 @@
         </properties>
     </service>
 
+    <service name="SOLR">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>INFRA_SOLR</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>INFRA_SOLR</component>
+                <config-property>infra_solr_port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="STORM">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>STORM_UI_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>STORM_UI_SERVER</component>
+                <config-property>ui.port</config-property>
+            </property>
+        </properties>
+    </service>
+
+    <service name="STORM-LOGVIEWER">
+        <url-pattern>http://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>STORM_UI_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="PORT">
+                <component>STORM_UI_SERVER</component>
+                <config-property>logviewer.port</config-property>
+            </property>
+        </properties>
+    </service>
+
 </service-discovery-url-mappings>

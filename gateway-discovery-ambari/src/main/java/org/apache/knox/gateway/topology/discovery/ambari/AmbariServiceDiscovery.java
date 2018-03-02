@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -53,6 +54,8 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private static final String COMPONENT_CONFIG_MAPPING_FILE =
                                                         "ambari-service-discovery-component-config-mapping.properties";
 
+    private static final String COMPONENT_CONFIG_OVERRIDES_FILENAME = "ambari-discovery-component-config.properties";
+
     private static final String GATEWAY_SERVICES_ACCESSOR_CLASS  = "org.apache.knox.gateway.GatewayServer";
     private static final String GATEWAY_SERVICES_ACCESSOR_METHOD = "getGatewayServices";
 
@@ -87,7 +90,23 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
 
             // Attempt to apply overriding or additional mappings from external source
-            String overridesPath = System.getProperty(COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            String overridesPath = null;
+
+            // First, check for the well-known overrides config file
+            String gatewayConfDir = System.getProperty(CONFIG_DIR_PROPERTY);
+            if (gatewayConfDir != null) {
+                File overridesFile = new File(gatewayConfDir, COMPONENT_CONFIG_OVERRIDES_FILENAME);
+                if (overridesFile.exists()) {
+                    overridesPath = overridesFile.getAbsolutePath();
+                }
+            }
+
+            // If no file in the config dir, check for the system property reference
+            if (overridesPath == null) {
+                overridesPath = System.getProperty(COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            }
+
+            // If there is an overrides configuration file specified either way, then apply it
             if (overridesPath != null) {
                 Properties overrides = new Properties();
                 try (InputStream in = new FileInputStream(overridesPath)) {

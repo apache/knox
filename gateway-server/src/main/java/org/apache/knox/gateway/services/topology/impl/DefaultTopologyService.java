@@ -51,6 +51,7 @@ import org.apache.knox.gateway.topology.TopologyMonitor;
 import org.apache.knox.gateway.topology.TopologyProvider;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
+import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
 import org.apache.knox.gateway.topology.simple.ProviderConfigurationParser;
@@ -621,6 +622,11 @@ public class DefaultTopologyService
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+
+    String gatewayConfDir = config.getGatewayConfDir();
+    if (gatewayConfDir != null) {
+      System.setProperty(ServiceDiscovery.CONFIG_DIR_PROPERTY, gatewayConfDir);
+    }
 
     try {
       listeners  = new HashSet<>();
