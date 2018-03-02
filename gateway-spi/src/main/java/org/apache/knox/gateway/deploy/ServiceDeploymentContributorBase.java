@@ -43,7 +43,7 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
   }
 
   protected boolean topologyContainsProviderType(DeploymentContext context, String role) {
-    Provider provider = getProviderByRole(context, role);
+    final Provider provider = getProviderByRole(context, role);
     return (provider != null);
   }
   

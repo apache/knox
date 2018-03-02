@@ -635,6 +635,123 @@ public class DeploymentFactoryFuncTest {
     LOG_EXIT();
   }
 
+  /**
+   * Test the case where topology has federation provider configured
+   * and service uses anonymous authentication in which case we should
+   * add AnonymousFilter to the filter chain.
+   * @since 1.1.0
+   * @throws IOException
+   * @throws SAXException
+   * @throws ParserConfigurationException
+   * @throws URISyntaxException
+   * @throws TransformerException
+   */
+  @Test( timeout = MEDIUM_TIMEOUT )
+  public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
+    LOG_ENTER();
+    final GatewayConfig config = new GatewayTestConfig();
+    ((GatewayTestConfig)config).setXForwardedEnabled(false);
+    final File targetDir = new File( System.getProperty( "user.dir" ), "target" );
+    final File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
+    gatewayDir.mkdirs();
+    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    final File deployDir = new File( config.getGatewayDeploymentDir() );
+    deployDir.mkdirs();
+
+    final DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    final Map<String,String> options = new HashMap<>();
+    options.put("persist-master", "false");
+    options.put("master", "password");
+    try {
+      DeploymentFactory.setGatewayServices(srvcs);
+      srvcs.init(config, options);
+    } catch (ServiceLifecycleException e) {
+      e.printStackTrace(); // I18N not required.
+    }
+
+    final Topology federationTopology = new Topology();
+    final Topology authenticationTopology = new Topology();
+
+    federationTopology.setName( "test-cluster" );
+    authenticationTopology.setName( "test-cluster" );
+
+    final Service service = new Service();
+    service.setRole( "RANGER" );
+    service.addUrl( "http://localhost:50070/" );
+    federationTopology.addService( service );
+    authenticationTopology.addService( service );
+
+    /* Add federation provider to first topology */
+    final Provider provider = new Provider();
+    provider.setRole( "federation" );
+    provider.setName( "SSOCookieProvider" );
+    provider.setEnabled( true );
+    Param param = new Param();
+    param.setName( "sso.authentication.provider.url" );
+    param.setValue( "https://www.local.com:8443/gateway/knoxsso/api/v1/websso" );
+    provider.addParam( param );
+    federationTopology.addProvider( provider );
+
+    /* Add authentication provider to second topology */
+    final Provider provider2 = new Provider();
+    provider2.setRole( "authentication" );
+    provider2.setName( "ShiroProvider" );
+    provider2.setEnabled( true );
+    Param param2 = new Param();
+    param2.setName( "contextConfigLocation" );
+    param2.setValue( "classpath:app-context-security.xml" );
+    provider2.addParam( param2 );
+    authenticationTopology.addProvider( provider2 );
+
+
+    final Provider asserter = new Provider();
+    asserter.setRole( "identity-assertion" );
+    asserter.setName("Default");
+    asserter.setEnabled( true );
+    federationTopology.addProvider( asserter );
+    Provider authorizer = new Provider();
+    authorizer.setRole( "authorization" );
+    authorizer.setName("AclsAuthz");
+    authorizer.setEnabled( true );
+    federationTopology.addProvider( authorizer );
+    authenticationTopology.addProvider( authorizer );
+
+    final EnterpriseArchive war = DeploymentFactory.createDeployment( config, federationTopology );
+    final EnterpriseArchive war2 = DeploymentFactory.createDeployment( config, federationTopology );
+
+    final Document web = XmlUtils.readXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+    final Document web2 = XmlUtils.readXml( war2.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+
+    /* Make sure AnonymousAuthFilter is added to the chain */
+    final Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
+
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ranger/service/public/**" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.AnonymousAuthFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "rewrite" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authorization" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
+
+    final Document gateway2 = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
+
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ranger/service/public/**" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.AnonymousAuthFilter" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "rewrite" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authorization" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
+
+
+    LOG_EXIT();
+  }
+
+
   private Node node( Node scope, String expression ) throws XPathExpressionException {
     return (Node)XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope, XPathConstants.NODE );
   }

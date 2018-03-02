@@ -157,6 +157,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       } else if ( topologyContainsProviderType(context, role) ) {
         context.contributeFilter(service, resource, role, policyBinding.getName(), null);
       }
+      /* handle the case where topology has federation provider but service defines Anonymous authentication see KNOX-1197 */
+      else if (role.equalsIgnoreCase("authentication") && topologyContainsProviderType(context, "federation")) {
+        context.contributeFilter(service, resource, role, policyBinding.getName(), null);
+      }
     }
   }
 
