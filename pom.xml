@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
-        <version>14</version>
+        <version>19</version>
     </parent>
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
