@@ -32,7 +32,7 @@ import java.util.Map;
 public class GenericProviderDeploymentContributor extends
     ProviderDeploymentContributorBase {
 
-  public static String FILTER_PARAM = "filter";
+  public static final String FILTER_PARAM = "filter";
 
   @Override
   public String getRole() {

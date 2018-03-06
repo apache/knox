@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.knox.gateway.GatewayServer;
@@ -457,11 +458,11 @@ public class SimpleDescriptorHandler {
                 // Params
                 Map<String, String> svcParams = serviceParams.get(serviceName);
                 if (svcParams != null) {
-                    for (String paramName : svcParams.keySet()) {
-                        if (!(paramName.toLowerCase()).startsWith(DISCOVERY_PARAM_PREFIX)) {
+                    for (Entry<String, String> svcParam : svcParams.entrySet()) {
+                        if (!(svcParam.getKey().toLowerCase()).startsWith(DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
-                            sw.write("            <name>" + paramName + "</name>\n");
-                            sw.write("            <value>" + svcParams.get(paramName) + "</value>\n");
+                            sw.write("            <name>" + svcParam.getKey() + "</name>\n");
+                            sw.write("            <value>" + svcParam.getValue() + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }

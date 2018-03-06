@@ -24,7 +24,6 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,6 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
         this.aliasService = aliasService;
 
         // Populate context entries
-        List<AppConfigurationEntry> appConfigEntries = new ArrayList<>();
         for (RemoteConfigurationRegistryConfig config : configs) {
             if (config.isSecureRegistry()) {
                 contextEntries.put(config.getName(), createEntries(config));

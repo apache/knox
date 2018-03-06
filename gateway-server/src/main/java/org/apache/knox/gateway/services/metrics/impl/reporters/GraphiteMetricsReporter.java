@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class GraphiteMetricsReporter extends AbstractMetricsReporter {
 
-  public static String NAME = "graphite-reporter";
+  public static final String NAME = "graphite-reporter";
 
   private Graphite graphite;
   private GraphiteReporter reporter;

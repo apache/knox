@@ -37,9 +37,9 @@ import java.util.Map;
 
 public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
-  private static Map<String, Adapter> METHOD_ADAPTERS = createMethodAdapters();
+  private static final Map<String, Adapter> METHOD_ADAPTERS = createMethodAdapters();
 
-  protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+  protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
 
   private Dispatch dispatch;
 

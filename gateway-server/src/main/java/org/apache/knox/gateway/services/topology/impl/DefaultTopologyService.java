@@ -80,6 +80,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
@@ -206,34 +207,23 @@ public class DefaultTopologyService
       Map<File, Topology> newTopologies) {
     ArrayList<TopologyEvent> events = new ArrayList<TopologyEvent>();
     // Go through the old topologies and find anything that was deleted.
-    for (File file : oldTopologies.keySet()) {
-      if (!newTopologies.containsKey(file)) {
-        events.add(new TopologyEvent(TopologyEvent.Type.DELETED, oldTopologies.get(file)));
+    for (Entry<File, Topology> oldTopology : oldTopologies.entrySet()) {
+      if (!newTopologies.containsKey(oldTopology.getKey())) {
+        events.add(new TopologyEvent(TopologyEvent.Type.DELETED, oldTopology.getValue()));
       }
     }
     // Go through the new topologies and figure out what was updated vs added.
-    for (File file : newTopologies.keySet()) {
-      if (oldTopologies.containsKey(file)) {
-        Topology oldTopology = oldTopologies.get(file);
-        Topology newTopology = newTopologies.get(file);
-        if (newTopology.getTimestamp() > oldTopology.getTimestamp()) {
-          events.add(new TopologyEvent(TopologyEvent.Type.UPDATED, newTopologies.get(file)));
+    for (Entry<File, Topology> newTopology : newTopologies.entrySet()) {
+      if (oldTopologies.containsKey(newTopology.getKey())) {
+        Topology oldTopology = oldTopologies.get(newTopology.getKey());
+        if (newTopology.getValue().getTimestamp() > oldTopology.getTimestamp()) {
+          events.add(new TopologyEvent(TopologyEvent.Type.UPDATED, newTopology.getValue()));
         }
       } else {
-        events.add(new TopologyEvent(TopologyEvent.Type.CREATED, newTopologies.get(file)));
+        events.add(new TopologyEvent(TopologyEvent.Type.CREATED, newTopology.getValue()));
       }
     }
     return events;
-  }
-
-  private File calculateAbsoluteProvidersConfigDir(GatewayConfig config) {
-    File pcDir = new File(config.getGatewayProvidersConfigDir());
-    return pcDir.getAbsoluteFile();
-  }
-
-  private File calculateAbsoluteDescriptorsDir(GatewayConfig config) {
-    File descDir = new File(config.getGatewayDescriptorsDir());
-    return descDir.getAbsoluteFile();
   }
 
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {

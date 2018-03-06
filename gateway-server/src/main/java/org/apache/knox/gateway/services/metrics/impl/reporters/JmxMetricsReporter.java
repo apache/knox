@@ -26,7 +26,7 @@ import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 
 public class JmxMetricsReporter extends AbstractMetricsReporter {
 
-  public static String NAME = "jmx-reporter";
+  public static final String NAME = "jmx-reporter";
 
   private JmxReporter jmxReporter;
 

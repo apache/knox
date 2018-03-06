@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -53,19 +54,9 @@ public abstract class AbstractRequest<T> {
    * @param request
    * @param headers
    */
-  private void removeHeaders(HttpRequest request, Map<String, String> headers) {
-    for(String header : headers.keySet()) {
-      request.removeHeaders(header);
-    }
-  }
-
-  /**
-   * @param request
-   * @param headers
-   */
   private void addHeaders(HttpRequest request, Map<String, String> headers) {
-    for(String header : headers.keySet()) {
-      request.setHeader(header, headers.get(header));
+    for(Entry<String, String> header : headers.entrySet()) {
+      request.setHeader(header.getKey(), header.getValue());
     }
   }
 

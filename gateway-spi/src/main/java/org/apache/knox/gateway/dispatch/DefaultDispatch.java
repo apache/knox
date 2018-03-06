@@ -61,8 +61,8 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final String SET_COOKIE = "SET-COOKIE";
   protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
 
-  protected static SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
-  protected static SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
+  protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+  protected static final SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
   protected static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 

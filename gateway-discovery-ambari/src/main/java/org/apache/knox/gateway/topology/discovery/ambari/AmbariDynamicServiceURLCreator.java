@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 
 class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
@@ -159,10 +160,10 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
         String url = null;
         if (pattern != null) {
             url = pattern;
-            for (String placeHolder : placeholderValues.keySet()) {
-                String value = placeholderValues.get(placeHolder);
+            for (Entry<String, String> placeHolder : placeholderValues.entrySet()) {
+                String value = placeHolder.getValue();
                 if (value != null) {
-                    url = url.replace("{" + placeHolder + "}", value);
+                    url = url.replace("{" + placeHolder.getKey() + "}", value);
                 }
             }
         }

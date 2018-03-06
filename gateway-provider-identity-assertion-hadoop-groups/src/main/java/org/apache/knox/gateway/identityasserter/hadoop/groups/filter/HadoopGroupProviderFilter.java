@@ -34,7 +34,7 @@ import org.apache.hadoop.security.Groups;
 /**
  * A filter that integrates the Hadoop {@link GroupMappingServiceProvider} for
  * looking up group membership of the authenticated (asserted) identity.
- * 
+ *
  * @since 0.11.0
  */
 public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
@@ -42,7 +42,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   /**
    * Logging
    */
-  public static HadoopGroupProviderMessages LOG = MessagesFactory
+  public static final HadoopGroupProviderMessages LOG = MessagesFactory
       .get(HadoopGroupProviderMessages.class);
 
   /**

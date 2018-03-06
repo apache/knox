@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -218,8 +219,8 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             Properties props = new Properties();
             props.setProperty(PROP_CLUSTER_NAME, clusterName);
             props.setProperty(PROP_CLUSTER_SOURCE, address);
-            for (String name : configVersions.keySet()) {
-                props.setProperty(name, configVersions.get(name));
+            for (Entry<String, String> configVersion : configVersions.entrySet()) {
+                props.setProperty(configVersion.getKey(), configVersion.getValue());
             }
 
             persist(props, getConfigVersionsPersistenceFile(address, clusterName));
@@ -354,8 +355,8 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         // Build the set of configuration versions
         Map<String, String> configVersions = new HashMap<>();
         Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigs = cluster.getServiceConfigurations();
-        for (String serviceName : serviceConfigs.keySet()) {
-            Map<String, AmbariCluster.ServiceConfiguration> configTypeVersionMap = serviceConfigs.get(serviceName);
+        for (Entry<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfig : serviceConfigs.entrySet()) {
+            Map<String, AmbariCluster.ServiceConfiguration> configTypeVersionMap = serviceConfig.getValue();
             for (AmbariCluster.ServiceConfiguration config : configTypeVersionMap.values()) {
                 String configType = config.getType();
                 String version = config.getVersion();
@@ -431,10 +432,10 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
         configVersionsLock.readLock().lock();
         try {
-            for (String address : ambariClusterConfigVersions.keySet()) {
+            for (Entry<String, Map<String, Map<String, String>>> ambariClusterConfigVersion : ambariClusterConfigVersions.entrySet()) {
                 List<String> clusterNames = new ArrayList<>();
-                clusterNames.addAll(ambariClusterConfigVersions.get(address).keySet());
-                result.put(address, clusterNames);
+                clusterNames.addAll(ambariClusterConfigVersion.getValue().keySet());
+                result.put(ambariClusterConfigVersion.getKey(), clusterNames);
             }
         } finally {
             configVersionsLock.readLock().unlock();

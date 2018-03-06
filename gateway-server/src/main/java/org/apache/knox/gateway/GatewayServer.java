@@ -114,7 +114,6 @@ public class GatewayServer {
   private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
-  private static final String DEFAULT_CONNECTOR_NAME = "default";
 
   private static GatewayServer server;
   private static GatewayServices services;
@@ -317,11 +316,9 @@ public class GatewayServer {
             }
           }
           if (connector.getName() == null) {
-            log.startedGateway(
-                connector != null ? connector.getLocalPort() : -1);
+            log.startedGateway(connector.getLocalPort());
           } else {
-            log.startedGateway(connector != null ? connector.getName() : "",
-                connector != null ? connector.getLocalPort() : -1);
+            log.startedGateway(connector.getName(), connector.getLocalPort());
           }
         }
       }

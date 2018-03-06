@@ -18,12 +18,12 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 class AmbariClientCommon {
 
@@ -34,8 +34,6 @@ class AmbariClientCommon {
 
     static final String AMBARI_SERVICECONFIGS_URI =
                                     AMBARI_CLUSTERS_URI + "/%s/configurations/service_config_versions?is_current=true";
-
-    private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
     private RESTInvoker restClient;
 
@@ -87,8 +85,8 @@ class AmbariClientCommon {
 
                     Map<String, String> configProps = new HashMap<>();
                     JSONObject configProperties = (JSONObject) ((JSONObject) configuration).get("properties");
-                    for (String propertyName : configProperties.keySet()) {
-                        configProps.put(propertyName, String.valueOf(((JSONObject) configProperties).get(propertyName)));
+                    for (Entry<String, Object> entry : configProperties.entrySet()) {
+                        configProps.put(entry.getKey(), String.valueOf(entry.getValue()));
                     }
                     if (!serviceConfigurations.containsKey(serviceName)) {
                         serviceConfigurations.put(serviceName, new HashMap<>());

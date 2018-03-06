@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import net.minidev.json.JSONArray;
@@ -155,7 +156,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private AmbariConfigurationMonitor getConfigurationChangeMonitor() {
         AmbariConfigurationMonitor ambariMonitor = null;
         try {
-            Class clazz = Class.forName(GATEWAY_SERVICES_ACCESSOR_CLASS);
+            Class<?> clazz = Class.forName(GATEWAY_SERVICES_ACCESSOR_CLASS);
             if (clazz != null) {
                 Method m = clazz.getDeclaredMethod(GATEWAY_SERVICES_ACCESSOR_METHOD);
                 if (m != null) {
@@ -270,9 +271,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                                                                                                     clusterName,
                                                                                                     discoveryUser,
                                                                                                     discoveryPwdAlias);
-        for (String serviceName : serviceConfigurations.keySet()) {
-            for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfigurations.get(serviceName).entrySet()) {
-                cluster.addServiceConfiguration(serviceName, serviceConfig.getKey(), serviceConfig.getValue());
+        for (Entry<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfiguration : serviceConfigurations.entrySet()) {
+            for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfiguration.getValue().entrySet()) {
+                cluster.addServiceConfiguration(serviceConfiguration.getKey(), serviceConfig.getKey(), serviceConfig.getValue());
             }
         }
 

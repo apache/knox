@@ -25,8 +25,8 @@ import javax.security.auth.x500.X500Principal;
 
 public class X500PrincipalParser
 {
-  public static int LEASTSIGNIFICANT = 0;
-  public static int MOSTSIGNIFICANT = 1;
+  public static final int LEASTSIGNIFICANT = 0;
+  public static final int MOSTSIGNIFICANT = 1;
   
   public static final String attrCN = "CN";
   public static final String attrOU = "OU";
