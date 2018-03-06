@@ -1,0 +1,104 @@
+<bs-modal (onClose)="onClose()" #newProviderConfigModal xmlns="http://www.w3.org/1999/html">
+  <bs-modal-header [showDismiss]="true">
+    <label class="modal-title">Create a New Provider Configuration</label>
+  </bs-modal-header>
+  <bs-modal-body>
+
+    <div *ngIf="isRootStep()">
+      <!-- Provider Configuration Name -->
+      <div>
+        <table>
+          <tr>
+            <td><strong>Name</strong></td>
+            <td><input type="textbox"
+                       size="60"
+                       [(ngModel)]="name"></td>
+          </tr>
+        </table>
+      </div> <!-- Provider Configuration Name -->
+
+      <br/>
+
+      <!-- Display New Providers -->
+      <div>
+        <strong>Providers</strong><br/>
+        <div *ngFor="let pc of providers">
+          {{pc.name}}
+        </div>
+      </div> <!-- Display New Providers -->
+
+      <br/>
+
+      <!-- Root Step -->
+      <div>
+        <button type="button"
+                class="btn btn-default btn-sm"
+                data-dismiss="newProviderConfigModal"
+                (click)="onNextStep()">Add Provider</button>
+      </div> <!-- Root Step -->
+    </div>
+
+    <!-- Provider Category Selection Step -->
+    <div *ngIf="isProviderCategoryStep()">
+      <strong>Choose a Provider Category</strong><br/><br/>
+      <div *ngFor="let pc of getProviderCategories()">
+        <label>
+          <input type="radio"
+                 [name]="pc"
+                 [(ngModel)]="selectedCategory"
+                 [value]="pc">{{pc}}
+        </label>
+      </div>
+    </div> <!-- Provider Category Selection Step -->
+
+    <!-- Provider Type Selection Step -->
+    <div *ngIf="isProviderTypeStep()">
+      <strong>Choose a {{ selectedCategory }} Provider Type</strong><br/><br/>
+      <div *ngFor="let pt of getProviderTypes()">
+        <label>
+          <input type="radio"
+                 [name]="pt"
+                 (change)="getCategoryWizard().onChange()"
+                 [(ngModel)]="getCategoryWizard().selectedType"
+                 [value]="pt">{{pt}}
+        </label>
+      </div>
+    </div> <!-- Provider Type Selection Step -->
+
+    <!-- Provider Type Params Step -->
+    <div *ngIf="isProviderParamsStep()">
+      <strong>Specify {{ getCategoryWizard().getSelectedType() }} Provider Parameters</strong><br/><br/>
+      <table>
+        <tr *ngFor="let pt of getProviderParams()">
+          <td><strong>{{pt}}</strong></td>
+          <td><input type="textbox"
+                     size="60"
+                     #paramInput
+                     (change)="setProviderParamBinding(pt, paramInput.value)"
+                     [value]="getProviderParamBinding(pt)"></td>
+        </tr>
+      </table>
+    </div> <!-- Provider Type Params Step -->
+
+
+  </bs-modal-body>
+  <bs-modal-footer>
+    <button type="button"
+            class="btn btn-default btn-sm pull-left"
+            data-dismiss="newProviderConfigModal"
+            (click)="newProviderConfigModal.dismiss()">Cancel</button>
+    <button type="button"
+            *ngIf="!isRootStep()"
+            class="btn btn-primary btn-sm"
+            (click)="onPreviousStep()">Back</button>
+    <button type="button"
+            *ngIf="isRootStep() || !hasMoreSteps()"
+            class="btn btn-primary btn-sm"
+            [disabled]="(isRootStep() && !name)"
+            (click)="isRootStep() ? newProviderConfigModal.close() : onFinishAdd()">Ok</button>
+    <button type="button"
+            *ngIf="!isRootStep() && hasMoreSteps()"
+            class="btn btn-primary btn-sm"
+            (click)="onNextStep()">Next</button>
+  </bs-modal-footer>
+</bs-modal>

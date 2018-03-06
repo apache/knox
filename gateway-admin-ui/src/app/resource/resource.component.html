@@ -3,7 +3,22 @@
     <table class="table table-hover">
       <thead>
       <tr>
-        <th>{{ getResourceTypeSingularDisplayName(resourceType) }}</th>
+        <th>
+          <span>
+          {{ getResourceTypeSingularDisplayName(resourceType) }}
+          </span>
+          <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
+                *ngIf="resourceType === 'Provider Configurations'"
+                (click)="newProviderConfigModal.open()"
+                title="Create New Provider Configuration"
+                data-toggle="tooltip"></span>
+          <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
+                (click)="isAddingService=true"
+                *ngIf="resourceType === 'Descriptors'"
+                (click)="newDescriptorModal.open()"
+                title="Create New Descriptor"
+                data-toggle="tooltip"></span>
+        </th>
         <th *ngIf="resourceType === 'Topologies'">Timestamp</th>
       </tr>
       </thead>
@@ -18,5 +33,9 @@
       </tr>
       </tbody>
     </table>
+  </div>
+  <div>
+    <app-new-desc-wizard #newDescriptorModal></app-new-desc-wizard>
+    <app-provider-config-wizard #newProviderConfigModal></app-provider-config-wizard>
   </div>
 </div>

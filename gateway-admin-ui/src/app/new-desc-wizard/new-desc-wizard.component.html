@@ -1,0 +1,105 @@
+<bs-modal (onClose)="onClose()" #newDescriptorModal xmlns="http://www.w3.org/1999/html">
+  <bs-modal-header [showDismiss]="true">
+    <label class="modal-title">Create a New Descriptor</label>
+  </bs-modal-header>
+  <bs-modal-body>
+    <div class="panel-body">
+
+      <div> <!-- Descriptor Name -->
+        <strong>Name</strong> <input type="text" [(ngModel)]="descriptorName">
+      </div> <!-- Descriptor Name -->
+
+      <br>
+
+      <div> <!-- Provider Config reference -->
+          <span class="col-md-sm pull-left"><strong>Provider Configuration</strong>&nbsp;</span>
+          <span class="col-md-sm inline-editable" (click)="editModePC=true" *ngIf="!editModePC">{{descriptor.providerConfig}}</span>
+          <span class="col-md-sm inline-editor inlineEditForm" *ngIf="editModePC">
+            <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
+            <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
+              <span class="glyphicon glyphicon-ok"></span>
+            </button>
+            <button class="btn btn-xs" (click)="editModePC=false">
+              <span class="glyphicon glyphicon-remove"></span>
+            </button>
+          </span>
+          &nbsp;
+          <button id="chooseProviderConfig"
+                  class="btn btn-xs"
+                  (click)="chooseProviderConfigModal.open(descriptor, 'sm')"
+                  [disabled]="editModePC"
+                  type="submit"
+                  data-toggle="tooltip"
+                  title="Choose Provider Configuration">
+            <span class="glyphicon glyphicon-edit"></span>
+          </button>
+        <app-provider-config-selector #choosePC></app-provider-config-selector>
+      </div> <!-- Provider Config reference -->
+
+      <br>
+
+      <!-- Services -->
+      <div>
+        <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showServices'] ? 'minus' : 'plus')"
+              (click)="toggleBoolean('showServices')"></span>
+        <span (click)="toggleBoolean('showServices')"><strong>Services</strong></span>
+      </div>
+      <div class="panel panel-default col-md-12" *ngIf="this['showServices']">
+            <table>
+                <tr>
+                  <td *ngFor="let col of getServiceDisplayColumns()">
+                    <div *ngFor="let supportedService of col">
+                      <input type="checkbox"
+                             [checked]="isSelected(supportedService)"
+                             (click)="toggleServiceSelected(supportedService)">
+                      {{ supportedService }}
+                    </div>
+                  </td>
+                </tr>
+            </table>
+      </div> <!-- Services -->
+
+      <br>
+
+      <!-- Discovery -->
+      <div>
+        <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showDiscovery'] ? 'minus' : 'plus')"
+              (click)="toggleBoolean('showDiscovery')"></span>
+        <span (click)="toggleBoolean('showDiscovery')"><strong>Discovery</strong></span>
+      </div>
+      <div class="panel panel-default col-md-12" *ngIf="this['showDiscovery']">
+        <div>
+          <table>
+            <tr>
+              <td><strong>Address</strong></td>
+              <td><input type="text" [(ngModel)]="descriptor.discoveryAddress"></td>
+            </tr>
+            <tr>
+              <td><strong>Cluster</strong></td>
+              <td><input type="text" [(ngModel)]="descriptor.discoveryCluster"></td>
+            </tr>
+            <tr>
+              <td><strong>Username</strong></td>
+              <td><input type="text" [(ngModel)]="descriptor.discoveryUser"></td>
+            </tr>
+            <tr>
+              <td><strong>Password Alias</strong></td>
+              <td><input type="text" [(ngModel)]="descriptor.discoveryPassAlias"></td>
+            </tr>
+          </table>
+        </div>
+      </div> <!-- Discovery -->
+
+    </div>
+  </bs-modal-body>
+  <bs-modal-footer>
+    <button type="button"
+            class="btn btn-default btn-sm"
+            data-dismiss="newDescriptorModal"
+            (click)="newDescriptorModal.dismiss()">Cancel</button>
+    <button type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="!descriptor || !descriptorName"
+            (click)="newDescriptorModal.close()">Ok</button>
+  </bs-modal-footer>
+</bs-modal>

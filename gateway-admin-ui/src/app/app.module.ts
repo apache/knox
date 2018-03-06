@@ -38,7 +38,9 @@ import { ResourceComponent } from './resource/resource.component';
 import { ResourceService } from './resource/resource.service';
 import { DescriptorComponent } from './descriptor/descriptor.component';
 import { ResourceDetailComponent } from './resource-detail/resource-detail.component';
-import { ProviderConfigSelectorComponent } from './provider-config-selector/provider-config-selector.component'
+import { ProviderConfigSelectorComponent } from './provider-config-selector/provider-config-selector.component';
+import { NewDescWizardComponent } from './new-desc-wizard/new-desc-wizard.component';
+import { ProviderConfigWizardComponent } from './provider-config-wizard/provider-config-wizard.component'
 
 @NgModule({
   imports: [ BrowserModule,
@@ -59,7 +61,9 @@ import { ProviderConfigSelectorComponent } from './provider-config-selector/prov
                   ResourceComponent,
                   DescriptorComponent,
                   ResourceDetailComponent,
-                  ProviderConfigSelectorComponent
+                  ProviderConfigSelectorComponent,
+                  NewDescWizardComponent,
+                  ProviderConfigWizardComponent
     ],
   providers: [ TopologyService,
                GatewayVersionService,

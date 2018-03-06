@@ -46,8 +46,8 @@
       <div class="panel-body" *ngIf="isShowProvider(provider)">
         <strong>Role</strong> {{ provider.role }}<br>
         <strong>Enabled</strong>&nbsp;<input type="checkbox"
-                                                     [checked]="isProviderEnabled(provider)"
-                                                     (click)="onProviderEnabled(provider)"><br>
+                                             [checked]="isProviderEnabled(provider)"
+                                             (click)="onProviderEnabled(provider)"><br>
         <div>
           <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (isShowProviderParams(provider) ? 'minus' : 'plus')"
                 (click)="toggleShowProviderParams(provider)"></span>
@@ -137,7 +137,7 @@
       <div class="panel panel-default col-md-12">
         <span class="col-md-12 pull-left">
           <span class="col-md-sm"><strong>Provider Configuration</strong>&nbsp;</span>
-          <span class="col-md-sm inline-editable" (click)="editModePC=true" *ngIf="!editModePC">{{ descriptor.providerConfig}}</span>
+          <span class="col-md-sm inline-editable" (click)="editModePC=true" *ngIf="!editModePC">{{descriptor.providerConfig}}</span>
           <span class="col-md-sm inline-editor inlineEditForm" *ngIf="editModePC">
             <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
             <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
