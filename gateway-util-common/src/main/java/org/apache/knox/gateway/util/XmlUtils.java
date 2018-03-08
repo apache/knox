@@ -46,6 +46,7 @@ public class XmlUtils {
   public static Document readXml( InputStream input ) throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
     f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
     DocumentBuilder b = f.newDocumentBuilder();
     return b.parse( input );
   }
@@ -53,6 +54,7 @@ public class XmlUtils {
   public static Document readXml( InputSource source ) throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
     f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
     DocumentBuilder b = f.newDocumentBuilder();
     return b.parse( source );
   }
@@ -98,6 +100,7 @@ public class XmlUtils {
   public static Document createDocument(boolean standalone) throws ParserConfigurationException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
     f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
     DocumentBuilder b = f.newDocumentBuilder();
     Document d = b.newDocument();
     d.setXmlStandalone( standalone );
