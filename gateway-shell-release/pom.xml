@@ -82,6 +82,7 @@
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
                                     </descriptors>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
                         </executions>
