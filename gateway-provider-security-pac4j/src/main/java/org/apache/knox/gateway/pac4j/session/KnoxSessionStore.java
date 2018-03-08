@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.pac4j.session;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.Urls;
@@ -30,8 +31,13 @@ import org.pac4j.core.util.JavaSerializationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Specific session store where data are saved into cookies (and not in memory).
@@ -66,7 +72,7 @@ public class KnoxSessionStore implements SessionStore {
         return null;
     }
 
-    private Serializable decryptBase64(final String v) {
+    private Serializable uncompressDecryptBase64(final String v) {
         if (v != null && v.length() > 0) {
             byte[] bytes = Base64.decodeBase64(v);
             EncryptionResult result = EncryptionResult.fromByteArray(bytes);
@@ -76,7 +82,11 @@ public class KnoxSessionStore implements SessionStore {
                     result.iv,
                     result.salt);
             if (clear != null) {
-                return javaSerializationHelper.unserializeFromBytes(clear);
+                try {
+                    return javaSerializationHelper.unserializeFromBytes(unCompress(clear));
+                } catch (IOException e) {
+                    throw new TechnicalException(e);
+                }
             }
         }
         return null;
@@ -86,18 +96,31 @@ public class KnoxSessionStore implements SessionStore {
         final Cookie cookie = ContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
         Object value = null;
         if (cookie != null) {
-            value = decryptBase64(cookie.getValue());
+            value = uncompressDecryptBase64(cookie.getValue());
         }
         logger.debug("Get from session: {} = {}", key, value);
         return value;
     }
 
-    private String encryptBase64(final Object o) {
+    private String compressEncryptBase64(final Object o) {
         if (o == null || o.equals("")
             || (o instanceof Map<?,?> && ((Map<?,?>)o).isEmpty())) {
             return null;
         } else {
-            final byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
+            byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
+
+            /* compress the data  */
+            try {
+                bytes = compress(bytes);
+
+                if(bytes.length > 3000) {
+                    logger.warn("Cookie too big, it might not be properly set");
+                }
+
+            } catch (final IOException e) {
+                throw new TechnicalException(e);
+            }
+
             EncryptionResult result = cryptoService.encryptForCluster(this.clusterName, PAC4J_PASSWORD, bytes);
             return Base64.encodeBase64String(result.toByteAray());
         }
@@ -105,7 +128,7 @@ public class KnoxSessionStore implements SessionStore {
 
     public void set(WebContext context, String key, Object value) {
         logger.debug("Save in session: {} = {}", key, value);
-        final Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + key, encryptBase64(value));
+        final Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(value));
         try {
             String domain = Urls.getDomainName(context.getFullRequestURL(), this.domainSuffix);
             if (domain == null) {
@@ -119,6 +142,41 @@ public class KnoxSessionStore implements SessionStore {
         cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
         context.addResponseCookie(cookie);
     }
+
+    /**
+     * A function used to compress the data using GZIP
+     * @param data
+     * @return gziped data
+     * @since 1.1.0
+     */
+    private static byte[] compress(final byte[] data) throws IOException {
+
+        try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream(
+            data.length);
+            final GZIPOutputStream gzip = new GZIPOutputStream(byteStream)) {
+            gzip.write(data);
+            gzip.close();
+            return byteStream.toByteArray();
+        }
+    }
+
+    /**
+     * Decompress the data compressed using gzip
+     *
+     * @param data
+     * @return uncompressed data
+     * @throws IOException
+     * @since 1.1.0
+     */
+    private static byte[] unCompress(final byte[] data) throws IOException {
+
+        try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(
+            data);
+            final GZIPInputStream gzip = new GZIPInputStream(inputStream)) {
+            return IOUtils.toByteArray(gzip);
+        }
+    }
+
 
     @Override
     public SessionStore buildFromTrackableSession(WebContext arg0, Object arg1) {
@@ -139,8 +197,7 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     @Override
-    public boolean renewSession(WebContext arg0) {
-        // TODO Auto-generated method stub
+    public boolean renewSession(final WebContext context) {
         return false;
     }
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.pac4j.filter;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
@@ -29,6 +30,8 @@ import org.apache.knox.gateway.services.security.CryptoService;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
+import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
@@ -70,6 +73,8 @@ public class Pac4jDispatcherFilter implements Filter {
   private static final String PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM = "pac4j.cookie.domain.suffix";
 
   private static final String PAC4J_CONFIG = "pac4j.config";
+
+  private static final String PAC4J_SESSION_STORE = "pac4j.session.store";
 
   private CallbackFilter callbackFilter;
 
@@ -160,7 +165,18 @@ public class Pac4jDispatcherFilter implements Filter {
     securityFilter.setConfigOnly(config);
 
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
-    config.setSessionStore(new KnoxSessionStore(cryptoService, clusterName, domainSuffix));
+    final String sessionStoreVar = filterConfig.getInitParameter(PAC4J_SESSION_STORE);
+
+    SessionStore sessionStore;
+
+    if(!StringUtils.isBlank(sessionStoreVar) && J2ESessionStore.class.getName().contains(sessionStoreVar) ) {
+      sessionStore = new J2ESessionStore();
+    } else {
+      sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix);
+    }
+
+    config.setSessionStore(sessionStore);
+
   }
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
