@@ -19,5 +19,5 @@ export class ProviderConfig {
     name: string;
     role: string;
     enabled: string;
-    params: Object;
+    params: Map<string, string>;
 }

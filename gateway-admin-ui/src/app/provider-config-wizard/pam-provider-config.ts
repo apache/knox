@@ -16,24 +16,38 @@
  */
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {OrderedParamContainer} from "./ordered-param-container";
 
-export class PAMProviderConfig extends AuthenticationProviderConfig {
+export class PAMProviderConfig extends AuthenticationProviderConfig implements OrderedParamContainer {
 
   static SESSION_TIMEOUT  = 'Session Timeout';
+  static REALM            = 'Realm';
+  static SERVICE          = 'Service';
+  static AUTH_CHAIN       = 'Authentication Chain';
 
   private static displayPropertyNames = [ PAMProviderConfig.SESSION_TIMEOUT ];
 
   private static displayPropertyNameBindings: Map<string, string> =
                             new Map([
-                              [PAMProviderConfig.SESSION_TIMEOUT, 'sessionTimeout']
+                              [PAMProviderConfig.SESSION_TIMEOUT, 'sessionTimeout'],
+                              [PAMProviderConfig.REALM,           'main.pamRealm'],
+                              [PAMProviderConfig.SERVICE,         'main.pamRealm.service'],
+                              [PAMProviderConfig.AUTH_CHAIN,      'urls./**']
                             ]);
 
+  private static paramsOrder: string[] =
+                            [ PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SESSION_TIMEOUT),
+                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.REALM),
+                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SERVICE),
+                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.AUTH_CHAIN)
+                            ];
 
   constructor() {
     super('ShiroProvider');
-    this.setParam('main.pamRealm', 'org.apache.knox.gateway.shirorealm.KnoxPamRealm');
-    this.setParam('main.pamRealm.service', 'login');
-    this.setParam('urls./**', 'authcBasic');
+    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.REALM),
+                  'org.apache.knox.gateway.shirorealm.KnoxPamRealm');
+    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SERVICE), 'login');
+    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.AUTH_CHAIN), 'authcBasic');
   }
 
   getDisplayPropertyNames(): string[] {
@@ -44,5 +58,21 @@ export class PAMProviderConfig extends AuthenticationProviderConfig {
     return PAMProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  // TODO: PJZ: Shiro-based providers have param ordering requirements; need to accommodate that
+  getOrderedParamNames(): string[] {
+    return PAMProviderConfig.paramsOrder;
+  }
+
+  orderParams(params: Map<string, string>): Map<string, string> {
+    let result = new Map<string, string>();
+
+    for (let name of this.getOrderedParamNames()) {
+      let value = params[name];
+      if (value) {
+        result[name] = value;
+      }
+    }
+
+    return result;
+  }
+
 }

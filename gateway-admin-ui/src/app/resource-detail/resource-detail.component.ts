@@ -137,7 +137,7 @@ export class ResourceDetailComponent implements OnInit {
 
                             // There may not be params
                             if (entry.param) {
-                                let params = {};
+                                let params = new Map<string, string>();
                                 for (let i = 0; i < entry.param.length; i++) {
                                     let param = entry.param[i];
                                     params[param.name[0]] = param.value[0];
@@ -518,7 +518,7 @@ export class ResourceDetailComponent implements OnInit {
 
   addProviderParam(provider: ProviderConfig, name: string, value: string) {
       if (!provider.params) {
-          provider.params = {};
+          provider.params = new Map<string, string>();
       }
       provider.params[name] = value;
       this.changedProviders = this.providers;
@@ -526,11 +526,10 @@ export class ResourceDetailComponent implements OnInit {
 
   getProviderParamNames(provider: ProviderConfig): string[] {
       if (!provider.params) {
-          provider.params = {};
+          provider.params = new Map<string, string>();
       }
-      return Object.getOwnPropertyNames(provider.params);
+      return Object.keys(provider.params);
   }
-
 
   isProviderEnabled(pc: ProviderConfig): boolean {
       let result: boolean = false;

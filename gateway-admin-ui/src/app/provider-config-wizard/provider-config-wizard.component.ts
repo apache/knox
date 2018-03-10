@@ -27,6 +27,8 @@ import {IdentityAssertionWizard} from "./identity-assertion-wizard";
 import {HaWizard} from "./ha-wizard";
 import {Resource} from "../resource/resource";
 import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {OrderedParamContainer} from "./ordered-param-container";
+
 
 @Component({
   selector: 'app-provider-config-wizard',
@@ -87,26 +89,31 @@ export class ProviderConfigWizardComponent implements OnInit {
     this.selectedCategory = ProviderConfigWizardComponent.CATEGORY_AUTHENTICATION;
   }
 
+
+  // Type Guard for identifying OrderedParamContainer implementations
+  static isOrderedParamContainer = (x: any): x is OrderedParamContainer => x.orderParams;
+
   onFinishAdd() {
-    console.debug('Selected provider category: ' + this.selectedCategory);
+    console.debug('ProviderConfigWizard --> Selected provider category: ' + this.selectedCategory);
 
     let catWizard = this.getCategoryWizard(this.selectedCategory);
     let type = catWizard ? catWizard.getSelectedType() : 'undefined';
-    console.debug('Selected provider type: ' + type);
+    console.debug('ProviderConfigWizard --> Selected provider type: ' + type);
 
     if (catWizard) {
       let pc: ProviderConfig = catWizard.getProviderConfig();
       if (pc) {
         this.providers.push(pc);
-        console.debug('\tProvider Name: ' + pc.name);
-        console.debug('\tProvider Role: ' + pc.role);
-        console.debug('\tProvider Enabled: ' + pc.enabled);
+        console.debug('ProviderConfigWizard --> Provider: name=' + pc.name + ', role=' + pc.role + ', enabled=' + pc.enabled);
         if (pc.params) {
-          for (let name of Object.getOwnPropertyNames(pc.params)) {
-            console.debug('\t\tParam: ' + name + ' = ' + pc.params[name]);
+          // If the provider is managing its own param order, allow it to re-order the params now
+          if (ProviderConfigWizardComponent.isOrderedParamContainer(pc)) {
+            pc.params = (pc as OrderedParamContainer).orderParams(pc.params);
           }
-        } else {
-          console.debug('\tNo Params');
+
+          for (let name of Object.getOwnPropertyNames(pc.params)) {
+            console.debug('\tParam: ' + name + ' = ' + pc.params[name]);
+          }
         }
       }
     }
@@ -115,12 +122,6 @@ export class ProviderConfigWizardComponent implements OnInit {
   }
 
   onClose() {
-    console.debug('Provider Configuration: ' + this.name);
-
-    for (let pc of this.providers) {
-      console.debug('\tProvider: ' + pc.name + ' (' + pc.role + ')');
-    }
-
     // Identify the new resource
     let newResource = new Resource();
     newResource.name = this.name + '.json';
@@ -195,7 +196,7 @@ export class ProviderConfigWizardComponent implements OnInit {
     if (catWizard) {
       return catWizard.getTypes();
     } else {
-      console.debug('Unresolved category wizard for ' + (category ? category : this.selectedCategory));
+      console.debug('ProviderConfigWizard --> Unresolved category wizard for ' + (category ? category : this.selectedCategory));
     }
     return [];
   }
@@ -209,14 +210,13 @@ export class ProviderConfigWizardComponent implements OnInit {
           let dispPC = pc as DisplayBindingProviderConfig;
           return dispPC.getDisplayPropertyNames();
         } else {
-          console.debug('Got Vanilla ProviderConfig');
           return [];
         }
       } else {
-        console.log('No provider config from category wizard ' + typeof(catWizard));
+        console.log('ProviderConfigWizard --> No provider config from category wizard ' + typeof(catWizard));
       }
     } else {
-      console.debug('Unresolved category wizard for ' + this.selectedCategory);
+      console.debug('ProviderConfigWizard --> Unresolved category wizard for ' + this.selectedCategory);
     }
     return [];
   }
@@ -230,7 +230,7 @@ export class ProviderConfigWizardComponent implements OnInit {
           let dispPC = pc as DisplayBindingProviderConfig;
           let property = dispPC.getDisplayNamePropertyBinding(name);
           pc.setParam(property, value);
-          console.debug('Set ProviderConfig param value: ' + property + '=' + value);
+          console.debug('ProviderConfigWizard --> Set ProviderConfig param value: ' + property + '=' + value);
         }
       }
     }

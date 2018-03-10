@@ -24,10 +24,10 @@ export abstract class AuthenticationProviderConfig extends DisplayBindingProvide
 
   constructor(name: string, role?: string) {
     super();
-    this.name = name;
     this.role = role ? role : AuthenticationProviderConfig.AUTHENTICATION_ROLE;
-    this.params = {};
+    this.name = name;
     this.enabled = 'true'; // enable by default
+    this.params = new Map<string, string>();
   }
 
 }

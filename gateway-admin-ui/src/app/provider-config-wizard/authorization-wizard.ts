@@ -45,7 +45,6 @@ export class AuthorizationWizard extends CategoryWizard {
   onChange() {
     let configType = AuthorizationWizard.typeConfigMap.get(this.selectedType);
     if (configType) {
-      console.debug(configType.prototype.toString() + ' resolved for config type  ' + this.selectedType);
       this.providerConfig = Object.create(configType.prototype) as DisplayBindingProviderConfig;
       this.providerConfig.constructor.apply(this.providerConfig);
     } else {

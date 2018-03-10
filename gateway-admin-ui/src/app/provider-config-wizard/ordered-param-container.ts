@@ -15,18 +15,13 @@
  * limitations under the License.
  */
 
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+// ProviderConfig implementations, for which parameter order is important, should implement this interface
+export interface OrderedParamContainer {
 
-export abstract class IdentityAssertionProviderConfig extends DisplayBindingProviderConfig {
+  // Get the param names in the correct order
+  getOrderedParamNames(): string[];
 
-  static ID_ASSERTION_ROLE: string = 'identity-assertion';
-
-  constructor(name: string, role?: string) {
-    super();
-    this.role = role ? role : IdentityAssertionProviderConfig.ID_ASSERTION_ROLE;
-    this.name = name;
-    this.enabled = 'true'; // enable by default
-    this.params  = new Map<string, string>();
-  }
+  // Ensure the specified set of params is ordered correctly
+  orderParams(params: Map<string, string>): Map<string, string>;
 
 }

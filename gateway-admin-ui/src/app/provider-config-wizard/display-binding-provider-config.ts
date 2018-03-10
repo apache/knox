@@ -32,7 +32,6 @@ export abstract class DisplayBindingProviderConfig extends ProviderConfig {
   }
 
   setParam(name: string, value: string) {
-    console.debug('ProviderConfig --> setParam(' + name + ', ' + value + ')');
     this.params[name] = value;
   }
 

@@ -33,11 +33,10 @@ export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
 
   constructor() {
     super();
-    console.debug('new ACLsAuthznProviderConfig()');
-    this.name    = 'AclsAuthz';
     this.role    = 'authorization';
+    this.name    = 'AclsAuthz';
     this.enabled = 'true';
-    this.params  = {};
+    this.params  = new Map<string, string>();
   }
 
   getDisplayPropertyNames(): string[] {

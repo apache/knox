@@ -36,10 +36,10 @@ export class HaWizard extends CategoryWizard {
 
   getProviderConfig(): ProviderConfig {
     this.providerConfig = new ProviderConfig();
-    this.providerConfig.name = 'HaProvider';
     this.providerConfig.role = 'ha';
+    this.providerConfig.name = 'HaProvider';
     this.providerConfig.enabled = 'true';
-    this.providerConfig.params = {};
+    this.providerConfig.params = new Map<string, string>();
     return this.providerConfig;
   }
 
