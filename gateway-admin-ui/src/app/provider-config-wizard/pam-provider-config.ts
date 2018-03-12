@@ -17,6 +17,7 @@
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
 import {OrderedParamContainer} from "./ordered-param-container";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class PAMProviderConfig extends AuthenticationProviderConfig implements OrderedParamContainer {
 
@@ -73,6 +74,18 @@ export class PAMProviderConfig extends AuthenticationProviderConfig implements O
     }
 
     return result;
+  }
+
+  isValid(): boolean {
+    let isValid = true;
+
+    // Since the other properties are set internally, just validate the session timeout value
+    let timeout = this.getParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SESSION_TIMEOUT));
+    if (timeout) {
+      isValid = ValidationUtils.isValidNumber(timeout);
+    }
+
+    return isValid;
   }
 
 }

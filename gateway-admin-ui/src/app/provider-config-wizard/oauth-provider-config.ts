@@ -16,6 +16,7 @@
  */
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class OAUTHProviderConfig extends AuthenticationProviderConfig {
 
@@ -43,6 +44,10 @@ export class OAUTHProviderConfig extends AuthenticationProviderConfig {
 
   getDisplayNamePropertyBinding(name: string) {
     return OAUTHProviderConfig.displayPropertyNameBindings.get(name);
+  }
+
+  isValid(): boolean {
+    return ValidationUtils.isValidURL(this.getParam(this.getDisplayNamePropertyBinding(OAUTHProviderConfig.CALLBACK_URL)));
   }
 
 }

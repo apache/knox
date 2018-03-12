@@ -29,7 +29,7 @@ export class IdentityAssertionWizard extends CategoryWizard {
   private stepCount: number = 4;
 
   private static DEFAULT: string      = 'Default';
-  private static CONCAT: string       = 'Concatentation';
+  private static CONCAT: string       = 'Concatenation';
   private static SWITCHCASE: string   = 'SwitchCase';
   private static REGEXP: string       = 'Regular Expression';
   private static GROUP_LOOKUP: string = 'Group Lookup';
@@ -62,6 +62,7 @@ export class IdentityAssertionWizard extends CategoryWizard {
     if (configType) {
       this.providerConfig = Object.create(configType.prototype) as IdentityAssertionProviderConfig;
       this.providerConfig.constructor.apply(this.providerConfig);
+      (this.providerConfig as IdentityAssertionProviderConfig).setType(this.selectedType);
     } else {
       console.debug('IdentityAssertionWizard --> No provider configuration type mapped for ' + this.selectedType);
       this.providerConfig = null;

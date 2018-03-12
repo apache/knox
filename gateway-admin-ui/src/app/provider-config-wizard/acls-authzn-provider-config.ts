@@ -19,6 +19,8 @@ import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 
 export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
 
+  private static MODE_VALUES: string[] = [ 'OR', 'AND' ];
+
   private static DEFAULT_MODE: string = 'Default Mode';
   private static DEFAULT_ACL: string  = 'Default ACL';
 
@@ -47,4 +49,14 @@ export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
     return ACLsAuthznProviderConfig.displayPropertyNameBindings.get(name);
   }
 
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let defaultMode = this.getParam(this.getDisplayNamePropertyBinding(ACLsAuthznProviderConfig.DEFAULT_MODE));
+    if (defaultMode) {
+      isValid = (ACLsAuthznProviderConfig.MODE_VALUES.indexOf(defaultMode.toUpperCase()) > -1);
+    }
+
+    return isValid;
+  }
 }

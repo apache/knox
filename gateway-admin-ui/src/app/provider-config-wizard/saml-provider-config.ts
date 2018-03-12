@@ -16,6 +16,7 @@
  */
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class SAMLProviderConfig extends AuthenticationProviderConfig {
 
@@ -55,6 +56,8 @@ export class SAMLProviderConfig extends AuthenticationProviderConfig {
                                     ]);
 
 
+  private static SECRET_PROPERTIES: string[] = [ SAMLProviderConfig.KEYSTORE_PASS, SAMLProviderConfig.PK_PASS ];
+
   constructor() {
     super('pac4j', AuthenticationProviderConfig.FEDERATION_ROLE);
   }
@@ -65,6 +68,25 @@ export class SAMLProviderConfig extends AuthenticationProviderConfig {
 
   getDisplayNamePropertyBinding(name: string) {
     return SAMLProviderConfig.displayPropertyNameBindings.get(name);
+  }
+
+  isPasswordParam(name: string): boolean {
+    return (name && SAMLProviderConfig.SECRET_PROPERTIES.indexOf(name) > -1);
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let cb = this.getParam(this.getDisplayNamePropertyBinding(SAMLProviderConfig.CALLBACK_URL));
+    if (cb) {
+      let isValidCB = ValidationUtils.isValidURL(cb);
+      if (!isValidCB) {
+        console.debug('SAMLProviderConfig --> ' + SAMLProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
+      }
+      isValid = isValidCB && isValidCB;
+    }
+
+    return isValid;
   }
 
 }

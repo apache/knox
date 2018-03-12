@@ -23,6 +23,10 @@ export abstract class CategoryWizard {
 
   providerConfig: ProviderConfig;
 
+  reset() {
+    this.providerConfig = null;
+    this.selectedType   = null;
+  }
 
   getSelectedType(): string {
     return this.selectedType;

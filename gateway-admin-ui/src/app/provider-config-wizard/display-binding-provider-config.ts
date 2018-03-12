@@ -19,6 +19,16 @@ import {ProviderConfig} from "../resource-detail/provider-config";
 
 export abstract class DisplayBindingProviderConfig extends ProviderConfig {
 
+  protected providerType: string;
+
+  setType(type: string) {
+    this.providerType = type;
+  }
+
+  getType(): string {
+    return this.providerType;
+  }
+
   getName(): string {
     return this.name;
   }
@@ -35,12 +45,26 @@ export abstract class DisplayBindingProviderConfig extends ProviderConfig {
     this.params[name] = value;
   }
 
+  removeParam(name: string): string {
+    let value = this.getParam(name);
+    delete this.params[name];
+    return value;
+  }
+
   getParamNames(): string[] {
     return Object.getOwnPropertyNames(this.params);
   }
 
   getParam(name: string): string {
     return this.params[name];
+  }
+
+  isPasswordParam(name: string): boolean {
+    return false;
+  }
+
+  isValid(): boolean {
+    return true;
   }
 
   abstract getDisplayPropertyNames(): string[];

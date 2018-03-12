@@ -6,6 +6,7 @@ import {Descriptor} from "../resource-detail/descriptor";
 import {ResourceService} from "../resource/resource.service";
 import {Resource} from "../resource/resource";
 import {ResourceTypesService} from "../resourcetypes/resourcetypes.service";
+import {ValidationUtils} from "../utils/validation-utils";
 
 @Component({
   selector: 'app-new-desc-wizard',
@@ -161,6 +162,18 @@ export class NewDescWizardComponent implements OnInit {
 
   toggleBoolean(propertyName: string) {
       this[propertyName] = !this[propertyName];
+  }
+
+  validate(): boolean {
+    let isValid: boolean = true;
+
+    // Validate the discovery address
+    if (this.descriptor.discoveryAddress) {
+      isValid = isValid && ValidationUtils.isValidURL(this.descriptor.discoveryAddress);
+      isValid = isValid && ValidationUtils.isValidString(this.descriptor.discoveryCluster);
+    }
+
+    return isValid;
   }
 
 }

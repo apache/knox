@@ -99,7 +99,7 @@
             (click)="newDescriptorModal.dismiss()">Cancel</button>
     <button type="button"
             class="btn btn-primary btn-sm"
-            [disabled]="!descriptor || !descriptorName"
+            [disabled]="!descriptor || !descriptorName || !validate()"
             (click)="newDescriptorModal.close()">Ok</button>
   </bs-modal-footer>
 </bs-modal>

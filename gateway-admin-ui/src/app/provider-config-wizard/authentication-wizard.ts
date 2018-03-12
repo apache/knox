@@ -38,7 +38,7 @@ export class AuthenticationWizard extends CategoryWizard {
   private static AUTH_HADOOP: string     = 'Kerberos';
   private static AUTH_SSO: string        = 'SSO';
   private static AUTH_SSO_COOKIE: string = 'SSO Cookie';
-  private static AUTH_JWT: string        = 'JWT';
+  private static AUTH_JWT: string        = 'JSON Web Tokens';
   private static AUTH_CAS: string        = 'CAS';
   private static AUTH_OAUTH: string      = 'OAuth';
   private static AUTH_SAML: string       = 'SAML';
@@ -82,6 +82,7 @@ export class AuthenticationWizard extends CategoryWizard {
     if (configType) {
       this.providerConfig = Object.create(configType.prototype) as AuthenticationProviderConfig;
       this.providerConfig.constructor.apply(this.providerConfig);
+      (this.providerConfig as AuthenticationProviderConfig).setType(this.selectedType);
     } else {
       console.debug('AuthenticationWizard --> No provider configuration type mapped for ' + this.selectedType);
       this.providerConfig = null;

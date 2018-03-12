@@ -83,6 +83,7 @@ export class ProviderConfigWizardComponent implements OnInit {
   }
 
   reset() {
+    this.getCategoryWizard(this.selectedCategory).reset();
     this.step = 0;
     this.name = '';
     this.providers = [];
@@ -102,7 +103,7 @@ export class ProviderConfigWizardComponent implements OnInit {
 
     if (catWizard) {
       let pc: ProviderConfig = catWizard.getProviderConfig();
-      if (pc) {
+      if (pc && this.isProviderConfigValid(pc)) {
         this.providers.push(pc);
         console.debug('ProviderConfigWizard --> Provider: name=' + pc.name + ', role=' + pc.role + ', enabled=' + pc.enabled);
         if (pc.params) {
@@ -115,10 +116,13 @@ export class ProviderConfigWizardComponent implements OnInit {
             console.debug('\tParam: ' + name + ' = ' + pc.params[name]);
           }
         }
+
+        this.step = 0; // Return to the beginning
+
+        // Clear the wizard state
+        this.getCategoryWizard(this.selectedCategory).reset();
       }
     }
-
-    this.step = 0; // Return to the beginning
   }
 
   onClose() {
@@ -131,18 +135,18 @@ export class ProviderConfigWizardComponent implements OnInit {
                                         newResource,
                                         this.resourceService.serializeProviderConfiguration(this.providers, 'json'))
                         .then(() => {
-                          // Reload the resource list presentation
-                          this.resourceTypesService.selectResourceType('Provider Configurations');
+                            // Reload the resource list presentation
+                            this.resourceTypesService.selectResourceType('Provider Configurations');
 
-                          // Set the new descriptor as the selected resource
-                          this.resourceService.getProviderConfigResources().then(resources => {
-                            for (let res of resources) {
-                              if (res.name === newResource.name) {
-                                this.resourceService.selectedResource(res);
-                                break;
+                            // Set the new descriptor as the selected resource
+                            this.resourceService.getProviderConfigResources().then(resources => {
+                              for (let res of resources) {
+                                if (res.name === newResource.name) {
+                                  this.resourceService.selectedResource(res);
+                                  break;
+                                }
                               }
-                            }
-                          });
+                            });
                         });
   }
 
@@ -151,7 +155,7 @@ export class ProviderConfigWizardComponent implements OnInit {
   }
 
   onNextStep() {
-    ++this.step;
+      ++this.step;
   }
 
   onPreviousStep() {
@@ -227,10 +231,13 @@ export class ProviderConfigWizardComponent implements OnInit {
       let pc = catWizard.getProviderConfig();
       if (pc) {
         if (pc instanceof DisplayBindingProviderConfig) {
-          let dispPC = pc as DisplayBindingProviderConfig;
-          let property = dispPC.getDisplayNamePropertyBinding(name);
-          pc.setParam(property, value);
-          console.debug('ProviderConfigWizard --> Set ProviderConfig param value: ' + property + '=' + value);
+          let property = (pc as DisplayBindingProviderConfig).getDisplayNamePropertyBinding(name);
+          if (property) {
+            pc.setParam(property, value);
+            console.debug('ProviderConfigWizard --> Set ProviderConfig param value: ' + property + '=' + value);
+          } else {
+            console.debug('No provider property configured for ' + name);
+          }
         }
       }
     }
@@ -249,6 +256,53 @@ export class ProviderConfigWizardComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  getConfiguredProviderDisplayNames(): string[] {
+    let result: string[] = [];
+
+    for (let p of this.providers) {
+      let pName: string;
+      let pRole: string;
+      if (p instanceof DisplayBindingProviderConfig) {
+        pName = (p as DisplayBindingProviderConfig).getType();
+        pRole = p.getRole();
+      } else {
+        pName = p.name;
+        pRole = p.role;
+      }
+      result.push(pName + ' (' + pRole + ')');
+    }
+
+    return result;
+  }
+
+  isPasswordParam(name: string) {
+    let result: boolean = false;
+
+    let p = this.getCategoryWizard().getProviderConfig();
+    if (p && p instanceof DisplayBindingProviderConfig) {
+      result = (p as DisplayBindingProviderConfig).isPasswordParam(name);
+    }
+
+    return result;
+  }
+
+  isProviderConfigValid(pc: ProviderConfig): boolean {
+    let isValid: boolean = true;
+    if (pc instanceof DisplayBindingProviderConfig) {
+      console.debug('Checking validity of ' + this.selectedCategory + ' ' + (pc as DisplayBindingProviderConfig).getType() + ' provider...');
+      isValid = (pc as DisplayBindingProviderConfig).isValid();
+    }
+    return isValid;
+  }
+
+  togglePasswordDisplay(propertyName: string) {
+    this['show' + propertyName] = !this['show' + propertyName];
+  }
+
+  getPasswordDisplay(propertName: string): boolean {
+    return this['show' + propertName];
   }
 
 }

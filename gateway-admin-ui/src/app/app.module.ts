@@ -18,6 +18,7 @@ import { NgModule }      from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from "@angular/common/http";
 import { FormsModule } from '@angular/forms';
+import { CustomFormsModule } from 'ng2-validation';
 
 import { AppComponent }  from './app.component';
 import { TopologyService } from './topology.service';
@@ -46,6 +47,7 @@ import { ProviderConfigWizardComponent } from './provider-config-wizard/provider
   imports: [ BrowserModule,
              HttpClientModule,
              FormsModule,
+             CustomFormsModule,
              BsModalModule,
              AceEditorModule
     ],

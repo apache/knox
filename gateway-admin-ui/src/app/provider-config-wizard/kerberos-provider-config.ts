@@ -16,6 +16,7 @@
  */
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class KerberosProviderConfig extends AuthenticationProviderConfig {
 
@@ -30,10 +31,8 @@ export class KerberosProviderConfig extends AuthenticationProviderConfig {
   static KRB_KEYTAB       = 'KeyTab';
   static KRB_RULES        = 'Name Rules';
 
-
   private static displayPropertyNames = [ KerberosProviderConfig.CONFIG_PREFIX,
                                           KerberosProviderConfig.SIG_SECRET,
-                                          KerberosProviderConfig.TYPE,
                                           KerberosProviderConfig.ANON_ALLOWED,
                                           KerberosProviderConfig.TOKEN_VALIDITY,
                                           KerberosProviderConfig.COOKIE_DOMAIN,
@@ -46,20 +45,22 @@ export class KerberosProviderConfig extends AuthenticationProviderConfig {
   private static displayPropertyNameBindings: Map<string, string> =
                                         new Map([
                                           [KerberosProviderConfig.CONFIG_PREFIX,  'config.prefix'],
-                                          [KerberosProviderConfig.SIG_SECRET,     '.signature.secret'],
-                                          [KerberosProviderConfig.TYPE,           '.type'],
-                                          [KerberosProviderConfig.ANON_ALLOWED,   '.simple.anonymous.allowed'],
-                                          [KerberosProviderConfig.TOKEN_VALIDITY, '.token.validity'],
-                                          [KerberosProviderConfig.COOKIE_DOMAIN,  '.cookie.domain'],
-                                          [KerberosProviderConfig.COOKIE_PATH,    '.cookie.path'],
-                                          [KerberosProviderConfig.KRB_PRINCIPAL,  '.kerberos.principal'],
-                                          [KerberosProviderConfig.KRB_KEYTAB,     '.kerberos.keytab'],
-                                          [KerberosProviderConfig.KRB_RULES,      '.kerberos.name.rules']
+                                          [KerberosProviderConfig.SIG_SECRET,     'signature.secret'],
+                                          [KerberosProviderConfig.TYPE,           'type'],
+                                          [KerberosProviderConfig.ANON_ALLOWED,   'simple.anonymous.allowed'],
+                                          [KerberosProviderConfig.TOKEN_VALIDITY, 'token.validity'],
+                                          [KerberosProviderConfig.COOKIE_DOMAIN,  'cookie.domain'],
+                                          [KerberosProviderConfig.COOKIE_PATH,    'cookie.path'],
+                                          [KerberosProviderConfig.KRB_PRINCIPAL,  'kerberos.principal'],
+                                          [KerberosProviderConfig.KRB_KEYTAB,     'kerberos.keytab'],
+                                          [KerberosProviderConfig.KRB_RULES,      'kerberos.name.rules']
                                         ]);
 
 
   constructor() {
     super('HadoopAuth');
+    this.setParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.CONFIG_PREFIX), 'hadoop.auth.config');
+    this.setParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.TYPE), 'kerberos');
   }
 
   getDisplayPropertyNames(): string[] {
@@ -67,15 +68,71 @@ export class KerberosProviderConfig extends AuthenticationProviderConfig {
   }
 
   getDisplayNamePropertyBinding(name: string) {
+    let propName: string;
     if (name === KerberosProviderConfig.CONFIG_PREFIX) {
-      return KerberosProviderConfig.displayPropertyNameBindings.get(name);
+      propName = KerberosProviderConfig.displayPropertyNameBindings.get(name);
     } else {
       let prefix = this.getParam(KerberosProviderConfig.displayPropertyNameBindings.get(KerberosProviderConfig.CONFIG_PREFIX));
       if (prefix) {
-        return prefix + KerberosProviderConfig.displayPropertyNameBindings.get(name);
+        propName = prefix + '.' + KerberosProviderConfig.displayPropertyNameBindings.get(name);
+      } else {
+        propName = KerberosProviderConfig.displayPropertyNameBindings.get(name);
       }
     }
-    return null;
+    return propName;
+  }
+
+  isPasswordParam(name: string): boolean {
+    return (name === KerberosProviderConfig.SIG_SECRET);
+  }
+
+  setParam(name: string, value: string) {
+    console.debug('KerberosProviderConfig --> setParam(' + name + ', ' + value + ')'); // TODO: PJZ: DELETE ME
+    if (name === this.getDisplayNamePropertyBinding(KerberosProviderConfig.CONFIG_PREFIX)) {
+      // If the config prefix property has changed, then the properties need to be modified accordingly
+      let prevPrefix = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.CONFIG_PREFIX));
+      if (value !== prevPrefix) {
+        // Iterate over those properties which have already been set
+        for (let propName of this.getParamNames()) {
+          console.debug('\tPrevious property ' + propName);
+          if (propName.startsWith(prevPrefix)) { // If the property name includes the previous config prefix
+            let suffix = propName.substring(prevPrefix.length + 1); // prefix + '.'
+            let newPropName = value + '.' + suffix;
+            this.setParam(newPropName, this.getParam(propName));
+            console.debug('\tRenamed ' + propName + ' to ' + newPropName + ' because config prefix changed.');
+            this.removeParam(propName);
+            console.debug('\tDeleted ' + propName + ' because config prefix changed.');
+          }
+        }
+        super.setParam(name, value); // Update the config prefix property itself
+      }
+    } else {
+      super.setParam(name, value);
+    }
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let allowAnon = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.ANON_ALLOWED));
+    if (allowAnon) {
+      let isValidAllowAnon = ValidationUtils.isValidBoolean(allowAnon);
+      if (!isValidAllowAnon) {
+        console.debug(KerberosProviderConfig.ANON_ALLOWED + ' value is not valid.');
+      }
+      isValid = isValid && isValidAllowAnon;
+    }
+
+    let tokenExpiration = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.TOKEN_VALIDITY));
+    if (tokenExpiration) {
+      let isValidTokenExpiration = ValidationUtils.isValidNumber(tokenExpiration);
+      if (!isValidTokenExpiration) {
+        console.debug(KerberosProviderConfig.TOKEN_VALIDITY + ' value is not valid.');
+      }
+      isValid = isValid && isValidTokenExpiration;
+    }
+
+    return isValid;
   }
 
 }

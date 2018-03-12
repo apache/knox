@@ -21,14 +21,15 @@
     "@angular/platform-browser-dynamic": "^5.0.0",
     "@angular/router": "^5.0.0",
     "core-js": "^2.4.1",
-    "rxjs": "^5.5.2",
-    "zone.js": "^0.8.14",
-    "ng2-ace-editor": "0.3.3",
-    "ng2-bs3-modal": "^0.13.0",
-    "ts-helpers": "^1.1.1",
     "jquery": ">=3.0.0",
     "js-yaml": "^3.10.0",
-    "popper.js": "^1.12.9"
+    "ng2-ace-editor": "0.3.3",
+    "ng2-bs3-modal": "^0.13.0",
+    "ng2-validation": "^4.2.0",
+    "popper.js": "^1.12.9",
+    "rxjs": "^5.5.2",
+    "ts-helpers": "^1.1.1",
+    "zone.js": "^0.8.14"
   },
   "devDependencies": {
     "@angular/cli": "^1.6.5",

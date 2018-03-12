@@ -11,8 +11,15 @@
           <tr>
             <td><strong>Name</strong></td>
             <td><input type="textbox"
+                       name="name"
+                       #field="ngModel"
+                       [required]="true"
                        size="60"
-                       [(ngModel)]="name"></td>
+                       [(ngModel)]="name">
+              <span *ngIf="field.errors?.required" style="color: red">
+                &nbsp;A provider configuration name is required.
+              </span>
+            </td>
           </tr>
         </table>
       </div> <!-- Provider Configuration Name -->
@@ -22,8 +29,8 @@
       <!-- Display New Providers -->
       <div>
         <strong>Providers</strong><br/>
-        <div *ngFor="let pc of providers">
-          {{pc.name}}
+        <div *ngFor="let pDisplay of getConfiguredProviderDisplayNames()">
+          {{ pDisplay }}
         </div>
       </div> <!-- Display New Providers -->
 
@@ -71,11 +78,21 @@
       <table>
         <tr *ngFor="let pt of getProviderParams()">
           <td><strong>{{pt}}</strong></td>
-          <td><input type="textbox"
+          <td>
+            <span>
+              <input [type]="!isPasswordParam(pt) || this['show'+pt] ? 'textbox' : 'password'"
                      size="60"
                      #paramInput
                      (change)="setProviderParamBinding(pt, paramInput.value)"
-                     [value]="getProviderParamBinding(pt)"></td>
+                     [value]="getProviderParamBinding(pt)">
+            </span>
+            <span *ngIf="isPasswordParam(pt)">
+              <input type="checkbox"
+                     class="clickable"
+                     [checked]="getPasswordDisplay(pt)"
+                     (click)="togglePasswordDisplay(pt)">show
+            </span>
+          </td>
         </tr>
       </table>
     </div> <!-- Provider Type Params Step -->

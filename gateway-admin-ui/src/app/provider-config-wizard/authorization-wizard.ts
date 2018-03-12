@@ -47,6 +47,7 @@ export class AuthorizationWizard extends CategoryWizard {
     if (configType) {
       this.providerConfig = Object.create(configType.prototype) as DisplayBindingProviderConfig;
       this.providerConfig.constructor.apply(this.providerConfig);
+      (this.providerConfig as DisplayBindingProviderConfig).setType(this.selectedType);
     } else {
       console.debug('AuthorizationWizard --> No provider configuration type mapped for ' + this.selectedType);
       this.providerConfig = null;

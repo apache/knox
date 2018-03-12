@@ -19,8 +19,10 @@ import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-con
 
 export class SwitchCaseAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  static PRINCIPAL_CASE       = 'Principal Case';
-  static GROUP_PRINCIPAL_CASE = 'Group Principal Case';
+  private static CASE_VALUES: string[] = [ 'upper', 'lower' ];
+
+  private static PRINCIPAL_CASE       = 'Principal Case';
+  private static GROUP_PRINCIPAL_CASE = 'Group Principal Case';
 
   private static displayPropertyNames = [ SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE,
                                           SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE
@@ -42,6 +44,22 @@ export class SwitchCaseAssertionProviderConfig extends IdentityAssertionProvider
 
   getDisplayNamePropertyBinding(name: string) {
     return SwitchCaseAssertionProviderConfig.displayPropertyNameBindings.get(name);
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let pc = this.getParam(this.getDisplayNamePropertyBinding(SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE));
+    if (pc) {
+      isValid = isValid && (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(pc.toLowerCase()) > -1);
+    }
+
+    let gpc = this.getParam(this.getDisplayNamePropertyBinding(SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE));
+    if (gpc) {
+      isValid = isValid && (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(gpc.toLowerCase()) > -1);
+    }
+
+    return isValid;
   }
 
 }

@@ -19,8 +19,8 @@ import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-con
 
 export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  static PRINCIPAL_MAPPING       = 'Principal Mapping';
-  static GROUP_PRINCIPAL_MAPPING = 'Group Principal Mapping';
+  private static PRINCIPAL_MAPPING       = 'Principal Mapping';
+  private static GROUP_PRINCIPAL_MAPPING = 'Group Principal Mapping';
 
   private static displayPropertyNames = [ DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING,
                                           DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING
@@ -32,6 +32,7 @@ export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderC
       [DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING, 'group.principal.mapping']
     ]);
 
+  private static MAPPING_REGEXP = new RegExp('^(?:(?:[\\w\\*\\,]*=(?:[\\w][^\\*\\=])+[;]?)*)$');
 
   constructor() {
     console.debug('new DefaultIdAssertionProviderConfig()');
@@ -44,6 +45,30 @@ export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderC
 
   getDisplayNamePropertyBinding(name: string) {
     return DefaultIdAssertionProviderConfig.displayPropertyNameBindings.get(name);
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let pMap = this.getParam(this.getDisplayNamePropertyBinding(DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING));
+    if (pMap) {
+      let isPMapValid = DefaultIdAssertionProviderConfig.MAPPING_REGEXP.test(pMap);
+      if (!isPMapValid) {
+        console.debug(DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING + ' value is not a valid mapping');
+      }
+      isValid = isValid && isPMapValid;
+    }
+
+    let gpMap = this.getParam(this.getDisplayNamePropertyBinding(DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING));
+    if (gpMap) {
+      let isGMapValid = DefaultIdAssertionProviderConfig.MAPPING_REGEXP.test(gpMap);
+      if (!isGMapValid) {
+        console.debug(DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING + ' value is not a valid mapping');
+      }
+      isValid = isValid && isGMapValid;
+    }
+
+    return isValid;
   }
 
 }

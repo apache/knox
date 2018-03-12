@@ -16,6 +16,7 @@
  */
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class SSOCookieProviderConfig extends AuthenticationProviderConfig {
 
@@ -40,4 +41,7 @@ export class SSOCookieProviderConfig extends AuthenticationProviderConfig {
     return SSOCookieProviderConfig.displayPropertyNameBindings.get(name);
   }
 
+  isValid(): boolean {
+    return ValidationUtils.isValidURL(this.getParam(this.getDisplayNamePropertyBinding(SSOCookieProviderConfig.PROVIDER_URL)));
+  }
 }

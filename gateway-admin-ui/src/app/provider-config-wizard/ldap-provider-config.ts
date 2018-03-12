@@ -17,17 +17,31 @@
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
 import {OrderedParamContainer} from "./ordered-param-container";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class LDAPProviderConfig extends AuthenticationProviderConfig implements OrderedParamContainer {
 
-  static SESSION_TIMEOUT       = 'Session Timeout';
-  static DN_TEMPLATE           = 'User DN Template';
-  static URL                   = 'URL';
-  static MECHANISM             = 'Mechanism';
-  static REALM                 = 'Realm';
-  static CONTEXT_FACTORY       = 'LDAP Context Factory';
-  static REALM_CONTEXT_FACTORY = 'Realm Context Factory';
-  static AUTH_CHAIN            = 'Authentication Chain';
+  private static DN_TEMPLATE_REGEXP: RegExp =
+    new RegExp('(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+               '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
+               '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+               '=(?:#(?:[\\dA-Fa-f]{2})' +
+               '+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))' +
+               '*(?:,(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+               '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
+               '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))*)*');
+
+
+  private static LDAP_URL_SCHEMES: string[] = [ 'ldap', 'ldaps' ];
+
+  private static SESSION_TIMEOUT       = 'Session Timeout';
+  private static DN_TEMPLATE           = 'User DN Template';
+  private static URL                   = 'URL';
+  private static MECHANISM             = 'Mechanism';
+  private static REALM                 = 'Realm';
+  private static CONTEXT_FACTORY       = 'LDAP Context Factory';
+  private static REALM_CONTEXT_FACTORY = 'Realm Context Factory';
+  private static AUTH_CHAIN            = 'Authentication Chain';
 
   private static displayPropertyNames = [ LDAPProviderConfig.SESSION_TIMEOUT,
                                           LDAPProviderConfig.URL,
@@ -84,7 +98,6 @@ export class LDAPProviderConfig extends AuthenticationProviderConfig implements 
     return LDAPProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-
   getOrderedParamNames(): string[] {
     return LDAPProviderConfig.paramsOrder;
   }
@@ -100,6 +113,42 @@ export class LDAPProviderConfig extends AuthenticationProviderConfig implements 
     }
 
     return result;
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let timeout = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.SESSION_TIMEOUT));
+    if (timeout) {
+      let isTimeoutValid = ValidationUtils.isValidNumber(timeout);
+      if (!isTimeoutValid) {
+        console.debug(LDAPProviderConfig.SESSION_TIMEOUT + ' value is not valid.');
+      }
+      isValid = (isValid && isTimeoutValid);
+    }
+
+    let url = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.URL));
+    if (url) {
+      // Ensure that it's a valid LDAP(S) URL
+      let isURLValid = ValidationUtils.isValidURLOfScheme(url, LDAPProviderConfig.LDAP_URL_SCHEMES);
+      if (!isURLValid) {
+        console.debug(LDAPProviderConfig.URL + ' value is not valid.');
+      }
+      isValid = isValid && isURLValid;
+    } else {
+      isValid = false;
+    }
+
+    let dnTemplate = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.DN_TEMPLATE));
+    if (dnTemplate) {
+      let isDNTemplateValid = LDAPProviderConfig.DN_TEMPLATE_REGEXP.test(dnTemplate);
+      if (!isDNTemplateValid) {
+        console.debug(LDAPProviderConfig.DN_TEMPLATE + ' value is not a valid DN template.');
+      }
+      isValid = isValid && isDNTemplateValid;
+    }
+
+    return isValid;
   }
 
 }

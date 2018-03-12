@@ -16,13 +16,14 @@
  */
 
 import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class RegexAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  static INPUT        = 'Input';
-  static OUTPUT       = 'Output';
-  static LOOKUP       = "Lookup";
-  static ORIG_ON_FAIL = "User Original Lookup on Failure";
+  private static INPUT        = 'Input';
+  private static OUTPUT       = 'Output';
+  private static LOOKUP       = "Lookup";
+  private static ORIG_ON_FAIL = "Use Original Lookup on Failure";
 
   private static displayPropertyNames = [ RegexAssertionProviderConfig.INPUT,
                                           RegexAssertionProviderConfig.OUTPUT,
@@ -48,6 +49,21 @@ export class RegexAssertionProviderConfig extends IdentityAssertionProviderConfi
 
   getDisplayNamePropertyBinding(name: string) {
     return RegexAssertionProviderConfig.displayPropertyNameBindings.get(name);
+  }
+
+  isValid(): boolean {
+    let isValid: boolean = true;
+
+    let useOrig = this.getParam(this.getDisplayNamePropertyBinding(RegexAssertionProviderConfig.ORIG_ON_FAIL));
+    if (useOrig) {
+      isValid = ValidationUtils.isValidBoolean(useOrig);
+      if (!isValid) {
+        console.debug('RegexAssertionProviderConfig --> ' + RegexAssertionProviderConfig.ORIG_ON_FAIL +
+                      ' value is not a valid boolean.')
+      }
+    }
+
+    return isValid;
   }
 
 }
