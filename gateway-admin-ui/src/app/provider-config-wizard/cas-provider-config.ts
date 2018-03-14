@@ -40,8 +40,6 @@ export class CASProviderConfig extends AuthenticationProviderConfig {
                                         ]);
 
 
-  private static SUPPORTED_PROTOCOLS: string[] = [ 'CAS10', 'CAS20', 'CAS20_PROXY', 'CAS30', 'CAS30_PROXY', 'SAML' ];
-
   constructor() {
     super('pac4j', AuthenticationProviderConfig.FEDERATION_ROLE);
   }
@@ -54,34 +52,46 @@ export class CASProviderConfig extends AuthenticationProviderConfig {
     return CASProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case CASProviderConfig.CALLBACK_URL:
+      case CASProviderConfig.LOGIN_URL:
+        isValid = this.isValidURL(paramName);
+        break;
+      case CASProviderConfig.PROTOCOL:
+        isValid = this.isValidProtocol();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidURL(param: string): boolean {
     let isValid: boolean = true;
-
-    let cbURL = this.getParam(this.getDisplayNamePropertyBinding(CASProviderConfig.CALLBACK_URL));
-    if (cbURL) {
-      let isCBURLValid = ValidationUtils.isValidURL(cbURL);
-      if (!isCBURLValid) {
-        console.debug(CASProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
+    let url = this.getParam(this.getDisplayNamePropertyBinding(param));
+    if (url) {
+      isValid = ValidationUtils.isValidHttpURL(url);
+      if (!isValid) {
+        console.debug(param + ' value is not a valid URL.');
       }
-      isValid = isValid && isCBURLValid;
     }
+    return isValid;
+  }
 
-    let loginURL = this.getParam(this.getDisplayNamePropertyBinding(CASProviderConfig.LOGIN_URL));
-    if (loginURL) {
-      let isLoginURLValid = ValidationUtils.isValidURL(loginURL);
-      if (!isLoginURLValid) {
-        console.debug(CASProviderConfig.LOGIN_URL + ' value is not a valid URL.');
-      }
-      isValid = isValid && isLoginURLValid;
-    }
+  private isValidProtocol(): boolean {
+    let isValid: boolean = true;
 
     let protocol = this.getParam(this.getDisplayNamePropertyBinding(CASProviderConfig.PROTOCOL));
     if (protocol) {
-      let isProtocolValid = (CASProviderConfig.SUPPORTED_PROTOCOLS.indexOf(protocol) > -1);
-      if (!isProtocolValid) {
-        console.debug(CASProviderConfig.PROTOCOL + ' value is not a supported protocol');
+      isValid = isValid = ValidationUtils.isValidCASProtocol(protocol);
+      if (!isValid) {
+        console.debug(CASProviderConfig.PROTOCOL + ' value is not a valid protocol: ' +
+                      ValidationUtils.CAS_PROTOCOLS.toString());
       }
-      isValid = isValid && isProtocolValid;
     }
 
     return isValid;

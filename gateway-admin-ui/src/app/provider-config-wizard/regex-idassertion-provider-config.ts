@@ -51,15 +51,28 @@ export class RegexAssertionProviderConfig extends IdentityAssertionProviderConfi
     return RegexAssertionProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case RegexAssertionProviderConfig.ORIG_ON_FAIL:
+        isValid = this.isValidUseOriginal();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidUseOriginal(): boolean {
     let isValid: boolean = true;
 
     let useOrig = this.getParam(this.getDisplayNamePropertyBinding(RegexAssertionProviderConfig.ORIG_ON_FAIL));
     if (useOrig) {
       isValid = ValidationUtils.isValidBoolean(useOrig);
       if (!isValid) {
-        console.debug('RegexAssertionProviderConfig --> ' + RegexAssertionProviderConfig.ORIG_ON_FAIL +
-                      ' value is not a valid boolean.')
+        console.debug(RegexAssertionProviderConfig.ORIG_ON_FAIL + ' value is not a valid boolean.')
       }
     }
 

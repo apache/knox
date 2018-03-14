@@ -76,10 +76,23 @@ export class PAMProviderConfig extends AuthenticationProviderConfig implements O
     return result;
   }
 
-  isValid(): boolean {
-    let isValid = true;
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
 
-    // Since the other properties are set internally, just validate the session timeout value
+    switch (paramName) {
+      case PAMProviderConfig.SESSION_TIMEOUT:
+        isValid = this.isValidTimeout();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidTimeout(): boolean {
+    let isValid: boolean = true;
+
     let timeout = this.getParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SESSION_TIMEOUT));
     if (timeout) {
       isValid = ValidationUtils.isValidNumber(timeout);

@@ -167,13 +167,46 @@ export class NewDescWizardComponent implements OnInit {
   validate(): boolean {
     let isValid: boolean = true;
 
-    // Validate the discovery address
-    if (this.descriptor.discoveryAddress) {
-      isValid = isValid && ValidationUtils.isValidURL(this.descriptor.discoveryAddress);
-      isValid = isValid && ValidationUtils.isValidString(this.descriptor.discoveryCluster);
+    if (this.descriptor) {
+
+      isValid = isValid && this.isValidDescriptorName();
+
+      // Validate the discovery address
+      if (this.descriptor.discoveryAddress) {
+        isValid = isValid && this.isValidDiscoveryAddress();
+        isValid = isValid && this.isValidDiscoveryCluster();
+      }
+    } else {
+      isValid = false;
     }
 
     return isValid;
+  }
+
+  isValidDescriptorName(): boolean {
+    let isValid: boolean = false;
+
+    if (this.descriptorName) {
+      isValid = ValidationUtils.isValidString(this.descriptorName);
+    }
+
+    return isValid;
+  }
+
+  isValidDiscoveryAddress(): boolean {
+    if (this.descriptor.discoveryAddress) {
+      return (ValidationUtils.isValidURL(this.descriptor.discoveryAddress));
+    } else {
+      return true;
+    }
+  }
+
+  isValidDiscoveryCluster(): boolean {
+    if (this.descriptor.discoveryAddress) {
+      return (ValidationUtils.isValidString(this.descriptor.discoveryCluster));
+    } else {
+      return true;
+    }
   }
 
 }

@@ -16,6 +16,8 @@
  */
 
 
+import {CASProviderConfig} from "../provider-config-wizard/cas-provider-config";
+
 export class ParsedURL {
 
   static REGEXP: RegExp = new RegExp('^(([^:\/?#]+):)?\/\/(([^\/?#]+):([^\/?#]+))?([^?#]*)(\/?([^#]*))?(#(.*))?');
@@ -47,6 +49,25 @@ export class ParsedURL {
 
 
 export class ValidationUtils {
+
+  private static DN_TEMPLATE_REGEXP: RegExp =
+    new RegExp('(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+      '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
+      '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+      '=(?:#(?:[\\dA-Fa-f]{2})' +
+      '+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))' +
+      '*(?:,(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
+      '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
+      '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))*)*');
+
+
+  private static PRINCIPAL_MAPPING_REGEXP = new RegExp('^(?:(?:[a-zA-Z\\*]+[\\,]?)+=[a-zA-Z]+[;]?)*$');
+
+  static LDAP_URL_SCHEMES: string[] = [ 'ldap', 'ldaps' ];
+
+  static HTTP_URL_SCHEMES: string[] = [ 'http', 'https' ];
+
+  static CAS_PROTOCOLS: string[] = [ 'CAS10', 'CAS20', 'CAS20_PROXY', 'CAS30', 'CAS30_PROXY', 'SAML' ];
 
 
   static parseBoolean(value: string): boolean {
@@ -132,4 +153,35 @@ export class ValidationUtils {
     return isValid;
   }
 
+  static isValidLdapURL(url: string): boolean {
+    return ValidationUtils.isValidURLOfScheme(url, ValidationUtils.LDAP_URL_SCHEMES);
+  }
+
+  static isValidHttpURL(url: string): boolean {
+    return ValidationUtils.isValidURLOfScheme(url, ValidationUtils.HTTP_URL_SCHEMES);
+  }
+
+  static isValidDNTemplate(dnTemplate: string): boolean {
+    return ValidationUtils.DN_TEMPLATE_REGEXP.test(dnTemplate);
+  }
+
+  static isValidCASProtocol(protocol: string): boolean {
+    let isValid: boolean = false;
+
+    if (protocol) {
+      isValid = (ValidationUtils.CAS_PROTOCOLS.indexOf(protocol) > -1);
+    }
+
+    return isValid;
+  }
+
+  static isValidPrincipalMapping(mapping: string): boolean {
+    let isValid: boolean = false;
+
+    if (mapping) {
+      isValid = ValidationUtils.PRINCIPAL_MAPPING_REGEXP.test(mapping)
+    }
+
+    return isValid;
+  }
 }

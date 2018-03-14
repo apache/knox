@@ -46,8 +46,32 @@ export class OAUTHProviderConfig extends AuthenticationProviderConfig {
     return OAUTHProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
-    return ValidationUtils.isValidURL(this.getParam(this.getDisplayNamePropertyBinding(OAUTHProviderConfig.CALLBACK_URL)));
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case OAUTHProviderConfig.CALLBACK_URL:
+        isValid = this.isValidCallbackURL();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidCallbackURL(): boolean {
+    let isValid: boolean = true;
+
+    let url = this.getParam(this.getDisplayNamePropertyBinding(OAUTHProviderConfig.CALLBACK_URL));
+    if (url) {
+      isValid = ValidationUtils.isValidHttpURL(url);
+      if (!isValid) {
+        console.debug(OAUTHProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
+      }
+    }
+
+    return isValid;
   }
 
 }

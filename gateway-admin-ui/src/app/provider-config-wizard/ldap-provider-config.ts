@@ -21,19 +21,6 @@ import {ValidationUtils} from "../utils/validation-utils";
 
 export class LDAPProviderConfig extends AuthenticationProviderConfig implements OrderedParamContainer {
 
-  private static DN_TEMPLATE_REGEXP: RegExp =
-    new RegExp('(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
-               '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
-               '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
-               '=(?:#(?:[\\dA-Fa-f]{2})' +
-               '+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))' +
-               '*(?:,(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
-               '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
-               '(?:\\+(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*"))*)*');
-
-
-  private static LDAP_URL_SCHEMES: string[] = [ 'ldap', 'ldaps' ];
-
   private static SESSION_TIMEOUT       = 'Session Timeout';
   private static DN_TEMPLATE           = 'User DN Template';
   private static URL                   = 'URL';
@@ -115,39 +102,65 @@ export class LDAPProviderConfig extends AuthenticationProviderConfig implements 
     return result;
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case LDAPProviderConfig.SESSION_TIMEOUT:
+        isValid = this.isTimeoutValid();
+        break;
+      case LDAPProviderConfig.DN_TEMPLATE:
+        isValid = this.isDnTemplateValid();
+        break;
+      case LDAPProviderConfig.URL:
+        isValid = this.isLdapURLValid();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isTimeoutValid(): boolean {
     let isValid: boolean = true;
 
     let timeout = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.SESSION_TIMEOUT));
     if (timeout) {
-      let isTimeoutValid = ValidationUtils.isValidNumber(timeout);
-      if (!isTimeoutValid) {
+      isValid = ValidationUtils.isValidNumber(timeout);
+      if (!isValid) {
         console.debug(LDAPProviderConfig.SESSION_TIMEOUT + ' value is not valid.');
       }
-      isValid = (isValid && isTimeoutValid);
     }
+    return isValid;
+  }
+
+  private isLdapURLValid(): boolean {
+    let isValid: boolean = true;
 
     let url = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.URL));
     if (url) {
-      // Ensure that it's a valid LDAP(S) URL
-      let isURLValid = ValidationUtils.isValidURLOfScheme(url, LDAPProviderConfig.LDAP_URL_SCHEMES);
-      if (!isURLValid) {
-        console.debug(LDAPProviderConfig.URL + ' value is not valid.');
+      isValid = ValidationUtils.isValidLdapURL(url);
+      if (!isValid) {
+        console.debug(LDAPProviderConfig.URL+ ' value is not valid.');
       }
-      isValid = isValid && isURLValid;
     } else {
-      isValid = false;
+      isValid = false; // URL must be specified
     }
+
+    return isValid;
+  }
+
+  private isDnTemplateValid(): boolean {
+    let isValid: boolean = true;
 
     let dnTemplate = this.getParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.DN_TEMPLATE));
     if (dnTemplate) {
-      let isDNTemplateValid = LDAPProviderConfig.DN_TEMPLATE_REGEXP.test(dnTemplate);
-      if (!isDNTemplateValid) {
-        console.debug(LDAPProviderConfig.DN_TEMPLATE + ' value is not a valid DN template.');
+      isValid = ValidationUtils.isValidDNTemplate(dnTemplate);
+      if (!isValid) {
+        console.debug(LDAPProviderConfig.DN_TEMPLATE + ' value is not valid.');
       }
-      isValid = isValid && isDNTemplateValid;
     }
-
     return isValid;
   }
 

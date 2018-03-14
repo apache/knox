@@ -17,7 +17,6 @@
 
 import {AuthenticationProviderConfig} from "./authentication-provider-config";
 import {ValidationUtils} from "../utils/validation-utils";
-import {SAMLProviderConfig} from "./saml-provider-config";
 
 export class OIDCProviderConfig extends AuthenticationProviderConfig {
 
@@ -70,43 +69,65 @@ export class OIDCProviderConfig extends AuthenticationProviderConfig {
     return (name === OIDCProviderConfig.PROVIDER_SECRET);
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case OIDCProviderConfig.CALLBACK_URL:
+      case OIDCProviderConfig.PROVIDER_DISCOVERY_URL:
+        isValid = this.isValidURL(paramName);
+        break;
+      case OIDCProviderConfig.USE_NONCE:
+        isValid = this.isValidUseNonce();
+        break;
+      case OIDCProviderConfig.MAX_CLOCK_SKEW:
+        isValid = this.isValidClockSkew();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidURL(param: string): boolean {
     let isValid: boolean = true;
 
-    let cbURL = this.getParam(this.getDisplayNamePropertyBinding(OIDCProviderConfig.CALLBACK_URL));
-    if (cbURL) {
-      let isCBURLValid = ValidationUtils.isValidURL(cbURL);
-      if (!isCBURLValid) {
-        console.debug(OIDCProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
+    let url = this.getParam(this.getDisplayNamePropertyBinding(param));
+    if (url) {
+      isValid = ValidationUtils.isValidHttpURL(url);
+      if (!isValid) {
+        console.debug(param + ' value is not a valid URL.');
       }
-      isValid = isValid && isCBURLValid;
     }
 
-    let pdURL = this.getParam(this.getDisplayNamePropertyBinding(OIDCProviderConfig.PROVIDER_DISCOVERY_URL));
-    if (pdURL) {
-      let isPDURLValid = ValidationUtils.isValidURL(pdURL);
-      if (!isPDURLValid) {
-        console.debug(OIDCProviderConfig.PROVIDER_DISCOVERY_URL + ' value is not a valid URL.');
-      }
-      isValid = isValid && isPDURLValid;
-    }
+    return isValid;
+  }
+
+
+  private isValidUseNonce(): boolean {
+    let isValid: boolean = true;
 
     let useNonce = this.getParam(this.getDisplayNamePropertyBinding(OIDCProviderConfig.USE_NONCE));
     if (useNonce) {
-      let isNonceValid = ValidationUtils.isValidBoolean(useNonce);
-      if (!isNonceValid) {
+      isValid = ValidationUtils.isValidBoolean(useNonce);
+      if (!isValid) {
         console.debug(OIDCProviderConfig.USE_NONCE + ' value is not a valid boolean.');
       }
-      isValid = isValid && isNonceValid;
     }
+
+    return isValid;
+  }
+
+  private isValidClockSkew(): boolean {
+    let isValid: boolean = true;
 
     let clockSkew = this.getParam(this.getDisplayNamePropertyBinding(OIDCProviderConfig.MAX_CLOCK_SKEW));
     if (clockSkew) {
-      let isSkewValid = ValidationUtils.isValidNumber(clockSkew);
-      if (!isSkewValid) {
+      isValid = ValidationUtils.isValidNumber(clockSkew);
+      if (!isValid) {
         console.debug(OIDCProviderConfig.MAX_CLOCK_SKEW + ' value is not a valid number');
       }
-      isValid = isValid && isSkewValid;
     }
 
     return isValid;

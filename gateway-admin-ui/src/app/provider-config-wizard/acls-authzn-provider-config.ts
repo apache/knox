@@ -49,7 +49,21 @@ export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
     return ACLsAuthznProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case ACLsAuthznProviderConfig.DEFAULT_MODE:
+        isValid = this.isValidMode();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidMode(): boolean {
     let isValid: boolean = true;
 
     let defaultMode = this.getParam(this.getDisplayNamePropertyBinding(ACLsAuthznProviderConfig.DEFAULT_MODE));
@@ -59,4 +73,5 @@ export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
 
     return isValid;
   }
+
 }

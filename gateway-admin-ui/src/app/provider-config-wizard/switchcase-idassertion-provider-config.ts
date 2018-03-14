@@ -46,17 +46,30 @@ export class SwitchCaseAssertionProviderConfig extends IdentityAssertionProvider
     return SwitchCaseAssertionProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
-    let isValid: boolean = true;
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
 
-    let pc = this.getParam(this.getDisplayNamePropertyBinding(SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE));
-    if (pc) {
-      isValid = isValid && (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(pc.toLowerCase()) > -1);
+    switch (paramName) {
+      case SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE:
+      case SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE:
+        isValid = this.isValidCase(paramName);
+        break;
+      default:
+        isValid = true;
     }
 
-    let gpc = this.getParam(this.getDisplayNamePropertyBinding(SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE));
-    if (gpc) {
-      isValid = isValid && (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(gpc.toLowerCase()) > -1);
+    return isValid;
+  }
+
+  private isValidCase(param: string): boolean {
+    let isValid: boolean = true;
+
+    let value = this.getParam(this.getDisplayNamePropertyBinding(param));
+    if (value) {
+      isValid = (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(value.toLowerCase()) > -1);
+      if (!isValid) {
+        console.debug(param + ' value is not a valid case: ' + SwitchCaseAssertionProviderConfig.CASE_VALUES.toString());
+      }
     }
 
     return isValid;

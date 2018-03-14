@@ -74,16 +74,46 @@ export class SAMLProviderConfig extends AuthenticationProviderConfig {
     return (name && SAMLProviderConfig.SECRET_PROPERTIES.indexOf(name) > -1);
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case SAMLProviderConfig.CALLBACK_URL:
+        isValid = this.isValidCallbackURL();
+        break;
+      case SAMLProviderConfig.MAX_AUTH_LIFETIME:
+        isValid = this.isValidMaxAuthLifetime();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidCallbackURL(): boolean {
     let isValid: boolean = true;
 
-    let cb = this.getParam(this.getDisplayNamePropertyBinding(SAMLProviderConfig.CALLBACK_URL));
-    if (cb) {
-      let isValidCB = ValidationUtils.isValidURL(cb);
-      if (!isValidCB) {
-        console.debug('SAMLProviderConfig --> ' + SAMLProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
+    let url = this.getParam(this.getDisplayNamePropertyBinding(SAMLProviderConfig.CALLBACK_URL));
+    if (url) {
+      isValid = ValidationUtils.isValidHttpURL(url);
+      if (!isValid) {
+        console.debug(SAMLProviderConfig.CALLBACK_URL + ' value is not a valid URL.');
       }
-      isValid = isValidCB && isValidCB;
+    }
+
+    return isValid;
+  }
+
+  private isValidMaxAuthLifetime(): boolean {
+    let isValid: boolean = true;
+
+    let malt = this.getParam(this.getDisplayNamePropertyBinding(SAMLProviderConfig.MAX_AUTH_LIFETIME));
+    if (malt) {
+      isValid = ValidationUtils.isValidNumber(malt);
+      if (!isValid) {
+        console.debug(SAMLProviderConfig.MAX_AUTH_LIFETIME + ' value is not a valid number.');
+      }
     }
 
     return isValid;

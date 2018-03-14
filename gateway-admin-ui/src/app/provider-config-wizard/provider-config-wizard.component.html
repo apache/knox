@@ -92,6 +92,7 @@
                      [checked]="getPasswordDisplay(pt)"
                      (click)="togglePasswordDisplay(pt)">show
             </span>
+            <span *ngIf="!isValidParamValue(pt)" style="color: red">invalid</span>
           </td>
         </tr>
       </table>

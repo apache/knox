@@ -111,27 +111,46 @@ export class KerberosProviderConfig extends AuthenticationProviderConfig {
     }
   }
 
-  isValid(): boolean {
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean = true;
+
+    switch (paramName) {
+      case KerberosProviderConfig.ANON_ALLOWED:
+        isValid = this.isValidAllowAnon();
+        break;
+      case KerberosProviderConfig.TOKEN_VALIDITY:
+        isValid = this.isValidTokenExpiration();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
+  }
+
+  private isValidTokenExpiration(): boolean {
+    let isValid: boolean = true;
+
+    let tokenExpiration = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.TOKEN_VALIDITY));
+    if (tokenExpiration) {
+      isValid = ValidationUtils.isValidNumber(tokenExpiration);
+      if (!isValid) {
+        console.debug(KerberosProviderConfig.TOKEN_VALIDITY + ' value is not valid.');
+      }
+    }
+    return isValid;
+  }
+
+  private isValidAllowAnon(): boolean {
     let isValid: boolean = true;
 
     let allowAnon = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.ANON_ALLOWED));
     if (allowAnon) {
-      let isValidAllowAnon = ValidationUtils.isValidBoolean(allowAnon);
-      if (!isValidAllowAnon) {
+      isValid = ValidationUtils.isValidBoolean(allowAnon);
+      if (!isValid) {
         console.debug(KerberosProviderConfig.ANON_ALLOWED + ' value is not valid.');
       }
-      isValid = isValid && isValidAllowAnon;
     }
-
-    let tokenExpiration = this.getParam(this.getDisplayNamePropertyBinding(KerberosProviderConfig.TOKEN_VALIDITY));
-    if (tokenExpiration) {
-      let isValidTokenExpiration = ValidationUtils.isValidNumber(tokenExpiration);
-      if (!isValidTokenExpiration) {
-        console.debug(KerberosProviderConfig.TOKEN_VALIDITY + ' value is not valid.');
-      }
-      isValid = isValid && isValidTokenExpiration;
-    }
-
     return isValid;
   }
 

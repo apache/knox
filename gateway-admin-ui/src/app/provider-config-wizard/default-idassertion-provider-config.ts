@@ -16,6 +16,7 @@
  */
 
 import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
+import {ValidationUtils} from "../utils/validation-utils";
 
 export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
@@ -32,8 +33,6 @@ export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderC
       [DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING, 'group.principal.mapping']
     ]);
 
-  private static MAPPING_REGEXP = new RegExp('^(?:(?:[\\w\\*\\,]*=(?:[\\w][^\\*\\=])+[;]?)*)$');
-
   constructor() {
     console.debug('new DefaultIdAssertionProviderConfig()');
     super('Default');
@@ -47,25 +46,30 @@ export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderC
     return DefaultIdAssertionProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
-    let isValid: boolean = true;
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
 
-    let pMap = this.getParam(this.getDisplayNamePropertyBinding(DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING));
-    if (pMap) {
-      let isPMapValid = DefaultIdAssertionProviderConfig.MAPPING_REGEXP.test(pMap);
-      if (!isPMapValid) {
-        console.debug(DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING + ' value is not a valid mapping');
-      }
-      isValid = isValid && isPMapValid;
+    switch (paramName) {
+      case DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING:
+      case DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING:
+        isValid = this.isValidPrincipalMapping(paramName);
+        break;
+      default:
+        isValid = true;
     }
 
-    let gpMap = this.getParam(this.getDisplayNamePropertyBinding(DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING));
-    if (gpMap) {
-      let isGMapValid = DefaultIdAssertionProviderConfig.MAPPING_REGEXP.test(gpMap);
-      if (!isGMapValid) {
-        console.debug(DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING + ' value is not a valid mapping');
+    return isValid;
+  }
+
+  private isValidPrincipalMapping(param: string) {
+    let isValid: boolean = true;
+
+    let mapping = this.getParam(this.getDisplayNamePropertyBinding(param));
+    if (mapping) {
+      isValid = ValidationUtils.isValidPrincipalMapping(mapping);
+      if (!isValid) {
+        console.debug(param + ' value is not a valid principal mapping.')
       }
-      isValid = isValid && isGMapValid;
     }
 
     return isValid;

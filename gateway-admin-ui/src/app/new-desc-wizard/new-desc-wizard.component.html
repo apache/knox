@@ -6,7 +6,10 @@
     <div class="panel-body">
 
       <div> <!-- Descriptor Name -->
-        <strong>Name</strong> <input type="text" [(ngModel)]="descriptorName">
+        <span>
+          <strong>Name</strong> <input type="text" [(ngModel)]="descriptorName">
+        </span>
+        <span *ngIf="!isValidDescriptorName()" style="color: red">invalid</span>
       </div> <!-- Descriptor Name -->
 
       <br>
@@ -72,19 +75,37 @@
           <table>
             <tr>
               <td><strong>Address</strong></td>
-              <td><input type="text" [(ngModel)]="descriptor.discoveryAddress"></td>
+              <td>
+                <span>
+                  <input type="text" [(ngModel)]="descriptor.discoveryAddress">
+                </span>
+                <span *ngIf="!isValidDiscoveryAddress()" style="color: red">invalid</span>
+              </td>
             </tr>
             <tr>
               <td><strong>Cluster</strong></td>
-              <td><input type="text" [(ngModel)]="descriptor.discoveryCluster"></td>
+              <td>
+                <span>
+                  <input type="text" [(ngModel)]="descriptor.discoveryCluster">
+                </span>
+                <span *ngIf="!isValidDiscoveryCluster()" style="color: red">invalid</span>
+              </td>
             </tr>
             <tr>
               <td><strong>Username</strong></td>
-              <td><input type="text" [(ngModel)]="descriptor.discoveryUser"></td>
+              <td>
+                <span>
+                  <input type="text" [(ngModel)]="descriptor.discoveryUser">
+                </span>
+              </td>
             </tr>
             <tr>
               <td><strong>Password Alias</strong></td>
-              <td><input type="text" [(ngModel)]="descriptor.discoveryPassAlias"></td>
+              <td>
+                <span>
+                  <input type="text" [(ngModel)]="descriptor.discoveryPassAlias">
+                </span>
+              </td>
             </tr>
           </table>
         </div>
@@ -99,7 +120,7 @@
             (click)="newDescriptorModal.dismiss()">Cancel</button>
     <button type="button"
             class="btn btn-primary btn-sm"
-            [disabled]="!descriptor || !descriptorName || !validate()"
+            [disabled]="!validate()"
             (click)="newDescriptorModal.close()">Ok</button>
   </bs-modal-footer>
 </bs-modal>

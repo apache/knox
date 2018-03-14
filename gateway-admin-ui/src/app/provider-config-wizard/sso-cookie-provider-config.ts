@@ -41,7 +41,31 @@ export class SSOCookieProviderConfig extends AuthenticationProviderConfig {
     return SSOCookieProviderConfig.displayPropertyNameBindings.get(name);
   }
 
-  isValid(): boolean {
-    return ValidationUtils.isValidURL(this.getParam(this.getDisplayNamePropertyBinding(SSOCookieProviderConfig.PROVIDER_URL)));
+  isValidParamValue(paramName: string): boolean {
+    let isValid: boolean;
+
+    switch (paramName) {
+      case SSOCookieProviderConfig.PROVIDER_URL:
+        isValid = this.isValidProviderURL();
+        break;
+      default:
+        isValid = true;
+    }
+
+    return isValid;
   }
+
+  private isValidProviderURL(): boolean {
+    let isValid: boolean = true;
+
+    let url = this.getParam(this.getDisplayNamePropertyBinding(SSOCookieProviderConfig.PROVIDER_URL));
+    if (url) {
+      isValid = ValidationUtils.isValidHttpURL(url);
+      if (!isValid) {
+        console.debug(SSOCookieProviderConfig.PROVIDER_URL + ' value is not a valid URL.');
+      }
+    }
+    return isValid;
+  }
+
 }

@@ -236,7 +236,7 @@ export class ProviderConfigWizardComponent implements OnInit {
             pc.setParam(property, value);
             console.debug('ProviderConfigWizard --> Set ProviderConfig param value: ' + property + '=' + value);
           } else {
-            console.debug('No provider property configured for ' + name);
+            console.debug('ProviderConfigWizard --> No provider property configured for ' + name);
           }
         }
       }
@@ -288,10 +288,20 @@ export class ProviderConfigWizardComponent implements OnInit {
     return result;
   }
 
+  isValidParamValue(paramName: string) {
+    let isValid: boolean = true;
+    let pc: ProviderConfig = this.getCategoryWizard().getProviderConfig();
+    if (pc) {
+      if (pc instanceof DisplayBindingProviderConfig) {
+        isValid = (pc as DisplayBindingProviderConfig).isValidParamValue(paramName);
+      }
+    }
+    return isValid;
+  }
+
   isProviderConfigValid(pc: ProviderConfig): boolean {
     let isValid: boolean = true;
     if (pc instanceof DisplayBindingProviderConfig) {
-      console.debug('Checking validity of ' + this.selectedCategory + ' ' + (pc as DisplayBindingProviderConfig).getType() + ' provider...');
       isValid = (pc as DisplayBindingProviderConfig).isValid();
     }
     return isValid;
