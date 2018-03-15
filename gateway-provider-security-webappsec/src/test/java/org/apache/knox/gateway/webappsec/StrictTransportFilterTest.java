@@ -32,7 +32,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.knox.gateway.webappsec.filter.StrictTranportFilter;
+import org.apache.knox.gateway.webappsec.filter.StrictTransportFilter;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +40,7 @@ import org.junit.Test;
 /**
  *
  */
-public class StrictTranportFilterTest {
+public class StrictTransportFilterTest {
   /**
    * 
    */
@@ -52,7 +52,7 @@ public class StrictTranportFilterTest {
   @Test
   public void testDefaultOptionsValue() throws Exception {
     try {
-      StrictTranportFilter filter = new StrictTranportFilter();
+      StrictTransportFilter filter = new StrictTransportFilter();
       Properties props = new Properties();
       props.put("strict.transport.enabled", "true");
       filter.init(new TestFilterConfig(props));
@@ -80,7 +80,7 @@ public class StrictTranportFilterTest {
   @Test
   public void testConfiguredOptionsValue() throws Exception {
     try {
-      StrictTranportFilter filter = new StrictTranportFilter();
+      StrictTransportFilter filter = new StrictTransportFilter();
       Properties props = new Properties();
       props.put("strict.transport.enabled", "true");
       props.put("strict.transport", "max-age=31536010; includeSubDomains");

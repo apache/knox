@@ -88,9 +88,9 @@ public class XFrameOptionsFilter implements Filter {
     }
 
     /**
-     * construct a wrapper for this request
+     * construct a wrapper for this response
      * 
-     * @param request
+     * @param response
      */
     public XFrameOptionsResponseWrapper(HttpServletResponse response) {
         super(response);

@@ -105,6 +105,9 @@ class RESTInvoker {
                     org.apache.commons.codec.binary.Base64.encodeBase64String((username + ":" + password).getBytes());
             request.addHeader(new BasicHeader("Authorization", "Basic " + encodedCreds));
 
+            // Ambari CSRF protection
+            request.addHeader("X-Requested-By", "Knox");
+
             response = httpClient.execute(request);
 
             if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {

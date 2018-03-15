@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * This filter protects proxied webapps from protocol downgrade attacks 
  * and cookie hijacking.
  */
-public class StrictTranportFilter implements Filter {
+public class StrictTransportFilter implements Filter {
   private static final String STRICT_TRANSPORT = "Strict-Transport-Security";
   private static final String CUSTOM_HEADER_PARAM = "strict.transport";
 
@@ -55,7 +55,7 @@ public class StrictTranportFilter implements Filter {
   public void doFilter(ServletRequest req, ServletResponse res,
       FilterChain chain) throws IOException, ServletException {
     ((HttpServletResponse) res).setHeader(STRICT_TRANSPORT, option);
-    chain.doFilter(req, new StrictTranportResponseWrapper((HttpServletResponse) res));
+    chain.doFilter(req, new StrictTransportResponseWrapper((HttpServletResponse) res));
   }
 
   /* (non-Javadoc)
@@ -69,7 +69,7 @@ public class StrictTranportFilter implements Filter {
     }
   }
 
-  public class StrictTranportResponseWrapper extends HttpServletResponseWrapper {
+  public class StrictTransportResponseWrapper extends HttpServletResponseWrapper {
     @Override
     public void addHeader(String name, String value) {
       // don't allow additional values to be added to
@@ -88,11 +88,11 @@ public class StrictTranportFilter implements Filter {
     }
 
     /**
-     * construct a wrapper for this request
+     * construct a wrapper for this response
      * 
-     * @param request
+     * @param response
      */
-    public StrictTranportResponseWrapper(HttpServletResponse response) {
+    public StrictTransportResponseWrapper(HttpServletResponse response) {
         super(response);
     }
 

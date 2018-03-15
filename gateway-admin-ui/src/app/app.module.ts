@@ -16,7 +16,7 @@
  */
 import { NgModule }      from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from "@angular/common/http";
+import { HttpClientModule, HttpClientXsrfModule } from "@angular/common/http";
 import { FormsModule } from '@angular/forms';
 import { CustomFormsModule } from 'ng2-validation';
 
@@ -46,6 +46,7 @@ import { ProviderConfigWizardComponent } from './provider-config-wizard/provider
 @NgModule({
   imports: [ BrowserModule,
              HttpClientModule,
+             HttpClientXsrfModule,
              FormsModule,
              CustomFormsModule,
              BsModalModule,

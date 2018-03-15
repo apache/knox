@@ -41,7 +41,8 @@ export class GatewayVersionService {
 
     addHeaders(headers: HttpHeaders) {
         return headers.append('Accept', 'application/json')
-                      .append('Content-Type', 'application/json');
+                      .append('Content-Type', 'application/json')
+                      .append('X-XSRF-Header', 'admin-ui');
     }
 
     private handleError(error: any): Promise<any> {

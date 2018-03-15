@@ -27,6 +27,7 @@
             <param><name>csrf.customHeader</name><value>X-XSRF-Header</value></param>
             <param><name>csrf.methodsToIgnore</name><value>GET,OPTIONS,HEAD</value></param>
             <param><name>xframe.options.enabled</name><value>true</value></param>
+            <param><name>xss.protection.enabled</name><value>true</value></param>
             <param><name>strict.transport.enabled</name><value>true</value></param>
         </provider>
 

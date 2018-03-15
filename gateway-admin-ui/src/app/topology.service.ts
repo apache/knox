@@ -35,7 +35,7 @@ export class TopologyService {
 
     getTopologies(): Promise<Topology[]> {
         let headers = new HttpHeaders();
-        this.addJsonHeaders(headers);
+        headers = this.addJsonHeaders(headers);
         return this.http.get(this.topologiesUrl, {
             headers: headers
         } )
@@ -59,7 +59,6 @@ export class TopologyService {
     saveTopology(url: string, xml : string): Promise<string> {
         let xheaders = new HttpHeaders();
         xheaders = this.addXmlHeaders(xheaders);
-        xheaders = this.addCsrfHeaders(xheaders);
         return this.http
             .put(url, xml, { headers: xheaders, responseType: 'text' })
             .toPromise()
@@ -71,7 +70,6 @@ export class TopologyService {
     createTopology(name: string, xml : string): Promise<string> {
         let xheaders = new HttpHeaders();
         xheaders = this.addXmlHeaders(xheaders);
-        xheaders = this.addCsrfHeaders(xheaders);
         let url = this.topologiesUrl + "/" + name;
         return this.http
             .put(url, xml, { headers: xheaders, responseType: 'text' })
@@ -83,7 +81,6 @@ export class TopologyService {
     deleteTopology(href: string): Promise<string> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        headers = this.addCsrfHeaders(headers);
         return this.http.delete(href, {
             headers: headers, responseType: 'text'
         } )
@@ -93,13 +90,13 @@ export class TopologyService {
     }
 
     addJsonHeaders(headers: HttpHeaders): HttpHeaders {
-        return headers.append('Accept', 'application/json')
-                      .append('Content-Type', 'application/json');
+        return this.addCsrfHeaders(headers.append('Accept', 'application/json')
+                                          .append('Content-Type', 'application/json'));
     }
 
     addXmlHeaders(headers: HttpHeaders): HttpHeaders {
-        return headers.append('Accept', 'application/xml')
-                      .append('Content-Type', 'application/xml');
+        return this.addCsrfHeaders(headers.append('Accept', 'application/xml')
+                                          .append('Content-Type', 'application/xml'));
     }
 
     addCsrfHeaders(headers: HttpHeaders): HttpHeaders {
