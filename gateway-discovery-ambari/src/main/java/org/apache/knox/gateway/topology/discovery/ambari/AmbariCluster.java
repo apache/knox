@@ -144,14 +144,16 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
             if (parts.length == 2) {
                 ServiceConfiguration sc = getServiceConfiguration(parts[0], parts[1]);
                 if (sc != null) {
-                    String enabledProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".enabled");
-                    String ensembleProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".ensemble");
+                    String enabledProp   = zooKeeperHAConfigMappings.getProperty(serviceName + ".enabled");
+                    String ensembleProp  = zooKeeperHAConfigMappings.getProperty(serviceName + ".ensemble");
+                    String portProp      = zooKeeperHAConfigMappings.getProperty(serviceName + ".port");
                     String namespaceProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".namespace");
                     Map<String, String> scProps = sc.getProperties();
                     if (scProps != null) {
                         result =
                             new ZooKeeperConfiguration(enabledProp != null ? scProps.get(enabledProp) : null,
                                                        ensembleProp != null ? scProps.get(ensembleProp) : null,
+                                                       portProp != null ? scProps.get(portProp) : null,
                                                        namespaceProp != null ? scProps.get(namespaceProp) : null);
                     }
                 }
@@ -193,9 +195,9 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
         String ensemble;
         String namespace;
 
-        ZooKeeperConfiguration(String enabled, String ensemble, String namespace) {
+        ZooKeeperConfiguration(String enabled, String ensemble, String port, String namespace) {
             this.namespace = namespace;
-            this.ensemble = ensemble;
+            this.ensemble = (port == null) ? ensemble : applyPortToEnsemble(ensemble, port);
             this.isEnabled = (enabled != null ? Boolean.valueOf(enabled) : true);
         }
 
@@ -212,6 +214,25 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
         @Override
         public String getNamespace() {
             return namespace;
+        }
+
+        private String applyPortToEnsemble(String ensemble, String port) {
+            String updatedEnsemble = "";
+
+            String[] hosts = ensemble.split(",");
+            int index = 0;
+            for (String host : hosts) {
+                int portIndex = host.indexOf(':');
+                if (portIndex > 0) {
+                    host = host.substring(0, portIndex);
+                }
+                updatedEnsemble += host + ":" + port;
+                if (++index < hosts.length) {
+                    updatedEnsemble += ",";
+                }
+            }
+
+            return updatedEnsemble;
         }
     }
 }

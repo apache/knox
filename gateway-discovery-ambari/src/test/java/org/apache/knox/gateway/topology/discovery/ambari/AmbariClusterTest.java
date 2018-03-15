@@ -123,6 +123,26 @@ public class AmbariClusterTest {
     assertEquals(namespace, config.getNamespace());
   }
 
+  @Test
+  public void testHBaseZooKeeperConfiguration() throws Exception {
+
+    final boolean isEnabled = true;
+    final String ensemble = "host1:2181,host2:2181,host3:2181";
+    final String namespace = "/hbase-secure";
+
+    Map<String, String> serviceConfigProps = new HashMap<>();
+    serviceConfigProps.put("hbase.zookeeper.quorum", "host1,host2,host3");
+    serviceConfigProps.put("hbase.zookeeper.property.clientPort", "2181");
+    serviceConfigProps.put("zookeeper.znode.parent", namespace);
+
+    AmbariCluster.ZooKeeperConfig config = getZooKeeperConfiguration("WEBHBASE", "HBASE", "hbase-site", serviceConfigProps);
+    assertNotNull(config);
+    assertEquals(isEnabled, config.isEnabled());
+    assertEquals(ensemble, config.getEnsemble());
+    assertEquals(namespace, config.getNamespace());
+  }
+
+
 
   private ServiceDiscovery.Cluster.ZooKeeperConfig getZooKeeperConfiguration(final String              serviceName,
                                                                              final String              configType,
