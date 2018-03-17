@@ -130,10 +130,21 @@ export class ProviderConfigWizardComponent implements OnInit {
     let newResource = new Resource();
     newResource.name = this.name + '.json';
 
+    // Make constrained copies of ProviderConfig objects to avoid persisting unwanted object properties
+    let tmp = new Array<ProviderConfig>();
+    for (let p of this.providers) {
+      let pp = new ProviderConfig();
+      pp.role = p.role;
+      pp.name = p.name;
+      pp.enabled = p.enabled;
+      pp.params = p.params;
+      tmp.push(pp);
+    }
+
     // Persist the new provider configuration
     this.resourceService.createResource('Provider Configurations',
                                         newResource,
-                                        this.resourceService.serializeProviderConfiguration(this.providers, 'json'))
+                                        this.resourceService.serializeProviderConfiguration(tmp, 'json'))
                         .then(() => {
                             // Reload the resource list presentation
                             this.resourceTypesService.selectResourceType('Provider Configurations');
