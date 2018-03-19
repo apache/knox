@@ -26,7 +26,8 @@ export class PAMProviderConfig extends AuthenticationProviderConfig implements O
   static SERVICE          = 'Service';
   static AUTH_CHAIN       = 'Authentication Chain';
 
-  private static displayPropertyNames = [ PAMProviderConfig.SESSION_TIMEOUT ];
+  private static displayPropertyNames = [ PAMProviderConfig.SESSION_TIMEOUT,
+                                          PAMProviderConfig.SERVICE ];
 
   private static displayPropertyNameBindings: Map<string, string> =
                             new Map([
