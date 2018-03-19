@@ -438,6 +438,56 @@ public class SimpleDescriptorHandlerTest {
     }
 
 
+    /**
+     * KNOX-1216
+     */
+    @Test
+    public void testMissingProviderConfigReference() throws Exception {
+
+        // Prepare a mock SimpleDescriptor
+        final Map<String, List<String>> serviceURLs = new HashMap<>();
+        serviceURLs.put("NAMENODE", null);
+        serviceURLs.put("JOBTRACKER", null);
+        serviceURLs.put("WEBHDFS", null);
+        serviceURLs.put("WEBHCAT", null);
+        serviceURLs.put("OOZIE", null);
+        serviceURLs.put("WEBHBASE", null);
+        serviceURLs.put("HIVE", null);
+        serviceURLs.put("RESOURCEMANAGER", null);
+        serviceURLs.put("AMBARIUI", Collections.singletonList("http://c6401.ambari.apache.org:8080"));
+
+        File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+
+        // Mock out the simple descriptor
+        SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
+        EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
+        EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(null).anyTimes();
+        List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
+        for (String serviceName : serviceURLs.keySet()) {
+            SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
+            EasyMock.expect(svc.getName()).andReturn(serviceName).anyTimes();
+            EasyMock.expect(svc.getVersion()).andReturn("WEBHDFS".equals(serviceName) ? "2.4.0" : null).anyTimes();
+            EasyMock.expect(svc.getURLs()).andReturn(serviceURLs.get(serviceName)).anyTimes();
+            EasyMock.replay(svc);
+            serviceMocks.add(svc);
+        }
+        EasyMock.expect(testDescriptor.getServices()).andReturn(serviceMocks).anyTimes();
+        EasyMock.replay(testDescriptor);
+
+        try {
+            // Invoke the simple descriptor handler
+            SimpleDescriptorHandler.handle(testDescriptor, destDir, destDir);
+            fail("Expected an IllegalArgumentException because the provider configuration reference is missing.");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected exception for missing provider configuration reference: " +
+                 e.getClass().getName() + " : " + e.getMessage());
+        }
+    }
+
     private File writeProviderConfig(String path, String content) throws IOException {
         File f = new File(path);
         FileUtils.write(f, content);

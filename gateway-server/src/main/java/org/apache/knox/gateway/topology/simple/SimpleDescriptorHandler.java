@@ -346,11 +346,17 @@ public class SimpleDescriptorHandler {
         BufferedWriter fw = null;
         File topologyDescriptor = null;
         try {
-            // Resolve and parse the referenced provider configuration
-            File providerConfigFile = resolveProviderConfigurationReference(desc.getProviderConfig(), srcDirectory);
-            ProviderConfiguration providerConfiguration = handleProviderConfiguration(desc, providerConfigFile);
+            // Handle the referenced provider configuration
+            File providerConfigFile = null;
+            ProviderConfiguration providerConfiguration = null;
+            String providerConfigReference = desc.getProviderConfig();
+            if (providerConfigReference != null) {
+                // Resolve and parse the referenced provider configuration
+                providerConfigFile = resolveProviderConfigurationReference(providerConfigReference, srcDirectory);
+                providerConfiguration = handleProviderConfiguration(desc, providerConfigFile);
+            }
             if (providerConfiguration == null) {
-                throw new IllegalArgumentException("Invalid provider configuration: " + desc.getProviderConfig());
+                throw new IllegalArgumentException("Invalid provider configuration: " + providerConfigReference);
             }
             result.put(RESULT_REFERENCE, providerConfigFile);
 

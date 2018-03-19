@@ -9,7 +9,7 @@
         <span>
           <strong>Name</strong> <input type="text" [(ngModel)]="descriptorName">
         </span>
-        <span *ngIf="!isValidDescriptorName()" style="color: red">invalid</span>
+        <span *ngIf="!isValidDescriptorName()" style="color: red">required</span>
       </div> <!-- Descriptor Name -->
 
       <br>
@@ -37,6 +37,7 @@
             <span class="glyphicon glyphicon-edit"></span>
           </button>
         <app-provider-config-selector #choosePC></app-provider-config-selector>
+        <span *ngIf="!isValidProviderConfig()" style="color: red">required</span>
       </div> <!-- Provider Config reference -->
 
       <br>

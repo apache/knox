@@ -171,6 +171,8 @@ export class NewDescWizardComponent implements OnInit {
 
       isValid = isValid && this.isValidDescriptorName();
 
+      isValid = isValid && this.isValidProviderConfig();
+
       // Validate the discovery address
       if (this.descriptor.discoveryAddress) {
         isValid = isValid && this.isValidDiscoveryAddress();
@@ -188,6 +190,16 @@ export class NewDescWizardComponent implements OnInit {
 
     if (this.descriptorName) {
       isValid = ValidationUtils.isValidString(this.descriptorName);
+    }
+
+    return isValid;
+  }
+
+  isValidProviderConfig(): boolean {
+    let isValid: boolean = false;
+
+    if (this.descriptor.providerConfig) {
+      isValid = ValidationUtils.isValidString(this.descriptor.providerConfig);
     }
 
     return isValid;
