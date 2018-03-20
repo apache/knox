@@ -17,8 +17,13 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import java.io.IOException;
-import java.text.ParseException;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.CertificateUtils;
+import org.eclipse.jetty.http.MimeTypes;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -29,22 +34,20 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.CertificateUtils;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
+import java.io.IOException;
+import java.text.ParseException;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_COOKIE_NAME = "sso.cookie.name";
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
-  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
+
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
+  private static final String XHR_HEADER = "X-Requested-With";
+  private static final String XHR_VALUE = "XMLHttpRequest";
+  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
 
   private String cookieName;
   private String authenticationProviderUrl;
@@ -120,7 +123,19 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
     String loginURL = constructLoginURL(request);
-    response.sendRedirect(loginURL);
+
+    /* We don't need redirect if this is a XHR request */
+    if (request.getHeader(XHR_HEADER) != null && request.getHeader(XHR_HEADER)
+        .equalsIgnoreCase(XHR_VALUE)) {
+      final byte[] data = error.getBytes("UTF-8");
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setContentType(MimeTypes.Type.TEXT_PLAIN.toString());
+      response.setContentLength(data.length);
+      response.getOutputStream().write(data);
+    } else {
+      response.sendRedirect(loginURL);
+    }
+
   }
 
   /**
