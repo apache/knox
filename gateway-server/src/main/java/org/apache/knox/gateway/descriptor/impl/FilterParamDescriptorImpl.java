@@ -47,6 +47,17 @@ public class FilterParamDescriptorImpl implements FilterParamDescriptor {
   @Override
   public FilterParamDescriptor name( String name ) {
     this.name = name;
+
+    // If there is already a param identified by the new name, remove it, such that it is REPLACED with this new param
+    if (parent != null) {
+      for (FilterParamDescriptor param : parent.params()) {
+        if (param.name().equals(name) && (param != this)) {
+          parent.params().remove(param);
+          break;
+        }
+      }
+    }
+
     return this;
   }
 
