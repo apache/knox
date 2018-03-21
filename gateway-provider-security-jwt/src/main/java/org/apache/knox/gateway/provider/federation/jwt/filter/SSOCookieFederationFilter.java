@@ -128,7 +128,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (request.getHeader(XHR_HEADER) != null && request.getHeader(XHR_HEADER)
         .equalsIgnoreCase(XHR_VALUE)) {
       final byte[] data = error.getBytes("UTF-8");
-      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       response.setContentType(MimeTypes.Type.TEXT_PLAIN.toString());
       response.setContentLength(data.length);
       response.getOutputStream().write(data);
