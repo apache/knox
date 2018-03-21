@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.filter;
 
 import org.apache.knox.gateway.audit.api.CorrelationContext;
+import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
@@ -33,13 +34,15 @@ public class CorrelationHandler extends HandlerWrapper {
   @Override
   public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException {
-    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
+    CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
+    CorrelationContext correlationContext = correlationService.createContext();
     correlationContext.setRequestId( UUID.randomUUID().toString() );
     try {
       super.handle( target, baseRequest, request, response );
     } finally {
+      // Ensure that the correlationContext is destroyed between requests
       correlationContext.destroy();
+      correlationService.detachContext();
     }
   }
-
 }

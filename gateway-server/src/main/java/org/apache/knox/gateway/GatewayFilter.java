@@ -169,19 +169,7 @@ public class GatewayFilter implements Filter {
       servletRequest.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, chain.getResourceRole() );
       try {
         chain.doFilter( servletRequest, servletResponse );
-      } catch( IOException e ) {
-        LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
-        throw e;
-      } catch( ServletException e ) {
-        LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
-        throw e;
-      } catch( RuntimeException e ) {
-        LOG.failedToExecuteFilter( e );
-        auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
-        throw e;
-      } catch( ThreadDeath e ) {
+      } catch( IOException | RuntimeException | ThreadDeath | ServletException e ) {
         LOG.failedToExecuteFilter( e );
         auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw e;
@@ -189,11 +177,18 @@ public class GatewayFilter implements Filter {
         LOG.failedToExecuteFilter( e );
         auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw new ServletException( e );
+      } finally {
+        // Make sure to destroy the correlationContext to prevent threading issues
+        CorrelationServiceFactory.getCorrelationService().detachContext();
       }
     } else {
       LOG.failedToMatchPath( requestPath );
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
+
+      // Make sure to destroy the correlationContext to prevent threading issues
+      CorrelationServiceFactory.getCorrelationService().detachContext();
     }
+    
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]

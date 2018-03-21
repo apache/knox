@@ -29,9 +29,8 @@ public class CollectAppender extends AppenderSkeleton {
     super();
   }
 
-  public static BlockingQueue<LoggingEvent> queue = new LinkedBlockingQueue<LoggingEvent>();
-  public static boolean closed = false;
-
+  public static final BlockingQueue<LoggingEvent> queue = new LinkedBlockingQueue<>();
+  
   @Override
   protected void append( LoggingEvent event ) {
     event.getProperties();

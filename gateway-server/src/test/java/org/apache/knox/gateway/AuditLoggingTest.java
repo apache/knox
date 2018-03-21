@@ -26,9 +26,11 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -58,8 +60,12 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuditLoggingTest {
+  private static Logger LOG = LoggerFactory.getLogger( AuditLoggingTest.class );
+
   private static final String METHOD = "GET";
   private static final String PATH = "path";
   private static final String CONTEXT_PATH = "contextPath/";
@@ -86,7 +92,7 @@ public class AuditLoggingTest {
    * action=access request_type=uri outcome=unavailable
    * action=access request_type=uri outcome=success message=Response status: 404
    */
-  public void testNoFiltersAudit() throws ServletException, IOException {
+  public void testNoFiltersAudit() throws Exception {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.replay( config );
 
@@ -113,15 +119,48 @@ public class AuditLoggingTest {
     FilterChain chain = EasyMock.createNiceMock( FilterChain.class );
     EasyMock.replay( chain );
 
-    GatewayFilter gateway = new GatewayFilter();
-    gateway.init( config );
-    gateway.doFilter( request, response, chain );
-    gateway.destroy();
+    Random rnd = new Random();
 
-    assertThat( CollectAppender.queue.size(), is( 1 ) );
-    Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
-    LoggingEvent accessEvent = iterator.next();
-    verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
+    // Make number of total requests between 1-100
+    int numberTotalRequests = rnd.nextInt(99) + 1;
+    Set<Callable<Void>> callables = new HashSet<>(numberTotalRequests);
+    for (int i = 0; i < numberTotalRequests; i++) {
+      callables.add(() -> {
+        GatewayFilter gateway = new GatewayFilter();
+        gateway.init( config );
+        gateway.doFilter( request, response, chain );
+        gateway.destroy();
+        return null;
+      });
+    }
+
+    // Make number of concurrent requests between 1-10
+    int numberConcurrentRequests = rnd.nextInt( 9) + 1;
+
+    LOG.info("Executing %d total requests with %d concurrently", numberTotalRequests, numberConcurrentRequests);
+
+    ExecutorService executor = Executors.newFixedThreadPool(numberConcurrentRequests);
+    executor.invokeAll(callables);
+    executor.shutdown();
+    executor.awaitTermination(5, TimeUnit.SECONDS);
+    assertThat(executor.isTerminated(), is(true));
+
+    assertThat( CollectAppender.queue.size(), is( numberTotalRequests ) );
+
+    // Use a set to make sure to dedupe any requestIds to get only unique ones
+    Set<String> requestIds = new HashSet<>();
+    for (LoggingEvent accessEvent : CollectAppender.queue) {
+      verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
+
+      CorrelationContext cc = (CorrelationContext)accessEvent.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
+      // There are some events that do not have a CorrelationContext associated (ie: deploy)
+      if(cc != null) {
+        requestIds.add(cc.getRequestId());
+      }
+    }
+
+    // There should be a unique correlation id for each request
+    assertThat(requestIds.size(), is(numberTotalRequests));
   }
 
   @Test
