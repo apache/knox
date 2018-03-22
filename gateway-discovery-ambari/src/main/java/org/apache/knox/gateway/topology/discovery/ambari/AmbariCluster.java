@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -32,6 +33,8 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
     private static final String ZK_CONFIG_MAPPING_FILE = "ambari-service-discovery-zk-config-mapping.properties";
+
+    private static final String ZK_CONFIG_MAPPING_OVERRIDE_FILE = "ambari-discovery-zk-config.properties";
 
     static final String ZK_CONFIG_MAPPING_SYSTEM_PROPERTY =
                                                      "org.apache.knox.gateway.topology.discovery.ambari.zk.mapping";
@@ -48,7 +51,22 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
             }
 
             // Attempt to apply overriding or additional mappings from external source
-            String overridesPath = System.getProperty(ZK_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            String overridesPath = null;
+
+            // First, check for the well-known overrides config file
+            String gatewayConfDir = System.getProperty(ServiceDiscovery.CONFIG_DIR_PROPERTY);
+            if (gatewayConfDir != null) {
+                File overridesFile = new File(gatewayConfDir, ZK_CONFIG_MAPPING_OVERRIDE_FILE);
+                if (overridesFile.exists()) {
+                    overridesPath = overridesFile.getAbsolutePath();
+                }
+            }
+
+            // If no file in the config dir, check for the system property reference
+            if (overridesPath == null) {
+                overridesPath = System.getProperty(ZK_CONFIG_MAPPING_SYSTEM_PROPERTY);
+            }
+
             if (overridesPath != null) {
                 Properties overrides = new Properties();
                 try (InputStream in = new FileInputStream(overridesPath)) {
@@ -150,6 +168,24 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
                     String namespaceProp = zooKeeperHAConfigMappings.getProperty(serviceName + ".namespace");
                     Map<String, String> scProps = sc.getProperties();
                     if (scProps != null) {
+
+                        if (ensembleProp != null) {
+                            // If there are multiple ensemble properties specified, then iteratively check for the first
+                            // valid value, and use that one.
+                            String[] ensembleProps = ensembleProp.split(",");
+                            if (ensembleProps.length > 1) {
+                                for (String prop : ensembleProps) {
+                                    if (!prop.isEmpty()) {
+                                        String value = scProps.get(prop);
+                                        if (value != null) {
+                                            ensembleProp = prop;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         result =
                             new ZooKeeperConfiguration(enabledProp != null ? scProps.get(enabledProp) : null,
                                                        ensembleProp != null ? scProps.get(ensembleProp) : null,

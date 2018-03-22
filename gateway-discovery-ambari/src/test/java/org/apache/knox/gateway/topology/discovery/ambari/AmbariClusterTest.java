@@ -16,17 +16,12 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
-import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -136,6 +131,62 @@ public class AmbariClusterTest {
     serviceConfigProps.put("zookeeper.znode.parent", namespace);
 
     AmbariCluster.ZooKeeperConfig config = getZooKeeperConfiguration("WEBHBASE", "HBASE", "hbase-site", serviceConfigProps);
+    assertNotNull(config);
+    assertEquals(isEnabled, config.isEnabled());
+    assertEquals(ensemble, config.getEnsemble());
+    assertEquals(namespace, config.getNamespace());
+  }
+
+
+  /**
+   * The Atlas ZooKeeper ensemble determination is based on multiple properties with a prioritized search order.
+   * This test verifies that the default property is used when the primary property value is undefined.
+   */
+  @Test
+  public void testAtlasZooKeeperEnsemblePropsConfigurationSecondary() throws Exception {
+
+    final boolean isEnabled = true;
+    final String ensemble = "host1:2181,host2:2181,host3:2181";
+    //final String ensemblePropPrimary = "atlas.server.ha.zookeeper.connect";
+    final String ensemblePropSecondary = "atlas.kafka.zookeeper.connect";
+    final String namespace = "/apache_atlas";
+
+    Map<String, String> serviceConfigProps = new HashMap<>();
+    // Since the primary property is undefined, the ZooKeeper config should query the value of the secondary property
+    serviceConfigProps.put(ensemblePropSecondary, ensemble);
+    serviceConfigProps.put("atlas.server.ha.zookeeper.zkroot", namespace);
+    serviceConfigProps.put("atlas.server.ha.enabled", "true");
+
+    AmbariCluster.ZooKeeperConfig config =
+                            getZooKeeperConfiguration("ATLAS", "ATLAS", "application-properties", serviceConfigProps);
+    assertNotNull(config);
+    assertEquals(isEnabled, config.isEnabled());
+    assertEquals(ensemble, config.getEnsemble());
+    assertEquals(namespace, config.getNamespace());
+  }
+
+
+  /**
+   * The Atlas ZooKeeper ensemble determination is based on multiple properties with a prioritized search order.
+   * This test verifies that the primary property value is used when it's defined.
+   */
+  @Test
+  public void testAtlasZooKeeperEnsemblePropsConfigurationPrimary() throws Exception {
+
+    final boolean isEnabled = true;
+    final String ensemble = "host1:2181,host2:2181,host3:2181";
+    final String ensemblePropPrimary = "atlas.server.ha.zookeeper.connect";
+    final String ensemblePropSecondary = "atlas.kafka.zookeeper.connect";
+    final String namespace = "/apache_atlas";
+
+    Map<String, String> serviceConfigProps = new HashMap<>();
+    serviceConfigProps.put(ensemblePropSecondary, "invalid");
+    serviceConfigProps.put(ensemblePropPrimary, ensemble); // Since the primary property is defined, its value should be used
+    serviceConfigProps.put("atlas.server.ha.zookeeper.zkroot", namespace);
+    serviceConfigProps.put("atlas.server.ha.enabled", "true");
+
+    AmbariCluster.ZooKeeperConfig config =
+        getZooKeeperConfiguration("ATLAS", "ATLAS", "application-properties", serviceConfigProps);
     assertNotNull(config);
     assertEquals(isEnabled, config.isEnabled());
     assertEquals(ensemble, config.getEnsemble());
