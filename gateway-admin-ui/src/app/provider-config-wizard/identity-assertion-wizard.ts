@@ -32,7 +32,7 @@ export class IdentityAssertionWizard extends CategoryWizard {
   private static CONCAT: string       = 'Concatenation';
   private static SWITCHCASE: string   = 'SwitchCase';
   private static REGEXP: string       = 'Regular Expression';
-  private static GROUP_LOOKUP: string = 'Group Lookup';
+  private static GROUP_LOOKUP: string = 'Hadoop Group Lookup (LDAP)';
 
   private static assertionTypes: string[] = [ IdentityAssertionWizard.DEFAULT,
                                               IdentityAssertionWizard.CONCAT,
