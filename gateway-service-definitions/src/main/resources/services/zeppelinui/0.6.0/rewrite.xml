@@ -166,6 +166,15 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm" >
     <rewrite template="{$frontend[path]}/zeppelin/app/search/result-list.html"/>
   </rule>
+
+  <!-- Rewrite the outgoing content for /api/ticket -->
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api/login" pattern="*://*:*/api/login">
+    <rewrite template="{$frontend[path]}/zeppelin/api/login"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api" pattern="*://*:*/api/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/api/{**}"/>
+  </rule>
   
   <filter name="ZEPPELINUI/zeppelin/outbound/javascript/filter">
           <content type="application/javascript">
