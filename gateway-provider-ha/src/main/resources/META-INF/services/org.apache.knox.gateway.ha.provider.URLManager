@@ -20,3 +20,4 @@ org.apache.knox.gateway.ha.provider.impl.HS2ZookeeperURLManager
 org.apache.knox.gateway.ha.provider.impl.SOLRZookeeperURLManager
 org.apache.knox.gateway.ha.provider.impl.KafkaZookeeperURLManager
 org.apache.knox.gateway.ha.provider.impl.HBaseZookeeperURLManager
+org.apache.knox.gateway.ha.provider.impl.AtlasZookeeperURLManager
