@@ -84,7 +84,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
     AmbariConfigurationMonitor(GatewayConfig config, AliasService aliasService) {
         this.gatewayConfig   = config;
-        this.ambariClient    = new AmbariClientCommon(aliasService);
+        this.ambariClient    = new AmbariClientCommon(config, aliasService);
         this.internalMonitor = new PollingConfigAnalyzer(this);
 
         // Override the default polling interval if it has been configured

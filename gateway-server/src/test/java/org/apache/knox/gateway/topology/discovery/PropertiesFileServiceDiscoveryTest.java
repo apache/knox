@@ -16,7 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery;
 
-import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.File;
@@ -55,13 +56,16 @@ public class PropertiesFileServiceDiscoveryTest {
         ServiceDiscovery sd = ServiceDiscoveryFactory.get("PROPERTIES_FILE");
         assertNotNull(sd);
 
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
         String discoveryAddress = this.getClass().getName() + "__test-discovery-source.properties";
         File discoverySource = new File(discoveryAddress);
         try {
             config.store(new FileOutputStream(discoverySource), "Test discovery source for PropertiesFileServiceDiscovery");
 
             ServiceDiscovery.Cluster c =
-                        sd.discover(new DefaultServiceDiscoveryConfig(discoverySource.getAbsolutePath()), "mycluster");
+                    sd.discover(gc, new DefaultServiceDiscoveryConfig(discoverySource.getAbsolutePath()), "mycluster");
             assertNotNull(c);
             for (String name : clusterProperties.keySet()) {
                 assertEquals(clusterProperties.get(name), c.getServiceURLs(name.split("\\.")[1]).get(0));

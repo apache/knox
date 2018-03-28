@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
@@ -38,8 +39,8 @@ class AmbariClientCommon {
     private RESTInvoker restClient;
 
 
-    AmbariClientCommon(AliasService aliasService) {
-        this(new RESTInvoker(aliasService));
+    AmbariClientCommon(GatewayConfig config, AliasService aliasService) {
+        this(new RESTInvoker(config, aliasService));
     }
 
 

@@ -18,7 +18,11 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.knox.gateway.config.ConfigurationException;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -39,13 +43,38 @@ class RESTInvoker {
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
-    private AliasService aliasService = null;
+    private static final int DEFAULT_TIMEOUT = 10000;
 
-    private CloseableHttpClient httpClient = org.apache.http.impl.client.HttpClients.createDefault();
+    private AliasService aliasService;
+
+    private CloseableHttpClient httpClient;
 
 
     RESTInvoker(AliasService aliasService) {
+        this(null, aliasService);
+    }
+
+
+    RESTInvoker(GatewayConfig config, AliasService aliasService) {
         this.aliasService = aliasService;
+
+        // Initialize the HTTP client
+        this.httpClient = HttpClientBuilder.create().setDefaultRequestConfig(getRequestConfig(config)).build();
+    }
+
+
+    private static RequestConfig getRequestConfig(GatewayConfig config) {
+        RequestConfig.Builder builder = RequestConfig.custom();
+        if (config != null) {
+            builder.setConnectTimeout(config.getHttpClientConnectionTimeout())
+                   .setConnectionRequestTimeout(config.getHttpClientConnectionTimeout())
+                   .setSocketTimeout(config.getHttpClientSocketTimeout());
+        } else {
+            builder.setConnectTimeout(DEFAULT_TIMEOUT)
+                   .setConnectionRequestTimeout(DEFAULT_TIMEOUT)
+                   .setSocketTimeout(DEFAULT_TIMEOUT);
+        }
+        return builder.build();
     }
 
 
@@ -121,7 +150,8 @@ class RESTInvoker {
             } else {
                 log.unexpectedRestResponseStatusCode(url, response.getStatusLine().getStatusCode());
             }
-
+        } catch (ConnectTimeoutException e) {
+            log.restInvocationTimedOut(url, e);
         } catch (IOException e) {
             log.restInvocationError(url, e);
         } finally {

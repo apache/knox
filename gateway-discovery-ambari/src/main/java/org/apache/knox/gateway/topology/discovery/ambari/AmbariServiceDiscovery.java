@@ -29,6 +29,7 @@ import java.util.Properties;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -137,10 +138,10 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
      * construction time. This is called internally prior to discovery invocations to make sure the clients have been
      * initialized.
      */
-    private void init() {
+    private void init(GatewayConfig config) {
         if (!isInitialized) {
             if (this.restClient == null) {
-                this.restClient = new RESTInvoker(aliasService);
+                this.restClient = new RESTInvoker(config, aliasService);
             }
             this.ambariClient = new AmbariClientCommon(restClient);
             this.configChangeMonitor = getConfigurationChangeMonitor();
@@ -188,24 +189,24 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
 
     @Override
-    public Map<String, Cluster> discover(ServiceDiscoveryConfig config) {
+    public Map<String, Cluster> discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig) {
         Map<String, Cluster> clusters = new HashMap<>();
 
-        init();
+        init(gatewayConfig);
 
-        String discoveryAddress = config.getAddress();
+        String discoveryAddress = discoveryConfig.getAddress();
 
         // Invoke Ambari REST API to discover the available clusters
         String clustersDiscoveryURL = String.format("%s" + AMBARI_CLUSTERS_URI, discoveryAddress);
 
-        JSONObject json = restClient.invoke(clustersDiscoveryURL, config.getUser(), config.getPasswordAlias());
+        JSONObject json = restClient.invoke(clustersDiscoveryURL, discoveryConfig.getUser(), discoveryConfig.getPasswordAlias());
 
         // Parse the cluster names from the response, and perform the cluster discovery
         JSONArray clusterItems = (JSONArray) json.get("items");
         for (Object clusterItem : clusterItems) {
             String clusterName = (String) ((JSONObject)((JSONObject) clusterItem).get("Clusters")).get("cluster_name");
             try {
-                Cluster c = discover(config, clusterName);
+                Cluster c = discover(gatewayConfig, discoveryConfig, clusterName);
                 clusters.put(clusterName, c);
             } catch (Exception e) {
                 log.clusterDiscoveryError(clusterName, e);
@@ -217,12 +218,12 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
 
     @Override
-    public Cluster discover(ServiceDiscoveryConfig config, String clusterName) {
+    public Cluster discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig config, String clusterName) {
         AmbariCluster cluster = new AmbariCluster(clusterName);
 
         Map<String, String> serviceComponents = new HashMap<>();
 
-        init();
+        init(gatewayConfig);
 
         String discoveryAddress = config.getAddress();
         String discoveryUser = config.getUser();

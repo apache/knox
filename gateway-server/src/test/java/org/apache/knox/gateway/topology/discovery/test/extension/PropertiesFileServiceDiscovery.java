@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.test.extension;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.GatewayService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
@@ -39,13 +40,14 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
     }
 
     @Override
-    public Map<String, ServiceDiscovery.Cluster> discover(ServiceDiscoveryConfig config) {
+    public Map<String, ServiceDiscovery.Cluster> discover(GatewayConfig gatewayConfig,
+                                                          ServiceDiscoveryConfig discoveryConfig) {
 
         Map<String, ServiceDiscovery.Cluster> result = new HashMap<>();
 
         Properties p = new Properties();
         try {
-            p.load(new FileInputStream(config.getAddress()));
+            p.load(new FileInputStream(discoveryConfig.getAddress()));
 
             Map<String, Map<String, List<String>>> clusters = new HashMap<>();
             for (Object key : p.keySet()) {
@@ -79,8 +81,10 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
 
 
     @Override
-    public ServiceDiscovery.Cluster discover(ServiceDiscoveryConfig config, String clusterName) {
-        Map<String, ServiceDiscovery.Cluster> clusters = discover(config);
+    public ServiceDiscovery.Cluster discover(GatewayConfig          gwConfig,
+                                             ServiceDiscoveryConfig discoveryConfig,
+                                             String                 clusterName) {
+        Map<String, ServiceDiscovery.Cluster> clusters = discover(gwConfig, discoveryConfig);
         return clusters.get(clusterName);
     }
 

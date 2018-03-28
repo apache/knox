@@ -213,7 +213,8 @@ public class SimpleDescriptorHandlerFuncTest {
 
       // Invoke the simple descriptor handler, which will also create the credential store
       // (because it doesn't exist) and the encryptQueryString alias
-      Map<String, File> files = SimpleDescriptorHandler.handle(testDescriptor,
+      Map<String, File> files = SimpleDescriptorHandler.handle(config,
+                                                               testDescriptor,
                                                                providerConfig.getParentFile(),
                                                                destDir);
       topologyFile = files.get("topology");
@@ -262,12 +263,12 @@ public class SimpleDescriptorHandlerFuncTest {
     }
 
     @Override
-    public Map<String, Cluster> discover(ServiceDiscoveryConfig config) {
+    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
       return Collections.emptyMap();
     }
 
     @Override
-    public Cluster discover(ServiceDiscoveryConfig config, String clusterName) {
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
       return null;
     }
   }

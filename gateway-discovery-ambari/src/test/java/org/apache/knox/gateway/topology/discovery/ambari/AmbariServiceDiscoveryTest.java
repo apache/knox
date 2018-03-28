@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.easymock.EasyMock;
@@ -50,12 +51,15 @@ public class AmbariServiceDiscoveryTest {
         final String clusterName = "testCluster";
         ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
         EasyMock.expect(sdc.getAddress()).andReturn(discoveryAddress).anyTimes();
         EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
         EasyMock.replay(sdc);
 
-        ServiceDiscovery.Cluster cluster = sd.discover(sdc, clusterName);
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, clusterName);
         assertNotNull(cluster);
         assertEquals(clusterName, cluster.getName());
         assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
@@ -71,12 +75,15 @@ public class AmbariServiceDiscoveryTest {
         final String clusterName = "anotherCluster";
         ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
         EasyMock.expect(sdc.getAddress()).andReturn(discoveryAddress).anyTimes();
         EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
         EasyMock.replay(sdc);
 
-        Map<String, ServiceDiscovery.Cluster> clusters = sd.discover(sdc);
+        Map<String, ServiceDiscovery.Cluster> clusters = sd.discover(gc, sdc);
         assertNotNull(clusters);
         assertEquals(1, clusters.size());
         ServiceDiscovery.Cluster cluster = clusters.get(clusterName);
@@ -93,6 +100,9 @@ public class AmbariServiceDiscoveryTest {
     public void testClusterDiscoveryWithExternalComponentConfigAugmentation() throws Exception {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "myCluster";
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
 
         // Create component config mapping override
         Properties compConfOverrideProps = new Properties();
@@ -135,7 +145,7 @@ public class AmbariServiceDiscoveryTest {
         EasyMock.replay(sdc);
 
         try {
-            ServiceDiscovery.Cluster cluster = sd.discover(sdc, clusterName);
+            ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, clusterName);
             assertNotNull(cluster);
             assertEquals(clusterName, cluster.getName());
             assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));

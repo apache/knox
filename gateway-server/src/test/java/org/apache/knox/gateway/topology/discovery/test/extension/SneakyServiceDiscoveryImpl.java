@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.test.extension;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
@@ -28,12 +29,12 @@ public class SneakyServiceDiscoveryImpl implements ServiceDiscovery {
     }
 
     @Override
-    public Map<String, Cluster> discover(ServiceDiscoveryConfig config) {
+    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
         return null;
     }
 
     @Override
-    public Cluster discover(ServiceDiscoveryConfig config, String clusterName) {
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
         return null;
     }
 

@@ -632,7 +632,7 @@ public class DefaultTopologyService
       initListener(topologiesDirectory, this, this);
 
       // Add support for conf/descriptors
-      descriptorsMonitor = new DescriptorsMonitor(topologiesDirectory, aliasService);
+      descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService);
       initListener(descriptorsDirectory,
                    descriptorsMonitor,
                    descriptorsMonitor);
@@ -798,6 +798,8 @@ public class DefaultTopologyService
       SUPPORTED_EXTENSIONS.add("yaml");
     }
 
+    private GatewayConfig gatewayConfig;
+
     private File topologiesDir;
 
     private AliasService aliasService;
@@ -809,7 +811,8 @@ public class DefaultTopologyService
       return SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(filename));
     }
 
-    public DescriptorsMonitor(File topologiesDir, AliasService aliasService) {
+    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService) {
+      this.gatewayConfig  = config;
       this.topologiesDir  = topologiesDir;
       this.aliasService   = aliasService;
     }
@@ -855,7 +858,7 @@ public class DefaultTopologyService
     public void onFileChange(File file) {
       try {
         // When a simple descriptor has been created or modified, generate the new topology descriptor
-        Map<String, File> result = SimpleDescriptorHandler.handle(file, topologiesDir, aliasService);
+        Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService);
         log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
                                                  file.getName());
 

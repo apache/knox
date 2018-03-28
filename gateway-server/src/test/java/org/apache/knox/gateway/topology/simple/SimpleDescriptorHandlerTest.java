@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
 import java.io.ByteArrayInputStream;
@@ -45,7 +46,6 @@ import org.apache.commons.io.FileUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -175,6 +175,9 @@ public class SimpleDescriptorHandlerTest {
             knoxssoParams.put("knoxsso.token.ttl", "100000");
             serviceParameters.put("KNOXSSO", knoxssoParams);
 
+            GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.replay(gc);
+
             // Mock out the simple descriptor
             SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
             EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
@@ -198,9 +201,10 @@ public class SimpleDescriptorHandlerTest {
 
             // Invoke the simple descriptor handler
             Map<String, File> files =
-                           SimpleDescriptorHandler.handle(testDescriptor,
-                                                          providerConfig.getParentFile(), // simple desc co-located with provider config
-                                                          destDir);
+               SimpleDescriptorHandler.handle(gc,
+                                              testDescriptor,
+                                              providerConfig.getParentFile(), // simple desc co-located with provider config
+                                              destDir);
             topologyFile = files.get("topology");
 
             // Validate the resulting topology descriptor
@@ -347,6 +351,9 @@ public class SimpleDescriptorHandlerTest {
         try {
             File destDir = (new File(".")).getCanonicalFile();
 
+            GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.replay(gc);
+
             // Mock out the simple descriptor
             SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
             EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
@@ -368,9 +375,10 @@ public class SimpleDescriptorHandlerTest {
 
             // Invoke the simple descriptor handler
             Map<String, File> files =
-                    SimpleDescriptorHandler.handle(testDescriptor,
-                                                   providerConfig.getParentFile(), // simple desc co-located with provider config
-                                                   destDir);
+                SimpleDescriptorHandler.handle(gc,
+                                               testDescriptor,
+                                               providerConfig.getParentFile(), // simple desc co-located with provider config
+                                               destDir);
 
             topologyFile = files.get("topology");
 
@@ -458,6 +466,9 @@ public class SimpleDescriptorHandlerTest {
 
         File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
 
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
         // Mock out the simple descriptor
         SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
         EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
@@ -477,7 +488,7 @@ public class SimpleDescriptorHandlerTest {
 
         try {
             // Invoke the simple descriptor handler
-            SimpleDescriptorHandler.handle(testDescriptor, destDir, destDir);
+            SimpleDescriptorHandler.handle(gc, testDescriptor, destDir, destDir);
             fail("Expected an IllegalArgumentException because the provider configuration reference is missing.");
         } catch (IllegalArgumentException e) {
             // Expected

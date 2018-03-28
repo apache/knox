@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery;
 
+import org.apache.knox.gateway.config.GatewayConfig;
+
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +45,7 @@ public interface ServiceDiscovery {
      *
      * @return A Map of the discovered service data, keyed by the cluster name.
      */
-    Map<String, Cluster> discover(ServiceDiscoveryConfig config);
+    Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config);
 
 
     /**
@@ -54,7 +56,7 @@ public interface ServiceDiscovery {
      *
      * @return The discovered service data for the specified cluster
      */
-    Cluster discover(ServiceDiscoveryConfig config, String clusterName);
+    Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName);
 
 
     /**

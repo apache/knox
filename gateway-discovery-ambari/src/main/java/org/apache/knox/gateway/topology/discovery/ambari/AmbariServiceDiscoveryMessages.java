@@ -59,14 +59,17 @@ public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
              text = "Encountered an error during cluster {0} discovery: {1}")
-    void clusterDiscoveryError(final String clusterName,
-                               @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void clusterDiscoveryError(final String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+
+    @Message(level = MessageLevel.ERROR,
+             text = "REST invocation {0} timed out")
+    void restInvocationTimedOut(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 
     @Message(level = MessageLevel.DEBUG,
              text = "REST invocation {0} failed: {1}")
-    void restInvocationError(final String url,
-                             @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void restInvocationError(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 
     @Message(level = MessageLevel.ERROR,

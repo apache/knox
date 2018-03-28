@@ -227,13 +227,12 @@ public class DefaultTopologyServiceTest {
       provider.addTopologyChangeListener(topoListener);
       provider.reloadTopologies();
 
-
       // Add a simple descriptor to the descriptors dir to verify topology generation and loading (KNOX-1006)
       AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
       EasyMock.expect(aliasService.getPasswordFromAliasForGateway(anyObject(String.class))).andReturn(null).anyTimes();
       EasyMock.replay(aliasService);
       DefaultTopologyService.DescriptorsMonitor dm =
-              new DefaultTopologyService.DescriptorsMonitor(topologyDir, aliasService);
+              new DefaultTopologyService.DescriptorsMonitor(config, topologyDir, aliasService);
 
       // Listener to simulate the topologies directory monitor, to notice when a topology has been deleted
       provider.addTopologyChangeListener(new TestTopologyDeleteListener((DefaultTopologyService)provider));

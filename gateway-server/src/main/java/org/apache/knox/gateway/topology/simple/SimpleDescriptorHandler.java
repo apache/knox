@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
@@ -81,27 +82,27 @@ public class SimpleDescriptorHandler {
 
     private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
-    public static Map<String, File> handle(File desc) throws IOException {
-        return handle(desc, NO_GATEWAY_SERVICES);
+    public static Map<String, File> handle(GatewayConfig config, File desc) throws IOException {
+        return handle(config, desc, NO_GATEWAY_SERVICES);
     }
 
-    public static Map<String, File> handle(File desc, Service...gatewayServices) throws IOException {
-        return handle(desc, desc.getParentFile(), gatewayServices);
+    public static Map<String, File> handle(GatewayConfig config, File desc, Service...gatewayServices) throws IOException {
+        return handle(config, desc, desc.getParentFile(), gatewayServices);
     }
 
-    public static Map<String, File> handle(File desc, File destDirectory) throws IOException {
-        return handle(desc, destDirectory, NO_GATEWAY_SERVICES);
+    public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory) throws IOException {
+        return handle(config, desc, destDirectory, NO_GATEWAY_SERVICES);
     }
 
-    public static Map<String, File> handle(File desc, File destDirectory, Service...gatewayServices) throws IOException {
-        return handle(SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
+    public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
+        return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
     }
 
-    public static Map<String, File> handle(SimpleDescriptor desc, File srcDirectory, File destDirectory) {
-        return handle(desc, srcDirectory, destDirectory, NO_GATEWAY_SERVICES);
+    public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory) {
+        return handle(config, desc, srcDirectory, destDirectory, NO_GATEWAY_SERVICES);
     }
 
-    public static Map<String, File> handle(SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
+    public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
 
         List<String> validServiceNames = new ArrayList<>();
         Map<String, String> serviceVersions = new HashMap<>();
@@ -111,7 +112,7 @@ public class SimpleDescriptorHandler {
         ServiceDiscovery.Cluster cluster = null;
         if (desc.getDiscoveryAddress() != null) {
             // Discover the cluster details required by the descriptor
-            cluster = performDiscovery(desc, gatewayServices);
+            cluster = performDiscovery(config, desc, gatewayServices);
             if (cluster == null) {
                 log.failedToDiscoverClusterServices(desc.getClusterName());
             }
@@ -176,7 +177,7 @@ public class SimpleDescriptorHandler {
     }
 
 
-    private static ServiceDiscovery.Cluster performDiscovery(SimpleDescriptor desc, Service...gatewayServices) {
+    private static ServiceDiscovery.Cluster performDiscovery(GatewayConfig config, SimpleDescriptor desc, Service...gatewayServices) {
         DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
         sdc.setUser(desc.getDiscoveryUser());
         sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
@@ -194,7 +195,7 @@ public class SimpleDescriptorHandler {
             discoveryInstances.put(discoveryType, sd);
         }
 
-        return sd.discover(sdc, desc.getClusterName());
+        return sd.discover(config, sdc, desc.getClusterName());
     }
 
 
