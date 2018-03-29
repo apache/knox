@@ -62,7 +62,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String truststoreType = "jks";
   private String keystoreType = "jks";
   private boolean isTopologyPortMappingEnabled = true;
+  private boolean isTopologyDomainMappingEnabled = true;
   private ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<String, String> topologyDomainMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
 
@@ -124,6 +126,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getGatewayPort() {
     return gatewayPort;
+  }
+
+  @Override
+  public String getGatewayDomain() {
+    return "localdomain";
   }
 
 //  public void setGatewayPort( int gatewayPort ) {
@@ -604,6 +611,26 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayPortMappingEnabled() {
     return isTopologyPortMappingEnabled;
+  }
+
+  /**
+   * Map of Topology names and their domains.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, String> getGatewayDomainMappings() {
+    return topologyDomainMapping;
+  }
+
+  /**
+   * Is the Domain Mapping feature on
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayDomainMappingEnabled() {
+    return isTopologyDomainMappingEnabled;
   }
 
   @Override

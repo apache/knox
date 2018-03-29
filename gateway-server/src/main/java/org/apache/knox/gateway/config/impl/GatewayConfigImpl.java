@@ -110,6 +110,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
+  public static final String GATEWAY_DOMAIN = GATEWAY_CONFIG_FILE_PREFIX + ".domain";
   public static final String DEPLOYMENT_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".deployment.dir";
   public static final String SECURITY_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".security.dir";
   public static final String DATA_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".data.dir";
@@ -163,6 +164,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GATEWAY_PORT_MAPPING_ENABLED = GATEWAY_PORT_MAPPING_PREFIX + "enabled";
 
   /**
+   * Properties for for gateway domain mapping feature
+   */
+  public static final String GATEWAY_DOMAIN_MAPPING_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".domain.mapping.";
+  public static final String GATEWAY_DOMAIN_MAPPING_REGEX = GATEWAY_CONFIG_FILE_PREFIX + "\\.domain\\.mapping\\..*";
+  public static final String GATEWAY_DOMAIN_MAPPING_ENABLED = GATEWAY_DOMAIN_MAPPING_PREFIX + "enabled";
+
+  /**
    * Comma seperated list of MIME Types to be compressed by Knox on the way out.
    *
    * @since 0.12
@@ -187,6 +195,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
+  public static final String DEFAULT_GATEWAY_DOMAIN = "localdomain";
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
   public static final String DEFAULT_SECURITY_DIR = "security";
   public static final String DEFAULT_DATA_DIR = "data";
@@ -204,6 +213,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
+  public static final boolean DEFAULT_GATEWAY_DOMAIN_MAPPING_ENABLED = true;
 
   /**
    * Default list of MIME Type to be compressed.
@@ -416,6 +426,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getGatewayPort() {
     return Integer.parseInt( get( HTTP_PORT, DEFAULT_HTTP_PORT ) );
+  }
+
+  @Override
+  public String getGatewayDomain() {
+    return get( GATEWAY_DOMAIN, DEFAULT_GATEWAY_DOMAIN );
   }
 
   @Override
@@ -879,6 +894,29 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   /**
+   * Map of Topology names and their domains.
+   *
+   * @return
+   */
+  @Override
+  public Map<String, String> getGatewayDomainMappings() {
+    final Map<String, String> result = new ConcurrentHashMap<String, String>();
+    final Map<String, String> properties = getValByRegex(GATEWAY_DOMAIN_MAPPING_REGEX);
+
+    // Convert port no. from string to int
+    for(final Map.Entry<String, String> e : properties.entrySet()) {
+      // ignore the GATEWAY_PORT_MAPPING_ENABLED property
+      if(!e.getKey().equalsIgnoreCase(GATEWAY_DOMAIN_MAPPING_ENABLED)) {
+        // extract the topology name and use it as a key
+        result.put(StringUtils.substringAfter(e.getKey(), GATEWAY_DOMAIN_MAPPING_PREFIX), e.getValue() );
+      }
+
+    }
+
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
    * Is the Port Mapping feature on ?
    *
    * @return
@@ -886,6 +924,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayPortMappingEnabled() {
     final String result = get( GATEWAY_PORT_MAPPING_ENABLED, Boolean.toString(DEFAULT_GATEWAY_PORT_MAPPING_ENABLED));
+    return Boolean.parseBoolean(result);
+  }
+
+  /**
+   * Is the Domain Mapping feature on
+   *
+   * @return
+   */
+  @Override
+  public boolean isGatewayDomainMappingEnabled() {
+    final String result = get( GATEWAY_DOMAIN_MAPPING_ENABLED, Boolean.toString(DEFAULT_GATEWAY_DOMAIN_MAPPING_ENABLED));
     return Boolean.parseBoolean(result);
   }
 

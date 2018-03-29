@@ -76,6 +76,20 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
     }
 
+    if(defaultTopologyName == null && defaultTopologyRedirectContext != null
+            && config.getGatewayDomainMappings().values().contains(config.getGatewayDomain())) {
+
+      for(final Map.Entry<String, String> entry: config.getGatewayDomainMappings().entrySet()) {
+
+        if(entry.getValue().equals(config.getGatewayDomain())) {
+          defaultTopologyRedirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
+          break;
+        }
+
+      }
+
+    }
+
     if (defaultTopologyName != null) {
       defaultTopologyRedirectContext = config.getDefaultAppRedirectPath();
       if (defaultTopologyRedirectContext != null
