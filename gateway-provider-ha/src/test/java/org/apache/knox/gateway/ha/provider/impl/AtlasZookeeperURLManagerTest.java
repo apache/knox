@@ -93,25 +93,37 @@ public class AtlasZookeeperURLManagerTest {
 
     @Test
     public void testAtlasURLManagerLoadingForAtlasApiService() {
-        HaServiceConfig config = new DefaultHaServiceConfig("ATLAS-API");
-        config.setEnabled(true);
-        config.setZookeeperEnsemble(cluster.getConnectString());
-        config.setZookeeperNamespace("apache_atlas");
+        doTestAtlasZooKeeperURLManager("ATLAS-API", true, cluster.getConnectString(), "apache_atlas");
+    }
+
+    @Test
+    public void testAtlasURLManagerLoadingForAtlasUIService() {
+        doTestAtlasZooKeeperURLManager("ATLAS", true, cluster.getConnectString(), "apache_atlas");
+    }
+
+    @Test
+    public void testAtlasURLManagerWithLeadingSlashNamespace() {
+        doTestAtlasZooKeeperURLManager("ATLAS", true, cluster.getConnectString(), "/apache_atlas");
+    }
+
+    @Test
+    public void testAtlasAPIURLManagerWithLeadingSlashNamespace() {
+        doTestAtlasZooKeeperURLManager("ATLAS-API", true, cluster.getConnectString(), "/apache_atlas");
+    }
+
+    private void doTestAtlasZooKeeperURLManager(final String  serviceName,
+                                                final boolean enabled,
+                                                final String  ensemble,
+                                                final String  namespace) {
+        HaServiceConfig config = new DefaultHaServiceConfig(serviceName);
+        config.setEnabled(enabled);
+        config.setZookeeperEnsemble(ensemble);
+        config.setZookeeperNamespace(namespace);
         URLManager manager = URLManagerLoader.loadURLManager(config);
         Assert.assertNotNull(manager);
         Assert.assertTrue(manager instanceof AtlasZookeeperURLManager);
     }
 
-    @Test
-    public void testAtlasURLManagerLoadingForAtlasUIService() {
-        HaServiceConfig config = new DefaultHaServiceConfig("ATLAS");
-        config.setEnabled(true);
-        config.setZookeeperEnsemble(cluster.getConnectString());
-        config.setZookeeperNamespace("apache_atlas");
-        URLManager manager = URLManagerLoader.loadURLManager(config);
-        Assert.assertNotNull(manager);
-        Assert.assertTrue(manager instanceof AtlasZookeeperURLManager);
-    }
 
     void setAtlasActiveHostURLInZookeeper(String activeURL) throws Exception {
 
