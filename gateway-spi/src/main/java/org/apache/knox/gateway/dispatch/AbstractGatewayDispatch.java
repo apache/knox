@@ -70,12 +70,12 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   }
 
   @Override
-  public HttpClient getHttpClient() {
+  synchronized public HttpClient getHttpClient() {
     return client;
   }
 
   @Override
-  public void setHttpClient(HttpClient client) {
+  synchronized public void setHttpClient(HttpClient client) {
     this.client = client;
   }
 

@@ -122,13 +122,16 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
     try {
-      final char[] password = as.getPasswordFromAliasForCluster(clusterName, alias);
-      if (password != null) {
-        try {
-          return getEncryptor(clusterName,password ).decrypt( salt, iv, cipherText);
-        } catch (Exception e) {
-          LOG.failedToDecryptPasswordForCluster( clusterName, e );
-        }
+      char[] password = null;
+      ConfigurableEncryptor encryptor = null;
+        password = as.getPasswordFromAliasForCluster(clusterName, alias);
+        if (password != null) {
+          encryptor = getEncryptor(clusterName,password );
+          try {
+            return encryptor.decrypt( salt, iv, cipherText);
+          } catch (Exception e) {
+            LOG.failedToDecryptPasswordForCluster( clusterName, e );
+          }
       }
       else {
         LOG.failedToDecryptCipherForClusterNullPassword( clusterName );
@@ -167,7 +170,8 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] sign(String algorithm, String alias, String payloadToSign) {
     try {
-      char[] passphrase = as.getGatewayIdentityPassphrase();
+      char[] passphrase = null;
+      passphrase = as.getGatewayIdentityPassphrase();
       PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);

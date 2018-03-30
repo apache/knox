@@ -167,7 +167,9 @@ public class CMFMasterService {
         LOG.loadingFromPersistentMaster( tag );
         String line = new String(Base64.decodeBase64(lines.get(1)));
         String[] parts = line.split("::");
-        this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])), "UTF8").toCharArray();
+        this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]),
+            Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])),
+            "UTF8").toCharArray();
       } catch (IOException e) {
         LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
         throw e;

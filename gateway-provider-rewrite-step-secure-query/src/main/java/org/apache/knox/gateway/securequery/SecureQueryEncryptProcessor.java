@@ -18,13 +18,14 @@
 package org.apache.knox.gateway.securequery;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.CryptoService;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.EncryptionResult;
+import org.apache.knox.gateway.services.security.impl.ConfigurableEncryptor;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
@@ -33,10 +34,10 @@ import java.io.UnsupportedEncodingException;
 public class SecureQueryEncryptProcessor
     implements UrlRewriteStepProcessor<SecureQueryEncryptDescriptor> {
 
+  private static SecureQueryMessages log = MessagesFactory.get( SecureQueryMessages.class );
   private static final String ENCRYPTED_PARAMETER_NAME = "_";
 
-  private String clusterName;
-  private CryptoService cryptoService = null;
+  private ConfigurableEncryptor encryptor;
 
   @Override
   public String getType() {
@@ -45,9 +46,8 @@ public class SecureQueryEncryptProcessor
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryEncryptDescriptor descriptor ) throws Exception {
-    clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
-    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    encryptor = new ConfigurableEncryptor("encryptQueryString");
+    encryptor.init((GatewayConfig)environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE));
   }
 
   @Override
@@ -77,7 +77,12 @@ public class SecureQueryEncryptProcessor
   }
 
   private String encode( String string ) throws UnsupportedEncodingException {
-    EncryptionResult result = cryptoService.encryptForCluster(clusterName, "encryptQueryString", string.getBytes("UTF-8"));
+    EncryptionResult result = null;
+    try {
+      result = encryptor.encrypt(string);
+    } catch (Exception e) {
+      log.unableToEncryptValue(e);
+    }
     string = Base64.encodeBase64URLSafeString(result.toByteAray());
     return string;
   }

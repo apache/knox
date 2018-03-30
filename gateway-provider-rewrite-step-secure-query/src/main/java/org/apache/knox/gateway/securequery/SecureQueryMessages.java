@@ -28,4 +28,9 @@ public interface SecureQueryMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to create or verify the presence of a password for query string encryption: {0}" )
   void unableCreatePasswordForEncryption(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to encrypt a sensitive value due to an exception: {0}" )
+  void unableToEncryptValue(@StackTrace( level = MessageLevel.ERROR ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to decrypt a sensitive value due to an exception: {0}" )
+  void unableToDecryptValue(@StackTrace( level = MessageLevel.ERROR ) Exception e);
 }

@@ -127,7 +127,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
         // Hadoop cluster not Kerberos enabled
         addCredentialsToRequest( outboundRequest );
       }
-      inboundResponse = client.execute( outboundRequest );
+      inboundResponse = getHttpClient().execute( outboundRequest );
 
       int statusCode = inboundResponse.getStatusLine().getStatusCode();
       if( statusCode != 201 ) {

@@ -41,6 +41,8 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
 
+  private final Object lock = new Object();
+
   private Dispatch dispatch;
 
   private HttpClient httpClient;
@@ -59,41 +61,49 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
-    if (dispatch == null) {
-      String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
-      dispatch = newInstanceFromName(dispatchImpl);
+    synchronized(lock) {
+      if (dispatch == null) {
+        String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
+        dispatch = newInstanceFromName(dispatchImpl);
+      }
+      ConfigurationInjectorBuilder.configuration().target(dispatch).source(filterConfig).inject();
+      HttpClientFactory httpClientFactory;
+      String httpClientFactoryClass = filterConfig.getInitParameter("httpClientFactory");
+      if (httpClientFactoryClass != null) {
+        httpClientFactory = newInstanceFromName(httpClientFactoryClass);
+      } else {
+        httpClientFactory = new DefaultHttpClientFactory();
+      }
+      httpClient = httpClientFactory.createHttpClient(filterConfig);
+      dispatch.setHttpClient(httpClient);
+      dispatch.init();
     }
-    ConfigurationInjectorBuilder.configuration().target(dispatch).source(filterConfig).inject();
-    HttpClientFactory httpClientFactory;
-    String httpClientFactoryClass = filterConfig.getInitParameter("httpClientFactory");
-    if (httpClientFactoryClass != null) {
-      httpClientFactory = newInstanceFromName(httpClientFactoryClass);
-    } else {
-      httpClientFactory = new DefaultHttpClientFactory();
-    }
-    httpClient = httpClientFactory.createHttpClient(filterConfig);
-    dispatch.setHttpClient(httpClient);
-    dispatch.init();
   }
 
   @Override
   public void destroy() {
-    dispatch.destroy();
-    try {
-      if (httpClient instanceof  CloseableHttpClient) {
-        ((CloseableHttpClient) httpClient).close();
+    synchronized(lock) {
+      dispatch.destroy();
+      try {
+        if (httpClient instanceof  CloseableHttpClient) {
+          ((CloseableHttpClient) httpClient).close();
+        }
+      } catch ( IOException e ) {
+        LOG.errorClosingHttpClient(e);
       }
-    } catch ( IOException e ) {
-      LOG.errorClosingHttpClient(e);
     }
   }
 
   public Dispatch getDispatch() {
-    return dispatch;
+    synchronized(lock) {
+      return dispatch;
+    }
   }
 
   public void setDispatch(Dispatch dispatch) {
-    this.dispatch = dispatch;
+    synchronized(lock) {
+      this.dispatch = dispatch;
+    }
   }
 
   @Override
@@ -102,7 +112,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     Adapter adapter = METHOD_ADAPTERS.get(method);
     if ( adapter != null ) {
       try {
-        adapter.doMethod(dispatch, request, response);
+        adapter.doMethod(getDispatch(), request, response);
       } catch ( URISyntaxException e ) {
         throw new ServletException(e);
       }

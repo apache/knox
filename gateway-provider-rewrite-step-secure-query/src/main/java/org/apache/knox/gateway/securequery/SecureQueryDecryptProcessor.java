@@ -18,13 +18,14 @@
 package org.apache.knox.gateway.securequery;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.CryptoService;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.EncryptionResult;
+import org.apache.knox.gateway.services.security.impl.ConfigurableEncryptor;
 import org.apache.knox.gateway.util.urltemplate.Builder;
 import org.apache.knox.gateway.util.urltemplate.Query;
 import org.apache.knox.gateway.util.urltemplate.Template;
@@ -36,10 +37,10 @@ import java.util.StringTokenizer;
 public class SecureQueryDecryptProcessor implements
     UrlRewriteStepProcessor<SecureQueryDecryptDescriptor> {
 
+  private static SecureQueryMessages log = MessagesFactory.get( SecureQueryMessages.class );
   private static final String ENCRYPTED_PARAMETER_NAME = "_";
 
-  private String clusterName;
-  private CryptoService cryptoService;
+  private ConfigurableEncryptor encryptor = null;
 
   @Override
   public String getType() {
@@ -48,9 +49,8 @@ public class SecureQueryDecryptProcessor implements
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryDecryptDescriptor descriptor ) throws Exception {
-    clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
-    GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    encryptor = new ConfigurableEncryptor("encryptQueryString");
+    encryptor.init((GatewayConfig)environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE));
   }
 
   @Override
@@ -107,13 +107,17 @@ public class SecureQueryDecryptProcessor implements
   String decode( String string ) throws UnsupportedEncodingException {
     byte[] bytes = Base64.decodeBase64( string );
     EncryptionResult result = EncryptionResult.fromByteArray(bytes);
-    byte[] clear = cryptoService.decryptForCluster(clusterName, 
-        "encryptQueryString", 
-        result.cipher, 
-        result.iv, 
-        result.salt);
+    byte[] clear = null;
+    try {
+      clear = encryptor.decrypt(
+          result.salt, 
+          result.iv, 
+          result.cipher);
+    } catch (Exception e) {
+      log.unableToDecryptValue(e);
+    }
     if (clear != null) {
-      return new String(clear);
+      return new String(clear, "UTF-8");
     }
     return null;
   }
