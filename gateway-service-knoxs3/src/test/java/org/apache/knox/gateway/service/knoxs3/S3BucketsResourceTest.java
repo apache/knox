@@ -61,14 +61,14 @@ public class S3BucketsResourceTest {
     
     System.out.println(JsonUtils.renderAsJsonString(policyModel));
     
-    S3PolicyModel model = new S3PolicyModel();
+    AWSPolicyModel model = new AWSPolicyModel();
     model.setEffect("Allow");
     model.addAction("s3:Get*");
     model.addAction("s3:List*");
     model.setResource("*");
     System.out.println(model);
 
-    model = new S3PolicyModel();
+    model = new AWSPolicyModel();
     model.setEffect("Allow");
     model.addAction("s3:Get*");
     model.addAction("s3:List*");

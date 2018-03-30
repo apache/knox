@@ -23,13 +23,13 @@ import java.util.Map;
 
 import org.apache.knox.gateway.util.JsonUtils;
 
-public class S3PolicyModel {
+public class AWSPolicyModel {
   HashMap<String, Object> policyModel = new HashMap<String, Object>();
   ArrayList<String> actionArray = new ArrayList<String>();
   HashMap<String, Object> statementMap = new HashMap<String, Object>();
   ArrayList<String> resourcesArray = new ArrayList<String>();
 
-  public S3PolicyModel() {
+  public AWSPolicyModel() {
     policyModel.put("Version", "2012-10-17");
     ArrayList<Map<String, Object>> statement = new ArrayList<Map<String, Object>>();
     policyModel.put("Statement", statement );

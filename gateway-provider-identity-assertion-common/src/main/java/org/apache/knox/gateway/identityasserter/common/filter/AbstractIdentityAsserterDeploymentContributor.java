@@ -50,6 +50,10 @@ public abstract class AbstractIdentityAsserterDeploymentContributor extends
     if (params == null) {
       params = new ArrayList<FilterParamDescriptor>();
     }
+    // add resource role to params so that we can determine the service specific impersonation
+    // method when configured
+    params.add( resource.createFilterParam().name( "resource.role" ).value(resource.role() ) );
+
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {
       params.add( resource.createFilterParam().name(entry.getKey().toLowerCase()).value(entry.getValue()));

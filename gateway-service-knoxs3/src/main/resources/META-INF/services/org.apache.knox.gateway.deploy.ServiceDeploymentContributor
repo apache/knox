@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.knox.gateway.service.health.deploy.HealthServiceDeploymentContributor
+org.apache.knox.gateway.service.knoxs3.deploy.KnoxS3ServiceDeploymentContributor

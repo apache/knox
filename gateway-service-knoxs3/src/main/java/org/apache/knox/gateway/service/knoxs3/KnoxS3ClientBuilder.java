@@ -31,6 +31,7 @@ import javax.security.auth.Subject;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
@@ -49,16 +50,28 @@ public class KnoxS3ClientBuilder {
 
   public KnoxS3ClientBuilder() {
   }
-  
+
   public AmazonS3 getS3Client() {
-    BasicSessionCredentials sessionCredentials = getSessionCredentials();
-    if (sessionCredentials == null) {
-      throw new RuntimeException("No S3 credentials available.");
-    }
+    BasicSessionCredentials sessionCredentials = (BasicSessionCredentials) getCredentials();
 
     AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1)
         .withCredentials(new AWSStaticCredentialsProvider(sessionCredentials)).build();
     return s3;
+  }
+
+  /**
+   * Get an opaque Object representation of the credentials.
+   * This method will only be called by callers that are aware
+   * of the actual form of the credentials in the given context
+   * and therefore able to cast it appropriately.
+   * @return opaque object
+   */
+  public Object getCredentials() {
+    BasicSessionCredentials sessionCredentials = getSessionCredentials();
+    if (sessionCredentials == null) {
+      throw new RuntimeException("No S3 credentials available.");
+    }
+    return sessionCredentials;
   }
 
   public void init(Properties context) {
@@ -128,7 +141,7 @@ public class KnoxS3ClientBuilder {
   }
 
   private void buildS3PolicyModel(PolicyConfig policy) {
-    S3PolicyModel model = new S3PolicyModel();
+    AWSPolicyModel model = new AWSPolicyModel();
     model.setEffect("Allow");
     String[] actions = policy.actions.split(",");
     for (int i = 0; i < actions.length; i++) {
@@ -146,43 +159,38 @@ public class KnoxS3ClientBuilder {
   }
 
   private BasicSessionCredentials getSessionCredentials() {
-    AWSSecurityTokenService sts_client = AWSSecurityTokenServiceClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
-    String policy = "";
     BasicSessionCredentials sessionCredentials = null;
     try {
-      String username = null;
-      Subject subject = Subject.getSubject(AccessController.getContext());
-      username = getEffectiveUserName(subject);
-      policy = buildPolicy(username, subject);
-
-      if (policy != null) {
-        GetFederationTokenRequest request = new GetFederationTokenRequest(username).withPolicy(policy);
-        GetFederationTokenResult result = sts_client.getFederationToken(request);
-        System.out.println(result.getCredentials());
-  
-        Credentials session_creds = result.getCredentials();
-        sessionCredentials = new BasicSessionCredentials(
-            session_creds.getAccessKeyId(),
-            session_creds.getSecretAccessKey(),
-            session_creds.getSessionToken());
-      }
+      GetFederationTokenResult result = getFederationTokenResult();
+      Credentials session_creds = result.getCredentials();
+      sessionCredentials = new BasicSessionCredentials(
+          session_creds.getAccessKeyId(),
+          session_creds.getSecretAccessKey(),
+          session_creds.getSessionToken());
     } catch (Exception e) {
       e.printStackTrace();
     }
     return sessionCredentials;
   }
 
+  public GetFederationTokenResult getFederationTokenResult() {
+    String policy;
+    AWSSecurityTokenService sts_client = AWSSecurityTokenServiceClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+    String username = null;
+    Subject subject = Subject.getSubject(AccessController.getContext());
+    username = getEffectiveUserName(subject);
+    policy = buildPolicy(username, subject);
+    GetFederationTokenResult result = null;
+    if (policy != null) {
+      GetFederationTokenRequest request = new GetFederationTokenRequest(username).withPolicy(policy);
+      result = sts_client.getFederationToken(request);
+      System.out.println(result.getCredentials());
+    }
+    return result;
+  }
+
   private String getEffectiveUserName(Subject subject) {
-    String username;
-    Principal primaryPrincipal = (Principal)subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
-    Object[] impersonations = subject.getPrincipals(ImpersonatedPrincipal.class).toArray();
-    if (impersonations.length > 0) {
-      username = ((Principal)impersonations[0]).getName();
-    }
-    else {
-      username = primaryPrincipal.getName();
-    }
-    return username;
+    return SubjectUtils.getEffectivePrincipalName(subject);
   }
 
   private String buildPolicy(String username, Subject subject) {

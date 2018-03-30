@@ -32,17 +32,56 @@ import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
 
 import java.io.IOException;
 import java.security.AccessController;
+import java.util.HashMap;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
   private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   private static final String PRINCIPAL_MAPPING = "principal.mapping";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
+  private HashMap<String, Impersonation> impMap = new HashMap<String, Impersonation>();
+  private String resourceRole = null;
 
   /* (non-Javadoc)
    * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
    */
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+
+    /*
+     <param>
+       <name>path.segment.impersonated.principal</name>
+       <value>IDBROKER;credentials</value>
+     </param>
+
+     <param>
+       <name>header.impersonated.principal</name>
+       <value>*;SM_USER</value>
+     </param>
+
+     <param>
+       <name>query.param.impersonated.principal</name>
+       <value>WEBHDFS,HIVE;doas</value>
+     </param>
+    */
+
+    resourceRole = filterConfig.getInitParameter("resource.role");
+    String pathSegmentImpersonation = filterConfig.getInitParameter("path.segment.impersonated.principal");
+    if (pathSegmentImpersonation != null) {
+      String services = pathSegmentImpersonation.substring(0, pathSegmentImpersonation.indexOf(";"));
+      String[] svcArray = services.split(",");
+      String service = null;
+      int segmentIndex;
+      for (int i = 0; i < svcArray.length; i++) {
+        service = svcArray[i];
+        segmentIndex = pathSegmentImpersonation.indexOf(";");
+        if (segmentIndex != -1) {
+          Impersonation imp = new Impersonation(service, "path.segment", 
+              pathSegmentImpersonation.substring(segmentIndex+1));
+          impMap.put(svcArray[i], imp);
+        }
+      }
+    }
+
     String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
     if (principalMapping == null || principalMapping.isEmpty()) {
       principalMapping = filterConfig.getServletContext().getInitParameter(PRINCIPAL_MAPPING);
@@ -78,7 +117,30 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
     String principalName = getPrincipalName(subject);
 
-    String mappedPrincipalName = mapUserPrincipalBase(principalName);
+    String mappedPrincipalName = null;
+    
+    Impersonation imp = impMap.get(resourceRole);
+    if (imp != null) {
+      if (imp.type.equals("path.segment")) {
+        String pathInfo = ((HttpServletRequest)request).getPathInfo();
+        String[] segments = pathInfo.split("/");
+        for (int i = 0; i < segments.length; i++) {
+          if (segments[i].equals(imp.name)) {
+            if (segments.length > i+1) {
+              mappedPrincipalName = segments[i+1];
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (mappedPrincipalName != null && !mappedPrincipalName.equals(principalName)) {
+      // TODO: audit this
+      principalName = mappedPrincipalName;
+    }
+
+    mappedPrincipalName = mapUserPrincipalBase(principalName);
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
     String[] mappedGroups = mapGroupPrincipals(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
@@ -139,5 +201,17 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   public String mapUserPrincipal(String principalName) {
     // NOP
     return principalName;
+  }
+  
+  private class Impersonation {
+    public String service = null;
+    public String type = null;
+    public String name = null;
+    
+    public Impersonation(String service, String type, String name) {
+      this.service = service;
+      this.type = type;
+      this.name = name;
+    }
   }
 }

@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -44,6 +45,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.GatewaySpiResources;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.security.ClientImpersonatedPrincipal;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -68,7 +70,7 @@ public abstract class AbstractIdentityAssertionFilter extends
   }
 
   /**
-   * This method returns a Stringp[] of new group principal names to use
+   * This method returns a String[] of new group principal names to use
    * based on implementation specific mapping or lookup mechanisms.
    * Returning null means that whatever set of GroupPrincipals is in the
    * provided Subject is sufficient to use and no additional mapping is required.
@@ -87,7 +89,7 @@ public abstract class AbstractIdentityAssertionFilter extends
    */
   public abstract String mapUserPrincipal(String principalName);
 
-  /**
+    /**
    * @param wrapper
    * @param response
    * @param chain
@@ -95,22 +97,21 @@ public abstract class AbstractIdentityAssertionFilter extends
    * @param groups
    */
   protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response,
-      FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException,
-      ServletException {
+      FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException, ServletException {
         Subject subject = null;
         Principal impersonationPrincipal = null;
         Principal primaryPrincipal = null;
-        
+
         // get the current subject and determine whether we need another doAs with 
         // an impersonatedPrincipal and/or mapped group principals
         boolean impersonationNeeded = false;
         boolean groupsMapped = false;
-        
-        // look up the current Java Subject and assosciated group principals
+
+        Set<?> currentGroups = null;
+        // look up the current Java Subject and associated group principals
         Subject currentSubject = Subject.getSubject(AccessController.getContext());
-        Set<?> currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
-        
-        primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
+        currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
+
         if (primaryPrincipal != null) {
           if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
             impersonationNeeded = true;
@@ -126,9 +127,9 @@ public abstract class AbstractIdentityAssertionFilter extends
           // TODO: log as appropriate
           primaryPrincipal = new PrimaryPrincipal(((HttpServletRequest) request).getUserPrincipal().getName());
         }
-        
+
         groupsMapped = groups != null || !currentGroups.isEmpty();
-        
+
         if (impersonationNeeded || groupsMapped) {
           // gonna need a new subject and doAs
           subject = new Subject();
@@ -139,7 +140,7 @@ public abstract class AbstractIdentityAssertionFilter extends
           for (Object obj : currentGroups) {
             principals.add((Principal)obj);
           }
-          
+
           if (impersonationNeeded) {
             impersonationPrincipal = new ImpersonatedPrincipal(mappedPrincipalName);
             subject.getPrincipals().add(impersonationPrincipal);

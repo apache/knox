@@ -114,7 +114,6 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   }
 
   public String mapUserPrincipal(final String principalName) {
-    /* return the passed principal */
     return principalName;
   }
 
