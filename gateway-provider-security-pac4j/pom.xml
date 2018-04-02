@@ -99,6 +99,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>lang-tag</artifactId>
+            <version>1.4.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-config</artifactId>
             <version>${pac4j.version}</version>
