@@ -190,7 +190,6 @@ public class JettySSLService implements SSLService {
     String truststorePassword = null;
     if (clientAuthNeeded || clientAuthWanted) {
       if (truststorePath != null) {
-        sslContextFactory.setTrustStore(loadKeyStore(keystoreFileName, keystoreType, master));
         char[] truststorePwd = null;
         try {
           truststorePwd = as.getPasswordFromAliasForGateway(GATEWAY_TRUSTSTORE_PASSWORD);
@@ -203,6 +202,7 @@ public class JettySSLService implements SSLService {
         else {
           truststorePassword = new String(master);
         }
+        sslContextFactory.setTrustStore(loadKeyStore(truststorePath, trustStoreType, truststorePassword.toCharArray()));
         sslContextFactory.setTrustStorePassword(truststorePassword);
         sslContextFactory.setTrustStoreType(trustStoreType);
       }
