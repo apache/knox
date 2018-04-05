@@ -49,6 +49,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 	private static final int TIMEOUT = 2000;
 
 	private String zooKeeperEnsemble;
+	private String zooKeeperNamespace;
 	private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<String>();
 
 	// -------------------------------------------------------------------------------------
@@ -65,13 +66,14 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 		if (zookeeperEnsemble != null && zookeeperEnsemble.trim().length() > 0) {
 			return true;
 		}
-		
+
 		return false;
 	}
 
 	@Override
 	public void setConfig(HaServiceConfig config) {
-		zooKeeperEnsemble = config.getZookeeperEnsemble();
+		zooKeeperEnsemble  = config.getZookeeperEnsemble();
+		zooKeeperNamespace = config.getZookeeperNamespace();
 		setURLs(lookupURLs());
 	}
 
@@ -138,7 +140,11 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 	protected String getZookeeperEnsemble() {
 		return zooKeeperEnsemble;
 	}
-	
+
+	protected String getZookeeperNamespace() {
+		return zooKeeperNamespace;
+	}
+
 	/**
 	 * Validate access to hosts using simple light weight ping style REST call.
 	 * 

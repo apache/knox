@@ -43,9 +43,9 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 	 * Default Port Number for HBase REST Server
 	 */
 	private static final int PORT_NUMBER = 8080;
-	
-	private String zookeeperNamespace = "hbase-unsecure";
-	
+
+	private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/hbase-unsecure";
+
 	// -------------------------------------------------------------------------------------
 	// Abstract methods
 	// -------------------------------------------------------------------------------------
@@ -75,6 +75,12 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 		return "WEBHBASE";
 	};
 
+	@Override
+	protected String getZookeeperNamespace() {
+		String ns = super.getZookeeperNamespace();
+		return (ns == null || ns.isEmpty()) ? DEFAULT_ZOOKEEPER_NAMESPACE : ns;
+	}
+
 	// -------------------------------------------------------------------------------------
 	// Private methods
 	// -------------------------------------------------------------------------------------
@@ -86,16 +92,21 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 	{
 		List<String> serverHosts = new ArrayList<>();
 		
-		CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
-				.connectString(getZookeeperEnsemble())
-				.retryPolicy(new ExponentialBackoffRetry(1000, 3))
-				.build();
-		
+		CuratorFramework zooKeeperClient =
+                    CuratorFrameworkFactory.builder().connectString(getZookeeperEnsemble())
+                                                     .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+                                                     .build();
+
 		try {
 			zooKeeperClient.start();
-			
+
+			String namespace = getZookeeperNamespace();
+			if (!namespace.startsWith("/")) {
+				namespace = "/" + namespace;
+			}
+
 			// Retrieve list of all region server hosts
-			List<String> serverNodes = zooKeeperClient.getChildren().forPath("/" + zookeeperNamespace + "/rs");
+			List<String> serverNodes = zooKeeperClient.getChildren().forPath(namespace + "/rs");
 			
 			for (String serverNode : serverNodes) {
 				String serverURL = constructURL(serverNode);

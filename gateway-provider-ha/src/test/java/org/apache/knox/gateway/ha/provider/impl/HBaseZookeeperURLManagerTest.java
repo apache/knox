@@ -31,28 +31,24 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.fail;
+
 /**
  * Simple unit tests for HBaseZookeeperURLManager.
  * 
  * @see HBaseZookeeperURLManager
  */
 public class HBaseZookeeperURLManagerTest {
-	
+
+  private static final String UNSECURE_NS = "/hbase-unsecure";
+  private static final String SECURE_NS   = "/hbase-secure";
+
   private TestingCluster cluster;
 
   @Before
   public void setup() throws Exception {
     cluster = new TestingCluster(3);
     cluster.start();
-
-    CuratorFramework zooKeeperClient =
-        CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
-            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
-
-    zooKeeperClient.start();
-    zooKeeperClient.create().forPath("/hbase-unsecure");
-    zooKeeperClient.create().forPath("/hbase-unsecure/rs");
-    zooKeeperClient.close();
   }
 
   @After
@@ -61,12 +57,46 @@ public class HBaseZookeeperURLManagerTest {
   }
 
   @Test
-  public void testHBaseZookeeperURLManagerLoading() {
+  public void testHBaseZookeeperURLManagerLoading() throws Exception {
+    createZNodes(UNSECURE_NS);
+    doTest(null);
+  }
+
+  @Test
+  public void testSecureNSHBaseZookeeperURLManagerLoading() throws Exception {
+    createZNodes(SECURE_NS);
+    doTest(SECURE_NS);
+  }
+
+  @Test
+  public void testSecureNSHBaseZookeeperURLManagerLoadingNoLeadingSlash() throws Exception {
+    createZNodes(SECURE_NS);
+    doTest(SECURE_NS.substring(1)); // Omit the leading slash from the namespace
+  }
+
+  private void doTest(String namespace) throws Exception {
     HaServiceConfig config = new DefaultHaServiceConfig("WEBHBASE");
     config.setEnabled(true);
     config.setZookeeperEnsemble(cluster.getConnectString());
-    URLManager manager = URLManagerLoader.loadURLManager(config);
+    config.setZookeeperNamespace(namespace);
+    URLManager manager = null;
+    try {
+      manager = URLManagerLoader.loadURLManager(config);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
     Assert.assertNotNull(manager);
     Assert.assertTrue(manager instanceof HBaseZookeeperURLManager);
   }
+
+  private void createZNodes(String namespace) throws Exception {
+    CuratorFramework zooKeeperClient =
+                          CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
+                                                           .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+    zooKeeperClient.start();
+    zooKeeperClient.create().forPath(namespace);
+    zooKeeperClient.create().forPath(namespace + "/rs");
+    zooKeeperClient.close();
+  }
+
 }
