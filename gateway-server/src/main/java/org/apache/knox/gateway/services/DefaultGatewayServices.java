@@ -27,6 +27,7 @@ import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistry
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
+import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
 import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.hostmap.impl.DefaultHostMapperService;
@@ -67,12 +68,33 @@ public class DefaultGatewayServices implements GatewayServices {
     ks.setMasterService(ms);
     ks.init(config, options);
     services.put(KEYSTORE_SERVICE, ks);
-    
-    DefaultAliasService alias = new DefaultAliasService();
-    alias.setKeystoreService(ks);
+
+    /* create an instance so that it can be passed to other services */
+    final RemoteAliasService alias = new RemoteAliasService();
+
+    final RemoteConfigurationRegistryClientService registryClientService =
+        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(alias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
+    final DefaultAliasService defaultAlias = new DefaultAliasService();
+    defaultAlias.setKeystoreService(ks);
+    defaultAlias.setMasterService(ms);
+    defaultAlias.init(config, options);
+
+    /*
+     * Setup and initialize remote Alias Service.
+     * NOTE: registryClientService.init() needs to
+     * be called before alias.start();
+     */
+    alias.setLocalAliasService(defaultAlias);
     alias.setMasterService(ms);
+    alias.setRegistryClientService(registryClientService);
     alias.init(config, options);
+    alias.start();
     services.put(ALIAS_SERVICE, alias);
+
 
     DefaultCryptoService crypto = new DefaultCryptoService();
     crypto.setKeystoreService(ks);
@@ -107,11 +129,6 @@ public class DefaultGatewayServices implements GatewayServices {
     sis.init( config, options );
     services.put( SERVER_INFO_SERVICE, sis );
 
-    RemoteConfigurationRegistryClientService registryClientService =
-                                                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
-    registryClientService.setAliasService(alias);
-    registryClientService.init(config, options);
-    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
 
     DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
     ccs.setAliasService(alias);
@@ -137,7 +154,7 @@ public class DefaultGatewayServices implements GatewayServices {
 
     ks.start();
 
-    DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
+    Service alias = services.get(ALIAS_SERVICE);
     alias.start();
 
     SSLService ssl = (SSLService) services.get(SSL_SERVICE);
@@ -166,7 +183,7 @@ public class DefaultGatewayServices implements GatewayServices {
 
     (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).stop();
 
-    DefaultAliasService alias = (DefaultAliasService) services.get(ALIAS_SERVICE);
+    Service alias = services.get(ALIAS_SERVICE);
     alias.stop();
 
     SSLService ssl = (SSLService) services.get(SSL_SERVICE);

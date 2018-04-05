@@ -615,4 +615,33 @@ public interface GatewayMessages {
                                      final String clusterName,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO,
+           text = "Adding alias {1} for cluster {0} locally (local keystore) ")
+  void addAliasLocally(final String cluster, final String alias);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Error adding alias {1} for cluster {0} locally (local keystore), cause: {2} ")
+  void errorAddingAliasLocally(final String cluster, final String alias, final String cause);
+
+  @Message(level = MessageLevel.INFO,
+           text = "Remove alias {1} for cluster {0} locally (local keystore) ")
+  void removeAliasLocally(final String cluster, final String alias);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Error removing alias {1} for cluster {0} locally (local keystore), cause: {2} ")
+  void errorRemovingAliasLocally(final String cluster, final String alias, final String cause);
+
+  @Message(level = MessageLevel.INFO,
+           text = "Adding remote listener for path {0} ")
+  void addRemoteListener(final String path);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Error adding remote listener for path {0}, cause: {1} ")
+  void errorAddingRemoteListener(final String path, final String cause);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Error removing remote listener for path {0}, cause: {1} ")
+  void errorRemovingRemoteListener(final String path, final String cause);
+
+
 }

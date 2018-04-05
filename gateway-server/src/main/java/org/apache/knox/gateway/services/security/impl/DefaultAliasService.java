@@ -41,7 +41,7 @@ public class DefaultAliasService implements AliasService {
 
   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
-  protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+  protected static char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
   'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
   'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -103,7 +103,7 @@ public class DefaultAliasService implements AliasService {
     return credential;
   }
 
-  private String generatePassword(int length) {
+  protected static String generatePassword(int length) {
     StringBuilder sb = new StringBuilder();
     SecureRandom r = new SecureRandom();
     for (int i = 0; i < length; i++) {

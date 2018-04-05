@@ -25,6 +25,7 @@ import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -50,6 +51,16 @@ public class CLIGatewayServices implements GatewayServices {
   }
 
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
+
+    /* create an instance so that it can be passed to other services */
+    final RemoteAliasService alias = new RemoteAliasService();
+
+    final RemoteConfigurationRegistryClientService registryClientService =
+        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(alias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
     ms = new CLIMasterService();
     ms.init(config, options);
     services.put("MasterService", ms);
@@ -59,9 +70,20 @@ public class CLIGatewayServices implements GatewayServices {
     ks.init(config, options);
     services.put(KEYSTORE_SERVICE, ks);
     
-    DefaultAliasService alias = new DefaultAliasService();
-    alias.setKeystoreService(ks);
+    DefaultAliasService defaultAlias = new DefaultAliasService();
+    defaultAlias.setKeystoreService(ks);
+    defaultAlias.init(config, options);
+
+    /*
+     * Setup and initialize remote Alias Service.
+     * NOTE: registryClientService.init() needs to
+     * be called before alias.start();
+     */
+    alias.setLocalAliasService(defaultAlias);
+    alias.setMasterService(ms);
+    alias.setRegistryClientService(registryClientService);
     alias.init(config, options);
+    alias.start();
     services.put(ALIAS_SERVICE, alias);
 
     DefaultCryptoService crypto = new DefaultCryptoService();
@@ -74,11 +96,8 @@ public class CLIGatewayServices implements GatewayServices {
     tops.init(  config, options  );
     services.put(TOPOLOGY_SERVICE, tops);
 
-    RemoteConfigurationRegistryClientService registryClientService =
-                                                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
-    registryClientService.setAliasService(alias);
-    registryClientService.init(config, options);
-    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
+
   }
   
   public void start() throws ServiceLifecycleException {
