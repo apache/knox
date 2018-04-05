@@ -25,6 +25,7 @@ import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
@@ -75,14 +76,7 @@ public class HaProviderDeploymentContributorTest {
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
-      providerParams.put("TestRoleOne",
-                         "enabled=false;" +
-                         "maxRetryAttempts=5;"+
-                         "retrySleep=50;"+
-                         "maxFailoverAttempts=4;"+
-                         "failoverSleep=40;"+
-                         "zookeeperNamespace=testRoleOne;"+
-                         "zookeeperEnsemble=http://host1:2181,http://host2:2181");
+      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4, 50, 5, "testRoleOne", "http://host1:2181,http://host2:2181"));
 
       Provider haProvider = createHaProvider(providerParams);
 
@@ -136,13 +130,13 @@ public class HaProviderDeploymentContributorTest {
 
       // Specify all the possible params in the TestRoleOne service level
       Map<String, String> testRoleOneParams = new HashMap<>();
-      testRoleOneParams.put("enabled", "true");
-      testRoleOneParams.put("maxRetryAttempts", "6");
-      testRoleOneParams.put("retrySleep", "60");
-      testRoleOneParams.put("maxFailoverAttempts", "8");
-      testRoleOneParams.put("failoverSleep", "80");
-      testRoleOneParams.put("zookeeperNamespace", "testRoleOneOverride");
-      testRoleOneParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+      testRoleOneParams.put(Service.HA_ENABLED_PARAM, "true");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS, "6");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS, "8");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP, "80");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleOneOverride");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE, "http://host3:2181,http://host4:2181");
 
       // A service with all the params overriden
       Service testRoleOneService = EasyMock.createNiceMock(Service.class);
@@ -182,11 +176,7 @@ public class HaProviderDeploymentContributorTest {
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
-      providerParams.put("TestRoleOne",
-                         "enabled=false;" +
-                         "maxRetryAttempts=5;"+
-                         "maxFailoverAttempts=4;"+
-                         "failoverSleep=40");
+      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4, -1, 5));
 
       Provider haProvider = createHaProvider(providerParams);
 
@@ -195,10 +185,10 @@ public class HaProviderDeploymentContributorTest {
 
       // Specify all the possible params in the TestRoleOne service level
       Map<String, String> testRoleOneParams = new HashMap<>();
-      testRoleOneParams.put("enabled", "true");
-      testRoleOneParams.put("retrySleep", "60");
-      testRoleOneParams.put("zookeeperNamespace", "testRoleOneOverride");
-      testRoleOneParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+      testRoleOneParams.put(Service.HA_ENABLED_PARAM, "true");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleOneOverride");
+      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE, "http://host3:2181,http://host4:2181");
 
       // A service with all the params overriden
       Service testRoleOneService = EasyMock.createNiceMock(Service.class);
@@ -237,18 +227,11 @@ public class HaProviderDeploymentContributorTest {
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify a subset of the possible HaProvider-level params for TestRoleOne
-      providerParams.put("TestRoleOne",
-                         "enabled=true;maxRetryAttempts=1;retrySleep=10;maxFailoverAttempts=2;failoverSleep=20");
+      providerParams.put("TestRoleOne", getHaProviderParamValue(true, 20, 2, 10, 1));
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
       providerParams.put("TestRoleTwo",
-                         "enabled=false;" +
-                         "maxRetryAttempts=3;"+
-                         "retrySleep=30;"+
-                         "maxFailoverAttempts=4;"+
-                         "failoverSleep=40;"+
-                         "zookeeperNamespace=testRoleTwo;"+
-                         "zookeeperEnsemble=http://host1:2181,http://host2:2181");
+                         getHaProviderParamValue(false, 40, 4, 30, 3, "testRoleTwo", "http://host1:2181,http://host2:2181"));
 
       Provider testHaProvider = createHaProvider(providerParams);
 
@@ -265,13 +248,13 @@ public class HaProviderDeploymentContributorTest {
 
       // Override all the possible params in the TestRoleTwo service level
       Map<String, String> testRoleTwoParams = new HashMap<>();
-      testRoleTwoParams.put("enabled", "true");
-      testRoleTwoParams.put("maxRetryAttempts", "6");
-      testRoleTwoParams.put("retrySleep", "60");
-      testRoleTwoParams.put("maxFailoverAttempts", "8");
-      testRoleTwoParams.put("failoverSleep", "80");
-      testRoleTwoParams.put("zookeeperNamespace", "testRoleTwoOverride");
-      testRoleTwoParams.put("zookeeperEnsemble", "http://host3:2181,http://host4:2181");
+      testRoleTwoParams.put(Service.HA_ENABLED_PARAM, "true");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS, "6");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS, "8");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP, "80");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleTwoOverride");
+      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE, "http://host3:2181,http://host4:2181");
 
       Service testRoleTwoService = EasyMock.createNiceMock(Service.class);
       EasyMock.expect(testRoleTwoService.getRole()).andReturn("TestRoleTwo").anyTimes();
@@ -306,6 +289,73 @@ public class HaProviderDeploymentContributorTest {
                               true, 80, 8, 60, 6, "testRoleTwoOverride", "http://host3:2181,http://host4:2181");
    }
 
+
+   private static String getHaProviderParamValue(boolean enabled,
+                                                 long    failoverSleep,
+                                                 int     maxFailoverAttempts,
+                                                 long    retrySleep,
+                                                 int     maxRetryAttempts) {
+      return getHaProviderParamValue(enabled, failoverSleep, maxFailoverAttempts, retrySleep, maxRetryAttempts, null, null);
+   }
+
+
+   private static String getHaProviderParamValue(boolean enabled,
+                                                 long    failoverSleep,
+                                                 int     maxFailoverAttempts,
+                                                 long    retrySleep,
+                                                 int     maxRetryAttempts,
+                                                 String  zooKeeperNamespace,
+                                                 String  zooKeeperEnsemble) {
+      StringBuilder builder = new StringBuilder();
+
+      builder.append(HaServiceConfigConstants.CONFIG_PARAM_ENABLED);
+      builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+      builder.append(String.valueOf(enabled));
+
+      if (maxRetryAttempts > -1) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(String.valueOf(maxRetryAttempts));
+      }
+
+      if (retrySleep > -1) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(String.valueOf(retrySleep));
+      }
+
+      if (maxFailoverAttempts > -1) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(String.valueOf(maxFailoverAttempts));
+      }
+
+      if (failoverSleep > -1) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(String.valueOf(failoverSleep));
+      }
+
+      if (zooKeeperNamespace != null) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(zooKeeperNamespace);
+      }
+
+      if (zooKeeperEnsemble != null) {
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
+         builder.append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
+         builder.append(zooKeeperEnsemble);
+      }
+
+      return builder.toString();
+   }
 
    /**
     *

@@ -49,28 +49,48 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
         try {
             p.load(new FileInputStream(discoveryConfig.getAddress()));
 
-            Map<String, Map<String, List<String>>> clusters = new HashMap<>();
+            Map<String, Map<String, Map<String, String>>> clusterProperties = new HashMap<>();
+            Map<String, Map<String, List<String>>> clusterURLs = new HashMap<>();
             for (Object key : p.keySet()) {
                 String propertyKey = (String)key;
                 String[] parts = propertyKey.split("\\.");
-                if (parts.length == 2) {
+                if (parts.length == 3) {
                     String clusterName = parts[0];
+                    if (!clusterURLs.containsKey(clusterName)) {
+                        clusterURLs.put(clusterName, new HashMap<>());
+                    }
+                    if (!clusterProperties.containsKey(clusterName)) {
+                        clusterProperties.put(clusterName, new HashMap<>());
+                    }
                     String serviceName = parts[1];
-                    String serviceURL  = p.getProperty(propertyKey);
-                    if (!clusters.containsKey(clusterName)) {
-                        clusters.put(clusterName, new HashMap<String, List<String>>());
+                    String property    = parts[2];
+                    if (property.equals("url")) {
+                        String serviceURL = p.getProperty(propertyKey);
+                        Map<String, List<String>> serviceURLs = clusterURLs.get(clusterName);
+                        if (!serviceURLs.containsKey(serviceName)) {
+                            serviceURLs.put(serviceName, new ArrayList<>());
+                        }
+
+                        // Handle muliple URLs for the service (e.g., HA)
+                        String[] svcURLs = serviceURL.split(",");
+                        for (String url : svcURLs) {
+                          serviceURLs.get(serviceName).add(url);
+                        }
+                    } else if (!property.equalsIgnoreCase("name")) { // ZooKeeper config properties
+                        Map<String, Map<String, String>> props = clusterProperties.get(clusterName);
+                        if (!props.containsKey(serviceName)) {
+                            props.put(serviceName, new HashMap<>());
+                        }
+                        props.get(serviceName).put(property, p.getProperty(propertyKey));
                     }
-                    Map<String, List<String>> serviceURLs = clusters.get(clusterName);
-                    if (!serviceURLs.containsKey(serviceName)) {
-                        serviceURLs.put(serviceName, new ArrayList<String>());
-                    }
-                    serviceURLs.get(serviceName).add(serviceURL);
                 }
             }
 
-            for (String clusterName : clusters.keySet()) {
+            for (String clusterName : clusterURLs.keySet()) {
                 result.put(clusterName,
-                        new PropertiesFileServiceDiscovery.Cluster(clusterName, clusters.get(clusterName)));
+                           new PropertiesFileServiceDiscovery.Cluster(clusterName,
+                                                                      clusterURLs.get(clusterName),
+                                                                      clusterProperties.get(clusterName)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,10 +112,12 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
     static class Cluster implements ServiceDiscovery.Cluster {
         private String name;
         private Map<String, List<String>> serviceURLS = new HashMap<>();
+        private Map<String, Map<String, String>> serviceConfigProps = new HashMap<>();
 
-        Cluster(String name, Map<String, List<String>> serviceURLs) {
+        Cluster(String name, Map<String, List<String>> serviceURLs, Map<String, Map<String, String>> svcProperties) {
             this.name = name;
             this.serviceURLS.putAll(serviceURLs);
+            this.serviceConfigProps.putAll(svcProperties);
         }
 
         @Override
@@ -115,7 +137,45 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
 
         @Override
         public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
-            return null; // TODO: PJZ: Implement me
+            ZooKeeperConfig zkConf = null;
+
+            Map<String, String> svcProps = serviceConfigProps.get(serviceName);
+            if (svcProps != null) {
+                String enabled = svcProps.get("haEnabled");
+                String ensemble = svcProps.get("ensemble");
+                String namespace = svcProps.get("namespace");
+                if (enabled != null && ensemble != null) {
+                    zkConf = new ZooKeeperConfigImpl(Boolean.valueOf(enabled), ensemble, namespace);
+                }
+            }
+            return zkConf;
+        }
+
+        private static class ZooKeeperConfigImpl implements ZooKeeperConfig {
+            private boolean isEnabled = false;
+            private String  ensemble  = null;
+            private String  namespace = null;
+
+            ZooKeeperConfigImpl(boolean enabled, String ensemble, String namespace) {
+                this.isEnabled = enabled;
+                this.ensemble  = ensemble;
+                this.namespace = namespace;
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return isEnabled;
+            }
+
+            @Override
+            public String getEnsemble() {
+                return ensemble;
+            }
+
+            @Override
+            public String getNamespace() {
+                return namespace;
+            }
         }
     }
 

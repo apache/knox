@@ -437,19 +437,48 @@ public class SimpleDescriptorHandler {
                     sw.write("        <version>" + serviceVersions.get(serviceName) + "</version>\n");
                 }
 
-                // If the service is configured for ZooKeeper-based HA
-                ServiceDiscovery.Cluster.ZooKeeperConfig zkConf = haServiceParams.get(serviceName);
-                if (zkConf != null && zkConf.isEnabled() && zkConf.getEnsemble() != null) {
-                    // Add the zookeeper params to the map for serialization
-                    Map<String,String> params = serviceParams.computeIfAbsent(serviceName, k -> new HashMap<>());
+                // Add the service params to the map for serialization
+                Map<String,String> params = serviceParams.computeIfAbsent(serviceName, k -> new HashMap<>());
 
+                ServiceDiscovery.Cluster.ZooKeeperConfig zkConf = haServiceParams.get(serviceName);
+
+                // Determine whether to persist the haEnabled param, and to what value
+                boolean isServiceHaEnabledAuto = false;
+                boolean isServiceHaEnabled = false;
+
+                if (haProvider != null) {
+                    Map<String, String> haParams = haProvider.getParams();
+                    if (haParams != null && haParams.containsKey(serviceName)) {
+                        String serviceHaParams = haParams.get(serviceName);
+                        Map<String,String> parsedServiceHaParams = parseHaProviderParam(serviceHaParams);
+                        String enabledValue = parsedServiceHaParams.get("enabled");
+                        if (enabledValue != null) {
+                            if (enabledValue.equalsIgnoreCase("auto")) {
+                                isServiceHaEnabledAuto = true;
+                                isServiceHaEnabled = (zkConf != null && zkConf.isEnabled());
+                            } else {
+                                isServiceHaEnabled = enabledValue.equalsIgnoreCase("true");
+                            }
+                        }
+                    }
+                }
+
+                // If the HA provider configuration for this service indicates an enabled value of "auto", then
+                // persist the derived enabled value.
+                if (isServiceHaEnabledAuto) {
+                    params.put(org.apache.knox.gateway.topology.Service.HA_ENABLED_PARAM,
+                               String.valueOf(isServiceHaEnabled));
+                }
+
+                // If the service is configured for ZooKeeper-based HA
+                if (zkConf != null && zkConf.getEnsemble() != null) {
                     String ensemble = zkConf.getEnsemble();
-                    if (ensemble != null) {
+                    if (ensemble != null && !ensemble.isEmpty()) {
                         params.put("zookeeperEnsemble", ensemble);
                     }
 
                     String namespace = zkConf.getNamespace();
-                    if (namespace != null) {
+                    if (namespace != null && !namespace.isEmpty() ) {
                         params.put("zookeeperNamespace", namespace);
                     }
                 } else {
@@ -534,6 +563,22 @@ public class SimpleDescriptorHandler {
         }
 
         result.put(RESULT_TOPOLOGY, topologyDescriptor);
+
+        return result;
+    }
+
+    private static Map<String, String> parseHaProviderParam(String paramValue) {
+        Map<String, String> result = new HashMap<>();
+
+        String[] elements = paramValue.split(";");
+        if (elements.length > 0) {
+            for (String element : elements) {
+                String[] kv = element.split("=");
+                if (kv.length == 2) {
+                    result.put(kv[0], kv[1]);
+                }
+            }
+        }
 
         return result;
     }

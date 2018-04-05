@@ -35,12 +35,16 @@ public class PropertiesFileServiceDiscoveryTest {
     private static final Map<String, String> clusterProperties = new HashMap<>();
     static {
         clusterProperties.put("mycluster.name", "mycluster");
-        clusterProperties.put("mycluster.NAMENODE", "hdfs://namenodehost:8020");
-        clusterProperties.put("mycluster.JOBTRACKER", "rpc://jobtrackerhostname:8050");
-        clusterProperties.put("mycluster.WEBHCAT", "http://webhcathost:50111/templeton");
-        clusterProperties.put("mycluster.OOZIE", "http://ooziehost:11000/oozie");
-        clusterProperties.put("mycluster.HIVE", "http://hivehostname:10001/clipath");
-        clusterProperties.put("mycluster.RESOURCEMANAGER", "http://remanhost:8088/ws");
+        clusterProperties.put("mycluster.NAMENODE.url", "hdfs://namenodehost:8020");
+        clusterProperties.put("mycluster.JOBTRACKER.url", "rpc://jobtrackerhostname:8050");
+        clusterProperties.put("mycluster.WEBHCAT.url", "http://webhcathost:50111/templeton");
+        clusterProperties.put("mycluster.WEBHDFS.url", "http://webhdfshost1:50070/webhdfs,http://webhdfshost2:50070/webhdfs");
+        clusterProperties.put("mycluster.OOZIE.url", "http://ooziehost:11000/oozie");
+        clusterProperties.put("mycluster.HIVE.url", "http://hivehostname:10001/clipath");
+        clusterProperties.put("mycluster.RESOURCEMANAGER.url", "http://remanhost:8088/ws");
+        clusterProperties.put("mycluster.HIVE.haEnabled", "true");
+        clusterProperties.put("mycluster.HIVE.ensemble", "http://host1:1281,http://host2:1281");
+        clusterProperties.put("mycluster.HIVE.namespace", "hiveserver2");
     }
 
     private static final Properties config = new Properties();
@@ -68,8 +72,28 @@ public class PropertiesFileServiceDiscoveryTest {
                     sd.discover(gc, new DefaultServiceDiscoveryConfig(discoverySource.getAbsolutePath()), "mycluster");
             assertNotNull(c);
             for (String name : clusterProperties.keySet()) {
-                assertEquals(clusterProperties.get(name), c.getServiceURLs(name.split("\\.")[1]).get(0));
+                if (name.endsWith("url")) {
+                    String svcName = name.split("\\.")[1];
+                    if ("WEBHDFS".equals(svcName)) {
+                        List<String> webhdfsURLs = c.getServiceURLs(svcName);
+                        assertEquals(2, webhdfsURLs.size());
+                        assertEquals("http://webhdfshost1:50070/webhdfs", webhdfsURLs.get(0));
+                        assertEquals("http://webhdfshost2:50070/webhdfs", webhdfsURLs.get(1));
+                    } else {
+                        assertEquals(clusterProperties.get(name), c.getServiceURLs(svcName).get(0));
+                    }
+                }
             }
+
+            assertNull("Should not be any ZooKeeper config for RESOURCEMANAGER",
+                       c.getZooKeeperConfiguration("RESOURCEMANAGER"));
+
+            // HIVE ZooKeeper config
+            ServiceDiscovery.Cluster.ZooKeeperConfig zkConf = c.getZooKeeperConfiguration("HIVE");
+            assertNotNull(zkConf);
+            assertEquals(Boolean.valueOf(clusterProperties.get("mycluster.HIVE.haEnabled")), zkConf.isEnabled());
+            assertEquals(clusterProperties.get("mycluster.HIVE.ensemble"), zkConf.getEnsemble());
+            assertEquals(clusterProperties.get("mycluster.HIVE.namespace"), zkConf.getNamespace());
         } finally {
             discoverySource.delete();
         }

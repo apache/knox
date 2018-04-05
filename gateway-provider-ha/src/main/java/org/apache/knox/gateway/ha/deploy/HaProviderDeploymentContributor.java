@@ -108,7 +108,7 @@ public class HaProviderDeploymentContributor extends ProviderDeploymentContribut
     */
    private void applyParamOverrides(HaServiceConfig config, Map<String, String> serviceLevelParams) {
       if (serviceLevelParams != null && !serviceLevelParams.isEmpty()) {
-         String enabled = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ENABLED);
+         String enabled = serviceLevelParams.get(Service.HA_ENABLED_PARAM);
          if (enabled != null) {
             config.setEnabled(Boolean.valueOf(enabled));
          }

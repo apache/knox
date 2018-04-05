@@ -25,6 +25,8 @@ import java.util.Map;
 
 public class Service {
 
+  public static final String HA_ENABLED_PARAM = "haEnabled";
+
   private String role;
   private String name;
   private Version version;
