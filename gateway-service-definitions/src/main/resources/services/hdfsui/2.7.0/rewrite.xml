@@ -79,6 +79,16 @@
       <rewrite template="/gateway/default/datanode/?host=http://{dnWebAddress}"/>
   </rule>
 
+  <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/infoAddr">
+    <match pattern="{infoAddr}"/>
+    <rewrite template="{$prefix[',url]}/datanode/?host=http://{infoAddr}'"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/infoSecureAddr">
+    <match pattern="{infoSecureAddr}"/>
+    <rewrite template="{$prefix[',url]}/datanode/?host=http://{infoSecureAddr}'"/>
+  </rule>
+
   <!-- Redirection rules that rewrite the Location reponse header  -->
   <filter name="HDFSUI/hdfs/outbound/headers/logs">
     <content type="application/x-http-headers">
@@ -126,6 +136,9 @@
     </content>
     <content type="*/html">
        <apply path="//\{dnWebAddress\}" rule="HDFSUI/hdfs/outbound/datanode"/>
+       <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
+       <apply path="\'//\{infoAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoAddr"/>
+       <apply path="\'//\{infoSecureAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoSecureAddr"/>
     </content>
   </filter>
 
