@@ -53,7 +53,7 @@
           <input type="radio"
                  [name]="pc"
                  [(ngModel)]="selectedCategory"
-                 [value]="pc">{{pc}}
+                 [value]="pc">&nbsp;{{pc}}
         </label>
       </div>
     </div> <!-- Provider Category Selection Step -->
@@ -67,7 +67,7 @@
                  [name]="pt"
                  (change)="getCategoryWizard().onChange()"
                  [(ngModel)]="getCategoryWizard().selectedType"
-                 [value]="pt">{{pt}}
+                 [value]="pt">&nbsp;{{pt}}
         </label>
       </div>
     </div> <!-- Provider Type Selection Step -->

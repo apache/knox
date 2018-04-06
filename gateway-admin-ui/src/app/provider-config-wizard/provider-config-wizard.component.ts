@@ -28,6 +28,7 @@ import {HaWizard} from "./ha-wizard";
 import {Resource} from "../resource/resource";
 import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 import {OrderedParamContainer} from "./ordered-param-container";
+import {HostMapProviderWizard} from "./hostmap-provider-wizard";
 
 
 @Component({
@@ -46,10 +47,12 @@ export class ProviderConfigWizardComponent implements OnInit {
   private static CATEGORY_AUTHORIZATION: string   = 'Authorization';
   private static CATEGORY_ID_ASSERTION: string    = 'Identity Assertion';
   private static CATEGORY_HA: string              = 'HA';
+  private static CATEGORY_HOSTMAP: string         = 'Host Mapping';
   private static providerCategories: string[] = [ ProviderConfigWizardComponent.CATEGORY_AUTHENTICATION,
                                                   ProviderConfigWizardComponent.CATEGORY_AUTHORIZATION,
                                                   ProviderConfigWizardComponent.CATEGORY_ID_ASSERTION,
-                                                  ProviderConfigWizardComponent.CATEGORY_HA
+                                                  ProviderConfigWizardComponent.CATEGORY_HA,
+                                                  ProviderConfigWizardComponent.CATEGORY_HOSTMAP
                                                 ];
 
   private static CATEGORY_TYPES: Map<string, CategoryWizard> =
@@ -57,7 +60,8 @@ export class ProviderConfigWizardComponent implements OnInit {
               [ProviderConfigWizardComponent.CATEGORY_AUTHENTICATION, new AuthenticationWizard() as CategoryWizard],
               [ProviderConfigWizardComponent.CATEGORY_AUTHORIZATION,  new AuthorizationWizard() as CategoryWizard],
               [ProviderConfigWizardComponent.CATEGORY_ID_ASSERTION,   new IdentityAssertionWizard() as CategoryWizard],
-              [ProviderConfigWizardComponent.CATEGORY_HA,             new HaWizard() as CategoryWizard]
+              [ProviderConfigWizardComponent.CATEGORY_HA,             new HaWizard() as CategoryWizard],
+              [ProviderConfigWizardComponent.CATEGORY_HOSTMAP,        new HostMapProviderWizard() as CategoryWizard]
             ]);
 
   @ViewChild('newProviderConfigModal')
@@ -166,7 +170,7 @@ export class ProviderConfigWizardComponent implements OnInit {
   }
 
   onNextStep() {
-      ++this.step;
+    ++this.step;
   }
 
   onPreviousStep() {
