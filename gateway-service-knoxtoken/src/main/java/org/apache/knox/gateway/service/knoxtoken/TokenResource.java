@@ -97,7 +97,7 @@ public class TokenResource {
     if (principals != null) {
       String[] dns = principals.split(";");
       for (int i = 0; i < dns.length; i++) {
-        allowedDNs.add(dns[i]);
+        allowedDNs.add(dns[i].replaceAll("\\s+",""));
       }
     }
 
@@ -154,7 +154,7 @@ public class TokenResource {
     if (clientCertRequired) {
       X509Certificate cert = extractCertificate(request);
       if (cert != null) {
-        if (!allowedDNs.contains(cert.getSubjectDN().getName())) {
+        if (!allowedDNs.contains(cert.getSubjectDN().getName().replaceAll("\\s+",""))) {
           return Response.status(403).entity("{ \"Unable to get token - untrusted client cert.\" }").build();
         }
       }

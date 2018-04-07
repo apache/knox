@@ -273,7 +273,7 @@ public class TokenServiceResourceTest {
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
-    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
+    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost,OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
     ArrayList<X509Certificate> certArrayList = new ArrayList<X509Certificate>();
     certArrayList.add(trustedCertMock);
     X509Certificate[] certs = {};
