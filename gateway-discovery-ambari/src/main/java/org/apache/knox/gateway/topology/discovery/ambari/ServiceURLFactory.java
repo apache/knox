@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Factory for creating cluster-specific service URLs.
@@ -35,10 +36,15 @@ public class ServiceURLFactory {
     // Default URL creator
     defaultURLCreator = new AmbariDynamicServiceURLCreator(cluster);
 
-    // Custom (internal) URL creators
-    urlCreators.put("NAMENODE", new NameNodeUrlCreator(cluster));
-    urlCreators.put("WEBHDFS", new WebHdfsUrlCreator(cluster));
-    urlCreators.put("HDFSUI", new HdfsUIUrlCreator(cluster));
+    // Custom URL creators (too complex for simple mapping configuration)
+    ServiceLoader<ServiceURLCreator> creators = ServiceLoader.load(ServiceURLCreator.class);
+    for (ServiceURLCreator creator : creators) {
+      String type = creator.getTargetService();
+      if (type != null && !type.isEmpty()) {
+        creator.init(cluster);
+        urlCreators.put(creator.getTargetService(), creator);
+      }
+    }
   }
 
 

@@ -33,8 +33,13 @@ public class NameNodeUrlCreator implements ServiceURLCreator {
 
   private AmbariCluster cluster = null;
 
-  NameNodeUrlCreator(AmbariCluster cluster) {
+  public void init(AmbariCluster cluster) {
     this.cluster = cluster;
+  }
+
+  @Override
+  public String getTargetService() {
+    return SERVICE;
   }
 
   @Override

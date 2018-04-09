@@ -34,7 +34,7 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
   private AmbariCluster cluster = null;
 
 
-  HDFSURLCreatorBase(AmbariCluster cluster) {
+  public void init(AmbariCluster cluster) {
     this.cluster = cluster;
   }
 
@@ -143,9 +143,6 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
   private static String getHANameNodeHttpAddress(Map<String, String> props, String nameService, String node) {
     return props.get("dfs.namenode.http-address." + nameService + "." + node);
   }
-
-
-  protected abstract String getTargetService();
 
 
   protected abstract String createURL(String address);

@@ -41,7 +41,27 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
     private AmbariCluster cluster = null;
     private ServiceURLPropertyConfig config;
 
+    AmbariDynamicServiceURLCreator() {
+    }
+
     AmbariDynamicServiceURLCreator(AmbariCluster cluster) {
+        this();
+        init(cluster);
+    }
+
+    AmbariDynamicServiceURLCreator(AmbariCluster cluster, File mappingConfiguration) throws IOException {
+        this.cluster = cluster;
+        config = new ServiceURLPropertyConfig(new FileInputStream(mappingConfiguration));
+    }
+
+    AmbariDynamicServiceURLCreator(AmbariCluster cluster, String mappings) {
+        this.cluster = cluster;
+        config = new ServiceURLPropertyConfig(new ByteArrayInputStream(mappings.getBytes()));
+    }
+
+
+    @Override
+    public void init(AmbariCluster cluster) {
         this.cluster = cluster;
 
         // Load the default internal configuration
@@ -79,14 +99,10 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
         }
     }
 
-    AmbariDynamicServiceURLCreator(AmbariCluster cluster, File mappingConfiguration) throws IOException {
-        this.cluster = cluster;
-        config = new ServiceURLPropertyConfig(new FileInputStream(mappingConfiguration));
-    }
 
-    AmbariDynamicServiceURLCreator(AmbariCluster cluster, String mappings) {
-        this.cluster = cluster;
-        config = new ServiceURLPropertyConfig(new ByteArrayInputStream(mappings.getBytes()));
+    @Override
+    public String getTargetService() {
+        return null;
     }
 
     public List<String> create(String serviceName, Map<String, String> serviceParams) {

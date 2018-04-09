@@ -24,12 +24,12 @@ public class WebHdfsUrlCreator extends HDFSURLCreatorBase {
   private static final String SERVICE = "WEBHDFS";
 
 
-  WebHdfsUrlCreator(AmbariCluster cluster) {
-    super(cluster);
+  public void init(AmbariCluster cluster) {
+    super.init(cluster);
   }
 
   @Override
-  protected String getTargetService() {
+  public String getTargetService() {
     return SERVICE;
   }
 

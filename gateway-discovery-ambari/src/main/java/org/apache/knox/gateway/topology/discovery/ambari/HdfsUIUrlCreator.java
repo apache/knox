@@ -24,12 +24,12 @@ public class HdfsUIUrlCreator extends HDFSURLCreatorBase {
   private static final String SERVICE = "HDFSUI";
 
 
-  HdfsUIUrlCreator(AmbariCluster cluster) {
-    super(cluster);
+  public void init(AmbariCluster cluster) {
+    super.init(cluster);
   }
 
   @Override
-  protected String getTargetService() {
+  public String getTargetService() {
     return SERVICE;
   }
 

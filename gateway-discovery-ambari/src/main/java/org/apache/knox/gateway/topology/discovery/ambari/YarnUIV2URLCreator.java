@@ -16,33 +16,14 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
-import java.util.List;
-import java.util.Map;
+public class YarnUIV2URLCreator extends YarnUIURLCreator {
 
-public interface ServiceURLCreator {
-
-  /**
-   *
-   * @return The name of the service for which the implementation is able to create URLs.
-   */
-  String getTargetService();
+  private static final String SERVICE = "YARNUIV2";
 
 
-  /**
-   *
-   * @param cluster the cluster from which the service URLs will be derived.
-   */
-  void init(AmbariCluster cluster);
-
-
-  /**
-   * Creates one or more cluster-specific URLs for the specified service.
-   *
-   * @param service       The service identifier.
-   * @param serviceParams A map of parameters and their corresponding values for the specified service.
-   *
-   * @return A List of created URL strings; the list may be empty.
-   */
-  List<String> create(String service, Map<String, String> serviceParams);
+  @Override
+  public String getTargetService() {
+    return SERVICE;
+  }
 
 }
