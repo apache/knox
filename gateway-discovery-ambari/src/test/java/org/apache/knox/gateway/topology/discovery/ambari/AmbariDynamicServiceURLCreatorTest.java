@@ -113,54 +113,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, expectedScheme, HTTP_PORT, HTTP_PATH);
     }
 
-
-    @Test
-    public void testResourceManagerURLFromInternalMapping() throws Exception {
-        testResourceManagerURL(null);
-    }
-
-    @Test
-    public void testResourceManagerURLFromExternalMapping() throws Exception {
-        testResourceManagerURL(TEST_MAPPING_CONFIG);
-    }
-
-    private void testResourceManagerURL(Object mappingConfiguration) throws Exception {
-
-        final String HTTP_ADDRESS  = "host2:1111";
-        final String HTTPS_ADDRESS = "host2:22222";
-
-        // HTTP
-        AmbariComponent resman = EasyMock.createNiceMock(AmbariComponent.class);
-        setResourceManagerComponentExpectations(resman, HTTP_ADDRESS, HTTPS_ADDRESS, "HTTP");
-
-        AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
-        EasyMock.expect(cluster.getComponent("RESOURCEMANAGER")).andReturn(resman).anyTimes();
-        EasyMock.replay(cluster);
-
-        // Run the test
-        AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, mappingConfiguration);
-        String url = builder.create("RESOURCEMANAGER", null).get(0);
-        assertEquals("http://" + HTTP_ADDRESS + "/ws", url);
-
-        // HTTPS
-        EasyMock.reset(resman);
-        setResourceManagerComponentExpectations(resman, HTTP_ADDRESS, HTTPS_ADDRESS, "HTTPS_ONLY");
-
-        // Run the test
-        url = builder.create("RESOURCEMANAGER", null).get(0);
-        assertEquals("https://" + HTTPS_ADDRESS + "/ws", url);
-    }
-
-    private void setResourceManagerComponentExpectations(final AmbariComponent resmanMock,
-                                                         final String          httpAddress,
-                                                         final String          httpsAddress,
-                                                         final String          httpPolicy) {
-        EasyMock.expect(resmanMock.getConfigProperty("yarn.resourcemanager.webapp.address")).andReturn(httpAddress).anyTimes();
-        EasyMock.expect(resmanMock.getConfigProperty("yarn.resourcemanager.webapp.https.address")).andReturn(httpsAddress).anyTimes();
-        EasyMock.expect(resmanMock.getConfigProperty("yarn.http.policy")).andReturn(httpPolicy).anyTimes();
-        EasyMock.replay(resmanMock);
-    }
-
     @Test
     public void testJobTrackerURLFromInternalMapping() throws Exception {
         testJobTrackerURL(null);

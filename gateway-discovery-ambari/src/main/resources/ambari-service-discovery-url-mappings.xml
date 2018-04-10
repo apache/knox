@@ -95,40 +95,6 @@
         </properties>
     </service>
 
-    <service name="RESOURCEMANAGER">
-        <url-pattern>{SCHEME}://{WEBAPP_ADDRESS}/ws</url-pattern>
-        <properties>
-            <property name="WEBAPP_HTTP_ADDRESS">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.resourcemanager.webapp.address</config-property>
-            </property>
-            <property name="WEBAPP_HTTPS_ADDRESS">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.resourcemanager.webapp.https.address</config-property>
-            </property>
-            <property name="HTTP_POLICY">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.http.policy</config-property>
-            </property>
-            <property name="SCHEME">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>https</then>
-                        <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-            <property name="WEBAPP_ADDRESS">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>WEBAPP_HTTPS_ADDRESS</then>
-                        <else>WEBAPP_HTTP_ADDRESS</else>
-                    </if>
-                </config-property>
-            </property>
-        </properties>
-    </service>
-
     <service name="HIVE">
         <url-pattern>{SCHEME}://{HOST}:{PORT}/{PATH}</url-pattern>
         <properties>
@@ -153,40 +119,6 @@
                     <if property="USE_SSL" value="true">
                         <then>https</then>
                         <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-        </properties>
-    </service>
-
-    <service name="HDFSUI"> <!-- TODO: Custom ServiceURLCreator for this due to NN federation for HDP 3.0-->
-        <url-pattern>{SCHEME}://{WEBAPP_ADDRESS}</url-pattern>
-        <properties>
-            <property name="WEBAPP_HTTP_ADDRESS">
-                <component>NAMENODE</component>
-                <config-property>dfs.namenode.http-address</config-property>
-            </property>
-            <property name="WEBAPP_HTTPS_ADDRESS">
-                <component>NAMENODE</component>
-                <config-property>dfs.namenode.https-address</config-property>
-            </property>
-            <property name="HTTP_POLICY">
-                <component>NAMENODE</component>
-                <config-property>dfs.http.policy</config-property>
-            </property>
-            <property name="SCHEME">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>https</then>
-                        <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-            <property name="WEBAPP_ADDRESS">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>WEBAPP_HTTPS_ADDRESS</then>
-                        <else>WEBAPP_HTTP_ADDRESS</else>
                     </if>
                 </config-property>
             </property>
@@ -491,41 +423,6 @@
             <property name="PORT">
                 <component>FALCON_SERVER</component>
                 <config-property>falcon_port</config-property>
-            </property>
-        </properties>
-    </service>
-
-
-    <service name="YARNUI">
-        <url-pattern>{SCHEME}://{YARN_RM_WEBAPP_ADDRESS}</url-pattern>
-        <properties>
-            <property name="HTTP_ADDRESS">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.resourcemanager.webapp.address</config-property>
-            </property>
-            <property name="HTTPS_ADDRESS">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.resourcemanager.webapp.https.address</config-property>
-            </property>
-            <property name="HTTP_POLICY">
-                <component>RESOURCEMANAGER</component>
-                <config-property>yarn.http.policy</config-property>
-            </property>
-            <property name="SCHEME">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>https</then>
-                        <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-            <property name="YARN_RM_WEBAPP_ADDRESS">
-                <config-property>
-                    <if property="HTTP_POLICY" value="HTTPS_ONLY">
-                        <then>HTTPS_ADDRESS</then>
-                        <else>HTTP_ADDRESS</else>
-                    </if>
-                </config-property>
             </property>
         </properties>
     </service>
