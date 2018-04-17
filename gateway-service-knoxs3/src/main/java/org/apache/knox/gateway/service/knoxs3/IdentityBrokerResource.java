@@ -18,12 +18,8 @@
 package org.apache.knox.gateway.service.knoxs3;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.security.ImpersonatedPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.securitytoken.model.GetFederationTokenResult;
 
 import javax.annotation.PostConstruct;
@@ -37,8 +33,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.PrintWriter;
-import java.security.AccessController;
-import java.security.Principal;
 import java.util.Enumeration;
 import java.util.Properties;
 
