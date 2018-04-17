@@ -476,11 +476,12 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    try {
-      remoteClient.removeEntryListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY);
-    } catch (final Exception e) {
-      LOG.errorRemovingRemoteListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY,
-          e.toString());
+    if(remoteClient != null) {
+      try {
+        remoteClient.removeEntryListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY);
+      } catch (final Exception e) {
+        LOG.errorRemovingRemoteListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY, e.toString());
+      }
     }
   }
 
