@@ -102,6 +102,16 @@ public class AtlasZookeeperURLManagerTest {
     }
 
     @Test
+    public void testAtlasURLManagerDefaultNamespace() {
+        doTestAtlasZooKeeperURLManager("ATLAS", true, cluster.getConnectString(), null);
+    }
+
+    @Test
+    public void testAtlasAPIURLManagerDefaultNamespace() {
+        doTestAtlasZooKeeperURLManager("ATLAS-API", true, cluster.getConnectString(), null);
+    }
+
+    @Test
     public void testAtlasURLManagerWithLeadingSlashNamespace() {
         doTestAtlasZooKeeperURLManager("ATLAS", true, cluster.getConnectString(), "/apache_atlas");
     }
