@@ -22,16 +22,11 @@ export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
   private static MODE_VALUES: string[] = [ 'OR', 'AND' ];
 
   private static DEFAULT_MODE: string = 'Default Mode';
-  private static DEFAULT_ACL: string  = 'Default ACL';
 
-  private static displayPropertyNames: string[] = [ ACLsAuthznProviderConfig.DEFAULT_MODE,
-                                                    ACLsAuthznProviderConfig.DEFAULT_ACL
-                                                  ];
+  private static displayPropertyNames: string[] = [ ACLsAuthznProviderConfig.DEFAULT_MODE ];
 
   private static displayPropertyNameBindings: Map<string, string> =
-                    new Map([ [ACLsAuthznProviderConfig.DEFAULT_ACL,  'acl'],
-                              [ACLsAuthznProviderConfig.DEFAULT_MODE, 'acl.mode']
-                            ]);
+                    new Map([ [ACLsAuthznProviderConfig.DEFAULT_MODE, 'acl.mode'] ]);
 
   constructor() {
     super();
