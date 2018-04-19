@@ -37,14 +37,14 @@
         <span>&nbsp;</span>
         <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (isShowProvider(provider) ? 'minus' : 'plus')"
               (click)="toggleShowProvider(provider)"></span>
-        <span><strong>{{ provider.name }}</strong></span>
+        <span><strong>{{ provider.role }}</strong></span>
         <span class="clickable inline-glyph glyphicon glyphicon-remove pull-right btn btn-xs"
-              [title]="'Remove ' + provider.name"
+              [title]="'Remove ' + provider.role"
               (click)="onRemoveProvider(provider.name)"
               data-toggle="tooltip"></span>
       </div>
       <div class="panel-body" *ngIf="isShowProvider(provider)">
-        <strong>Role</strong> {{ provider.role }}<br>
+        <strong>Name</strong> {{ provider.name }}<br>
         <strong>Enabled</strong>&nbsp;<input type="checkbox"
                                              [checked]="isProviderEnabled(provider)"
                                              (click)="onProviderEnabled(provider)"><br>
