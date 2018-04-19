@@ -66,6 +66,10 @@ public class RemoteAliasMonitorTest {
   private static String expectedClusterNameDev = "development";
   private static String expectedAliasDev = "knox.test.alias.dev";
   private static String expectedPasswordDev = "otherDummyPassword";
+
+  private static String preferRemoteAlias = "prefer.remote.alias";
+  private static String preferRemoteAliasEncryptedPassword = "QmgrK2JBRlE1MUU9OjpIYzZlVUttKzdaWkFOSjlYZVVyVzNRPT06Om5kdTQ3WTJ1by9vSHprZUZHcjBqVG5TaGxsMFVUdUNyN0EvUlZDV1ZHQUU9";
+  private static String preferRemoteAliasClearPassword = "ApacheKnoxPassword123";
   /* For CLI tests */
   private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
   private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
@@ -123,12 +127,21 @@ public class RemoteAliasMonitorTest {
         .withACL(acls).forPath(
         RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
             PATH_SEPARATOR + expectedClusterNameDev);
+
     assertNotNull("Failed to create node:"
         + RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
         + RemoteAliasService.
         PATH_SEPARATOR + expectedClusterNameDev, client.checkExists().forPath(
         RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
             PATH_SEPARATOR + expectedClusterNameDev));
+
+    /* Start Zookeeper with an existing alias */
+    client.create().withMode(CreateMode.PERSISTENT).
+        forPath(RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+                + RemoteAliasService.
+                PATH_SEPARATOR + expectedClusterName
+                + RemoteAliasService.PATH_SEPARATOR + preferRemoteAlias,
+            preferRemoteAliasEncryptedPassword.getBytes());
   }
 
   @AfterClass
@@ -184,6 +197,9 @@ public class RemoteAliasMonitorTest {
     EasyMock.expect(defaultAlias.getAliasesForCluster(expectedClusterNameDev))
         .andReturn(new ArrayList<>()).anyTimes();
 
+    EasyMock.expect(defaultAlias.getPasswordFromAliasForCluster(expectedClusterName, preferRemoteAlias))
+        .andReturn("thisiswrong".toCharArray()).anyTimes();
+
     EasyMock.replay(defaultAlias);
 
     final DefaultMasterService ms = EasyMock
@@ -212,7 +228,7 @@ public class RemoteAliasMonitorTest {
         .getAliasesForCluster(expectedClusterNameDev);
 
     /* no alias added so ist should be empty */
-    Assert.assertEquals(aliases.size(), 0);
+    Assert.assertEquals(aliases.size(), 1);
     Assert.assertEquals(aliasesDev.size(), 0);
 
 
@@ -250,6 +266,13 @@ public class RemoteAliasMonitorTest {
     /* make sure the externally added passwords match */
     Assert.assertEquals(expectedPassword, new String(result));
     Assert.assertEquals(expectedPasswordDev, new String(result1));
+
+    /* test that remote alias service prefers remote over local */
+    final char[] prefAliasResult = zkAlias
+        .getPasswordFromAliasForCluster(expectedClusterName, preferRemoteAlias);
+    Assert.assertEquals(preferRemoteAliasClearPassword, new String(prefAliasResult));
+
+    zkAlias.stop();
 
   }
 

@@ -330,13 +330,7 @@ public class RemoteAliasService implements AliasService {
     /* convert all alias names to lower case since JDK expects the same behaviour */
     final String alias = givenAlias.toLowerCase();
 
-    char[] password;
-    /* try to get it from the local keystore, ignore generate flag. */
-    password = localAliasService
-        .getPasswordFromAliasForCluster(clusterName, alias);
-    if (password != null) {
-      return password;
-    }
+    char[] password = null;
 
     /* try to get it from remote registry */
     if (remoteClient != null) {
@@ -356,7 +350,7 @@ public class RemoteAliasService implements AliasService {
 
       } else {
         try {
-          return decrypt(encrypted).toCharArray();
+          password = decrypt(encrypted).toCharArray();
         } catch (final Exception e) {
           throw new AliasServiceException(e);
         }
@@ -364,9 +358,15 @@ public class RemoteAliasService implements AliasService {
 
     }
 
-    /* Case where remote registry is not configured and we need to generate password and save it locally */
-    else if (generate) {
-      return localAliasService
+    /*
+     * If
+     * 1. Remote registry not configured or
+     * 2. Password not found for given alias in remote registry,
+     * Then try local keystore
+     */
+    if(password == null) {
+      /* try to get it from the local keystore, ignore generate flag. */
+      password = localAliasService
           .getPasswordFromAliasForCluster(clusterName, alias, generate);
     }
 
