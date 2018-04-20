@@ -182,6 +182,16 @@ export class ProviderConfigWizardComponent implements OnInit {
     let catWizard = this.getCategoryWizard(this.selectedCategory);
     if (catWizard) {
       result = (this.step < (catWizard.getSteps() - 1));
+      if (result) {
+        if (this.isProviderTypeStep()) { // Next step would be params
+          // Check for the need to display the params step
+          let pc = catWizard.getProviderConfig();
+          if (pc && pc instanceof DisplayBindingProviderConfig) {
+            let propNames: string[] = (pc as DisplayBindingProviderConfig).getDisplayPropertyNames();
+            result = propNames.length > 0;
+          }
+        }
+      }
     }
     return result;
   }

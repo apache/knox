@@ -27,6 +27,7 @@ import {CASProviderConfig} from "./cas-provider-config";
 import {SAMLProviderConfig} from "./saml-provider-config";
 import {OIDCProviderConfig} from "./oidc-provider-config";
 import {OAUTHProviderConfig} from "./oauth-provider-config";
+import {AnonymousProviderConfig} from "./AnonymousProviderConfig";
 
 export class AuthenticationWizard extends CategoryWizard {
 
@@ -43,6 +44,7 @@ export class AuthenticationWizard extends CategoryWizard {
   private static AUTH_OAUTH: string      = 'OAuth';
   private static AUTH_SAML: string       = 'SAML';
   private static AUTH_OIDC: string       = 'OpenID Connect';
+  private static AUTH_ANONYMOUS: string  = 'Anonymous';
   private static authTypes: string[] = [ AuthenticationWizard.AUTH_LDAP,
                                          AuthenticationWizard.AUTH_PAM,
                                          AuthenticationWizard.AUTH_HADOOP,
@@ -52,7 +54,8 @@ export class AuthenticationWizard extends CategoryWizard {
                                          AuthenticationWizard.AUTH_CAS,
                                          AuthenticationWizard.AUTH_OAUTH,
                                          AuthenticationWizard.AUTH_SAML,
-                                         AuthenticationWizard.AUTH_OIDC
+                                         AuthenticationWizard.AUTH_OIDC,
+                                         AuthenticationWizard.AUTH_ANONYMOUS
                                        ];
 
   private static typeConfigMap: Map<string, typeof AuthenticationProviderConfig> =
@@ -66,6 +69,7 @@ export class AuthenticationWizard extends CategoryWizard {
                      [AuthenticationWizard.AUTH_OAUTH,      OAUTHProviderConfig],
                      [AuthenticationWizard.AUTH_SAML,       SAMLProviderConfig],
                      [AuthenticationWizard.AUTH_OIDC,       OIDCProviderConfig],
+                     [AuthenticationWizard.AUTH_ANONYMOUS,  AnonymousProviderConfig]
                    ] as [string, typeof AuthenticationProviderConfig][]);
 
 
