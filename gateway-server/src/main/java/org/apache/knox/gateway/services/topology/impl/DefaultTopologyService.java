@@ -468,10 +468,9 @@ public class DefaultTopologyService
       // registry, even if it does not exist locally.
       deleteRemoteEntry("/knox/config/shared-providers", name);
 
-      if (providerConfig != null) {
-        // Whether the remote configuration registry is being employed or not, delete the local file if it exists
-        result = providerConfig.delete();
-      }
+      // Whether the remote configuration registry is being employed or not, delete the local file if it exists
+      result = providerConfig == null || !providerConfig.exists() || providerConfig.delete();
+
     } else {
       log.preventedDeletionOfSharedProviderConfiguration(providerConfig.getAbsolutePath());
     }
