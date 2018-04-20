@@ -235,7 +235,7 @@ public class RemoteAliasService implements AliasService {
     List<String> remoteAliases = new ArrayList<>();
 
     /* If we have remote registry configured, query it */
-    if (remoteClient != null) {
+    if (remoteClient != null && config.isRemoteAliasServiceEnabled()) {
       remoteAliases = remoteClient
           .listChildEntries(buildClusterEntryName(clusterName));
     }
@@ -264,7 +264,7 @@ public class RemoteAliasService implements AliasService {
     /* first add the alias to the local keystore */
     localAliasService.addAliasForCluster(clusterName, alias, value);
 
-    if (remoteClient != null) {
+    if (remoteClient != null && config.isRemoteAliasServiceEnabled()) {
 
       final String aliasEntryPath = buildAliasEntryName(clusterName, alias);
 
@@ -299,16 +299,19 @@ public class RemoteAliasService implements AliasService {
     localAliasService.removeAliasForCluster(clusterName, alias);
 
     /* If we have remote registry configured, query it */
-    if (remoteClient != null) {
+    if (remoteClient != null && config.isRemoteAliasServiceEnabled()) {
 
       final String aliasEntryPath = buildAliasEntryName(clusterName, alias);
 
-      remoteClient.deleteEntry(aliasEntryPath);
-
       if (remoteClient.entryExists(aliasEntryPath)) {
-        throw new IllegalStateException(String.format(
-            "Failed to delete alias %s for cluster %s in remote registry",
-            alias, clusterName));
+        remoteClient.deleteEntry(aliasEntryPath);
+
+        if (remoteClient.entryExists(aliasEntryPath)) {
+          throw new IllegalStateException(String.format(
+              "Failed to delete alias %s for cluster %s in remote registry",
+              alias, clusterName));
+        }
+
       }
 
     } else {
@@ -333,11 +336,15 @@ public class RemoteAliasService implements AliasService {
     char[] password = null;
 
     /* try to get it from remote registry */
-    if (remoteClient != null) {
+    if (remoteClient != null && config.isRemoteAliasServiceEnabled()) {
 
       checkPathsExist(remoteClient);
-      final String encrypted = remoteClient
-          .getEntryData(buildAliasEntryName(clusterName, alias));
+      String encrypted = null;
+
+      if(remoteClient.entryExists(buildAliasEntryName(clusterName, alias))) {
+        encrypted = remoteClient
+            .getEntryData(buildAliasEntryName(clusterName, alias));
+      }
 
       /* Generate a new password */
       if (encrypted == null) {
@@ -446,7 +453,7 @@ public class RemoteAliasService implements AliasService {
   @Override
   public void start() throws ServiceLifecycleException {
 
-    if (remoteClient != null) {
+    if (remoteClient != null && config.isRemoteAliasServiceEnabled()) {
 
       /* ensure that nodes are properly setup */
       ensureEntries(remoteClient);
@@ -463,7 +470,7 @@ public class RemoteAliasService implements AliasService {
       /* Register a listener for aliases entry additions/removals */
       try {
         remoteClient.addChildEntryListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY,
-            new RemoteAliasChildListener());
+            new RemoteAliasChildListener(this));
       } catch (final Exception e) {
         throw new IllegalStateException(
             "Unable to add listener for path " + PATH_KNOX_ALIAS_STORE_TOPOLOGY,
@@ -472,11 +479,17 @@ public class RemoteAliasService implements AliasService {
 
     }
 
+    if(!config.isRemoteAliasServiceEnabled()) {
+      LOG.remoteAliasServiceDisabled();
+    } else {
+      LOG.remoteAliasServiceEnabled();
+    }
+
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    if(remoteClient != null) {
+    if(remoteClient != null && config.isRemoteAliasServiceEnabled()) {
       try {
         remoteClient.removeEntryListener(PATH_KNOX_ALIAS_STORE_TOPOLOGY);
       } catch (final Exception e) {
@@ -564,8 +577,14 @@ public class RemoteAliasService implements AliasService {
   /**
    * A listener that listens for changes to the child nodes.
    */
-  private static class RemoteAliasChildListener
+  private class RemoteAliasChildListener
       implements RemoteConfigurationRegistryClient.ChildEntryListener {
+
+    final RemoteAliasService remoteAliasService;
+
+    public RemoteAliasChildListener (final RemoteAliasService remoteAliasService ) {
+      this.remoteAliasService = remoteAliasService;
+    }
 
     @Override
     public void childEvent(final RemoteConfigurationRegistryClient client,
@@ -603,7 +622,7 @@ public class RemoteAliasService implements AliasService {
           LOG.addAliasLocally(paths[0], paths[1]);
           try {
             client.addEntryListener(path,
-                new RemoteAliasEntryListener(paths[0], paths[1]));
+                new RemoteAliasEntryListener(paths[0], paths[1], remoteAliasService));
           } catch (final Exception e) {
             LOG.errorRemovingAliasLocally(paths[0], paths[1], e.toString());
           }
@@ -612,7 +631,7 @@ public class RemoteAliasService implements AliasService {
           /* Add a child listener for the cluster */
           LOG.addRemoteListener(path);
           try {
-            client.addChildEntryListener(path, new RemoteAliasChildListener());
+            client.addChildEntryListener(path, new RemoteAliasChildListener(remoteAliasService));
           } catch (Exception e) {
             LOG.errorAddingRemoteListener(path, e.toString());
           }
@@ -633,6 +652,7 @@ public class RemoteAliasService implements AliasService {
 
     final String cluster;
     final String alias;
+    final RemoteAliasService remoteAliasService;
 
     /**
      * Create an instance
@@ -640,10 +660,11 @@ public class RemoteAliasService implements AliasService {
      * @param cluster
      * @param alias
      */
-    public RemoteAliasEntryListener(final String cluster, final String alias) {
+    public RemoteAliasEntryListener(final String cluster, final String alias, final RemoteAliasService remoteAliasService) {
       super();
       this.cluster = cluster;
       this.alias = alias;
+      this.remoteAliasService = remoteAliasService;
     }
 
     @Override
@@ -658,8 +679,8 @@ public class RemoteAliasService implements AliasService {
             && aliasService instanceof RemoteAliasService) {
           try {
             ((RemoteAliasService) aliasService)
-                .addAliasForClusterLocally(cluster, alias, new String(data));
-          } catch (final AliasServiceException e) {
+                .addAliasForClusterLocally(cluster, alias, remoteAliasService.decrypt(new String(data)));
+          } catch (final Exception e) {
             /* log and move on */
             LOG.errorAddingAliasLocally(cluster, alias, e.toString());
           }

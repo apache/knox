@@ -641,6 +641,19 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  /**
+   * Returns whether the Remote Alias Service is enabled or not.
+   * This value also depends on whether remote registry is enabled or not.
+   * if it is enabled then this option takes effect else this option has no
+   * effect.
+   *
+   * @return
+   */
+  @Override
+  public boolean isRemoteAliasServiceEnabled() {
+    return true;
+  }
+
   @Override
   public int getClusterMonitorPollingInterval(String type) {
     return 600;

@@ -176,6 +176,9 @@ public class RemoteAliasMonitorTest {
 
     EasyMock.expect(gc.getRemoteConfigurationMonitorClientName())
         .andReturn(configMonitorName).anyTimes();
+
+    EasyMock.expect(gc.isRemoteAliasServiceEnabled())
+        .andReturn(true).anyTimes();
     EasyMock.replay(gc);
 
     // Mock Alias Service
@@ -227,7 +230,7 @@ public class RemoteAliasMonitorTest {
     List<String> aliasesDev = zkAlias
         .getAliasesForCluster(expectedClusterNameDev);
 
-    /* no alias added so ist should be empty */
+    /* no alias added so ist should be empty, except the one in ZK  */
     Assert.assertEquals(aliases.size(), 1);
     Assert.assertEquals(aliasesDev.size(), 0);
 

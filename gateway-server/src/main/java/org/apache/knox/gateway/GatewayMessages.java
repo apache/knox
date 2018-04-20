@@ -643,5 +643,12 @@ public interface GatewayMessages {
            text = "Error removing remote listener for path {0}, cause: {1} ")
   void errorRemovingRemoteListener(final String path, final String cause);
 
+  @Message(level = MessageLevel.INFO,
+           text = "Remote Alias Service disabled")
+  void remoteAliasServiceDisabled();
+
+  @Message(level = MessageLevel.INFO,
+           text = "Remote Alias Service enabled")
+  void remoteAliasServiceEnabled();
 
 }

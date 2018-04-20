@@ -84,6 +84,9 @@ public class RemoteAliasServiceTest {
 
     EasyMock.expect(gc.getAlgorithm()).andReturn("AES").anyTimes();
 
+    EasyMock.expect(gc.isRemoteAliasServiceEnabled())
+        .andReturn(true).anyTimes();
+
     EasyMock.replay(gc);
 
   }

@@ -193,6 +193,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String PROVIDERCONFIG_DIR_NAME = "shared-providers";
   private static final String DESCRIPTORS_DIR_NAME = "descriptors";
 
+  public static final String REMOTE_ALIAS_SERVICE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.enabled";
+
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
@@ -204,6 +206,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
+
+  public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
+
+
 
   /**
    * Default list of MIME Type to be compressed.
@@ -982,6 +988,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getRemoteConfigurationMonitorClientName() {
     return get(REMOTE_CONFIG_MONITOR_CLIENT_NAME);
+  }
+
+  /**
+   * Returns whether the Remote Alias Service is enabled or not.
+   * This value also depends on whether remote registry is enabled or not.
+   * if it is enabled then this option takes effect else this option has no
+   * effect.
+   *
+   * @return
+   */
+  @Override
+  public boolean isRemoteAliasServiceEnabled() {
+    final String result = get( REMOTE_ALIAS_SERVICE_ENABLED, Boolean.toString(DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED));
+    return Boolean.parseBoolean(result);
   }
 
 }

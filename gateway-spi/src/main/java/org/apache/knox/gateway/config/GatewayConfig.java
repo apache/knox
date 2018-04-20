@@ -349,4 +349,13 @@ public interface GatewayConfig {
    */
   String getRemoteConfigurationMonitorClientName();
 
+  /**
+   * Returns whether the Remote Alias Service is enabled or not.
+   * This value also depends on whether remote registry is enabled or not.
+   * if it is enabled then this option takes effect else this option has no
+   * effect.
+   * @return
+   */
+  boolean isRemoteAliasServiceEnabled();
+
 }
