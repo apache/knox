@@ -882,10 +882,10 @@ public class AmbariDynamicServiceURLCreatorTest {
         final String HTTPS_PORT = "8989";
 
         final String[] HOSTNAMES = {"host1", "host4"};
-        final List<String> atlastServerHosts = Arrays.asList(HOSTNAMES);
+        final List<String> atlasServerHosts = Arrays.asList(HOSTNAMES);
 
         AmbariComponent atlasServer = EasyMock.createNiceMock(AmbariComponent.class);
-        EasyMock.expect(atlasServer.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(atlasServer.getHostNames()).andReturn(atlasServerHosts).anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.enableTLS")).andReturn("false").anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.server.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.server.https.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -901,7 +901,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "http", HTTP_PORT, null);
 
         EasyMock.reset(atlasServer);
-        EasyMock.expect(atlasServer.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(atlasServer.getHostNames()).andReturn(atlasServerHosts).anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.enableTLS")).andReturn("true").anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.server.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(atlasServer.getConfigProperty("atlas.server.https.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -914,15 +914,62 @@ public class AmbariDynamicServiceURLCreatorTest {
 
 
     @Test
+    public void testRangerURL() throws Exception {
+        doTestRangerURLs("RANGER");
+    }
+
+
+    @Test
+    public void testRangerUIURL() throws Exception {
+        doTestRangerURLs("RANGERUI");
+    }
+
+
+    private void doTestRangerURLs(String serviceName) throws Exception {
+        final String HTTP_PORT = "6080";
+        final String HTTPS_PORT = "6182";
+
+        final String[] HOSTNAMES = {"host1", "host3"};
+        final List<String> rangerServerHosts = Arrays.asList(HOSTNAMES);
+
+        AmbariComponent rangerAdmin = EasyMock.createNiceMock(AmbariComponent.class);
+        EasyMock.expect(rangerAdmin.getHostNames()).andReturn(rangerServerHosts).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("false").anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
+        EasyMock.replay(rangerAdmin);
+
+        AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+        EasyMock.expect(cluster.getComponent("RANGER_ADMIN")).andReturn(rangerAdmin).anyTimes();
+        EasyMock.replay(cluster);
+
+        AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, null);
+
+        // Run the test
+        validateServiceURLs(builder.create(serviceName, null), HOSTNAMES, "http", HTTP_PORT, null);
+
+        EasyMock.reset(rangerAdmin);
+        EasyMock.expect(rangerAdmin.getHostNames()).andReturn(rangerServerHosts).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("true").anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
+        EasyMock.replay(rangerAdmin);
+
+        // Run the test
+        validateServiceURLs(builder.create(serviceName, null), HOSTNAMES, "https", HTTPS_PORT, null);
+    }
+
+
+    @Test
     public void testZeppelinURL() throws Exception {
         final String HTTP_PORT = "8787";
         final String HTTPS_PORT = "8989";
 
         final String[] HOSTNAMES = {"host1", "host4"};
-        final List<String> atlastServerHosts = Arrays.asList(HOSTNAMES);
+        final List<String> zeppelingServerHosts = Arrays.asList(HOSTNAMES);
 
         AmbariComponent zeppelinMaster = EasyMock.createNiceMock(AmbariComponent.class);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelingServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("false").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -938,7 +985,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(builder.create("ZEPPELIN", null), HOSTNAMES, "http", HTTP_PORT, null);
 
         EasyMock.reset(zeppelinMaster);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelingServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("true").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -955,10 +1002,10 @@ public class AmbariDynamicServiceURLCreatorTest {
         final String HTTPS_PORT = "8989";
 
         final String[] HOSTNAMES = {"host1", "host4"};
-        final List<String> atlastServerHosts = Arrays.asList(HOSTNAMES);
+        final List<String> zeppelinServerHosts = Arrays.asList(HOSTNAMES);
 
         AmbariComponent zeppelinMaster = EasyMock.createNiceMock(AmbariComponent.class);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelinServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("false").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -974,7 +1021,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(builder.create("ZEPPELINUI", null), HOSTNAMES, "http", HTTP_PORT, null);
 
         EasyMock.reset(zeppelinMaster);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelinServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("true").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -991,10 +1038,10 @@ public class AmbariDynamicServiceURLCreatorTest {
         final String HTTPS_PORT = "8989";
 
         final String[] HOSTNAMES = {"host1", "host4"};
-        final List<String> atlastServerHosts = Arrays.asList(HOSTNAMES);
+        final List<String> zeppelinServerHosts = Arrays.asList(HOSTNAMES);
 
         AmbariComponent zeppelinMaster = EasyMock.createNiceMock(AmbariComponent.class);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelinServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("false").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
@@ -1010,7 +1057,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(builder.create("ZEPPELINWS", null), HOSTNAMES, "ws", HTTP_PORT, null);
 
         EasyMock.reset(zeppelinMaster);
-        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(atlastServerHosts).anyTimes();
+        EasyMock.expect(zeppelinMaster.getHostNames()).andReturn(zeppelinServerHosts).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.ssl")).andReturn("true").anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(zeppelinMaster.getConfigProperty("zeppelin.server.ssl.port")).andReturn(HTTPS_PORT).anyTimes();
