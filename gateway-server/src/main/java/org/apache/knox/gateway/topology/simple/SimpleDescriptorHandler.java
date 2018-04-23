@@ -104,6 +104,7 @@ public class SimpleDescriptorHandler {
 
     public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
 
+        List<String> declaredServiceNames = new ArrayList<>();
         List<String> validServiceNames = new ArrayList<>();
         Map<String, String> serviceVersions = new HashMap<>();
         Map<String, Map<String, String>> serviceParams = new HashMap<>();
@@ -120,6 +121,7 @@ public class SimpleDescriptorHandler {
 
         for (SimpleDescriptor.Service descService : desc.getServices()) {
             String serviceName = descService.getName();
+            declaredServiceNames.add(serviceName);
 
             String serviceVer = descService.getVersion();
             if (serviceVer != null) {
@@ -173,7 +175,15 @@ public class SimpleDescriptorHandler {
         }
 
         // Generate the topology file
-        return generateTopology(desc, srcDirectory, destDirectory, cluster, validServiceNames, serviceVersions, serviceURLs, serviceParams);
+        return generateTopology(desc,
+                                srcDirectory,
+                                destDirectory,
+                                cluster,
+                                declaredServiceNames,
+                                validServiceNames,
+                                serviceVersions,
+                                serviceURLs,
+                                serviceParams);
     }
 
 
@@ -338,6 +348,7 @@ public class SimpleDescriptorHandler {
                                                       final File srcDirectory,
                                                       final File destDirectory,
                                                       final ServiceDiscovery.Cluster cluster,
+                                                      final List<String> declaredServiceNames,
                                                       final List<String> validServiceNames,
                                                       final Map<String, String> serviceVersions,
                                                       final Map<String, List<String>> serviceURLs,
@@ -425,6 +436,18 @@ public class SimpleDescriptorHandler {
             // Services
             // Sort the service names to write the services alphabetically
             List<String> serviceNames = new ArrayList<>(validServiceNames);
+
+            // Add any declared services, which were not validated, but which have ZK-based HA provider config
+            for (String haServiceName : haServiceParams.keySet()) {
+                // If the service configured for HA was declared in the descriptor, then add it to the services to be
+                // serialized (if it's not already included)
+                if (declaredServiceNames.contains(haServiceName)) {
+                    if (!serviceNames.contains(haServiceName)) {
+                        serviceNames.add(haServiceName);
+                    }
+                }
+            }
+
             Collections.sort(serviceNames);
 
             // Write the service declarations

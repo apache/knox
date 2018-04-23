@@ -58,6 +58,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertNull;
 
 
 public class SimpleDescriptorHandlerTest {
@@ -123,6 +124,7 @@ public class SimpleDescriptorHandlerTest {
             "            <param><name>HIVE</name><value>enabled=auto;retrySleep=20;maxRetryAttempts=3</value></param>\n" +
             "            <param><name>WEBHDFS</name><value>enabled=true;retrySleep=40;maxRetryAttempts=5</value></param>\n" +
             "            <param><name>WEBHBASE</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
+            "            <param><name>ATLAS</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
             "        </provider>\n" +
             "    </gateway>\n";
 
@@ -535,6 +537,9 @@ public class SimpleDescriptorHandlerTest {
         final String WEBHBASE_HA_ENABLED   = "false";
         final String WEBHBASE_HA_ENSEMBLE  = "http://zkhost1:1281,http://zkhost2:1281";
 
+        final String ATLAS_HA_ENABLED   = "true";
+        final String ATLAS_HA_ENSEMBLE  = "http://zkhost5:1281,http://zkhost6:1281,http://zkhost7:1281";
+
         final Properties DISCOVERY_PROPERTIES = new Properties();
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".name", clusterName);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".NAMENODE.url", "hdfs://namenodehost:8020");
@@ -547,6 +552,8 @@ public class SimpleDescriptorHandlerTest {
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".HIVE.namespace", HIVE_HA_NAMESPACE);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHBASE.haEnabled", WEBHBASE_HA_ENABLED);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHBASE.ensemble", WEBHBASE_HA_ENSEMBLE);
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS.haEnabled", ATLAS_HA_ENABLED);
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS.ensemble", ATLAS_HA_ENSEMBLE);
 
         try {
             DISCOVERY_PROPERTIES.store(new FileOutputStream(discoveryConfig), null);
@@ -558,6 +565,8 @@ public class SimpleDescriptorHandlerTest {
         serviceURLs.put("NAMENODE", null);
         serviceURLs.put("WEBHDFS", null);
         serviceURLs.put("RESOURCEMANAGER", null);
+        serviceURLs.put("ATLAS", null);
+        serviceURLs.put("HIVE", null);
 
         // Write the externalized provider config to a temp file
         File providerConfig = new File(System.getProperty("java.io.tmpdir"), "ambari-cluster-policy.xml");
@@ -626,6 +635,7 @@ public class SimpleDescriptorHandlerTest {
             validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
+            List<String> generatedServiceDeclarations = new ArrayList<>();
             Map<String, List<String>> topologyServiceURLs = new HashMap<>();
             NodeList serviceNodes =
                 (NodeList) xpath.compile("/topology/service").evaluate(topologyXml, XPathConstants.NODESET);
@@ -636,6 +646,7 @@ public class SimpleDescriptorHandlerTest {
                 Node roleNode = (Node) xpath.compile("role/text()").evaluate(serviceNode, XPathConstants.NODE);
                 assertNotNull(roleNode);
                 String role = roleNode.getNodeValue();
+                generatedServiceDeclarations.add(role);
 
                 // Validate the explicit version for the WEBHDFS service
                 if ("WEBHDFS".equals(role)) {
@@ -655,7 +666,7 @@ public class SimpleDescriptorHandlerTest {
                     assertEquals(2, urlNodes.getLength());
                 }
 
-                // Validate the HIV service params
+                // Validate the HIVE service params
                 if ("HIVE".equals(role)) {
                     // Expecting HA-related service params
                     NodeList paramNodes = (NodeList) xpath.compile("param").evaluate(serviceNode, XPathConstants.NODESET);
@@ -675,23 +686,24 @@ public class SimpleDescriptorHandlerTest {
                     assertEquals(HIVE_HA_NAMESPACE, hiveServiceParams.get("zookeeperNamespace"));
                 }
 
-                // Validate the HIV service params
-                if ("WEBHBASE".equals(role)) {
+                // Validate the ATLAS service params
+                if ("ATLAS".equals(role)) {
                     // Expecting HA-related service params
                     NodeList paramNodes = (NodeList) xpath.compile("param").evaluate(serviceNode, XPathConstants.NODESET);
                     assertNotNull(paramNodes);
-                    Map<String, String> webhbaseServiceParams = new HashMap<>();
+                    Map<String, String> atlasServiceParams = new HashMap<>();
                     for (int paramNodeIndex=0; paramNodeIndex < paramNodes.getLength(); paramNodeIndex++) {
                         Node paramNode = paramNodes.item(paramNodeIndex);
                         Node nameNode = (Node) xpath.compile("name/text()").evaluate(paramNode, XPathConstants.NODE);
                         assertNotNull(nameNode);
                         Node valueNode = (Node) xpath.compile("value/text()").evaluate(paramNode, XPathConstants.NODE);
                         assertNotNull(valueNode);
-                        webhbaseServiceParams.put(nameNode.getNodeValue(), valueNode.getNodeValue());
+                        atlasServiceParams.put(nameNode.getNodeValue(), valueNode.getNodeValue());
                     }
-                    assertEquals("Expected false because enabled=auto and service config indicates HA is NOT enabled",
-                                 WEBHBASE_HA_ENABLED, webhbaseServiceParams.get("haEnabled"));
-                    assertEquals(WEBHBASE_HA_ENSEMBLE, webhbaseServiceParams.get("zookeeperEnsemble"));
+                    assertEquals("Expected true because enabled=auto and service config indicates HA is enabled",
+                                 ATLAS_HA_ENABLED, atlasServiceParams.get("haEnabled"));
+                    assertEquals(ATLAS_HA_ENSEMBLE, atlasServiceParams.get("zookeeperEnsemble"));
+                    assertNull(atlasServiceParams.get("zookeeperNamespace"));
                 }
 
                 // Validate the URLs
@@ -711,7 +723,7 @@ public class SimpleDescriptorHandlerTest {
                     }
                 }
             }
-            assertEquals("Unexpected number of service declarations.", serviceURLs.size(), topologyServiceURLs.size());
+            assertEquals("Unexpected number of service declarations.", serviceURLs.size(), generatedServiceDeclarations.size());
 
         } catch (Exception e) {
             e.printStackTrace();
