@@ -24,10 +24,23 @@ import java.util.Map;
 
 public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
 
-  private static final String SCHEME_HTTP  = "http";
-  private static final String SCHEME_HTTPS = "https";
+  static final String CONFIG_SERVICE_NAMENODE = "NAMENODE";
+  static final String CONFIG_SERVICE_HDFS     = "HDFS";
+  static final String CONFIG_TYPE_HDFS_SITE   = "hdfs-site";
+  static final String CONFIG_TYPE_CORE_SITE   = "core-site";
 
-  private static final String NAMESERVICE_PARAM = "discovery-nameservice";
+  static final String HTTP_POLICY_PROPERTY = "dfs.http.policy";
+
+  static final String HTTP_ONLY_POLICY  = "HTTP_ONLY";
+  static final String HTTPS_ONLY_POLICY = "HTTPS_ONLY";
+
+  static final String SCHEME_HTTP  = "http";
+  static final String SCHEME_HTTPS = "https";
+
+  static final String HTTP_ADDRESS_PROPERTY  = "dfs.namenode.http-address";
+  static final String HTTPS_ADDRESS_PROPERTY = "dfs.namenode.https-address";
+
+  static final String NAMESERVICE_PARAM = "discovery-nameservice";
 
   protected AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
@@ -42,11 +55,12 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
     List<String> urls = new ArrayList<>();
 
     if (getTargetService().equals(service)) {
-      AmbariCluster.ServiceConfiguration sc = cluster.getServiceConfiguration("HDFS", "hdfs-site");
+      AmbariCluster.ServiceConfiguration sc =
+                                      cluster.getServiceConfiguration(CONFIG_SERVICE_HDFS, CONFIG_TYPE_HDFS_SITE);
       if (sc != null) {
         // First, check if it's HA config
         String nameServices = null;
-        AmbariComponent nameNodeComp = cluster.getComponent("NAMENODE");
+        AmbariComponent nameNodeComp = cluster.getComponent(CONFIG_SERVICE_NAMENODE);
         if (nameNodeComp != null) {
           nameServices = nameNodeComp.getConfigProperty("dfs.nameservices");
         }
@@ -66,7 +80,8 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
               ns = nsParam;
             } else {
               // core-site.xml : dfs.defaultFS property (e.g., hdfs://ns1)
-              AmbariCluster.ServiceConfiguration coreSite = cluster.getServiceConfiguration("HDFS", "core-site");
+              AmbariCluster.ServiceConfiguration coreSite =
+                                        cluster.getServiceConfiguration(CONFIG_SERVICE_HDFS, CONFIG_TYPE_CORE_SITE);
               if (coreSite != null) {
                 String defaultFS = coreSite.getProperties().get("fs.defaultFS");
                 if (defaultFS != null) {
@@ -88,28 +103,30 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
           // nameservice. If this property is present, use its value to create the correct URLs.
           String nameServiceNodes = props.get("dfs.ha.namenodes." + ns);
           if (nameServiceNodes != null) {
+            String addressPropertyPrefix = getAddressPropertyPrefix();
             String[] nodes = nameServiceNodes.split(",");
             for (String node : nodes) {
-              String propertyValue = getHANameNodeHttpAddress(props, ns, node);
+              String propertyValue = getHANameNodeHttpAddress(addressPropertyPrefix, props, ns, node);
               if (propertyValue != null) {
                 urls.add(createURL(propertyValue));
               }
             }
           } else {
-            // Name node HTTP addresses are defined as properties of the form:
-            //      dfs.namenode.http-address.<NAMESERVICE>.nn<INDEX>
-            // So, this iterates over the nn<INDEX> properties until there is no such property (since it cannot be known how
-            // many are defined by any other means).
+            // Name node HTTP[S] addresses are defined as properties of the form:
+            //      dfs.namenode.http[s]-address.<NAMESERVICE>.nn<INDEX>
+            // So, this iterates over the nn<INDEX> properties until there is no such property (since it cannot be
+            // known how many are defined by any other means).
+            String addressPropertyPrefix = getAddressPropertyPrefix();
             int i = 1;
-            String propertyValue = getHANameNodeHttpAddress(props, ns, i++);
+            String propertyValue = getHANameNodeHttpAddress(addressPropertyPrefix, props, ns, i++);
             while (propertyValue != null) {
               urls.add(createURL(propertyValue));
-              propertyValue = getHANameNodeHttpAddress(props, ns, i++);
+              propertyValue = getHANameNodeHttpAddress(addressPropertyPrefix, props, ns, i++);
             }
           }
 
-        } else { // If it's not an HA configuration, get the single name node HTTP address
-          urls.add(createURL(sc.getProperties().get("dfs.namenode.http-address")));
+        } else { // If it's not an HA configuration, get the single name node HTTP[S] address
+          urls.add(createURL(sc.getProperties().get(getAddressPropertyPrefix())));
         }
       }
     }
@@ -119,7 +136,8 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
 
 
   // Verify whether the declared nameservice is among the configured nameservices in the cluster
-  private static boolean validateDeclaredNameService(AmbariCluster.ServiceConfiguration hdfsSite, String declaredNameService) {
+  private static boolean validateDeclaredNameService(AmbariCluster.ServiceConfiguration hdfsSite,
+                                                     String                             declaredNameService) {
     boolean isValid = false;
     String nameservices = hdfsSite.getProperties().get("dfs.nameservices");
     if (nameservices != null) {
@@ -135,31 +153,46 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
   }
 
 
-  private static String getHANameNodeHttpAddress(Map<String, String> props, String nameService, int index) {
-    return props.get("dfs.namenode.http-address." + nameService + ".nn" + index);
+  private static String getHANameNodeHttpAddress(String              addressPropertyPrefix,
+                                                 Map<String, String> props,
+                                                 String              nameService,
+                                                 int                 index) {
+    return props.get(addressPropertyPrefix + "." + nameService + ".nn" + index);
   }
 
 
-  private static String getHANameNodeHttpAddress(Map<String, String> props, String nameService, String node) {
-    return props.get("dfs.namenode.http-address." + nameService + "." + node);
+  private static String getHANameNodeHttpAddress(String              addressPropertyPrefix,
+                                                 Map<String, String> props,
+                                                 String              nameService,
+                                                 String              node) {
+    return props.get(addressPropertyPrefix + "." + nameService + "." + node);
   }
 
+  /**
+   * @return The HTTP or HTTPS address property name prefix, depending on the value of the dfs.http.policy property
+   */
+  private String getAddressPropertyPrefix() {
+    return HTTPS_ONLY_POLICY.equals(getHttpPolicy()) ? HTTPS_ADDRESS_PROPERTY : HTTP_ADDRESS_PROPERTY;
+  }
+
+  private String getHttpPolicy() {
+    String httpPolicy = HTTP_ONLY_POLICY;
+
+    AmbariCluster.ServiceConfiguration sc = cluster.getServiceConfiguration(CONFIG_SERVICE_HDFS, CONFIG_TYPE_HDFS_SITE);
+    if (sc != null) {
+      String propertyValue = sc.getProperties().get(HTTP_POLICY_PROPERTY);
+      if (propertyValue != null && !propertyValue.isEmpty()) {
+        httpPolicy = propertyValue;
+      }
+    }
+    return httpPolicy;
+  }
 
   protected abstract String createURL(String address);
 
 
   protected String getURLScheme() {
-    String scheme = SCHEME_HTTP;
-
-    AmbariCluster.ServiceConfiguration sc = cluster.getServiceConfiguration("HDFS", "hdfs-site");
-    if (sc != null) {
-      String httpPolicy = sc.getProperties().get("dfs.http.policy");
-      if (httpPolicy != null) {
-        scheme = httpPolicy.equals("HTTPS_ONLY") ? SCHEME_HTTPS : SCHEME_HTTP;
-      }
-    }
-
-    return scheme;
+    return HTTPS_ONLY_POLICY.equals(getHttpPolicy()) ? SCHEME_HTTPS : SCHEME_HTTP;
   }
 
 
