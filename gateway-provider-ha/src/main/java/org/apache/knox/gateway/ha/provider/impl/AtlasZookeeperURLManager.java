@@ -53,7 +53,7 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
     public void setConfig(HaServiceConfig config) {
         zooKeeperEnsemble = config.getZookeeperEnsemble();
         zooKeeperNamespace = config.getZookeeperNamespace();
-        if (zooKeeperNamespace != null) {
+        if (zooKeeperNamespace != null && !zooKeeperNamespace.isEmpty()) {
             if (!zooKeeperNamespace.startsWith("/")) {
                 zooKeeperNamespace = "/" + zooKeeperNamespace;
             }

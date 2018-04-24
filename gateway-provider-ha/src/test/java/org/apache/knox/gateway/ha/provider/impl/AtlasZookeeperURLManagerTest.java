@@ -121,6 +121,11 @@ public class AtlasZookeeperURLManagerTest {
         doTestAtlasZooKeeperURLManager("ATLAS-API", true, cluster.getConnectString(), "/apache_atlas");
     }
 
+    @Test
+    public void testAtlasAPIURLManagerWithEmptyNamespace() {
+        doTestAtlasZooKeeperURLManager("ATLAS-API", true, cluster.getConnectString(), "");
+    }
+
     private void doTestAtlasZooKeeperURLManager(final String  serviceName,
                                                 final boolean enabled,
                                                 final String  ensemble,
