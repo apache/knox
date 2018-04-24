@@ -348,7 +348,7 @@
     </service>
 
     <service name="ZEPPELINWS">
-        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <url-pattern>{SCHEME}://{HOST}:{PORT}/ws</url-pattern>
         <properties>
             <property name="HOST">
                 <component>ZEPPELIN_MASTER</component>
