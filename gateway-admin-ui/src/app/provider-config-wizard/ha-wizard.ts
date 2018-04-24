@@ -17,13 +17,18 @@
 
 import {CategoryWizard} from "./category-wizard";
 import {ProviderConfig} from "../resource-detail/provider-config";
+import {ProviderContributorWizard} from "./ProviderContributorWizard";
+import {HaProviderConfig} from "./ha-provider-config";
+import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 
-export class HaWizard extends CategoryWizard {
+export class HaWizard extends CategoryWizard implements ProviderContributorWizard {
 
-  private stepCount: number = 2;
+  private static DEFAULT_TYPE: string = HaProviderConfig.TYPE;
+
+  private stepCount: number = 4;
 
   getTypes(): string[] {
-    return [];
+    return [HaWizard.DEFAULT_TYPE];
   }
 
   getSteps(): number {
@@ -31,16 +36,40 @@ export class HaWizard extends CategoryWizard {
   }
 
   onChange() {
-    // Nothing to do
+    this.providerConfig = this.createNewProviderConfig();
   }
 
   getProviderConfig(): ProviderConfig {
-    this.providerConfig = new ProviderConfig();
-    this.providerConfig.role = 'ha';
-    this.providerConfig.name = 'HaProvider';
-    this.providerConfig.enabled = 'true';
-    this.providerConfig.params = new Map<string, string>();
-    return this.providerConfig;
+    return (this.providerConfig as HaProviderConfig);
+  }
+
+  getProviderRole(): string {
+    return this.providerConfig.role;
+  }
+
+  createNewProviderConfig(): ProviderConfig {
+    let pc = new HaProviderConfig();
+    pc.role = 'ha';
+//    pc.name = HaProviderConfig.TYPE; // TODO: PJZ: DELETE ME
+    pc.enabled = 'true';
+    pc.params = new Map<string, string>();
+    return (pc as HaProviderConfig);
+  }
+
+  contribute(target: ProviderConfig) {
+    let svcNameProperty =
+      (this.providerConfig as DisplayBindingProviderConfig).getDisplayNamePropertyBinding(HaProviderConfig.SERVICE_NAME);
+    let serviceName = (this.providerConfig as DisplayBindingProviderConfig).getParam(svcNameProperty);
+
+    let paramValue: string = "enabled=true";
+
+    for (let propertyName in this.providerConfig.params) {
+      if (propertyName !== svcNameProperty) {
+        paramValue += ',' +propertyName + '=' + (this.providerConfig as DisplayBindingProviderConfig).getParam(propertyName);
+      }
+    }
+
+    (target as DisplayBindingProviderConfig).setParam(serviceName, paramValue);
   }
 
 }

@@ -29,6 +29,7 @@ import {Resource} from "../resource/resource";
 import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 import {OrderedParamContainer} from "./ordered-param-container";
 import {HostMapProviderWizard} from "./hostmap-provider-wizard";
+import {ProviderContributorWizard} from "./ProviderContributorWizard";
 
 
 @Component({
@@ -106,9 +107,45 @@ export class ProviderConfigWizardComponent implements OnInit {
     console.debug('ProviderConfigWizard --> Selected provider type: ' + type);
 
     if (catWizard) {
-      let pc: ProviderConfig = catWizard.getProviderConfig();
+      let pc: ProviderConfig;
+
+      let isContributed: boolean = false;
+
+      if (this.isProviderContributorWizard(catWizard)) {
+        let contribWiz = catWizard as ProviderContributorWizard;
+        let role = contribWiz.getProviderRole();
+        console.debug('Wizard is ProviderContributorWizard for role ' + role);
+        for (let provider of this.providers) {
+          if (role === provider.role) {
+            console.debug('Found existing provider config for ' + role);
+            pc = provider;
+            break;
+          }
+        }
+
+        if (!pc) {
+          console.debug('No existing provider config found for ' + role + ", so creating one...");
+          pc = contribWiz.createNewProviderConfig();
+          this.providers.push(pc);
+        }
+
+        // If there is an existing provider config of the current type
+        if (pc) {
+          if (this.isProviderConfigValid(catWizard.getProviderConfig())) {
+            contribWiz.contribute(pc);
+            isContributed = true;
+          }
+        }
+      }
+
+      if (!pc) { // If not a contributing wizard, just use the category wizard's provider config
+        pc = catWizard.getProviderConfig();
+      }
+
       if (pc && this.isProviderConfigValid(pc)) {
-        this.providers.push(pc);
+        if (!isContributed) {
+          this.providers.push(pc);
+        }
         console.debug('ProviderConfigWizard --> Provider: name=' + pc.name + ', role=' + pc.role + ', enabled=' + pc.enabled);
         if (pc.params) {
           // If the provider is managing its own param order, allow it to re-order the params now
@@ -218,6 +255,11 @@ export class ProviderConfigWizardComponent implements OnInit {
 
   getCategoryWizard(category?: string): CategoryWizard {
     return ProviderConfigWizardComponent.CATEGORY_TYPES.get(category ? category : this.selectedCategory);
+  }
+
+  // Type guard function to determine if a CategoryWizard is a ProviderContributorWizard
+  isProviderContributorWizard(wizard: any): wizard is ProviderContributorWizard {
+    return (<ProviderContributorWizard>wizard).getProviderRole !== undefined;
   }
 
   getProviderTypes(category?: string) : string[] {
