@@ -22,27 +22,35 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
 
   public static TYPE: string = 'HaProvider';
 
+  private static ENSEMBLE_REGEXP: RegExp = new RegExp('^([a-zA-Z\\d-.]+:\\d+)(;[a-zA-Z\\d-.]+:\\d+)*$');
+
   public static SERVICE_NAME          = 'Service Name';
   public static MAX_FAILOVER_ATTEMPTS = 'Failover Atttempts Limit';
   public static FAILOVER_SLEEP        = 'Failover Interval';
   public static MAX_RETRY_ATTEMPTS    = 'Retry Attempts Limit';
   public static RETRY_SLEEP           = 'Retry Interval';
+  public static ZK_ENSEMBLE           = 'ZooKeeper Ensemble';
+  public static ZK_NAMESPACE          = 'ZooKeeper Namespace';
 
   private static displayPropertyNames = [ HaProviderConfig.SERVICE_NAME,
                                           HaProviderConfig.MAX_FAILOVER_ATTEMPTS,
                                           HaProviderConfig.FAILOVER_SLEEP,
                                           HaProviderConfig.MAX_RETRY_ATTEMPTS,
-                                          HaProviderConfig.RETRY_SLEEP
+                                          HaProviderConfig.RETRY_SLEEP,
+                                          HaProviderConfig.ZK_ENSEMBLE,
+                                          HaProviderConfig.ZK_NAMESPACE
                                         ];
 
   private static displayPropertyNameBindings: Map<string, string> =
-    new Map([
-      [HaProviderConfig.SERVICE_NAME,          'serviceName'],
-      [HaProviderConfig.MAX_FAILOVER_ATTEMPTS, 'maxFailoverAttempts'],
-      [HaProviderConfig.FAILOVER_SLEEP,        'failoverSleep'],
-      [HaProviderConfig.MAX_RETRY_ATTEMPTS,    'maxRetryAttempts'],
-      [HaProviderConfig.RETRY_SLEEP,           'retrySleep']
-    ] as [string, string][]);
+                                        new Map([
+                                          [HaProviderConfig.SERVICE_NAME,          'serviceName'],
+                                          [HaProviderConfig.MAX_FAILOVER_ATTEMPTS, 'maxFailoverAttempts'],
+                                          [HaProviderConfig.FAILOVER_SLEEP,        'failoverSleep'],
+                                          [HaProviderConfig.MAX_RETRY_ATTEMPTS,    'maxRetryAttempts'],
+                                          [HaProviderConfig.RETRY_SLEEP,           'retrySleep'],
+                                          [HaProviderConfig.ZK_ENSEMBLE,           'zookeeperEnsemble'],
+                                          [HaProviderConfig.ZK_NAMESPACE,          'zookeeperNamespace']
+                                        ] as [string, string][]);
 
   constructor() {
     super();
@@ -70,6 +78,12 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
         case HaProviderConfig.SERVICE_NAME:
           isValid = ValidationUtils.isValidString(value) && !ValidationUtils.isValidNumber(value);
           break;
+        case HaProviderConfig.ZK_ENSEMBLE:
+          isValid = this.isValidZooKeeperEnsemble(value);
+          break;
+        case HaProviderConfig.ZK_NAMESPACE:
+          isValid = ValidationUtils.isValidString(value);
+          break;
         default:
           isValid = ValidationUtils.isValidNumber(value);
           if (!isValid) {
@@ -78,6 +92,23 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
       }
     }
 
+    return isValid;
+  }
+
+  private isValidZooKeeperEnsemble(value: string): boolean {
+    let isValid: boolean = HaProviderConfig.ENSEMBLE_REGEXP.test(value);
+    if (isValid) {
+      // Check each hostname for validity
+      let addresses: string[] = value.split(';');
+      for (let address of addresses) {
+        if (isValid) {
+          let hostport: string[] = address.split(':');
+          isValid = isValid && ValidationUtils.isValidHostName(hostport[0]);
+        } else {
+          break;
+        }
+      }
+    }
     return isValid;
   }
 

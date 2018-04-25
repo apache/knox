@@ -16,8 +16,6 @@
  */
 
 
-import {CASProviderConfig} from "../provider-config-wizard/cas-provider-config";
-
 export class ParsedURL {
 
   static REGEXP: RegExp = new RegExp('^(([^:\/?#]+):)?\/\/(([^\/?#]+):([^\/?#]+))?([^?#]*)(\/?([^#]*))?(#(.*))?');
@@ -193,6 +191,11 @@ export class ValidationUtils {
 
   static isValidHTTPMethod(method: string): boolean {
     return ValidationUtils.HTTP_METHODS.includes(method);
+  }
+
+  static isValidHostName(hostName: string): boolean {
+    // For now, make sure it's a valid string, and does NOT exceed the acceptable host name length
+    return ValidationUtils.isValidString(hostName) && hostName.length < 256;
   }
 
 }
