@@ -102,6 +102,8 @@
     </modules>
 
     <properties>
+        <maven.test.skip>true</maven.test.skip>
+        <!--  <maven.rat.skip>=true</maven.rat.skip> -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <repo.id>internal.repo</repo.id>
@@ -219,7 +221,7 @@
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
-                <version>0.8</version>
+                <version>0.12</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
