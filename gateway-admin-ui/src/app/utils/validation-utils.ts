@@ -63,12 +63,15 @@ export class ValidationUtils {
 
   private static PRINCIPAL_MAPPING_REGEXP = new RegExp('^(?:(?:[a-zA-Z\\*]+[\\,]?)+=[a-zA-Z]+[;]?)*$');
 
+  private static SIGNED_NUMBER_REGEP = new RegExp('^-?\\d+$');
+
   static LDAP_URL_SCHEMES: string[] = [ 'ldap', 'ldaps' ];
 
   static HTTP_URL_SCHEMES: string[] = [ 'http', 'https' ];
 
   static CAS_PROTOCOLS: string[] = [ 'CAS10', 'CAS20', 'CAS20_PROXY', 'CAS30', 'CAS30_PROXY', 'SAML' ];
 
+  static HTTP_METHODS: string[] = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'CONNECT'];
 
   static parseBoolean(value: string): boolean {
     let parsed: boolean;
@@ -92,6 +95,9 @@ export class ValidationUtils {
     return (value && !isNaN(Number(value)));
   }
 
+  static isValidSignedNumber(value: string): boolean {
+    return ValidationUtils.SIGNED_NUMBER_REGEP.test(value);
+  }
 
   static isValidBoolean(value: string): boolean {
     return (ValidationUtils.parseBoolean(value) !== undefined);
@@ -184,4 +190,9 @@ export class ValidationUtils {
 
     return isValid;
   }
+
+  static isValidHTTPMethod(method: string): boolean {
+    return ValidationUtils.HTTP_METHODS.includes(method);
+  }
+
 }

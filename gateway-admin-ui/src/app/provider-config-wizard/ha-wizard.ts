@@ -23,7 +23,7 @@ import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 
 export class HaWizard extends CategoryWizard implements ProviderContributorWizard {
 
-  private static DEFAULT_TYPE: string = HaProviderConfig.TYPE;
+  private static DEFAULT_TYPE: string = 'Add service';
 
   private stepCount: number = 4;
 
@@ -48,12 +48,7 @@ export class HaWizard extends CategoryWizard implements ProviderContributorWizar
   }
 
   createNewProviderConfig(): ProviderConfig {
-    let pc = new HaProviderConfig();
-    pc.role = 'ha';
-//    pc.name = HaProviderConfig.TYPE; // TODO: PJZ: DELETE ME
-    pc.enabled = 'true';
-    pc.params = new Map<string, string>();
-    return (pc as HaProviderConfig);
+    return new HaProviderConfig();
   }
 
   contribute(target: ProviderConfig) {

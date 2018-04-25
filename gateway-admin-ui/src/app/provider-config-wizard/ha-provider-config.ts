@@ -46,7 +46,11 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
 
   constructor() {
     super();
+    this.setType(HaProviderConfig.TYPE);
+    this.enabled = 'true';
     this.name = HaProviderConfig.TYPE;
+    this.role = 'ha';
+    this.params = new Map<string, string>();
   }
 
   getDisplayPropertyNames(): string[] {
@@ -55,10 +59,6 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
 
   getDisplayNamePropertyBinding(name: string): string {
     return HaProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  getType(): string {
-    return HaProviderConfig.TYPE;
   }
 
   isValidParamValue(paramName: string): boolean {
