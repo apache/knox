@@ -32,5 +32,8 @@
         <route path="/jobhistory/conf">
             <rewrite apply="JOBHISTORYUI/jobhistory/outbound/configuration" to="response.body"/>
         </route>
+        <route path="/jobhistory/node?**">
+            <rewrite apply="JOBHISTORYUI/jobhistory/inbound/node" to="request.url"/>
+        </route>
      </routes>
 </service>
