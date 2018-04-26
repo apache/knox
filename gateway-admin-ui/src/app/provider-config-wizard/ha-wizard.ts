@@ -60,7 +60,10 @@ export class HaWizard extends CategoryWizard implements ProviderContributorWizar
 
     for (let propertyName in this.providerConfig.params) {
       if (propertyName !== svcNameProperty) {
-        paramValue += ';' + propertyName + '=' + (this.providerConfig as DisplayBindingProviderConfig).getParam(propertyName);
+        let value = (this.providerConfig as DisplayBindingProviderConfig).getParam(propertyName);
+        if (value && value.trim().length > 0) {
+          paramValue += ';' + propertyName + '=' + value;
+        }
       }
     }
 

@@ -138,6 +138,8 @@ export class ProviderConfigWizardComponent implements OnInit {
           if (this.isProviderConfigValid(catWizard.getProviderConfig())) {
             contribWiz.contribute(pc);
             isContributed = true;
+          } else {
+            console.debug('CategoryWizard ProviderConfig is not valid.');
           }
         }
       }
@@ -146,7 +148,7 @@ export class ProviderConfigWizardComponent implements OnInit {
         pc = catWizard.getProviderConfig();
       }
 
-      if (pc && this.isProviderConfigValid(pc)) {
+      if (pc && (isContributed || this.isProviderConfigValid(pc))) {
         if (!isContributed) {
           this.providers.push(pc);
         }
@@ -166,6 +168,8 @@ export class ProviderConfigWizardComponent implements OnInit {
 
         // Clear the wizard state
         this.getCategoryWizard(this.selectedCategory).reset();
+      } else {
+        console.debug('ProviderConfig is missing or invalid.');
       }
     }
   }

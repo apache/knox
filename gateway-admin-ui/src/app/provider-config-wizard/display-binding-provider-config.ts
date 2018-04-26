@@ -71,7 +71,9 @@ export abstract class DisplayBindingProviderConfig extends ProviderConfig {
     let isValid: boolean = true;
 
     for (let param of this.getDisplayPropertyNames()) {
-      isValid = isValid && this.isValidParamValue(param);
+      if (isValid) { // quit if invalid param is discovered
+        isValid = isValid && this.isValidParamValue(param);
+      }
     }
 
     return isValid;

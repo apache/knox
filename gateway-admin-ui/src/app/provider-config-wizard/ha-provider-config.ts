@@ -73,23 +73,29 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
     let isValid: boolean = true;
 
     let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
-    if (value) {
-      switch (paramName) {
-        case HaProviderConfig.SERVICE_NAME:
-          isValid = ValidationUtils.isValidString(value) && !ValidationUtils.isValidNumber(value);
-          break;
-        case HaProviderConfig.ZK_ENSEMBLE:
+
+    switch (paramName) {
+      case HaProviderConfig.SERVICE_NAME:
+        isValid = ValidationUtils.isValidString(value) && !ValidationUtils.isValidNumber(value);
+        break;
+      case HaProviderConfig.ZK_ENSEMBLE:
+        if (value) {
           isValid = this.isValidZooKeeperEnsemble(value);
-          break;
-        case HaProviderConfig.ZK_NAMESPACE:
+        }
+        break;
+      case HaProviderConfig.ZK_NAMESPACE:
+        if (value) {
           isValid = ValidationUtils.isValidString(value);
-          break;
-        default:
+        }
+        break;
+      default:
+        if (value) {
           isValid = ValidationUtils.isValidNumber(value);
-          if (!isValid) {
-            console.debug(paramName + ' value is not valid.');
-          }
-      }
+        }
+    }
+
+    if (!isValid) {
+      console.debug(paramName + ' (' + this.getDisplayNamePropertyBinding(paramName) + ') value is NOT valid: ' + value);
     }
 
     return isValid;
