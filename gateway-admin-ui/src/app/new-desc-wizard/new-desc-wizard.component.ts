@@ -51,6 +51,7 @@ export class NewDescWizardComponent implements OnInit {
                                                  'WEBHCAT',
                                                  'WEBHDFS',
                                                  'YARNUI',
+                                                 'YARNUIV2',
                                                  'ZEPPELIN',
                                                  'ZEPPELINUI',
                                                  'ZEPPELINWS'] ;
