@@ -80,19 +80,21 @@ public class DefaultURLManager implements URLManager {
   @Override
   public synchronized void markFailed(String url) {
     String top = urls.peek();
-    boolean pushToBottom = false;
-    URI topUri = URI.create(top);
-    URI incomingUri = URI.create(url);
-    String topHostPort = topUri.getHost() + ":" + topUri.getPort();
-    String incomingHostPort = incomingUri.getHost() + ":" + incomingUri.getPort();
-    if ( topHostPort.equals(incomingHostPort) ) {
-      pushToBottom = true;
-    }
-    //put the failed url at the bottom
-    if ( pushToBottom ) {
-      String failed = urls.poll();
-      urls.offer(failed);
-      LOG.markedFailedUrl(failed, urls.peek());
+    if (top != null) {
+      boolean pushToBottom = false;
+      URI topUri = URI.create(top);
+      URI incomingUri = URI.create(url);
+      String topHostPort = topUri.getHost() + ":" + topUri.getPort();
+      String incomingHostPort = incomingUri.getHost() + ":" + incomingUri.getPort();
+      if (topHostPort.equals(incomingHostPort)) {
+        pushToBottom = true;
+      }
+      //put the failed url at the bottom
+      if (pushToBottom) {
+        String failed = urls.poll();
+        urls.offer(failed);
+        LOG.markedFailedUrl(failed, urls.peek());
+      }
     }
   }
 }

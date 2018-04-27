@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class DefaultURLManagerTest {
 
@@ -87,6 +88,22 @@ public class DefaultURLManagerTest {
       assertEquals(url2, manager.getActiveURL());
       manager.markFailed(url2);
       assertEquals(url3, manager.getActiveURL());
+   }
+
+   /**
+    * KNOX-1283
+    */
+   @Test
+   public void testMarkFailedWithEmptyURLs() {
+      ArrayList<String> urls = new ArrayList<>();
+      DefaultURLManager manager = new DefaultURLManager();
+      manager.setURLs(urls);
+      assertTrue(manager.getURLs().isEmpty());
+      try {
+         manager.markFailed("http://localhost:8080");
+      } catch (NullPointerException e) {
+         fail("Empty URL list should not result in NPE.");
+      }
    }
 
 }
