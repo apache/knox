@@ -48,7 +48,7 @@ Release build file for the Apache Knox Gateway
 <condition property="mvn.cmd" value="mvn">
 <os family="unix" />
 </condition>
-<condition property="mvn.cmd" value="mvn.bat">
+<condition property="mvn.cmd" value="mvn.cmd">
 <os family="windows" />
 </condition>
 
@@ -102,7 +102,9 @@ Release build file for the Apache Knox Gateway
 
 <target name="build" depends="_init" description="Build the product.">
 <exec executable="${mvn.cmd}">
-    <arg value="clean"/>
+    <arg value="-DskipTests"/> 
+    <arg value="-Drat.numUnapprovedLicenses=100"/>
+    <arg value="clean"/>    
     <arg value="install"/>
 </exec>
 </target>
@@ -110,20 +112,24 @@ Release build file for the Apache Knox Gateway
 <target name="build-notest" depends="_init" description="Build the product without running tests.">
 <exec executable="${mvn.cmd}">
     <arg value="-DskipTests"/>
+    <arg value="-Drat.numUnapprovedLicenses=100"/>
     <arg value="clean"/>
     <arg value="install"/>
 </exec>
 </target>
 
 <target name="verify" depends="_init" description="Perform the verification build.">
-    <exec executable="${mvn.cmd}">
+    <exec executable="${mvn.cmd}">        
+        <arg value="-Drat.numUnapprovedLicenses=100"/>
         <arg value="clean"/>
         <arg value="verify"/>
     </exec>
 </target>
 <target name="package" depends="_init" description="Build and package the product (aka verify).">
 <exec executable="${mvn.cmd}">
+    <arg value="-DskipTests"/> 
     <arg value="-Ppackage"/>
+    <arg value="-Drat.numUnapprovedLicenses=100"/>
     <arg value="clean"/>
     <arg value="install"/>
 </exec>
@@ -133,8 +139,9 @@ Release build file for the Apache Knox Gateway
 </target>
 <target name="quick-package" depends="_init" description="Build and package the product (aka verify).">
 <exec executable="${mvn.cmd}">
-    <arg value="-DskipTests"/>
+    <arg value="-DskipTests"/>    
     <arg value="-Ppackage"/>
+    <arg value="-Drat.numUnapprovedLicenses=100"/>
     <arg value="install"/>
 </exec>
 <copy todir="target/${gateway-version}">
@@ -302,7 +309,9 @@ Release build file for the Apache Knox Gateway
 
     <target name="release" depends="_init">
         <exec executable="${mvn.cmd}">
+            <arg value="-DskipTests"/> 
             <arg value="-Ppackage,release"/>
+            <arg value="-Drat.numUnapprovedLicenses=100"/>
             <arg value="clean"/>
             <arg value="install"/>
         </exec>
@@ -364,13 +373,21 @@ Release build file for the Apache Knox Gateway
 
     <target name="_install-test-home-windows" depends="delete-test-home" if="isWindows">
         <unzip src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.zip" dest="${install.dir}"/>
+        <exec executable="knoxcli.cmd" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">
+              <arg value="create-master"/>
+              <arg value="--master"/>
+              <arg value="knox"/>
+        </exec>
+        <exec executable="knoxcli.cmd" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">
+              <arg value="create-cert"/>
+        </exec>
     </target>
 
     <target name="_install-test-home-unix" depends="delete-test-home" if="isUnix">
         <untar src="target/${gateway-version}/${gateway-artifact}-${gateway-version}.tar.gz" dest="${install.dir}" compression="gzip"/>
         <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/gateway.sh" perm="544"/>
-        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/ldap.sh" perm="544"/>
-        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/knoxcli.sh" perm="544"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/gateway.cmd" perm="544"/>
+        <chmod file="${install.dir}/${gateway-artifact}-${gateway-version}/bin/knoxcli.sh" perm="544"/>       
         <exec executable="bin/knoxcli.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
             <arg value="create-master"/>
             <arg value="--master"/>
@@ -390,36 +407,109 @@ Release build file for the Apache Knox Gateway
     </target>
 
     <target name="start-test-ldap" description="Spawn test LDAP server.">
-        <exec executable="bin/ldap.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="start"/>
+        <exec executable="ldap.cmd" spawn="true" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin"> 
+             <arg value="/c"/>
+             <arg value="start"/>             
         </exec>
     </target>
 
     <target name="start-test-gateway" description="Start test gateway server.">
-        <exec executable="bin/gateway.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
+        <exec executable="gateway.cmd" spawn="true" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">
+            <arg value="/c"/>
             <arg value="start"/>
-        </exec>
+        </exec>      
     </target>
 
     <target name="start-debug-gateway" description="Start test gateway server.">
-        <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
+        <exec executable="java" spawn="true" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">
+            <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"/>
             <arg value="-jar"/>
-            <arg value="bin/gateway.jar"/>
+            <arg value="gateway.jar"/>          
         </exec>
     </target>
 
-    <target name="stop-test-ldap" description="Spawn test LDAP server.">
-        <exec executable="bin/ldap.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="stop"/>
+    <target name="stop-test-knox" description="Start test gateway server.">
+        <echo>Killing Local LDAP and Gateway instances + Jmeter Instance by Image java.exe..."</echo> 
+        <exec executable="taskkill" osfamily="winnt">
+           <arg value="/F"/> 
+           <arg value="/IM"/>
+           <arg value="java.exe"/>
         </exec>
     </target>
+    
+    <target name="stop-test-ldap" description="Spawn test LDAP server.">
+        <exec executable="ldap.cmd" spawn="true" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">
+              <arg value="/c"/>
+              <arg value="stop"/>
+        </exec>
+        <delete file="${install.dir}/${gateway-artifact}-${gateway-version}/pids/ldap_process.pid"/>      
+        <exec executable="jps" output="${install.dir}/${gateway-artifact}-${gateway-version}/pids/ldap_process.pid">          
+        </exec>        
+        <loadfile srcfile="${install.dir}/${gateway-artifact}-${gateway-version}/pids/ldap_process.pid" property="ldap_process">
+           <filterchain>
+              <sortfilter/>
+              <headfilter lines="4"/>
+              <linecontains>
+                <contains value="ldap.jar"/>
+              </linecontains>
+              <replacestring from="ldap.jar"/>             
+              <striplinebreaks/>
+              <replaceregex pattern="\s+[0-9]+\s" replace="" />
+           </filterchain>         
+        </loadfile>      
+        <echo>Killing Local LDAP instance with PID - "${ldap_process}..."</echo>             
+        <exec executable="taskkill" osfamily="winnt">
+           <arg value="/F"/> 
+           <arg value="/PID"/>
+           <arg value="${ldap_process}"/>
+        </exec>
+        <echo>Killing PID-Killing-Failed Local LDAP and Gateway instances by Image java.exe..."</echo> 
+        <exec executable="taskkill" osfamily="winnt">
+           <arg value="/F"/> 
+           <arg value="/IM"/>
+           <arg value="java.exe"/>
+        </exec>
+      
+        <exec executable="kill" osfamily="unix">
+           <arg value="-9"/>
+           <arg value="${ldap_process}"/>
+        </exec>       
+    </target>
+  
 
     <target name="stop-test-gateway" description="Start test gateway server.">
-        <exec executable="bin/gateway.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
-            <arg value="stop"/>
-        </exec>
-    </target>
+        <exec executable="gateway.cmd" spawn="true" dir="${install.dir}/${gateway-artifact}-${gateway-version}/bin">            
+          <arg value="/c"/>  
+          <arg value="stop"/>
+        </exec> 
+        <delete file="${install.dir}/${gateway-artifact}-${gateway-version}/pids/gateway_process.pid"/>      
+        <exec executable="jps" output="${install.dir}/${gateway-artifact}-${gateway-version}/pids/gateway_process.pid"> 
+        </exec>        
+        <loadfile srcfile="${install.dir}/${gateway-artifact}-${gateway-version}/pids/gateway_process.pid" property="gateway_process_pid">
+           <filterchain>
+              <sortfilter reverse="true"/>
+              <headfilter lines="4"/>      
+              <linecontains>
+                <contains value="gateway.jar"/>
+             </linecontains>
+             <replacestring from="gateway.jar"/>             
+             <striplinebreaks/>
+             <replaceregex pattern="\s+[0-9]+\s" replace="" />
+           </filterchain>           
+        </loadfile>        
+        <echo>Killing Local Gateway instance with PID - "${gateway_process_pid}..."</echo>   
+        <exec executable="taskkill" osfamily="winnt">
+           <arg value="/F"/> 
+           <arg value="/PID"/>
+           <arg value="${gateway_process_pid}"/>
+        </exec>        
+        <exec executable="kill" osfamily="unix">
+          <arg value="-9"/>
+          <arg value="${gateway_process}"/>
+        </exec>        
+     </target>
+         
+
 
     <target name="start-test-servers" depends="start-test-ldap,start-test-gateway" description="Start test LDAP and test gateway servers."/>
     <target name="stop-test-servers" depends="stop-test-gateway,stop-test-ldap" description="Stop test LDAP server and gateway servers."/>
