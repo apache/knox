@@ -31,6 +31,10 @@
   <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/query" pattern="*://*:*/**/hdfs/{**}?{**}">
     <rewrite template="{$serviceUrl[HDFSUI]}/{**}?{**}"/>
   </rule>
+  <!-- KNOX-1277 -->
+  <rule dir="OUT" name="HDFSUI/hdfs/inbound/namenode/root/filter/refresh-tag">
+    <rewrite template="{$prefix[0;url&amp;equals;,url]}/hdfs/dfshealth.html"/>
+  </rule>
 
   <!-- log rules  -->
   <rule dir="IN" name="HDFSUI/hdfs/inbound/logs" pattern="*://*:*/**/hdfs/logs">
@@ -146,6 +150,8 @@
        <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
        <apply path="\'//\{infoAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoAddr"/>
        <apply path="\'//\{infoSecureAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoSecureAddr"/>
+       <!-- KNOX-1277 -->
+       <apply path=".*dfshealth\.html" rule="HDFSUI/hdfs/inbound/namenode/root/filter/refresh-tag"/>
     </content>
   </filter>
 
