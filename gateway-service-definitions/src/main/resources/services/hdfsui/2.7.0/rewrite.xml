@@ -134,6 +134,13 @@
       <apply path="/startupProgress" rule="HDFSUI/hdfs/outbound/namenode/relative/startupProgress"/>
       <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
     </content>
+    <!-- KNOX-1282 content type changed for new UI -->
+    <content type="*/javascript">
+      <apply path="/jmx" rule="HDFSUI/hdfs/outbound/namenode/relative/jmx"/>
+      <apply path="/conf" rule="HDFSUI/hdfs/outbound/namenode/relative/conf"/>
+      <apply path="/startupProgress" rule="HDFSUI/hdfs/outbound/namenode/relative/startupProgress"/>
+      <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
+    </content>
     <content type="*/html">
        <apply path="//\{dnWebAddress\}" rule="HDFSUI/hdfs/outbound/datanode"/>
        <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
