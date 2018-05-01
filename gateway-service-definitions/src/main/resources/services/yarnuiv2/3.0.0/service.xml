@@ -15,19 +15,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="YARNUIV2" name="yarnuiv2" version="0.1.0">
+<service role="YARNUIV2" name="yarnuiv2" version="3.0.0">
   <policies>
     <policy role="webappsec"/>
     <policy role="authentication" name="Anonymous"/>
     <policy role="rewrite"/>
     <policy role="authorization"/>
   </policies>
-
   <routes>
     <route path="/yarnuiv2">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/rootAppScript" to="request.url"/>
     </route>
-    
+
+    <route path="/yarnuiv2/logs/?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/logs" to="request.url"/>
+    </route>
+
     <route path="/yarnuiv2/**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/path" to="request.url"/>
     </route>
@@ -51,6 +54,7 @@
     
     <route path="/yarnuiv2/ws/**">
         <rewrite apply="YARNUIV2/yarnuiv2/inbound/ws" to="request.url"/>
+        <rewrite apply="YARNUIV2/yarnuiv2/headers/outbound" to="response.headers"/>
         <rewrite apply="YARNUIV2/yarnuiv2/outbound/mainpage" to="response.body"/>
         <dispatch contributor-name="http-client" />
     </route>

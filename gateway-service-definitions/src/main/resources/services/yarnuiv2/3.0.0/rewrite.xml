@@ -25,10 +25,14 @@
     <rewrite template="http://{host}:{port=**}"/>
   </rule> 
  
-  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/timeline" pattern="*://*:*/**/yarnuiv2/timeline?{host}&amp;{port=**}">
-    <rewrite template="http://{host}:{port=**}"/>
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/timeline" pattern="*://*:*/**/yarnuiv2/timeline?{host}&amp;{port=**}?{**}">
+    <rewrite template="http://{host}:{port=**}?{**}"/>
   </rule> 
  
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/logs" pattern="*://*:*/**/yarnuiv2/logs/?{**}">
+    <rewrite template="{$serviceUrl[YARNUIV2]}/logs/?{**}"/>
+  </rule>
+
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/path" pattern="*://*:*/**/yarnuiv2/{**}">
     <rewrite template="{$serviceUrl[YARNUIV2]}/ui2/{**}"/>
   </rule>
@@ -37,8 +41,8 @@
     <rewrite template="{$serviceUrl[YARNUIV2]}/{**}?{**}"/>
   </rule>
 
-  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/ws" pattern="*://*:*/**/yarnuiv2/ws/{**}">
-    <rewrite template="{$serviceUrl[YARNUIV2]}/ws/{**}"/>
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/ws" pattern="*://*:*/**/yarnuiv2/ws/{**}?{**}">
+    <rewrite template="{$serviceUrl[YARNUIV2]}/ws/{**}?{**}"/>
   </rule>
  
   <!-- Resources -->
@@ -114,7 +118,7 @@
     <rewrite template="ui2/#/cluster-overview"/>
   </rule>
 
-  <rule dir="IN" name="YARNUIV2/yarnuiv2/nodeaddress">
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/nodeaddress">
     <match pattern="{host}:{port}"/>
     <rewrite template="{$frontend[url]}/yarnuiv2/node?{host}?{port}"/>
   </rule>
@@ -138,6 +142,7 @@
   <filter name="YARNUIV2/yarnuiv2/outbound/mainpage">
     <content type="*/json">
       <apply path="$.nodes.node[*].nodeHTTPAddress" rule="YARNUIV2/yarnuiv2/nodeaddress"/>
+      <apply path="$.appAttempts.appAttempt[*].nodeHttpAddress" rule="YARNUIV2/yarnuiv2/nodeaddress"/>
     </content>
   </filter>
 
@@ -147,5 +152,5 @@
     </content>
   </filter>
 
-</rules>
+ </rules>
   
