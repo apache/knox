@@ -28,8 +28,8 @@ import org.apache.zookeeper.ZooDefs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -68,10 +68,37 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
         };
     }
 
+    private static final RemoteConfigurationRegistryClient.EntryACL WORLD_ANYONE_READ;
+    static {
+        WORLD_ANYONE_READ = new RemoteConfigurationRegistryClient.EntryACL() {
+            public String getId() {
+                return "anyone";
+            }
+
+            public String getType() {
+                return "world";
+            }
+
+            public Object getPermissions() {
+                return ZooDefs.Perms.READ;
+            }
+
+            public boolean canRead() {
+                return true;
+            }
+
+            public boolean canWrite() {
+                return false;
+            }
+        };
+    }
+
     private RemoteConfigurationRegistryClient client = null;
 
     private File providersDir;
     private File descriptorsDir;
+
+    private final List<RemoteConfigurationRegistryClient.EntryACL> replacementACL = new ArrayList<>();
 
     /**
      * @param config                The gateway configuration
@@ -88,11 +115,15 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
                 this.client = registryClientService.get(clientName);
                 if (this.client == null) {
                     log.unresolvedClientConfigurationForRemoteMonitoring(clientName);
+                } else if (config.allowUnauthenticatedRemoteRegistryReadAccess()) {
+                    replacementACL.add(WORLD_ANYONE_READ);
                 }
             } else {
                 log.missingClientConfigurationForRemoteMonitoring();
             }
         }
+
+        replacementACL.add(AUTHENTICATED_USERS_ALL);
     }
 
     @Override
@@ -179,9 +210,9 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
                     if (client.isAuthenticationConfigured()) {
                         log.correctingSuspectWritableRemoteConfigurationEntry(name);
 
-                        // Replace the existing ACL with one that permits only authenticated users
-                        client.setACL(name, Collections.singletonList(AUTHENTICATED_USERS_ALL));
-                  }
+                        // Replace the existing ACL with the replacement ACL for the authentication scenario
+                        client.setACL(name, replacementACL);
+                    }
                 }
             }
         }

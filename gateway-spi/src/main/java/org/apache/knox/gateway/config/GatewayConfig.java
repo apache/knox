@@ -350,6 +350,14 @@ public interface GatewayConfig {
   String getRemoteConfigurationMonitorClientName();
 
   /**
+   * When new remote registry entries must be created, or new ACLs applied to existing entries, this method indicates
+   * whether unauthenticated connections should be given read access to those entries.
+   *
+   * @return true, if unauthenticated clients should be allowed to access remote registry entries.
+   */
+  boolean allowUnauthenticatedRemoteRegistryReadAccess();
+
+  /**
    * Returns whether the Remote Alias Service is enabled or not.
    * This value also depends on whether remote registry is enabled or not.
    * if it is enabled then this option takes effect else this option has no

@@ -79,6 +79,7 @@ public class RemoteConfigurationMonitorTest {
 
     private static final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
     private static final ACL SASL_TESTUSER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("sasl", ZK_USERNAME));
+    private static final ACL WORLD_ANYONE_READ = new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"));
 
     private static File testTmp;
     private static File providersDir;
@@ -272,6 +273,83 @@ public class RemoteConfigurationMonitorTest {
 
         // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
         List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+    }
+
+
+    /**
+     * KNOX-1135
+     */
+    @Test
+    public void testZooKeeperConfigMonitorSASLNodesExistWithUnacceptableACLAllowUnauthenticatedReads() throws Exception {
+        final String configMonitorName = "zkConfigClient";
+        final String alias = "zkPass";
+
+        // Setup the base GatewayConfig mock
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getGatewayDescriptorsDir()).andReturn(descriptorsDir.getAbsolutePath()).anyTimes();
+        EasyMock.expect(gc.getRemoteRegistryConfigurationNames())
+            .andReturn(Collections.singletonList(configMonitorName))
+            .anyTimes();
+        final String registryConfig =
+            GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
+        EasyMock.expect(gc.allowUnauthenticatedRemoteRegistryReadAccess()).andReturn(true).anyTimes();
+        EasyMock.expect(gc.getRemoteRegistryConfiguration(configMonitorName))
+            .andReturn(registryConfig).anyTimes();
+        EasyMock.expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(configMonitorName).anyTimes();
+        EasyMock.replay(gc);
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForGateway(alias))
+            .andReturn(ZK_PASSWORD.toCharArray())
+            .anyTimes();
+        EasyMock.replay(aliasService);
+
+        RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+        clientService.setAliasService(aliasService);
+        clientService.init(gc, Collections.emptyMap());
+        clientService.start();
+
+        RemoteConfigurationMonitorFactory.setClientService(clientService);
+
+        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
+        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+
+        final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
+        List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL, new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_CONFIG);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_DESCRIPTORS);
+
+        // Make sure both ACLs were applied
+        List<ACL> preACLs = client.getACL().forPath(PATH_KNOX);
+        assertEquals(2, preACLs.size());
+
+        // Check that the config nodes really do exist (the monitor will NOT create them if they're present)
+        assertNotNull(client.checkExists().forPath(PATH_KNOX));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_CONFIG));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_PROVIDERS));
+        assertNotNull(client.checkExists().forPath(PATH_KNOX_DESCRIPTORS));
+
+        try {
+            cm.start();
+        } catch (Exception e) {
+            fail("Failed to start monitor: " + e.getMessage());
+        }
+
+        // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
+        List<ACL> expectedACLs = new ArrayList<>();
+        expectedACLs.add(SASL_TESTUSER_ALL);
+        expectedACLs.add(WORLD_ANYONE_READ);
         validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
         validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
         validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));

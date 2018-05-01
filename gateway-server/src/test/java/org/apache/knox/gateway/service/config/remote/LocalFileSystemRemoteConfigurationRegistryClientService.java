@@ -74,14 +74,11 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
 
     @Override
     public void start() throws ServiceLifecycleException {
-
     }
 
     @Override
     public void stop() throws ServiceLifecycleException {
-
     }
-
 
     private RemoteConfigurationRegistryClient createClient(RemoteConfigurationRegistryConfig config) {
         String rootDir = config.getConnectionString();

@@ -231,6 +231,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* @since 0.15 Remote configuration monitoring */
   static final String CONFIG_REGISTRY_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.registry";
   static final String REMOTE_CONFIG_MONITOR_CLIENT_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.client";
+  static final String REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS =
+                                                  REMOTE_CONFIG_MONITOR_CLIENT_NAME + ".allowUnauthenticatedReadAccess";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -988,6 +990,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getRemoteConfigurationMonitorClientName() {
     return get(REMOTE_CONFIG_MONITOR_CLIENT_NAME);
+  }
+
+  @Override
+  public boolean allowUnauthenticatedRemoteRegistryReadAccess() {
+    return Boolean.parseBoolean(get(REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS, String.valueOf(false)));
   }
 
   /**

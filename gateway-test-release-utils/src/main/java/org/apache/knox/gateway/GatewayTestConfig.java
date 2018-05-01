@@ -663,4 +663,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isClusterMonitorEnabled(String type) {
     return false;
   }
+
+  @Override
+  public boolean allowUnauthenticatedRemoteRegistryReadAccess() {
+    return false;
+  }
+
 }
