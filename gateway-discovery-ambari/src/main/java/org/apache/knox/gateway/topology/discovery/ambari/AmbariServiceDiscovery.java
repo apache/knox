@@ -287,13 +287,15 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             String configType = componentServiceConfigs.get(componentName);
             if (configType != null) {
                 AmbariCluster.ServiceConfiguration svcConfig = configs.get(configType);
-                AmbariComponent c = new AmbariComponent(componentName,
-                                                        svcConfig.getVersion(),
-                                                        clusterName,
-                                                        serviceName,
-                                                        hostNames,
-                                                        svcConfig.getProperties());
-                cluster.addComponent(c);
+                if (svcConfig != null) {
+                    AmbariComponent c = new AmbariComponent(componentName,
+                                                            svcConfig.getVersion(),
+                                                            clusterName,
+                                                            serviceName,
+                                                            hostNames,
+                                                            svcConfig.getProperties());
+                    cluster.addComponent(c);
+                }
             }
         }
 
