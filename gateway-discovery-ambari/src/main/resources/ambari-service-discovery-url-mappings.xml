@@ -485,34 +485,6 @@
         </properties>
     </service>
 
-    <service name="SPARKHISTORYUI">
-        <url-pattern>http://{HOST}:{PORT}</url-pattern>
-        <properties>
-            <property name="HOST">
-                <component>SPARK_JOBHISTORYSERVER</component>
-                <hostname/>
-            </property>
-            <property name="PORT">
-                <component>SPARK_JOBHISTORYSERVER</component>
-                <config-property>spark.history.ui.port</config-property>
-            </property>
-        </properties>
-    </service>
-
-    <service name="LIVYSERVER">
-        <url-pattern>http://{HOST}:{PORT}</url-pattern>
-        <properties>
-            <property name="HOST">
-                <component>LIVY_SERVER</component>
-                <hostname/>
-            </property>
-            <property name="PORT">
-                <component>LIVY_SERVER</component>
-                <config-property>livy.server.port</config-property>
-            </property>
-        </properties>
-    </service>
-
     <service name="SOLR">
         <url-pattern>http://{HOST}:{PORT}</url-pattern>
         <properties>
