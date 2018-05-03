@@ -506,6 +506,16 @@ public interface GatewayMessages {
            text = "Started gateway, topology \"{0}\" listening on port \"{1}\".")
   void startedGateway(final String topology, final int port);
 
+  /**
+   * Log topology and port
+   *
+   * @param topology
+   * @param port
+   */
+  @Message(level = MessageLevel.ERROR,
+           text = "Topology \"{0}\" failed to start listening on port \"{1}\".")
+  void startedGatewayPortConflict(final String topology, final int port);
+
   @Message(level = MessageLevel.ERROR,
            text =
                " Could not find topology \"{0}\" mapped to port \"{1}\" configured in gateway-config.xml. "

@@ -19,6 +19,7 @@ package org.apache.knox.gateway;
  */
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.velocity.VelocityContext;
@@ -35,6 +36,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -152,14 +155,33 @@ public class GatewayPortMappingConfigTest {
    * Test case where topologies "eerie" and "huron" use same ports.
    */
   @Test
-  public void testCheckPortConflict() throws IOException {
+  public void testCheckPortConflict()
+      throws IOException, NoSuchFieldException, IllegalAccessException {
     /* Check port conflict with default port */
     exception.expect(IOException.class);
     exception.expectMessage(String.format(
-        " Topologies %s and %s use the same port %d, ports for topologies (if defined) have to be unique. ",
-        "huron", "eerie", huronPort));
+        " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
+        huronPort, "eerie"));
 
-    GatewayServer.checkPortConflict(huronPort, "eerie", gatewayConfig);
+    GatewayServer gatewayServer = new GatewayServer(gatewayConfig);
+
+    Server mockedJetty = EasyMock.createNiceMock(Server.class);
+
+    ServerConnector mockConnector = EasyMock.createNiceMock(ServerConnector.class);
+    EasyMock.expect(mockConnector.getPort()).andReturn(huronPort).anyTimes();
+    EasyMock.replay(mockConnector);
+
+    ServerConnector[] mockConnectorArray = new ServerConnector[] {mockConnector};
+
+    EasyMock.expect(mockedJetty.getConnectors()).andReturn(mockConnectorArray).anyTimes();
+
+    EasyMock.replay(mockedJetty);
+
+    Field field = gatewayServer.getClass().getDeclaredField("jetty");
+    field.setAccessible(true);
+    field.set(gatewayServer, mockedJetty);
+
+    gatewayServer.checkPortConflict(huronPort, "eerie", gatewayConfig);
 
   }
 
@@ -176,7 +198,8 @@ public class GatewayPortMappingConfigTest {
     exception
         .expectMessage(String.format("Port %d already in use.", defaultPort));
 
-    GatewayServer.checkPortConflict(defaultPort, null, gatewayConfig);
+    final GatewayServer gatewayServer = new GatewayServer(gatewayConfig);
+    gatewayServer.checkPortConflict(defaultPort, null, gatewayConfig);
 
   }
 

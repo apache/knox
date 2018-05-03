@@ -350,7 +350,7 @@ public class GatewayServer {
    * @throws NoSuchAlgorithmException
    * @throws KeyStoreException
    */
-  private static Connector createConnector(final Server server,
+  private Connector createConnector(final Server server,
       final GatewayConfig config, final int port, final String topologyName)
       throws IOException, CertificateException, NoSuchAlgorithmException,
       KeyStoreException {
@@ -481,7 +481,7 @@ public class GatewayServer {
    * @param config
    * @throws IOException
    */
-  public static void checkPortConflict(final int port,
+  public void checkPortConflict(final int port,
       final String topologyName, final GatewayConfig config)
       throws IOException {
 
@@ -508,20 +508,16 @@ public class GatewayServer {
             port));
       }
     } else {
-      // Topology name is not blank so check amongst other ports if we have a conflict
-      for (final Map.Entry<String, Integer> entry : config
-          .getGatewayPortMappings().entrySet()) {
-        if (entry.getKey().equalsIgnoreCase(topologyName)) {
-          continue;
-        }
-
-        if (entry.getValue() == port) {
+      /* check for port conflict */
+      final Connector[] connectors = jetty.getConnectors();
+      for (int i = 0; i < connectors.length; i++) {
+        if (connectors[i] instanceof ServerConnector
+            && ((ServerConnector) connectors[i]).getPort() == port) {
           log.portAlreadyInUse(port, topologyName);
           throw new IOException(String.format(
-              " Topologies %s and %s use the same port %d, ports for topologies (if defined) have to be unique. ",
-              entry.getKey(), topologyName, port));
+              " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
+              port, topologyName));
         }
-
       }
 
     }
@@ -582,8 +578,17 @@ public class GatewayServer {
         // and NOT for Default Topology listening on standard gateway port.
         if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue().intValue() != config.getGatewayPort()) ) {
           log.createJettyConnector(entry.getKey().toLowerCase(), entry.getValue());
-          jetty.addConnector(createConnector(jetty, config, entry.getValue(),
-              entry.getKey().toLowerCase()));
+          try {
+            jetty.addConnector(createConnector(jetty, config, entry.getValue(),
+                entry.getKey().toLowerCase()));
+          } catch(final IOException e) {
+            /* in case of port conflict we log error and move on */
+            if( e.toString().contains("ports for topologies (if defined) have to be unique.") ) {
+              log.startedGatewayPortConflict(entry.getKey().toLowerCase(), entry.getValue());
+            } else {
+              throw e;
+            }
+          }
         }
       }
     }
