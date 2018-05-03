@@ -59,22 +59,18 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
                                       cluster.getServiceConfiguration(CONFIG_SERVICE_HDFS, CONFIG_TYPE_HDFS_SITE);
       if (sc != null) {
         // First, check if it's HA config
-        String nameServices = null;
-        AmbariComponent nameNodeComp = cluster.getComponent(CONFIG_SERVICE_NAMENODE);
-        if (nameNodeComp != null) {
-          nameServices = nameNodeComp.getConfigProperty("dfs.nameservices");
-        }
-
+        String nameServices = sc.getProperties().get("dfs.nameservices");
         if (nameServices != null && !nameServices.isEmpty()) {
           String ns = null;
 
           // Parse the nameservices value
           String[] namespaces = nameServices.split(",");
 
-          if (namespaces.length > 1) {
-            String nsParam = (serviceParams != null) ? serviceParams.get(NAMESERVICE_PARAM) : null;
+          String nsParam = (serviceParams != null) ? serviceParams.get(NAMESERVICE_PARAM) : null;
+
+          if (namespaces.length > 1 || nsParam != null) {
             if (nsParam != null) {
-              if (!validateDeclaredNameService(sc, nsParam)) {
+              if (!validateDeclaredNameService(namespaces, nsParam)) {
                 log.undefinedHDFSNameService(nsParam);
               }
               ns = nsParam;
@@ -136,12 +132,9 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
 
 
   // Verify whether the declared nameservice is among the configured nameservices in the cluster
-  private static boolean validateDeclaredNameService(AmbariCluster.ServiceConfiguration hdfsSite,
-                                                     String                             declaredNameService) {
+  private static boolean validateDeclaredNameService(String[] namespaces, String declaredNameService) {
     boolean isValid = false;
-    String nameservices = hdfsSite.getProperties().get("dfs.nameservices");
-    if (nameservices != null) {
-      String[] namespaces = nameservices.split(",");
+    if (namespaces != null) {
       for (String ns : namespaces) {
         if (ns.equals(declaredNameService)) {
           isValid = true;

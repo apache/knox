@@ -98,10 +98,6 @@ public class WebHdfsUrlCreatorTest {
     final String HTTP_ADDRESS  = "host1:20070";
     final String HTTPS_ADDRESS = "host2:20470";
 
-    AmbariComponent nnComp = EasyMock.createNiceMock(AmbariComponent.class);
-    EasyMock.expect(nnComp.getConfigProperty("dfs.nameservices")).andReturn("X,Y").anyTimes();
-    EasyMock.replay(nnComp);
-
     AmbariCluster.ServiceConfiguration coreSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
     Map<String, String> corSiteProps = new HashMap<>();
     corSiteProps.put("fs.defaultFS", "hdfs://X");
@@ -113,6 +109,7 @@ public class WebHdfsUrlCreatorTest {
     configProps.put(HDFSURLCreatorBase.HTTP_POLICY_PROPERTY, HDFSURLCreatorBase.HTTP_ONLY_POLICY);
     configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY, HTTP_ADDRESS);
     configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY, HTTPS_ADDRESS);
+    configProps.put("dfs.nameservices", "X,Y");
     configProps.put("dfs.ha.namenodes.X", "nn1,nn2");
     configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY + ".X.nn1", "host3:20070");
     configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY + ".X.nn2", "host4:20070");
@@ -121,9 +118,6 @@ public class WebHdfsUrlCreatorTest {
     EasyMock.replay(hdfsSiteConfig);
 
     AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
-    EasyMock.expect(cluster.getComponent("NAMENODE"))
-            .andReturn(nnComp)
-            .anyTimes();
     EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site"))
             .andReturn(hdfsSiteConfig)
             .anyTimes();
@@ -145,6 +139,203 @@ public class WebHdfsUrlCreatorTest {
 
   @Test
   public void testFederatedHttpsEndpointAddress() {
+    final String HTTP_ADDRESS  = "host1:20070";
+    final String HTTPS_ADDRESS = "host2:20470";
+
+    AmbariCluster.ServiceConfiguration coreSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> corSiteProps = new HashMap<>();
+    corSiteProps.put("fs.defaultFS", "hdfs://Y");
+    EasyMock.expect(coreSiteConfig.getProperties()).andReturn(corSiteProps).anyTimes();
+    EasyMock.replay(coreSiteConfig);
+
+    AmbariCluster.ServiceConfiguration hdfsSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> configProps = new HashMap<>();
+    configProps.put(HDFSURLCreatorBase.HTTP_POLICY_PROPERTY, HDFSURLCreatorBase.HTTPS_ONLY_POLICY);
+    configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY, HTTP_ADDRESS);
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY, HTTPS_ADDRESS);
+    configProps.put("dfs.nameservices", "X,Y");
+    configProps.put("dfs.ha.namenodes.Y", "nn7,nn8");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn7", "host5:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn8", "host6:20470");
+
+    EasyMock.expect(hdfsSiteConfig.getProperties()).andReturn(configProps).anyTimes();
+    EasyMock.replay(hdfsSiteConfig);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site"))
+            .andReturn(hdfsSiteConfig)
+            .anyTimes();
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "core-site"))
+            .andReturn(coreSiteConfig)
+            .anyTimes();
+    EasyMock.replay(cluster);
+
+    WebHdfsUrlCreator c = new WebHdfsUrlCreator();
+    c.init(cluster);
+    List<String> urls = c.create("WEBHDFS", null);
+    assertNotNull(urls);
+    assertFalse(urls.isEmpty());
+    assertEquals(2, urls.size());
+    assertTrue(urls.contains("https://" + "host5:20470" + "/webhdfs"));
+    assertTrue(urls.contains("https://" + "host6:20470" + "/webhdfs"));
+  }
+
+
+  @Test
+  public void testFederatedHttpsWebHdfsEndpointAddressWithValidNS() {
+    final String HTTP_ADDRESS  = "host1:20070";
+    final String HTTPS_ADDRESS = "host2:20470";
+
+    AmbariCluster.ServiceConfiguration coreSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> corSiteProps = new HashMap<>();
+    corSiteProps.put("fs.defaultFS", "hdfs://Y");
+    EasyMock.expect(coreSiteConfig.getProperties()).andReturn(corSiteProps).anyTimes();
+    EasyMock.replay(coreSiteConfig);
+
+    AmbariCluster.ServiceConfiguration hdfsSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> configProps = new HashMap<>();
+    configProps.put(HDFSURLCreatorBase.HTTP_POLICY_PROPERTY, HDFSURLCreatorBase.HTTPS_ONLY_POLICY);
+    configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY, HTTP_ADDRESS);
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY, HTTPS_ADDRESS);
+    configProps.put("dfs.nameservices", "X,Y");
+    configProps.put("dfs.ha.namenodes.X", "nn2,nn3");
+    configProps.put("dfs.ha.namenodes.Y", "nn7,nn8");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn2", "host3:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn3", "host4:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn7", "host5:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn8", "host6:20470");
+
+    EasyMock.expect(hdfsSiteConfig.getProperties()).andReturn(configProps).anyTimes();
+    EasyMock.replay(hdfsSiteConfig);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site"))
+            .andReturn(hdfsSiteConfig)
+            .anyTimes();
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "core-site"))
+            .andReturn(coreSiteConfig)
+            .anyTimes();
+    EasyMock.replay(cluster);
+
+    Map<String, String> serviceParams = new HashMap<>();
+    serviceParams.put("discovery-nameservice", "X");
+
+    WebHdfsUrlCreator c = new WebHdfsUrlCreator();
+    c.init(cluster);
+    List<String> urls = c.create("WEBHDFS", serviceParams);
+    assertNotNull(urls);
+    assertFalse(urls.isEmpty());
+    assertEquals(2, urls.size());
+    assertTrue(urls.contains("https://" + "host3:20470" + "/webhdfs"));
+    assertTrue(urls.contains("https://" + "host4:20470" + "/webhdfs"));
+  }
+
+
+  @Test
+  public void testFederatedHttpsWebHdfsEndpointAddressWithInvalidNS() {
+    final String HTTP_ADDRESS  = "host1:20070";
+    final String HTTPS_ADDRESS = "host2:20470";
+
+    AmbariCluster.ServiceConfiguration coreSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> corSiteProps = new HashMap<>();
+    corSiteProps.put("fs.defaultFS", "hdfs://Y");
+    EasyMock.expect(coreSiteConfig.getProperties()).andReturn(corSiteProps).anyTimes();
+    EasyMock.replay(coreSiteConfig);
+
+    AmbariCluster.ServiceConfiguration hdfsSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> configProps = new HashMap<>();
+    configProps.put(HDFSURLCreatorBase.HTTP_POLICY_PROPERTY, HDFSURLCreatorBase.HTTPS_ONLY_POLICY);
+    configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY, HTTP_ADDRESS);
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY, HTTPS_ADDRESS);
+    configProps.put("dfs.nameservices", "X,Y");
+    configProps.put("dfs.ha.namenodes.X", "nn2,nn3");
+    configProps.put("dfs.ha.namenodes.Y", "nn7,nn8");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn2", "host3:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn3", "host4:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn7", "host5:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn8", "host6:20470");
+
+    EasyMock.expect(hdfsSiteConfig.getProperties()).andReturn(configProps).anyTimes();
+    EasyMock.replay(hdfsSiteConfig);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site"))
+            .andReturn(hdfsSiteConfig)
+            .anyTimes();
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "core-site"))
+            .andReturn(coreSiteConfig)
+            .anyTimes();
+    EasyMock.replay(cluster);
+
+    Map<String, String> serviceParams = new HashMap<>();
+    serviceParams.put("discovery-nameservice", "Z");
+
+    WebHdfsUrlCreator c = new WebHdfsUrlCreator();
+    c.init(cluster);
+    List<String> urls = c.create("WEBHDFS", serviceParams);
+    assertNotNull(urls);
+    assertTrue(urls.isEmpty());
+  }
+
+
+  @Test
+  public void testFederatedHttpsNamenodeEndpointAddressWithValidDeclaredNS() {
+    final String HTTP_ADDRESS  = "host1:20070";
+    final String HTTPS_ADDRESS = "host2:20470";
+
+    AmbariComponent nnComp = EasyMock.createNiceMock(AmbariComponent.class);
+    EasyMock.expect(nnComp.getConfigProperty("dfs.nameservices")).andReturn("X,Y").anyTimes();
+    EasyMock.replay(nnComp);
+
+    AmbariCluster.ServiceConfiguration coreSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> corSiteProps = new HashMap<>();
+    corSiteProps.put("fs.defaultFS", "hdfs://Y");
+    EasyMock.expect(coreSiteConfig.getProperties()).andReturn(corSiteProps).anyTimes();
+    EasyMock.replay(coreSiteConfig);
+
+    AmbariCluster.ServiceConfiguration hdfsSiteConfig = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
+    Map<String, String> configProps = new HashMap<>();
+    configProps.put(HDFSURLCreatorBase.HTTP_POLICY_PROPERTY, HDFSURLCreatorBase.HTTPS_ONLY_POLICY);
+    configProps.put(HDFSURLCreatorBase.HTTP_ADDRESS_PROPERTY, HTTP_ADDRESS);
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY, HTTPS_ADDRESS);
+    configProps.put("dfs.ha.namenodes.X", "nn2,nn3");
+    configProps.put("dfs.ha.namenodes.Y", "nn7,nn8");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn2", "host3:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".X.nn3", "host4:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn7", "host5:20470");
+    configProps.put(HDFSURLCreatorBase.HTTPS_ADDRESS_PROPERTY + ".Y.nn8", "host6:20470");
+
+    EasyMock.expect(hdfsSiteConfig.getProperties()).andReturn(configProps).anyTimes();
+    EasyMock.replay(hdfsSiteConfig);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getComponent("NAMENODE"))
+            .andReturn(nnComp)
+            .anyTimes();
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "hdfs-site"))
+            .andReturn(hdfsSiteConfig)
+            .anyTimes();
+    EasyMock.expect(cluster.getServiceConfiguration("HDFS", "core-site"))
+            .andReturn(coreSiteConfig)
+            .anyTimes();
+    EasyMock.replay(cluster);
+
+    NameNodeUrlCreator c = new NameNodeUrlCreator();
+    c.init(cluster);
+
+    Map<String, String> serviceParams = new HashMap<>();
+    serviceParams.put("discovery-nameservice", "X");
+
+    List<String> urls = c.create("NAMENODE", serviceParams);
+    assertNotNull(urls);
+    assertFalse(urls.isEmpty());
+    assertEquals(1, urls.size());
+    assertTrue(urls.contains("hdfs://X"));
+  }
+
+
+  @Test
+  public void testFederatedHttpsNamenodeEndpointAddressWithInvalidDeclaredNS() {
     final String HTTP_ADDRESS  = "host1:20070";
     final String HTTPS_ADDRESS = "host2:20470";
 
@@ -182,14 +373,15 @@ public class WebHdfsUrlCreatorTest {
             .anyTimes();
     EasyMock.replay(cluster);
 
-    WebHdfsUrlCreator c = new WebHdfsUrlCreator();
+    NameNodeUrlCreator c = new NameNodeUrlCreator();
     c.init(cluster);
-    List<String> urls = c.create("WEBHDFS", null);
+
+    Map<String, String> serviceParams = new HashMap<>();
+    serviceParams.put("discovery-nameservice", "Z");
+
+    List<String> urls = c.create("NAMENODE", serviceParams);
     assertNotNull(urls);
-    assertFalse(urls.isEmpty());
-    assertEquals(2, urls.size());
-    assertTrue(urls.contains("https://" + "host5:20470" + "/webhdfs"));
-    assertTrue(urls.contains("https://" + "host6:20470" + "/webhdfs"));
+    assertTrue(urls.isEmpty());
   }
 
 }

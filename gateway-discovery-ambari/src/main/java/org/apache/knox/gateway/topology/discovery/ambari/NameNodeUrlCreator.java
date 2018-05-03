@@ -53,9 +53,9 @@ public class NameNodeUrlCreator implements ServiceURLCreator {
         // Validate declared nameservice against available nameservices
         if (!validateDeclaredNameService(cluster, declaredNameService)) {
           log.undefinedHDFSNameService(declaredNameService);
+        } else {
+          urls.add("hdfs://" + declaredNameService);
         }
-
-        urls.add("hdfs://" + declaredNameService);
       } else {
         // Add the default nameservice URL to the result
         AmbariCluster.ServiceConfiguration coreSite = cluster.getServiceConfiguration("HDFS", "core-site");
@@ -74,11 +74,13 @@ public class NameNodeUrlCreator implements ServiceURLCreator {
   // Verify whether the declared nameservice is among the configured nameservices in the cluster
   private static boolean validateDeclaredNameService(AmbariCluster cluster, String declaredNameService) {
     boolean isValid = false;
-    AmbariCluster.ServiceConfiguration hdfsSite = cluster.getServiceConfiguration("HDFS", "hdfs-site");
-    if (hdfsSite != null) {
-      String nameservices = hdfsSite.getProperties().get("dfs.nameservices");
-      if (nameservices != null) {
-        String[] namespaces = nameservices.split(",");
+
+    AmbariComponent nameNodeComp = cluster.getComponent(SERVICE);
+    if (nameNodeComp != null) {
+      String nameServices = nameNodeComp.getConfigProperty("dfs.nameservices");
+      if (nameServices != null && !nameServices.isEmpty()) {
+        // Parse the nameservices value
+        String[] namespaces = nameServices.split(",");
         for (String ns : namespaces) {
           if (ns.equals(declaredNameService)) {
             isValid = true;

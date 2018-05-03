@@ -158,10 +158,22 @@ public class SimpleDescriptorHandler {
             }
 
             // Service params
-            if (descService.getParams() != null) {
-                serviceParams.put(serviceName, descService.getParams());
-                if (!validServiceNames.contains(serviceName)) {
-                    validServiceNames.add(serviceName);
+            Map<String, String> descriptorServiceParams = descService.getParams();
+            if (descriptorServiceParams != null && !descriptorServiceParams.isEmpty()) {
+                boolean hasNonDiscoveryParams = false;
+                // Determine if there are any params which are not discovery-only
+                for (String paramName : descriptorServiceParams.keySet()) {
+                    if (!paramName.startsWith(DISCOVERY_PARAM_PREFIX)) {
+                        hasNonDiscoveryParams = true;
+                        break;
+                    }
+                }
+                // Don't add the service if the only params are discovery-only params
+                if (hasNonDiscoveryParams) {
+                    serviceParams.put(serviceName, descService.getParams());
+                    if (!validServiceNames.contains(serviceName)) {
+                        validServiceNames.add(serviceName);
+                    }
                 }
             }
         }
