@@ -299,7 +299,7 @@ public class DefaultTopologyServiceTest {
         assertTrue(topologyFile.exists());
         topologyFile.delete();
         provider.reloadTopologies();
-        assertFalse("Simple descriptor should have been deleted because the associated topology was.",
+        assertTrue("Simple descriptor should NOT have been deleted because the associated topology was.",
                     simpleDesc.exists());
 
       } finally {

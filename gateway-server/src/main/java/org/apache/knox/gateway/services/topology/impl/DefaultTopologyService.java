@@ -577,17 +577,6 @@ public class DefaultTopologyService
 
   @Override
   public void onFileDelete(java.io.File file) {
-    // For full topology descriptors, we need to make sure to delete any corresponding simple descriptors to prevent
-    // unintended subsequent generation of the topology descriptor
-    for (String ext : DescriptorsMonitor.SUPPORTED_EXTENSIONS) {
-      File simpleDesc =
-              new File(descriptorsDirectory, FilenameUtils.getBaseName(file.getName()) + "." + ext);
-      if (simpleDesc.exists()) {
-        log.deletingDescriptorForTopologyDeletion(simpleDesc.getName(), file.getName());
-        simpleDesc.delete();
-      }
-    }
-
     onFileChange(file);
   }
 
