@@ -601,11 +601,11 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Removed descriptor {0} reference to provider configuration {1}." )
   void removedProviderConfigurationReference(String descriptorName, String providerConfigurationName);
 
-  @Message( level = MessageLevel.WARN,
+  @Message( level = MessageLevel.DEBUG,
             text = "The permissions for the remote configuration registry entry \"{0}\" are such that its content may not be trustworthy." )
   void suspectWritableRemoteConfigurationEntry(String entryPath);
 
-  @Message( level = MessageLevel.WARN,
+  @Message( level = MessageLevel.DEBUG,
             text = "Correcting the suspect permissions for the remote configuration registry entry \"{0}\"." )
   void correctingSuspectWritableRemoteConfigurationEntry(String entryPath);
 
