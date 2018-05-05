@@ -88,7 +88,7 @@ public class WebHdfsHaDispatchTest {
       }).once();
       EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
       Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
-      WebHdfsHaDispatch dispatch = new WebHdfsHaDispatch();
+      AbstractHdfsHaDispatch dispatch = new WebHdfsHaDispatch();
       HttpClientBuilder builder = HttpClientBuilder.create();
       CloseableHttpClient client = builder.build();
       dispatch.setHttpClient(client);

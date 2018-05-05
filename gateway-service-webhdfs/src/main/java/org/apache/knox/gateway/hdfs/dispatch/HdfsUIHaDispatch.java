@@ -19,16 +19,16 @@ package org.apache.knox.gateway.hdfs.dispatch;
 
 import javax.servlet.ServletException;
 
-public class WebHdfsHaDispatch extends AbstractHdfsHaDispatch {
-  public static final String RESOURCE_ROLE = "WEBHDFS";
+public class HdfsUIHaDispatch extends AbstractHdfsHaDispatch {
+  public static final String RESOURCE_ROLE = "HDFSUI";
 
   /**
    * @throws javax.servlet.ServletException
    */
-  public WebHdfsHaDispatch() throws ServletException {
+  public HdfsUIHaDispatch() throws ServletException {
     super();
   }
-  
+
   protected String getResourceRole() {
     return RESOURCE_ROLE;
   }

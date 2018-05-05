@@ -32,8 +32,6 @@
         <route path="/hdfs/dfshealth.html#tab-datanode">
             <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
         </route>
-
-
     </routes>
-    <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.HdfsUIHaDispatch"/>
 </service>
