@@ -248,6 +248,7 @@
                         <exclude>src/stage.txt</exclude>
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>
+                        <exclude>**/*.json</exclude>
                         <exclude>**/target/**</exclude>
                         <exclude>**/install/**</exclude>
                         <exclude>**/candidate/**</exclude>
