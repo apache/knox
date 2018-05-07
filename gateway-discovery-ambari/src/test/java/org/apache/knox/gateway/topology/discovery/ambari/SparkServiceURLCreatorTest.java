@@ -25,6 +25,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class SparkServiceURLCreatorTest {
 
@@ -154,6 +155,74 @@ public class SparkServiceURLCreatorTest {
     assertEquals(2, urls.size());
     assertEquals("http://host1:" + PORT, urls.get(0));
     assertEquals("http://host2:" + PORT, urls.get(1));
+  }
+
+
+  @Test
+  public void testSparkThriftUI() {
+    doTestSparkThriftUI("SPARK_THRIFTSERVER", null);
+  }
+
+  @Test
+  public void testSpark2ThriftUI() {
+    doTestSparkThriftUI("SPARK2_THRIFTSERVER", null);
+  }
+
+  @Test
+  public void testSparkThriftUIWithEndpointPath() { doTestSparkThriftUIWithEndpointPath("SPARK_THRIFTSERVER"); }
+
+  @Test
+  public void testSpark2ThriftUIWithEndpointPath() { doTestSparkThriftUIWithEndpointPath("SPARK2_THRIFTSERVER"); }
+
+  @Test
+  public void testSparkThriftUIBinaryTransport() { doTestSparkThriftUIBinaryTransport("SPARK_THRIFTSERVER"); }
+
+  @Test
+  public void testSpark2ThriftUIBinaryTransport() { doTestSparkThriftUIBinaryTransport("SPARK2_THRIFTSERVER"); }
+
+
+  private void doTestSparkThriftUIWithEndpointPath(String componentName) {
+    doTestSparkThriftUI(componentName, "http", "mypath");
+  }
+
+  private void doTestSparkThriftUIBinaryTransport(String componentName) {
+    doTestSparkThriftUI(componentName, "binary", null);
+  }
+
+
+  private void doTestSparkThriftUI(String componentName, String endpointPath) {
+    doTestSparkThriftUI(componentName, "http", endpointPath);
+  }
+
+
+  private void doTestSparkThriftUI(String componentName, String transportMode, String endpointPath) {
+    final String PORT = "4545";
+
+    AmbariComponent ac = EasyMock.createNiceMock(AmbariComponent.class);
+    List<String> hostNames = Arrays.asList("host1", "host2");
+    EasyMock.expect(ac.getHostNames()).andReturn(hostNames).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("hive.server2.thrift.http.port")).andReturn(PORT).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("hive.server2.transport.mode")).andReturn(transportMode).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("hive.server2.http.endpoint")).andReturn(endpointPath).anyTimes();
+    EasyMock.replay(ac);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getComponent(componentName)).andReturn(ac).anyTimes();
+    EasyMock.replay(cluster);
+
+    SparkThriftServerUIServiceURLCreator c = new SparkThriftServerUIServiceURLCreator();
+    c.init(cluster);
+    List<String> urls = c.create("THRIFTSERVERUI", null);
+    assertNotNull(urls);
+
+    if ("http".equalsIgnoreCase(transportMode)) {
+      assertFalse(urls.isEmpty());
+      assertEquals(2, urls.size());
+      assertEquals("http://host1:" + PORT + (endpointPath != null ? "/" + endpointPath : ""), urls.get(0));
+      assertEquals("http://host2:" + PORT + (endpointPath != null ? "/" + endpointPath : ""), urls.get(1));
+    } else {
+      assertTrue(urls.isEmpty());
+    }
   }
 
 
