@@ -24,6 +24,12 @@
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
         </route>
         <route path="/sparkhistory/**?**"/>
+        <route path="/sparkhistory/static/historypage.js">
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/historypage" to="response.body"/>
+        </route>
+        <route path="/sparkhistory/static/historypage-template.html">
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/historypage-template" to="response.body"/>
+        </route>
         <route path="/sparkhistory/history/**?**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers" to="response.headers"/>
         </route>

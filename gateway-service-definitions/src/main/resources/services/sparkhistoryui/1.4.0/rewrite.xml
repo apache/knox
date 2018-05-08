@@ -53,7 +53,7 @@
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/sorttable" pattern="/static/sorttable.js">
     <rewrite template="{$frontend[url]}/sparkhistory/static/sorttable.js"/>
   </rule>
-  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/jquery" pattern="/static/{jquery=jquery*.min.js}">
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/jquery" pattern="/static/{jquery=jquery*}">
     <rewrite template="{$frontend[url]}/sparkhistory/static/{jquery}"/>
   </rule>
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/initialize" pattern="/static/initialize-tooltips.js">
@@ -62,6 +62,28 @@
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/table" pattern="/static/table.js">
     <rewrite template="{$frontend[url]}/sparkhistory/static/table.js"/>
   </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/historypage-common" pattern="/static/historypage-common.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/historypage-common.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/dataTables" pattern="/static/{dataTables=dataTables*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{dataTables}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/jsonFormatter" pattern="/static/{jsonFormatter=jsonFormatter*}">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/{jsonFormatter}"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/utils" pattern="/static/utils.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/utils.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/historypage" pattern="/static/historypage.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/historypage.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/log-view" pattern="/static/log-view.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/log-view.js"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/webui" pattern="/static/webui.js">
+    <rewrite template="{$frontend[url]}/sparkhistory/static/webui.js"/>
+  </rule>
+
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/additional" pattern="/static/additional-metrics.js">
     <rewrite template="{$frontend[url]}/sparkhistory/static/additional-metrics.js"/>
   </rule>
@@ -108,6 +130,34 @@
   <filter name="SPARKHISTORYUI/sparkhistory/outbound/rqheaders">
     <content type="application/x-http-headers">
       <apply path="X-Forwarded-Context" rule="SPARKHISTORYUI/sparkhistory/outbound/rqheaders/xfc"/>
+    </content>
+  </filter>
+
+  <!-- re-write rules for historypage-template page-->
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/uiroot">
+    <rewrite template="{$frontend[url]}/sparkhistory"/>
+  </rule>
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/historypage-template">
+    <content type="*/html">
+      <apply path="\{\{uiroot\}\}" rule="SPARKHISTORYUI/sparkhistory/outbound/uiroot"/>
+    </content>
+  </filter>
+
+  <!-- re-write rules for historypage.js-->
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/historypage/api">
+    <rewrite template="{$frontend[url]}/sparkhistory/api"/>
+  </rule>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/historypage/static">
+    <rewrite template="{$frontend[url]}/sparkhistory/static"/>
+  </rule>
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/historypage">
+    <content type="*/x-javascript">
+      <apply path="api" rule="SPARKHISTORYUI/sparkhistory/outbound/historypage/api"/>
+      <apply path="static" rule="SPARKHISTORYUI/sparkhistory/outbound/historypage/static"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="api" rule="SPARKHISTORYUI/sparkhistory/outbound/historypage/api"/>
+      <apply path="static" rule="SPARKHISTORYUI/sparkhistory/outbound/historypage/static"/>
     </content>
   </filter>
 </rules>
