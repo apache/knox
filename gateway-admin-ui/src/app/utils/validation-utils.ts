@@ -48,6 +48,8 @@ export class ParsedURL {
 
 export class ValidationUtils {
 
+  private static VALID_NAME_REGEXP: RegExp = new RegExp('^[\\w\\d-_]*$')
+
   private static DN_TEMPLATE_REGEXP: RegExp =
     new RegExp('(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
       '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*")' +
@@ -115,6 +117,9 @@ export class ValidationUtils {
     return isValid;
   }
 
+  static isValidResourceName(name: string): boolean {
+    return ValidationUtils.isValidString(name) && ValidationUtils.VALID_NAME_REGEXP.test(name);
+  }
 
   static isValidURL(url: string): boolean {
     let isValid: boolean = false;

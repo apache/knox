@@ -185,21 +185,29 @@ export class NewDescWizardComponent implements OnInit {
     return isValid;
   }
 
+  isMissingDescriptorName(): boolean {
+    return !ValidationUtils.isValidString(this.descriptorName);
+  }
+
   isValidDescriptorName(): boolean {
     let isValid: boolean = false;
 
-    if (this.descriptorName) {
-      isValid = ValidationUtils.isValidString(this.descriptorName);
+    if (!this.isMissingDescriptorName()) {
+      isValid = ValidationUtils.isValidResourceName(this.descriptorName);
     }
 
     return isValid;
   }
 
+  isMissingProviderConfig(): boolean {
+    return (!this.descriptor || !ValidationUtils.isValidString(this.descriptor.providerConfig));
+  }
+
   isValidProviderConfig(): boolean {
     let isValid: boolean = false;
 
-    if (this.descriptor.providerConfig) {
-      isValid = ValidationUtils.isValidString(this.descriptor.providerConfig);
+    if (!this.isMissingProviderConfig()) {
+      isValid = ValidationUtils.isValidResourceName(this.descriptor.providerConfig);
     }
 
     return isValid;

@@ -22,6 +22,7 @@ import { ResourceService } from "./resource/resource.service";
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
+import {ValidationUtils} from "./utils/validation-utils";
 
 @Component({
     selector: 'topology-detail',
@@ -65,7 +66,7 @@ import 'brace/mode/xml';
          </bs-modal-body>
          <bs-modal-footer>
            <button type="button" class="btn btn-default btn-sm" data-dismiss="duplicateModal" (click)="duplicateModal.dismiss()">Cancel</button>
-           <button type="button" class="btn btn-primary btn-sm" [disabled]="!newTopologyName" (click)="duplicateModal.close()">Ok</button>
+           <button type="button" class="btn btn-primary btn-sm" [disabled]="!isValidNewTopologyName()" (click)="duplicateModal.close()">Ok</button>
          </bs-modal-footer>
        </bs-modal>
        <bs-modal (onClose)="deleteTopology()" #deleteConfirmModal>
@@ -146,6 +147,10 @@ export class TopologyDetailComponent implements OnInit {
               this.topologyService.getTopology(this.topology.href).then( content => this.topologyContent = content).then(() => this.makeReadOnly(this.topologyContent, 'generated') );
             }
         }
+    }
+
+    isValidNewTopologyName(): boolean {
+      return ValidationUtils.isValidResourceName(this.newTopologyName);
     }
 
     /*

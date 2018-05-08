@@ -31,6 +31,7 @@ import {OrderedParamContainer} from "./ordered-param-container";
 import {HostMapProviderWizard} from "./hostmap-provider-wizard";
 import {ProviderContributorWizard} from "./ProviderContributorWizard";
 import {WebAppSecurityWizard} from "./webappsec-wizard";
+import {ValidationUtils} from "../utils/validation-utils";
 
 
 @Component({
@@ -74,7 +75,7 @@ export class ProviderConfigWizardComponent implements OnInit {
 
   private step: number = 0;
 
-  name: String = '';
+  name: string = '';
 
   providers: Array<ProviderConfig> = [];
 
@@ -350,6 +351,10 @@ export class ProviderConfigWizardComponent implements OnInit {
     }
 
     return result;
+  }
+
+  isValidProviderConfigName(): boolean {
+    return ValidationUtils.isValidResourceName(this.name);
   }
 
   isPasswordParam(name: string) {

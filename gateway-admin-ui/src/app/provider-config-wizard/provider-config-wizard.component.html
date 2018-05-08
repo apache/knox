@@ -17,7 +17,10 @@
                        size="60"
                        [(ngModel)]="name">
               <span *ngIf="field.errors?.required" style="color: red">
-                &nbsp;A provider configuration name is required.
+                &nbsp;required
+              </span>
+              <span *ngIf="!field.errors?.required && !isValidProviderConfigName()" style="color: red">
+                &nbsp;invalid
               </span>
             </td>
           </tr>
