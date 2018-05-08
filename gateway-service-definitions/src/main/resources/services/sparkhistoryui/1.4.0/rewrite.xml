@@ -90,6 +90,10 @@
       <rewrite template="{$frontend[url]}/sparkhistory/history/{**}/jobs/"/>
     </match>
   </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/outbound/rqheaders/xfc">
+    <match pattern="{**}"/>
+    <rewrite template="{**}/sparkhistoryui" />
+  </rule>
 
   <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers">
     <content type="application/x-http-headers">
@@ -99,6 +103,11 @@
   <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs">
     <content type="application/x-http-headers">
       <apply path="Location" rule="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs/location"/>
+    </content>
+  </filter>
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/rqheaders">
+    <content type="application/x-http-headers">
+      <apply path="X-Forwarded-Context" rule="SPARKHISTORYUI/sparkhistory/outbound/rqheaders/xfc"/>
     </content>
   </filter>
 </rules>

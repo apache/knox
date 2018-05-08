@@ -17,8 +17,12 @@
 -->
 <service role="SPARKHISTORYUI" name="sparkhistory" version="1.4.0">
     <routes>
-        <route path="/sparkhistory/"/>
-        <route path="/sparkhistory/**"/>
+        <route path="/sparkhistory/">
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
+        </route>
+        <route path="/sparkhistory/**">
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
+        </route>
         <route path="/sparkhistory/**?**"/>
         <route path="/sparkhistory/history/**?**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers" to="response.headers"/>
