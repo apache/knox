@@ -595,4 +595,34 @@
         </properties>
     </service>
 
+    <service name="LOGSEARCH">
+        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <properties>
+            <property name="HOST">
+                <component>LOGSEARCH_SERVER</component>
+                <hostname/>
+            </property>
+            <property name="SCHEME">
+                <component>LOGSEARCH_SERVER</component>
+                <config-property>logsearch.protocol</config-property>
+            </property>
+            <property name="HTTP_PORT">
+                <component>LOGSEARCH_SERVER</component>
+                <config-property>logsearch.http.port</config-property>
+            </property>
+            <property name="HTTPS_PORT">
+                <component>LOGSEARCH_SERVER</component>
+                <config-property>logsearch.https.port</config-property>
+            </property>
+            <property name="PORT">
+                <config-property>
+                    <if property="SCHEME" value="https">
+                        <then>HTTPS_PORT</then>
+                        <else>HTTP_PORT</else>
+                    </if>
+                </config-property>
+            </property>
+        </properties>
+    </service>
+
 </service-discovery-url-mappings>

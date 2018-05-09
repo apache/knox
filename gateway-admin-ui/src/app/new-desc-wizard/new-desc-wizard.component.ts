@@ -36,6 +36,7 @@ export class NewDescWizardComponent implements OnInit {
                                                  'JOBTRACKER',
                                                  'JOBHISTORYUI',
                                                  'LIVYSERVER',
+                                                 'LOGSEARCH',
                                                  'NAMENODE',
                                                  'OOZIE',
                                                  'OOZIEUI',
