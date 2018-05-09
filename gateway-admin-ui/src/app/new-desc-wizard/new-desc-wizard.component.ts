@@ -224,8 +224,8 @@ export class NewDescWizardComponent implements OnInit {
   }
 
   isValidDiscoveryCluster(): boolean {
-    if (this.descriptor.discoveryAddress) {
-      return (ValidationUtils.isValidString(this.descriptor.discoveryCluster));
+    if (this.descriptor.discoveryCluster) {
+      return (ValidationUtils.isValidResourceName(this.descriptor.discoveryCluster));
     } else {
       return true;
     }
