@@ -815,7 +815,6 @@ public class UrlRewriteServletFilterTest {
   public void testResponseHtmlBodyRewritePrefixFunctionTestPrefix() throws Exception {
 
     Map<String,String> initParams = new HashMap<>();
-    initParams.put( "response.body", "test-filter-6" );
     setUp( initParams );
 
     String responseHtml = "<html><div src=\"'components/navbar/navbar.html?v=1496201914075\"></div></html>";
@@ -844,6 +843,87 @@ public class UrlRewriteServletFilterTest {
     assertThat(content,  is(responseHtmlOne));
 
   }
+
+  /**
+   * Test the postfix function
+   * @since 1.1.0
+   * KNOX-1305
+   */
+  @Test
+  public void testFunctionTestPostfix() throws Exception {
+
+    Map<String,String> initParams = new HashMap<>();
+    initParams.put( "response.headers", "test-filter-6" );
+    setUp( initParams );
+
+    String locationHeader = "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=http://localhost:20070/index.html&doAs=anonymous";
+    String responseHtml = "<html>Hello There !</html>";
+    String expectedLocationHeader = "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=http%3A%2F%2F0.0.0.0%3A0%2Fsparkhistory%2F";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "application/html" )
+        .header("Location", locationHeader )
+        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Content-Type", "application/html" );
+
+    // Execute the request.
+    response = TestUtils.execute( server, request );
+
+    assertThat( response.getStatus(), is( 200 ) );
+    String content = response.get("Location");
+
+    assertThat(content,  is(expectedLocationHeader));
+  }
+
+  /**
+   * Test the infix function
+   * @since 1.1.0
+   * KNOX-1305
+   */
+  @Test
+  public void testFunctionTestInfix() throws Exception {
+
+    Map<String,String> initParams = new HashMap<>();
+    initParams.put( "response.headers", "test-filter-6" );
+    setUp( initParams );
+
+    String customHeader = "https://localhost:8443/gateway/sandbox/?query=http://localhost:20070";
+    String responseHtml = "<html>Hello There !</html>";
+    String expectedCustomHeader = "https://localhost:8443/gateway/sandbox/?query=%27http%3A%2F%2F0.0.0.0%3A0%2Fsparkhistory%2F%27";
+
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "application/html" )
+        .header("CustomHeader", customHeader )
+        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Content-Type", "application/html" );
+
+    // Execute the request.
+    response = TestUtils.execute( server, request );
+
+    assertThat( response.getStatus(), is( 200 ) );
+    String content = response.get("CustomHeader");
+
+    assertThat(content,  is(expectedCustomHeader));
+  }
+
 
 
   /**

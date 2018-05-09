@@ -19,3 +19,5 @@
 org.apache.knox.gateway.filter.rewrite.impl.FrontendFunctionProcessor
 org.apache.knox.gateway.filter.rewrite.impl.html.HtmlImportFunctionProcessor
 org.apache.knox.gateway.filter.rewrite.impl.html.HtmlPrefixProcessor
+org.apache.knox.gateway.filter.rewrite.impl.html.HtmlPostfixProcessor
+org.apache.knox.gateway.filter.rewrite.impl.html.HtmlInfixProcessor

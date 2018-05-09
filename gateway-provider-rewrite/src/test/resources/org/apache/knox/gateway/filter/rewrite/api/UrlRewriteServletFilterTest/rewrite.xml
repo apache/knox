@@ -62,6 +62,18 @@
         <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}?{**}"/>
     </rule>
 
+    <!-- HTML postfix attribute tests, since 1.1.0 -->
+    <rule dir="OUT" name="test-rule-html-postfix-attribute/1" >
+        <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v1}/{websso}?originalUrl={**}"/>
+        <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v1}/{websso}?originalUrl={$postfix[url,/sparkhistory/]}"/>
+    </rule>
+
+    <!-- HTML infix attribute tests, since 1.1.0 -->
+    <rule dir="OUT" name="test-rule-html-infix-attribute/1" >
+        <match pattern="{scheme}://{host}:{port}/{gateway}/{sandbox}/?query={**}"/>
+        <rewrite template="{scheme}://{host}:{port}/{gateway}/{sandbox}/?query={$infix[&#39;,url,/sparkhistory/&#39;]}"/>
+    </rule>
+
     <filter name="test-filter-1">
         <content type="application/json">
             <apply path="$.url" rule="test-rule-1"/>
@@ -103,6 +115,13 @@
     <filter name="test-filter-5">
         <content type="*/html">
             <apply path="(@import)+ .*css.*" rule="test-rule-html-import-attribute"/>
+        </content>
+    </filter>
+
+    <filter name="test-filter-6">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="test-rule-html-postfix-attribute/1"/>
+            <apply path="CustomHeader" rule="test-rule-html-infix-attribute/1"/>
         </content>
     </filter>
 

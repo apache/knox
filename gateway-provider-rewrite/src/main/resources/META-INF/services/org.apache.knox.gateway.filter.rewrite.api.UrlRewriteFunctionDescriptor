@@ -19,3 +19,5 @@
 org.apache.knox.gateway.filter.rewrite.api.FrontendFunctionDescriptor
 org.apache.knox.gateway.filter.rewrite.impl.html.HtmlImportFunctionDescriptor
 org.apache.knox.gateway.filter.rewrite.impl.html.HtmlPrefixDescriptor
+org.apache.knox.gateway.filter.rewrite.impl.html.HtmlPostfixDescriptor
+org.apache.knox.gateway.filter.rewrite.impl.html.HtmlInfixDescriptor
