@@ -20,6 +20,7 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.easymock.EasyMock;
@@ -27,6 +28,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -66,6 +69,167 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
 
 //        printServiceURLs(cluster);
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithDefaultAddress() throws Exception {
+        final String discoveryAddress = "http://ambarihost:8080";
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
+                .andReturn(discoveryAddress.toCharArray())
+                .anyTimes();
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
+                .andReturn(clusterName.toCharArray())
+                .anyTimes();
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, clusterName);
+        assertNotNull(cluster);
+        assertEquals(clusterName, cluster.getName());
+        assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
+        assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithDefaultClusterName() throws Exception {
+        final String discoveryAddress = "http://ambarihost:8080";
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
+                .andReturn(discoveryAddress.toCharArray())
+                .anyTimes();
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
+                .andReturn(clusterName.toCharArray())
+                .anyTimes();
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getAddress()).andReturn(discoveryAddress).anyTimes();
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, null);
+        assertNotNull(cluster);
+        assertEquals(clusterName, cluster.getName());
+        assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
+        assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithDefaultAddressAndClusterName() throws Exception {
+        final String discoveryAddress = "http://ambarihost:8080";
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
+                .andReturn(discoveryAddress.toCharArray())
+                .anyTimes();
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
+                .andReturn(clusterName.toCharArray())
+                .anyTimes();
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, null);
+        assertNotNull(cluster);
+        assertEquals(clusterName, cluster.getName());
+        assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
+        assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithMissingAddressAndClusterName() throws Exception {
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, null);
+        assertNull(cluster);
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithMissingAddress() throws Exception {
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, clusterName);
+        assertNull(cluster);
+    }
+
+
+    @Test
+    public void testSingleClusterDiscoveryWithMissingClusterName() throws Exception {
+        final String discoveryAddress = "http://ambarihost:8080";
+        final String clusterName = "testCluster";
+
+        AliasService as = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
+                .andReturn(discoveryAddress.toCharArray())
+                .anyTimes();
+        EasyMock.replay(as);
+
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
+        EasyMock.replay(sdc);
+
+        ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, null);
+        assertNull(cluster);
     }
 
 
@@ -204,6 +368,21 @@ public class AmbariServiceDiscoveryTest {
 
         TestAmbariServiceDiscovery(String clusterName) {
             super(new TestRESTInvoker(clusterName));
+        }
+
+        TestAmbariServiceDiscovery(String clusterName, AliasService aliasService) {
+            super(new TestRESTInvoker(clusterName));
+
+            // Try to set the AliasService member, which is normally injected at runtime
+            try {
+                Field f = getClass().getSuperclass().getDeclaredField("aliasService");
+                if (f != null) {
+                    f.setAccessible(true);
+                    f.set(this, aliasService);
+                }
+            } catch (Exception e) {
+                //
+            }
         }
 
     }

@@ -110,13 +110,9 @@ public class SimpleDescriptorHandler {
         Map<String, Map<String, String>> serviceParams = new HashMap<>();
         Map<String, List<String>> serviceURLs = new HashMap<>();
 
-        ServiceDiscovery.Cluster cluster = null;
-        if (desc.getDiscoveryAddress() != null) {
-            // Discover the cluster details required by the descriptor
-            cluster = performDiscovery(config, desc, gatewayServices);
-            if (cluster == null) {
-                log.failedToDiscoverClusterServices(desc.getClusterName());
-            }
+        ServiceDiscovery.Cluster cluster = performDiscovery(config, desc, gatewayServices);
+        if (cluster == null) {
+            log.failedToDiscoverClusterServices(desc.getName());
         }
 
         for (SimpleDescriptor.Service descService : desc.getServices()) {

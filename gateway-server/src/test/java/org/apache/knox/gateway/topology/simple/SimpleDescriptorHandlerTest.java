@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.topology.simple;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscoveryType;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
 import java.io.ByteArrayInputStream;
@@ -485,6 +486,7 @@ public class SimpleDescriptorHandlerTest {
         // Mock out the simple descriptor
         SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
         EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn("DUMMY").anyTimes();
         EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
         EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(null).anyTimes();
         List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();

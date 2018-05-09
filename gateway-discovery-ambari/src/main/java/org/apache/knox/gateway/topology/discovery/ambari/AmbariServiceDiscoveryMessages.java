@@ -73,6 +73,19 @@ public interface AmbariServiceDiscoveryMessages {
 
 
     @Message(level = MessageLevel.ERROR,
+            text = "No address for Ambari service discovery has been configured.")
+    void missingDiscoveryAddress();
+
+    @Message(level = MessageLevel.ERROR,
+        text = "No cluster for Ambari service discovery has been configured.")
+    void missingDiscoveryCluster();
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Encountered an error attempting to determine the value for alias {0} : {1}")
+    void aliasServiceError(final String alias, final String error);
+
+
+    @Message(level = MessageLevel.ERROR,
              text = "Encountered an error attempting to determine the user for alias {0} : {1}")
     void aliasServiceUserError(final String alias, final String error);
 

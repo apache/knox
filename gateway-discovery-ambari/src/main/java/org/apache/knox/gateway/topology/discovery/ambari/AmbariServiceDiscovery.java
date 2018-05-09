@@ -33,6 +33,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.GatewayService;
@@ -62,6 +63,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private static final String GATEWAY_SERVICES_ACCESSOR_METHOD = "getGatewayServices";
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
+
+    private static final String DEFAULT_DISCOVERY_ADDRESS_ALIAS = "ambari.discovery.address";
+    private static final String DEFAULT_DISCOVERY_CLUSTER_ALIAS = "ambari.discovery.cluster";
 
     // Map of component names to service configuration types
     private static Map<String, String> componentServiceConfigs = new HashMap<>();
@@ -219,89 +223,134 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
     @Override
     public Cluster discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig config, String clusterName) {
-        AmbariCluster cluster = new AmbariCluster(clusterName);
-
-        Map<String, String> serviceComponents = new HashMap<>();
-
-        init(gatewayConfig);
+        AmbariCluster cluster = null;
 
         String discoveryAddress = config.getAddress();
         String discoveryUser = config.getUser();
         String discoveryPwdAlias = config.getPasswordAlias();
 
-        Map<String, List<String>> componentHostNames = new HashMap<>();
-        String hostRolesURL = String.format("%s" + AMBARI_HOSTROLES_URI, discoveryAddress, clusterName);
-        JSONObject hostRolesJSON = restClient.invoke(hostRolesURL, discoveryUser, discoveryPwdAlias);
-        if (hostRolesJSON != null) {
-            // Process the host roles JSON
-            JSONArray items = (JSONArray) hostRolesJSON.get("items");
-            for (Object obj : items) {
-                JSONArray components = (JSONArray) ((JSONObject) obj).get("components");
-                for (Object component : components) {
-                    JSONArray hostComponents = (JSONArray) ((JSONObject) component).get("host_components");
-                    for (Object hostComponent : hostComponents) {
-                        JSONObject hostRoles = (JSONObject) ((JSONObject) hostComponent).get("HostRoles");
-                        String serviceName = (String) hostRoles.get("service_name");
-                        String componentName = (String) hostRoles.get("component_name");
+        // Handle missing discovery address value with the default alias if it has been defined
+        if (discoveryAddress == null || discoveryAddress.isEmpty()) {
+            if (this.aliasService != null) {
+                try {
+                    char[] defaultAddress =
+                                this.aliasService.getPasswordFromAliasForGateway(DEFAULT_DISCOVERY_ADDRESS_ALIAS);
+                    if (defaultAddress != null) {
+                        discoveryAddress = new String(defaultAddress);
+                    }
+                } catch (AliasServiceException e) {
+                    log.aliasServiceError(DEFAULT_DISCOVERY_ADDRESS_ALIAS, e.getLocalizedMessage());
+                }
+            }
 
-                        serviceComponents.put(componentName, serviceName);
+            // If no default address could be determined
+            if (discoveryAddress == null) {
+                log.missingDiscoveryAddress();
+            }
+        }
 
-                        // Assuming public host name is more applicable than host_name
-                        String hostName = (String) hostRoles.get("public_host_name");
-                        if (hostName == null) {
-                            // Some (even slightly) older versions of Ambari/HDP do not return public_host_name,
-                            // so fall back to host_name in those cases.
-                            hostName = (String) hostRoles.get("host_name");
-                        }
+        // Handle missing discovery cluster value with the default alias if it has been defined
+        if (clusterName == null || clusterName.isEmpty()) {
+            if (this.aliasService != null) {
+                try {
+                    char[] defaultCluster =
+                                this.aliasService.getPasswordFromAliasForGateway(DEFAULT_DISCOVERY_CLUSTER_ALIAS);
+                    if (defaultCluster != null) {
+                        clusterName = new String(defaultCluster);
+                    }
+                } catch (AliasServiceException e) {
+                    log.aliasServiceError(DEFAULT_DISCOVERY_CLUSTER_ALIAS, e.getLocalizedMessage());
+                }
+            }
 
-                        if (hostName != null) {
-                            log.discoveredServiceHost(serviceName, hostName);
-                            if (!componentHostNames.containsKey(componentName)) {
-                                componentHostNames.put(componentName, new ArrayList<>());
+            // If no default cluster could be determined
+            if (clusterName == null) {
+                log.missingDiscoveryCluster();
+            }
+        }
+
+        // There must be a discovery address and cluster or discovery cannot be performed
+        if (discoveryAddress != null && clusterName != null) {
+            cluster = new AmbariCluster(clusterName);
+
+            Map<String, String> serviceComponents = new HashMap<>();
+
+            init(gatewayConfig);
+
+            Map<String, List<String>> componentHostNames = new HashMap<>();
+            String hostRolesURL = String.format("%s" + AMBARI_HOSTROLES_URI, discoveryAddress, clusterName);
+            JSONObject hostRolesJSON = restClient.invoke(hostRolesURL, discoveryUser, discoveryPwdAlias);
+            if (hostRolesJSON != null) {
+                // Process the host roles JSON
+                JSONArray items = (JSONArray) hostRolesJSON.get("items");
+                for (Object obj : items) {
+                    JSONArray components = (JSONArray) ((JSONObject) obj).get("components");
+                    for (Object component : components) {
+                        JSONArray hostComponents = (JSONArray) ((JSONObject) component).get("host_components");
+                        for (Object hostComponent : hostComponents) {
+                            JSONObject hostRoles = (JSONObject) ((JSONObject) hostComponent).get("HostRoles");
+                            String serviceName = (String) hostRoles.get("service_name");
+                            String componentName = (String) hostRoles.get("component_name");
+
+                            serviceComponents.put(componentName, serviceName);
+
+                            // Assuming public host name is more applicable than host_name
+                            String hostName = (String) hostRoles.get("public_host_name");
+                            if (hostName == null) {
+                                // Some (even slightly) older versions of Ambari/HDP do not return public_host_name,
+                                // so fall back to host_name in those cases.
+                                hostName = (String) hostRoles.get("host_name");
                             }
-                            componentHostNames.get(componentName).add(hostName);
+
+                            if (hostName != null) {
+                                log.discoveredServiceHost(serviceName, hostName);
+                                if (!componentHostNames.containsKey(componentName)) {
+                                    componentHostNames.put(componentName, new ArrayList<>());
+                                }
+                                componentHostNames.get(componentName).add(hostName);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Service configurations
-        Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations =
-                                                        ambariClient.getActiveServiceConfigurations(discoveryAddress,
-                                                                                                    clusterName,
-                                                                                                    discoveryUser,
-                                                                                                    discoveryPwdAlias);
-        for (Entry<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfiguration : serviceConfigurations.entrySet()) {
-            for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfiguration.getValue().entrySet()) {
-                cluster.addServiceConfiguration(serviceConfiguration.getKey(), serviceConfig.getKey(), serviceConfig.getValue());
-            }
-        }
-
-        // Construct the AmbariCluster model
-        for (String componentName : serviceComponents.keySet()) {
-            String serviceName = serviceComponents.get(componentName);
-            List<String> hostNames = componentHostNames.get(componentName);
-
-            Map<String, AmbariCluster.ServiceConfiguration> configs = serviceConfigurations.get(serviceName);
-            String configType = componentServiceConfigs.get(componentName);
-            if (configType != null) {
-                AmbariCluster.ServiceConfiguration svcConfig = configs.get(configType);
-                if (svcConfig != null) {
-                    AmbariComponent c = new AmbariComponent(componentName,
-                                                            svcConfig.getVersion(),
-                                                            clusterName,
-                                                            serviceName,
-                                                            hostNames,
-                                                            svcConfig.getProperties());
-                    cluster.addComponent(c);
+            // Service configurations
+            Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations =
+                ambariClient.getActiveServiceConfigurations(discoveryAddress,
+                    clusterName,
+                    discoveryUser,
+                    discoveryPwdAlias);
+            for (Entry<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfiguration : serviceConfigurations.entrySet()) {
+                for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfiguration.getValue().entrySet()) {
+                    cluster.addServiceConfiguration(serviceConfiguration.getKey(), serviceConfig.getKey(), serviceConfig.getValue());
                 }
             }
-        }
 
-        if (configChangeMonitor != null) {
-            // Notify the cluster config monitor about these cluster configuration details
-            configChangeMonitor.addClusterConfigVersions(cluster, config);
+            // Construct the AmbariCluster model
+            for (String componentName : serviceComponents.keySet()) {
+                String serviceName = serviceComponents.get(componentName);
+                List<String> hostNames = componentHostNames.get(componentName);
+
+                Map<String, AmbariCluster.ServiceConfiguration> configs = serviceConfigurations.get(serviceName);
+                String configType = componentServiceConfigs.get(componentName);
+                if (configType != null) {
+                    AmbariCluster.ServiceConfiguration svcConfig = configs.get(configType);
+                    if (svcConfig != null) {
+                        AmbariComponent c = new AmbariComponent(componentName,
+                            svcConfig.getVersion(),
+                            clusterName,
+                            serviceName,
+                            hostNames,
+                            svcConfig.getProperties());
+                        cluster.addComponent(c);
+                    }
+                }
+            }
+
+            if (configChangeMonitor != null) {
+                // Notify the cluster config monitor about these cluster configuration details
+                configChangeMonitor.addClusterConfigVersions(cluster, config);
+            }
         }
 
         return cluster;
