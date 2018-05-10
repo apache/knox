@@ -51,4 +51,12 @@
         <rewrite template="input-mock-scheme-2://input-mock-host-2:{port}/{path=**}" />
     </rule>
 
+    <rule name="service-1/test-rule-8" dir="OUT" pattern="/foo/{**}">
+        <rewrite template="/foo/service-1" />
+    </rule>
+
+    <rule name="service-2/test-rule-9" dir="OUT" pattern="/foo/bar">
+        <rewrite template="/foo/service-2" />
+    </rule>
+
 </rules>

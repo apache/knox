@@ -184,6 +184,26 @@ public class UrlRewriteProcessorTest {
         "Expect rewrite to contain the correct path.",
         outputUrl.toString(), is( "input-mock-scheme-2://input-mock-host-2:42/test-input-path" ) );
 
+    //Test the scenario where input could match two different rules
+    inputUrl = Parser.parseLiteral( "/foo/bar" );
+
+    roles.remove(0);
+    roles.add("service-1");
+    outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.OUT, null);
+
+    assertThat(
+            "Expect rewrite to contain the correct path.",
+            outputUrl.toString(), is( "/foo/service-1" ) );
+
+    roles.remove(0);
+    roles.add("service-2");
+
+    outputUrl = processor.rewrite( environment, inputUrl, UrlRewriter.Direction.OUT, null);
+
+    assertThat(
+            "Expect rewrite to contain the correct path.",
+            outputUrl.toString(), is( "/foo/service-2" ) );
+
     processor.destroy();
   }
 

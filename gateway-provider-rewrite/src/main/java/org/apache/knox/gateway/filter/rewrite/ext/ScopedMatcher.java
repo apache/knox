@@ -23,6 +23,7 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 /**
  * A simple extension to the matcher that takes into account scopes for rules along with the templates themselves.
@@ -33,12 +34,11 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
 
   public static final String GLOBAL_SCOPE = "GLOBAL";
 
-  private List<Matcher<UrlRewriteRuleProcessorHolder>> matchers;
+  private HashMap<String, Matcher<UrlRewriteRuleProcessorHolder>> matchers;
 
   public ScopedMatcher() {
     super();
-    matchers = new ArrayList<>();
-    matchers.add(new Matcher<UrlRewriteRuleProcessorHolder>());
+    matchers = new HashMap<>();
   }
 
   @Override
@@ -59,7 +59,7 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
 
   public Match match(Template input, String scope) {
     List<Match> matches = new ArrayList<>();
-    for (Matcher<UrlRewriteRuleProcessorHolder> matcher : matchers) {
+    for (Matcher<UrlRewriteRuleProcessorHolder> matcher : matchers.values()) {
       Match match = matcher.match(input);
       if (match != null) {
         matches.add(match);
@@ -113,17 +113,11 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
    * @return a matcher
    */
   private Matcher<UrlRewriteRuleProcessorHolder> getMatcher(Template template, UrlRewriteRuleProcessorHolder holder) {
-    for (Matcher<UrlRewriteRuleProcessorHolder> matcher : matchers) {
-      UrlRewriteRuleProcessorHolder matchersHolder = matcher.get(template);
-      if (matchersHolder == null) {
-        return matcher;
-      } else if (holder.getScope() == null && matchersHolder.getScope() == null) {
-        return matcher;
-      }
+    String scope = holder.getScope();
+    if (!matchers.containsKey(scope)) {
+      matchers.put(scope, new Matcher<UrlRewriteRuleProcessorHolder>());
     }
-    Matcher<UrlRewriteRuleProcessorHolder> matcher = new Matcher<>();
-    matchers.add(matcher);
-    return matcher;
-  }
 
+    return matchers.get(scope);
+  }
 }
