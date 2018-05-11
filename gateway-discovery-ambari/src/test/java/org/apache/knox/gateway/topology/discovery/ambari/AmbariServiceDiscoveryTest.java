@@ -77,18 +77,11 @@ public class AmbariServiceDiscoveryTest {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "testCluster";
 
-        AliasService as = EasyMock.createNiceMock(AliasService.class);
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
-                .andReturn(discoveryAddress.toCharArray())
-                .anyTimes();
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
-                .andReturn(clusterName.toCharArray())
-                .anyTimes();
-        EasyMock.replay(as);
-
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getDefaultDiscoveryAddress()).andReturn(discoveryAddress).anyTimes();
+        EasyMock.expect(gc.getDefaultDiscoveryCluster()).andReturn(clusterName).anyTimes();
         EasyMock.replay(gc);
 
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
@@ -108,18 +101,11 @@ public class AmbariServiceDiscoveryTest {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "testCluster";
 
-        AliasService as = EasyMock.createNiceMock(AliasService.class);
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
-                .andReturn(discoveryAddress.toCharArray())
-                .anyTimes();
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
-                .andReturn(clusterName.toCharArray())
-                .anyTimes();
-        EasyMock.replay(as);
-
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getDefaultDiscoveryAddress()).andReturn(discoveryAddress).anyTimes();
+        EasyMock.expect(gc.getDefaultDiscoveryCluster()).andReturn(clusterName).anyTimes();
         EasyMock.replay(gc);
 
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
@@ -140,18 +126,11 @@ public class AmbariServiceDiscoveryTest {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "testCluster";
 
-        AliasService as = EasyMock.createNiceMock(AliasService.class);
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
-                .andReturn(discoveryAddress.toCharArray())
-                .anyTimes();
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.cluster"))
-                .andReturn(clusterName.toCharArray())
-                .anyTimes();
-        EasyMock.replay(as);
-
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getDefaultDiscoveryAddress()).andReturn(discoveryAddress).anyTimes();
+        EasyMock.expect(gc.getDefaultDiscoveryCluster()).andReturn(clusterName).anyTimes();
         EasyMock.replay(gc);
 
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
@@ -191,10 +170,7 @@ public class AmbariServiceDiscoveryTest {
     public void testSingleClusterDiscoveryWithMissingAddress() throws Exception {
         final String clusterName = "testCluster";
 
-        AliasService as = EasyMock.createNiceMock(AliasService.class);
-        EasyMock.replay(as);
-
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.replay(gc);
@@ -213,15 +189,10 @@ public class AmbariServiceDiscoveryTest {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "testCluster";
 
-        AliasService as = EasyMock.createNiceMock(AliasService.class);
-        EasyMock.expect(as.getPasswordFromAliasForGateway("ambari.discovery.address"))
-                .andReturn(discoveryAddress.toCharArray())
-                .anyTimes();
-        EasyMock.replay(as);
-
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName, as);
+        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getDefaultDiscoveryAddress()).andReturn(discoveryAddress).anyTimes();
         EasyMock.replay(gc);
 
         ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);

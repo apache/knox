@@ -33,7 +33,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.GatewayService;
@@ -63,9 +62,6 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private static final String GATEWAY_SERVICES_ACCESSOR_METHOD = "getGatewayServices";
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
-
-    private static final String DEFAULT_DISCOVERY_ADDRESS_ALIAS = "ambari.discovery.address";
-    private static final String DEFAULT_DISCOVERY_CLUSTER_ALIAS = "ambari.discovery.cluster";
 
     // Map of component names to service configuration types
     private static Map<String, String> componentServiceConfigs = new HashMap<>();
@@ -229,19 +225,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
         String discoveryUser = config.getUser();
         String discoveryPwdAlias = config.getPasswordAlias();
 
-        // Handle missing discovery address value with the default alias if it has been defined
+        // Handle missing discovery address value with the default if it has been defined
         if (discoveryAddress == null || discoveryAddress.isEmpty()) {
-            if (this.aliasService != null) {
-                try {
-                    char[] defaultAddress =
-                                this.aliasService.getPasswordFromAliasForGateway(DEFAULT_DISCOVERY_ADDRESS_ALIAS);
-                    if (defaultAddress != null) {
-                        discoveryAddress = new String(defaultAddress);
-                    }
-                } catch (AliasServiceException e) {
-                    log.aliasServiceError(DEFAULT_DISCOVERY_ADDRESS_ALIAS, e.getLocalizedMessage());
-                }
-            }
+            discoveryAddress = gatewayConfig.getDefaultDiscoveryAddress();
 
             // If no default address could be determined
             if (discoveryAddress == null) {
@@ -249,19 +235,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
         }
 
-        // Handle missing discovery cluster value with the default alias if it has been defined
+        // Handle missing discovery cluster value with the default if it has been defined
         if (clusterName == null || clusterName.isEmpty()) {
-            if (this.aliasService != null) {
-                try {
-                    char[] defaultCluster =
-                                this.aliasService.getPasswordFromAliasForGateway(DEFAULT_DISCOVERY_CLUSTER_ALIAS);
-                    if (defaultCluster != null) {
-                        clusterName = new String(defaultCluster);
-                    }
-                } catch (AliasServiceException e) {
-                    log.aliasServiceError(DEFAULT_DISCOVERY_CLUSTER_ALIAS, e.getLocalizedMessage());
-                }
-            }
+            clusterName = gatewayConfig.getDefaultDiscoveryCluster();
 
             // If no default cluster could be determined
             if (clusterName == null) {

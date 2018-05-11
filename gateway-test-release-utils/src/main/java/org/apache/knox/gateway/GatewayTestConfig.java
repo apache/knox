@@ -608,7 +608,17 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isGatewayServerHeaderEnabled() {
-	return false;
+	  return false;
+  }
+
+  @Override
+  public String getDefaultDiscoveryAddress() {
+    return null;
+  }
+
+  @Override
+  public String getDefaultDiscoveryCluster() {
+    return null;
   }
 
   @Override

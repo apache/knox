@@ -313,7 +313,21 @@ public interface GatewayConfig {
    * @return
    */
   boolean isGatewayServerHeaderEnabled();
-  
+
+  /**
+   * Determine the default address for discovering service endpoint details.
+   *
+   * @return A valid discovery source address, or null (because this property is optional).
+   */
+  String getDefaultDiscoveryAddress();
+
+  /**
+   * Determine the default target cluster for discovering service endpoint details.
+   *
+   * @return A valid cluster name, or null (because this property is optional).
+   */
+  String getDefaultDiscoveryCluster();
+
   /**
    *
    * @param type The type of cluster configuration monitor for which the interval should be returned.

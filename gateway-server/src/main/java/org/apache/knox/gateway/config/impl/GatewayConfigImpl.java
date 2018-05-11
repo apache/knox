@@ -234,6 +234,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS =
                                                   REMOTE_CONFIG_MONITOR_CLIENT_NAME + ".allowUnauthenticatedReadAccess";
 
+  /* @since 1.1.0 Default discovery configuration */
+  static final String DEFAULT_DISCOVERY_ADDRESS = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.address";
+  static final String DEFAULT_DISCOVERY_CLUSTER = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.cluster";
+
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
 
@@ -952,6 +956,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayServerHeaderEnabled() {
     return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "true"));
+  }
+
+  @Override
+  public String getDefaultDiscoveryAddress() {
+    return getVar(DEFAULT_DISCOVERY_ADDRESS, null);
+  }
+
+  @Override
+  public String getDefaultDiscoveryCluster() {
+    return getVar(DEFAULT_DISCOVERY_CLUSTER, null);
   }
 
   @Override
