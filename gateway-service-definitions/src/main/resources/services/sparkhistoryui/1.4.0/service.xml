@@ -19,9 +19,11 @@
     <routes>
         <route path="/sparkhistory/">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers/sso/filter" to="response.headers"/>
         </route>
         <route path="/sparkhistory/**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers/sso/filter" to="response.headers"/>
         </route>
         <route path="/sparkhistory/**?**"/>
         <route path="/sparkhistory/static/historypage.js">

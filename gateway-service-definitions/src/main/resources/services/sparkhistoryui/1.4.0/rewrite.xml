@@ -160,4 +160,15 @@
       <apply path="static" rule="SPARKHISTORYUI/sparkhistory/outbound/historypage/static"/>
     </content>
   </filter>
+
+  <!-- re-write rule for location when SHS redirects to Knox SSO login page -->
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/headers/location/sso">
+    <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={**}"/>
+    <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={$postfix[url,/sparkhistory/]}"/>
+  </rule>
+  <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers/sso/filter">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARKHISTORYUI/sparkhistory/outbound/headers/location/sso"/>
+    </content>
+  </filter>
 </rules>
