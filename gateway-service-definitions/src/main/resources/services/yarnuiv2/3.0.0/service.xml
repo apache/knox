@@ -56,7 +56,6 @@
         <rewrite apply="YARNUIV2/yarnuiv2/inbound/ws" to="request.url"/>
         <rewrite apply="YARNUIV2/yarnuiv2/headers/outbound" to="response.headers"/>
         <rewrite apply="YARNUIV2/yarnuiv2/outbound/mainpage" to="response.body"/>
-        <dispatch contributor-name="http-client" />
     </route>
     <!-- Resources -->
     <route path="/yarnuiv2/styles/**">
@@ -92,5 +91,5 @@
     </route>
     
   </routes>
-  <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch"/>
+  <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
 </service>
