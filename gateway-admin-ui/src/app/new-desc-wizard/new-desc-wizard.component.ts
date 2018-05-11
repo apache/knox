@@ -35,6 +35,8 @@ export class NewDescWizardComponent implements OnInit {
                                                  'HIVE',
                                                  'JOBTRACKER',
                                                  'JOBHISTORYUI',
+                                                 'KNOXSSO',
+                                                 'KNOXTOKEN',
                                                  'LIVYSERVER',
                                                  'LOGSEARCH',
                                                  'NAMENODE',
