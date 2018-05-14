@@ -40,6 +40,10 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.Marshaller;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.stream.StreamSource;
 
 @Provider
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -57,7 +61,13 @@ public class TopologyMarshaller implements MessageBodyWriter<Topology>, MessageB
   }
 
   @Override
-  public void writeTo(Topology instance, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+  public void writeTo(Topology                       instance,
+                      Class<?>                       type,
+                      Type                           genericType,
+                      Annotation[]                   annotations,
+                      MediaType                      mediaType,
+                      MultivaluedMap<String, Object> httpHeaders,
+                      OutputStream                   entityStream) throws IOException, WebApplicationException {
     try {
       Map<String, Object> properties = new HashMap<>(1);
       properties.put( JAXBContextProperties.MEDIA_TYPE, mediaType.toString());
@@ -75,26 +85,43 @@ public class TopologyMarshaller implements MessageBodyWriter<Topology>, MessageB
   ///
   @Override
   public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-    boolean readable = (type == Topology.class);
-    return readable;
+    return (type == Topology.class);
   }
 
   @Override
-  public Topology readFrom(Class<Topology> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+  public Topology readFrom(Class<Topology>                type,
+                           Type                           genericType,
+                           Annotation[]                   annotations,
+                           MediaType                      mediaType,
+                           MultivaluedMap<String, String> httpHeaders,
+                           InputStream                    entityStream) throws IOException, WebApplicationException {
+    Topology topology = null;
+
     try {
-      if(isReadable(type, genericType, annotations, mediaType)) {
+      if (isReadable(type, genericType, annotations, mediaType)) {
         Map<String, Object> properties = Collections.emptyMap();
         JAXBContext context = JAXBContext.newInstance(new Class[]{Topology.class}, properties);
-        InputStream is = entityStream;
+
         Unmarshaller u = context.createUnmarshaller();
         u.setProperty(UnmarshallerProperties.MEDIA_TYPE, mediaType.getType() + "/" + mediaType.getSubtype());
-        Topology topology = (Topology)u.unmarshal(is);
-        return topology;
+
+        if (mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+          // Safeguard against entity injection (KNOX-1308)
+          XMLInputFactory xif = XMLInputFactory.newFactory();
+          xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+          xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+          xif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
+          XMLStreamReader xsr = xif.createXMLStreamReader(new StreamSource(entityStream));
+          topology = (Topology) u.unmarshal(xsr);
+        } else {
+          topology = (Topology) u.unmarshal(entityStream);
+        }
       }
-    } catch (JAXBException e) {
+    } catch (XMLStreamException | JAXBException e) {
       throw new IOException(e);
     }
-    return null;
+
+    return topology;
   }
 
 }

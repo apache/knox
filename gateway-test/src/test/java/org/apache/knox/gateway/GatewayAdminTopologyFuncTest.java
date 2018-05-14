@@ -72,6 +72,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -730,6 +731,170 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutTopologyWithEntityInjection() throws Exception {
+    LOG_ENTER() ;
+
+    final String MALICIOUS_PARAM_NAME = "exposed";
+
+    final String XML_WITH_INJECTION =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+        "<!DOCTYPE foo [<!ENTITY xxeiltvf SYSTEM \"file:///etc/hosts\"> ]>\n" +
+        "<topology>\n" +
+        "    <gateway>\n" +
+        "        <provider>\n" +
+        "            <role>authentication</role>\n" +
+        "            <name>ShiroProvider</name>\n" +
+        "            <enabled>true</enabled>\n" +
+        "            <param>\n" +
+        "                <name>" + MALICIOUS_PARAM_NAME + "</name>\n" +
+        "                <value>&xxeiltvf;</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>sessionTimeout</name>\n" +
+        "                <value>30</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapRealm</name>\n" +
+        "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapContextFactory</name>\n" +
+        "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapRealm.contextFactory</name>\n" +
+        "                <value>$ldapContextFactory</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapRealm.userDnTemplate</name>\n" +
+        "                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapRealm.contextFactory.url</name>\n" +
+        "                <value>ldap://localhost:33389</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>\n" +
+        "                <value>simple</value>\n" +
+        "            </param>\n" +
+        "            <param>\n" +
+        "                <name>urls./**</name>\n" +
+        "                <value>authcBasic</value>\n" +
+        "            </param>\n" +
+        "        </provider>\n" +
+        "    </gateway>\n" +
+        "    <service>\n" +
+        "        <role>NAMENODE</role>\n" +
+        "        <url>hdfs://localhost:8020</url>\n" +
+        "    </service>\n" +
+        "</topology>";
+
+    String username = "admin";
+    String password = "admin-password";
+    String url = clusterUrl + "/api/v1/topologies/test-put-with-entity-injection";
+
+    // Should get a response with missing entity reference value because of the entity injection prevention safeguard
+    String XML_RESPONSE = given().auth().preemptive().basic(username, password)
+                                 .contentType(MediaType.APPLICATION_XML)
+                                 .header("Accept", MediaType.APPLICATION_XML)
+                                 .body(XML_WITH_INJECTION)
+                                 .then()
+                                 .statusCode(HttpStatus.SC_OK)
+                                 .when().put(url).getBody().asString();
+
+    Document doc = XmlUtils.readXml(new InputSource(new StringReader(XML_RESPONSE)));
+    assertNotNull(doc);
+
+    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param/name", containsString("exposed")));
+    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param[\"" + MALICIOUS_PARAM_NAME + "\"]/value", is("")));
+
+    LOG_EXIT();
+  }
+
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutTopologyWithEntityExpansion() throws Exception {
+    LOG_ENTER() ;
+
+    final String MALICIOUS_PARAM_NAME = "expanded";
+
+    final String XML_WITH_INJECTION =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<!DOCTYPE foo [<!ENTITY xeevowya0 \"b68et\"><!ENTITY xeevowya1 \"&xeevowya0;&xeevowya0;\"><!ENTITY xeevowya2 \"&xeevowya1;&xeevowya1;\"><!ENTITY xeevowya3 \"&xeevowya2;&xeevowya2;\">]>\n" +
+            "<topology>\n" +
+            "    <gateway>\n" +
+            "        <provider>\n" +
+            "            <role>authentication</role>\n" +
+            "            <name>ShiroProvider</name>\n" +
+            "            <enabled>true</enabled>\n" +
+            "            <param>\n" +
+            "                <name>" + MALICIOUS_PARAM_NAME + "</name>\n" +
+            "                <value>&xeevowya3;</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>sessionTimeout</name>\n" +
+            "                <value>30</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm</name>\n" +
+            "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapContextFactory</name>\n" +
+            "                <value>org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory</name>\n" +
+            "                <value>$ldapContextFactory</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.userDnTemplate</name>\n" +
+            "                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory.url</name>\n" +
+            "                <value>ldap://localhost:33389</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>\n" +
+            "                <value>simple</value>\n" +
+            "            </param>\n" +
+            "            <param>\n" +
+            "                <name>urls./**</name>\n" +
+            "                <value>authcBasic</value>\n" +
+            "            </param>\n" +
+            "        </provider>\n" +
+            "    </gateway>\n" +
+            "    <service>\n" +
+            "        <role>NAMENODE</role>\n" +
+            "        <url>hdfs://localhost:8020</url>\n" +
+            "    </service>\n" +
+            "</topology>";
+
+    String username = "admin";
+    String password = "admin-password";
+    String url = clusterUrl + "/api/v1/topologies/test-put-with-entity-injection";
+
+    // Should get a HTTP 500 response because of the entity injection prevention safeguard
+    String XML_RESPONSE = given().auth().preemptive().basic(username, password)
+                                 .contentType(MediaType.APPLICATION_XML)
+                                 .header("Accept", MediaType.APPLICATION_XML)
+                                 .body(XML_WITH_INJECTION)
+                                 .then()
+                                 .statusCode(HttpStatus.SC_OK)
+                                 .when().put(url).getBody().asString();
+
+    Document doc = XmlUtils.readXml(new InputSource(new StringReader(XML_RESPONSE)));
+    assertNotNull(doc);
+
+    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param/name", containsString("expanded")));
+    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param[\"" + MALICIOUS_PARAM_NAME + "\"]/value", is("")));
+
+    LOG_EXIT();
+  }
+
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testXForwardedHeaders() {
