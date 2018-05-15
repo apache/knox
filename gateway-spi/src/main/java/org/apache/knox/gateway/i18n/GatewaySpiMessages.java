@@ -88,6 +88,9 @@ public interface GatewaySpiMessages {
   @Message(level = MessageLevel.ERROR, text = "Invalid resource URI {0} : {1}")
   void invalidResourceURI(final String uri, final String reason, @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
+  @Message(level = MessageLevel.ERROR, text = "Invalid resource name: {0}")
+  void invalidResourceName(final String resourceName);
+
   @Message( level = MessageLevel.ERROR, text = "Topology {0} cannot be manually overwritten because it was generated from a simple descriptor." )
   void disallowedOverwritingGeneratedTopology(final String topologyName);
 

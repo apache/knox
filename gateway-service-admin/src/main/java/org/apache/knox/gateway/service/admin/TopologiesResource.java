@@ -29,6 +29,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.TopologyService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,6 +57,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -79,6 +82,9 @@ public class TopologiesResource {
   private static final String SINGLE_PROVIDERCONFIG_API_PATH = PROVIDERCONFIG_API_PATH + "/{name}";
   private static final String DESCRIPTORS_API_PATH    = "descriptors";
   private static final String SINGLE_DESCRIPTOR_API_PATH = DESCRIPTORS_API_PATH + "/{name}";
+
+  private static final int     RESOURCE_NAME_LENGTH_MAX = 100;
+  private static final Pattern RESOURCE_NAME_PATTERN    = Pattern.compile("^[\\w-/.]+$");
 
   private static GatewaySpiMessages log = MessagesFactory.get(GatewaySpiMessages.class);
 
@@ -148,6 +154,17 @@ public class TopologiesResource {
   @Path(SINGLE_TOPOLOGY_API_PATH)
   public Topology uploadTopology(@PathParam("id") String id, Topology t) {
     Topology result = null;
+
+    try {
+      id = URLDecoder.decode(id, "UTF-8");
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    if (!isValidResourceName(id)) {
+      log.invalidResourceName(id);
+      throw new BadRequestException("Invalid topology name: " + id);
+    }
 
     GatewayServices gs =
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -305,6 +322,17 @@ public class TopologiesResource {
   public Response uploadProviderConfiguration(@PathParam("name") String name, @Context HttpHeaders headers, String content) {
     Response response = null;
 
+    try {
+      name = URLDecoder.decode(name, "UTF-8");
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    if (!isValidResourceName(name)) {
+      log.invalidResourceName(name);
+      throw new BadRequestException("Invalid provider configuration name: " + name);
+    }
+
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
@@ -336,8 +364,21 @@ public class TopologiesResource {
   @PUT
   @Consumes({APPLICATION_JSON, TEXT_PLAIN})
   @Path(SINGLE_DESCRIPTOR_API_PATH)
-  public Response uploadSimpleDescriptor(@PathParam("name") String name, @Context HttpHeaders headers, String content) {
+  public Response uploadSimpleDescriptor(@PathParam("name") String name,
+                                         @Context HttpHeaders headers,
+                                         String content) {
     Response response = null;
+
+    try {
+      name = URLDecoder.decode(name, "UTF-8");
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    if (!isValidResourceName(name)) {
+      log.invalidResourceName(name);
+      throw new BadRequestException("Invalid descriptor name: " + name);
+    }
 
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -467,6 +508,21 @@ public class TopologiesResource {
       }
     }
     return result;
+  }
+
+
+  private static boolean isValidResourceName(final String name) {
+    boolean isValid = false;
+
+    if (name != null) {
+      if (name.length() <= RESOURCE_NAME_LENGTH_MAX) {
+        if (RESOURCE_NAME_PATTERN.matcher(name).matches()) {
+          isValid = true;
+        }
+      }
+    }
+
+    return isValid;
   }
 
 
