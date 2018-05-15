@@ -245,7 +245,6 @@ export class ResourceService {
               break;
           }
         }
-        this.logHeaders(headers); // TODO: PJZ: DELETE ME
         return headers;
     }
 

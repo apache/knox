@@ -29,8 +29,7 @@ import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 
-public class WebAppSecContributor extends
-    ProviderDeploymentContributorBase {
+public class WebAppSecContributor extends ProviderDeploymentContributorBase {
   private static final String ROLE = "webappsec";
   private static final String NAME = "WebAppSec";
   private static final String CSRF_SUFFIX = "_CSRF";
@@ -42,6 +41,9 @@ public class WebAppSecContributor extends
   private static final String XFRAME_OPTIONS_SUFFIX = "_XFRAMEOPTIONS";
   private static final String XFRAME_OPTIONS_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.XFrameOptionsFilter";
   private static final String XFRAME_OPTIONS_ENABLED = "xframe.options.enabled";
+  private static final String XCONTENT_TYPE_OPTIONS_SUFFIX = "_XCONTENTTYPEOPTIONS";
+  private static final String XCONTENT_TYPE_OPTIONS_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.XContentTypeOptionsFilter";
+  private static final String XCONTENT_TYPE_OPTIONS_ENABLED = "xcontent-type.options.enabled";
   private static final String XSS_PROTECTION_SUFFIX = "_XSSPROTECTION";
   private static final String XSS_PROTECTION_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.XSSProtectionFilter";
   private static final String XSS_PROTECTION_ENABLED = "xss.protection.enabled";
@@ -66,54 +68,83 @@ public class WebAppSecContributor extends
   }
 
   @Override
-  public void contributeFilter(DeploymentContext context, Provider provider, Service service, 
-      ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+  public void contributeFilter(DeploymentContext           context,
+                               Provider                    provider,
+                               Service                     service,
+                               ResourceDescriptor          resource,
+                               List<FilterParamDescriptor> params) {
     
     Provider webappsec = context.getTopology().getProvider(ROLE, NAME);
     if (webappsec != null && webappsec.isEnabled()) {
       Map<String,String> map = provider.getParams();
       if (params == null) {
-        params = new ArrayList<FilterParamDescriptor>();
+        params = new ArrayList<>();
       }
 
       Map<String, String> providerParams = provider.getParams();
       // CORS support
       String corsEnabled = map.get(CORS_ENABLED);
-      if ( corsEnabled != null && "true".equals(corsEnabled)) {
+      if (corsEnabled != null && "true".equals(corsEnabled)) {
         provisionConfig(resource, providerParams, params, "cors.");
-        resource.addFilter().name( getName() + CORS_SUFFIX ).role( getRole() ).impl( CORS_FILTER_CLASSNAME ).params( params );
+        resource.addFilter().name(getName() + CORS_SUFFIX)
+                            .role(getRole())
+                            .impl(CORS_FILTER_CLASSNAME)
+                            .params(params);
       }
 
       // CRSF
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
       String csrfEnabled = map.get(CSRF_ENABLED);
-      if ( csrfEnabled != null && "true".equals(csrfEnabled)) {
+      if (csrfEnabled != null && "true".equals(csrfEnabled)) {
         provisionConfig(resource, providerParams, params, "csrf.");
-        resource.addFilter().name( getName() + CSRF_SUFFIX ).role( getRole() ).impl( CSRF_FILTER_CLASSNAME ).params( params );
+        resource.addFilter().name(getName() + CSRF_SUFFIX)
+                            .role(getRole())
+                            .impl(CSRF_FILTER_CLASSNAME)
+                            .params(params);
       }
 
       // X-Frame-Options - clickjacking protection
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
       String xframeOptionsEnabled = map.get(XFRAME_OPTIONS_ENABLED);
-      if ( xframeOptionsEnabled != null && "true".equals(xframeOptionsEnabled)) {
+      if (xframeOptionsEnabled != null && "true".equals(xframeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xframe.");
-        resource.addFilter().name( getName() + XFRAME_OPTIONS_SUFFIX ).role( getRole() ).impl( XFRAME_OPTIONS_FILTER_CLASSNAME ).params( params );
+        resource.addFilter().name(getName() + XFRAME_OPTIONS_SUFFIX)
+                            .role(getRole())
+                            .impl(XFRAME_OPTIONS_FILTER_CLASSNAME)
+                            .params(params);
+      }
+
+      // X-Content-Type-Options - MIME type sniffing protection
+      params = new ArrayList<>();
+      String xContentTypeOptionsEnabled = map.get(XCONTENT_TYPE_OPTIONS_ENABLED);
+      if (xContentTypeOptionsEnabled != null && "true".equals(xContentTypeOptionsEnabled)) {
+        provisionConfig(resource, providerParams, params, "xcontent-type.");
+        resource.addFilter().name(getName() + XCONTENT_TYPE_OPTIONS_SUFFIX)
+                            .role(getRole())
+                            .impl(XCONTENT_TYPE_OPTIONS_FILTER_CLASSNAME)
+                            .params(params);
       }
 
       // X-XSS-Protection - browser xss protection
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
       String xssProtectionEnabled = map.get(XSS_PROTECTION_ENABLED);
-      if ( xssProtectionEnabled != null && "true".equals(xssProtectionEnabled)) {
+      if (xssProtectionEnabled != null && "true".equals(xssProtectionEnabled)) {
         provisionConfig(resource, providerParams, params, "xss.");
-        resource.addFilter().name( getName() + XSS_PROTECTION_SUFFIX ).role( getRole() ).impl( XSS_PROTECTION_FILTER_CLASSNAME ).params( params );
+        resource.addFilter().name(getName() + XSS_PROTECTION_SUFFIX)
+                            .role(getRole())
+                            .impl(XSS_PROTECTION_FILTER_CLASSNAME)
+                            .params(params);
       }
 
       // HTTP Strict-Transport-Security
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
       String strictTranportEnabled = map.get(STRICT_TRANSPORT_ENABLED);
-      if ( strictTranportEnabled != null && "true".equals(strictTranportEnabled)) {
+      if (strictTranportEnabled != null && "true".equals(strictTranportEnabled)) {
         provisionConfig(resource, providerParams, params, "strict.");
-        resource.addFilter().name( getName() + STRICT_TRANSPORT_SUFFIX).role( getRole() ).impl(STRICT_TRANSPORT_FILTER_CLASSNAME).params( params );
+        resource.addFilter().name(getName() + STRICT_TRANSPORT_SUFFIX)
+                            .role(getRole())
+                            .impl(STRICT_TRANSPORT_FILTER_CLASSNAME)
+                            .params(params);
       }
     }
   }
@@ -122,7 +153,7 @@ public class WebAppSecContributor extends
       List<FilterParamDescriptor> params, String prefix) {
     for(Entry<String, String> entry : providerParams.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
-        params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+        params.add(resource.createFilterParam().name(entry.getKey().toLowerCase()).value(entry.getValue()));
       }
     }
   }

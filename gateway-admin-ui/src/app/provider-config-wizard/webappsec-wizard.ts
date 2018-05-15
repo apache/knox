@@ -40,30 +40,34 @@ import {CORSProviderConfig} from "./cors-provider-config";
 import {WebAppSecurityContributor} from "./webappsec-contributor";
 import {STSProviderConfig} from "./sts-provider-config";
 import {XFrameOptionsProviderConfig} from "./xframeoptions-provider-config";
+import {XContentTypeOptionsProviderConfig} from "./xcontent-type-options-provider-config";
 
 export class WebAppSecurityWizard extends CategoryWizard implements ProviderContributorWizard {
 
   private stepCount: number = 4;
 
   // WebAppSec provider types
-  private static CSRF: string   = 'Cross-Site Request Forgery';
-  private static CORS: string   = 'Cross-Origin Resource Sharing';
-  private static XFRAME: string = 'X-Frame-Options';
-  private static STS: string    = 'Strict Transport Security';
+  private static CSRF: string          = 'Cross-Site Request Forgery';
+  private static CORS: string          = 'Cross-Origin Resource Sharing';
+  private static XFRAME: string        = 'X-Frame-Options';
+  private static XCONTENT_TYPE: string = 'X-Content-Type-Options';
+  private static STS: string           = 'Strict Transport Security';
 
   private static webAppSecTypes: string[] = [ WebAppSecurityWizard.CSRF,
                                               WebAppSecurityWizard.CORS,
                                               WebAppSecurityWizard.XFRAME,
+                                              WebAppSecurityWizard.XCONTENT_TYPE,
                                               WebAppSecurityWizard.STS
                                             ]
 
   private static typeConfigMap: Map<string, typeof WebAppSecurityContributor> =
                                             new Map([
-                                                      [WebAppSecurityWizard.CSRF,   CSRFProviderConfig],
-                                                      [WebAppSecurityWizard.CORS,   CORSProviderConfig],
-                                                      [WebAppSecurityWizard.XFRAME, XFrameOptionsProviderConfig],
-                                                      [WebAppSecurityWizard.STS,    STSProviderConfig]
-                                                    ] as [string, typeof WebAppSecurityContributor][]);
+                                              [WebAppSecurityWizard.CSRF,          CSRFProviderConfig],
+                                              [WebAppSecurityWizard.CORS,          CORSProviderConfig],
+                                              [WebAppSecurityWizard.XFRAME,        XFrameOptionsProviderConfig],
+                                              [WebAppSecurityWizard.XCONTENT_TYPE, XContentTypeOptionsProviderConfig],
+                                              [WebAppSecurityWizard.STS,           STSProviderConfig]
+                                            ] as [string, typeof WebAppSecurityContributor][]);
 
 
   getTypes(): string[] {
