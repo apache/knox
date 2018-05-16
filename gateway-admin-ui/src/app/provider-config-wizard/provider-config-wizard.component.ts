@@ -29,7 +29,7 @@ import {Resource} from "../resource/resource";
 import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 import {OrderedParamContainer} from "./ordered-param-container";
 import {HostMapProviderWizard} from "./hostmap-provider-wizard";
-import {ProviderContributorWizard} from "./ProviderContributorWizard";
+import {ProviderContributorWizard} from "./provider-contributor-wizard";
 import {WebAppSecurityWizard} from "./webappsec-wizard";
 import {ValidationUtils} from "../utils/validation-utils";
 
@@ -116,7 +116,10 @@ export class ProviderConfigWizardComponent implements OnInit {
 
       let isContributed: boolean = false;
 
+      let isContributingWizard: boolean = false;
+
       if (this.isProviderContributorWizard(catWizard)) {
+        isContributingWizard = true;
         let contribWiz = catWizard as ProviderContributorWizard;
         let role = contribWiz.getProviderRole();
         console.debug('Wizard is ProviderContributorWizard for role ' + role);
@@ -145,11 +148,11 @@ export class ProviderConfigWizardComponent implements OnInit {
         }
       }
 
-      if (!pc) { // If not a contributing wizard, just use the category wizard's provider config
+      if (!pc && !isContributingWizard) { // If not a contributing wizard, just use the category wizard's provider config
         pc = catWizard.getProviderConfig();
       }
 
-      if (pc && (isContributed || this.isProviderConfigValid(pc))) {
+      if (pc && (isContributed || (!isContributingWizard && this.isProviderConfigValid(pc)))) {
         if (!isContributed) {
           this.providers.push(pc);
         }

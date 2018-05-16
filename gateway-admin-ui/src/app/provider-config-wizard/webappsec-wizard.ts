@@ -17,7 +17,7 @@
 
 import {CategoryWizard} from "./category-wizard";
 import {ProviderConfig} from "../resource-detail/provider-config";
-import {ProviderContributorWizard} from "./ProviderContributorWizard";
+import {ProviderContributorWizard} from "./provider-contributor-wizard";
 import {HaProviderConfig} from "./ha-provider-config";
 import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
 import {HaWizard} from "./ha-wizard";
