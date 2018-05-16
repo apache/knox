@@ -76,7 +76,7 @@ public class XContentTypeOptionsFilterTest {
       XContentTypeOptionsFilter filter = new XContentTypeOptionsFilter();
       Properties props = new Properties();
       props.put("xcontent-type.options.enabled", "true");
-      props.put("xcontent-type.options", customOption);
+      props.put("xcontent-type.options.value", customOption);
       filter.init(new TestFilterConfig(props));
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
