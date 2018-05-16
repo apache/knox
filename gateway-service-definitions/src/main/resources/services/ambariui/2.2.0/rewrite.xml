@@ -99,6 +99,8 @@
             <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/img/logo-white.png" rule="AMBARIUI/ambari/outbound/whitelogo"/>
+            <apply path="/img/ambari-logo.png" rule="AMBARIUI/ambari/outbound/img"/>
+            <apply path="/img/logo.png" rule="AMBARIUI/ambari/outbound/img"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
         </content>
@@ -106,6 +108,8 @@
             <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/img/logo-white.png" rule="AMBARIUI/ambari/outbound/whitelogo"/>
+            <apply path="/img/ambari-logo.png" rule="AMBARIUI/ambari/outbound/img"/>
+            <apply path="/img/logo.png" rule="AMBARIUI/ambari/outbound/img"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
             <apply path="/img/ambari-view-default.png" rule="AMBARIUI/ambari/outbound/ambariview"/>
         </content>
