@@ -163,12 +163,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GATEWAY_PORT_MAPPING_ENABLED = GATEWAY_PORT_MAPPING_PREFIX + "enabled";
 
   /**
-   * Comma seperated list of MIME Types to be compressed by Knox on the way out.
+   * Comma-separated list of MIME Types to be compressed by Knox on the way out.
    *
    * @since 0.12
    */
-  public static final String MIME_TYPES_TO_COMPRESS = GATEWAY_CONFIG_FILE_PREFIX
-      + ".gzip.compress.mime.types";
+  public static final String MIME_TYPES_TO_COMPRESS = GATEWAY_CONFIG_FILE_PREFIX + ".gzip.compress.mime.types";
 
   public static final String CLUSTER_CONFIG_MONITOR_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".cluster.config.monitor.";
   public static final String CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX = ".interval";
@@ -195,6 +194,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   public static final String REMOTE_ALIAS_SERVICE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.enabled";
 
+  /**
+   * Comma-separated list of topology names, which should be forcibly treated as read-only.
+   * @since 1.1.0
+   */
+  public static final String READ_ONLY_OVERRIDE_TOPOLOGIES =
+                                                    GATEWAY_CONFIG_FILE_PREFIX + ".read.only.override.topologies";
+
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
@@ -210,13 +216,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
 
 
-
   /**
    * Default list of MIME Type to be compressed.
    * @since 0.12
    */
-  public static final String DEFAULT_MIME_TYPES_TO_COMPRESS = "text/html, text/plain, text/xml, text/css, "
-      + "application/javascript, application/x-javascript, text/javascript";
+  public static final String DEFAULT_MIME_TYPES_TO_COMPRESS =
+        "text/html, text/plain, text/xml, text/css, application/javascript, application/x-javascript, text/javascript";
 
   public static final String COOKIE_SCOPING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
   public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED = false;
@@ -1023,6 +1028,18 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isRemoteAliasServiceEnabled() {
     final String result = get( REMOTE_ALIAS_SERVICE_ENABLED, Boolean.toString(DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED));
     return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public List<String> getReadOnlyOverrideTopologyNames() {
+    List<String> topologyNames = new ArrayList<>();
+
+    String value = get(READ_ONLY_OVERRIDE_TOPOLOGIES);
+    if (value != null && !value.isEmpty()) {
+      topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+    }
+
+    return topologyNames;
   }
 
 }

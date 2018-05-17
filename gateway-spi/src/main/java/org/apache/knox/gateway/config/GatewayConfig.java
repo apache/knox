@@ -373,11 +373,20 @@ public interface GatewayConfig {
 
   /**
    * Returns whether the Remote Alias Service is enabled or not.
-   * This value also depends on whether remote registry is enabled or not.
-   * if it is enabled then this option takes effect else this option has no
-   * effect.
-   * @return
+   *
+   * This value also depends on whether the remote configuration registry is enabled or not.
+   * If it is enabled, then this option takes effect, else this option has no effect.
+   *
+   * @return true, if the remote alias service is enabled; otherwise, false;
    */
   boolean isRemoteAliasServiceEnabled();
+
+  /**
+   * Get the list of those topology names which should be treated as read-only, regardless of their actual read-write
+   * status.
+   *
+   * @return A list of the names of those topologies which should be treated as read-only.
+   */
+  List<String> getReadOnlyOverrideTopologyNames();
 
 }

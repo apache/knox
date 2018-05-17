@@ -20,11 +20,13 @@ package org.apache.knox.gateway;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -677,6 +679,18 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public boolean allowUnauthenticatedRemoteRegistryReadAccess() {
     return false;
+  }
+
+  @Override
+  public List<String> getReadOnlyOverrideTopologyNames() {
+    List<String> readOnly = new ArrayList<>();
+
+    String value = get(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES);
+    if (value != null && !value.isEmpty()) {
+      readOnly.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+    }
+
+    return readOnly;
   }
 
 }

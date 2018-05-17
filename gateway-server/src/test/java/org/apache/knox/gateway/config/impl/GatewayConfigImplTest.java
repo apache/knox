@@ -257,7 +257,40 @@ public class GatewayConfigImplTest {
 
     assertEquals(TimeUnit.SECONDS.toMillis(20), config.getHttpClientConnectionTimeout());
     assertEquals(TimeUnit.SECONDS.toMillis(20), config.getHttpClientSocketTimeout());
-
   }
+
+
+  // KNOX-1322
+  @Test
+  public void testGetReadOnlyOverrideTopologyNames() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    List<String> names = config.getReadOnlyOverrideTopologyNames();
+    assertNotNull(names);
+    assertTrue(names.isEmpty());
+
+    config.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, "");
+    names = config.getReadOnlyOverrideTopologyNames();
+    assertNotNull(names);
+    assertTrue(names.isEmpty());
+
+    config.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, "admin");
+    names = config.getReadOnlyOverrideTopologyNames();
+    assertNotNull(names);
+    assertFalse(names.isEmpty());
+    assertEquals(1, names.size());
+    assertEquals("admin", names.get(0));
+
+    config.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, "admin, sandbox, test ,default");
+    names = config.getReadOnlyOverrideTopologyNames();
+    assertNotNull(names);
+    assertFalse(names.isEmpty());
+    assertEquals(4, names.size());
+    assertTrue(names.contains("admin"));
+    assertTrue(names.contains("sandbox"));
+    assertTrue(names.contains("test"));
+    assertTrue(names.contains("default"));
+  }
+
 
 }

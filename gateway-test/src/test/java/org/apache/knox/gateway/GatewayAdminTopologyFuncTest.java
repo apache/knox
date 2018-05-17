@@ -36,6 +36,7 @@ import io.restassured.http.ContentType;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -453,6 +454,63 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
+
+
+  /**
+   * KNOX-1322
+   */
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testTopologyObjectForcedReadOnly() throws Exception {
+    LOG_ENTER();
+
+    final String testTopologyName = "test-cluster";
+
+    // First, verify that without any special config, the topology is NOT marked as generated (i.e., read-only)
+    validateGeneratedElement(testTopologyName, "false");
+
+    try {
+      gateway.stop();
+
+      // Update gateway config, such that the test topology should be marked as generated (i.e., read-only)
+      GatewayTestConfig conf = new GatewayTestConfig();
+      conf.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, testTopologyName);
+      setupGateway(conf);
+
+      // Verify that the generate element reflects the configuration change
+      validateGeneratedElement(testTopologyName, "true");
+
+      // Verify that another topology is unaffected by the configuration
+      validateGeneratedElement("admin", "false");
+
+    } finally {
+      // Restart the gateway with old settings.
+      gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+    LOG_EXIT();
+  }
+
+
+  /**
+   * Access the specified topology, and validate the value of the generated element therein.
+   *
+   * @param topologyName  The name of the topology to validate
+   * @param expectedValue The expected value of the generated element.
+   */
+  private void validateGeneratedElement(String topologyName, String expectedValue) throws Exception {
+    String testClusterTopology = given().auth().preemptive().basic("admin", "admin-password")
+                                        .header("Accept", MediaType.APPLICATION_XML)
+                                        .then()
+                                        .statusCode(HttpStatus.SC_OK)
+                                        .when().get(clusterUrl + "/api/v1/topologies/" + topologyName)
+                                               .thenReturn().getBody().asString();
+    assertNotNull(testClusterTopology);
+    Document doc = XmlUtils.readXml(new InputSource(new StringReader(testClusterTopology)));
+    assertNotNull(doc);
+    assertThat(doc, hasXPath("/topology/generated", is(expectedValue)));
+  }
+
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPositiveAuthorization() throws ClassNotFoundException{

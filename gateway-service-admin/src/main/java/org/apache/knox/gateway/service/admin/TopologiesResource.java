@@ -102,19 +102,27 @@ public class TopologiesResource {
   @Produces({APPLICATION_JSON, APPLICATION_XML})
   @Path(SINGLE_TOPOLOGY_API_PATH)
   public Topology getTopology(@PathParam("id") String id) {
-    GatewayServices services = (GatewayServices) request.getServletContext()
-        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    GatewayServices services =
+              (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayConfig config =
+                    (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
     for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
-      if(t.getName().equals(id)) {
+      if (t.getName().equals(id)) {
         try {
           t.setUri(new URI( buildURI(t, config, request) ));
         } catch (URISyntaxException se) {
           t.setUri(null);
         }
+
+        // For any read-only override topology, mark it as generated to discourage modification.
+        List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
+        if (ambariManagedTopos.contains(t.getName())) {
+          t.setGenerated(true);
+        }
+
         return BeanConverter.getTopology(t);
       }
     }
@@ -125,25 +133,21 @@ public class TopologiesResource {
   @Produces({APPLICATION_JSON, APPLICATION_XML})
   @Path(TOPOLOGIES_API_PATH)
   public SimpleTopologyWrapper getTopologies() {
-    GatewayServices services = (GatewayServices) request.getServletContext()
-        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-
+    GatewayServices services =
+              (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayConfig config =
+        (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
     ArrayList<SimpleTopology> st = new ArrayList<SimpleTopology>();
-    GatewayConfig conf = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-
     for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
-      st.add(getSimpleTopology(t, conf));
+      st.add(getSimpleTopology(t, config));
     }
+    st.sort(new TopologyComparator());
 
-    Collections.sort(st, new TopologyComparator());
     SimpleTopologyWrapper stw = new SimpleTopologyWrapper();
-
-    for(SimpleTopology t : st){
-      stw.topologies.add(t);
-    }
+    stw.topologies.addAll(st);
 
     return stw;
 
