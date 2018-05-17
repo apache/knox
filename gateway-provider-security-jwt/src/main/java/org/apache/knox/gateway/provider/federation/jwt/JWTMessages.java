@@ -49,7 +49,7 @@ public interface JWTMessages {
   @Message( level = MessageLevel.DEBUG, text = "Sending redirect to: {0}" )
   void sendRedirectToLoginURL(String loginURL);
 
-  @Message( level = MessageLevel.ERROR, text = "Required configuration element for authentication provider is missing." )
+  @Message( level = MessageLevel.WARN, text = "Configuration for authentication provider URL is missing - will derive default URL." )
   void missingAuthenticationProviderUrlConfiguration();
 
   @Message( level = MessageLevel.DEBUG, text = "{0} Cookie has been found and is being processed." )

@@ -42,6 +42,9 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
+  public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
+  public static final String X_FORWARDED_PORT = "X-Forwarded-Port";
+  public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
 
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
@@ -72,7 +75,6 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     authenticationProviderUrl = filterConfig.getInitParameter(SSO_AUTHENTICATION_PROVIDER_URL);
     if (authenticationProviderUrl == null) {
       log.missingAuthenticationProviderUrlConfiguration();
-      throw new ServletException("Required authentication provider URL is missing.");
     }
 
     // token verification pem
@@ -169,6 +171,9 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    */
   protected String constructLoginURL(HttpServletRequest request) {
     String delimiter = "?";
+    if (authenticationProviderUrl == null) {
+    	authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
+    }
     if (authenticationProviderUrl.contains("?")) {
       delimiter = "&";
     }
@@ -178,9 +183,35 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     return loginURL;
   }
 
+  /**
+   * Derive a provider URL from the request assuming that the
+   * KnoxSSO endpoint is local to the endpoint serving this request.
+   * @param request
+   * @return
+   */
+  public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
+    String scheme = null;
+    String host = null;
+    int port = 0;
+    if (!beingProxied(request)) {
+      scheme = request.getScheme();
+      host = request.getServerName();
+      port = request.getServerPort();
+    }
+    else {
+      scheme = request.getHeader(X_FORWARDED_PROTO);
+      host = request.getHeader(X_FORWARDED_HOST);
+      port = Integer.parseInt(request.getHeader(X_FORWARDED_PORT));
+    }
+    return scheme + "://" + host + ":" + port + "/" + "gateway/knoxsso/api/v1/websso";
+  }
+
+  private boolean beingProxied(HttpServletRequest request) {
+    return (request.getHeader(X_FORWARDED_HOST) != null);
+  }
+
   private String getOriginalQueryString(HttpServletRequest request) {
     String originalQueryString = request.getQueryString();
     return (originalQueryString == null) ? "" : "?" + originalQueryString;
   }
-
 }

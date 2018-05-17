@@ -102,12 +102,10 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       Properties props = getProperties();
       props.remove("sso.authentication.provider.url");
       handler.init(new TestFilterConfig(props));
-
-      fail("Servlet exception should have been thrown.");
-
     } catch (ServletException se) {
-      // expected - let's ensure it mentions the missing authentication provider URL
-      se.getMessage().contains("authentication provider URL is missing");
+      // no longer expected - let's ensure it mentions the missing authentication provider URL
+      fail("Servlet exception should have been thrown.");
+      se.printStackTrace();
     }
   }
 
@@ -143,6 +141,48 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
   }
 
+  @Test
+  public void testDefaultAuthenticationProviderURL() throws Exception {
+    Properties props = new Properties();
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getScheme()).andReturn("https").anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn("localhost").anyTimes();
+    EasyMock.expect(request.getServerPort()).andReturn(8443).anyTimes();
+    EasyMock.replay(request);
+
+    String providerURL = ((TestSSOCookieFederationProvider) handler).deriveDefaultAuthenticationProviderUrl(request);
+    Assert.assertNotNull("LoginURL should not be null.", providerURL);
+    Assert.assertEquals(providerURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso");
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).testConstructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    Assert.assertEquals(loginURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
+  }
+
+  @Test
+  public void testProxiedDefaultAuthenticationProviderURL() throws Exception {
+    Properties props = new Properties();
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PROTO)).andReturn("https").anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_HOST)).andReturn("remotehost").anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PORT)).andReturn("8443").anyTimes();
+    EasyMock.replay(request);
+
+    String providerURL = ((TestSSOCookieFederationProvider) handler).deriveDefaultAuthenticationProviderUrl(request);
+    Assert.assertNotNull("LoginURL should not be null.", providerURL);
+    Assert.assertEquals(providerURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso");
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).testConstructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    Assert.assertEquals(loginURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
+  }
 
   @Override
   protected String getVerificationPemProperty() {
