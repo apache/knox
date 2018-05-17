@@ -293,9 +293,12 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             // Service configurations
             Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations =
                 ambariClient.getActiveServiceConfigurations(discoveryAddress,
-                    clusterName,
-                    discoveryUser,
-                    discoveryPwdAlias);
+                                                            clusterName,
+                                                            discoveryUser,
+                                                            discoveryPwdAlias);
+            if (serviceConfigurations.isEmpty()) {
+                log.failedToAccessServiceConfigs(clusterName);
+            }
             for (Entry<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfiguration : serviceConfigurations.entrySet()) {
                 for (Map.Entry<String, AmbariCluster.ServiceConfiguration> serviceConfig : serviceConfiguration.getValue().entrySet()) {
                     cluster.addServiceConfiguration(serviceConfiguration.getKey(), serviceConfig.getKey(), serviceConfig.getValue());

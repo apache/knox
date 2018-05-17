@@ -58,19 +58,20 @@ public interface AmbariServiceDiscoveryMessages {
                                                          @StackTrace(level = MessageLevel.ERROR) Exception e);
 
     @Message(level = MessageLevel.ERROR,
-             text = "Encountered an error during cluster {0} discovery: {1}")
+             text = "Encountered an error during cluster ({0}) discovery: {1}")
     void clusterDiscoveryError(final String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR,
+        text = "Failed to access the service configurations for cluster ({0}) discovery")
+    void failedToAccessServiceConfigs(final String clusterName);
 
     @Message(level = MessageLevel.ERROR,
              text = "REST invocation {0} timed out")
     void restInvocationTimedOut(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-
     @Message(level = MessageLevel.DEBUG,
              text = "REST invocation {0} failed: {1}")
     void restInvocationError(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
-
 
     @Message(level = MessageLevel.ERROR,
             text = "No address for Ambari service discovery has been configured.")

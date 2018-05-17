@@ -65,7 +65,7 @@ class PropertyEqualsHandler implements ConditionalValueHandler {
             }
 
             if (result == null) {
-                if (propertyValue.equals(value)) {
+                if (propertyValue != null && propertyValue.equals(value)) {
                     result = affirmativeResult.evaluate(config, cluster);
                 } else if (negativeResult != null) {
                     result = negativeResult.evaluate(config, cluster);
