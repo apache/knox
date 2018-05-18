@@ -33,7 +33,7 @@ public class XContentTypeOptionsFilter implements Filter {
 
   public static final String X_CONTENT_TYPE_OPTIONS_HEADER = "X-Content-Type-Options";
 
-  public static final String CUSTOM_HEADER_PARAM = "xcontent-type.options.value";
+  public static final String CUSTOM_HEADER_PARAM = "xcontent-type.options";
 
   public static final String DEFAULT_OPTION_VALUE = "nosniff";
 

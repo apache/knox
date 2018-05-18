@@ -26,7 +26,7 @@ export class XContentTypeOptionsProviderConfig extends WebAppSecurityContributor
   private static displayPropertyNames = [ XContentTypeOptionsProviderConfig.VALUE ];
 
   private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [XContentTypeOptionsProviderConfig.VALUE, 'xcontent-type.options.value'] ] as [string, string][]);
+    new Map([ [XContentTypeOptionsProviderConfig.VALUE, 'xcontent-type.options'] ] as [string, string][]);
 
   constructor() {
     super();

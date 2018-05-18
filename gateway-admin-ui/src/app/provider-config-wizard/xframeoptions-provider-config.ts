@@ -28,12 +28,12 @@ export class XFrameOptionsProviderConfig extends WebAppSecurityContributor {
   private static displayPropertyNames = [ XFrameOptionsProviderConfig.VALUE ];
 
   private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [XFrameOptionsProviderConfig.VALUE, 'xframe-options.value'] ] as [string, string][]);
+    new Map([ [XFrameOptionsProviderConfig.VALUE, 'xframe.options'] ] as [string, string][]);
 
   constructor() {
     super();
     // Set the default values
-    this.setParam('xframe-options.enabled', 'true');
+    this.setParam('xframe.options.enabled', 'true');
     this.setParam(XFrameOptionsProviderConfig.displayPropertyNameBindings.get(XFrameOptionsProviderConfig.VALUE), 'DENY');
   }
 
