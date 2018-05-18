@@ -540,7 +540,7 @@ public class DefaultTopologyService
       try {
         remoteMonitor.start();
       } catch (Exception e) {
-        log.remoteConfigurationMonitorStartFailure(remoteMonitor.getClass().getTypeName(), e.getLocalizedMessage(), e);
+        log.remoteConfigurationMonitorStartFailure(remoteMonitor.getClass().getTypeName(), e.getLocalizedMessage());
       }
     }
   }

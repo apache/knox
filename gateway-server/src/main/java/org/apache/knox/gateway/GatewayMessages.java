@@ -559,9 +559,7 @@ public interface GatewayMessages {
                                              @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.WARN, text = "An error occurred while attempting to start the remote configuration monitor {0} : {1}" )
-  void remoteConfigurationMonitorStartFailure(final String monitorType,
-                                              final String errorMessage,
-                                              @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  void remoteConfigurationMonitorStartFailure(final String monitorType, final String errorMessage);
 
   @Message( level = MessageLevel.INFO, text = "Starting remote configuration monitor for source {0} ..." )
   void startingRemoteConfigurationMonitor(final String address);
