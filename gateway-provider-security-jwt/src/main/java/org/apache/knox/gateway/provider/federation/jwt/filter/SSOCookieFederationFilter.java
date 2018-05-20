@@ -38,7 +38,8 @@ import java.io.IOException;
 import java.text.ParseException;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
-  public static final String SSO_COOKIE_NAME = "sso.cookie.name";
+  private static final String GATEWAY_PATH = "gateway.path";
+public static final String SSO_COOKIE_NAME = "sso.cookie.name";
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
@@ -54,6 +55,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
   private String cookieName;
   private String authenticationProviderUrl;
+private String gatewayPath;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -83,6 +85,9 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    // gateway path for deriving an idp url when missing
+    gatewayPath = filterConfig.getInitParameter(GATEWAY_PATH);
 
     configureExpectedParameters(filterConfig);
   }
@@ -203,7 +208,14 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       host = request.getHeader(X_FORWARDED_HOST);
       port = Integer.parseInt(request.getHeader(X_FORWARDED_PORT));
     }
-    return scheme + "://" + host + ":" + port + "/" + "gateway/knoxsso/api/v1/websso";
+    StringBuffer sb = new StringBuffer(scheme);
+    sb.append("://").append(host);
+    if (!host.contains(":")) {
+      sb.append(":").append(port);
+    }
+    sb.append("/").append(gatewayPath).append("/knoxsso/api/v1/websso");
+    
+    return sb.toString();
   }
 
   private boolean beingProxied(HttpServletRequest request) {

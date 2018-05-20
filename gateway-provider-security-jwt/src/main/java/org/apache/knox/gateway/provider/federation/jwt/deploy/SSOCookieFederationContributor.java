@@ -58,6 +58,10 @@ public class SSOCookieFederationContributor extends
     for(Entry<String, String> entry : providerParams.entrySet()) {
       params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
     }
+    // add the gatewaypath to the filter params in case a provider URL needs to be derived
+    String path = context.getGatewayConfig().getGatewayPath();
+    params.add( resource.createFilterParam().name("gateway.path").value(path));
+    
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }
 }
