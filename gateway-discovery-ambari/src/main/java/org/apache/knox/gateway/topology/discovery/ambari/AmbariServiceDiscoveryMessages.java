@@ -69,9 +69,9 @@ public interface AmbariServiceDiscoveryMessages {
              text = "REST invocation {0} timed out")
     void restInvocationTimedOut(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-    @Message(level = MessageLevel.DEBUG,
+    @Message(level = MessageLevel.ERROR,
              text = "REST invocation {0} failed: {1}")
-    void restInvocationError(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void restInvocationError(final String url, @StackTrace(level = MessageLevel.ERROR) Exception e);
 
     @Message(level = MessageLevel.ERROR,
             text = "No address for Ambari service discovery has been configured.")
