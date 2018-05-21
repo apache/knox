@@ -28,4 +28,5 @@
         </route>
         <route path="/datanode/?**"/>
     </routes>
+    <dispatch classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch"/>
 </service>

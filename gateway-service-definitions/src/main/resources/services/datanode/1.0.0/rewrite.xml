@@ -38,14 +38,17 @@
        <rewrite template="{host}/logs/{**}"/>
     </rule>
 
-  <filter name="DATANODE/outbound/datanode/static">
-     <content type="*/html">
-      <apply path="dn.js"    rule="DATANODE/outbound/datanode/dn"/>
-    </content>
-    <content type="application/x-javascript">
-      <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
-   </content>
-  </filter>
+    <filter name="DATANODE/outbound/datanode/static">
+        <content type="*/html">
+            <apply path="dn.js"    rule="DATANODE/outbound/datanode/dn"/>
+        </content>
+        <content type="application/x-javascript">
+            <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+        </content>
+        <content type="application/javascript">
+            <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+        </content>
+    </filter>
 
   <rule dir="OUT" name="DATANODE/outbound/datanode/window/location">
     <rewrite template="'{$inboundurl[host]}'"/>
@@ -66,7 +69,7 @@
   </rule>
 
   <rule dir="OUT" name="DATANODE/inbound/datanode/html" pattern="*0;url=datanode.html">
-    <rewrite template="0;url=/gateway/default/datanode/datanode.html?host={$inboundurl[host]}"/>
+      <rewrite template="{$prefix[0;url&amp;equals;,url]}/datanode/datanode.html?host={$inboundurl[host]}"/>
   </rule>
   <rule dir="OUT" name="DATANODE/datanode/outbound/logs/files" pattern="/logs/{**}">
     <rewrite template="{gateway.url}/datanode/logs/{**}?host={$inboundurl[host]}"/>
