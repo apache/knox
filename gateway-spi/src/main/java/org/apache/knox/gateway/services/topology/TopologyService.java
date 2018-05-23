@@ -58,6 +58,8 @@ public interface TopologyService extends Service {
 
   boolean deleteProviderConfiguration(String name);
 
+  boolean deleteProviderConfiguration(String name, boolean force);
+
   Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config);
 
 }

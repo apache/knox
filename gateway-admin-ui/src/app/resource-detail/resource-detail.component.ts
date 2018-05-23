@@ -223,7 +223,7 @@ export class ResourceDetailComponent implements OnInit {
         replacementResource.href = this.resource.href;
 
         // Delete the XML resource
-        this.resourceService.deleteResource(this.resource.href)
+        this.resourceService.deleteResource(this.resource.href + '?force=true')
           .then(() => {
           // Save the updated content
           this.resourceService.saveResource(replacementResource, content).then(() => {

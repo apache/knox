@@ -37,6 +37,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -282,13 +283,13 @@ public class TopologiesResource {
   @DELETE
   @Produces(APPLICATION_JSON)
   @Path(SINGLE_PROVIDERCONFIG_API_PATH)
-  public Response deleteProviderConfiguration(@PathParam("name") String name) {
+  public Response deleteProviderConfiguration(@PathParam("name") String name, @QueryParam("force") String force) {
     Response response;
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
-    if (ts.deleteProviderConfiguration(name)) {
+    if (ts.deleteProviderConfiguration(name, Boolean.valueOf(force))) {
       response = ok().entity("{ \"deleted\" : \"provider config " + name + "\" }").build();
     } else {
       response = notModified().build();

@@ -449,6 +449,11 @@ public class DefaultTopologyService
 
   @Override
   public boolean deleteProviderConfiguration(String name) {
+    return deleteProviderConfiguration(name, false);
+  }
+
+  @Override
+  public boolean deleteProviderConfiguration(String name, boolean force) {
     boolean result = false;
 
     // Determine if the file exists, and if so, if there are any descriptors referencing it
@@ -462,7 +467,7 @@ public class DefaultTopologyService
     }
 
     // If the local file does not exist, or it does exist and there are NOT any referencing descriptors
-    if (providerConfig == null || !hasReferences) {
+    if (force || (providerConfig == null || !hasReferences)) {
 
       // If the remote config monitor is configured, attempt to delete the provider configuration from the remote
       // registry, even if it does not exist locally.
