@@ -71,13 +71,18 @@
     <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
   </rule>
 
+  <!-- job history ws rest api -->
+  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/ws" pattern="*://*:*/**/jobhistory/ws/{**}">
+    <rewrite template="{$serviceUrl[JOBHISTORYUI]}/ws/{**}"/>
+  </rule>
+
   <rule dir="IN" name="JOBHISTORYUI/nodelink/inbound" pattern="*://*:*/**/jobhistory/node?{scheme}?{host}?{port}">
     <rewrite template="{scheme}://{host}:{port}/node?{scheme}?{host}?{port}"/>
   </rule>
 
   <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/node" pattern="*://*:*/**/jobhistory/node?{host}&amp;{port=**}">
     <rewrite template="http://{host}:{port=**}/node"/>
-   </rule>
+  </rule>
 
   <!-- request out web content rewrite rules -->
 
