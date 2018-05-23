@@ -44,7 +44,10 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 	 */
 	private static final int PORT_NUMBER = 8080;
 
-	private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/hbase-unsecure";
+	private static final String DEFAULT_ZOOKEEPER_NAMESPACE_SECURE = "/hbase-secure";
+
+	private static final String DEFAULT_ZOOKEEPER_NAMESPACE_UNSECURE = "/hbase-unsecure";
+
 
 	// -------------------------------------------------------------------------------------
 	// Abstract methods
@@ -59,9 +62,9 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 	protected List<String> lookupURLs() {
 		// Retrieve list of potential hosts from ZooKeeper
 		List<String> hosts = retrieveHosts();
-		
+
 		// Validate access to hosts using cheap ping style operation
-		List<String> validatedHosts = validateHosts(hosts,"/","text/xml");
+		List<String> validatedHosts = validateHosts(hosts,"/version/rest","text/xml");
 
 		// Randomize the hosts list for simple load balancing
 		if (!validatedHosts.isEmpty()) {
@@ -77,8 +80,7 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 
 	@Override
 	protected String getZookeeperNamespace() {
-		String ns = super.getZookeeperNamespace();
-		return (ns == null || ns.isEmpty()) ? DEFAULT_ZOOKEEPER_NAMESPACE : ns;
+		return super.getZookeeperNamespace();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -100,17 +102,33 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 		try {
 			zooKeeperClient.start();
 
+			List<String> serverNodes = null;
+
 			String namespace = getZookeeperNamespace();
-			if (!namespace.startsWith("/")) {
-				namespace = "/" + namespace;
+			if (namespace != null && !namespace.isEmpty()) {
+			 	if (!namespace.startsWith("/")) {
+					namespace = "/" + namespace;
+				}
+				serverNodes = zooKeeperClient.getChildren().forPath(namespace + "/rs");
+			} else {
+				// If no namespace is explicitly specified, try the default secure namespace
+				try {
+					serverNodes = zooKeeperClient.getChildren().forPath(DEFAULT_ZOOKEEPER_NAMESPACE_SECURE + "/rs");
+				} catch (Exception e) {
+					// Ignore -- znode may not exist
+				}
+
+				if (serverNodes == null || serverNodes.isEmpty()) {
+					// Fall back to the default unsecure namespace if no secure nodes are found
+					serverNodes = zooKeeperClient.getChildren().forPath(DEFAULT_ZOOKEEPER_NAMESPACE_UNSECURE + "/rs");
+				}
 			}
 
-			// Retrieve list of all region server hosts
-			List<String> serverNodes = zooKeeperClient.getChildren().forPath(namespace + "/rs");
-			
-			for (String serverNode : serverNodes) {
-				String serverURL = constructURL(serverNode);
-				serverHosts.add(serverURL);
+			if (serverNodes != null) {
+				for (String serverNode : serverNodes) {
+					String serverURL = constructURL(serverNode);
+					serverHosts.add(serverURL);
+				}
 			}
 		} catch (Exception e) {
 			LOG.failedToGetZookeeperUrls(e);
@@ -121,10 +139,10 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 				zooKeeperClient.close();
 			}
 		}
-		
+
 		return serverHosts;
 	}
-	
+
 	/**
 	 * Given a String of the format "host,number,number" convert to a URL of the format
 	 * "http://host:port".
@@ -140,10 +158,10 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
 		buffer.append(scheme);
 		buffer.append("://");
 		// Strip off the host name 
-		buffer.append(serverInfo.substring(0,serverInfo.indexOf(",")));
+		buffer.append(serverInfo.substring(0, serverInfo.indexOf(",")));
 		buffer.append(":");
 		buffer.append(PORT_NUMBER);
-		
+
 		return buffer.toString();
 	}
 }

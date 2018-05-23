@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.ha.provider.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -68,13 +71,33 @@ public class HBaseZookeeperURLManagerTest {
     doTest(SECURE_NS);
   }
 
+  /**
+   * KNOX-1149
+   */
+  @Test
+  public void testDefaultNSHBaseZookeeperURLManagerLoadingWhenSecureAndUnsecureZNodesPresent() throws Exception {
+    createZNodes(UNSECURE_NS);
+    createZNodes(SECURE_NS);
+    doTest(null);
+  }
+
+  /**
+   * KNOX-1149
+   */
+  @Test
+  public void testSpecifiedNSHBaseZookeeperURLManagerLoadingWhenSecureAndUnsecureZNodesPresent() throws Exception {
+    createZNodes(UNSECURE_NS);
+    createZNodes(SECURE_NS);
+    doTest(UNSECURE_NS);
+  }
+
   @Test
   public void testSecureNSHBaseZookeeperURLManagerLoadingNoLeadingSlash() throws Exception {
     createZNodes(SECURE_NS);
     doTest(SECURE_NS.substring(1)); // Omit the leading slash from the namespace
   }
 
-  private void doTest(String namespace) throws Exception {
+  private void doTest(String namespace) {
     HaServiceConfig config = new DefaultHaServiceConfig("WEBHBASE");
     config.setEnabled(true);
     config.setZookeeperEnsemble(cluster.getConnectString());
@@ -88,6 +111,7 @@ public class HBaseZookeeperURLManagerTest {
     Assert.assertNotNull(manager);
     Assert.assertTrue(manager instanceof HBaseZookeeperURLManager);
   }
+
 
   private void createZNodes(String namespace) throws Exception {
     CuratorFramework zooKeeperClient =

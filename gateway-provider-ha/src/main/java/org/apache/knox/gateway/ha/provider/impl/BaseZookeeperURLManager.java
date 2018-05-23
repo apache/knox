@@ -17,17 +17,28 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dispatch.KnoxSpnegoAuthSchemeFactory;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.URLManager;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.http.auth.AuthSchemeProvider;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
@@ -46,7 +57,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 	/**
 	 * Host Ping Timeout
 	 */
-	private static final int TIMEOUT = 2000;
+	private static final int TIMEOUT = 5000;
 
 	private String zooKeeperEnsemble;
 	private String zooKeeperNamespace;
@@ -63,11 +74,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 		}
 		
 		String zookeeperEnsemble = config.getZookeeperEnsemble();
-		if (zookeeperEnsemble != null && zookeeperEnsemble.trim().length() > 0) {
-			return true;
-		}
-
-		return false;
+		return zookeeperEnsemble != null && (zookeeperEnsemble.trim().length() > 0);
 	}
 
 	@Override
@@ -157,45 +164,84 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 	protected List<String> validateHosts(List<String> hosts, String suffix, String acceptHeader) {
 		List<String> result = new ArrayList<String>();
 		
-		CloseableHttpClient client = null;
+		CloseableHttpClient client = buildHttpClient();
 		
 		try {
-			// Construct a HttpClient with short term timeout
-			RequestConfig.Builder requestBuilder = RequestConfig.custom()
-					.setConnectTimeout(TIMEOUT)
-					.setSocketTimeout(TIMEOUT)
-					.setConnectionRequestTimeout(TIMEOUT);
-
-			client = HttpClientBuilder.create()
-					.setDefaultRequestConfig(requestBuilder.build())
-					.build();
-			
 			for(String host: hosts) {
 				try	{
 					HttpGet get = new HttpGet(host + suffix);
-					
+
 					if (acceptHeader != null) {
 						get.setHeader("Accept", acceptHeader);
 					}
-					
+
+					// Ping host
 					String response = client.execute(get, new StringResponseHandler());
 					
 					if (response != null) {
 						result.add(host);
 					}
-				}
-				catch (Exception ex) {
+				} catch (Exception ex) {
 					// ignore host
 				}
 			}
-		}
-		catch (Exception ex) {
+		} catch (Exception e) {
 			// Ignore errors
-		}
-		finally	{
+		} finally	{
 			IOUtils.closeQuietly(client);
 		}
 		
 		return result;
 	}
+
+	/**
+	 * Construct an Apache HttpClient with suitable timeout and authentication.
+	 * 
+	 * @return Apache HttpClient
+	 */
+	private CloseableHttpClient buildHttpClient() {
+		CloseableHttpClient client = null;
+		
+		// Construct a HttpClient with short term timeout
+		RequestConfig.Builder requestBuilder = RequestConfig.custom()
+																												.setConnectTimeout(TIMEOUT)
+																												.setSocketTimeout(TIMEOUT)
+																												.setConnectionRequestTimeout(TIMEOUT);
+
+		// If Kerberos is enabled, allow for challenge/response transparent to client
+		if (Boolean.getBoolean(GatewayConfig.HADOOP_KERBEROS_SECURED)) {
+			CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+			credentialsProvider.setCredentials(AuthScope.ANY, new NullCredentials());
+
+			Registry<AuthSchemeProvider> authSchemeRegistry =
+														RegistryBuilder.<AuthSchemeProvider>create()
+																					 .register(AuthSchemes.SPNEGO, new KnoxSpnegoAuthSchemeFactory(true))
+																					 .build();
+			
+			client = HttpClientBuilder.create()
+																.setDefaultRequestConfig(requestBuilder.build())
+																.setDefaultAuthSchemeRegistry(authSchemeRegistry)
+																.setDefaultCredentialsProvider(credentialsProvider)
+																.build();
+		} else {
+			client = HttpClientBuilder.create()
+																.setDefaultRequestConfig(requestBuilder.build())
+																.build();
+		}
+
+		return client;
+	}
+	
+	private static class NullCredentials implements Credentials {
+		@Override
+		public Principal getUserPrincipal() {
+			return null;
+		}
+
+		@Override
+		public String getPassword() {
+			return null;
+		}
+	}
+
 }
