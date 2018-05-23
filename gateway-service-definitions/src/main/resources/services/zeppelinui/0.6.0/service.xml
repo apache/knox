@@ -28,6 +28,10 @@
       <rewrite apply="ZEPPELINUI/zeppelin/outbound/javascript/filter" to="response.body"/>
     </route>
 
+    <route path="/zeppelin/favicon.ico">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/favicon" to="request.url"/>
+    </route>
+
     <route path="/zeppelin/">
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/root" to="request.url"/>
     </route>

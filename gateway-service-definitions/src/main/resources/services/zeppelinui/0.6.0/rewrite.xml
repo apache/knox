@@ -16,6 +16,10 @@
    limitations under the License.
 -->
 <rules>
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/favicon" pattern="*://*:*/**/zeppelin/favicon.ico">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/favicon.ico"/>
+  </rule>
+
   <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/root" pattern="*://*:*/**/zeppelin/">
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/"/>
   </rule>
