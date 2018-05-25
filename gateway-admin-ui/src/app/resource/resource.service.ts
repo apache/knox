@@ -65,8 +65,12 @@ export class ResourceService {
                         .toPromise()
                         .then(response => response['items'] as Resource[])
             .catch((err: HttpErrorResponse) => {
-                console.debug('ResourceService --> getProviderConfigResources() --> error: ' + err.message);
-                return this.handleError(err);
+                console.debug('ResourceService --> getProviderConfigResources() --> error: HTTP ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -76,8 +80,12 @@ export class ResourceService {
                         .toPromise()
                         .then(response => response['items'] as Resource[])
             .catch((err: HttpErrorResponse) => {
-                console.debug('ResourceService --> getDescriptorResources() --> error: ' + err.message);
-                return this.handleError(err);
+                console.debug('ResourceService --> getDescriptorResources() --> error: HTTP ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -87,8 +95,12 @@ export class ResourceService {
                         .toPromise()
                         .then(response => response['topologies'].topology as Resource[])
             .catch((err: HttpErrorResponse) => {
-                console.debug('ResourceService --> getTopologyResources() --> error: ' + err.message);
-                return this.handleError(err);
+                console.debug('ResourceService --> getTopologyResources() --> error: HTTP ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -96,7 +108,6 @@ export class ResourceService {
         if (res) {
             let headers = new HttpHeaders();
             headers = (resType === 'Topologies') ? this.addXmlHeaders(headers) : this.addHeaders(headers, res.name);
-
             return this.http.get(res.href, {headers: headers, responseType: 'text'})
                 .toPromise()
                 .then(response => {
@@ -104,8 +115,12 @@ export class ResourceService {
                     return response;
                 })
                 .catch((err: HttpErrorResponse) => {
-                    console.debug('ResourceService --> getResource() ' + res.name + '\n  error: ' + err.message);
+                  console.debug('ResourceService --> getResource() ' + res.name + '\n  error: ' + err.status + ' ' + err.message);
+                  if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                  } else {
                     return this.handleError(err);
+                  }
                 });
         } else {
             return Promise.resolve(null);
@@ -122,7 +137,11 @@ export class ResourceService {
                         .then(() => content)
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> saveResource() ' + resource.name + '\n  error: ' + err.message);
-                return this.handleError(err);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -135,7 +154,11 @@ export class ResourceService {
                         .then(() => content)
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> createResource() --> ' + resource.name + '\n  error: ' + err.message);
-                return this.handleError(err);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -147,7 +170,11 @@ export class ResourceService {
                         .then(response => response)
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> deleteResource() --> ' + href + '\n  error: ' + err.message);
-                return this.handleError(err);
+                if (err.status === 401) {
+                  window.location.assign(document.location.pathname);
+                } else {
+                  return this.handleError(err);
+                }
             });
     }
 
@@ -264,7 +291,11 @@ export class ResourceService {
     }
 
     addCsrfHeaders(headers: HttpHeaders): HttpHeaders {
-        return headers.append('X-XSRF-Header', 'admin-ui');
+        return this.addXHRHeaders(headers.append('X-XSRF-Header', 'admin-ui'));
+    }
+
+    addXHRHeaders(headers: HttpHeaders): HttpHeaders {
+      return headers.append('X-Requested-With', 'XMLHttpRequest');
     }
 
     selectedResourceType(value: string) {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { Injectable }    from '@angular/core';
-import { HttpHeaders, HttpClient } from '@angular/common/http';
+import {HttpHeaders, HttpClient, HttpErrorResponse} from '@angular/common/http';
 
 import 'rxjs/add/operator/toPromise';
 import { Subject }    from 'rxjs/Subject';
@@ -39,9 +39,16 @@ export class TopologyService {
         return this.http.get(this.topologiesUrl, {
             headers: headers
         } )
-            .toPromise()
-            .then(response => response['topologies'].topology as Topology[])
-            .catch(this.handleError);
+        .toPromise()
+        .then(response => response['topologies'].topology as Topology[])
+        .catch((err: HttpErrorResponse) => {
+          console.debug('TopologyService --> getTopologies() --> ' + '\n  error: ' + err.message);
+          if (err.status === 401) {
+            window.location.assign(document.location.pathname);
+          } else {
+            return this.handleError(err);
+          }
+        });
     }
 
     getTopology(href : string): Promise<string> {
@@ -50,32 +57,49 @@ export class TopologyService {
         return this.http.get(href, {
             headers: headers, responseType: 'text'
         } )
-            .toPromise()
-            .then(response => response)
-            .catch(this.handleError);
-
+        .toPromise()
+        .then(response => response)
+        .catch((err: HttpErrorResponse) => {
+          console.debug('TopologyService --> getTopology() --> ' + href + '\n  error: ' + err.message);
+          if (err.status === 401) {
+            window.location.assign(document.location.pathname);
+          } else {
+            return this.handleError(err);
+          }
+        });
     }
 
     saveTopology(url: string, xml : string): Promise<string> {
         let xheaders = new HttpHeaders();
         xheaders = this.addXmlHeaders(xheaders);
-        return this.http
-            .put(url, xml, { headers: xheaders, responseType: 'text' })
-            .toPromise()
-            .then(() => xml)
-            .catch(this.handleError);
-
+        return this.http.put(url, xml, { headers: xheaders, responseType: 'text' })
+                        .toPromise()
+                        .then(() => xml)
+                        .catch((err: HttpErrorResponse) => {
+                          console.debug('TopologyService --> getTopology() --> \n  error: ' + err.status + ' ' + err.message);
+                          if (err.status === 401) {
+                            window.location.assign(document.location.pathname);
+                          } else {
+                            return this.handleError(err);
+                          }
+                        });
     }
 
     createTopology(name: string, xml : string): Promise<string> {
         let xheaders = new HttpHeaders();
         xheaders = this.addXmlHeaders(xheaders);
         let url = this.topologiesUrl + "/" + name;
-        return this.http
-            .put(url, xml, { headers: xheaders, responseType: 'text' })
-            .toPromise()
-            .then(() => xml)
-            .catch(this.handleError);
+        return this.http.put(url, xml, { headers: xheaders, responseType: 'text' })
+                        .toPromise()
+                        .then(() => xml)
+                        .catch((err: HttpErrorResponse) => {
+                          console.debug('TopologyService --> getTopology() --> \n  error: ' + err.status + ' ' + err.message);
+                          if (err.status === 401) {
+                            window.location.assign(document.location.pathname);
+                          } else {
+                            return this.handleError(err);
+                          }
+                        });
     }
 
     deleteTopology(href: string): Promise<string> {
@@ -84,9 +108,16 @@ export class TopologyService {
         return this.http.delete(href, {
             headers: headers, responseType: 'text'
         } )
-            .toPromise()
-            .then(response => response)
-            .catch(this.handleError);
+        .toPromise()
+        .then(response => response)
+        .catch((err: HttpErrorResponse) => {
+          console.debug('TopologyService --> getTopology() --> ' + href + '\n  error: ' + err.message);
+          if (err.status === 401) {
+            window.location.assign(document.location.pathname);
+          } else {
+            return this.handleError(err);
+          }
+        });
     }
 
     addJsonHeaders(headers: HttpHeaders): HttpHeaders {
@@ -100,7 +131,11 @@ export class TopologyService {
     }
 
     addCsrfHeaders(headers: HttpHeaders): HttpHeaders {
-        return headers.append('X-XSRF-Header', 'admin-ui');
+      return this.addXHRHeaders(headers.append('X-XSRF-Header', 'admin-ui'));
+    }
+
+    addXHRHeaders(headers: HttpHeaders): HttpHeaders {
+      return headers.append('X-Requested-With', 'XMLHttpRequest');
     }
 
     selectedTopology(value: Topology) {
@@ -110,7 +145,6 @@ export class TopologyService {
     changedTopology(value: string) {
         this.changedTopologySource.next(value);
     }
-
 
     private handleError(error: any): Promise<any> {
         console.error('An error occurred', error); // for demo purposes only

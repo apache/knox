@@ -19,6 +19,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule, HttpClientXsrfModule } from "@angular/common/http";
 import { FormsModule } from '@angular/forms';
 import { CustomFormsModule } from 'ng2-validation';
+import { APP_BASE_HREF } from '@angular/common';
 
 import { AppComponent }  from './app.component';
 import { TopologyService } from './topology.service';
@@ -42,6 +43,7 @@ import { ResourceDetailComponent } from './resource-detail/resource-detail.compo
 import { ProviderConfigSelectorComponent } from './provider-config-selector/provider-config-selector.component';
 import { NewDescWizardComponent } from './new-desc-wizard/new-desc-wizard.component';
 import { ProviderConfigWizardComponent } from './provider-config-wizard/provider-config-wizard.component'
+
 
 @NgModule({
   imports: [ BrowserModule,
@@ -72,7 +74,8 @@ import { ProviderConfigWizardComponent } from './provider-config-wizard/provider
                GatewayVersionService,
                ResourceComponent,
                ResourceTypesService,
-               ResourceService
+               ResourceService,
+               { provide: APP_BASE_HREF, useValue : '/' }
     ],
   bootstrap: [ AppComponent,
                GatewayVersionComponent
