@@ -22,7 +22,10 @@ import java.util.Map;
 
 public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator {
 
-  private static final String URL_TEMPLATE = "http://%s:%s";
+  private static final String SCHEME_HTTP  = "http";
+  private static final String SCHEME_HTTPS = "https";
+
+  private static final String URL_TEMPLATE = "%s://%s:%s";
 
   protected AmbariCluster cluster = null;
 
@@ -37,6 +40,15 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
     this.cluster = cluster;
   }
 
+  boolean isSSL(AmbariComponent comp) {
+    return false;
+  }
+
+  String getPort(AmbariComponent comp) {
+    return comp.getConfigProperty(portConfigProperty);
+  }
+
+
   @Override
   public List<String> create(String service, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
@@ -48,10 +60,10 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
       }
 
       if (comp != null) {
-        String port = comp.getConfigProperty(portConfigProperty);
+        String port = getPort(comp);
         List<String> hostNames = comp.getHostNames();
         for (String host : hostNames) {
-          urls.add(String.format(URL_TEMPLATE, host, port));
+          urls.add(String.format(URL_TEMPLATE, (isSSL(comp) ? SCHEME_HTTPS : SCHEME_HTTP), host, port));
         }
       }
     }

@@ -20,6 +20,14 @@ public class SparkHistoryUIServiceURLCreator extends SparkCommonServiceURLCreato
 
   private static final String RESOURCE_ROLE = "SPARKHISTORYUI";
 
+
+  private static final String SSL_FLAG_PRIMARY   = "spark.ssl.historyServer.enabled";
+  private static final String SSL_FLAG_SECONDARY = "spark.ssl.enabled";
+
+  private static final String SSL_PORT_PROPERTY = "spark.ssl.historyServer.port";
+
+  private static final int SSL_PORT_OFFSET = 400;
+
   @Override
   public void init(AmbariCluster cluster) {
     super.init(cluster);
@@ -31,6 +39,30 @@ public class SparkHistoryUIServiceURLCreator extends SparkCommonServiceURLCreato
   @Override
   public String getTargetService() {
     return RESOURCE_ROLE;
+  }
+
+
+  @Override
+  String getPort(AmbariComponent comp) {
+    String port;
+
+    if (isSSL(comp)) {
+      String sslPort = comp.getConfigProperty(SSL_PORT_PROPERTY);
+      if (sslPort == null || sslPort.isEmpty()) {
+        int p = Integer.valueOf(comp.getConfigProperty(portConfigProperty)) + SSL_PORT_OFFSET;
+        sslPort = String.valueOf(p);
+      }
+      port = sslPort;
+    } else {
+      port = comp.getConfigProperty(portConfigProperty);
+    }
+
+    return port;
+  }
+
+  @Override
+  boolean isSSL(AmbariComponent comp) {
+    return Boolean.valueOf(comp.getConfigProperty(SSL_FLAG_PRIMARY)) || Boolean.valueOf(comp.getConfigProperty(SSL_FLAG_SECONDARY));
   }
 
 }

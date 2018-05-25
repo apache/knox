@@ -64,6 +64,90 @@ public class SparkServiceURLCreatorTest {
 
 
   @Test
+  public void testSparkHistoryUI_SSL() {
+    doTestSparkHistoryUI_SSL("SPARK_JOBHISTORYSERVER", true, false, "4321");
+  }
+
+  @Test
+  public void testSparkHistoryUI_SSL_FALLBACK_FLAG() {
+    doTestSparkHistoryUI_SSL("SPARK_JOBHISTORYSERVER", false, true, "4321");
+  }
+
+  @Test
+  public void testSparkHistoryUI_SSL_FALLBACK_PORT() {
+    doTestSparkHistoryUI_SSL("SPARK_JOBHISTORYSERVER", true, false, null);
+  }
+
+  @Test
+  public void testSparkHistoryUI_SSL_FALLBACK_FLAG_AND_PORT() {
+    doTestSparkHistoryUI_SSL("SPARK_JOBHISTORYSERVER", false, true, null);
+  }
+
+  @Test
+  public void testSpark2HistoryUI_SSL() {
+    doTestSparkHistoryUI_SSL("SPARK2_JOBHISTORYSERVER", true, false, "4321");
+  }
+
+  @Test
+  public void testSparkwHistoryUI_SSL_FALLBACK_FLAG() {
+    doTestSparkHistoryUI_SSL("SPARK2_JOBHISTORYSERVER", false, true, "4321");
+  }
+
+  @Test
+  public void testSpark2HistoryUI_SSL_FALLBACK_PORT() {
+    doTestSparkHistoryUI_SSL("SPARK2_JOBHISTORYSERVER", true, false, null);
+  }
+
+  @Test
+  public void testSpark2HistoryUI_SSL_FALLBACK_FLAG_AND_PORT() {
+    doTestSparkHistoryUI_SSL("SPARK2_JOBHISTORYSERVER", false, true, null);
+  }
+
+  private void doTestSparkHistoryUI_SSL(String componentName, Boolean sslSHS, Boolean sslSpark, String sslSHSPort) {
+    final String PORT = "4545";
+
+    boolean isSSLConfigured = false;
+
+    AmbariComponent ac = EasyMock.createNiceMock(AmbariComponent.class);
+    List<String> hostNames = Arrays.asList("host1", "host2");
+    EasyMock.expect(ac.getHostNames()).andReturn(hostNames).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("spark.history.ui.port")).andReturn(PORT).anyTimes();
+    if (sslSHS != null) {
+      isSSLConfigured = true;
+      EasyMock.expect(ac.getConfigProperty("spark.ssl.historyServer.enabled")).andReturn(String.valueOf(sslSHS)).anyTimes();
+    }
+    if (sslSpark != null) {
+      isSSLConfigured = true;
+      EasyMock.expect(ac.getConfigProperty("spark.ssl.enabled")).andReturn(String.valueOf(sslSpark)).anyTimes();
+    }
+    if (sslSHSPort != null) {
+      EasyMock.expect(ac.getConfigProperty("spark.ssl.historyServer.port")).andReturn(sslSHSPort).anyTimes();
+    }
+    EasyMock.replay(ac);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getComponent(componentName)).andReturn(ac).anyTimes();
+    EasyMock.replay(cluster);
+
+    SparkHistoryUIServiceURLCreator c = new SparkHistoryUIServiceURLCreator();
+    c.init(cluster);
+    List<String> urls = c.create("SPARKHISTORYUI", null);
+    assertNotNull(urls);
+    assertFalse(urls.isEmpty());
+    assertEquals(2, urls.size());
+
+    if (isSSLConfigured) {
+      String expectedPort = sslSHSPort != null ? sslSHSPort : String.valueOf(Integer.valueOf(PORT) + 400);
+      assertEquals("https://host1:" + expectedPort, urls.get(0));
+      assertEquals("https://host2:" + expectedPort, urls.get(1));
+    } else {
+      assertEquals("http://host1:" + PORT, urls.get(0));
+      assertEquals("http://host2:" + PORT, urls.get(1));
+    }
+  }
+
+
+  @Test
   public void testSparkAndSpark2HistoryUI() {
     final String PORT  = "4545";
     final String PORT2 = "6767";
@@ -125,6 +209,40 @@ public class SparkServiceURLCreatorTest {
     assertEquals(2, urls.size());
     assertEquals("http://host1:" + PORT, urls.get(0));
     assertEquals("http://host2:" + PORT, urls.get(1));
+  }
+
+  @Test
+  public void testLivyServer_SSL() {
+    doTestLivyServerSSL("LIVY_SERVER");
+  }
+
+  @Test
+  public void testLivy2Server_SSL() {
+    doTestLivyServerSSL("LIVY2_SERVER");
+  }
+
+  private void doTestLivyServerSSL(String componentName) {
+    final String PORT = "4545";
+
+    AmbariComponent ac = EasyMock.createNiceMock(AmbariComponent.class);
+    List<String> hostNames = Arrays.asList("host1", "host2");
+    EasyMock.expect(ac.getHostNames()).andReturn(hostNames).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("livy.server.port")).andReturn(PORT).anyTimes();
+    EasyMock.expect(ac.getConfigProperty("livy.keystore")).andReturn("mykeystore").anyTimes();
+    EasyMock.replay(ac);
+
+    AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
+    EasyMock.expect(cluster.getComponent(componentName)).andReturn(ac).anyTimes();
+    EasyMock.replay(cluster);
+
+    LivyServiceURLCreator c = new LivyServiceURLCreator();
+    c.init(cluster);
+    List<String> urls = c.create("LIVYSERVER", null);
+    assertNotNull(urls);
+    assertFalse(urls.isEmpty());
+    assertEquals(2, urls.size());
+    assertEquals("https://host1:" + PORT, urls.get(0));
+    assertEquals("https://host2:" + PORT, urls.get(1));
   }
 
   @Test

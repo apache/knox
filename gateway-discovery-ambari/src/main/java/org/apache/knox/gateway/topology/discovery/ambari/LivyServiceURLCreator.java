@@ -33,4 +33,10 @@ public class LivyServiceURLCreator extends SparkCommonServiceURLCreator {
     return RESOURCE_ROLE;
   }
 
+  @Override
+  boolean isSSL(AmbariComponent comp) {
+    String keystore = comp.getConfigProperty("livy.keystore");
+    return (keystore != null && !keystore.isEmpty());
+  }
+
 }
