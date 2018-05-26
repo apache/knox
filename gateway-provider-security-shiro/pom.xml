@@ -65,9 +65,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.kohsuke</groupId>
+            <groupId>org.abstractj</groupId>
             <artifactId>libpam4j</artifactId>
-            <version>1.8</version>
         </dependency>
 
         <dependency>
