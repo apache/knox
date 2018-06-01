@@ -17,27 +17,82 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.Properties;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.knox.gateway.SpiGatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class HadoopAuthCookieStore extends BasicCookieStore {
 
   private static SpiGatewayMessages LOG = MessagesFactory.get( SpiGatewayMessages.class );
 
+  private GatewayConfig gatewayConfig = null;
+
+
+  HadoopAuthCookieStore(GatewayConfig config) {
+    this.gatewayConfig = config;
+  }
+
   @Override
   public void addCookie(Cookie cookie) {
     if (cookie.getName().equals("hadoop.auth") || cookie.getName().equals("hive.server2.auth")) {
-      Wrapper wrapper = new Wrapper( cookie );
-      LOG.acceptingServiceCookie( wrapper );
-      super.addCookie( wrapper );
+      // Only add the cookie if it's Knox's cookie
+      if (isKnoxCookie(gatewayConfig, cookie)) {
+        Wrapper wrapper = new Wrapper(cookie);
+        LOG.acceptingServiceCookie(wrapper);
+        super.addCookie(wrapper);
+      }
     }
+  }
+
+
+  private static boolean isKnoxCookie(GatewayConfig config, Cookie cookie) {
+    boolean result = false;
+
+    if (cookie != null) {
+      String value = cookie.getValue();
+      if (value != null && !value.isEmpty()) {
+        String principal = null;
+
+        String[] cookieParts = value.split("&");
+        if (cookieParts.length > 1) {
+          String[] elementParts = cookieParts[1].split("=");
+          if (elementParts.length == 2) {
+            principal = elementParts[1];
+          }
+
+          if (principal != null) {
+            String krb5Config = config.getKerberosLoginConfig();
+            if (krb5Config != null && !krb5Config.isEmpty()) {
+              Properties p = new Properties();
+              try {
+                p.load(new FileInputStream(krb5Config));
+                String configuredPrincipal = p.getProperty("principal");
+                // Strip off enclosing quotes, if present
+                if (configuredPrincipal.startsWith("\"")) {
+                  configuredPrincipal = configuredPrincipal.substring(1, configuredPrincipal.length() - 1);
+                }
+                // Check if they're the same principal
+                result = principal.equals(configuredPrincipal);
+              } catch (IOException e) {
+                LOG.errorReadingKerberosLoginConfig(krb5Config, e);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   private static class Wrapper extends BasicClientCookie {

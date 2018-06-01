@@ -114,7 +114,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           .build();
 
       builder = builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
-          .setDefaultCookieStore(new HadoopAuthCookieStore())
+          .setDefaultCookieStore(new HadoopAuthCookieStore(gatewayConfig))
           .setDefaultCredentialsProvider(credentialsProvider);
     } else {
       builder = builder.setDefaultCookieStore(new NoCookieStore());
