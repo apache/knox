@@ -18,6 +18,62 @@
 <rules>
 
   <!-- Route in rules  -->
+
+  <!-- DATANODE Rules -->
+  <rule dir="IN" name="DATANODE/datanode/inbound/master/query2" pattern="*://*:*/**/hdfs/datanode/?host={host}?{**}">
+    <rewrite template="{host}/?{**}"/>
+  </rule>
+
+  <rule dir="IN" name="DATANODE/datanode/inbound/master/query" pattern="*://*:*/**/hdfs/datanode/{**}?host={host}?{**}">
+    <rewrite template="{host}/{**}?{**}"/>
+  </rule>
+
+  <rule dir="IN" name="DATANODE/datanode/inbound/static" pattern="*://*:*/**/hdfs/static/{**}?host={host}?{**}">
+    <rewrite template="{host}/static/{**}?{**}"/>
+  </rule>
+  <rule dir="IN" name="DATANODE/datanode/inbound/logs" pattern="*://*:*/**/hdfs/datanode/logs/?host={host}">
+    <rewrite template="{host}/logs/"/>
+  </rule>
+  <rule dir="IN" name="DATANODE/datanode/inbound/logs/files" pattern="*://*:*/**/hdfs/datanode/logs/{**}?host={host}">
+    <rewrite template="{host}/logs/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DATANODE/inbound/datanode/html" pattern="*0;url=datanode.html">
+    <rewrite template="{$prefix[0;url&amp;equals;,url]}/hdfs/datanode/datanode.html?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/outbound/datanode/dn" pattern="/dn.js">
+    <rewrite template="{gateway.url}/hdfs/datanode/dn.js?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/outbound/datanode/dfs/jmx" pattern="/jmx?{**}">
+    <rewrite template="{gateway.url}/hdfs/datanode/jmx?host={$inboundurl[host]}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/logs" pattern="/logs">
+    <rewrite template="{gateway.url}/hdfs/datanode/logs/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/OUT" pattern="/static/{**}">
+    <rewrite template="{gateway.url}/hdfs/datanode/static/{**}?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/jetty-dir-css" pattern="jetty-dir.css">
+    <rewrite template="{gateway.url}/hdfs/datanode/static/jetty-dir.css?host={$inboundurl[host]}"/>
+  </rule>
+
+  <filter name="DATANODE/outbound/datanode/static">
+    <content type="*/html">
+      <apply path="dn.js" rule="DATANODE/outbound/datanode/dn"/>
+      <apply path=".*datanode\.html" rule="DATANODE/inbound/datanode/html"/>
+      <apply path="logs" rule="DATANODE/datanode/html/logs"/>
+      <apply path="jetty-dir.css" rule="DATANODE/datanode/html/jetty-dir-css"/>
+      <apply path=".*\.js" rule="DATANODE/datanode/html/OUT"/>
+      <apply path=".*\.css" rule="DATANODE/datanode/html/OUT"/>
+    </content>
+    <content type="application/x-javascript">
+      <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+    </content>
+  </filter>
+
   <!-- namenode rules  -->
   <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/root" pattern="*://*:*/**/hdfs/">
     <rewrite template="{$serviceUrl[HDFSUI]}/"/>
@@ -40,13 +96,8 @@
   <rule dir="IN" name="HDFSUI/hdfs/inbound/logs" pattern="*://*:*/**/hdfs/logs">
     <rewrite template="{$serviceUrl[HDFSUI]}/logs"/>
   </rule>
-    <rule dir="IN" name="HDFSUI/hdfs/inbound/logs/files" pattern="*://*:*/**/hdfs/logs/{**}">
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/logs/files" pattern="*://*:*/**/hdfs/logs/{**}">
     <rewrite template="{$serviceUrl[HDFSUI]}/logs/{**}"/>
-  </rule>
-
-  <!-- datanode rules -->
-  <rule dir="IN" name="HDFSUI/hdfs/inbound/datanode" pattern="*://*:*/**/hdfs/datanode?{host}">
-      <rewrite template="{$serviceScheme[HDFSUI]}:{host}/datanode.html"/>
   </rule>
 
   <!--
@@ -63,13 +114,12 @@
     {**} -> user.name=guest
    -->
   <rule dir="IN" name="HDFSUI/hdfs/inbound/logs/redir" pattern="*://*:*/**/hdfs/logs?{scheme}?{host}?{port}?{**}">
-        <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
-   </rule>
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
 
   <!-- Outbound rewrite rule that apply to html body-->
 
   <rule dir="OUT" name="HDFSUI/content/static" pattern="/static/{**}">
-
     <rewrite template="{gateway.url}/hdfs/static/{**}"/>
   </rule>
   <rule dir="OUT" name="HDFSUI/content/resource" pattern="dfshealth.js">
@@ -79,8 +129,8 @@
     <rewrite template="{gateway.url}/hdfs/logs/{**}"/>
   </rule>
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode">
-      <match pattern="//{dnWebAddress}"/>
-      <rewrite template="/gateway/default/datanode/?host=http://{dnWebAddress}"/>
+    <match pattern="//{dnWebAddress}"/>
+    <rewrite template="/gateway/default/datanode/?host=http://{dnWebAddress}"/>
   </rule>
 
   <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
@@ -94,7 +144,7 @@
   </rule>
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/address">
     <match pattern="{dnWebAddress}"/>
-    <rewrite template="{$prefix[',url]}/datanode/?host={dnWebAddress}'"/>
+    <rewrite template="{$prefix[',url]}/hdfs/datanode/?host={dnWebAddress}'"/>
   </rule>
 
   <!-- Redirection rules that rewrite the Location reponse header  -->
@@ -104,19 +154,19 @@
     </content>
   </filter>
 
-    <!--
-    The following outbound  rule re-writes the response Location header, and it used by the
-    "HDFSUI/hdfs/outbound/headers/logs" redirection rule.
-    Any /logs query parameter is matched and then it is rewritten so Location has
-    {host} -> host=nodehost.com
-    host can be mapped using the hostmap function(used to map server that may have an outside hostname and inside hostname
-    see hostmap function in Knox User's guide).
-    {scheme} -> scheme=http
-    {port} -> port=50070
-    {**} -> user.name=guest
-    The result of rewriting the Location header is that the browser then will go through Knox, and the next request
-    will trigger the inbound "HDFSUI/hdfs/inbound/logs/redir" rule.
-   -->
+  <!--
+  The following outbound  rule re-writes the response Location header, and it used by the
+  "HDFSUI/hdfs/outbound/headers/logs" redirection rule.
+  Any /logs query parameter is matched and then it is rewritten so Location has
+  {host} -> host=nodehost.com
+  host can be mapped using the hostmap function(used to map server that may have an outside hostname and inside hostname
+  see hostmap function in Knox User's guide).
+  {scheme} -> scheme=http
+  {port} -> port=50070
+  {**} -> user.name=guest
+  The result of rewriting the Location header is that the browser then will go through Knox, and the next request
+  will trigger the inbound "HDFSUI/hdfs/inbound/logs/redir" rule.
+ -->
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/headers/logs/location">
     <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
     <rewrite template="{gateway.url}/hdfs/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
@@ -150,14 +200,14 @@
       <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
     </content>
     <content type="*/html">
-       <apply path="//\{dnWebAddress\}" rule="HDFSUI/hdfs/outbound/datanode"/>
-       <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
-       <apply path="\'//\{infoAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoAddr"/>
-       <apply path="\'//\{infoSecureAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoSecureAddr"/>
-       <!-- KNOX-1277 -->
-       <apply path=".*dfshealth\.html" rule="HDFSUI/hdfs/inbound/namenode/root/filter/refresh-tag"/>
-       <!-- DN web Address Change -->
-       <apply path="\'\{dnWebAddress\}\'" rule="HDFSUI/hdfs/outbound/datanode/address"/>
+      <apply path="//\{dnWebAddress\}" rule="HDFSUI/hdfs/outbound/datanode"/>
+      <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
+      <apply path="\'//\{infoAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoAddr"/>
+      <apply path="\'//\{infoSecureAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoSecureAddr"/>
+      <!-- KNOX-1277 -->
+      <apply path=".*dfshealth\.html" rule="HDFSUI/hdfs/inbound/namenode/root/filter/refresh-tag"/>
+      <!-- DN web Address Change -->
+      <apply path="\'\{dnWebAddress\}\'" rule="HDFSUI/hdfs/outbound/datanode/address"/>
     </content>
   </filter>
 

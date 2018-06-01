@@ -32,6 +32,24 @@
         <route path="/hdfs/dfshealth.html#tab-datanode">
             <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>
         </route>
+
+        <!-- DATANODE Rules -->
+        <route path="/hdfs/datanode/">
+            <rewrite apply="DATANODE/datanode/inbound/master/query2" to="request.url"/>
+            <rewrite apply="DATANODE/outbound/datanode/static" to="response.body"/>
+        </route>
+        <route path="/hdfs/datanode/**?**">
+            <rewrite apply="DATANODE/datanode/inbound/master/query" to="request.url"/>
+            <rewrite apply="DATANODE/outbound/datanode/static" to="response.body"/>
+        </route>
+        <route path="/hdfs/datanode/logs/">
+            <rewrite apply="DATANODE/datanode/inbound/logs" to="request.url"/>
+            <rewrite apply="DATANODE/outbound/datanode/static" to="response.body"/>
+        </route>
+        <route path="/hdfs/datanode/logs/**">
+            <rewrite apply="DATANODE/datanode/inbound/logs/files" to="request.url"/>
+            <rewrite apply="DATANODE/outbound/datanode/static" to="response.body"/>
+        </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.HdfsUIHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch"/>
 </service>
