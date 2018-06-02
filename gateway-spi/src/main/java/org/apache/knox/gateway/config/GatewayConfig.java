@@ -389,4 +389,15 @@ public interface GatewayConfig {
    */
   List<String> getReadOnlyOverrideTopologyNames();
 
+  /**
+   * Get the comma separated list of group names that represent Knox Admin users
+   * @return
+   */
+  String getKnoxAdminGroups();
+
+  /**
+   * Get the comma separated list of user names that represent Knox Admin users
+   * @return
+   */
+  String getKnoxAdminUsers();
 }

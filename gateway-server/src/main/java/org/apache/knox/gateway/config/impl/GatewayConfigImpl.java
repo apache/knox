@@ -243,6 +243,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String DEFAULT_DISCOVERY_ADDRESS = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.address";
   static final String DEFAULT_DISCOVERY_CLUSTER = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.cluster";
 
+  static final String KNOX_ADMIN_GROUPS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.admin.groups";
+  static final String KNOX_ADMIN_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.admin.users";
+
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
 
@@ -1040,6 +1043,18 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
 
     return topologyNames;
+  }
+
+  @Override
+  public String getKnoxAdminGroups() {
+    final String result = get(KNOX_ADMIN_GROUPS, null);
+    return result;
+  }
+
+  @Override
+  public String getKnoxAdminUsers() {
+    final String result = get(KNOX_ADMIN_USERS, null);
+    return result;
   }
 
 }

@@ -693,4 +693,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return readOnly;
   }
 
+  @Override
+  public String getKnoxAdminGroups() {
+    return null;
+  }
+
+  @Override
+  public String getKnoxAdminUsers() {
+    return null;
+  }
+
 }

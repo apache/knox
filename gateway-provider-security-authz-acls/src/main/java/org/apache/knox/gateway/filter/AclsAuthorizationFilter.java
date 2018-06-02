@@ -41,6 +41,9 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class AclsAuthorizationFilter implements Filter {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
@@ -50,10 +53,22 @@ public class AclsAuthorizationFilter implements Filter {
   private String resourceRole = null;
   private String aclProcessingMode = null;
   private AclParser parser = new AclParser();
+  private ArrayList<String> adminGroups = new ArrayList<String>();;
+  private ArrayList<String> adminUsers = new ArrayList<String>();;
 
   
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    String adminGroups = filterConfig.getInitParameter("knox.admin.groups");
+    if (adminGroups != null) {
+      parseAdminGroupConfig(adminGroups);
+    }
+    
+    String adminUsers = filterConfig.getInitParameter("knox.admin.users");
+    if (adminUsers != null) {
+      parseAdminUserConfig(adminUsers);
+    }
+
     resourceRole = getInitParameter(filterConfig, "resource.role");
     log.initializingForResourceRole(resourceRole);
     aclProcessingMode = getInitParameter(filterConfig, resourceRole + ".acl.mode");
@@ -70,6 +85,14 @@ public class AclsAuthorizationFilter implements Filter {
 
   private String getInitParameter(FilterConfig filterConfig, String paramName) {
     return filterConfig.getInitParameter(paramName.toLowerCase());
+  }
+
+  private void parseAdminGroupConfig(String groups) {
+    Collections.addAll(adminGroups, groups.split(","));
+  }
+
+  private void parseAdminUserConfig(String users) {
+    Collections.addAll(adminUsers, users.split(","));
   }
 
   public void destroy() {
@@ -90,7 +113,7 @@ public class AclsAuthorizationFilter implements Filter {
     }
   }
 
-  private boolean enforceAclAuthorizationPolicy(ServletRequest request,
+  protected boolean enforceAclAuthorizationPolicy(ServletRequest request,
       ServletResponse response, FilterChain chain) {
     HttpServletRequest req = (HttpServletRequest) request;
     
@@ -162,7 +185,7 @@ public class AclsAuthorizationFilter implements Filter {
     return allowed;
   }
 
-  private boolean checkUserAcls(Principal user) {
+  boolean checkUserAcls(Principal user) {
     boolean allowed = false;
     if (user == null) {
       return false;
@@ -174,11 +197,15 @@ public class AclsAuthorizationFilter implements Filter {
       if (parser.users.contains(user.getName())) {
         allowed = true;
       }
+      else if (parser.users.contains("KNOX_ADMIN_USERS") &&
+          adminUsers.contains(user.getName())) {
+        allowed = true;
+      }
     }
     return allowed;
   }
 
-  private boolean checkGroupAcls(Object[] userGroups) {
+  boolean checkGroupAcls(Object[] userGroups) {
     boolean allowed = false;
     if (userGroups == null) {
       return false;
@@ -187,14 +214,23 @@ public class AclsAuthorizationFilter implements Filter {
       allowed = true;
     }
     else {
-      for (int i = 0; i < userGroups.length; i++) {
-        if (parser.groups.contains(((Principal)userGroups[i]).getName())) {
-          allowed = true;
-          break;
-        }
+      allowed = hasAllowedPrincipal(parser.groups, userGroups);
+      if (!allowed && parser.groups.contains("KNOX_ADMIN_GROUPS")) {
+        allowed = hasAllowedPrincipal(adminGroups, userGroups);
       }
     }
     return allowed;
+  }
+
+  private boolean hasAllowedPrincipal(List<String> allowed, Object[] userGroups) {
+    boolean rc = false;
+    for (int i = 0; i < userGroups.length; i++) {
+      if (allowed.contains(((Principal)userGroups[i]).getName())) {
+        rc = true;
+        break;
+      }
+    }
+    return rc;
   }
 
   private void sendForbidden(HttpServletResponse res) {

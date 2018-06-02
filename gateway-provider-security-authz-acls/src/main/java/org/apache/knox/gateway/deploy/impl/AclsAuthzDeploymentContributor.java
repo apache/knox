@@ -60,6 +60,14 @@ public class AclsAuthzDeploymentContributor extends ProviderDeploymentContributo
     }
     // add resource role to params so that we can determine the acls to enforce at runtime
     params.add( resource.createFilterParam().name( "resource.role" ).value(resource.role() ) );
+    
+    // the following are used within the AclsAuthz provider to replace
+    // placeholders within the acls KNOX_ADMIN_GROUPS and KNOX_ADMIN_USERS
+    String adminGroups = context.getGatewayConfig().getKnoxAdminGroups();
+    params.add(resource.createFilterParam().name("knox.admin.groups").value(adminGroups));
+
+    String adminUsers = context.getGatewayConfig().getKnoxAdminUsers();
+    params.add(resource.createFilterParam().name("knox.admin.users").value(adminUsers));
 
     // blindly add all the provider params as filter init params
     // this will include any {resource.role}-ACLS parameters to be enforced - such as NAMENODE-ACLS
