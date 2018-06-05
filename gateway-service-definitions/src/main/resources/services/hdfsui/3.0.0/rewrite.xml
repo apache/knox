@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+  <!-- Route in rules  -->
+
+  <!-- DATANODE Rules -->
+  <rule dir="IN" name="DATANODE/datanode/inbound/master/query2" pattern="*://*:*/**/hdfs/datanode/?host={host}?{**}">
+    <rewrite template="{host}/?{**}"/>
+  </rule>
+  <rule dir="IN" name="DATANODE/datanode/inbound/master/query" pattern="*://*:*/**/hdfs/datanode/{**}?host={host}?{**}">
+    <rewrite template="{host}/{**}?{**}"/>
+  </rule>
+
+
+  <rule dir="IN" name="DATANODE/datanode/inbound/static" pattern="*://*:*/**/hdfs/static/{**}?host={host}?{**}">
+    <rewrite template="{host}/static/{**}?{**}"/>
+  </rule>
+  <rule dir="IN" name="DATANODE/datanode/inbound/logs" pattern="*://*:*/**/hdfs/datanode/logs/?host={host}">
+    <rewrite template="{host}/logs/"/>
+  </rule>
+  <rule dir="IN" name="DATANODE/datanode/inbound/logs/files" pattern="*://*:*/**/hdfs/datanode/logs/{**}?host={host}">
+    <rewrite template="{host}/logs/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="DATANODE/inbound/datanode/html" pattern="*0;url=datanode.html">
+    <rewrite template="{$prefix[0;url&amp;equals;,url]}/hdfs/datanode/datanode.html?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/outbound/datanode/dn" pattern="/dn.js">
+    <rewrite template="{gateway.url}/hdfs/datanode/dn.js?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/outbound/datanode/dfs/jmx" pattern="/jmx?{**}">
+    <rewrite template="{gateway.url}/hdfs/datanode/jmx?host={$inboundurl[host]}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/logs" pattern="/logs">
+    <rewrite template="{gateway.url}/hdfs/datanode/logs/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/OUT" pattern="/static/{**}">
+    <rewrite template="{gateway.url}/hdfs/datanode/static/{**}?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="DATANODE/datanode/html/jetty-dir-css" pattern="jetty-dir.css">
+    <rewrite template="{gateway.url}/hdfs/datanode/static/jetty-dir.css?host={$inboundurl[host]}"/>
+  </rule>
+
+  <filter name="DATANODE/outbound/datanode/static">
+    <content type="*/html">
+      <apply path="dn.js" rule="DATANODE/outbound/datanode/dn"/>
+      <apply path=".*datanode\.html" rule="DATANODE/inbound/datanode/html"/>
+      <apply path="logs" rule="DATANODE/datanode/html/logs"/>
+      <apply path="jetty-dir.css" rule="DATANODE/datanode/html/jetty-dir-css"/>
+      <apply path=".*\.js" rule="DATANODE/datanode/html/OUT"/>
+      <apply path=".*\.css" rule="DATANODE/datanode/html/OUT"/>
+    </content>
+    <content type="application/x-javascript">
+      <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+    </content>
+    <content type="application/javascript">
+      <apply path="/jmx" rule="DATANODE/outbound/datanode/dfs/jmx"/>
+    </content>
+  </filter>
+
+  <!-- namenode rules  -->
+
+  <!-- New rules to support like datanode -->
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/MAINROOT" pattern="*://*:*/**/hdfs/?host={host}?{**}">
+    <rewrite template="{host}/?{**}"/>
+  </rule>
+  
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/MAINROOT1" pattern="*://*:*/**/hdfs/{**}?host={host}?{**}">
+    <rewrite template="{host}/{**}?{**}"/>
+ </rule>
+  
+  <rule dir="IN" name="HDFSUI/inbound/STATIC" pattern="*://*:*/**/hdfs/static/{**}?host={host}?{**}">
+    <rewrite template="{host}/static/{**}?{**}"/>
+  </rule>
+
+  <!-- Intial refresh -->
+  <rule dir="OUT" name="HDFSUI/inbound/namenode/refresh-tag" pattern="*0;url=dfshealth.html">
+    <rewrite template="{$prefix[0;url&amp;equals;,url]}/hdfs/dfshealth.html?host={$inboundurl[host]}"/>
+  </rule>
+
+  <!-- log rules  -->
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/logs" pattern="*://*:*/**/hdfs/logs?host={host}">
+    <rewrite template="{host}/logs/"/>
+  </rule>
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/logs/files" pattern="*://*:*/**/hdfs/logs/{**}?host={host}">
+    <rewrite template="{host}/logs/{**}"/>
+  </rule>
+
+  <!--
+    After the redirection(302) from {gateway.url}/hdfs/logs/?{**}, hdfs returns the datanode host from
+    which we need to access the log as part of the redirection location header.
+    e.g
+    After call to /logs a 302 is generated with a location  location header that has
+    "https://knox_host:knox_port/gateway/knox_deployment/hdfs/logs/?port=50070&host=nodehost.com&scheme
+=http&user.name=guest"
+    The following rule accomplish the inbound call after 302.
+    {host} -> host=nodehost.com
+    {scheme} -> scheme=http
+    {port} -> port=50070
+    {**} -> user.name=guest
+   -->
+  <rule dir="IN" name="HDFSUI/hdfs/inbound/logs/redir" pattern="*://*:*/**/hdfs/logs?{scheme}?{host}?{port}?{**}">
+    <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
+  </rule>
+
+  <!-- Outbound rewrite rule that apply to html body -->
+
+  <rule dir="OUT" name="HDFSUI/content/static" pattern="/static/{**}">
+    <rewrite template="{gateway.url}/hdfs/static/{**}?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/content/resource" pattern="dfshealth.js">
+    <rewrite template="{gateway.url}/hdfs/dfshealth.js?host={$inboundurl[host]}"/>
+  </rule>
+  
+  <!-- outbound rewrite rules for links under utilities -->
+  
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/logshtml" pattern="/logs">
+    <rewrite template="{gateway.url}/hdfs/logs/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/jmxhtml" pattern="jmx">
+    <rewrite template="{gateway.url}/hdfs/jmx/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/confhtml" pattern="conf">
+    <rewrite template="{gateway.url}/hdfs/conf/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/stackshtml" pattern="stacks">
+    <rewrite template="{gateway.url}/hdfs/stacks/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml" pattern="explorer.html">
+    <rewrite template="{gateway.url}/hdfs/explorer.html/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/logs/files" pattern="/logs/{**}">
+    <rewrite template="{gateway.url}/hdfs/logs/{**}?host={$inboundurl[host]}"/>
+  </rule>
+
+  <!-- for explorer page rewrite -->
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-overview" pattern="dfshealth.html#tab-overview">
+   <rewrite template="{gateway.url}/hdfs/dfshealth.html?host={$inboundurl[host]}#tab-overview"/>
+  </rule> 
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-datanode" pattern="dfshealth.html#tab-datanode">
+   <rewrite template="{gateway.url}/hdfs/dfshealth.html?host={$inboundurl[host]}#tab-datanode"/>
+  </rule> 
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-datanode-volume-failures" pattern="dfshealth.html#tab-datanode-volume-failures">
+   <rewrite template="{gateway.url}/hdfs/dfshealth.html?host={$inboundurl[host]}#tab-datanode-volume-failures"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-snapshot" pattern="dfshealth.html#tab-snapshot">
+   <rewrite template="{gateway.url}/hdfs/dfshealth.html?host={$inboundurl[host]}#tab-snapshot"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-startup-progress" pattern="dfshealth.html#tab-startup-progress">
+   <rewrite template="{gateway.url}/hdfs/dfshealth.html?host={$inboundurl[host]}#tab-startup-progress"/>
+  </rule>
+
+
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode">
+    <match pattern="//{dnWebAddress}"/>
+    <rewrite template="/gateway/default/datanode/?host=http://{dnWebAddress}"/>
+  </rule>
+
+  <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/infoAddr">
+    <match pattern="{infoAddr}"/>
+    <rewrite template="{$prefix[',url]}/datanode/?host=http://{infoAddr}'"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/infoSecureAddr">
+    <match pattern="{infoSecureAddr}"/>
+    <rewrite template="{$prefix[',url]}/datanode/?host=http://{infoSecureAddr}'"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/datanode/address">
+    <match pattern="{dnWebAddress}"/>
+    <rewrite template="{$prefix[',url]}/hdfs/datanode/?host={dnWebAddress}'"/>
+    <!-- <encrypt-query/> -->
+  </rule>
+
+  <!-- Redirection rules that rewrite the Location reponse header  -->
+  <filter name="HDFSUI/hdfs/outbound/headers/logs">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="HDFSUI/hdfs/outbound/headers/logs/location"/>
+    </content>
+  </filter>
+
+  <!--
+  The following outbound  rule re-writes the response Location header, and it used by the
+  "HDFSUI/hdfs/outbound/headers/logs" redirection rule.
+  Any /logs query parameter is matched and then it is rewritten so Location has
+  {host} -> host=nodehost.com
+  host can be mapped using the hostmap function(used to map server that may have an outside hostname and inside hostname
+  see hostmap function in Knox User's guide).
+  {scheme} -> scheme=http
+  {port} -> port=50070
+  {**} -> user.name=guest
+  The result of rewriting the Location header is that the browser then will go through Knox, and the next request
+  will trigger the inbound "HDFSUI/hdfs/inbound/logs/redir" rule.
+ -->
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/headers/logs/location">
+    <match pattern="{scheme}://{host}:{port}/logs/?{**}"/>
+    <rewrite template="{gateway.url}/hdfs/logs?{scheme}?host={$hostmap(host)}?{port}?{**}"/>
+  </rule>
+
+  <!-- JavaScript re-write rules -->
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/relative/jmx">
+    <rewrite template="{gateway.url}/hdfs/jmx?host={$inboundurl[host]}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/relative/conf">
+    <rewrite template="{gateway.url}/hdfs/conf?host={$inboundurl[host]}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/relative/startupProgress">
+    <rewrite template="{gateway.url}/hdfs/startupProgress?host={$inboundurl[host]}?{**}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerjs" pattern="explorer.js">
+    <rewrite template="{gateway.url}/hdfs/explorer.js/?host={$inboundurl[host]}"/>
+  </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/namenode/relative/webhdfs">
+    <rewrite template="{gateway.url}/webhdfs"/>
+  </rule>
+  <filter name="HDFSUI/hdfs/outbound/namenode/relative">
+    <content type="*/x-javascript">
+      <apply path="/jmx" rule="HDFSUI/hdfs/outbound/namenode/relative/jmx"/>
+      <apply path="/conf" rule="HDFSUI/hdfs/outbound/namenode/relative/conf"/>
+      <apply path="/startupProgress" rule="HDFSUI/hdfs/outbound/namenode/relative/startupProgress"/>
+      <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
+      <apply path="explorer\.js" rule="HDFSUI/hdfs/outbound/explorerjs1"/>
+    </content>
+    <!-- KNOX-1282 content type changed for new UI -->
+    <content type="*/javascript">
+      <apply path="/jmx" rule="HDFSUI/hdfs/outbound/namenode/relative/jmx"/>
+      <apply path="/conf" rule="HDFSUI/hdfs/outbound/namenode/relative/conf"/>
+      <apply path="/startupProgress" rule="HDFSUI/hdfs/outbound/namenode/relative/startupProgress"/>
+      <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
+    </content>
+    <content type="*/html">
+      <apply path="jmx" rule="HDFSUI/hdfs/outbound/jmxhtml"/>
+      <apply path="conf" rule="HDFSUI/hdfs/outbound/confhtml"/>
+      <apply path="stacks" rule="HDFSUI/hdfs/outbound/stackshtml"/>
+      <apply path="explorer\.html" rule="HDFSUI/hdfs/outbound/explorerhtml"/>
+      <apply path="dfshealth\.html\#tab-overview" rule="HDFSUI/hdfs/outbound/explorerhtml/tab-overview"/>
+      <apply path="dfshealth\.html\#tab-datanode" rule="HDFSUI/hdfs/outbound/explorerhtml/tab-datanode"/>
+      <apply path="dfshealth\.html\#tab-datanode-volume-failures" rule="HDFSUI/hdfs/outbound/explorerhtml/tab-datanode-volume-failures"/>
+      <apply path="dfshealth\.html\#tab-snapshot" rule="HDFSUI/hdfs/outbound/explorerhtml/tab-snapshot"/>
+      <apply path="dfshealth\.html\#tab-startup-progress" rule="HDFSUI/hdfs/outbound/explorerhtml/tab-startup-progress"/> 
+      <apply path="//\{dnWebAddress\}" rule="HDFSUI/hdfs/outbound/datanode"/>
+      <!-- rules for to fix angular infoAddr variable KNOX-1242 -->
+      <apply path="\'//\{infoAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoAddr"/>
+      <apply path="\'//\{infoSecureAddr\}\'" rule="HDFSUI/hdfs/outbound/datanode/infoSecureAddr"/>
+      <!-- KNOX-1277 -->
+      <apply path=".*dfshealth\.html" rule="HDFSUI/inbound/namenode/refresh-tag"/>
+      <!-- DN web Address Change -->
+      <apply path="\'\{dnWebAddress\}\'" rule="HDFSUI/hdfs/outbound/datanode/address"/>
+    </content>
+  </filter>
+
+</rules>
