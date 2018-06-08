@@ -22,7 +22,7 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
 
   public static TYPE: string = 'HaProvider';
 
-  private static ENSEMBLE_REGEXP: RegExp = new RegExp('^([a-zA-Z\\d-.]+:\\d+)(;[a-zA-Z\\d-.]+:\\d+)*$');
+  private static ENSEMBLE_REGEXP: RegExp = new RegExp('^([a-zA-Z\\d-.]+:\\d+)(,[a-zA-Z\\d-.]+:\\d+)*$');
 
   public static SERVICE_NAME          = 'Service Name';
   public static MAX_FAILOVER_ATTEMPTS = 'Failover Atttempts Limit';
