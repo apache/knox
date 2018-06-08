@@ -557,7 +557,7 @@ public abstract class DeploymentFactory {
       }
       if ( versionMap != null && !versionMap.isEmpty()) {
         if( version == null ) {
-          contributor = ((TreeMap<Version, ServiceDeploymentContributor>) versionMap).firstEntry().getValue();
+          contributor = ((TreeMap<Version, ServiceDeploymentContributor>) versionMap).lastEntry().getValue();
         } else {
           contributor = versionMap.get( version );
         }
