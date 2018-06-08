@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -79,7 +81,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_COOKIES_FILTER_PARAM );
   }
 
-  private Template getSourceUrl() {
+  Template getSourceUrl() {
     Template urlTemplate;
     //KNOX-439[
     //StringBuffer urlString = super.getRequestURL();
@@ -107,7 +109,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   }
 
   // Note: Source url was added to the request attributes by the GatewayFilter doFilter method.
-  private Template getTargetUrl() {
+  Template getTargetUrl() {
     boolean rewriteRequestUrl = true;
     Template targetUrl;
     if( rewriteRequestUrl ) {
@@ -177,14 +179,32 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public String getHeader( String name ) {
-    String value = super.getHeader( name );
+    String value = null;
+    if (name.equalsIgnoreCase("Host")) {
+      String uri = getRequestURI();
+      try {
+        URL url = new URL(uri);
+        value = url.getHost();
+        // by the time the targetUrl is set as a request
+        // attribute it has already been rewritten just
+        // just return it from here without additional rewrite
+        return value;
+      } catch (MalformedURLException e) {
+        value = null;
+      }
+    }
+
+    value = super.getHeader( name );
+
     if( value != null ) {
       value = rewriteValue( rewriter, super.getHeader( name ), pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
     }
+
     return value;
   }
 
   @SuppressWarnings("unchecked")
+  @Override
   public Enumeration getHeaders( String name ) {
     return new EnumerationRewriter( rewriter, super.getHeaders( name ), pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
   }

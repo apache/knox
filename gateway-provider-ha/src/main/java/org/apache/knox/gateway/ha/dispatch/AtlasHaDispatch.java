@@ -33,7 +33,6 @@ public class AtlasHaDispatch extends DefaultHaDispatch {
     private static Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
 
     static {
-        REQUEST_EXCLUDE_HEADERS.add("Host");
         REQUEST_EXCLUDE_HEADERS.add("Content-Length");
     }
 
