@@ -114,7 +114,7 @@
   </rule>
   <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/outbound/rqheaders/xfc">
     <match pattern="{**}"/>
-    <rewrite template="{**}/sparkhistoryui" />
+    <rewrite template="/{**}/sparkhistory" />
   </rule>
 
   <filter name="SPARKHISTORYUI/sparkhistory/outbound/headers">
