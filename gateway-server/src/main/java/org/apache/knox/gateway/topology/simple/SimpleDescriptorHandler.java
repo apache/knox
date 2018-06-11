@@ -502,7 +502,7 @@ public class SimpleDescriptorHandler {
                 }
 
                 // If the service is configured for ZooKeeper-based HA
-                if (zkConf != null && zkConf.getEnsemble() != null) {
+                if (zkConf != null && zkConf.getEnsemble() != null && isServiceHaEnabled) {
                     String ensemble = zkConf.getEnsemble();
                     if (ensemble != null && !ensemble.isEmpty()) {
                         params.put("zookeeperEnsemble", ensemble);

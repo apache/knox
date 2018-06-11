@@ -126,6 +126,7 @@ public class SimpleDescriptorHandlerTest {
             "            <param><name>WEBHDFS</name><value>enabled=true;retrySleep=40;maxRetryAttempts=5</value></param>\n" +
             "            <param><name>WEBHBASE</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
             "            <param><name>ATLAS</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
+            "            <param><name>ATLAS-API</name><value>enabled=false</value></param>\n" +
             "        </provider>\n" +
             "    </gateway>\n";
 
@@ -556,6 +557,8 @@ public class SimpleDescriptorHandlerTest {
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".WEBHBASE.ensemble", WEBHBASE_HA_ENSEMBLE);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS.haEnabled", ATLAS_HA_ENABLED);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS.ensemble", ATLAS_HA_ENSEMBLE);
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS-API.ensemble", ATLAS_HA_ENSEMBLE);
+        DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS-API.url", "http://atlasapihost:2222");
 
         try {
             DISCOVERY_PROPERTIES.store(new FileOutputStream(discoveryConfig), null);
@@ -568,6 +571,7 @@ public class SimpleDescriptorHandlerTest {
         serviceURLs.put("WEBHDFS", null);
         serviceURLs.put("RESOURCEMANAGER", null);
         serviceURLs.put("ATLAS", null);
+        serviceURLs.put("ATLAS-API", null);
         serviceURLs.put("HIVE", null);
 
         // Write the externalized provider config to a temp file
@@ -706,6 +710,31 @@ public class SimpleDescriptorHandlerTest {
                                  ATLAS_HA_ENABLED, atlasServiceParams.get("haEnabled"));
                     assertEquals(ATLAS_HA_ENSEMBLE, atlasServiceParams.get("zookeeperEnsemble"));
                     assertNull(atlasServiceParams.get("zookeeperNamespace"));
+                }
+
+                // Validate the ATLAS service params
+                if ("ATLAS-API".equals(role)) {
+                    // Expecting non-HA-related service params
+                    NodeList paramNodes = (NodeList) xpath.compile("param").evaluate(serviceNode, XPathConstants.NODESET);
+                    assertNotNull(paramNodes);
+                    Map<String, String> atlasApiServiceParams = new HashMap<>();
+                    for (int paramNodeIndex=0; paramNodeIndex < paramNodes.getLength(); paramNodeIndex++) {
+                        Node paramNode = paramNodes.item(paramNodeIndex);
+                        Node nameNode = (Node) xpath.compile("name/text()").evaluate(paramNode, XPathConstants.NODE);
+                        assertNotNull(nameNode);
+                        Node valueNode = (Node) xpath.compile("value/text()").evaluate(paramNode, XPathConstants.NODE);
+                        assertNotNull(valueNode);
+                        atlasApiServiceParams.put(nameNode.getNodeValue(), valueNode.getNodeValue());
+                    }
+                    // There should be no HA-related params because the enabled attribute is false
+                    assertNull(atlasApiServiceParams.get("zookeeperEnsemble"));
+                    assertNull(atlasApiServiceParams.get("zookeeperNamespace"));
+
+                    // Instead, the URL should be declared for the service
+                    NodeList urlNodes = (NodeList) xpath.compile("url").evaluate(serviceNode, XPathConstants.NODESET);
+                    assertNotNull(urlNodes);
+                    assertEquals(1, urlNodes.getLength());
+                    assertEquals(DISCOVERY_PROPERTIES.getProperty(clusterName + ".ATLAS-API.url"), urlNodes.item(0).getTextContent());
                 }
 
                 // Validate the URLs
