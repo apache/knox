@@ -703,4 +703,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  /**
+   * Custom header name to be used to pass the authenticated principal via
+   * dispatch
+   *
+   * @return
+   * @since 1.1.0
+   */
+  @Override
+  public String getFederationHeaderName() {
+    return "SM_USER";
+  }
+
 }

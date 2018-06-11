@@ -246,6 +246,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String KNOX_ADMIN_GROUPS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.admin.groups";
   static final String KNOX_ADMIN_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.admin.users";
 
+  /* property that specifies custom header name to be added to outgoing federated request */
+  static final String CUSTOM_FEDERATION_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".custom.federation.header.name";
+  /* Default federated header name, see HeaderPreAuthFederationFilter.headerName */
+  static final String DEFAULT_FEDERATION_HEADER_NAME = "SM_USER";
+
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
 
@@ -1055,6 +1060,18 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public String getKnoxAdminUsers() {
     final String result = get(KNOX_ADMIN_USERS, null);
     return result;
+  }
+
+  /**
+   * Custom header name to be used to pass the authenticated principal via
+   * dispatch
+   *
+   * @return
+   * @since 1.1.0
+   */
+  @Override
+  public String getFederationHeaderName() {
+    return get(CUSTOM_FEDERATION_HEADER_NAME, DEFAULT_FEDERATION_HEADER_NAME);
   }
 
 }

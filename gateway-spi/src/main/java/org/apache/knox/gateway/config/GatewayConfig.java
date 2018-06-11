@@ -400,4 +400,13 @@ public interface GatewayConfig {
    * @return
    */
   String getKnoxAdminUsers();
+
+  /**
+   * Custom header name to be used to pass the authenticated principal
+   * via dispatch
+   * @since 1.1.0
+   * @return
+   */
+  String getFederationHeaderName();
+
 }
