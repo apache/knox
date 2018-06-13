@@ -163,7 +163,7 @@ public class DefaultTopologyService
     try {
       TopologyValidator tv = new TopologyValidator(topology);
 
-      if(tv.validateTopology()) {
+      if(!tv.validateTopology()) {
         throw new SAXException(tv.getErrorString());
       }
 

@@ -85,4 +85,48 @@ limitations under the License.
         <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
     </property>
 
+    <!-- Knox Admin related config -->
+	<property>
+        <name>gateway.knox.admin.groups</name>
+        <value>admin</value>
+    </property>
+
+    <!-- DEMO LDAP config for Hadoop Group Provider -->
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping</name>
+        <value>org.apache.hadoop.security.LdapGroupsMapping</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.user</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.password</name>
+        <value>guest-password</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.url</name>
+        <value>ldap://localhost:33389</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.base</name>
+        <value></value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.user</name>
+        <value>(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.group</name>
+        <value>(objectclass=groupOfNames)</value>
+    </property>
+    <property>
+        <name>hgateway.group.config.adoop.security.group.mapping.ldap.search.attr.member</name>
+        <value>member</value>
+    </property>
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.group.name</name>
+        <value>cn</value>
+    </property>
+
 </configuration>

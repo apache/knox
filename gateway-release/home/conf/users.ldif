@@ -100,3 +100,11 @@ cn: scientist
 description: scientist group
 member: uid=sam,ou=people,dc=hadoop,dc=apache,dc=org
 
+# create the admin group under groups
+dn: cn=admin,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: admin
+description: admin group
+member: uid=admin,ou=people,dc=hadoop,dc=apache,dc=org
+

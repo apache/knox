@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -16,61 +16,69 @@
   limitations under the License.
 -->
 <topology>
-
-    <gateway>
-
-        <provider>
-            <role>webappsec</role>
-            <name>WebAppSec</name>
-            <enabled>true</enabled>
-            <param><name>csrf.enabled</name><value>true</value></param>
-            <param><name>csrf.customHeader</name><value>X-XSRF-Header</value></param>
-            <param><name>csrf.methodsToIgnore</name><value>GET,OPTIONS,HEAD</value></param>
-            <param><name>xframe.options.enabled</name><value>true</value></param>
-            <param><name>xss.protection.enabled</name><value>true</value></param>
-            <param><name>strict.transport.enabled</name><value>true</value></param>
-        </provider>
-
-        <provider>
-            <role>federation</role>
-            <name>SSOCookieProvider</name>
-            <enabled>true</enabled>
-        </provider>
-
-        <provider>
-            <role>authorization</role>
-            <name>AclsAuthz</name>
-            <enabled>true</enabled>
-            <param>
-                <name>knox.acl</name>
-                <value>admin;*;*</value>
-            </param>
-        </provider>
-
-        <provider>
-            <role>identity-assertion</role>
-            <name>Default</name>
-            <enabled>true</enabled>
-        </provider>
-
-        <provider>
-            <role>hostmap</role>
-            <name>static</name>
-            <enabled>true</enabled>
-            <param>
-                <name>localhost</name>
-                <value>sandbox,sandbox.hortonworks.com</value>
-            </param>
-        </provider>
-
-    </gateway>
-
-    <application>
-        <role>admin-ui</role>
-    </application>
-
-    <service>
-        <role>KNOX</role>
-    </service>
-
+   <name>manager</name>
+   <gateway>
+      <provider>
+         <role>webappsec</role>
+         <name>WebAppSec</name>
+         <enabled>true</enabled>
+         <param>
+            <name>csrf.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>csrf.customHeader</name>
+            <value>X-XSRF-Header</value>
+         </param>
+         <param>
+            <name>csrf.methodsToIgnore</name>
+            <value>GET,OPTIONS,HEAD</value>
+         </param>
+         <param>
+            <name>xframe.options.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>xss.protection.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>strict.transport.enabled</name>
+            <value>true</value>
+         </param>
+      </provider>
+      <provider>
+         <role>federation</role>
+         <name>SSOCookieProvider</name>
+         <enabled>true</enabled>
+      </provider>
+      <provider>
+         <role>identity-assertion</role>
+         <name>HadoopGroupProvider</name>
+         <enabled>true</enabled>
+         <param>
+            <name>CENTRAL_GROUP_CONFIG_PREFIX</name>
+            <value>gateway.group.config.</value>
+         </param>
+      </provider>
+      <provider>
+         <role>authorization</role>
+         <name>AclsAuthz</name>
+         <enabled>true</enabled>
+         <param>
+            <name>knox.acl.mode</name>
+            <value>OR</value>
+         </param>
+         <param>
+            <name>knox.acl</name>
+            <value>KNOX_ADMIN_USERS;KNOX_ADMIN_GROUPS;*</value>
+         </param>
+      </provider>
+   </gateway>
+   <service>
+      <role>KNOX</role>
+   </service>
+   <application>
+      <name>admin-ui</name>
+   </application>
 </topology>

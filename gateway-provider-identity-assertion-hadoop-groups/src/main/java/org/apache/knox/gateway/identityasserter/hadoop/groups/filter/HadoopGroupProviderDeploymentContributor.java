@@ -75,22 +75,22 @@ public class HadoopGroupProviderDeploymentContributor
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service,
       ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-	Map<String, String> p = provider.getParams();
-	String prefix = p.get("CENTRAL_GROUP_CONFIG_PREFIX");
-	if (prefix != null && !prefix.isEmpty()) {
-	  if (!prefix.endsWith(".")) {
-        prefix += ".";
-	  }
+  	Map<String, String> p = provider.getParams();
+  	String prefix = p.get("CENTRAL_GROUP_CONFIG_PREFIX");
+  	if (prefix != null && !prefix.isEmpty()) {
+  	  if (!prefix.endsWith(".")) {
+          prefix += ".";
+  	  }
       Map<String, String> groupMappingParams = 
               ((Configuration)context.getGatewayConfig()).getPropsWithPrefix(prefix);
       if (groupMappingParams != null) {
         params = createParamList(resource, params, groupMappingParams);	
       }
     }
-
-	if (params == null || params.isEmpty()) {
-      params = buildFilterInitParms(provider, resource, params);
-	}
+  
+  	if (params == null || params.isEmpty()) {
+        params = buildFilterInitParms(provider, resource, params);
+  	}
     resource.addFilter().name(getName()).role(getRole()).impl(getFilterClassname()).params(params);
   }
 
