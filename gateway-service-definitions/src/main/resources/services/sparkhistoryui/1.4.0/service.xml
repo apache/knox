@@ -34,12 +34,15 @@
         </route>
         <route path="/sparkhistory/history/**?**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers" to="response.headers"/>
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
         </route>
         <route path="/sparkhistory/history/**/?**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs" to="response.headers"/>
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
         </route>
         <route path="/sparkhistory/history/**/jobs/**?**">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs" to="response.headers"/>
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
         </route>
     </routes>
 </service>
