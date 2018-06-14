@@ -22,6 +22,9 @@
   <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/path" pattern="*://*:*/**/sparkhistory/{**}">
     <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/{**}"/>
   </rule>
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/simpleQuery" pattern="*://*:*/**/sparkhistory/?{**}">
+    <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/?{**}"/>
+  </rule>
   <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/query" pattern="*://*:*/**/sparkhistory/{**}?{**}">
     <rewrite template="{$serviceUrl[SPARKHISTORYUI]}/{**}?{**}"/>
   </rule>
