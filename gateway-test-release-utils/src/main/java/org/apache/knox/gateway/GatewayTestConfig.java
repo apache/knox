@@ -715,4 +715,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return "SM_USER";
   }
 
+  @Override
+  public List<String> getAutoDeployTopologyNames() {
+    ArrayList<String> names = new ArrayList<String>();
+    names.add("manager");
+    names.add("admin");
+    return null;
+  }
+
 }

@@ -549,11 +549,18 @@ public class GatewayServer {
         "org.eclipse.jetty.annotations.AnnotationConfiguration" );
 
     // Load the current topologies.
+    // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(listener);
     monitor.reloadTopologies();
+    List<String> autoDeploys = config.getAutoDeployTopologyNames();
+    if (autoDeploys != null) {
+      for (String topologyName : autoDeploys) {
+        monitor.redeployTopologies(topologyName);
+      }
+    }
 
     final Collection<Topology> topologies = monitor.getTopologies();
     final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();

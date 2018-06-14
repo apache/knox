@@ -250,6 +250,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String CUSTOM_FEDERATION_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".custom.federation.header.name";
   /* Default federated header name, see HeaderPreAuthFederationFilter.headerName */
   static final String DEFAULT_FEDERATION_HEADER_NAME = "SM_USER";
+  static final String AUTO_DEPLOY_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".auto.deploy.topologies";
+  static final String DEFAULT_AUTO_DEPLOY_TOPOLOGIES = "manager,admin";
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
@@ -1072,6 +1074,19 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getFederationHeaderName() {
     return get(CUSTOM_FEDERATION_HEADER_NAME, DEFAULT_FEDERATION_HEADER_NAME);
+  }
+
+  @Override
+  public List<String> getAutoDeployTopologyNames() {
+    List<String> topologyNames = new ArrayList<>();
+
+    String value = get(AUTO_DEPLOY_TOPOLOGIES);
+    if (value == null) {
+      value = DEFAULT_AUTO_DEPLOY_TOPOLOGIES;
+    }
+    topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+
+    return topologyNames;
   }
 
 }

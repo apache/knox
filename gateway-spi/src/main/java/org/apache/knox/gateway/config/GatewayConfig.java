@@ -19,6 +19,7 @@ package org.apache.knox.gateway.config;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -408,5 +409,13 @@ public interface GatewayConfig {
    * @return
    */
   String getFederationHeaderName();
+
+  /**
+   * Get the list of topology names that should be redeployed on restart.
+   * manager and admin are default topologies as they may depend on gateway-site.xml
+   * configuration for deployment time config. 
+   * @return
+   */
+  List<String> getAutoDeployTopologyNames();
 
 }
