@@ -19,10 +19,13 @@ package org.apache.knox.gateway.ha.provider.impl;
 
 /**
  * The constants for xml elements and attributes are meant to help render/consume the following:
- * <p/>
+ * <pre>
+ * {@code
  * <ha>
  * <service name='foo' failoverLimit='3' enabled='true'/>
  * </ha>
+ * }
+ * </pre>
  */
 public interface HaDescriptorConstants {
 

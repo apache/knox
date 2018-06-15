@@ -23,7 +23,11 @@ import java.net.URISyntaxException;
 import java.util.EnumSet;
 
 /**
+ * <pre>
+ * {@code
  *  <rule name="..." pattern="..." dir="request" flow="and"><match></match></rule>
+ * }
+ * </pre>
  */
 public interface UrlRewriteRuleDescriptor extends UrlRewriteFlowDescriptor<UrlRewriteRuleDescriptor> {
 

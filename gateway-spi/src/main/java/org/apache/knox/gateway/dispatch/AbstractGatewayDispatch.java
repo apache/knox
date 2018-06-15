@@ -117,7 +117,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   }
 
   /**
-   * @sine 0.14.0
+   * @since 0.14.0
    */
   public void doHead( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {

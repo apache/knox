@@ -22,9 +22,7 @@ import javax.servlet.ServletException;
  * limitations under the License.
  */
 public class RMHaDispatch extends org.apache.knox.gateway.rm.dispatch.RMHaDispatch {
-  /**
-   * @throws ServletException
-   */
+
   public RMHaDispatch() {
     super();
   }

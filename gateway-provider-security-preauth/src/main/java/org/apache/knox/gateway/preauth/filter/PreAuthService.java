@@ -66,7 +66,7 @@ public class PreAuthService {
    *
    * @since 0.12
    * @param filterConfig
-   * @return List<PreAuthValidator>
+   * @return a list of PreAuthValidator instances as defined in config
    * @throws ServletException
    */
   public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {

@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.filter.rewrite.impl.xml;
 
 /**
+ * <pre>
+ * {@code
  * <rules>
  *   <filter name="">
  *     <content type="json"> == <scope path="$"/>
@@ -30,6 +32,8 @@ package org.apache.knox.gateway.filter.rewrite.impl.xml;
  *     </content>
  *   </filter>
  * </rules>
+ * }
+ * </pre>
  */
 public interface XmlRewriteRulesTags {
 

@@ -81,7 +81,7 @@ public class Urls {
    * @param url a given URL
    * @param domainSuffix a domain suffix (can be <code>null</code>)
    * @return the extracted domain name
-   * @throws URISyntaxException
+   * @throws MalformedURLException
    */
   public static String getDomainName(String url, String domainSuffix) throws MalformedURLException {
 

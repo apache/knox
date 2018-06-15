@@ -87,6 +87,7 @@ import org.apache.shiro.util.StringUtils;
  * <p>
  * Sample config for <tt>shiro.ini</tt>:
  * 
+ * <pre>
  * [main]
  * ldapRealm=KnoxLdapRealm
  * ldapGroupContextFactory=KnoxLdapContextFactory
@@ -663,7 +664,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
   /**
      * Returns the LDAP User Distinguished Name (DN) to use when acquiring an
      * {@link javax.naming.ldap.LdapContext LdapContext} from the {@link LdapContextFactory}.
-     * <p/>
+     *
      * If the the {@link #getUserDnTemplate() userDnTemplate} property has been set, this implementation will construct
      * the User DN by substituting the specified {@code principal} into the configured template.  If the
      * {@link #getUserDnTemplate() userDnTemplate} has not been set, the method argument will be returned directly

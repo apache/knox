@@ -32,11 +32,19 @@ import java.util.List;
  * prefix to the rewritten frontend portion along with the literals
  * provided as an argument.
  * <p>
+ * <pre>
+ * {@code
  * <div ng-include src=\"'components/navbar/navbar.html?v=1498928142479'\"></div>
+ * }
+ * </pre>
  * <p>
  * and needs to be rewritten to something like
  * <p>
+ * <pre>
+ * {@code
  * <div ng-include src=\"'http://localhost:8443/sandbox/service/components/navbar/navbar.html?v=1498928142479'\"></div>
+ * }
+ * </pre>
  * <p>
  * The rewrite rule could then contain the $prefix function that would delegate
  * to the frontend function.

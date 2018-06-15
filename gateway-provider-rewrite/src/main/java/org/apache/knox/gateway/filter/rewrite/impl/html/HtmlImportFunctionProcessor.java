@@ -33,11 +33,19 @@ import java.util.List;
  * along with the '@import' literal. This is a workaround for the requirement to provide the ability to rewrite
  * a portion of html content that contains a tag like the following
  *
+ * <pre>
+ * {@code
  * <head> <style type=\"text/css\">@import "pretty.css";</style></head>
+ * }
+ * </pre>
  *
  * and needs to be rewritten to something like
  *
+ * <pre>
+ * {@code
  * <head> <style type=\"text/css\">@import "http://localhost:8443/sandbox/service/pretty.css";</style></head>
+ * }
+ * </pre>
  *
  * The rewrite rule could then contain the $import function that would delegate to the frontend function.
  *

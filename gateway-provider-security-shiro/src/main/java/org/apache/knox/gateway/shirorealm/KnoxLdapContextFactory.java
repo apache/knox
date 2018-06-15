@@ -38,7 +38,7 @@ import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
  * compared to regular authentication.
  * 
  * <p>
- * See {@link IsisLdapRealm} for typical configuration within <tt>shiro.ini</tt>.
+ * See {@link KnoxLdapRealm} for typical configuration within <tt>shiro.ini</tt>.
  */
 public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 

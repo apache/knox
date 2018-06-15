@@ -82,7 +82,7 @@ public class PreAuthFederationFilter implements Filter {
    * Recreate the current Subject based upon the provided mappedPrincipal
    * and look for the groups that should be associated with the new Subject.
    * Upon finding groups mapped to the principal - add them to the new Subject.
-   * @param mappedPrincipalName
+   * @param principal
    * @throws ServletException
    * @throws IOException
    */

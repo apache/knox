@@ -20,7 +20,11 @@ package org.apache.knox.gateway.filter.rewrite.api;
 import java.util.List;
 
 /**
+ * <pre>
+ * {@code
  * <rules><rule></rule></rules>
+ * }
+ * </pre>
  */
 public interface UrlRewriteRulesDescriptor {
 

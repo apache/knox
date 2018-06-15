@@ -88,7 +88,7 @@ public abstract class AbstractIdentityAssertionFilter extends
   public abstract String mapUserPrincipal(String principalName);
 
   /**
-   * @param wrapper
+   * @param request
    * @param response
    * @param chain
    * @param mappedPrincipalName

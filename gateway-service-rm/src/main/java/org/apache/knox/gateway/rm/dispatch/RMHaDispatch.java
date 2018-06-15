@@ -25,9 +25,6 @@ public class RMHaDispatch extends RMHaBaseDispatcher {
     private static final String RESOURCE_ROLE = "RESOURCEMANAGER";
     private HaProvider haProvider;
 
-    /**
-   * @throws javax.servlet.ServletException
-   */
   public RMHaDispatch() {
     super();
   }

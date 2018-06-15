@@ -112,8 +112,8 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   }
 
   /**
-   * @param groups
-   * @param wildCardGroups
+   * @param first
+   * @param second
    * @return
    */
   public static <T> T[] concat(T[] first, T[] second) {
