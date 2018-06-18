@@ -48,6 +48,7 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.apache.knox.gateway.util.Urls;
+import org.apache.knox.gateway.util.WhitelistUtils;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -66,8 +67,6 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
-  // default for the whitelist - open up for development - relative paths and localhost only
-  private static final String DEFAULT_WHITELIST = "^/.*$;^https?://(localhost|127.0.0.1|0:0:0:0:0:0:0:1|::1):\\d{0,9}/.*$";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
@@ -122,8 +121,7 @@ public class WebSSOResource {
 
     whitelist = context.getInitParameter(SSO_COOKIE_TOKEN_WHITELIST_PARAM);
     if (whitelist == null) {
-      // default to local/relative targets
-      whitelist = DEFAULT_WHITELIST;
+      whitelist = WhitelistUtils.getDispatchWhitelist(request);
     }
 
     String audiences = context.getInitParameter(SSO_COOKIE_TOKEN_AUDIENCES_PARAM);
@@ -183,7 +181,8 @@ public class WebSSOResource {
         log.originalURLNotFound();
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
       }
-      boolean validRedirect = RegExUtils.checkWhitelist(whitelist, original);
+
+      boolean validRedirect = (whitelist == null) || whitelist.isEmpty() || RegExUtils.checkWhitelist(whitelist, original);
       if (!validRedirect) {
         log.whiteListMatchFail(original, whitelist);
         throw new WebApplicationException("Original URL not valid according to the configured whitelist.",

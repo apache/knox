@@ -723,4 +723,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  public String getDispatchWhitelist() {
+    return null;
+  }
+
+  @Override
+  public List<String> getDispatchWhitelistServices() {
+    return Collections.emptyList();
+  }
+
 }

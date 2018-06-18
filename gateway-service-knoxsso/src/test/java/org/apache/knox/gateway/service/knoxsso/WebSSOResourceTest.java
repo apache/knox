@@ -17,11 +17,14 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.util.RegExUtils;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -49,7 +52,6 @@ import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.RegExUtils;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -96,22 +98,22 @@ public class WebSSOResourceTest {
     Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist,
         "http://host.example2.com:1234/"));
     // fail on missing port
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example2.com/"));
     // fail on invalid port
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example.com:8081/"));
     // fail on alphanumeric port
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example.com:A080/"));
     // fail on invalid hostname/domain
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example.net:8080/"));
     // fail on required port
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example2.com/"));
     // fail on required https
-    Assert.assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
+    assertFalse("Matched whitelist inappropriately", RegExUtils.checkWhitelist(whitelist,
         "http://host.example3.com/"));
     // match on localhost and port
     Assert.assertTrue("Failed to match whitelist", RegExUtils.checkWhitelist(whitelist,
@@ -402,7 +404,6 @@ public class WebSSOResourceTest {
 
   @Test
   public void testCustomTTL() throws Exception {
-
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
@@ -570,6 +571,145 @@ public class WebSSOResourceTest {
     Date now = new Date();
     assertTrue(expiresDate.after(now));
     assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+  }
+
+  @Test
+  public void testDefaultWhitelistLocalhostByAddress() throws Exception {
+    doTestDefaultLocalhostWhitelist("127.0.0.1");
+  }
+
+  @Test
+  public void testDefaultWhitelistLocalhostByName() throws Exception {
+    doTestDefaultLocalhostWhitelist("localhost");
+  }
+
+  @Test
+  public void testDefaultDomainWhitelist() throws Exception {
+    doTestDefaultDomainWhitelist("knox.test.org");
+    doTestDefaultDomainWhitelist("knox.test.com");
+  }
+
+  private void doTestDefaultLocalhostWhitelist(String localhostId) throws Exception {
+    String whitelistValue = doTestDefaultWhitelist(localhostId);
+    assertTrue(whitelistValue.contains("localhost"));
+  }
+
+  private void doTestDefaultDomainWhitelist(String hostname) throws Exception {
+    String whitelistValue = doTestDefaultWhitelist(hostname);
+    assertTrue(whitelistValue.contains(hostname.substring(hostname.indexOf('.')).replaceAll("\\.", "\\\\.")));
+  }
+
+
+  private String doTestDefaultWhitelist(String hostname) throws Exception {
+    final String testServiceRole = "TEST";
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.singletonList(testServiceRole)).anyTimes();
+    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
+    EasyMock.replay(config);
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.domain.suffix")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.redirect.whitelist.regex")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn("60000");
+    EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.config")).andReturn(config).anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(testServiceRole).anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn(hostname).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, request);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    Field whitelistField = webSSOResponse.getClass().getDeclaredField("whitelist");
+    whitelistField.setAccessible(true);
+    String whitelistValue = (String) whitelistField.get(webSSOResponse);
+    assertNotNull(whitelistValue);
+
+    return whitelistValue;
+  }
+
+  @Test
+  public void testTopologyDefinedWhitelist() throws Exception {
+    final String testServiceRole = "TEST";
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.singletonList(testServiceRole)).anyTimes();
+    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
+    EasyMock.replay(config);
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.domain.suffix")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.redirect.whitelist.regex")).andReturn("^.*$");
+    EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn("60000");
+    EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.config")).andReturn(config).anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(testServiceRole).anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn("localhost").anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, request);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    Field whitelistField = webSSOResponse.getClass().getDeclaredField("whitelist");
+    whitelistField.setAccessible(true);
+    String whitelistValue = (String) whitelistField.get(webSSOResponse);
+    assertNotNull(whitelistValue);
+    assertEquals("^.*$", whitelistValue);
   }
 
   /**

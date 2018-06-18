@@ -253,6 +253,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String AUTO_DEPLOY_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".auto.deploy.topologies";
   static final String DEFAULT_AUTO_DEPLOY_TOPOLOGIES = "manager,admin";
 
+  static final String DISPATCH_HOST_WHITELIST          = GATEWAY_CONFIG_FILE_PREFIX + ".dispatch.whitelist";
+  static final String DISPATCH_HOST_WHITELIST_SERVICES = DISPATCH_HOST_WHITELIST + ".services";
+
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
 
@@ -1087,6 +1090,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
 
     return topologyNames;
+  }
+
+  public String getDispatchWhitelist() {
+    return get(DISPATCH_HOST_WHITELIST);
+  }
+
+  @Override
+  public List<String> getDispatchWhitelistServices() {
+    List<String> result = new ArrayList<>();
+
+    String serviceList = get(DISPATCH_HOST_WHITELIST_SERVICES);
+    if (serviceList != null) {
+      for (String service : Arrays.asList(serviceList.split(","))) {
+        result.add(service.trim());
+      }
+    }
+
+    return result;
   }
 
 }

@@ -418,4 +418,20 @@ public interface GatewayConfig {
    */
   List<String> getAutoDeployTopologyNames();
 
+  /*
+   * Get the semicolon-delimited set of regular expressions defining to which hosts Knox will permit requests to be
+   * dispatched.
+   *
+   * @return The whitelist, which will be null if none is configured (in which case, requests to any host are permitted).
+   */
+  String getDispatchWhitelist();
+
+  /**
+   * Get the set of service roles to which the dispatch whitelist will be applied.
+   *
+   * @return The service roles, or an empty list if none are configured.
+   */
+  List<String> getDispatchWhitelistServices();
+
+
 }

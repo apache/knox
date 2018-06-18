@@ -23,6 +23,8 @@ import org.apache.knox.gateway.config.ConfigurationInjectorBuilder;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.knox.gateway.util.RegExUtils;
+import org.apache.knox.gateway.util.WhitelistUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -110,19 +112,40 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
     String method = request.getMethod().toUpperCase();
     Adapter adapter = METHOD_ADAPTERS.get(method);
-    if ( adapter != null ) {
-      try {
-        adapter.doMethod(getDispatch(), request, response);
-      } catch ( URISyntaxException e ) {
-        throw new ServletException(e);
+    if (adapter != null) {
+      if (isDispatchAllowed(request)) {
+        try {
+          adapter.doMethod(getDispatch(), request, response);
+        } catch (URISyntaxException e) {
+          throw new ServletException(e);
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
       }
     } else {
       response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
   }
 
+  private boolean isDispatchAllowed(HttpServletRequest request) {
+    boolean isAllowed = true;
+
+      String whitelist = WhitelistUtils.getDispatchWhitelist(request);
+      if (whitelist != null) {
+
+        String requestURI = request.getRequestURI();
+
+        isAllowed = RegExUtils.checkWhitelist(whitelist, requestURI);
+        if (!isAllowed) {
+          LOG.dispatchDisallowed(requestURI);
+        }
+    }
+
+    return isAllowed;
+  }
+
   private interface Adapter {
-    public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
+    void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException;
   }
 

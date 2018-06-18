@@ -86,7 +86,7 @@ limitations under the License.
     </property>
 
     <!-- Knox Admin related config -->
-	<property>
+    <property>
         <name>gateway.knox.admin.groups</name>
         <value>admin</value>
     </property>
@@ -127,6 +127,17 @@ limitations under the License.
     <property>
         <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.group.name</name>
         <value>cn</value>
+    </property>
+    <property>
+        <name>gateway.dispatch.whitelist.services</name>
+        <value>DATANODE,HBASEUI,HDFSUI,JOBHISTORYUI,NODEUI,RESOURCEMANAGER,WEBHBASE,WEBHDFS,YARNUI</value>
+        <description>The comma-delimited list of service roles for which the gateway.dispatch.whitelist should be applied.</description>
+    </property>
+
+    <property>
+        <name>gateway.dispatch.whitelist</name>
+        <value></value>
+        <description>The whitelist to be applied for dispatches associated with the service roles specified by gateway.dispatch.whitelist.services.</description>
     </property>
 
 </configuration>

@@ -81,4 +81,12 @@ public interface SpiGatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Error reading Kerberos login configuration {0} : {1}" )
   void errorReadingKerberosLoginConfig(String fileName, @StackTrace(level=MessageLevel.ERROR) Exception e);
 
+  @Message( level = MessageLevel.INFO,
+            text = "Applying a derived dispatch whitelist because none is configured in gateway-site: {0}" )
+  void derivedDispatchWhitelist(final String derivedWhitelist);
+
+  @Message( level = MessageLevel.ERROR,
+            text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )
+  void dispatchDisallowed(String uri);
+
 }
