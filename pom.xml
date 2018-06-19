@@ -78,6 +78,7 @@
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
+        <module>gateway-service-idbroker</module>
         <module>gateway-service-knoxs3</module>
         <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
@@ -630,6 +631,11 @@
             <dependency>
                 <groupId>${gateway-group}</groupId>
                 <artifactId>gateway-service-health</artifactId>
+                <version>${gateway-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${gateway-group}</groupId>
+                <artifactId>gateway-service-idbroker</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
             <dependency>
