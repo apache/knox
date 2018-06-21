@@ -63,6 +63,10 @@
             <artifactId>gateway-provider-jersey</artifactId>
         </dependency>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-service-idbroker</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>

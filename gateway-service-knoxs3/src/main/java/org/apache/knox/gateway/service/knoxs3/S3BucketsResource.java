@@ -18,8 +18,6 @@
 package org.apache.knox.gateway.service.knoxs3;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.security.ImpersonatedPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.util.JsonUtils;
@@ -59,7 +57,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.security.AccessController;
-import java.security.Principal;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +66,6 @@ import java.util.Properties;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-
 
 @Path(S3BucketsResource.RESOURCE_PATH)
 public class S3BucketsResource {
@@ -107,9 +103,7 @@ public class S3BucketsResource {
     Enumeration<String> e = context.getInitParameterNames();
     while (e.hasMoreElements()) {
       paramName = (String)e.nextElement();
-      if (paramName.startsWith("s3.")) {
-        props.setProperty(paramName, context.getInitParameter(paramName));
-      }
+      props.setProperty(paramName, context.getInitParameter(paramName));
     }
     
     return props;
@@ -134,7 +128,7 @@ public class S3BucketsResource {
       writer = response.getWriter();
       doDeleteObject(bucket, id);
     } catch (Exception ioe) {
-      log.logException("create", ioe);
+      log.logException("delete", ioe);
       return Response.serverError().entity(String.format("Failed to reply correctly due to : %s ", ioe)).build();
     } finally {
       if (writer != null) {

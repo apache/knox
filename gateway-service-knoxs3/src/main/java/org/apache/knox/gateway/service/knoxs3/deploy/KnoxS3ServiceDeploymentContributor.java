@@ -50,6 +50,6 @@ public class KnoxS3ServiceDeploymentContributor extends JerseyServiceDeploymentC
    */
   @Override
   protected String[] getPatterns() {
-    return new String[]{"*/**?**"};
+    return new String[]{"/knoxs3/*/**?**"};
   }
 }
