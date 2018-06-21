@@ -15,18 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.service.knoxs3;
+package org.apache.knox.gateway.shell.idbroker;
 
-import org.apache.knox.gateway.i18n.messages.Message;
-import org.apache.knox.gateway.i18n.messages.MessageLevel;
-import org.apache.knox.gateway.i18n.messages.Messages;
-import org.apache.knox.gateway.i18n.messages.StackTrace;
+import org.apache.knox.gateway.shell.Hadoop;
 
-@Messages(logger = "org.apache.knox.gateway.service.health")
-public interface KnoxS3ServiceMessages {
-  @Message(level = MessageLevel.INFO, text = "{0}")
-  void basicInfo(String original);
+public class Credentials {
 
-  @Message(level = MessageLevel.ERROR, text = "Unable to acquire credentials for S3 access using {0} , due to {1}")
-  void logException(String name, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  static String SERVICE_PATH = "/idbroker/api/v1/credentials";
+
+  public static Get.Request get( Hadoop session ) {
+    return new Get.Request( session );
+  }
 }
