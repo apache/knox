@@ -182,7 +182,7 @@ public class WebSSOResource {
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
       }
 
-      boolean validRedirect = (whitelist == null) || whitelist.isEmpty() || RegExUtils.checkWhitelist(whitelist, original);
+      boolean validRedirect = (whitelist == null) || RegExUtils.checkWhitelist(whitelist, original);
       if (!validRedirect) {
         log.whiteListMatchFail(original, whitelist);
         throw new WebApplicationException("Original URL not valid according to the configured whitelist.",

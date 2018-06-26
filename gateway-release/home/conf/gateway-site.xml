@@ -136,8 +136,9 @@ limitations under the License.
 
     <property>
         <name>gateway.dispatch.whitelist</name>
-        <value></value>
-        <description>The whitelist to be applied for dispatches associated with the service roles specified by gateway.dispatch.whitelist.services.</description>
+        <value>DEFAULT</value>
+        <description>The whitelist to be applied for dispatches associated with the service roles specified by gateway.dispatch.whitelist.services.
+        If the value is DEFAULT, a domain-based whitelist will be derived from the Knox host.</description>
     </property>
 
 </configuration>

@@ -102,6 +102,18 @@ public class WhitelistUtilsTest {
     assertTrue(whitelist.equals(WHITELIST));
   }
 
+  @Test
+  public void testExplicitlyConfiguredDefaultWhitelist() throws Exception {
+    final String serviceRole = "TEST";
+    final String WHITELIST = "DEFAULT";
+
+    String whitelist =
+        doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
+            serviceRole);
+    assertNotNull(whitelist);
+    assertTrue("Expected the derived localhost whitelist.",
+               RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
+  }
 
   private String doTestGetDispatchWhitelist(GatewayConfig config, String serviceRole) {
     return doTestGetDispatchWhitelist(config, "localhost", serviceRole);

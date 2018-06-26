@@ -27,6 +27,8 @@ import java.util.List;
 
 public class WhitelistUtils {
 
+  static final String DEFAULT_CONFIG_VALUE = "DEFAULT";
+
   static final String LOCALHOST_REGEXP_SEGMENT = "(localhost|127\\.0\\.0\\.1|0:0:0:0:0:0:0:1|::1)";
 
   static final String LOCALHOST_REGEXP = "^" + LOCALHOST_REGEXP_SEGMENT + "$";
@@ -51,7 +53,7 @@ public class WhitelistUtils {
       if (whitelistedServiceRoles.contains(serviceRole)) {
         // Check the whitelist against the URL to be dispatched
         whitelist = config.getDispatchWhitelist();
-        if (whitelist == null || whitelist.isEmpty()) {
+        if (whitelist == null || whitelist.equalsIgnoreCase(DEFAULT_CONFIG_VALUE)) {
           whitelist = deriveDefaultDispatchWhitelist(request);
           LOG.derivedDispatchWhitelist(whitelist);
         }

@@ -160,7 +160,7 @@ public class GatewayDispatchFilterTest {
                                    "",
                                    serviceRole,
                                    "http://www.notonmylist.org:9999",
-                                   false);
+                                   false); // Should be disallowed because nothing can match an empty whitelist
   }
 
 

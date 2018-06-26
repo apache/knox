@@ -111,10 +111,6 @@
             <name>knoxsso.token.ttl</name>
             <value>-1</value>
         </param>
-        <param>
-           <name>knoxsso.redirect.whitelist.regex</name>
-           <value>^https?:\/\/(localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
-        </param>
     </service>
 
 </topology>
