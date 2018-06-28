@@ -76,6 +76,11 @@ public class WhitelistUtils {
       int domainIndex = thisHost.indexOf('.');
       if (domainIndex > 0) {
         String domain = thisHost.substring(thisHost.indexOf('.'));
+        // Sometimes, the server name includes port details, which need to be stripped
+        int portIndex = domain.indexOf(":");
+        if (portIndex > 0) {
+          domain = domain.substring(0, portIndex);
+        }
         String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
         defaultWhitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, domainPattern);
       }

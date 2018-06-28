@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -64,6 +65,21 @@ public class WhitelistUtilsTest {
     assertTrue(whitelist.contains("localhost"));
   }
 
+  /**
+   * KNOX-1369
+   */
+  @Test
+  public void testDomainBasedDefaultForAffectedServiceRoleWhenServerNameIncludesPort() throws Exception {
+    final String serviceRole = "TEST";
+
+    GatewayConfig config = createMockGatewayConfig(Collections.singletonList(serviceRole), null);
+
+    // Check localhost by loopback address
+    String whitelist = doTestGetDispatchWhitelist(config, "host.test.com:1234", serviceRole);
+    assertNotNull(whitelist);
+    assertTrue(whitelist.contains(".+\\.test\\.com"));
+    assertFalse(whitelist.contains(":1234"));
+  }
 
   @Test
   public void testDefaultDomainWhitelist() throws Exception {
