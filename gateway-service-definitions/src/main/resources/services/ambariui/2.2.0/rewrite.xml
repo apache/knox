@@ -54,6 +54,11 @@
         <rewrite template="{$frontend[path]}/ambari/javascripts/app.js"/>
     </rule>
 
+    <!-- WS support -->
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/websocket">
+        <rewrite template="{$frontend[path]}/ambariws/api/stomp/v1"/>
+    </rule>
+
     <filter name="AMBARIUI/ambari/outbound/proxyroot">
         <content type="*/x-javascript">
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
@@ -95,12 +100,16 @@
             <apply path="/img/" rule="AMBARIUI/ambari/outbound/img"/>
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
+            <!-- WS support -->
+            <apply path="/api/stomp/v1" rule="AMBARIUI/ambari/outbound/websocket"/>
         </content>
         <content type="application/javascript">
             <apply path="/api/v1" rule="AMBARIUI/ambari/outbound/extrapath"/>
             <apply path="/img/" rule="AMBARIUI/ambari/outbound/img"/>
             <apply path="\{proxy_root\}" rule="AMBARIUI/ambari/outbound/sitepath"/>
             <apply path="/#/main/dashboard" rule="AMBARIUI/ambari/outbound/logohref"/>
+            <!-- WS support -->
+            <apply path="/api/stomp/v1" rule="AMBARIUI/ambari/outbound/websocket"/>
         </content>
         <content type="*/html">
         </content>
