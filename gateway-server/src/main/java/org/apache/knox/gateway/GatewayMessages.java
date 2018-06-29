@@ -114,6 +114,10 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to undeploy topology {0}: {1}" )
   void failedToUndeployTopology( String name, @StackTrace(level=MessageLevel.DEBUG) Exception e );
 
+  @Message( level = MessageLevel.WARN, text = "Failed to validate topology {0} error {1}. Please "
+      + "consider using descriptors instead of topologies" )
+  void failedToValidateTopology( String name, String cause );
+
   @Message( level = MessageLevel.INFO, text = "Deleting topology {0}" )
   void deletingTopology( String topologyName );
 

@@ -191,8 +191,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DEFAULT_DATA_DIR = "data";
   private static final String PROVIDERCONFIG_DIR_NAME = "shared-providers";
   private static final String DESCRIPTORS_DIR_NAME = "descriptors";
-
   public static final String REMOTE_ALIAS_SERVICE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.enabled";
+  public static final String STRICT_TOPOLOGY_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.topology.validation";
 
   /**
    * Comma-separated list of topology names, which should be forcibly treated as read-only.
@@ -212,9 +212,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
-
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
-
+  public static final boolean DEFAULT_STRICT_TOPOLOGY_VALIDATION = false;
 
   /**
    * Default list of MIME Type to be compressed.
@@ -1108,6 +1107,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
 
     return result;
+  }
+
+  /**
+   * Returns true when strict topology validation is enabled, in which case if
+   * topology validation fails Knox will throw a runtime exception. If false and
+   * topology validation fails Knox will log an ERROR and move on.
+   *
+   * @return
+   * @since 1.1.0
+   */
+  @Override
+  public boolean isTopologyValidationEnabled() {
+    final String result = get(STRICT_TOPOLOGY_VALIDATION, Boolean.toString(DEFAULT_STRICT_TOPOLOGY_VALIDATION));
+    return Boolean.parseBoolean(result);
   }
 
 }

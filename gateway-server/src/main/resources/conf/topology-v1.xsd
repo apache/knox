@@ -30,7 +30,7 @@ limitations under the License.
 
                             <h:element name="provider" maxOccurs="unbounded">
                                 <h:complexType>
-                                    <h:choice minOccurs="1" maxOccurs="unbounded">
+                                    <h:sequence>
                                         <h:element name="role" type="h:string" minOccurs="1" maxOccurs="1"/>
                                         <h:element name="name" type="h:string" minOccurs="1" maxOccurs="1"/>
                                         <h:element name="enabled" type="h:boolean" minOccurs="1" maxOccurs="1"/>
@@ -45,7 +45,7 @@ limitations under the License.
                                                 <h:attribute name="value" type="h:string" use="optional" />
                                             </h:complexType>
                                         </h:element>
-                                    </h:choice>
+                                    </h:sequence>
                                 </h:complexType>
                             </h:element>
 

@@ -115,6 +115,8 @@ public class DefaultTopologyService
 
   private RemoteConfigurationMonitor remoteMonitor = null;
 
+  private GatewayConfig config;
+
   private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
     final long TIMEOUT = 250; //ms
     final long DELAY = 50; //ms
@@ -164,7 +166,13 @@ public class DefaultTopologyService
       TopologyValidator tv = new TopologyValidator(topology);
 
       if(!tv.validateTopology()) {
-        throw new SAXException(tv.getErrorString());
+        if(config != null && config.isTopologyValidationEnabled()) {
+          /* If strict validation enabled we fail */
+          throw new SAXException(tv.getErrorString());
+        } else {
+          /* Log and move on */
+          log.failedToValidateTopology(topology.getName(), tv.getErrorString());
+        }
       }
 
       long start = System.currentTimeMillis();
@@ -606,6 +614,7 @@ public class DefaultTopologyService
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
 
+    this.config = config;
     String gatewayConfDir = config.getGatewayConfDir();
     if (gatewayConfDir != null) {
       System.setProperty(ServiceDiscovery.CONFIG_DIR_PROPERTY, gatewayConfDir);

@@ -732,4 +732,17 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptyList();
   }
 
+  /**
+   * Returns true when strict topology validation is enabled, in which case if
+   * topology validation fails Knox will throw a runtime exception. If false and
+   * topology validation fails Knox will log an ERROR and move on.
+   *
+   * @return
+   * @since 1.1.0
+   */
+  @Override
+  public boolean isTopologyValidationEnabled() {
+    return false;
+  }
+
 }

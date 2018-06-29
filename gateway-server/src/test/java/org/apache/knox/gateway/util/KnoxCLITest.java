@@ -1011,7 +1011,7 @@ public class KnoxCLITest {
     assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
     assertThat(outContent.toString(), containsString("test-cluster-bad"));
     assertThat(outContent.toString(), containsString("unsuccessful"));
-    //assertThat(outContent.toString(), containsString("Invalid content"));
+    assertThat(outContent.toString(), containsString("Invalid content"));
     assertThat(outContent.toString(), containsString("Line"));
 
 

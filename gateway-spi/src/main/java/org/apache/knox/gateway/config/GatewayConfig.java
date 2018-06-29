@@ -433,5 +433,16 @@ public interface GatewayConfig {
    */
   List<String> getDispatchWhitelistServices();
 
+  /**
+   * Returns true when strict topology validation is enabled,
+   * in which case if topology validation fails Knox will throw
+   * a runtime exception. If false and topology validation fails
+   * Knox will log an ERROR and move on.
+   *
+   * @since 1.1.0
+   * @return
+   */
+  boolean isTopologyValidationEnabled();
+
 
 }
