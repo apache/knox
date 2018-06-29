@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.knox.gateway.util.JsonUtils;
 
 public class AWSPolicyModel {
+  private static final String ACTION = "Action";
   HashMap<String, Object> policyModel = new HashMap<String, Object>();
   ArrayList<String> actionArray = new ArrayList<String>();
   HashMap<String, Object> statementMap = new HashMap<String, Object>();
@@ -34,7 +35,7 @@ public class AWSPolicyModel {
     ArrayList<Map<String, Object>> statement = new ArrayList<Map<String, Object>>();
     policyModel.put("Statement", statement );
     statement.add(statementMap);
-    statementMap.put("Action", actionArray );
+    statementMap.put(ACTION, actionArray );
     statementMap.put("Resource", resourcesArray);
   }
 
@@ -56,5 +57,10 @@ public class AWSPolicyModel {
 
   public String toString() {
     return JsonUtils.renderAsJsonString(policyModel);
+  }
+
+  public void combine(AWSPolicyModel model) {
+    ArrayList<Map<String, Object>> statement = (ArrayList<Map<String, Object>>) policyModel.get("Statement");
+    statement.add((Map<String, Object>)model.statementMap);
   }
 }
