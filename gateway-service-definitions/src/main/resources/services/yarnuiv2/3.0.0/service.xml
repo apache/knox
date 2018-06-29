@@ -25,6 +25,7 @@
   <routes>
     <route path="/yarnuiv2">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/rootAppScript" to="request.url"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/location" to="response.headers"/>
     </route>
 
     <route path="/yarnuiv2/logs/?**">
@@ -37,11 +38,15 @@
  
     <route path="/yarnuiv2/node?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/node" to="request.url"/>
-    </route>  
+    </route>
 
     <route path="/yarnuiv2/timeline?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/timeline" to="request.url"/>
-    </route>  
+    </route>
+
+    <route path="/yarnuiv2/redirect">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/redirect" to="request.url"/>
+    </route>
 
     <route path="/yarnuiv2/**?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/query" to="request.url"/>
@@ -89,7 +94,7 @@
     <route path="/yarnuiv2/config/**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/config" to="request.url"/>
     </route>
-    
+
   </routes>
   <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
 </service>

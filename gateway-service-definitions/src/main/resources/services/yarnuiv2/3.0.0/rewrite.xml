@@ -21,12 +21,16 @@
     <rewrite template="{$serviceUrl[YARNUIV2]}/ui2/"/>
   </rule>
 
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/redirect" pattern="*://*:*/**/yarnuiv2/redirect">
+    <rewrite template="{$serviceUrl[YARNUIV2]}/ui2/index.html"/>
+  </rule> 
+ 
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/node" pattern="*://*:*/**/yarnuiv2/node?{host}&amp;{port=**}">
-    <rewrite template="http://{host}:{port=**}"/>
+    <rewrite template="{$serviceScheme[YARNUIV2]}://{host}:{port=**}"/>
   </rule> 
  
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/timeline" pattern="*://*:*/**/yarnuiv2/timeline?{host}&amp;{port=**}?{**}">
-    <rewrite template="http://{host}:{port=**}?{**}"/>
+    <rewrite template="{$serviceScheme[YARNUIV2]}://{host}:{port=**}?{**}"/>
   </rule> 
  
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/logs" pattern="*://*:*/**/yarnuiv2/logs/?{**}">
@@ -152,5 +156,19 @@
     </content>
   </filter>
 
+  <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/index/location">
+    <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={**}">
+      <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={$postfix[url,/yarnuiv2/]}"/>
+    </match>
+    <match pattern="{scheme}://{host}:{port}/ui2/index.html">
+      <rewrite template="{$frontend[url]}/yarnuiv2/redirect"/>
+    </match>
+  </rule>
+
+  <filter name="YARNUIV2/yarnuiv2/outbound/headers/location">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/index/location"/>
+    </content>
+  </filter>
  </rules>
   
