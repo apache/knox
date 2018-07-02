@@ -45,6 +45,8 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   private final Object lock = new Object();
 
+  private String whitelist = null;
+
   private Dispatch dispatch;
 
   private HttpClient httpClient;
@@ -130,12 +132,16 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   private boolean isDispatchAllowed(HttpServletRequest request) {
     boolean isAllowed = true;
 
-      String whitelist = WhitelistUtils.getDispatchWhitelist(request);
-      if (whitelist != null) {
+      // Initialize the white list if it has not yet been initialized
+      if (whitelist == null) {
+        whitelist = WhitelistUtils.getDispatchWhitelist(request);
+      }
 
+      if (whitelist != null) {
         String requestURI = request.getRequestURI();
 
         isAllowed = RegExUtils.checkWhitelist(whitelist, requestURI);
+
         if (!isAllowed) {
           LOG.dispatchDisallowed(requestURI);
         }

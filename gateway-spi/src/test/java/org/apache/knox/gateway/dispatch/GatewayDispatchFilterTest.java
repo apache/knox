@@ -123,21 +123,6 @@ public class GatewayDispatchFilterTest {
 
   /**
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
-   * whitelist should be applied. If the dispatch URL matches the default domain-based whitelist, then the dispatch
-   * should be permitted.
-   */
-  @Test
-  public void testServiceDispatchWhitelistNoWhiteListForRole_valid_domain() throws Exception {
-    final String serviceRole = "TESTROLE";
-    doTestServiceDispatchWhitelist(Collections.singletonList(serviceRole),
-                                   "knoxbox.test.org",
-                                   null,
-                                   serviceRole,
-                                   "http://onmylist.test.org:9999", true);
-  }
-
-  /**
-   * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does match the default whitelist, then the dispatch should be
    * allowed.
    */
@@ -147,7 +132,8 @@ public class GatewayDispatchFilterTest {
     doTestServiceDispatchWhitelist(Collections.singletonList(serviceRole),
                                    null,
                                    serviceRole,
-                                   "http://localhost:9999", true);
+                                   "http://localhost:9999",
+                                   true);
   }
 
   /**

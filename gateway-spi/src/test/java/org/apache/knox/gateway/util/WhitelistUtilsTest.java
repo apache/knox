@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,22 +66,6 @@ public class WhitelistUtilsTest {
     assertTrue(whitelist.contains("localhost"));
   }
 
-  /**
-   * KNOX-1369
-   */
-  @Test
-  public void testDomainBasedDefaultForAffectedServiceRoleWhenServerNameIncludesPort() throws Exception {
-    final String serviceRole = "TEST";
-
-    GatewayConfig config = createMockGatewayConfig(Collections.singletonList(serviceRole), null);
-
-    // Check localhost by loopback address
-    String whitelist = doTestGetDispatchWhitelist(config, "host.test.com:1234", serviceRole);
-    assertNotNull(whitelist);
-    assertTrue(whitelist.contains(".+\\.test\\.com"));
-    assertFalse(whitelist.contains(":1234"));
-  }
-
   @Test
   public void testDefaultDomainWhitelist() throws Exception {
     final String serviceRole = "TEST";
@@ -91,19 +76,6 @@ public class WhitelistUtilsTest {
                                            serviceRole);
     assertNotNull(whitelist);
     assertTrue(whitelist.contains("\\.test\\.org"));
-  }
-
-  @Test
-  public void testDefaultProxiedDomainWhitelist() throws Exception {
-    final String serviceRole = "TEST";
-
-    String whitelist =
-        doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
-                                   "host0.test.org",
-                                   "forwarded-host.proxy.org",
-                                   serviceRole);
-    assertNotNull(whitelist);
-    assertTrue(whitelist.contains("\\.proxy\\.org"));
   }
 
   @Test
@@ -139,25 +111,29 @@ public class WhitelistUtilsTest {
   private String doTestGetDispatchWhitelist(GatewayConfig config,
                                             String        serverName,
                                             String        serviceRole) {
-    return doTestGetDispatchWhitelist(config, serverName, null, serviceRole);
-  }
-
-  private String doTestGetDispatchWhitelist(GatewayConfig config,
-                                            String        serverName,
-                                            String        xForwardedHost,
-                                            String        serviceRole) {
     ServletContext sc = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(sc.getAttribute("org.apache.knox.gateway.config")).andReturn(config).anyTimes();
     EasyMock.replay(sc);
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServerName()).andReturn(serverName).anyTimes();
-    EasyMock.expect(request.getHeader("X-Forwarded-Host")).andReturn(xForwardedHost).anyTimes();
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(serviceRole).anyTimes();
     EasyMock.expect(request.getServletContext()).andReturn(sc).anyTimes();
     EasyMock.replay(request);
 
-    return WhitelistUtils.getDispatchWhitelist(request);
+    String result = null;
+    if (serverName != null && !serverName.isEmpty() && !serverName.equalsIgnoreCase("localhost")) {
+      try {
+        Method method = WhitelistUtils.class.getDeclaredMethod("deriveDomainBasedWhitelist", String.class);
+        method.setAccessible(true);
+        result = (String) method.invoke(null, serverName);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      result = WhitelistUtils.getDispatchWhitelist(request);
+    }
+
+    return result;
   }
 
 

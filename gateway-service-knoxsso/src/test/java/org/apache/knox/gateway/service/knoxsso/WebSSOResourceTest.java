@@ -583,22 +583,10 @@ public class WebSSOResourceTest {
     doTestDefaultLocalhostWhitelist("localhost");
   }
 
-  @Test
-  public void testDefaultDomainWhitelist() throws Exception {
-    doTestDefaultDomainWhitelist("knox.test.org");
-    doTestDefaultDomainWhitelist("knox.test.com");
-  }
-
   private void doTestDefaultLocalhostWhitelist(String localhostId) throws Exception {
     String whitelistValue = doTestDefaultWhitelist(localhostId);
     assertTrue(whitelistValue.contains("localhost"));
   }
-
-  private void doTestDefaultDomainWhitelist(String hostname) throws Exception {
-    String whitelistValue = doTestDefaultWhitelist(hostname);
-    assertTrue(whitelistValue.contains(hostname.substring(hostname.indexOf('.')).replaceAll("\\.", "\\\\.")));
-  }
-
 
   private String doTestDefaultWhitelist(String hostname) throws Exception {
     final String testServiceRole = "TEST";
