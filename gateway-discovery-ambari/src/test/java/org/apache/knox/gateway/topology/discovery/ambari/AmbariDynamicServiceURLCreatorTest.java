@@ -902,6 +902,7 @@ public class AmbariDynamicServiceURLCreatorTest {
     private void doTestRangerURLs(String serviceName) throws Exception {
         final String HTTP_PORT = "6080";
         final String HTTPS_PORT = "6182";
+        final String EXT_URL = "http://host2:" + HTTP_PORT;
 
         final String[] HOSTNAMES = {"host1", "host3"};
         final List<String> rangerServerHosts = Arrays.asList(HOSTNAMES);
@@ -911,6 +912,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("false").anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn(EXT_URL).anyTimes();
         EasyMock.replay(rangerAdmin);
 
         AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
@@ -920,17 +922,22 @@ public class AmbariDynamicServiceURLCreatorTest {
         AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, null);
 
         // Run the test
-        validateServiceURLs(builder.create(serviceName, null), HOSTNAMES, "http", HTTP_PORT, null);
+        List<String> urls = builder.create(serviceName, null);
+        assertEquals(1, urls.size());
+        assertEquals(EXT_URL, urls.get(0));
 
         EasyMock.reset(rangerAdmin);
         EasyMock.expect(rangerAdmin.getHostNames()).andReturn(rangerServerHosts).anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("true").anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn(EXT_URL).anyTimes();
         EasyMock.replay(rangerAdmin);
 
-        // Run the test
-        validateServiceURLs(builder.create(serviceName, null), HOSTNAMES, "https", HTTPS_PORT, null);
+        // Run the test, making sure that the external URL is the result
+        urls = builder.create(serviceName, null);
+        assertEquals(1, urls.size());
+        assertEquals(EXT_URL, urls.get(0));
     }
 
 

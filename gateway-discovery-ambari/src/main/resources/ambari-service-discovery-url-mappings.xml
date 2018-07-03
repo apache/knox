@@ -386,77 +386,21 @@
     </service>
 
     <service name="RANGER">
-        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <url-pattern>{RANGER_EXTERNAL_URL}</url-pattern>
         <properties>
-            <property name="HOST">
-                <component>RANGER_ADMIN</component>
-                <hostname/>
-            </property>
-            <property name="SSL">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.https.attrib.ssl.enabled</config-property>
-            </property>
-            <property name="HTTPS_PORT">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.https.port</config-property>
-            </property>
-            <property name="HTTP_PORT">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.http.port</config-property>
-            </property>
-            <property name="SCHEME">
-                <config-property>
-                    <if property="SSL" value="true">
-                        <then>https</then>
-                        <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-            <property name="PORT">
-                <config-property>
-                    <if property="SSL" value="true">
-                        <then>HTTPS_PORT</then>
-                        <else>HTTP_PORT</else>
-                    </if>
-                </config-property>
-            </property>
+          <property name="RANGER_EXTERNAL_URL">
+            <component>RANGER_ADMIN</component>
+            <config-property>ranger.externalurl</config-property>
+          </property>
         </properties>
     </service>
 
     <service name="RANGERUI">
-        <url-pattern>{SCHEME}://{HOST}:{PORT}</url-pattern>
+        <url-pattern>{RANGER_EXTERNAL_URL}</url-pattern>
         <properties>
-            <property name="HOST">
+            <property name="RANGER_EXTERNAL_URL">
                 <component>RANGER_ADMIN</component>
-                <hostname/>
-            </property>
-            <property name="SSL">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.https.attrib.ssl.enabled</config-property>
-            </property>
-            <property name="HTTPS_PORT">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.https.port</config-property>
-            </property>
-            <property name="HTTP_PORT">
-                <component>RANGER_ADMIN</component>
-                <config-property>ranger.service.http.port</config-property>
-            </property>
-            <property name="SCHEME">
-                <config-property>
-                    <if property="SSL" value="true">
-                        <then>https</then>
-                        <else>http</else>
-                    </if>
-                </config-property>
-            </property>
-            <property name="PORT">
-                <config-property>
-                    <if property="SSL" value="true">
-                        <then>HTTPS_PORT</then>
-                        <else>HTTP_PORT</else>
-                    </if>
-                </config-property>
+                <config-property>ranger.externalurl</config-property>
             </property>
         </properties>
     </service>
