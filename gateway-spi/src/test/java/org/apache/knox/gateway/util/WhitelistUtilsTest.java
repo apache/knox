@@ -79,9 +79,36 @@ public class WhitelistUtilsTest {
   }
 
   @Test
+  public void testDefaultDomainWhitelistWithXForwardedHost() throws Exception {
+    final String serviceRole = "TEST";
+
+    String whitelist =
+        doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
+                                   "host0.test.org",
+                                   "lb.external.test.org",
+                                   serviceRole);
+    assertNotNull(whitelist);
+    assertTrue(whitelist.contains("\\.external\\.test\\.org"));
+  }
+
+  @Test
+  public void testDefaultDomainWhitelistWithXForwardedHostAndPort() throws Exception {
+    final String serviceRole = "TEST";
+
+    String whitelist =
+        doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
+                                   "host0.test.org",
+                                   "lb.external.test.org:9090",
+                                   serviceRole);
+    assertNotNull(whitelist);
+    assertTrue(whitelist.contains("\\.external\\.test\\.org"));
+    assertFalse(whitelist.contains("9090"));
+  }
+
+  @Test
   public void testConfiguredWhitelist() throws Exception {
     final String serviceRole = "TEST";
-    final String WHITELIST = "^.*\\.my\\.domain\\.com.*$";
+    final String WHITELIST   = "^.*\\.my\\.domain\\.com.*$";
 
     String whitelist =
                 doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
@@ -93,11 +120,11 @@ public class WhitelistUtilsTest {
   @Test
   public void testExplicitlyConfiguredDefaultWhitelist() throws Exception {
     final String serviceRole = "TEST";
-    final String WHITELIST = "DEFAULT";
+    final String WHITELIST   = "DEFAULT";
 
     String whitelist =
         doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
-            serviceRole);
+                                   serviceRole);
     assertNotNull(whitelist);
     assertTrue("Expected the derived localhost whitelist.",
                RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
@@ -111,21 +138,39 @@ public class WhitelistUtilsTest {
   private String doTestGetDispatchWhitelist(GatewayConfig config,
                                             String        serverName,
                                             String        serviceRole) {
+    return doTestGetDispatchWhitelist(config, serverName, null, serviceRole);
+  }
+
+  private String doTestGetDispatchWhitelist(GatewayConfig config,
+                                            String        serverName,
+                                            String        xForwardedHost,
+                                            String        serviceRole) {
     ServletContext sc = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(sc.getAttribute("org.apache.knox.gateway.config")).andReturn(config).anyTimes();
     EasyMock.replay(sc);
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
+      EasyMock.expect(request.getHeader("X-Forwarded-Host")).andReturn(xForwardedHost).anyTimes();
+    }
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(serviceRole).anyTimes();
     EasyMock.expect(request.getServletContext()).andReturn(sc).anyTimes();
     EasyMock.replay(request);
 
     String result = null;
-    if (serverName != null && !serverName.isEmpty() && !serverName.equalsIgnoreCase("localhost")) {
+    if (serverName != null && !serverName.isEmpty() && !serverName.equalsIgnoreCase("localhost") && xForwardedHost == null) {
       try {
         Method method = WhitelistUtils.class.getDeclaredMethod("deriveDomainBasedWhitelist", String.class);
         method.setAccessible(true);
         result = (String) method.invoke(null, serverName);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
+      try {
+        Method method = WhitelistUtils.class.getDeclaredMethod("deriveDefaultDispatchWhitelist", HttpServletRequest.class);
+        method.setAccessible(true);
+        result = (String) method.invoke(null, request);
       } catch (Exception e) {
         e.printStackTrace();
       }

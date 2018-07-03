@@ -67,10 +67,25 @@ public class WhitelistUtils {
   private static String deriveDefaultDispatchWhitelist(HttpServletRequest request) {
     String defaultWhitelist = null;
 
-    try {
-      defaultWhitelist = deriveDomainBasedWhitelist(InetAddress.getLocalHost().getCanonicalHostName());
-    } catch (UnknownHostException e) {
-      //
+    // Check first for the X-Forwarded-Host header, and use it to derive the domain-based whitelist
+    String requestedHost = request.getHeader("X-Forwarded-Host");
+    if (requestedHost != null && !requestedHost.isEmpty()) {
+      // The value may include port information, which needs to be removed
+      int portIndex = requestedHost.indexOf(":");
+      if (portIndex > 0) {
+        requestedHost = requestedHost.substring(0, portIndex);
+      }
+      defaultWhitelist = deriveDomainBasedWhitelist(requestedHost);
+    }
+
+    // If the domain-based whitelist could not be derived from the X-Forwarded-Host header value, then use the
+    // localhost FQDN
+    if (defaultWhitelist == null) {
+      try {
+          defaultWhitelist = deriveDomainBasedWhitelist(InetAddress.getLocalHost().getCanonicalHostName());
+      } catch (UnknownHostException e) {
+        //
+      }
     }
 
     // If the domain could not be determined, default to just the local/relative whitelist
