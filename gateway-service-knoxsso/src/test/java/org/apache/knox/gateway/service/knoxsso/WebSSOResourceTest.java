@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.util.RegExUtils;
 import static org.junit.Assert.assertEquals;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -46,6 +48,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
+import javax.ws.rs.WebApplicationException;
 
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -643,6 +646,63 @@ public class WebSSOResourceTest {
 
     return whitelistValue;
   }
+
+  @Test
+  public void testWhitelistValidationWithEncodedOriginalURL() throws Exception {
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
+    EasyMock.replay(config);
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.domain.suffix")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.redirect.whitelist.regex")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn(URLEncoder.encode("http://disallowedhost:9080/service",
+                                                                                     "UTF-8"));
+    EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn("KNOXSSO").anyTimes();
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, request);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    try {
+      webSSOResponse.doGet();
+    } catch (WebApplicationException e) {
+      // Expected
+      int status = e.getResponse().getStatus();
+      assertEquals(HttpStatus.SC_BAD_REQUEST, status);
+    }
+  }
+
 
   @Test
   public void testTopologyDefinedWhitelist() throws Exception {

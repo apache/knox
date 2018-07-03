@@ -18,8 +18,10 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -168,8 +170,8 @@ public class WebSSOResource {
   }
 
   private Response getAuthenticationToken(int statusCode) {
-    GatewayServices services = (GatewayServices) request.getServletContext()
-            .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayServices services =
+                (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     boolean removeOriginalUrlCookie = true;
     String original = getCookieValue((HttpServletRequest) request, ORIGINAL_URL_COOKIE_NAME);
     if (original == null) {
@@ -182,11 +184,25 @@ public class WebSSOResource {
         throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
       }
 
-      boolean validRedirect = (whitelist == null) || RegExUtils.checkWhitelist(whitelist, original);
+      boolean validRedirect = true;
+
+      // If there is a whitelist defined, then the original URL must be validated against it.
+      // If there is no whitelist, then everything is valid.
+      if (whitelist != null) {
+        String decodedOriginal = null;
+        try {
+          decodedOriginal = URLDecoder.decode(original, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+          //
+        }
+
+        validRedirect = RegExUtils.checkWhitelist(whitelist, (decodedOriginal != null ? decodedOriginal : original));
+      }
+
       if (!validRedirect) {
         log.whiteListMatchFail(original, whitelist);
         throw new WebApplicationException("Original URL not valid according to the configured whitelist.",
-                Response.Status.BAD_REQUEST);
+                                          Response.Status.BAD_REQUEST);
       }
     }
 

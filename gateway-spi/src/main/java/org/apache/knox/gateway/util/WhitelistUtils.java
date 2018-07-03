@@ -44,7 +44,8 @@ public class WhitelistUtils {
   public static String getDispatchWhitelist(HttpServletRequest request) {
     String whitelist = null;
 
-    GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute("org.apache.knox.gateway.config");
+    GatewayConfig config =
+                      (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     if (config != null) {
       List<String> whitelistedServiceRoles = new ArrayList<>();
       whitelistedServiceRoles.addAll(DEFAULT_SERVICE_ROLES);
