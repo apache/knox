@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.service.idbroker;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AliasService;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -47,7 +49,7 @@ public class IdentityBrokerResource {
   private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
 
   private KnoxCloudPolicyProvider policyProvider = new KnoxPolicyProviderManager();
-  private KnoxCloudCredentialsClient credentialsClient = new KnoxCloudCredentiatlsClientManager();
+  private KnoxCloudCredentialsClient credentialsClient = new KnoxCloudCredentialsClientManager();
 
   @Context
   HttpServletRequest request;
@@ -61,12 +63,24 @@ public class IdentityBrokerResource {
   @PostConstruct
   public void init() {
     Properties props = getProperties();
+    String topologyName = (String) request.getServletContext().
+    		getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+    props.setProperty("topology.name", topologyName);
     policyProvider.init(props);
     credentialsClient.init(props);
     credentialsClient.setPolicyProvider(policyProvider);
+    AliasService aliasService = getAliasService();
+    credentialsClient.setAliasService(aliasService);
   }
 
-  private Properties getProperties() {
+  private AliasService getAliasService() {
+    GatewayServices services = (GatewayServices)request.getServletContext().
+            getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+	return as;
+}
+
+private Properties getProperties() {
     Properties props = new Properties();
     String paramName = null;
     Enumeration<String> e = context.getInitParameterNames();

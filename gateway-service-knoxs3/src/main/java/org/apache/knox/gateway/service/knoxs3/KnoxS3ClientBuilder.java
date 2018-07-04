@@ -33,7 +33,7 @@ import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.idbroker.KnoxCloudCredentialsClient;
-import org.apache.knox.gateway.service.idbroker.KnoxCloudCredentiatlsClientManager;
+import org.apache.knox.gateway.service.idbroker.KnoxCloudCredentialsClientManager;
 import org.apache.knox.gateway.service.idbroker.KnoxCloudPolicyProvider;
 import org.apache.knox.gateway.service.idbroker.KnoxPolicyProviderManager;
 
@@ -52,7 +52,7 @@ import com.amazonaws.services.securitytoken.model.GetFederationTokenResult;
 
 public class KnoxS3ClientBuilder {
   private KnoxCloudPolicyProvider policyProvider = new KnoxPolicyProviderManager();
-  private KnoxCloudCredentialsClient credentialsClient = new KnoxCloudCredentiatlsClientManager();
+  private KnoxCloudCredentialsClient credentialsClient = new KnoxCloudCredentialsClientManager();
 
   private Properties props = null;
 

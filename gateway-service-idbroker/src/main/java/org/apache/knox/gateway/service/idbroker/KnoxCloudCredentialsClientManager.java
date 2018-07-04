@@ -21,7 +21,9 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.ServiceLoader;
 
-public class KnoxCloudCredentiatlsClientManager implements KnoxCloudCredentialsClient {
+import org.apache.knox.gateway.services.security.AliasService;
+
+public class KnoxCloudCredentialsClientManager implements KnoxCloudCredentialsClient {
   
   private static final String CLOUD_CLIENT_PROVIDER = "cloud.client.provider";
   private KnoxCloudCredentialsClient delegate = null;
@@ -50,10 +52,16 @@ public class KnoxCloudCredentiatlsClientManager implements KnoxCloudCredentialsC
   public void init(Properties context) {
     try {
       delegate = loadDelegate(context.getProperty(CLOUD_CLIENT_PROVIDER));
+      delegate.init(context);
     }
     catch (IdentityBrokerConfigException e) {
       e.printStackTrace();
     }
+  }
+  
+  @Override
+  public void setAliasService(AliasService aliasService) {
+	  delegate.setAliasService(aliasService);
   }
 
   public KnoxCloudCredentialsClient loadDelegate(String name) throws IdentityBrokerConfigException {
@@ -71,5 +79,4 @@ public class KnoxCloudCredentiatlsClientManager implements KnoxCloudCredentialsC
     }
     return delegate;
   }
-  
 }

@@ -19,6 +19,8 @@ package org.apache.knox.gateway.service.idbroker;
 
 import java.util.Properties;
 
+import org.apache.knox.gateway.services.security.AliasService;
+
 public interface KnoxCloudCredentialsClient {
   /**
    * initialize client with the context from the topology
@@ -47,5 +49,14 @@ public interface KnoxCloudCredentialsClient {
    * @return
    */
   String getName();
+
+  /**
+   * Set the AliasService implementation currently configured for the
+   * gateway, in order to locate the idbroker credentials for the given
+   * topology instance. Topology name is in the Properties provided to
+   * the init method.
+   * @param aliasService
+   */
+  void setAliasService(AliasService aliasService);
 
 }

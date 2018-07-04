@@ -25,7 +25,10 @@ import javax.security.auth.Subject;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.idbroker.AbstractKnoxCloudCredentialsClient;
 import org.apache.knox.gateway.service.idbroker.KnoxCloudCredentialsClient;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
@@ -33,7 +36,8 @@ import com.amazonaws.services.securitytoken.model.GetFederationTokenRequest;
 import com.amazonaws.services.securitytoken.model.GetFederationTokenResult;
 
 public class KnoxAWSClient extends AbstractKnoxCloudCredentialsClient implements KnoxCloudCredentialsClient {
-  /* (non-Javadoc)
+
+/* (non-Javadoc)
    * @see org.apache.knox.gateway.service.idbroker.KnoxCloudCredentialsClient#getCredentials()
    */
   @Override
@@ -48,7 +52,9 @@ public class KnoxAWSClient extends AbstractKnoxCloudCredentialsClient implements
 
   private GetFederationTokenResult getFederationTokenResult() {
     String policy;
-    AWSSecurityTokenService sts_client = AWSSecurityTokenServiceClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+    AWSSecurityTokenService sts_client = AWSSecurityTokenServiceClientBuilder.standard().
+    		withCredentials(new AliasServiceAWSCredentialsProvider()).
+    		withRegion(Regions.US_EAST_1).build();
     String username = null;
     Subject subject = Subject.getSubject(AccessController.getContext());
     username = getEffectiveUserName(subject);
@@ -73,5 +79,43 @@ public class KnoxAWSClient extends AbstractKnoxCloudCredentialsClient implements
 
   @Override
   public void init(Properties context) {
+    super.init(context);
   }
+
+  private class AliasServiceAWSCredentialsProvider
+      implements AWSCredentialsProvider {
+	@Override
+	public AWSCredentials getCredentials() {
+	  return new AWSCredentials() {
+        @Override
+        public String getAWSAccessKeyId() {
+          try {
+			return new String(aliasService.
+			    getPasswordFromAliasForCluster(topologyName, "aws.credentials.key"));
+		  } catch (AliasServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		  }
+          return null;
+		}
+		@Override
+		public String getAWSSecretKey() {
+          try {
+			return new String(aliasService.
+			    getPasswordFromAliasForCluster(topologyName, "aws.credentials.secret"));
+		  } catch (AliasServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		  }
+          return null;
+		}
+	  };
+	}
+
+	@Override
+	public void refresh() {		
+	}
+	  
+  }
+
 }

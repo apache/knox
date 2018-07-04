@@ -17,18 +17,34 @@
  */
 package org.apache.knox.gateway.service.idbroker;
 
-public class AbstractKnoxCloudCredentialsClient {
+import java.util.Properties;
+
+import org.apache.knox.gateway.services.security.AliasService;
+
+public abstract class AbstractKnoxCloudCredentialsClient implements KnoxCloudCredentialsClient {
   private KnoxCloudPolicyProvider policyProvider = null;
+  protected AliasService aliasService;
+  protected String topologyName;
 
   public AbstractKnoxCloudCredentialsClient() {
     super();
   }
   
+  @Override
+  public void init(Properties context) {
+    topologyName = context.getProperty("topology.name");
+  }
+
   public KnoxCloudPolicyProvider getPolicyProvider() {
     return policyProvider;
   }
 
   public void setPolicyProvider(KnoxCloudPolicyProvider policyProvider) {
     this.policyProvider = policyProvider;
+  }
+
+  @Override
+  public void setAliasService(AliasService aliasService) {
+	this.aliasService = aliasService;  
   }
 }
