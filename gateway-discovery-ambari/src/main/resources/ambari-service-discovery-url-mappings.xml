@@ -390,7 +390,7 @@
         <properties>
           <property name="RANGER_EXTERNAL_URL">
             <component>RANGER_ADMIN</component>
-            <config-property>ranger.externalurl</config-property>
+            <config-property>policymgr_external_url</config-property>
           </property>
         </properties>
     </service>
@@ -400,7 +400,7 @@
         <properties>
             <property name="RANGER_EXTERNAL_URL">
                 <component>RANGER_ADMIN</component>
-                <config-property>ranger.externalurl</config-property>
+                <config-property>policymgr_external_url</config-property>
             </property>
         </properties>
     </service>

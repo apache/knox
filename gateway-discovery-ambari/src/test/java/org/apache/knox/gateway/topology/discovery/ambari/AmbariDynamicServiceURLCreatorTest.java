@@ -912,7 +912,8 @@ public class AmbariDynamicServiceURLCreatorTest {
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("false").anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
-        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn(EXT_URL).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn("http://host7:9898").anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("policymgr_external_url")).andReturn(EXT_URL).anyTimes();
         EasyMock.replay(rangerAdmin);
 
         AmbariCluster cluster = EasyMock.createNiceMock(AmbariCluster.class);
@@ -931,7 +932,8 @@ public class AmbariDynamicServiceURLCreatorTest {
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.attrib.ssl.enabled")).andReturn("true").anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.http.port")).andReturn(HTTP_PORT).anyTimes();
         EasyMock.expect(rangerAdmin.getConfigProperty("ranger.service.https.port")).andReturn(HTTPS_PORT).anyTimes();
-        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn(EXT_URL).anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("ranger.externalurl")).andReturn("http://host7:9898").anyTimes();
+        EasyMock.expect(rangerAdmin.getConfigProperty("policymgr_external_url")).andReturn(EXT_URL).anyTimes();
         EasyMock.replay(rangerAdmin);
 
         // Run the test, making sure that the external URL is the result
