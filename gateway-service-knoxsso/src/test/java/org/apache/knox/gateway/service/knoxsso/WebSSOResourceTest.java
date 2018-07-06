@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -758,6 +759,71 @@ public class WebSSOResourceTest {
     String whitelistValue = (String) whitelistField.get(webSSOResponse);
     assertNotNull(whitelistValue);
     assertEquals("^.*$", whitelistValue);
+  }
+
+  @Test
+  public void testExpectedKnoxSSOParams() throws Exception {
+
+    final HashMap<String, String[]> paramMap = new HashMap<>();
+    paramMap.put("knoxtoken", new String[]{"eyJhbGciOiJSUzI1NiJ9.eyJzdWIiO"
+        + "iJhZG1pbjEiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNTMwODk1NjUw"
+        + "fQ.Sodks_BTwaijMM5eg9rY77ro1H4um12TCqmwL5eWn4IMWBBXZQOV"
+        + "D4JRWNKG_OtITKvkn9EhowOZO6Qtb6tvZLUPyW8Bf9gfgKAHJNLSYyc"
+        + "yWSPzBOc2kcPmwdYXkOXtPu6KWZaQcD-WRw-89aORbgqZVRKX2Zyk2MLb0Rnig_0"});
+
+    final String originalUrl = "http://localhost:9080/service";
+
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.expected.params")).andReturn("knoxtoken,originalUrl");
+
+    ServletContext contextNoParam = EasyMock.createNiceMock(ServletContext.class);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn(originalUrl).anyTimes();
+    EasyMock.expect(request.getParameterMap()).andReturn(paramMap).anyTimes();
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("tom").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, contextNoParam, request);
+
+    /* declare knoxtoken as part of knoxsso param so it is stripped from the final url */
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    Response resp = webSSOResponse.doGet();
+    assertEquals(originalUrl, resp.getLocation().toString());
+
+    /* declare knoxtoken as NOT part of knoxsso param so it is stripped from the final url */
+    webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = contextNoParam;
+    webSSOResponse.init();
+
+    resp = webSSOResponse.doGet();
+    assertEquals(originalUrl+"?&"+"knoxtoken="+"eyJhbGciOiJSUzI1NiJ9.eyJzdWIiO"
+        + "iJhZG1pbjEiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNTMwODk1NjUw"
+        + "fQ.Sodks_BTwaijMM5eg9rY77ro1H4um12TCqmwL5eWn4IMWBBXZQOV"
+        + "D4JRWNKG_OtITKvkn9EhowOZO6Qtb6tvZLUPyW8Bf9gfgKAHJNLSYyc"
+        + "yWSPzBOc2kcPmwdYXkOXtPu6KWZaQcD-WRw-89aORbgqZVRKX2Zyk2MLb0Rnig_0",resp.getLocation().toString());
+
   }
 
   /**
