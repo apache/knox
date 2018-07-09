@@ -104,7 +104,7 @@ public class WhitelistUtils {
       String domain = hostname.substring(hostname.indexOf('.'));
       String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
       whitelist =
-              String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, LOCALHOST_REGEXP_SEGMENT + "|(" + domainPattern + ")");
+              String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
     }
     return whitelist;
   }

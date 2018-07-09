@@ -20,9 +20,12 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import javax.annotation.RegEx;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +35,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class WhitelistUtilsTest {
+
+  private static final List<String> LOCALHOST_NAMES = Arrays.asList("localhost", "127.0.0.1", "0:0:0:0:0:0:0:1", "::1");
 
   @Test
   public void testDefault() throws Exception {
@@ -76,6 +81,16 @@ public class WhitelistUtilsTest {
                                            serviceRole);
     assertNotNull(whitelist);
     assertTrue(whitelist.contains("\\.test\\.org"));
+  }
+
+  @Test
+  public void testDefaultDomainWhitelistLocalhostDisallowed() throws Exception {
+    String whitelist = doTestDeriveDomainBasedWhitelist("host.test.org");
+    assertNotNull(whitelist);
+    // localhost names should be excluded from the whitelist when the Knox host domain can be determined
+    for (String name : LOCALHOST_NAMES) {
+      assertFalse(RegExUtils.checkWhitelist(whitelist, name));
+    }
   }
 
   @Test
@@ -158,11 +173,9 @@ public class WhitelistUtilsTest {
     EasyMock.replay(request);
 
     String result = null;
-    if (serverName != null && !serverName.isEmpty() && !serverName.equalsIgnoreCase("localhost") && xForwardedHost == null) {
+    if (serverName != null && !serverName.isEmpty() && !isLocalhostServerName(serverName) && xForwardedHost == null) {
       try {
-        Method method = WhitelistUtils.class.getDeclaredMethod("deriveDomainBasedWhitelist", String.class);
-        method.setAccessible(true);
-        result = (String) method.invoke(null, serverName);
+        result = doTestDeriveDomainBasedWhitelist(serverName);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -181,6 +194,15 @@ public class WhitelistUtilsTest {
     return result;
   }
 
+  private static String doTestDeriveDomainBasedWhitelist(final String serverName) throws Exception {
+    Method method = WhitelistUtils.class.getDeclaredMethod("deriveDomainBasedWhitelist", String.class);
+    method.setAccessible(true);
+    return (String) method.invoke(null, serverName);
+  }
+
+  private static boolean isLocalhostServerName(final String serverName) {
+    return LOCALHOST_NAMES.contains(serverName.toLowerCase());
+  }
 
   private static GatewayConfig createMockGatewayConfig(final List<String> serviceRoles, final String whitelist) {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
