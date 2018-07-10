@@ -13,7 +13,7 @@ Release Notes - Apache Knox - Version 1.1.0
 ** Improvement
     [KNOX-1381] - Fix logging
     [KNOX-1378] - Declare SSO params using KnoxSSO service option  knoxsso.expected.params
-	[KNOX-1379] - Default dispatch whitelist should not include localhost when the Knox host domain can be determined
+    [KNOX-1379] - Default dispatch whitelist should not include localhost when the Knox host domain can be determined
     [KNOX-1363] - Support service role-based whitelist for dispatches and redirects
     [KNOX-1357] - Add configurable list of AutoDeploy topologies to deploy on server start
     [KNOX-1350] - Complete centralization of manager.xml topology config in gateway-site.xml
@@ -22,6 +22,7 @@ Release Notes - Apache Knox - Version 1.1.0
     [KNOX-1338] - Add Config Property for Knox Admin Groups for AclsAuthz Provider Use
     [KNOX-1326] - merge DATANODE rewrite rules into HDFSUI
     [KNOX-1336] - Upgrade libpam4j to abstractj/1.9.1
+    [KNOX-1315] - Spark UI urls issue: Jobs, stdout/stderr and threadDump links (Guang Yang via lmccay)
     [KNOX-1143] - Add MR job history ws rest api rewrite rule to jobhistoryui (Guang Yang via lmccay)
     [KNOX-1089] - Upgrade Jetty
     [KNOX-1329] - Upgrade the transitive springframework spring core to even newer version
