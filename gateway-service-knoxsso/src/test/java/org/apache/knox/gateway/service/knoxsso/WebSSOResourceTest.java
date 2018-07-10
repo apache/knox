@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import org.apache.http.HttpStatus;
+import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.util.RegExUtils;
 import static org.junit.Assert.assertEquals;
@@ -823,6 +824,38 @@ public class WebSSOResourceTest {
         + "fQ.Sodks_BTwaijMM5eg9rY77ro1H4um12TCqmwL5eWn4IMWBBXZQOV"
         + "D4JRWNKG_OtITKvkn9EhowOZO6Qtb6tvZLUPyW8Bf9gfgKAHJNLSYyc"
         + "yWSPzBOc2kcPmwdYXkOXtPu6KWZaQcD-WRw-89aORbgqZVRKX2Zyk2MLb0Rnig_0",resp.getLocation().toString());
+
+  }
+
+  @Test
+  public void testRedactToken() throws Exception {
+
+    final String token = "eyJhbGciOiJSUzI1NiJ9."
+        + "eyJzdWIiOiJhZG1pbjEiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNTMwNzkwMjkxfQ."
+        + "BdWDAzGvXVvBH_TiEhAqowH-K24GfH8rgb8HJLromVpGwBTkbijIfOZWcvT3a5uZx6r"
+        + "VEGAXqAKPEqrODBGTSV6l0uEJGeAfQj_7ulQD0YkXaPPJ_FYYntelSA814HzTU0X8UmY"
+        + "Wo6awEaBwRC_xgNoZ_bMqnkjgFAfTtdHiiEQ";
+
+    final String originalUrl1 = "http://loclahost:8080/?&knoxtoken="+token;
+    final String originalUrl2 = "http://loclahost:8080/?&test=value&knoxtoken="+token;
+    final String originalUrl3 = "http://loclahost:8080/?&knoxtoken="+token+"&test=value";
+
+    final String fragment1 = "/gateway/knoxsso/api/v1/websso?knoxtoken="+token;
+    final String fragment2 = "/gateway/knoxsso/api/v1/websso?knoxtoken="+token+
+        "&originalUrl=http%3A%2F%2Fwww.local.com%3A8443%2F%3Fgateway%3Done%26knoxtoken";
+    final String fragment3 = "/gateway/knoxsso/api/v1/websso?test=value"+
+        "&originalUrl=http%3A%2F%2Fwww.local.com%3A8443%2F%3Fgateway%3Done%26knoxtoken";
+
+    assertEquals("http://loclahost:8080/?&knoxtoken=***************", Log4jAuditor
+        .maskTokenFromURL(originalUrl1));
+    assertEquals("http://loclahost:8080/?&test=value&knoxtoken=***************", Log4jAuditor.maskTokenFromURL(originalUrl2));
+    assertEquals("http://loclahost:8080/?&knoxtoken=***************&test=value", Log4jAuditor.maskTokenFromURL(originalUrl3));
+
+    assertEquals("/gateway/knoxsso/api/v1/websso?knoxtoken=***************", Log4jAuditor.maskTokenFromURL(fragment1));
+    assertEquals("/gateway/knoxsso/api/v1/websso?knoxtoken=***************"+
+        "&originalUrl=http://www.local.com:8443/?gateway=one&knoxtoken", Log4jAuditor.maskTokenFromURL(fragment2));
+    assertEquals("/gateway/knoxsso/api/v1/websso?test=value"+
+        "&originalUrl=http://www.local.com:8443/?gateway=one&knoxtoken", Log4jAuditor.maskTokenFromURL(fragment3));
 
   }
 

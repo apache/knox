@@ -43,6 +43,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.WebApplicationException;
 
+import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -210,7 +211,7 @@ public class WebSSOResource {
       }
 
       if (!validRedirect) {
-        log.whiteListMatchFail(original, whitelist);
+        log.whiteListMatchFail(Log4jAuditor.maskTokenFromURL(original), whitelist);
         throw new WebApplicationException("Original URL not valid according to the configured whitelist.",
                                           Response.Status.BAD_REQUEST);
       }
@@ -236,7 +237,7 @@ public class WebSSOResource {
         removeOriginalUrlCookie(response);
       }
 
-      log.aboutToRedirectToOriginal(original);
+      log.aboutToRedirectToOriginal(Log4jAuditor.maskTokenFromURL(original));
       response.setStatus(statusCode);
       response.setHeader("Location", original);
       try {
