@@ -28,19 +28,46 @@ import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Log4jAuditor implements Auditor {
 
+  /** Comma seperated list of query parameters who's values will be masked
+  * e.g. -Dmasked_params=knoxtoken,ccNumber
+  **/
+  public static String MASKED_QUERY_PARAMS_OPTION = "masked_params";
   private Logger logger;
   private String componentName;
   private String serviceName;
   private AuditService auditService = new Log4jAuditService();
   private CorrelationService correlationService = new Log4jCorrelationService();
+  /* List of parameters to be masked */
+  private static List<String> maskedParams = new ArrayList<>();
+
+  static {
+    /* add defaults */
+    maskedParams.add("knoxtoken");
+  }
 
   public Log4jAuditor( String loggerName, String componentName, String serviceName ) {
     logger = Logger.getLogger( loggerName );
     logger.setAdditivity( false );
     this.componentName = componentName;
     this.serviceName = serviceName;
+
+    /* check for -Dmasked_params system property for params to mask */
+    final String masked_query_params = System.getProperty(MASKED_QUERY_PARAMS_OPTION);
+    /* Add the params to mask list */
+    if(masked_query_params != null) {
+      final String[] params = masked_query_params.split(",");
+      for(final String s: params) {
+        if(!maskedParams.contains(s)) {
+          maskedParams.add(s);
+        }
+      }
+    }
   }
 
   @Override
@@ -76,7 +103,7 @@ public class Log4jAuditor implements Auditor {
   private void auditLog( String action, String resourceName, String resourceType, String outcome, String message ) {
     if ( logger.isInfoEnabled() ) {
       MDC.put( AuditConstants.MDC_ACTION_KEY, action );
-      MDC.put( AuditConstants.MDC_RESOURCE_NAME_KEY, resourceName );
+      MDC.put( AuditConstants.MDC_RESOURCE_NAME_KEY, maskTokenFromURL(resourceName) );
       MDC.put( AuditConstants.MDC_RESOURCE_TYPE_KEY, resourceType );
       MDC.put( AuditConstants.MDC_OUTCOME_KEY, outcome );
       MDC.put( AuditConstants.MDC_SERVICE_KEY, serviceName );
@@ -106,6 +133,48 @@ public class Log4jAuditor implements Auditor {
   @Override
   public String getAuditorName() {
     return logger.getName();
+  }
+
+  /**
+   * If the url contains knoxtoken parameter, mask it when logging.
+   * @param originalUrl
+   * @return originalUrl masking token value
+   */
+  public static String maskTokenFromURL(final String originalUrl) {
+    try {
+      final URI original = new URI(originalUrl);
+
+      if( original.getQuery() != null &&
+          !original.getQuery().isEmpty()) {
+
+        final String[] query = original.getQuery().split("&");
+        final StringBuffer newQuery = new StringBuffer();
+
+        for(int i = 0; i < query.length; i++ ) {
+
+          for(final String s: maskedParams) {
+            /* mask "knoxtoken" param */
+            if(query[i].contains(s+"=")) {
+              newQuery.append(s+"=***************");
+            } else {
+              newQuery.append(query[i]);
+            }
+          }
+          if (i < (query.length -1) ) {
+            newQuery.append("&");
+          }
+        }
+
+        final URI newURI = new URI(original.getScheme(), original.getAuthority(),
+            original.getPath(), newQuery.toString(), original.getFragment());
+
+        return newURI.toString();
+      }
+
+    } catch (final Exception e) {
+      // malformed uri just log the original url
+    }
+    return originalUrl;
   }
 
 }
