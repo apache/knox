@@ -35,8 +35,8 @@
 <rule dir="IN" name="YARNUI/yarn/inbound/cluster" pattern="*://*:*/**/yarn/cluster/{**}">
     <rewrite template="{$serviceUrl[YARNUI]}/cluster/{**}"/>
 </rule>
-<rule dir="IN" name="YARNUI/yarn/inbound/proxy" pattern="*://*:*/**/yarn/proxy/{**}">
-    <rewrite template="{$serviceUrl[YARNUI]}/proxy/{**}"/>
+<rule dir="IN" name="YARNUI/yarn/inbound/proxy" pattern="*://*:*/**/yarn/proxy/{**}?{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/proxy/{**}?{**}"/>
 </rule>
 <rule dir="IN" name="YARNUI/yarn/inbound/static" pattern="*://*:*/**/yarn/static/{**}">
     <rewrite template="{$serviceUrl[YARNUI]}/static/{**}"/>
@@ -251,8 +251,8 @@
     <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history1">
-    <match pattern="/proxy/{**}"/>
-    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+    <match pattern="/proxy/{**}?{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}/?{**}"/>
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/cluster/container">
@@ -283,8 +283,9 @@ by adding META refresh. So we need to rewrite META refresh to jobstory.
     <rewrite template="{gateway.scheme}://{gateway.host}:{gateway.port}/gateway/nodemanagerui/node?host={host}?port={port}"/>
 </rule>
 
-<rule dir="OUT" name="YARNUI/yarn/outbound/node/containerlogs2">
+<rule dir="OUT" name="YARNUI/yarn/outbound/node/containerlogs2" pattern="*://*:*/node/containerlogs/{**}?{**}">
     <match pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/proxy1" pattern="/proxy/{**}">
     <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
