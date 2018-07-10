@@ -41,18 +41,17 @@ import {ValidationUtils} from "./utils/validation-utils";
             style="min-height: 430px; width:100%; overflow: auto;" 
             (textChanged)="onChange($event)">
          </ace-editor>
-         <div *ngIf="showEditOptions" class="panel-footer">
+         <div class="panel-footer">
            <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
              <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
            </button>
-           <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
+           <button id="deleteTopology" *ngIf="showEditOptions" (click)="deleteConfirmModal.open('sm')" class="btn btn-default btn-sm" type="submit" >
              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
            </button>
-           <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit" >
+           <button id="saveTopology" *ngIf="showEditOptions" (click)="saveTopology()" class="btn btn-default btn-sm pull-right" [disabled]="!changedTopology" type="submit" >
              <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
            </button>
          </div>
-         
        </div>
        <bs-modal (onClose)="createTopology()" #duplicateModal>
          <bs-modal-header [showDismiss]="true">
