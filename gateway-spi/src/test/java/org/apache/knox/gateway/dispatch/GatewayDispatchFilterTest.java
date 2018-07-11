@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
@@ -136,7 +137,7 @@ public class GatewayDispatchFilterTest {
                                    null,
                                    serviceRole,
                                    "http://localhost:9999",
-                                   true);
+                                   shouldExpectLocalhost());
   }
 
   /**
@@ -151,7 +152,7 @@ public class GatewayDispatchFilterTest {
                                    null,
                                    serviceRole,
                                    URLEncoder.encode("http://localhost:9999", "UTF-8"),
-                                   true);
+                                   shouldExpectLocalhost());
   }
 
 
@@ -226,6 +227,11 @@ public class GatewayDispatchFilterTest {
                                    serviceRole,
                                    "http://www.onmylist.org:9999",
                                     true);
+  }
+
+
+  private static boolean shouldExpectLocalhost() throws Exception {
+    return InetAddress.getLocalHost().getCanonicalHostName().equalsIgnoreCase("localhost");
   }
 
 
