@@ -25,3 +25,4 @@ org.apache.knox.gateway.topology.discovery.ambari.YarnUIV2URLCreator
 org.apache.knox.gateway.topology.discovery.ambari.SparkHistoryUIServiceURLCreator
 org.apache.knox.gateway.topology.discovery.ambari.LivyServiceURLCreator
 org.apache.knox.gateway.topology.discovery.ambari.SparkThriftServerUIServiceURLCreator
+org.apache.knox.gateway.topology.discovery.ambari.NiFiURLCreator
