@@ -24,11 +24,13 @@ import javax.annotation.RegEx;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -63,12 +65,12 @@ public class WhitelistUtilsTest {
     // Check localhost by name
     String whitelist = doTestGetDispatchWhitelist(config, serviceRole);
     assertNotNull(whitelist);
-    assertTrue(whitelist.contains("localhost"));
+    assertEquals(shouldExpectLocalhost(), whitelist.contains("localhost"));
 
     // Check localhost by loopback address
     whitelist = doTestGetDispatchWhitelist(config, "127.0.0.1", serviceRole);
     assertNotNull(whitelist);
-    assertTrue(whitelist.contains("localhost"));
+    assertEquals(shouldExpectLocalhost(), whitelist.contains("localhost"));
   }
 
   @Test
@@ -141,8 +143,12 @@ public class WhitelistUtilsTest {
         doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
                                    serviceRole);
     assertNotNull(whitelist);
-    assertTrue("Expected the derived localhost whitelist.",
-               RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
+    assertEquals(shouldExpectLocalhost(),
+                 RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
+  }
+
+  private static boolean shouldExpectLocalhost() throws Exception {
+    return InetAddress.getLocalHost().getCanonicalHostName().equalsIgnoreCase("localhost");
   }
 
   private String doTestGetDispatchWhitelist(GatewayConfig config, String serviceRole) {
