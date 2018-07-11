@@ -283,7 +283,10 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                                 if (!componentHostNames.containsKey(componentName)) {
                                     componentHostNames.put(componentName, new ArrayList<>());
                                 }
-                                componentHostNames.get(componentName).add(hostName);
+                                // Avoid duplicates
+                                if (!componentHostNames.get(componentName).contains(hostName)) {
+                                    componentHostNames.get(componentName).add(hostName);
+                                }
                             }
                         }
                     }
