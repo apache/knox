@@ -24,11 +24,11 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.IpAddressValidator;
 
 /**
+ *
  */
 public class AclParser {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
 
-  public String resourceRole;
   public ArrayList<String> users;
   public ArrayList<String> groups;
   public boolean anyUser = true;
@@ -37,6 +37,9 @@ public class AclParser {
 
 
   public AclParser() {
+    users = new ArrayList<>();
+    groups = new ArrayList<>();
+    ipv = new IpAddressValidator(null);
   }
   
   public void parseAcls(String resourceRole, String acls) throws InvalidACLException {
@@ -45,8 +48,7 @@ public class AclParser {
       if (parts.length != 3) {
         log.invalidAclsFoundForResource(resourceRole);
         throw new InvalidACLException("Invalid ACLs specified for requested resource: " + resourceRole);
-      }
-      else {
+      } else {
         log.aclsFoundForResource(resourceRole);
       }
       parseUserAcls(parts);
@@ -54,17 +56,12 @@ public class AclParser {
       parseGroupAcls(parts);
 
       parseIpAddressAcls(parts);
-    }
-    else {
+    } else {
       log.noAclsFoundForResource(resourceRole);
-      users = new ArrayList<String>();
-      groups = new ArrayList<String>();
-      ipv = new IpAddressValidator(null);
     }
   }
 
   private void parseUserAcls(String[] parts) {
-    users = new ArrayList<String>();
     Collections.addAll(users, parts[0].split(","));
     if (!users.contains("*")) {
       anyUser = false;
@@ -72,7 +69,6 @@ public class AclParser {
   }
 
   private void parseGroupAcls(String[] parts) {
-    groups = new ArrayList<String>();
     Collections.addAll(groups, parts[1].split(","));
     if (!groups.contains("*")) {
       anyGroup = false;
