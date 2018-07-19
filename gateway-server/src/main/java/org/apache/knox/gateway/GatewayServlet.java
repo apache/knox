@@ -168,8 +168,13 @@ public class GatewayServlet implements Servlet, Filter {
       if( f != null ) {
         try {
           f.doFilter( servletRequest, servletResponse );
-          //TODO: This should really happen naturally somehow as part of being a filter.  This way will cause problems eventually.
-          chain.doFilter( servletRequest, servletResponse );
+
+          /* if response is committed in case of SSO redirect no need to apply further filters */
+          if(!servletResponse.isCommitted()) {
+            //TODO: This should really happen naturally somehow as part of being a filter.  This way will cause problems eventually.
+            chain.doFilter( servletRequest, servletResponse );
+          }
+
         } catch( IOException e ) {
           LOG.failedToExecuteFilter( e );
           throw e;
