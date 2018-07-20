@@ -85,6 +85,10 @@ public interface SpiGatewayMessages {
             text = "Applying a derived dispatch whitelist because none is configured in gateway-site: {0}" )
   void derivedDispatchWhitelist(final String derivedWhitelist);
 
+  @Message( level=MessageLevel.ERROR,
+             text = "Unable to reliably determine the Knox domain for the default whitelist. Defaulting to allow requests only to {0}. Please consider explicitly configuring the whitelist via the gateway.dispatch.whitelist property in gateway-site" )
+  void unableToDetermineKnoxDomainForDefaultWhitelist(final String permittedHostName);
+
   @Message( level = MessageLevel.ERROR,
             text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )
   void dispatchDisallowed(String uri);

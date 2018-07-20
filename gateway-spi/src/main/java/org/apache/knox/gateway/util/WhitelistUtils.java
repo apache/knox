@@ -43,6 +43,7 @@ public class WhitelistUtils {
 
   private static final List<String> DEFAULT_SERVICE_ROLES = Arrays.asList("KNOXSSO");
 
+
   public static String getDispatchWhitelist(HttpServletRequest request) {
     String whitelist = null;
 
@@ -67,49 +68,91 @@ public class WhitelistUtils {
     return whitelist;
   }
 
+
   private static String deriveDefaultDispatchWhitelist(HttpServletRequest request) {
     String defaultWhitelist = null;
 
-    // Check first for the X-Forwarded-Host header, and use it to derive the domain-based whitelist
-    String requestedHost = request.getHeader("X-Forwarded-Host");
-    if (requestedHost != null && !requestedHost.isEmpty()) {
-      // The value may include port information, which needs to be removed
-      int portIndex = requestedHost.indexOf(":");
-      if (portIndex > 0) {
-        requestedHost = requestedHost.substring(0, portIndex);
-      }
-      defaultWhitelist = deriveDomainBasedWhitelist(requestedHost);
-    }
+    // Check first for the X-Forwarded-Host header, and use it to determine the domain
+    String domain = getDomain(request.getHeader("X-Forwarded-Host"));
 
-    // If the domain-based whitelist could not be derived from the X-Forwarded-Host header value, then use the
-    // localhost FQDN
-    if (defaultWhitelist == null) {
+    // If the domain could not be derived from the X-Forwarded-Host header value, then use the localhost FQDN
+    if (domain == null) {
       try {
-          defaultWhitelist = deriveDomainBasedWhitelist(InetAddress.getLocalHost().getCanonicalHostName());
+          domain = getDomain(InetAddress.getLocalHost().getCanonicalHostName());
       } catch (UnknownHostException e) {
         //
       }
     }
 
-    // If the domain could not be determined, default to just the local/relative whitelist
+    // If a domain has still not yet been determined, try the requested host name
+    String requestedHost = null;
+
+    if (domain == null) {
+      requestedHost = request.getServerName();
+      domain = getDomain(requestedHost);
+    }
+
+    if (domain != null) {
+      defaultWhitelist = defineWhitelistForDomain(domain);
+    } else {
+      if (!requestedHost.matches(LOCALHOST_REGEXP)) { // localhost will be handled subsequently
+        // Use the requested host address/name for the whitelist
+        LOG.unableToDetermineKnoxDomainForDefaultWhitelist(requestedHost);
+        defaultWhitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, requestedHost);
+      }
+    }
+
+    // If the whitelist has not been determined at this point, default to just the local/relative whitelist
     if (defaultWhitelist == null) {
+      LOG.unableToDetermineKnoxDomainForDefaultWhitelist("localhost");
       defaultWhitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, LOCALHOST_REGEXP_SEGMENT);
     }
 
     return defaultWhitelist;
   }
 
-  private static String deriveDomainBasedWhitelist(String hostname) {
-    String whitelist = null;
-    if (!hostname.matches(IP_ADDRESS_REGEX)) {
-      int domainIndex = hostname.indexOf('.');
-      if (domainIndex > 0) {
-        String domain = hostname.substring(hostname.indexOf('.'));
-        String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
-        whitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
+
+  private static String getDomain(String hostname) {
+    String domain = null;
+
+    if (hostname != null && !hostname.isEmpty()) {
+      // The value may include port information, which needs to be removed
+      hostname = stripPort(hostname);
+
+      if (!hostname.matches(IP_ADDRESS_REGEX)) {
+        int domainIndex = hostname.indexOf('.');
+        if (domainIndex > 0) {
+          domain = hostname.substring(hostname.indexOf('.'));
+        }
       }
     }
+
+    return domain;
+  }
+
+
+  private static String defineWhitelistForDomain(String domain) {
+    String whitelist = null;
+
+    if (domain != null && !domain.isEmpty()) {
+      String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
+      whitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
+    }
+
     return whitelist;
   }
+
+
+  private static String stripPort(String hostName) {
+    String result = hostName;
+
+    int portIndex = hostName.indexOf(":");
+    if (portIndex > 0) {
+      result = hostName.substring(0, portIndex);
+    }
+
+    return result;
+  }
+
 
 }
