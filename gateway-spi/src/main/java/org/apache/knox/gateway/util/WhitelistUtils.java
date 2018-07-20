@@ -75,15 +75,6 @@ public class WhitelistUtils {
     // Check first for the X-Forwarded-Host header, and use it to determine the domain
     String domain = getDomain(request.getHeader("X-Forwarded-Host"));
 
-    // If the domain could not be derived from the X-Forwarded-Host header value, then use the localhost FQDN
-    if (domain == null) {
-      try {
-          domain = getDomain(InetAddress.getLocalHost().getCanonicalHostName());
-      } catch (UnknownHostException e) {
-        //
-      }
-    }
-
     // If a domain has still not yet been determined, try the requested host name
     String requestedHost = null;
 
