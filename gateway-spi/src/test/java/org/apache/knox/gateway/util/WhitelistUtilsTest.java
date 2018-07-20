@@ -135,6 +135,16 @@ public class WhitelistUtilsTest {
   }
 
   @Test
+  public void testLocalhostAddressAsHostName() throws Exception {
+    final String serviceRole = "TEST";
+    // InetAddress#getCanonicalHostName() sometimes returns the IP address as the host name
+    String whitelist = doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
+                                                  "192.168.1.100",
+                                                  serviceRole);
+    assertNull(whitelist);
+  }
+
+  @Test
   public void testExplicitlyConfiguredDefaultWhitelist() throws Exception {
     final String serviceRole = "TEST";
     final String WHITELIST   = "DEFAULT";
