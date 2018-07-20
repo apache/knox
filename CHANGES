@@ -11,6 +11,7 @@ Release Notes - Apache Knox - Version 1.1.0
     [KNOX-1040] - Initial changes to support simple descriptors and provider configurations in the Admin UI.
 
 ** Improvement
+    [KNOX-1394] - OOTB gateway-site.xml to Default to Demo Whitelist Scenario
     [KNOX-1381] - Fix logging
     [KNOX-1378] - Declare SSO params using KnoxSSO service option  knoxsso.expected.params
     [KNOX-1379] - Default dispatch whitelist should not include localhost when the Knox host domain can be determined
