@@ -141,7 +141,8 @@ public class WhitelistUtilsTest {
     String whitelist = doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
                                                   "192.168.1.100",
                                                   serviceRole);
-    assertNull(whitelist);
+    assertNotNull(whitelist);
+    assertTrue(whitelist.contains("192.168.1.100"));
   }
 
   @Test
@@ -186,16 +187,18 @@ public class WhitelistUtilsTest {
     }
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(serviceRole).anyTimes();
     EasyMock.expect(request.getServletContext()).andReturn(sc).anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn(serverName).anyTimes();
     EasyMock.replay(request);
 
     String result = null;
-    if (serverName != null && !serverName.isEmpty() && !isLocalhostServerName(serverName) && xForwardedHost == null) {
-      try {
-        result = doTestDeriveDomainBasedWhitelist(serverName);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
+//    if (serverName != null && !serverName.isEmpty() && !isLocalhostServerName(serverName) && xForwardedHost == null) {
+//      try {
+//        result = doTestDeriveDomainBasedWhitelist(serverName);
+//      } catch (Exception e) {
+//        e.printStackTrace();
+//      }
+//    } else if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
+    if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
       try {
         Method method = WhitelistUtils.class.getDeclaredMethod("deriveDefaultDispatchWhitelist", HttpServletRequest.class);
         method.setAccessible(true);
@@ -211,9 +214,15 @@ public class WhitelistUtilsTest {
   }
 
   private static String doTestDeriveDomainBasedWhitelist(final String serverName) throws Exception {
-    Method method = WhitelistUtils.class.getDeclaredMethod("deriveDomainBasedWhitelist", String.class);
-    method.setAccessible(true);
-    return (String) method.invoke(null, serverName);
+    // First, need to invoke the method for deriving the domain from the server name
+    Method getDomainMethod = WhitelistUtils.class.getDeclaredMethod("getDomain", String.class);
+    getDomainMethod.setAccessible(true);
+    String domain = (String) getDomainMethod.invoke(null, serverName);
+
+    // Then, invoke the method for defining the whitelist based on the domain we just derived (which may be invalid)
+    Method defineWhitelistMethod = WhitelistUtils.class.getDeclaredMethod("defineWhitelistForDomain", String.class);
+    defineWhitelistMethod.setAccessible(true);
+    return (String) defineWhitelistMethod.invoke(null, domain);
   }
 
   private static boolean isLocalhostServerName(final String serverName) {

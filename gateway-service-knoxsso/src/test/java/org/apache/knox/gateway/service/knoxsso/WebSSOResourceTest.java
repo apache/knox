@@ -602,6 +602,7 @@ public class WebSSOResourceTest {
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn("KNOXSSO").anyTimes();
     EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn("localhost").anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
