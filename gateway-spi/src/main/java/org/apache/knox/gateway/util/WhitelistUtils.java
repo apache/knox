@@ -37,6 +37,8 @@ public class WhitelistUtils {
 
   static final String DEFAULT_DISPATCH_WHITELIST_TEMPLATE = "^/.*$;^https?://%s:[0-9]+/?.*$";
 
+  private static final String IP_ADDRESS_REGEX = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$";
+
   private static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
 
   private static final List<String> DEFAULT_SERVICE_ROLES = Arrays.asList("KNOXSSO");
@@ -99,12 +101,13 @@ public class WhitelistUtils {
 
   private static String deriveDomainBasedWhitelist(String hostname) {
     String whitelist = null;
-    int domainIndex = hostname.indexOf('.');
-    if (domainIndex > 0) {
-      String domain = hostname.substring(hostname.indexOf('.'));
-      String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
-      whitelist =
-              String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
+    if (!hostname.matches(IP_ADDRESS_REGEX)) {
+      int domainIndex = hostname.indexOf('.');
+      if (domainIndex > 0) {
+        String domain = hostname.substring(hostname.indexOf('.'));
+        String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
+        whitelist = String.format(DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
+      }
     }
     return whitelist;
   }
