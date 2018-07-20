@@ -137,7 +137,7 @@ public class GatewayDispatchFilterTest {
                                    null,
                                    serviceRole,
                                    "http://localhost:9999",
-                                   shouldExpectLocalhost());
+                                   true);
   }
 
   /**
@@ -152,7 +152,7 @@ public class GatewayDispatchFilterTest {
                                    null,
                                    serviceRole,
                                    URLEncoder.encode("http://localhost:9999", "UTF-8"),
-                                   shouldExpectLocalhost());
+                                   true);
   }
 
 
@@ -227,11 +227,6 @@ public class GatewayDispatchFilterTest {
                                    serviceRole,
                                    "http://www.onmylist.org:9999",
                                     true);
-  }
-
-
-  private static boolean shouldExpectLocalhost() throws Exception {
-    return InetAddress.getLocalHost().getCanonicalHostName().equalsIgnoreCase("localhost");
   }
 
 
