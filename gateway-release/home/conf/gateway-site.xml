@@ -130,7 +130,7 @@ limitations under the License.
     </property>
     <property>
         <name>gateway.dispatch.whitelist.services</name>
-        <value>DATANODE,HBASEUI,HDFSUI,JOBHISTORYUI,NODEUI,RESOURCEMANAGER,WEBHBASE,WEBHDFS,YARNUI</value>
+        <value>DATANODE,HBASEUI,HDFSUI,JOBHISTORYUI,NODEUI,YARNUI</value>
         <description>The comma-delimited list of service roles for which the gateway.dispatch.whitelist should be applied.</description>
     </property>
 
