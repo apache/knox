@@ -1,3 +1,13 @@
 ------------------------------------------------------------------------------
 Known Issues
 ------------------------------------------------------------------------------
+
+Service discovery for WEBHBASE is unable to determine the correct port for the
+associated REST server, and it assumes that the REST server is running on the
+HBASE master host. As such, WEBHBASE declarations in descriptors will likely
+yield incorrect endpoints in the resulting topologies. The endpoint URL should
+be explicitly specified in descriptors to ensure correctness. See the User
+Guide for examples of specifying URLs in descriptor service declarations.
+(http://knox.apache.org/books/knox-1-1-0/user-guide.html#Simplified+Descriptor+Files)
+
+
