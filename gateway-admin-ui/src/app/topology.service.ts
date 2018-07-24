@@ -93,7 +93,7 @@ export class TopologyService {
                         .toPromise()
                         .then(() => xml)
                         .catch((err: HttpErrorResponse) => {
-                          console.debug('TopologyService --> getTopology() --> \n  error: ' + err.status + ' ' + err.message);
+                          console.debug('TopologyService --> createTopology() --> \n  error: ' + err.status + ' ' + err.message);
                           if (err.status === 401) {
                             window.location.assign(document.location.pathname);
                           } else {
