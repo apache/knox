@@ -17,8 +17,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Topology } from './topology';
 import { TopologyService } from "./topology.service";
+import { ResourceTypesService } from "./resourcetypes/resourcetypes.service";
 import { BsModalComponent } from 'ng2-bs3-modal/ng2-bs3-modal';
-import { ResourceService } from "./resource/resource.service";
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
@@ -104,7 +104,7 @@ export class TopologyDetailComponent implements OnInit {
 
     @ViewChild('editor') editor;
 
-    constructor(private topologyService : TopologyService, private resourceService: ResourceService) {
+    constructor(private topologyService : TopologyService, private resourceTypesService: ResourceTypesService) {
     }
 
     ngOnInit(): void {
@@ -125,17 +125,27 @@ export class TopologyDetailComponent implements OnInit {
     }
 
     createTopology() {
-        if (this.changedTopology) {
-            this.topologyService.createTopology(this.newTopologyName, this.changedTopology)
-            .then(value => this.topologyService.changedTopology(this.newTopologyName));
-        } else {
-            this.topologyService.createTopology(this.newTopologyName, this.topologyContent)
-            .then(value => this.topologyService.changedTopology(this.newTopologyName));
-        }
+      this.topologyService.createTopology(this.newTopologyName,
+                                          (this.changedTopology ? this.changedTopology : this.topologyContent))
+                          .then(() => {
+                              this.topologyService.changedTopology(this.newTopologyName)
+                              // This refreshes the list of topologies
+                              this.resourceTypesService.selectResourceType('Topologies');
+                          });
     }
 
     deleteTopology() {
-        this.topologyService.deleteTopology(this.topology.href).then(value => this.topologyService.changedTopology(this.topology.name));
+        this.topologyService.deleteTopology(this.topology.href)
+                            .then(() => {
+                                this.topologyService.changedTopology(this.topology.name);
+                                // This refreshes the list of topologies
+                                this.resourceTypesService.selectResourceType('Topologies');
+                                // This refreshes the topology content panel to the first one in the list
+                                this.topologyService.getTopologies()
+                                                    .then(topologies => {
+                                                        this.topologyService.selectedTopology(topologies[0]);
+                                                    })
+                            });
     }
 
     populateContent(topology: Topology) {
@@ -143,7 +153,9 @@ export class TopologyDetailComponent implements OnInit {
         this.setTitle(topology.name);
         if (this.topology) {
             if (this.topology.href) {
-              this.topologyService.getTopology(this.topology.href).then( content => this.topologyContent = content).then(() => this.makeReadOnly(this.topologyContent, 'generated') );
+              this.topologyService.getTopology(this.topology.href)
+                                  .then( content => this.topologyContent = content)
+                                  .then(() => this.makeReadOnly(this.topologyContent, 'generated') );
             }
         }
     }

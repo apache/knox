@@ -105,26 +105,27 @@ public class TopologiesResource {
   public Topology getTopology(@PathParam("id") String id) {
     GatewayServices services =
               (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    GatewayConfig config =
-                    (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (services != null) {
+      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      GatewayConfig config =
+                (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
+        if (t.getName().equals(id)) {
+          try {
+            t.setUri(new URI( buildURI(t, config, request) ));
+          } catch (URISyntaxException se) {
+            t.setUri(null);
+          }
 
-    for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
-      if (t.getName().equals(id)) {
-        try {
-          t.setUri(new URI( buildURI(t, config, request) ));
-        } catch (URISyntaxException se) {
-          t.setUri(null);
+          // For any read-only override topology, mark it as generated to discourage modification.
+          List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
+          if (ambariManagedTopos.contains(t.getName())) {
+            t.setGenerated(true);
+          }
+
+          return BeanConverter.getTopology(t);
         }
-
-        // For any read-only override topology, mark it as generated to discourage modification.
-        List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
-        if (ambariManagedTopos.contains(t.getName())) {
-          t.setGenerated(true);
-        }
-
-        return BeanConverter.getTopology(t);
       }
     }
     return null;
