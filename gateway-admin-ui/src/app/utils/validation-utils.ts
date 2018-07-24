@@ -18,7 +18,7 @@
 
 export class ParsedURL {
 
-  static REGEXP: RegExp = new RegExp('^(([^:\/?#]+):)?\/\/(([^\/?#]+):([^\/?#]+))?([^?#]*)(\/?([^#]*))?(#(.*))?');
+  static REGEXP: RegExp = new RegExp('^([^:/\\?#]+)?:\\/\\/([^:/\\?#]+)(:([^:/\\?#]+))?(\\/([^\\?#]*))*(\\?([^#]*))?(#(.*))?');
 
   scheme:   string;
   host:     string;
@@ -33,12 +33,12 @@ export class ParsedURL {
     let matches =  url.match(ParsedURL.REGEXP);
     if (matches && matches.length > 0) {
       result = {
-          scheme:   matches[2],
-          host:     matches[4],
-          port:     matches[5],
-          path:     matches[6],
-          query:    matches[7],
-          fragment: matches[9]
+        scheme:   matches[1],
+        host:     matches[2],
+        port:     matches[4],
+        path:     matches[5],
+        query:    matches[6],
+        fragment: matches[7]
       };
     }
     return result;
@@ -129,9 +129,8 @@ export class ValidationUtils {
       // Make sure it has at least a valid scheme, host and port
       if (parsedURL.scheme) {
         if (parsedURL.host) {
-          if (parsedURL.port) {
-            isValid = ValidationUtils.isValidNumber(parsedURL.port);
-          }
+          // Port is optional
+          isValid = parsedURL.port ? ValidationUtils.isValidNumber(parsedURL.port) : true;
         }
       }
     }
@@ -152,9 +151,8 @@ export class ValidationUtils {
           return false;
         }
         if (parsedURL.host) {
-          if (parsedURL.port) {
-            isValid = ValidationUtils.isValidNumber(parsedURL.port);
-          }
+          // Port is optional
+          isValid = parsedURL.port ? ValidationUtils.isValidNumber(parsedURL.port) : true;
         }
       }
     }
