@@ -102,7 +102,10 @@ Release Notes - Apache Knox - Version 1.1.0
     [KNOX-1153] - Service-level overrides for HA provider configuration in generated topologies, and alternate provide config formats.
 
 ** Bug
+    [KNOX-1399] - Duplicate configuration for gateway.dispatch.whitelist in gateway-site.xml OOTB
     [KNOX-1398] - WebHDFS and WebHBase APIs listed incorrectly as services that need whitelist enforcement
+	[KNOX-1397] - Admin UI Topologies List needs to Refresh on New or Deleted Topologies
+	[KNOX-1396] - Admin UI Provider Config wizard URL validation requires a port
     [KNOX-1360] - Fix ambari broken images (Aleksandr Kovalenko via Sandeep More)
     [KNOX-1358] - Create new version definition for SHS (Marco Gaido via lmccay)
     [KNOX-1345] - Fix javadoc errors
