@@ -133,14 +133,6 @@ limitations under the License.
         <value>DATANODE,HBASEUI,HDFSUI,JOBHISTORYUI,NODEUI,YARNUI</value>
         <description>The comma-delimited list of service roles for which the gateway.dispatch.whitelist should be applied.</description>
     </property>
-
-    <property>
-        <name>gateway.dispatch.whitelist</name>
-        <value>DEFAULT</value>
-        <description>The whitelist to be applied for dispatches associated with the service roles specified by gateway.dispatch.whitelist.services.
-        If the value is DEFAULT, a domain-based whitelist will be derived from the Knox host.</description>
-    </property>
-
     <property>
         <name>gateway.dispatch.whitelist</name>
         <value>^https?:\/\/(localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
