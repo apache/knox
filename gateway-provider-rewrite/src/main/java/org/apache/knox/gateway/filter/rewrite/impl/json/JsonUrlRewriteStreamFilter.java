@@ -29,7 +29,12 @@ import java.io.InputStreamReader;
 
 public class JsonUrlRewriteStreamFilter implements UrlRewriteStreamFilter {
 
-  private static String[] TYPES = new String[]{ "application/json", "text/json", "*/json" };
+  private static String[] TYPES = new String[]{
+    "application/json",
+    "text/json",
+    "*/json",
+    "application/hal+json"
+  };
   private static String[] NAMES = new String[]{ null };
 
   @Override
