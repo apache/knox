@@ -146,7 +146,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   public void onWebSocketClose(int statusCode, String reason) {
     super.onWebSocketClose(statusCode, reason);
 
-    /* do the cleaning business in seperate thread so we don't block */
+    /* do the cleaning business in separate thread so we don't block */
     pool.execute(new Runnable() {
       @Override
       public void run() {
