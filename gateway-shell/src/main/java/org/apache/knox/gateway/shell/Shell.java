@@ -21,6 +21,7 @@ import groovy.ui.GroovyMain;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
 import org.apache.knox.gateway.shell.job.Job;
+import org.apache.knox.gateway.shell.manager.Manager;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
 import org.apache.log4j.PropertyConfigurator;
@@ -41,7 +42,8 @@ public class Shell {
       Job.class.getName(),
       Workflow.class.getName(),
       Yarn.class.getName(),
-      TimeUnit.class.getName()
+      TimeUnit.class.getName(),
+      Manager.class.getName()
   };
 
   static {
