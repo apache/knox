@@ -325,13 +325,17 @@ public class AmbariDynamicServiceURLCreatorTest {
     private void testWebHBaseURL(Object mappingConfiguration) throws Exception {
         final String[] HOSTNAMES = {"host2", "host4"};
         final String HBASE_MASTER_PORT_PROPERTY = "hbase.master.info.port";
+        final String HBASE_REST_PORT_PROPERTY = "hbase.rest.port";
 
         AmbariComponent hbaseMaster = EasyMock.createNiceMock(AmbariComponent.class);
         Map<String, String> hbaseMasterConfig = new HashMap<>();
-        hbaseMasterConfig.put(HBASE_MASTER_PORT_PROPERTY, "60080");
+        hbaseMasterConfig.put(HBASE_MASTER_PORT_PROPERTY, "60088");
+        hbaseMasterConfig.put(HBASE_REST_PORT_PROPERTY, "60080");
         EasyMock.expect(hbaseMaster.getConfigProperties()).andReturn(hbaseMasterConfig).anyTimes();
         EasyMock.expect(hbaseMaster.getConfigProperty(HBASE_MASTER_PORT_PROPERTY))
                 .andReturn(hbaseMasterConfig.get(HBASE_MASTER_PORT_PROPERTY)).anyTimes();
+        EasyMock.expect(hbaseMaster.getConfigProperty(HBASE_REST_PORT_PROPERTY))
+                .andReturn(hbaseMasterConfig.get(HBASE_REST_PORT_PROPERTY)).anyTimes();
         List<String> hbaseMasterHosts = Arrays.asList(HOSTNAMES);
         EasyMock.expect(hbaseMaster.getHostNames()).andReturn(hbaseMasterHosts).anyTimes();
         EasyMock.replay(hbaseMaster);
@@ -343,7 +347,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         // Run the test
         AmbariDynamicServiceURLCreator builder = newURLCreator(cluster, mappingConfiguration);
         List<String> urls = builder.create("WEBHBASE", null);
-        validateServiceURLs(urls, HOSTNAMES, "http", hbaseMasterConfig.get(HBASE_MASTER_PORT_PROPERTY), null);
+        validateServiceURLs(urls, HOSTNAMES, "http", hbaseMasterConfig.get(HBASE_REST_PORT_PROPERTY), null);
     }
 
 

@@ -68,15 +68,15 @@
     </service>
 
     <service name="WEBHBASE">
-        <url-pattern>http://{HOST}:{MASTER_PORT}</url-pattern>
+        <url-pattern>http://{HOST}:{REST_PORT}</url-pattern>
         <properties>
             <property name="HOST">
                 <component>HBASE_MASTER</component>
                 <hostname/>
             </property>
-            <property name="MASTER_PORT">
+            <property name="REST_PORT">
                 <component>HBASE_MASTER</component>
-                <config-property>hbase.master.info.port</config-property>
+                <config-property>hbase.rest.port</config-property>
             </property>
         </properties>
     </service>
