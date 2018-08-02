@@ -115,7 +115,7 @@
         <groovy-version>2.4.8</groovy-version>
         <hadoop-version>3.0.0</hadoop-version>
         <jackson.version>2.9.5</jackson.version>
-        <jetty-version>9.2.22.v20170606</jetty-version>
+        <jetty-version>9.2.25.v20180606</jetty-version>
         <mockito-version>1.10.19</mockito-version>
         <surefire-version>2.16</surefire-version>
         <failsafe-version>2.19.1</failsafe-version>
