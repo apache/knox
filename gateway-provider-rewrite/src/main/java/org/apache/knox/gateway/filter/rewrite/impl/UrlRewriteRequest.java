@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.filter.GatewayRequestWrapper;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -32,6 +33,7 @@ import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
+import org.eclipse.jetty.http.HttpHeader;
 
 import javax.activation.MimeType;
 import javax.servlet.FilterConfig;
@@ -242,6 +244,20 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     ServletInputStream input = super.getInputStream();
     if( getContentLength() != 0 ) {
       MimeType mimeType = getMimeType();
+
+      /* In cases where content type is application/text and content-encoding is gzip */
+      final String contentEncoding = getHeader(
+          HttpHeader.CONTENT_ENCODING.asString());
+      if (!StringUtils.isBlank(contentEncoding) && StringUtils
+          .containsAny(contentEncoding, "gzip", "compress", "deflate", "br")) {
+        /* This prevents adding filters based on content-type, which in most cases would not be
+         * an issue but in cases where request specifies additional encoding this causes issues
+         * see KNOX-1412
+         */
+        mimeType = MimeTypes
+            .create("application/" + contentEncoding, getCharacterEncoding());
+      }
+
       UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
       if (filterContentConfig != null) {
         String asType = filterContentConfig.asType();
