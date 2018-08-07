@@ -58,7 +58,7 @@ public class KnoxAWSClient extends AbstractKnoxCloudCredentialsClient implements
     String username = null;
     Subject subject = Subject.getSubject(AccessController.getContext());
     username = getEffectiveUserName(subject);
-    policy = getPolicyProvider().buildPolicy(username, subject);
+    policy = getPolicyProvider().getPolicy(username, subject);
     GetFederationTokenResult result = null;
     if (policy != null) {
       GetFederationTokenRequest request = new GetFederationTokenRequest(username).withPolicy(policy);

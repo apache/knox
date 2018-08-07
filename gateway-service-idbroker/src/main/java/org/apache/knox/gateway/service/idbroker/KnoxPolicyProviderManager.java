@@ -50,8 +50,8 @@ public class KnoxPolicyProviderManager implements KnoxCloudPolicyProvider {
   }
 
   @Override
-  public String buildPolicy(String username, Subject subject) {
-    return delegate.buildPolicy(username, subject);
+  public String getPolicy(String username, Subject subject) {
+    return delegate.getPolicy(username, subject);
   }
 
   public KnoxCloudPolicyProvider loadDelegate(String name) throws IdentityBrokerConfigException {

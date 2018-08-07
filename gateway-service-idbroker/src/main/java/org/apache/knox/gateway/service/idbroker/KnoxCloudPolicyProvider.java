@@ -47,5 +47,5 @@ public interface KnoxCloudPolicyProvider {
    * @param subject
    * @return
    */
-  String buildPolicy(String username, Subject subject);
+  String getPolicy(String username, Subject subject);
 }

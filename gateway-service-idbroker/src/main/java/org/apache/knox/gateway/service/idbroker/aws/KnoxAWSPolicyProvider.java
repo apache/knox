@@ -50,7 +50,7 @@ public class KnoxAWSPolicyProvider implements KnoxCloudPolicyProvider {
     <service>
     <role>IDBROKER</role>
     <param>
-        <name>3.user.policy.action.guest</name>
+        <name>s3.user.policy.action.guest</name>
         <value>s3:Get*,s3:List*</value>
     </param>
     <param>
@@ -85,9 +85,6 @@ public class KnoxAWSPolicyProvider implements KnoxCloudPolicyProvider {
           } else {
             policy.resources=context.getProperty(paramName);
           }
-          if (policy.actions != null && policy.resources != null) {
-            buildAWSPolicyModel(policy);
-          }
         }else if (elements[1].equals("group")) {
           PolicyConfig policy = groupPolicyConfig.get(elements[4]);
           if (policy == null) {
@@ -99,15 +96,12 @@ public class KnoxAWSPolicyProvider implements KnoxCloudPolicyProvider {
           } else {
             policy.resources=context.getProperty(paramName);
           }
-          if (policy.actions != null && policy.resources != null) {
-            buildAWSPolicyModel(policy);
-          }
         }
       }
     }
   }
 
-  private void buildAWSPolicyModel(PolicyConfig policy) {
+  private AWSPolicyModel buildAWSPolicyModel(PolicyConfig policy) {
     AWSPolicyModel model = new AWSPolicyModel();
     model.setEffect("Allow");
     String[] actions = policy.actions.split(",");
@@ -122,43 +116,51 @@ public class KnoxAWSPolicyProvider implements KnoxCloudPolicyProvider {
     } else {
       model.setResource(resources[0]);
     }
-    policy.policy = model.toString();
+    return model;
   }
 
   /* (non-Javadoc)
    * @see org.apache.knox.gateway.service.idbroker.KnoxCloudPolicyProvider#buildPolicy(java.lang.String, javax.security.auth.Subject)
    */
   @Override
-  public String buildPolicy(String username, Subject subject) {
+  public String getPolicy(String username, Subject subject) {
     String policy = null;
+    List<String> groupNames = getGroupNames(subject);
+
+    PolicyConfig userConfig = userPolicyConfig.get(username);
+    // check for a group policy match
+    PolicyConfig config = null;
+    AWSPolicyModel model = null;
+    if (userConfig != null) {
+      model = buildAWSPolicyModel(userConfig); 
+    }
+    for (String groupName : groupNames) {
+      config = groupPolicyConfig.get(groupName);
+      if (config != null) {
+        if (model != null) {
+          model.combine(buildAWSPolicyModel(config));
+        }
+        else {
+          model = buildAWSPolicyModel(config);
+        }
+      }
+    }
+    return model.toString();
+  }
+
+  private List<String> getGroupNames(Subject subject) {
     List<String> groupNames = new ArrayList<String>();
     Object[] groups = subject.getPrincipals(GroupPrincipal.class).toArray();
     for (int i = 0; i < groups.length; i++) {
       groupNames.add(
           ((Principal)groups[0]).getName());
     }
-
-    PolicyConfig config = userPolicyConfig.get(username);
-    if (config == null) {
-      // check for a group policy match
-      for (String groupName : groupNames) {
-        config = groupPolicyConfig.get(groupName);
-        if (config != null) {
-          // just accept first match for now
-          break;
-        }
-      }
-    }
-    if (config != null) {
-      policy = config.policy;
-    }
-    return policy;
+    return groupNames;
   }
 
   private class PolicyConfig {
     public String actions = null;
     public String resources = null;
-    public String policy = null;
   }
 
   @Override

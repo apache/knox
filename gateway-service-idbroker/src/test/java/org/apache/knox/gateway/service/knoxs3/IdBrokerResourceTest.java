@@ -25,7 +25,7 @@ import org.apache.knox.gateway.service.idbroker.aws.AWSPolicyModel;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.junit.Test;
 
-public class S3BucketsResourceTest {
+public class IdBrokerResourceTest {
   @Test
   public void testPolicyCreation() {
 
@@ -138,11 +138,20 @@ public class S3BucketsResourceTest {
     model2.addResource("that");
     System.out.println(model2);
     
+    AWSPolicyModel model3 = new AWSPolicyModel();
+    model3.setEffect("Deny");
+    model3.addAction("s3:Get*");
+    model3.addAction("s3:List*");
+    model3.addResource("other thing");
+    System.out.println(model3);
+
     ArrayList<AWSPolicyModel> models = new ArrayList<AWSPolicyModel>();
     models.add(model);
     models.add(model2);
+    models.add(model3);
 
     model.combine(model2);
+    model.combine(model3);
     System.out.println("Aggregate: " + model);
   }
 }
