@@ -40,6 +40,17 @@
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
     </route>
 
+    <route path="/zeppelin/app.*.css">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/*.woff">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/app.*.ttf">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
 
     <route path="/zeppelin/api/**">
       <rewrite apply="ZEPPELINUI/zeppelin/inbound/api" to="request.url"/>
