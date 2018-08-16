@@ -17,6 +17,7 @@
 <%@ page import="org.apache.knox.gateway.topology.Topology" %>
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
 <%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
+<%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
 
 <!DOCTYPE html>
 <!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -51,7 +52,10 @@
           }
         }
         if (whitelist == null) {
-            whitelist = "";
+            whitelist = WhitelistUtils.getDispatchWhitelist(request);
+            if (whitelist == null) {
+                whitelist = "";
+            }
         }
         boolean validRedirect = RegExUtils.checkWhitelist(whitelist, request.getParameter("originalUrl"));
         if (validRedirect) {
