@@ -88,4 +88,9 @@ public class CustomDispatch {
   public void setUseTwoWaySsl(boolean useTwoWaySsl) {
     this.useTwoWaySsl = useTwoWaySsl;
   }
+
+  /* this is used when we use Apache Commons Digestor bindings, see KnoxFormatXmlTopologyRules.configure() */
+  public void setUseTwoWaySsl(String useTwoWaySsl) {
+    this.useTwoWaySsl = Boolean.parseBoolean(useTwoWaySsl);
+  }
 }

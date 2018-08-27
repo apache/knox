@@ -159,8 +159,10 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-definitions</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

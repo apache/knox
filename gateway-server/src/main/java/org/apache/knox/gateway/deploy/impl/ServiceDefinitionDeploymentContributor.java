@@ -183,6 +183,11 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, Route binding) {
     CustomDispatch customDispatch = binding.getDispatch();
+
+    if(context.getTopology().getDispatch() != null) {
+      customDispatch = context.getTopology().getDispatch();
+    }
+
     if ( customDispatch == null ) {
       customDispatch = serviceDefinition.getDispatch();
     }

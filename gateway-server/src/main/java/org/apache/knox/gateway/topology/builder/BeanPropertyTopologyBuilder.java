@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.builder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.knox.gateway.service.definition.CustomDispatch;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
@@ -32,6 +33,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
     private List<Provider> providers;
     private List<Service> services;
     private List<Application> applications;
+    private CustomDispatch dispatch;
 
     public BeanPropertyTopologyBuilder() {
         providers = new ArrayList<Provider>();
@@ -84,6 +86,14 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         return services;
     }
 
+    public void addDispatch(final CustomDispatch dispatch) {
+        this.dispatch = dispatch;
+    }
+
+    public CustomDispatch getDispatch() {
+        return this.dispatch;
+    }
+
     public BeanPropertyTopologyBuilder addApplication( Application application ) {
         applications.add(application);
         return this;
@@ -98,6 +108,8 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         topology.setName(name);
         topology.setDefaultServicePath(defaultService);
         topology.setGenerated(isGenerated);
+
+        topology.addDispatch(dispatch);
 
         for (Provider provider : providers) {
             topology.addProvider(provider);

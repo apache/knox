@@ -26,7 +26,7 @@ limitations under the License.
 
                 <h:element name="gateway" minOccurs="0" maxOccurs="1">
                     <h:complexType>
-                        <h:choice minOccurs="1" maxOccurs="unbounded">
+                        <h:sequence minOccurs="1" maxOccurs="unbounded">
 
                             <h:element name="provider" maxOccurs="unbounded">
                                 <h:complexType>
@@ -49,7 +49,21 @@ limitations under the License.
                                 </h:complexType>
                             </h:element>
 
-                        </h:choice>
+                            <h:element name="dispatch" minOccurs="0" maxOccurs="1">
+                                <h:complexType>
+                                    <h:all>
+                                        <h:element name="contributor-name" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                        <h:element name="ha-contributor-name" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                        <h:element name="classname" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                        <h:element name="ha-classname" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                        <h:element name="http-client-factory" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                        <h:element name="use-two-way-ssl" type="h:string" minOccurs="0" maxOccurs="1"/>
+                                    </h:all>
+                                </h:complexType>
+                            </h:element>
+
+                        </h:sequence>
+
                     </h:complexType>
                 </h:element>
 

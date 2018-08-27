@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.xml;
 
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
+import org.apache.knox.gateway.service.definition.CustomDispatch;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Param;
 import org.apache.knox.gateway.topology.Provider;
@@ -42,6 +43,15 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String ENABLED_TAG = "enabled";
   private static final String PARAM_TAG = "param";
   private static final String VALUE_TAG = "value";
+
+  /* topology dispatch tags */
+  private static final String DISPATCH_TAG = "gateway/dispatch";
+  private static final String CONTRIBUTOR_NAME = "contributor-name";
+  private static final String HA_CONTRIBUTOR_NAME = "ha-contributor-name";
+  private static final String CLASSNAME = "classname";
+  private static final String HA_CLASSNAME = "ha-classname";
+  private static final String HTTP_CLIENT_FACTORY = "http-client-factory";
+  private static final String USE_TWO_WAY_SSL = "use-two-way-ssl";
 
   private static final Rule paramRule = new ParamRule();
 
@@ -78,6 +88,15 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
+
+    /* topology dispatch */
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG ).createObject().ofType( CustomDispatch.class ).then().setNext( "addDispatch" );
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + CONTRIBUTOR_NAME ).callMethod( "setContributorName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HA_CONTRIBUTOR_NAME ).callMethod( "setHaContributorName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + CLASSNAME ).callMethod( "setClassName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HA_CLASSNAME ).callMethod( "setHaClassName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HTTP_CLIENT_FACTORY ).callMethod( "setHttpClientFactory" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + USE_TWO_WAY_SSL ).callMethod( "setUseTwoWaySsl" ).usingElementBodyAsArgument();
   }
 
   private static class ParamRule extends Rule {
