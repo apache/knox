@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/favicon" pattern="*://*:*/**/zeppelin/favicon.ico">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/favicon.ico"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/root" pattern="*://*:*/**/zeppelin/">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/rootAppScript" pattern="*://*:*/**/zeppelin/{path=app**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{path=app**}"/>
+  </rule>
+
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/notebook" pattern="*://*:*/**/zeppelin/{**}/notebook/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/notebook/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/interpreter" pattern="*://*:*/**/zeppelin/{**}/interpreter/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/interpreter/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/credential" pattern="*://*:*/**/zeppelin/{**}/credential/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/credential/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/configuration" pattern="*://*:*/**/zeppelin/{**}/configuration/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/configuration/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/api" pattern="*://*:*/**/zeppelin/api/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/api/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/components" pattern="*://*:*/**/zeppelin/components/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/components/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/app" pattern="*://*:*/**/zeppelin/app/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/app/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/app/notebook" pattern="*://*:*/**/zeppelin/app/notebook/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/app/notebook/{**}"/>
+  </rule>
+
+  <!-- Resources -->
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/styles" pattern="*://*:*/**/zeppelin/styles/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/styles/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/scripts" pattern="*://*:*/**/zeppelin/scripts/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/scripts/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/extensions" pattern="*://*:*/**/zeppelin/extensions/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/extensions/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/jax" pattern="*://*:*/**/zeppelin/jax/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/jax/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/components" pattern="*://*:*/**/zeppelin/components/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/components/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/assets" pattern="*://*:*/**/zeppelin/assets/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/assets/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/fonts" pattern="*://*:*/**/zeppelin/fonts/{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/fonts/{**}"/>
+  </rule>
+
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/css" pattern="styles/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/styles/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/assets/styles" pattern="assets/styles/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/assets/styles/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/assets" pattern="assets/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/assets/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="scripts/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/scripts/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="extensions/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/extensions/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="jax/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/jax/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="components/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/components/{**}"/>
+  </rule>
+    
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="{path=app.**}">
+    <rewrite template="{$frontend[path]}/zeppelin/{path=app.**}"/>
+  </rule>
+
+  <!--
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'components/{**}">
+    <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'app/{**}">
+    <rewrite template="{$prefix[&#39;,url]}/zeppelin/app/{**}"/>
+  </rule>
+  -->
+
+  <!-- Filters -->
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/home/home.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebook" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/notebook/notebook.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/jobmanager" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/jobmanager/jobmanager.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/interpreter" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/interpreter/interpreter.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebookRepos" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/notebook-repository/notebook-repository.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/credential" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/credential/credential.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/helium" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/helium/helium.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/configuration" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/configuration/configuration.html"/>
+  </rule>
+  
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm" >
+    <rewrite template="{$frontend[path]}/zeppelin/app/search/result-list.html"/>
+  </rule>
+
+  <!-- Rewrite the outgoing content for /api/ticket -->
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api/login" pattern="*://*:*/api/login">
+    <rewrite template="{$frontend[path]}/zeppelin/api/login"/>
+  </rule>
+
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api" pattern="*://*:*/api/{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/api/{**}"/>
+  </rule>
+  
+  <filter name="ZEPPELINUI/zeppelin/outbound/javascript/filter">
+          <content type="application/javascript">
+              <apply path="app/home/home.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home"/>
+              <apply path="app/notebook/notebook.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebook"/>
+              <apply path="app/jobmanager/jobmanager.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/jobmanager"/>
+              <apply path="app/interpreter/interpreter.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/interpreter"/>
+              <apply path="app/notebook-repository/notebook-repository.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebookRepos"/>
+              <apply path="app/credential/credential.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/credential"/>
+              <apply path="app/helium/helium.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/helium"/>
+              <apply path="app/configuration/configuration.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/configuration"/>
+              <apply path="app/search/result-list.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm"/>
+          </content>
+  </filter>
+
+</rules>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="ZEPPELINUI" name="zeppelinui" version="0.6.0">
+  <policies>
+    <policy role="webappsec"/>
+    <policy role="authentication" name="Anonymous"/>
+    <policy role="rewrite"/>
+    <policy role="authorization"/>
+  </policies>
+  <routes>
+    <!-- Filter -->
+    <route path="/zeppelin/scripts/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/outbound/javascript/filter" to="response.body"/>
+    </route>
+
+    <route path="/zeppelin/favicon.ico">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/favicon" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/root" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/*.js">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/*.woff">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/*.ttf">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/*.css">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/rootAppScript" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/api/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/api" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/components/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/components" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/app/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/app" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/app/notebook/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/app/notebook" to="request.url"/>
+    </route>
+
+    <!-- Resources -->
+    <route path="/zeppelin/styles/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/styles" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/scripts/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/scripts" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/extensions/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/extensions" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/jax/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/jax" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/components/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/components" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/assets/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/assets" to="request.url"/>
+    </route>
+
+    <route path="/zeppelin/fonts/**">
+      <rewrite apply="ZEPPELINUI/zeppelin/inbound/fonts" to="request.url"/>
+    </route>
+
+  </routes>
+  <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch"/>
+</service>
