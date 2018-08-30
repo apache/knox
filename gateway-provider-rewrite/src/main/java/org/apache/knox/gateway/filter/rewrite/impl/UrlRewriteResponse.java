@@ -181,9 +181,12 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     InputStream filteredInput = UrlRewriteStreamFilterFactory.create(
         mimeType, null, inStream, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
     outStream = (isGzip) ? new GZIPOutputStream(output) : output;
-    IOUtils.copyLarge( filteredInput, outStream, new byte[STREAM_BUFFER_SIZE] );
-    //KNOX-685: outStream.flush();
-    outStream.close();
+    try {
+        IOUtils.copyLarge( filteredInput, outStream, new byte[STREAM_BUFFER_SIZE] );
+    } finally {
+        //KNOX-685: outStream.flush();
+        outStream.close();
+    }
   }
 
   //TODO: Need to buffer the output here and when it is closed, rewrite it and then write the result to the stream.
