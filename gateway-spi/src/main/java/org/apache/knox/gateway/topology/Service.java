@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.topology;
 
+import org.apache.knox.gateway.service.definition.CustomDispatch;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -32,6 +34,7 @@ public class Service {
   private Version version;
   private Map<String, String> params = new LinkedHashMap<String, String>();
   private List<String> urls;
+  private CustomDispatch dispatch = null;
 
   public String getRole() {
     return role;
@@ -148,5 +151,25 @@ public class Service {
     }
 
     return hashCode;
+  }
+
+  /**
+   * Dispatch configured in topology service.
+   * Returns null if none configured.
+   * @since 1.2.0
+   * @return dispatch
+   */
+  public CustomDispatch getDispatch() {
+    return dispatch;
+  }
+
+  /**
+   * Add a custom dispatch that overrides the dispatch
+   * specified in service definition.
+   * @since 1.2.0
+   * @param dispatch
+   */
+  public void addDispatch(CustomDispatch dispatch) {
+    this.dispatch = dispatch;
   }
 }

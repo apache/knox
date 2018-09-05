@@ -164,9 +164,8 @@ public class ServiceDefinitionDeploymentContributorTest {
   }
 
   /**
-   * Test for a feature that sets dispatch for all the services defined in a
-   * topology. The dispatch is defined just once in the topology inside the
-   * <gateway> </gateway> tag.
+   * Test for a feature that sets dispatch the services defined in a
+   * topology. The dispatch is defined per service in a topology.
    * @since 1.2.0
    */
   @Test
@@ -235,7 +234,7 @@ public class ServiceDefinitionDeploymentContributorTest {
     providers.add(haProvider);
     EasyMock.expect(topology.getProviders()).andReturn(providers).anyTimes();
     /* mock topology dispatch */
-    EasyMock.expect(topology.getDispatch()).andReturn(topologyDispatch).anyTimes();
+    //EasyMock.expect(topology.getDispatch()).andReturn(topologyDispatch).anyTimes();
     EasyMock.replay(topology);
     EasyMock.expect(context.getTopology()).andReturn(topology).anyTimes();
 
@@ -248,6 +247,8 @@ public class ServiceDefinitionDeploymentContributorTest {
     Map<String, String> svcParams = new HashMap<>();
     EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
     EasyMock.expect(service.getRole()).andReturn(TEST_SERVICE_ROLE).anyTimes();
+    EasyMock.expect(service.getUrl()).andReturn("http://localhost:8081").anyTimes();
+    EasyMock.expect(service.getDispatch()).andReturn(topologyDispatch).anyTimes();
     EasyMock.replay(service);
 
     sddc.contributeService(context, service);

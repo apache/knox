@@ -45,7 +45,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String VALUE_TAG = "value";
 
   /* topology dispatch tags */
-  private static final String DISPATCH_TAG = "gateway/dispatch";
+  private static final String DISPATCH_TAG = "dispatch";
   private static final String CONTRIBUTOR_NAME = "contributor-name";
   private static final String HA_CONTRIBUTOR_NAME = "ha-contributor-name";
   private static final String CLASSNAME = "classname";
@@ -80,6 +80,14 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG ).createObject().ofType( Param.class ).then().addRule( paramRule ).then().setNext( "addParam" );
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
+    /* topology service dispatch */
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG).createObject().ofType( CustomDispatch.class ).then().setNext( "addDispatch" );
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + CONTRIBUTOR_NAME ).callMethod( "setContributorName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + HA_CONTRIBUTOR_NAME ).callMethod( "setHaContributorName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + CLASSNAME ).callMethod( "setClassName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + HA_CLASSNAME ).callMethod( "setHaClassName" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + HTTP_CLIENT_FACTORY ).callMethod( "setHttpClientFactory" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + USE_TWO_WAY_SSL ).callMethod( "setUseTwoWaySsl" ).usingElementBodyAsArgument();
 
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG ).createObject().ofType( Provider.class ).then().setNext( "addProvider" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ROLE_TAG ).setBeanProperty();
@@ -89,14 +97,6 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
 
-    /* topology dispatch */
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG ).createObject().ofType( CustomDispatch.class ).then().setNext( "addDispatch" );
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + CONTRIBUTOR_NAME ).callMethod( "setContributorName" ).usingElementBodyAsArgument();
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HA_CONTRIBUTOR_NAME ).callMethod( "setHaContributorName" ).usingElementBodyAsArgument();
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + CLASSNAME ).callMethod( "setClassName" ).usingElementBodyAsArgument();
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HA_CLASSNAME ).callMethod( "setHaClassName" ).usingElementBodyAsArgument();
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + HTTP_CLIENT_FACTORY ).callMethod( "setHttpClientFactory" ).usingElementBodyAsArgument();
-    forPattern( ROOT_TAG + "/" + DISPATCH_TAG + "/" + USE_TWO_WAY_SSL ).callMethod( "setUseTwoWaySsl" ).usingElementBodyAsArgument();
   }
 
   private static class ParamRule extends Rule {

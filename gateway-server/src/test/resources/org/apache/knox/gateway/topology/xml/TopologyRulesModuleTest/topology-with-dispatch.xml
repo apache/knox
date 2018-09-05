@@ -16,7 +16,9 @@
 -->
 <topology>
     <name>test-topology-name</name>
-    <gateway>
+    <service>
+        <role>TestRole</role>
+        <url>http://localhost:8081</url>
         <dispatch>
             <contributor-name>testContributor</contributor-name>
             <ha-contributor-name>testHAContributor</ha-contributor-name>
@@ -25,5 +27,5 @@
             <http-client-factory>testHttpClientFactory</http-client-factory>
             <use-two-way-ssl>true</use-two-way-ssl>
         </dispatch>
-    </gateway>
+    </service>
 </topology>

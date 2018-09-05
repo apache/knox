@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collection;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
@@ -262,17 +263,19 @@ public class TopologyRulesModuleTest {
 
   @Test
   public void testParseTopologyWithDispatch() throws IOException, SAXException {
-    Digester digester = loader.newDigester();
-    String name = "topology-with-dispatch.xml";
-    URL url = TestUtils.getResourceUrl( TopologyRulesModuleTest.class, name );
+    final Digester digester = loader.newDigester();
+    final String name = "topology-with-dispatch.xml";
+    final URL url = TestUtils.getResourceUrl( TopologyRulesModuleTest.class, name );
     assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
-    File file = new File( url.getFile() );
-    TopologyBuilder topologyBuilder = digester.parse( url );
-    Topology topology = topologyBuilder.build();
+    final File file = new File( url.getFile() );
+    final TopologyBuilder topologyBuilder = digester.parse( url );
+    final Topology topology = topologyBuilder.build();
     assertThat( "Failed to parse resource " + name, topology, notNullValue() );
     topology.setTimestamp( file.lastModified() );
 
-    CustomDispatch dispatch = topology.getDispatch();
+    final Collection<Service> services =  topology.getServices();
+    final CustomDispatch dispatch = services.iterator().next().getDispatch();
+
     assertThat( "Failed to find dispatch", dispatch, notNullValue() );
     assertThat( dispatch.getContributorName(), is("testContributor") );
     assertThat( dispatch.getHaContributorName(), is("testHAContributor") );

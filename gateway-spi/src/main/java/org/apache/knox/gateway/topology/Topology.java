@@ -114,25 +114,6 @@ public class Topology {
     return url;
   }
 
-  /**
-   * Add dispatch to be used by all the services
-   * deployed in this topology
-   * @since 1.2.0
-   * @param dispatch
-   */
-  public void addDispatch(final CustomDispatch dispatch) {
-    this.dispatch = dispatch;
-  }
-
-  /**
-   * Get the dispatch to be used by all the services
-   * deployed in this topology
-   * @return dispatch
-   */
-  public CustomDispatch getDispatch() {
-    return dispatch;
-  }
-
   public Application getApplication(String url) {
     return applicationMap.get( fixApplicationUrl( url ) );
   }
