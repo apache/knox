@@ -111,7 +111,7 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
    }
 
   private void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
-      LOG.failingOverRequest(outboundRequest.getURI().toString());
+      LOG.failedToConnectTo(outboundRequest.getURI().toString());
       AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
       if (counter == null) {
          counter = new AtomicInteger(0);
@@ -130,6 +130,7 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
                LOG.failoverSleepFailed(getResourceRole(), e);
             }
          }
+         LOG.failingOverRequest(outboundRequest.getURI().toString());
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
          LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getResourceRole());

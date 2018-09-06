@@ -33,6 +33,9 @@ public interface HaDispatchMessages {
   @Message(level = MessageLevel.INFO, text = "Failing over request to a different server: {0}")
   void failingOverRequest(String uri);
 
+  @Message(level = MessageLevel.INFO, text = "Failed to connect to: {0}")
+  void failedToConnectTo(String uri);
+
   @Message(level = MessageLevel.INFO, text = "Maximum attempts {0} to failover reached for service: {1}")
   void maxFailoverAttemptsReached(int attempts, String service);
 
