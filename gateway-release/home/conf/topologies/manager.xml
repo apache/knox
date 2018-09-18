@@ -44,7 +44,7 @@
          </param>
          <param>
             <name>strict.transport.enabled</name>
-            <value>true</value>
+            <value>false</value>
          </param>
       </provider>
       <provider>
