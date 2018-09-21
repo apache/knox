@@ -38,6 +38,7 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -246,7 +247,7 @@ public class RemoteAliasService implements AliasService {
 
     /* merge */
     for (final String alias : safe(localAliases)) {
-      if (!remoteAliases.contains(alias.toLowerCase())) {
+      if (!remoteAliases.contains(alias.toLowerCase(Locale.ROOT))) {
         remoteAliases.add(alias);
       }
     }
@@ -260,7 +261,7 @@ public class RemoteAliasService implements AliasService {
       throws AliasServiceException {
 
     /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase();
+    final String alias = givenAlias.toLowerCase(Locale.ROOT);
 
     /* first add the alias to the local keystore */
     localAliasService.addAliasForCluster(clusterName, alias, value);
@@ -281,7 +282,7 @@ public class RemoteAliasService implements AliasService {
       }
 
       if (remoteClient.getEntryData(aliasEntryPath) == null) {
-        throw new IllegalStateException(String.format(
+        throw new IllegalStateException(String.format(Locale.ROOT, 
             "Failed to store alias %s for cluster %s in remote registry", alias,
             clusterName));
       }
@@ -294,7 +295,7 @@ public class RemoteAliasService implements AliasService {
       final String givenAlias) throws AliasServiceException {
 
     /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase();
+    final String alias = givenAlias.toLowerCase(Locale.ROOT);
 
     /* first remove it from the local keystore */
     localAliasService.removeAliasForCluster(clusterName, alias);
@@ -308,7 +309,7 @@ public class RemoteAliasService implements AliasService {
         remoteClient.deleteEntry(aliasEntryPath);
 
         if (remoteClient.entryExists(aliasEntryPath)) {
-          throw new IllegalStateException(String.format(
+          throw new IllegalStateException(String.format(Locale.ROOT, 
               "Failed to delete alias %s for cluster %s in remote registry",
               alias, clusterName));
         }
@@ -332,7 +333,7 @@ public class RemoteAliasService implements AliasService {
       String givenAlias, boolean generate) throws AliasServiceException {
 
     /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase();
+    final String alias = givenAlias.toLowerCase(Locale.ROOT);
 
     char[] password = null;
 
@@ -387,7 +388,7 @@ public class RemoteAliasService implements AliasService {
       final String givenAlias) throws AliasServiceException {
 
     /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase();
+    final String alias = givenAlias.toLowerCase(Locale.ROOT);
     /* auto-generated password */
     final String passwordString = DefaultAliasService.generatePassword(16);
     addAliasForCluster(clusterName, alias, passwordString);

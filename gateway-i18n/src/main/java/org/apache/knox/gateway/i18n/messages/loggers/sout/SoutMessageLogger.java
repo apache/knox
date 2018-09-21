@@ -21,6 +21,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.MessageLogger;
 
 import java.text.MessageFormat;
+import java.util.Locale;
 
 /**
  *
@@ -47,7 +48,8 @@ public class SoutMessageLogger implements MessageLogger {
 
   @Override
   public void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
-    System.out.println( MessageFormat.format( getFormat( id ), level, id, message ) ); // I18N not required.
+    MessageFormat messageFormat = new MessageFormat(getFormat( id ), Locale.ROOT );
+    System.out.println( messageFormat.format(new Object[]{level, id, message}) ); // I18N not required.
     if( thrown != null ) {
       thrown.printStackTrace();
     }

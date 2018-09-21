@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -161,7 +162,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
     for ( Header header : headers ) {
       String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase())) {
+      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
         continue;
       }
       String value = header.getValue();

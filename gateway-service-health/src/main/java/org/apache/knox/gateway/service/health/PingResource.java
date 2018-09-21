@@ -30,6 +30,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Locale;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -76,7 +77,7 @@ public class PingResource {
       writer.println(getPingContent());
     } catch (IOException ioe) {
       log.logException("ping", ioe);
-      return Response.serverError().entity(String.format("Failed to reply correctly due to : %s ", ioe)).build();
+      return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", ioe)).build();
     } finally {
       if (writer != null) {
         writer.close();

@@ -29,13 +29,13 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -148,7 +148,7 @@ public class UrlRewriteResponseTest {
     InputStream inStream = null, input = null;
     try {
       outStream = isGzip ? new GZIPOutputStream( new FileOutputStream( inputFile ) ) : new FileOutputStream( inputFile );
-      outStream.write( content.getBytes() );
+      outStream.write( content.getBytes(StandardCharsets.UTF_8) );
       outStream.close();
 
       input = new FileInputStream( inputFile );

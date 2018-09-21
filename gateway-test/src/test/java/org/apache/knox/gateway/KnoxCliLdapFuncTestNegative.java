@@ -25,14 +25,14 @@ import org.apache.knox.gateway.util.KnoxCLI;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
-import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,8 +60,8 @@ public class KnoxCliLdapFuncTestNegative {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    System.setOut(new PrintStream(outContent));
-    System.setErr(new PrintStream(errContent));
+    System.setOut(new PrintStream(outContent, false, "UTF-8"));
+    System.setErr(new PrintStream(errContent, false, "UTF-8"));
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -248,10 +248,10 @@ public class KnoxCliLdapFuncTestNegative {
         "--u", username, "--p", password, "--g" };
     cli.run( args1 );
 
-    assertThat(outContent.toString(), containsString("LDAP authentication successful"));
-    assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Warn: "));
-    assertFalse(outContent.toString().contains("analyst"));
+    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication successful"));
+    assertThat(outContent.toString("UTF-8"), containsString("Your topology file may be incorrectly configured for group lookup"));
+    assertThat(outContent.toString("UTF-8"), containsString("Warn: "));
+    assertFalse(outContent.toString("UTF-8").contains("analyst"));
 
 
     outContent.reset();
@@ -269,8 +269,8 @@ public class KnoxCliLdapFuncTestNegative {
       NoOpAppender.tearDown( before );
     }
 
-    assertThat(outContent.toString(), containsString("LDAP authentication failed"));
-    assertThat(outContent.toString(), containsString("INVALID_CREDENTIALS"));
+    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication failed"));
+    assertThat(outContent.toString("UTF-8"), containsString("INVALID_CREDENTIALS"));
 
     outContent.reset();
     username = "sam";
@@ -282,11 +282,11 @@ public class KnoxCliLdapFuncTestNegative {
         "--u", username, "--p", password, "--g" };
     cli.run( args3 );
 
-    assertThat(outContent.toString(), containsString("LDAP authentication successful"));
-    assertThat(outContent.toString(), containsString("Your topology file may be incorrectly configured for group lookup"));
-    assertThat(outContent.toString(), containsString("Warn:"));
-    assertFalse(outContent.toString().contains("analyst"));
-    assertFalse(outContent.toString().contains("scientist"));
+    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication successful"));
+    assertThat(outContent.toString("UTF-8"), containsString("Your topology file may be incorrectly configured for group lookup"));
+    assertThat(outContent.toString("UTF-8"), containsString("Warn:"));
+    assertFalse(outContent.toString("UTF-8").contains("analyst"));
+    assertFalse(outContent.toString("UTF-8").contains("scientist"));
 
     LOG_EXIT();
   }

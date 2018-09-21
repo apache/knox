@@ -17,16 +17,6 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -43,6 +33,16 @@ import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 import javax.websocket.ClientEndpointConfig;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -193,7 +193,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     if (entry == null) {
       throw new RuntimeException(
-          String.format("Cannot find service for the given path: %s", path));
+          String.format(Locale.ROOT, "Cannot find service for the given path: %s", path));
     }
 
     /* Filter out /cluster/topology/service to get endpoint */
@@ -253,7 +253,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     final String[] contexts = path.split("/");
 
     final String serviceURL = serviceRegistry.lookupServiceURL(contexts[2],
-        entry.getName().toUpperCase());
+        entry.getName().toUpperCase(Locale.ROOT));
 
     /*
      * we have a match, if ws:// is present it is returned else http:// is

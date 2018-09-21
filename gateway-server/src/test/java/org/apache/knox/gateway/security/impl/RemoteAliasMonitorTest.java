@@ -39,8 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.testng.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,16 +69,7 @@ public class RemoteAliasMonitorTest {
   private static String preferRemoteAlias = "prefer.remote.alias";
   private static String preferRemoteAliasEncryptedPassword = "QmgrK2JBRlE1MUU9OjpIYzZlVUttKzdaWkFOSjlYZVVyVzNRPT06Om5kdTQ3WTJ1by9vSHprZUZHcjBqVG5TaGxsMFVUdUNyN0EvUlZDV1ZHQUU9";
   private static String preferRemoteAliasClearPassword = "ApacheKnoxPassword123";
-  /* For CLI tests */
-  private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-  private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
   private GatewayConfig gc;
-
-  public RemoteAliasMonitorTest() {
-    super();
-    System.setOut(new PrintStream(outContent));
-    System.setErr(new PrintStream(errContent));
-  }
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -141,7 +131,7 @@ public class RemoteAliasMonitorTest {
                 + RemoteAliasService.
                 PATH_SEPARATOR + expectedClusterName
                 + RemoteAliasService.PATH_SEPARATOR + preferRemoteAlias,
-            preferRemoteAliasEncryptedPassword.getBytes());
+            preferRemoteAliasEncryptedPassword.getBytes(StandardCharsets.UTF_8));
   }
 
   @AfterClass
@@ -241,7 +231,7 @@ public class RemoteAliasMonitorTest {
                 + RemoteAliasService.
                 PATH_SEPARATOR + expectedClusterName
                 + RemoteAliasService.PATH_SEPARATOR + expectedAlias,
-            zkAlias.encrypt(expectedPassword).getBytes());
+            zkAlias.encrypt(expectedPassword).getBytes(StandardCharsets.UTF_8));
 
     /* Create an alias in Zookeeper externally */
     client.create().withMode(CreateMode.PERSISTENT).
@@ -249,7 +239,7 @@ public class RemoteAliasMonitorTest {
                 + RemoteAliasService.
                 PATH_SEPARATOR + expectedClusterNameDev
                 + RemoteAliasService.PATH_SEPARATOR + expectedAliasDev,
-            zkAlias.encrypt(expectedPasswordDev).getBytes());
+            zkAlias.encrypt(expectedPasswordDev).getBytes(StandardCharsets.UTF_8));
 
     /* Try */
     aliases = zkAlias.getAliasesForCluster(expectedClusterName);

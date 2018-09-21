@@ -60,8 +60,8 @@ public class KnoxCLITest {
 
   @Before
   public void setup() throws Exception {
-    System.setOut(new PrintStream(outContent));
-    System.setErr(new PrintStream(errContent));
+    System.setOut(new PrintStream(outContent, false, "UTF-8"));
+    System.setErr(new PrintStream(errContent, false, "UTF-8"));
   }
 
   @Test
@@ -99,7 +99,7 @@ public class KnoxCLITest {
     // Test with no registry clients configured
     int rc = cli.run(args);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().isEmpty());
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").isEmpty());
 
     // Test with a single client configured
     // Configure a client for the test local filesystem registry implementation
@@ -108,7 +108,7 @@ public class KnoxCLITest {
     outContent.reset();
     rc = cli.run(args);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("test_client"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("test_client"));
 
     // Configure another client for the test local filesystem registry implementation
     config.set("gateway.remote.config.registry.another_client", "type=LocalFileSystem;address=/test2");
@@ -116,8 +116,8 @@ public class KnoxCLITest {
     outContent.reset();
     rc = cli.run(args);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("test_client"));
-    assertTrue(outContent.toString(), outContent.toString().contains("another_client"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("test_client"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("another_client"));
   }
 
   @Test
@@ -156,7 +156,7 @@ public class KnoxCLITest {
 
       // Validate the result
       assertEquals(0, rc);
-      String result = outContent.toString();
+      String result = outContent.toString("UTF-8");
       assertEquals(result, 3, result.split("\n").length);
     } finally {
       FileUtils.forceDelete(testRoot);
@@ -197,7 +197,7 @@ public class KnoxCLITest {
       outContent.reset();
       final String[] listArgs = {"list-provider-configs", "--registry-client", "test_client"};
       cli.run(listArgs);
-      String outStr =  outContent.toString().trim();
+      String outStr =  outContent.toString("UTF-8").trim();
       assertTrue(outStr.startsWith("Provider Configurations"));
       assertTrue(outStr.endsWith(")\n"+providerConfigName));
 
@@ -284,7 +284,7 @@ public class KnoxCLITest {
       outContent.reset();
       final String[] listArgs = {"list-descriptors", "--registry-client", "test_client"};
       cli.run(listArgs);
-      String outStr =  outContent.toString().trim();
+      String outStr =  outContent.toString("UTF-8").trim();
       assertTrue(outStr.startsWith("Descriptors"));
       assertTrue(outStr.endsWith(")\n"+descriptorName));
 
@@ -450,7 +450,7 @@ public class KnoxCLITest {
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1 has been successfully " +
         "created."));
 
     outContent.reset();
@@ -458,20 +458,20 @@ public class KnoxCLITest {
         "master"};
     rc = cli.run(args2);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
 
     outContent.reset();
     String[] args4 = {"delete-alias", "alias1", "--master", 
       "master"};
     rc = cli.run(args4);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1 has been successfully " +
         "deleted."));
 
     outContent.reset();
     rc = cli.run(args2);
     assertEquals(0, rc);
-    assertFalse(outContent.toString(), outContent.toString().contains("alias1"));
+    assertFalse(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
   }
   
   @Test
@@ -485,24 +485,24 @@ public class KnoxCLITest {
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains(
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains(
       "alias1 has been successfully " + "created."));
 
     outContent.reset();
     String[] args2 = { "list-alias", "--cluster", "Invalidcluster1", "--master", "master" };
     rc = cli.run(args2);
     assertEquals(0, rc);
-    System.out.println(outContent.toString());
-    assertTrue(outContent.toString(),
-      outContent.toString().contains("Invalid cluster name provided: Invalidcluster1"));
+    System.out.println(outContent.toString("UTF-8"));
+    assertTrue(outContent.toString("UTF-8"),
+      outContent.toString("UTF-8").contains("Invalid cluster name provided: Invalidcluster1"));
 
     outContent.reset();
     String[] args4 =
         { "delete-alias", "alias1", "--cluster", "Invalidcluster1", "--master", "master" };
     rc = cli.run(args4);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(),
-      outContent.toString().contains("Invalid cluster name provided: Invalidcluster1"));
+    assertTrue(outContent.toString("UTF-8"),
+      outContent.toString("UTF-8").contains("Invalid cluster name provided: Invalidcluster1"));
 
   }
 
@@ -523,7 +523,7 @@ public class KnoxCLITest {
       String[] args2 = { "delete-alias", "alias2", "--cluster", "cluster1", "--master", "master" };
       rc = cli.run(args2);
       assertEquals(0, rc);
-      assertTrue(outContent.toString().contains("No such alias exists in the cluster."));
+      assertTrue(outContent.toString("UTF-8").contains("No such alias exists in the cluster."));
     } finally {
       outContent.reset();
       String[] args1 = { "delete-alias", "alias1", "--cluster", "cluster1", "--master", "master" };
@@ -546,7 +546,7 @@ public class KnoxCLITest {
       String[] args2 = { "delete-alias", "alias2", "--master", "master" };
       rc = cli.run(args2);
       assertEquals(0, rc);
-      assertTrue(outContent.toString().contains("No such alias exists in the cluster."));
+      assertTrue(outContent.toString("UTF-8").contains("No such alias exists in the cluster."));
     } finally {
       outContent.reset();
       String[] args1 = { "delete-alias", "alias1", "--master", "master" };
@@ -562,7 +562,7 @@ public class KnoxCLITest {
     cli.setConf(new GatewayConfigImpl());
     int rc = cli.run(args1);
     assertEquals(-2, rc);
-    assertTrue(outContent.toString().contains("ERROR: Invalid Command"));
+    assertTrue(outContent.toString("UTF-8").contains("ERROR: Invalid Command"));
   }
 
   @Test
@@ -576,28 +576,28 @@ public class KnoxCLITest {
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains(
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains(
       "alias1 has been successfully " + "created."));
 
     outContent.reset();
     String[] args2 = { "list-alias", "--cluster", "cluster1", "--master", "master" };
     rc = cli.run(args2);
     assertEquals(0, rc);
-    System.out.println(outContent.toString());
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1"));
+    System.out.println(outContent.toString("UTF-8"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
 
     outContent.reset();
     String[] args4 =
         { "delete-alias", "alias1", "--cluster", "cluster1", "--master", "master" };
     rc = cli.run(args4);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains(
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains(
       "alias1 has been successfully " + "deleted."));
 
     outContent.reset();
     rc = cli.run(args2);
     assertEquals(0, rc);
-    assertFalse(outContent.toString(), outContent.toString().contains("alias1"));
+    assertFalse(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
 
   }
 
@@ -613,7 +613,7 @@ public class KnoxCLITest {
     cli.setConf( config );
     rc = cli.run(gwCreateArgs);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1 has been successfully " +
         "created."));
 
     AliasService as = cli.getGatewayServices().getService(GatewayServices.ALIAS_SERVICE);
@@ -625,7 +625,7 @@ public class KnoxCLITest {
     cli.setConf( config );
     rc = cli.run(clusterCreateArgs);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias2 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias2 has been successfully " +
         "created."));
 
     outContent.reset();
@@ -633,27 +633,27 @@ public class KnoxCLITest {
     cli = new KnoxCLI();
     rc = cli.run(args2);
     assertEquals(0, rc);
-    assertFalse(outContent.toString(), outContent.toString().contains("alias2"));
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1"));
+    assertFalse(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias2"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
 
     char[] passwordChars = as.getPasswordFromAliasForCluster("test", "alias2");
     assertNotNull(passwordChars);
-    assertTrue(new String(passwordChars), "testvalue1".equals(new String(passwordChars)));
+    assertEquals(new String(passwordChars), "testvalue1", new String(passwordChars));
 
     outContent.reset();
     String[] args1 = {"list-alias", "--cluster", "test", "--master", "master"};
     cli = new KnoxCLI();
     rc = cli.run(args1);
     assertEquals(0, rc);
-    assertFalse(outContent.toString(), outContent.toString().contains("alias1"));
-    assertTrue(outContent.toString(), outContent.toString().contains("alias2"));
+    assertFalse(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias2"));
 
     outContent.reset();
     String[] args4 = {"delete-alias", "alias1", "--master", "master"};
     cli = new KnoxCLI();
     rc = cli.run(args4);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias1 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias1 has been successfully " +
         "deleted."));
     
     outContent.reset();
@@ -661,7 +661,7 @@ public class KnoxCLITest {
     cli = new KnoxCLI();
     rc = cli.run(args5);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("alias2 has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("alias2 has been successfully " +
         "deleted."));
   }
 
@@ -674,7 +674,7 @@ public class KnoxCLITest {
     MasterService ms = cli.getGatewayServices().getService("MasterService");
     String master = String.copyValueOf( ms.getMasterSecret() );
     assertThat( master, is( "master" ) );
-    assertThat( outContent.toString(), containsString( "Master secret has been persisted to disk." ) );
+    assertThat( outContent.toString("UTF-8"), containsString( "Master secret has been persisted to disk." ) );
   }
 
   @Test
@@ -689,7 +689,7 @@ public class KnoxCLITest {
     int rc = 0;
     rc = cli.run(gwCreateArgs);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("gateway-identity has been successfully " +
         "created."));
   }
 
@@ -705,7 +705,7 @@ public class KnoxCLITest {
     int rc = 0;
     rc = cli.run(gwCreateArgs);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity has been successfully " +
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("gateway-identity has been successfully " +
         "created."));
 
     outContent.reset();
@@ -713,31 +713,31 @@ public class KnoxCLITest {
     rc = 0;
     rc = cli.run(gwCreateArgs2);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
-    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity.pem"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("gateway-identity.pem"));
 
     outContent.reset();
     String[] gwCreateArgs2_5 = {"export-cert"};
     rc = 0;
     rc = cli.run(gwCreateArgs2_5);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
-    assertTrue(outContent.toString(), outContent.toString().contains("gateway-identity.pem"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("gateway-identity.pem"));
 
     outContent.reset();
     String[] gwCreateArgs3 = {"export-cert", "--type", "JKS"};
     rc = 0;
     rc = cli.run(gwCreateArgs3);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("Certificate gateway-identity has been successfully exported to"));
-    assertTrue(outContent.toString(), outContent.toString().contains("gateway-client-trust.jks"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("gateway-client-trust.jks"));
 
     outContent.reset();
     String[] gwCreateArgs4 = {"export-cert", "--type", "invalid"};
     rc = 0;
     rc = cli.run(gwCreateArgs4);
     assertEquals(0, rc);
-    assertTrue(outContent.toString(), outContent.toString().contains("Invalid type for export file provided."));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("Invalid type for export file provided."));
   }
 
   @Test
@@ -754,7 +754,7 @@ public class KnoxCLITest {
     MasterService ms = cli.getGatewayServices().getService("MasterService");
     // assertTrue(ms.getClass().getName(), ms.getClass().getName().equals("kjdfhgjkhfdgjkh"));
     assertTrue( new String( ms.getMasterSecret() ), "master".equals( new String( ms.getMasterSecret() ) ) );
-    assertTrue(outContent.toString(), outContent.toString().contains("Master secret has been persisted to disk."));
+    assertTrue(outContent.toString("UTF-8"), outContent.toString("UTF-8").contains("Master secret has been persisted to disk."));
   }
 
   @Test
@@ -781,7 +781,7 @@ public class KnoxCLITest {
     assertThat( master.indexOf( '-', 14 ), is( 18 ) );
     assertThat( master.indexOf( '-', 19 ), is( 23 ) );
     assertThat( UUID.fromString( master ), notNullValue() );
-    assertThat( outContent.toString(), containsString( "Master secret has been persisted to disk." ) );
+    assertThat( outContent.toString("UTF-8"), containsString( "Master secret has been persisted to disk." ) );
 
     // Need to delete the master file so that the change isn't ignored.
     if( masterFile.exists() ) {
@@ -796,7 +796,7 @@ public class KnoxCLITest {
     assertThat( UUID.fromString( master2 ), notNullValue() );
     assertThat( master2, not( is( master ) ) );
     assertThat( rc, is( 0 ) );
-    assertThat(outContent.toString(), containsString("Master secret has been persisted to disk."));
+    assertThat(outContent.toString("UTF-8"), containsString("Master secret has been persisted to disk."));
   }
 
   @Test
@@ -822,12 +822,12 @@ public class KnoxCLITest {
     ms = cli.getGatewayServices().getService("MasterService");
     String master = String.copyValueOf( ms.getMasterSecret() );
     assertThat( master, is( "test-master-1" ) );
-    assertThat( outContent.toString(), containsString( "Master secret has been persisted to disk." ) );
+    assertThat( outContent.toString("UTF-8"), containsString( "Master secret has been persisted to disk." ) );
 
     outContent.reset();
     rc = cli.run(args);
     assertThat( rc, is(0 ) );
-    assertThat( outContent.toString(), containsString( "Master secret is already present on disk." ) );
+    assertThat( outContent.toString("UTF-8"), containsString( "Master secret is already present on disk." ) );
 
     outContent.reset();
     args = new String[]{ "create-master", "--master", "test-master-2", "--force" };
@@ -836,7 +836,7 @@ public class KnoxCLITest {
     ms = cli.getGatewayServices().getService("MasterService");
     master = String.copyValueOf( ms.getMasterSecret() );
     assertThat( master, is( "test-master-2" ) );
-    assertThat( outContent.toString(), containsString( "Master secret has been persisted to disk." ) );
+    assertThat( outContent.toString("UTF-8"), containsString( "Master secret has been persisted to disk." ) );
   }
 
   @Test
@@ -851,8 +851,8 @@ public class KnoxCLITest {
     cli.setConf( config );
 
     cli.run( args );
-    assertThat(outContent.toString(), containsString("sandbox"));
-    assertThat(outContent.toString(), containsString("admin"));
+    assertThat(outContent.toString("UTF-8"), containsString("sandbox"));
+    assertThat(outContent.toString("UTF-8"), containsString("admin"));
   }
 
   private class GatewayConfigMock extends GatewayConfigImpl{
@@ -967,30 +967,30 @@ public class KnoxCLITest {
     cli.setConf( config );
     cli.run( args );
 
-    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
-    assertThat(outContent.toString(), containsString("sandbox"));
-    assertThat(outContent.toString(), containsString("success"));
+    assertThat(outContent.toString("UTF-8"), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString("UTF-8"), containsString("sandbox"));
+    assertThat(outContent.toString("UTF-8"), containsString("success"));
     outContent.reset();
 
 
     String args2[] = {"validate-topology", "--master", "knox", "--cluster", "NotATopology"};
     cli.run(args2);
 
-    assertThat(outContent.toString(), containsString("NotATopology"));
-    assertThat(outContent.toString(), containsString("does not exist"));
+    assertThat(outContent.toString("UTF-8"), containsString("NotATopology"));
+    assertThat(outContent.toString("UTF-8"), containsString("does not exist"));
     outContent.reset();
 
     String args3[] = {"validate-topology", "--master", "knox", "--path", config.getGatewayTopologyDir() + "/admin.xml"};
     cli.run(args3);
 
-    assertThat(outContent.toString(), containsString("admin"));
-    assertThat(outContent.toString(), containsString("success"));
+    assertThat(outContent.toString("UTF-8"), containsString("admin"));
+    assertThat(outContent.toString("UTF-8"), containsString("success"));
     outContent.reset();
 
     String args4[] = {"validate-topology", "--master", "knox", "--path", "not/a/path"};
     cli.run(args4);
-    assertThat(outContent.toString(), containsString("does not exist"));
-    assertThat(outContent.toString(), containsString("not/a/path"));
+    assertThat(outContent.toString("UTF-8"), containsString("does not exist"));
+    assertThat(outContent.toString("UTF-8"), containsString("not/a/path"));
   }
 
   @Test
@@ -1008,11 +1008,11 @@ public class KnoxCLITest {
     cli.setConf( config );
     cli.run( args );
 
-    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
-    assertThat(outContent.toString(), containsString("test-cluster-bad"));
-    assertThat(outContent.toString(), containsString("unsuccessful"));
-    assertThat(outContent.toString(), containsString("Invalid content"));
-    assertThat(outContent.toString(), containsString("Line"));
+    assertThat(outContent.toString("UTF-8"), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString("UTF-8"), containsString("test-cluster-bad"));
+    assertThat(outContent.toString("UTF-8"), containsString("unsuccessful"));
+    assertThat(outContent.toString("UTF-8"), containsString("Invalid content"));
+    assertThat(outContent.toString("UTF-8"), containsString("Line"));
 
 
     outContent.reset();
@@ -1021,9 +1021,9 @@ public class KnoxCLITest {
 
     cli.run(args2);
 
-    assertThat(outContent.toString(), containsString(config.getGatewayTopologyDir()));
-    assertThat(outContent.toString(), containsString("success"));
-    assertThat(outContent.toString(), containsString("test-cluster-good"));
+    assertThat(outContent.toString("UTF-8"), containsString(config.getGatewayTopologyDir()));
+    assertThat(outContent.toString("UTF-8"), containsString("success"));
+    assertThat(outContent.toString("UTF-8"), containsString("test-cluster-good"));
 
 
   }

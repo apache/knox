@@ -16,13 +16,23 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.util.*;
-
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 
 public class SimpleDescriptorFactoryTest {
@@ -533,7 +543,7 @@ public class SimpleDescriptorFactoryTest {
                            Map<String, Map<String, String>> appParams) throws Exception {
         File f = new File(path);
 
-        Writer fw = new FileWriter(f);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
         fw.write("{" + "\n");
         fw.write("\"discovery-type\":\"" + discoveryType + "\",\n");
         fw.write("\"discovery-address\":\"" + discoveryAddress + "\",\n");
@@ -629,7 +639,7 @@ public class SimpleDescriptorFactoryTest {
 
         File f = new File(path);
 
-        Writer fw = new FileWriter(f);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
         fw.write("---" + "\n");
         fw.write("discovery-type: " + discoveryType + "\n");
         fw.write("discovery-address: " + discoveryAddress + "\n");

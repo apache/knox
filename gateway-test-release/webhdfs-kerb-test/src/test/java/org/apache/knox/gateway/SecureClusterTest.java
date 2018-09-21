@@ -17,12 +17,6 @@
  */
 package org.apache.knox.gateway;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Properties;
-
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.hadoop.fs.Path;
@@ -33,8 +27,6 @@ import org.apache.hadoop.minikdc.MiniKdc;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.ssl.KeyStoreTestUtil;
-import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.category.ReleaseTest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthScope;
@@ -47,11 +39,23 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.ReleaseTest;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.util.Locale;
+import java.util.Properties;
 
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_BLOCK_ACCESS_TOKEN_ENABLE_KEY;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_HTTPS_KEYSTORE_RESOURCE_KEY;
@@ -254,8 +258,9 @@ public class SecureClusterTest {
       file.delete();
       file.createNewFile();
     }
-    FileWriter writer = new FileWriter(file);
-    String content = String.format("com.sun.security.jgss.initiate {\n" +
+    Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
+    String content = String.format(Locale.ROOT,
+        "com.sun.security.jgss.initiate {\n" +
         "com.sun.security.auth.module.Krb5LoginModule required\n" +
         "renewTGT=true\n" +
         "doNotPrompt=true\n" +

@@ -17,25 +17,9 @@
  */
 package org.apache.knox.gateway;
 
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.knox.gateway.services.DefaultGatewayServices;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.category.ReleaseTest;
-import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -50,6 +34,13 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.knox.gateway.services.DefaultGatewayServices;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.ReleaseTest;
+import org.apache.knox.test.mock.MockServer;
 import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
@@ -58,6 +49,15 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
@@ -178,7 +178,7 @@ public class GatewayMultiFuncTest {
     String pword = uname + "-password";
 
     mock.expect().method( "GET" )
-        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", Charset.forName( "UTF-8" ) );
+        .respond().contentType( "application/json" ).contentLength( -1 ).content( "{\"msg\":\"H\u00eallo\"}", StandardCharsets.UTF_8 );
     String json = given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -191,7 +191,7 @@ public class GatewayMultiFuncTest {
     assertThat( mock.isEmpty(), is(true) );
 
     mock.expect().method( "GET" )
-        .respond().contentType( "application/octet-stream" ).contentLength( -1 ).content( "H\u00eallo".getBytes() );
+        .respond().contentType( "application/octet-stream" ).contentLength( -1 ).content( "H\u00eallo".getBytes(StandardCharsets.UTF_8) );
     byte[] bytes = given()
         //.log().all()
         .auth().preemptive().basic( uname, pword )
@@ -200,7 +200,7 @@ public class GatewayMultiFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/octet-stream" )
         .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asByteArray();
-    assertThat( bytes, is(equalTo("H\u00eallo".getBytes())) );
+    assertThat( bytes, is(equalTo("H\u00eallo".getBytes(StandardCharsets.UTF_8))) );
     assertThat( mock.isEmpty(), is(true) );
 
     mock.stop();
@@ -230,7 +230,7 @@ public class GatewayMultiFuncTest {
         .pathInfo( "/repeat-context/" )
         .respond()
         .status( HttpStatus.SC_CREATED )
-        .content( "{\"name\":\"value\"}".getBytes() )
+        .content( "{\"name\":\"value\"}".getBytes(StandardCharsets.UTF_8) )
         .contentLength( -1 )
         .contentType( "application/json; charset=UTF-8" )
         .header( "Location", gatewayUrl + "/knox681/repeat" );
@@ -260,7 +260,7 @@ public class GatewayMultiFuncTest {
     assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
     assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/knox681/repeat" ) );
     assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/json; charset=UTF-8") );
-    String body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    String body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), StandardCharsets.UTF_8 );
     assertThat( body, is( "{\"name\":\"value\"}" ) );
     response.close();
     client.close();
@@ -271,7 +271,7 @@ public class GatewayMultiFuncTest {
         .pathInfo( "/repeat-context/" )
         .respond()
         .status( HttpStatus.SC_CREATED )
-        .content( "<test-xml/>".getBytes() )
+        .content( "<test-xml/>".getBytes(StandardCharsets.UTF_8) )
         .contentType( "application/xml; charset=UTF-8" )
         .header( "Location", gatewayUrl + "/knox681/repeat" );
 
@@ -283,7 +283,7 @@ public class GatewayMultiFuncTest {
     assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
     assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/knox681/repeat" ) );
     assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/xml; charset=UTF-8") );
-    body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), Charset.forName( "UTF-8" ) );
+    body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), StandardCharsets.UTF_8 );
     assertThat( the(body), hasXPath( "/test-xml" ) );
     response.close();
     client.close();

@@ -37,8 +37,10 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  *
@@ -261,11 +263,11 @@ public class KnoxSh {
   private void displayTokenDetails(Map<String, String> json) {
     System.out.println("Token Type: " + json.get("token_type"));
 
-    DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss");
+    DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss", Locale.getDefault());
 
     long milliSeconds= Long.parseLong(json.get("expires_in"));
 
-    Calendar calendar = Calendar.getInstance();
+    Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
     calendar.setTimeInMillis(milliSeconds);
     System.out.println("Expires On: " + formatter.format(calendar.getTime()));
     String targetUrl = json.get("target_url");

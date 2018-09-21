@@ -17,25 +17,8 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import javax.websocket.ContainerProvider;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
-
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -56,8 +39,24 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.mycila.xmltool.XMLDoc;
-import com.mycila.xmltool.XMLTag;
+import javax.websocket.ContainerProvider;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * A basic test that attempts to proxy websocket connections through Knox
@@ -220,7 +219,7 @@ public class WebsocketEchoTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    backendServerUri = new URI(String.format("ws://%s:%d/ws", host, port));
+    backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/ws", host, port));
 
   }
 
@@ -252,7 +251,7 @@ public class WebsocketEchoTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    serverUri = new URI(String.format("ws://%s:%d/", host, port));
+    serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
 
     /* Setup websocket handler */
     setupGatewayConfig(backendServerUri.toString());

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteStepFlow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDescriptorBase<T> implements
     UrlRewriteFlowDescriptor<T> {
@@ -59,7 +60,7 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
   }
 
   public void setFlow( String flow ) {
-    flow = flow.trim().toUpperCase();
+    flow = flow.trim().toUpperCase(Locale.ROOT);
     this.flow = Enum.valueOf( UrlRewriteStepFlow.class, flow );
   }
 

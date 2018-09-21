@@ -32,12 +32,11 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * An implementation of RemoteConfigurationRegistryClientService intended to be used for testing without having to
@@ -107,7 +106,7 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
                     Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolved);
                     for (PosixFilePermission perm : perms) {
                         String[] parsed = perm.toString().split("_");
-                        collected.computeIfAbsent(parsed[0].toLowerCase(), s -> new ArrayList<>()).add(parsed[1].toLowerCase());
+                        collected.computeIfAbsent(parsed[0].toLowerCase(Locale.ROOT), s -> new ArrayList<>()).add(parsed[1].toLowerCase(Locale.ROOT));
                     }
 
                     for (String id : collected.keySet()) {

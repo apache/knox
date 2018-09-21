@@ -17,16 +17,6 @@
  */
 package org.apache.knox.gateway.filter;
 
-import javax.security.auth.Subject;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -38,12 +28,22 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 
+import javax.security.auth.Subject;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class AclsAuthorizationFilter implements Filter {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
@@ -84,7 +84,7 @@ public class AclsAuthorizationFilter implements Filter {
   }
 
   private String getInitParameter(FilterConfig filterConfig, String paramName) {
-    return filterConfig.getInitParameter(paramName.toLowerCase());
+    return filterConfig.getInitParameter(paramName.toLowerCase(Locale.ROOT));
   }
 
   private void parseAdminGroupConfig(String groups) {

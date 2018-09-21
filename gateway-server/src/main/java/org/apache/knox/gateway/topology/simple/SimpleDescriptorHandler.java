@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -525,7 +526,7 @@ public class SimpleDescriptorHandler {
                 Map<String, String> svcParams = serviceParams.get(serviceName);
                 if (svcParams != null) {
                     for (Entry<String, String> svcParam : svcParams.entrySet()) {
-                        if (!(svcParam.getKey().toLowerCase()).startsWith(DISCOVERY_PARAM_PREFIX)) {
+                        if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + svcParam.getKey() + "</name>\n");
                             sw.write("            <value>" + svcParam.getValue() + "</value>\n");

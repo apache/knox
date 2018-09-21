@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 class TraceOutput extends SynchronousServletOutputStreamAdapter {
 
@@ -66,7 +67,7 @@ class TraceOutput extends SynchronousServletOutputStreamAdapter {
       buffer.setLength( 0 );
       StringBuilder sb = new StringBuilder();
       TraceUtil.appendCorrelationContext( sb );
-      sb.append( String.format( "|ResponseBody[%d]%n\t%s", body.length(), body ) );
+      sb.append( String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body ) );
       if( bodyLog.isTraceEnabled() ) {
         log.trace( sb.toString() );
       }

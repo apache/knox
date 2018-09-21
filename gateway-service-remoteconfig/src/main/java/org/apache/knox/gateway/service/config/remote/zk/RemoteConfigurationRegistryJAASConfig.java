@@ -26,6 +26,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -157,7 +158,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
                 }
                 break;
             case Digest:
-                loginModuleName = digestLoginModules.get(registryType.toUpperCase());
+                loginModuleName = digestLoginModules.get(registryType.toUpperCase(Locale.ROOT));
         }
         return loginModuleName;
     }

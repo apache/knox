@@ -124,6 +124,7 @@
         <commons-beanutils-version>1.9.3</commons-beanutils-version>
         <failsafe-version>2.19.1</failsafe-version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
+        <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy-version>2.4.8</groovy-version>
         <hadoop-version>3.0.0</hadoop-version>
         <jackson.version>2.9.5</jackson.version>
@@ -414,6 +415,34 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>${forbiddenapis.version}</version>
+                <configuration>
+                    <failOnViolation>true</failOnViolation>
+                    <!-- if the used Java version is too new, don't fail, just do nothing: -->
+                    <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <bundledSignatures>
+                        <!--
+                          This will automatically choose the right
+                          signatures based on 'maven.compiler.target':
+                        -->
+                        <bundledSignature>jdk-unsafe</bundledSignature>
+                        <bundledSignature>jdk-deprecated</bundledSignature>
+                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
+                        <bundledSignature>jdk-non-portable</bundledSignature>
+                    </bundledSignatures>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>testCheck</goal>
+                        </goals>
+                    </execution>
+                 </executions>
+             </plugin>
         </plugins>
     </build>
 

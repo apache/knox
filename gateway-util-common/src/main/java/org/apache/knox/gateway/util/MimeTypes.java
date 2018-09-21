@@ -17,10 +17,11 @@
  */
 package org.apache.knox.gateway.util;
 
-import java.util.HashMap;
-import java.util.Map;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class MimeTypes {
 
@@ -70,7 +71,7 @@ public class MimeTypes {
   public static String getDefaultCharsetForMimeType( final String mimeType ) {
     String charset = null;
     if( mimeType != null ) {
-      charset = DEFAULT_CHARSETS.get( mimeType.trim().toLowerCase() );
+      charset = DEFAULT_CHARSETS.get( mimeType.trim().toLowerCase(Locale.ROOT) );
     }
     return charset;
   }

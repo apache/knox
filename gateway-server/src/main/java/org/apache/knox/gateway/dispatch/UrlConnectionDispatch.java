@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
+import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.audit.api.Action;
@@ -33,15 +36,11 @@ import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Rewriter;
 import org.apache.knox.gateway.util.urltemplate.Template;
-import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
-import org.apache.hadoop.security.authentication.client.AuthenticationException;
-import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +51,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Enumeration;
+import java.util.Locale;
 
 /**
  *
@@ -65,7 +65,7 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
 
   @Override
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-    String method = request.getMethod().toUpperCase();
+    String method = request.getMethod().toUpperCase(Locale.ROOT);
     if ("GET".equals(method)) {
       try {
         doGet(getDispatchUrl(request), request, response);

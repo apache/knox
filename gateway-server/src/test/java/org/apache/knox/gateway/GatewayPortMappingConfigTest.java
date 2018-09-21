@@ -19,7 +19,6 @@ package org.apache.knox.gateway;
  */
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.velocity.VelocityContext;
@@ -37,7 +36,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -159,7 +158,7 @@ public class GatewayPortMappingConfigTest {
       throws IOException, NoSuchFieldException, IllegalAccessException {
     /* Check port conflict with default port */
     exception.expect(IOException.class);
-    exception.expectMessage(String.format(
+    exception.expectMessage(String.format(Locale.ROOT, 
         " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
         huronPort, "eerie"));
 
@@ -196,7 +195,7 @@ public class GatewayPortMappingConfigTest {
 
     exception.expect(IOException.class);
     exception
-        .expectMessage(String.format("Port %d already in use.", defaultPort));
+        .expectMessage(String.format(Locale.ROOT, "Port %d already in use.", defaultPort));
 
     final GatewayServer gatewayServer = new GatewayServer(gatewayConfig);
     gatewayServer.checkPortConflict(defaultPort, null, gatewayConfig);

@@ -17,13 +17,13 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.text.ParseException;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -34,14 +34,14 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import java.io.IOException;
+import java.security.Principal;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 public class AccessTokenFederationFilter implements Filter {
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
@@ -80,7 +80,7 @@ public class AccessTokenFederationFilter implements Filter {
       if (verified) {
         long expires = Long.parseLong(token.getExpires());
         if (expires > System.currentTimeMillis()) {
-          if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase()) != -1) {
+          if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase(Locale.ROOT)) != -1) {
             Subject subject = createSubjectFromToken(token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
           }

@@ -17,13 +17,12 @@
  */
 package org.apache.knox.gateway.identityasserter.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
+import org.apache.knox.gateway.security.GroupPrincipal;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -34,13 +33,14 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Locale;
 
-import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
-import org.apache.knox.gateway.security.GroupPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author larry
@@ -57,7 +57,7 @@ public class CommonIdentityAssertionFilterTest {
     filter = new CommonIdentityAssertionFilter() {
       @Override
       public String mapUserPrincipal(String principalName) {
-        username = principalName.toUpperCase();
+        username = principalName.toUpperCase(Locale.ROOT);
         return principalName;
       }
 
@@ -66,7 +66,7 @@ public class CommonIdentityAssertionFilterTest {
         String[] groups = new String[2];
         int i = 0;
         for(GroupPrincipal p : subject.getPrincipals(GroupPrincipal.class)) {
-          groups[i] = p.getName().toUpperCase();
+          groups[i] = p.getName().toUpperCase(Locale.ROOT);
           i++;
         }
         mappedGroups = groups;
