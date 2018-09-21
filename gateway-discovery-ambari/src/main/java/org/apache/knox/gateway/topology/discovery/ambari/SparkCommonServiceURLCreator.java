@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator {
@@ -63,7 +64,7 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
         String port = getPort(comp);
         List<String> hostNames = comp.getHostNames();
         for (String host : hostNames) {
-          urls.add(String.format(URL_TEMPLATE, (isSSL(comp) ? SCHEME_HTTPS : SCHEME_HTTP), host, port));
+          urls.add(String.format(Locale.ROOT, URL_TEMPLATE, (isSSL(comp) ? SCHEME_HTTPS : SCHEME_HTTP), host, port));
         }
       }
     }

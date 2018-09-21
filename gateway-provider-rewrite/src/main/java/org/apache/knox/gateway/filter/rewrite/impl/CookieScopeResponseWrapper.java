@@ -22,6 +22,7 @@ import org.apache.knox.gateway.filter.GatewayResponseWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Locale;
 
 public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
 
@@ -44,7 +45,7 @@ public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
                 updatedCookie = value.replace(COOKIE_PATH, scopePath);
             } else {
                 // append the scope path
-                updatedCookie = String.format("%s %s;", value, scopePath);
+                updatedCookie = String.format(Locale.ROOT, "%s %s;", value, scopePath);
             }
             super.addHeader(name, updatedCookie);
         } else {

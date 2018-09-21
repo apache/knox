@@ -23,6 +23,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -71,7 +72,7 @@ class AmbariClientCommon {
                                                                                                 String discoveryPwdAlias) {
         Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations = new HashMap<>();
 
-        String serviceConfigsURL = String.format("%s" + AMBARI_SERVICECONFIGS_URI, discoveryAddress, clusterName);
+        String serviceConfigsURL = String.format(Locale.ROOT,"%s" + AMBARI_SERVICECONFIGS_URI, discoveryAddress, clusterName);
 
         JSONObject serviceConfigsJSON = restClient.invoke(serviceConfigsURL, discoveryUser, discoveryPwdAlias);
         if (serviceConfigsJSON != null) {

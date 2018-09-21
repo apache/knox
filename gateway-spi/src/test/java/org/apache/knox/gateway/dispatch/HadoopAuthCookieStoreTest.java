@@ -17,18 +17,22 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.List;
-
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class HadoopAuthCookieStoreTest {
 
@@ -163,7 +167,7 @@ public class HadoopAuthCookieStoreTest {
     try {
       File f = File.createTempFile(filename, ".conf");
       FileOutputStream out = new FileOutputStream(f);
-      out.write(contents.getBytes());
+      out.write(contents.getBytes(StandardCharsets.UTF_8));
       out.flush();
       out.close();
       result = f;

@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -218,7 +219,7 @@ public class WhitelistUtilsTest {
   }
 
   private static boolean isLocalhostServerName(final String serverName) {
-    return LOCALHOST_NAMES.contains(serverName.toLowerCase());
+    return LOCALHOST_NAMES.contains(serverName.toLowerCase(Locale.ROOT));
   }
 
   private static GatewayConfig createMockGatewayConfig(final List<String> serviceRoles, final String whitelist) {

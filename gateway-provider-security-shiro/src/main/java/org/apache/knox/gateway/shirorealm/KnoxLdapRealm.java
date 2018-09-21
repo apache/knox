@@ -19,35 +19,6 @@
 
 package org.apache.knox.gateway.shirorealm;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.naming.AuthenticationException;
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.PartialResultException;
-import javax.naming.SizeLimitExceededException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.PagedResultsControl;
-import javax.naming.ldap.PagedResultsResponseControl;
-
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -75,6 +46,35 @@ import org.apache.shiro.realm.ldap.LdapUtils;
 import org.apache.shiro.subject.MutablePrincipalCollection;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.StringUtils;
+
+import javax.naming.AuthenticationException;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.PartialResultException;
+import javax.naming.SizeLimitExceededException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of {@link org.apache.shiro.realm.ldap.JndiLdapRealm} that also
@@ -635,7 +635,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
   }
 
   public void setUserSearchScope( final String scope ) {
-    this.userSearchScope = ( scope == null ? null : scope.trim().toLowerCase() );
+    this.userSearchScope = ( scope == null ? null : scope.trim().toLowerCase(Locale.ROOT) );
   }
 
   private SearchControls getUserSearchControls() {
@@ -698,9 +698,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       String searchFilter = null;
       if ( userSearchFilter == null ) {
         if ( userSearchAttributeName == null ) {
-          searchFilter = String.format( "(objectclass=%1$s)", getUserObjectClass() );
+          searchFilter = String.format( Locale.ROOT, "(objectclass=%1$s)", getUserObjectClass() );
         } else {
-          searchFilter = String.format(
+          searchFilter = String.format( Locale.ROOT,
               "(&(objectclass=%1$s)(%2$s=%3$s))",
               getUserObjectClass(),
               userSearchAttributeName,

@@ -24,9 +24,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -304,7 +306,7 @@ public class ProviderConfigurationParserTest {
 
     File testConfig = new File(tmpDir, fileName);
 
-    Writer fw = new FileWriter(testConfig);
+    Writer fw = new OutputStreamWriter(new FileOutputStream(testConfig), StandardCharsets.UTF_8);
     fw.write(config);
     fw.flush();
     fw.close();

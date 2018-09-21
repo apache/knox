@@ -21,8 +21,12 @@ import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 
 public class ServiceDiscoveryFactoryTest {
@@ -41,7 +45,7 @@ public class ServiceDiscoveryFactoryTest {
         String TYPE = "dUmmY";
         ServiceDiscovery sd = ServiceDiscoveryFactory.get(TYPE);
         assertNotNull("Expected to get a ServiceDiscovery object.", sd);
-        assertEquals("Unexpected ServiceDiscovery type.", TYPE.toUpperCase(), sd.getType());
+        assertEquals("Unexpected ServiceDiscovery type.", TYPE.toUpperCase(Locale.ROOT), sd.getType());
     }
 
 

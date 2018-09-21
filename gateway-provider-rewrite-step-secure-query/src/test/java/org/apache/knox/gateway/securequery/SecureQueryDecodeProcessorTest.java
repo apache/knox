@@ -24,10 +24,11 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
-import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -56,8 +57,7 @@ public class SecureQueryDecodeProcessorTest {
       }
     };
 
-    BASE64Encoder encoder = new BASE64Encoder();
-    String encQuery = encoder.encode( "test-query".getBytes("utf-8" ) );
+    String encQuery = Base64.getEncoder().encodeToString( "test-query".getBytes(StandardCharsets.UTF_8) );
     encQuery = encQuery.replaceAll( "\\=", "" );
     String inString = "http://host:0/root/path?_=" + encQuery;
     Template inTemplate = Parser.parseLiteral( inString );
@@ -96,9 +96,8 @@ public class SecureQueryDecodeProcessorTest {
       }
     };
 
-    BASE64Encoder encoder = new BASE64Encoder();
     String inQuery = "test-query=test-value";
-    String encQuery = encoder.encode( inQuery.getBytes( "utf-8" ) );
+    String encQuery = Base64.getEncoder().encodeToString( inQuery.getBytes( StandardCharsets.UTF_8 ) );
     encQuery = encQuery.replaceAll( "\\=", "" );
     String inString = "http://host:0/root/path?_=" + encQuery + "&clear-param=clear-value";
     Template inTemplate = Parser.parseLiteral( inString );

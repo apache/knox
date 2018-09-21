@@ -42,6 +42,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -110,14 +111,14 @@ public class TestUtils {
   public static void LOG_ENTER() {
     StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
     System.out.flush();
-    System.out.println( String.format( "Running %s#%s", caller.getClassName(), caller.getMethodName() ) );
+    System.out.println( String.format( Locale.ROOT, "Running %s#%s", caller.getClassName(), caller.getMethodName() ) );
     System.out.flush();
   }
 
   public static void LOG_EXIT() {
     StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
     System.out.flush();
-    System.out.println( String.format( "Exiting %s#%s", caller.getClassName(), caller.getMethodName() ) );
+    System.out.println( String.format( Locale.ROOT, "Exiting %s#%s", caller.getClassName(), caller.getMethodName() ) );
     System.out.flush();
   }
 

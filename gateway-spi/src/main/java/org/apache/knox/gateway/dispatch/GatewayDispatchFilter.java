@@ -17,12 +17,12 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import org.apache.knox.gateway.SpiGatewayMessages;
-import org.apache.knox.gateway.filter.AbstractGatewayFilter;
-import org.apache.knox.gateway.config.ConfigurationInjectorBuilder;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.knox.gateway.SpiGatewayMessages;
+import org.apache.knox.gateway.config.ConfigurationInjectorBuilder;
+import org.apache.knox.gateway.filter.AbstractGatewayFilter;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.apache.knox.gateway.util.WhitelistUtils;
 
@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class GatewayDispatchFilter extends AbstractGatewayFilter {
@@ -114,7 +115,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   @Override
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-    String method = request.getMethod().toUpperCase();
+    String method = request.getMethod().toUpperCase(Locale.ROOT);
     Adapter adapter = METHOD_ADAPTERS.get(method);
     if (adapter != null) {
       if (isDispatchAllowed(request)) {

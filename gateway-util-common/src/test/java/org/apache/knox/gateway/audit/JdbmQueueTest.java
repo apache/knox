@@ -27,7 +27,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -281,7 +283,8 @@ public class JdbmQueueTest {
     if(size <= 0) return "0";
     final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
     int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-    return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+    return new DecimalFormat("#,##0.#", DecimalFormatSymbols.getInstance(Locale.getDefault()))
+        .format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
   }
 
   public static String createFillString( int size ) {

@@ -35,6 +35,8 @@ import javax.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -81,7 +83,7 @@ public class ProxyInboundClientTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    serverUri = new URI(String.format("ws://%s:%d/",host,port));
+    serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/",host,port));
   }
 
   @AfterClass
@@ -102,7 +104,7 @@ public class ProxyInboundClientTest {
   public void testClientInstance() throws IOException, DeploymentException {
 
     final String textMessage = "Echo";
-    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes());
+    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
@@ -192,7 +194,7 @@ public class ProxyInboundClientTest {
   public void testBinarymessage() throws IOException, DeploymentException {
 
     final String textMessage = "Echo";
-    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes());
+    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
@@ -276,7 +278,7 @@ public class ProxyInboundClientTest {
       /* just wait for the test to finish */
     }
 
-    Assert.assertEquals("Binary message does not match", textMessage, new String(recievedBinaryMessage));
+    Assert.assertEquals("Binary message does not match", textMessage, new String(recievedBinaryMessage, StandardCharsets.UTF_8));
   }
 
   @Test(timeout = 3000)

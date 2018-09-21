@@ -17,23 +17,16 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.topology.discovery.test.extension.DummyServiceDiscoveryType;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import org.easymock.EasyMock;
+import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -42,14 +35,19 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-
-import org.apache.commons.io.FileUtils;
-import org.easymock.EasyMock;
-import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static org.hamcrest.Matchers.hasXPath;
 import static org.hamcrest.Matchers.is;
@@ -245,7 +243,7 @@ public class SimpleDescriptorHandlerTest {
             // Validate the provider configuration
             Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
             ProviderConfiguration testProviderConfiguration =
-                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
+                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes(StandardCharsets.UTF_8)));
             validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
@@ -415,7 +413,7 @@ public class SimpleDescriptorHandlerTest {
             // Validate the provider configuration
             Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
             ProviderConfiguration testProviderConfiguration =
-                ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes()));
+                ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_PROVIDER_CONFIG.getBytes(StandardCharsets.UTF_8)));
             validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
@@ -637,7 +635,7 @@ public class SimpleDescriptorHandlerTest {
             // Validate the provider configuration
             Node gatewayNode = (Node) xpath.compile("/topology/gateway").evaluate(topologyXml, XPathConstants.NODE);
             ProviderConfiguration testProviderConfiguration =
-                ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_HA_PROVIDER_CONFIG.getBytes()));
+                ProviderConfigurationParser.parseXML(new ByteArrayInputStream(TEST_HA_PROVIDER_CONFIG.getBytes(StandardCharsets.UTF_8)));
             validateGeneratedProviderConfiguration(testProviderConfiguration, gatewayNode);
 
             // Validate the service declarations
@@ -784,7 +782,7 @@ public class SimpleDescriptorHandlerTest {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.transform(new DOMSource(generatedGatewayNode), new StreamResult(writer));
         ProviderConfiguration generatedProviderConfiguration =
-                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(writer.toString().getBytes()));
+                        ProviderConfigurationParser.parseXML(new ByteArrayInputStream(writer.toString().getBytes(StandardCharsets.UTF_8)));
         assertNotNull(generatedProviderConfiguration);
 
         // Compare the generated ProviderConfiguration to the expected one

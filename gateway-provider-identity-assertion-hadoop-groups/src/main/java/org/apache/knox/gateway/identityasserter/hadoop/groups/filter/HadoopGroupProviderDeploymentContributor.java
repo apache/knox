@@ -17,11 +17,6 @@
  */
 package org.apache.knox.gateway.identityasserter.hadoop.groups.filter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
@@ -29,6 +24,12 @@ import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * A provider deployment contributor for looking up authenticated user groups as
@@ -111,7 +112,7 @@ public class HadoopGroupProviderDeploymentContributor
       params = new ArrayList<FilterParamDescriptor>();
     }
     for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name(entry.getKey().toLowerCase()).value(entry.getValue()));
+      params.add( resource.createFilterParam().name(entry.getKey().toLowerCase(Locale.ROOT)).value(entry.getValue()));
     }
     return params;
   }
