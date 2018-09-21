@@ -20,12 +20,12 @@ package org.apache.knox.gateway.service.admin;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.admin.beans.BeanConverter;
 import org.apache.knox.gateway.service.admin.beans.Topology;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.TopologyService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +53,6 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -63,12 +62,10 @@ import java.util.regex.Pattern;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.notModified;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-
 
 @Path("/api/v1")
 public class TopologiesResource {

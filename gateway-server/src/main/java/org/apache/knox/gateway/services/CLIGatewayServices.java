@@ -25,12 +25,12 @@ import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
-import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
-import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
+import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.knox.gateway.services.security.impl.CLIMasterService;
+import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
+import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.topology.Provider;
 
 import java.util.Collection;

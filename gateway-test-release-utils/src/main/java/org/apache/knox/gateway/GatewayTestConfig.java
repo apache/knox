@@ -610,7 +610,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isGatewayServerHeaderEnabled() {
-	  return false;
+    return false;
   }
 
   @Override

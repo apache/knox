@@ -27,7 +27,6 @@ import org.apache.knox.gateway.svcregfunc.api.ServiceMappedHostFunctionDescripto
 import org.apache.knox.gateway.util.urltemplate.Host;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.shirorealm.impl.i18n;
 
 import org.apache.knox.gateway.i18n.messages.Message;

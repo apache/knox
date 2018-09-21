@@ -787,8 +787,8 @@ public abstract class DeploymentFactory {
         throw new DeploymentException(
             "Failed to contribute provider. Role: " +
             role + " Name: " + name + ". Please check the topology for" +
-              	    " errors in name and role and that the provider is " +
-              	    "on the classpath.");
+                    " errors in name and role and that the provider is " +
+                    "on the classpath.");
       }
     }
     return contributor;

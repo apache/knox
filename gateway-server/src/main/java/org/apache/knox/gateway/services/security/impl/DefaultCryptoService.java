@@ -17,6 +17,17 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.CryptoService;
+import org.apache.knox.gateway.services.security.EncryptionResult;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
+
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -27,24 +38,13 @@ import java.security.SignatureException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.CryptoService;
-import org.apache.knox.gateway.services.security.EncryptionResult;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-
 public class DefaultCryptoService implements CryptoService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   private AliasService as = null;
   private KeystoreService ks = null;
   private HashMap<String,ConfigurableEncryptor> encryptorCache =
-		  new HashMap<String,ConfigurableEncryptor>();
+      new HashMap<String,ConfigurableEncryptor>();
   private GatewayConfig config = null;
 
   public void setKeystoreService(KeystoreService ks) {
@@ -59,7 +59,7 @@ public class DefaultCryptoService implements CryptoService {
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
     this.config = config;
-	if (as == null) {
+  if (as == null) {
       throw new ServiceLifecycleException("Alias service is not set");
     }
   }
@@ -197,7 +197,7 @@ public class DefaultCryptoService implements CryptoService {
   // We have seen via profiling that AESEncryptor instantiation is very expensive.
   private final ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
     synchronized( encryptorCache ) {
-    	ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
+      ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
       if( encryptor == null ) {
         encryptor = new ConfigurableEncryptor( String.valueOf( password ) );
         encryptor.init(config);

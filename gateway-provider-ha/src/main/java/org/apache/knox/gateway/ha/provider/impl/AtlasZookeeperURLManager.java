@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.ha.provider.impl;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -26,7 +25,8 @@ import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AtlasZookeeperURLManager extends DefaultURLManager {
     private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/apache_atlas";

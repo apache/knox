@@ -25,7 +25,6 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.hostmap.FileBasedHostMapper;
 import org.apache.knox.gateway.services.hostmap.HostMapper;
 import org.apache.knox.gateway.services.hostmap.HostMapperService;
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 
 import java.net.URL;
 import java.util.ArrayList;

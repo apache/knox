@@ -19,10 +19,8 @@ package org.apache.knox.gateway.util;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class MimeTypeMap<V> {
 

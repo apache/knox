@@ -17,6 +17,20 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.SSLService;
+import org.apache.knox.gateway.util.X500PrincipalParser;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+
+import javax.security.auth.x500.X500Principal;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,20 +45,6 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import javax.security.auth.x500.X500Principal;
-
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.gateway.services.security.SSLService;
-import org.apache.knox.gateway.util.X500PrincipalParser;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class JettySSLService implements SSLService {
   private static final String EPHEMERAL_DH_KEY_SIZE_PROPERTY = "jdk.tls.ephemeralDHKeySize";

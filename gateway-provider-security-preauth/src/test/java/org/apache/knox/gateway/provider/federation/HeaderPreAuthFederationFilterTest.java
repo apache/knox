@@ -123,11 +123,7 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
     public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
         PreAuthValidationException {
       String token = httpRequest.getHeader("CUSTOM_TOKEN");
-      if (token.equalsIgnoreCase("HelloWorld")) {
-        return true;
-      } else {
-        return false;
-      }
+      return token.equalsIgnoreCase("HelloWorld");
     }
 
     /**

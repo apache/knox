@@ -17,6 +17,9 @@
  */
 package org.apache.knox.gateway.ha.dispatch;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Optional;
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
@@ -26,9 +29,6 @@ import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

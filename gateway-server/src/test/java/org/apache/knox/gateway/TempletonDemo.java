@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.knox.test.category.ManualTests;
-import org.apache.knox.test.category.SlowTests;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -27,6 +25,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.test.category.ManualTests;
+import org.apache.knox.test.category.SlowTests;
 import org.apache.log4j.helpers.Loader;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

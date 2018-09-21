@@ -208,7 +208,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     String backendURL = urlFromServiceDefinition(serviceDefs,
         serviceRegistryService, entry, path);
 
-    StringBuffer backend = new StringBuffer();
+    StringBuilder backend = new StringBuilder();
     try {
 
       /* if we do not find websocket URL we default to HTTP */
@@ -216,8 +216,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         URL serviceUrl = new URL(backendURL);
 
         /* Use http host:port if ws url not configured */
-        final String protocol = (serviceUrl.getProtocol() == "ws"
-                || serviceUrl.getProtocol() == "wss") ? serviceUrl.getProtocol()
+        final String protocol = (serviceUrl.getProtocol().equals("ws")
+                || serviceUrl.getProtocol().equals("wss")) ? serviceUrl.getProtocol()
                 : "ws";
         backend.append(protocol).append("://");
         backend.append(serviceUrl.getHost()).append(":");

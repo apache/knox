@@ -25,7 +25,9 @@ import java.io.File;
 import java.net.URL;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class ServiceDefinitionsLoaderTest {
 

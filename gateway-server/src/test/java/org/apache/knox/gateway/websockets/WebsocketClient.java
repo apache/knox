@@ -17,11 +17,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
@@ -30,8 +26,11 @@ import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
-
-import org.eclipse.jetty.util.BlockingArrayQueue;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A Test websocket client

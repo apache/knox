@@ -61,7 +61,7 @@ public class KnoxSh {
 
   private Command command;
   private String gateway = null;
-  /* (non-Javadoc)
+  /* (non-Javadoc)                                                                   N
    * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
    */
   public int run(String[] args) throws Exception {

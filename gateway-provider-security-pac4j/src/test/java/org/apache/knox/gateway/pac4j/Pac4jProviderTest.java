@@ -31,14 +31,19 @@ import org.pac4j.core.client.Clients;
 import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
-
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * This class simulates a full authentication process using pac4j.
