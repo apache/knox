@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.svcregfunc.impl;
 
+import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
@@ -27,11 +28,10 @@ import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.log.NoOpLogger;
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
-import org.apache.http.auth.BasicUserPrincipal;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.eclipse.jetty.util.log.Log;
@@ -39,7 +39,13 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
-import javax.servlet.*;
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;

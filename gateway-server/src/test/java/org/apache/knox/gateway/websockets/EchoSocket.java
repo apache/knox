@@ -17,13 +17,13 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.websocket.api.BatchMode;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+
+import java.io.IOException;
 
 /**
  * 

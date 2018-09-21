@@ -17,10 +17,10 @@
  */
 package org.apache.knox.gateway.services;
 
-import java.util.Map;
-
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
+
+import java.util.Map;
 
 /**
  * Simple server info service implementation that delegates to the

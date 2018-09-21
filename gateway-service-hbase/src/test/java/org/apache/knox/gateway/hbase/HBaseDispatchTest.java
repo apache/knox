@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.hbase;
 
-import java.net.URI;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.knox.gateway.dispatch.Dispatch;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.FastTests;
@@ -28,8 +25,11 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class HBaseDispatchTest {

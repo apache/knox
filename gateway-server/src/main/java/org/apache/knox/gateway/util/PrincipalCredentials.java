@@ -17,13 +17,12 @@
  */
 package org.apache.knox.gateway.util;
 
+import org.apache.http.annotation.Contract;
+import org.apache.http.annotation.ThreadingBehavior;
+import org.apache.http.auth.Credentials;
+
 import java.io.Serializable;
 import java.security.Principal;
-
-
-import org.apache.http.annotation.ThreadingBehavior;
-import org.apache.http.annotation.Contract;
-import org.apache.http.auth.Credentials;
 
 /**
  * Simple {@link Credentials} implementation based on a user name / password

@@ -55,29 +55,29 @@ public class ConfigurableEncryptor {
   public void init(GatewayConfig config) {
     if (config != null) {
       String alg = config.getAlgorithm();
-	    if (alg != null) {
-		  this.alg = alg;
-	    }
-	    String pbeAlg = config.getPBEAlgorithm();
-	    if (pbeAlg != null) {
-		  this.pbeAlg = pbeAlg;
-	    }
-	    String transformation = config.getTransformation();
-	    if (transformation != null) {
-		  this.transformation = transformation;
-	    }
-	    String saltSize = config.getSaltSize();
-	    if (saltSize != null) {
-		  this.saltSize = Integer.parseInt(saltSize);
-	    }
-	    String iterationCount = config.getIterationCount();
-	    if (iterationCount != null) {
-		  this.iterationCount = Integer.parseInt(iterationCount);
-	    }
-	    String keyLength = config.getKeyLength();
-	    if (keyLength != null) {
-		  this.keyLength = Integer.parseInt(keyLength);
-	    }
+      if (alg != null) {
+      this.alg = alg;
+      }
+      String pbeAlg = config.getPBEAlgorithm();
+      if (pbeAlg != null) {
+      this.pbeAlg = pbeAlg;
+      }
+      String transformation = config.getTransformation();
+      if (transformation != null) {
+      this.transformation = transformation;
+      }
+      String saltSize = config.getSaltSize();
+      if (saltSize != null) {
+      this.saltSize = Integer.parseInt(saltSize);
+      }
+      String iterationCount = config.getIterationCount();
+      if (iterationCount != null) {
+      this.iterationCount = Integer.parseInt(iterationCount);
+      }
+      String keyLength = config.getKeyLength();
+      if (keyLength != null) {
+      this.keyLength = Integer.parseInt(keyLength);
+      }
     }
   }
 

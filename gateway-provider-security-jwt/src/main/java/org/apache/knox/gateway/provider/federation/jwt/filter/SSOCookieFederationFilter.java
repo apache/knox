@@ -39,7 +39,7 @@ import java.text.ParseException;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final String GATEWAY_PATH = "gateway.path";
-public static final String SSO_COOKIE_NAME = "sso.cookie.name";
+  public static final String SSO_COOKIE_NAME = "sso.cookie.name";
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
@@ -55,7 +55,7 @@ public static final String SSO_COOKIE_NAME = "sso.cookie.name";
 
   private String cookieName;
   private String authenticationProviderUrl;
-private String gatewayPath;
+  private String gatewayPath;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -177,7 +177,7 @@ private String gatewayPath;
   protected String constructLoginURL(HttpServletRequest request) {
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
-    	authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
+      authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
     }
     if (authenticationProviderUrl.contains("?")) {
       delimiter = "&";

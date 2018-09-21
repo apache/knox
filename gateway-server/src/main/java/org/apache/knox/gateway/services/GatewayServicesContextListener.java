@@ -17,12 +17,12 @@
  */
 package org.apache.knox.gateway.services;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Topology;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 public class GatewayServicesContextListener implements ServletContextListener {
 
