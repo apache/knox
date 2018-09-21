@@ -16,21 +16,24 @@ package org.apache.knox.gateway.rm.dispatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.rm.i18n.RMMessages;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.BufferedHttpEntity;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class  RMHaBaseDispatcher extends DefaultDispatch {
@@ -119,7 +122,7 @@ class  RMHaBaseDispatcher extends DefaultDispatch {
           inboundResponse.setEntity(entity);
           ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
           inboundResponse.getEntity().writeTo(outputStream);
-          String body = new String(outputStream.toByteArray());
+          String body = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
           if (body.contains("This is standby RM")) {
              throw new StandbyException();
           }

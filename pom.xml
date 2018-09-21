@@ -103,6 +103,12 @@
     </modules>
 
     <properties>
+        <!--
+         It is recommended to set the compiler version globally,
+         as the compiler plugin and the forbidden API checker both
+         use this version
+        -->
+        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <repo.id>internal.repo</repo.id>
@@ -112,18 +118,23 @@
         <gateway-artifact>knox</gateway-artifact>
         <gateway-version>1.2.0-SNAPSHOT</gateway-version>
         <gateway-group>org.apache.knox</gateway-group>
+
+        <!-- Dependencies sorted alphabetically -->
+        <apacheds-version>2.0.0-M16</apacheds-version>
+        <commons-beanutils-version>1.9.3</commons-beanutils-version>
+        <failsafe-version>2.19.1</failsafe-version>
+        <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
         <groovy-version>2.4.8</groovy-version>
         <hadoop-version>3.0.0</hadoop-version>
         <jackson.version>2.9.5</jackson.version>
-        <jetty-version>9.2.25.v20180606</jetty-version>
-        <mockito-version>1.10.19</mockito-version>
-        <surefire-version>2.16</surefire-version>
-        <failsafe-version>2.19.1</failsafe-version>
-        <apacheds-version>2.0.0-M16</apacheds-version>
         <javax-websocket-version>1.1</javax-websocket-version>
+        <jetty-version>9.2.25.v20180606</jetty-version>
         <metrics-version>3.1.2</metrics-version>
+        <mockito-version>1.10.19</mockito-version>
         <shiro.version>1.2.6</shiro.version>
-        <commons-beanutils-version>1.9.3</commons-beanutils-version>
+        <spotbugs.version>3.1.7</spotbugs.version>
+        <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
+        <surefire-version>2.16</surefire-version>
     </properties>
 
     <licenses>
@@ -183,7 +194,9 @@
                             <execution>
                                 <id>source</id>
                                 <phase>package</phase>
-                                <goals><goal>single</goal></goals>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
                                 <configuration>
                                     <finalName>${gateway-artifact}-${gateway-version}</finalName>
                                     <outputDirectory>target/${gateway-version}</outputDirectory>
@@ -227,7 +240,9 @@
                 <executions>
                     <execution>
                         <phase>verify</phase>
-                        <goals><goal>check</goal></goals>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
                 <configuration>
@@ -298,12 +313,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <compilerId>javac</compilerId>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <debug>true</debug>
+                    <source>${maven.compiler.target}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -351,25 +364,56 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.0.0-M1</version>
                 <executions>
-                  <execution>
-                    <id>enforce-maven</id>
-                    <goals>
-                      <goal>enforce</goal>
-                    </goals>
-                    <configuration>
-                      <rules>
-                        <requireMavenVersion>
-                          <version>[3.0.2,)</version>
-                        </requireMavenVersion>
-                        <requireJavaVersion>
-                          <version>[1.8,)</version>
-                        </requireJavaVersion>
-                      </rules>
-                    </configuration>
-                  </execution>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.0.2,)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[1.8,)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-maven-plugin.version}</version>
+                <configuration>
+                    <threshold>High</threshold>
+                    <failOnError>true</failOnError>
+                    <excludeFilterFile>${session.executionRootDirectory}/src/spotbugs-filter.xml</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>${findsecbugs-plugin.version}</version> <!-- Auto-update to the latest stable -->
+                        </plugin>
+                    </plugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+                    <dependency>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs</artifactId>
+                        <version>${spotbugs.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 
@@ -416,11 +460,6 @@
                     </formats>
                     <check/>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.5.2</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -763,16 +802,16 @@
                 <version>2.6</version>
             </dependency>
             <dependency>
-              <groupId>com.nimbusds</groupId>
-              <artifactId>nimbus-jose-jwt</artifactId>
-              <version>4.41.2</version>
-              <scope>compile</scope>
-              <exclusions>
-                <exclusion>
-                  <groupId>org.bouncycastle</groupId>
-                  <artifactId>bcprov-jdk15on</artifactId>
-                </exclusion>
-              </exclusions>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>4.41.2</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk15on</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -823,7 +862,7 @@
                 <version>2.5.2</version>
             </dependency>
 
-           <dependency>
+            <dependency>
                 <groupId>com.thetransactioncompany</groupId>
                 <artifactId>cors-filter</artifactId>
                 <version>2.4</version>
@@ -1231,7 +1270,7 @@
                 <version>${jetty-version}</version>
             </dependency>
 
-             <!-- Websocket support -->
+            <!-- Websocket support -->
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-server</artifactId>

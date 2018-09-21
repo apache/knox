@@ -19,6 +19,7 @@ package org.apache.knox.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 
 public class Console {
 
@@ -26,14 +27,14 @@ public class Console {
   PrintStream oldErr, newErr;
   ByteArrayOutputStream newOutBuf, newErrBuf;
 
-  public void capture() {
+  public void capture() throws UnsupportedEncodingException {
     oldErr = System.err;
     newErrBuf = new ByteArrayOutputStream();
-    newErr = new PrintStream( newErrBuf );
+    newErr = new PrintStream( newErrBuf, false, "UTF-8" );
 
     oldOut = System.out; // I18N not required.
     newOutBuf = new ByteArrayOutputStream();
-    newOut = new PrintStream( newOutBuf );
+    newOut = new PrintStream( newOutBuf, false, "UTF-8" );
 
     System.setErr( newErr );
     System.setOut( newOut );

@@ -17,12 +17,18 @@
  */
 package org.apache.knox.gateway.shell;
 
+import org.apache.knox.gateway.shell.knox.token.Get;
+import org.apache.knox.gateway.shell.knox.token.Token;
+import org.apache.knox.gateway.util.JsonUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
@@ -33,10 +39,6 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.knox.gateway.shell.knox.token.Token;
-import org.apache.knox.gateway.util.JsonUtils;
-import org.apache.knox.gateway.shell.knox.token.Get;
 
 /**
  *
@@ -275,7 +277,7 @@ public class KnoxSh {
   }
 
   private String readFile(String file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader (file));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
     String line = null;
     String content = null;
     StringBuilder  stringBuilder = new StringBuilder();

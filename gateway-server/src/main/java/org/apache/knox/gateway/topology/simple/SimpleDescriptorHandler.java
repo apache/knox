@@ -16,23 +16,6 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import java.io.StringWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -45,6 +28,22 @@ import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Processes simple topology descriptors, producing full topology files, which can subsequently be deployed to the
@@ -577,7 +576,7 @@ public class SimpleDescriptorHandler {
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
 
-            fw = new BufferedWriter(new FileWriter(topologyDescriptor));
+            fw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(topologyDescriptor), StandardCharsets.UTF_8));
             fw.write(sw.toString());
             fw.flush();
         } catch (IOException e) {

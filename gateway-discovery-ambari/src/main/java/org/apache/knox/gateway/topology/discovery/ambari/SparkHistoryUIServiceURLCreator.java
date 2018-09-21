@@ -20,7 +20,6 @@ public class SparkHistoryUIServiceURLCreator extends SparkCommonServiceURLCreato
 
   private static final String RESOURCE_ROLE = "SPARKHISTORYUI";
 
-
   private static final String SSL_FLAG_PRIMARY   = "spark.ssl.historyServer.enabled";
   private static final String SSL_FLAG_SECONDARY = "spark.ssl.enabled";
 
@@ -49,7 +48,7 @@ public class SparkHistoryUIServiceURLCreator extends SparkCommonServiceURLCreato
     if (isSSL(comp)) {
       String sslPort = comp.getConfigProperty(SSL_PORT_PROPERTY);
       if (sslPort == null || sslPort.isEmpty()) {
-        int p = Integer.valueOf(comp.getConfigProperty(portConfigProperty)) + SSL_PORT_OFFSET;
+        int p = Integer.parseInt(comp.getConfigProperty(portConfigProperty)) + SSL_PORT_OFFSET;
         sslPort = String.valueOf(p);
       }
       port = sslPort;

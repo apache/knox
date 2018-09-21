@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class ProviderConfigurationParser {
   private static final String EXT_YML  = "yml";
   private static final String EXT_YAML = "yaml";
 
-  public static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList(EXT_XML, EXT_JSON, EXT_YML, EXT_YAML);
+  public static final List<String> SUPPORTED_EXTENSIONS = Collections.unmodifiableList(Arrays.asList(EXT_XML, EXT_JSON, EXT_YML, EXT_YAML));
 
 
   public static ProviderConfiguration parse(String path) throws Exception {

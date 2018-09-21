@@ -18,23 +18,25 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 class RESTInvoker {
 
@@ -130,8 +132,7 @@ class RESTInvoker {
             }
 
             // Add an auth header if credentials are available
-            String encodedCreds =
-                    org.apache.commons.codec.binary.Base64.encodeBase64String((username + ":" + password).getBytes());
+            String encodedCreds = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             request.addHeader(new BasicHeader("Authorization", "Basic " + encodedCreds));
 
             // Ambari CSRF protection

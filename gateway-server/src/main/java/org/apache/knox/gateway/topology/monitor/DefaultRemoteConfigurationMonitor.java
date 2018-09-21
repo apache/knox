@@ -20,18 +20,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.ChildEntryListener;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.EntryListener;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.zookeeper.ZooDefs;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 
 class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
 
@@ -155,7 +155,7 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
             for (String providerConfig : providerConfigs) {
                 File localFile = new File(providersDir, providerConfig);
 
-                byte[] remoteContent = client.getEntryData(NODE_KNOX_PROVIDERS + "/" + providerConfig).getBytes();
+                byte[] remoteContent = client.getEntryData(NODE_KNOX_PROVIDERS + "/" + providerConfig).getBytes(StandardCharsets.UTF_8);
                 if (!localFile.exists() || !Arrays.equals(remoteContent, FileUtils.readFileToByteArray(localFile))) {
                     FileUtils.writeByteArrayToFile(localFile, remoteContent);
                     log.downloadedRemoteConfigFile(providersDir.getName(), providerConfig);

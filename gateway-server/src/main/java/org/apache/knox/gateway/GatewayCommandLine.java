@@ -26,9 +26,12 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
-import static org.apache.commons.cli.HelpFormatter.*;
+import static org.apache.commons.cli.HelpFormatter.DEFAULT_DESC_PAD;
+import static org.apache.commons.cli.HelpFormatter.DEFAULT_LEFT_PAD;
 
 public class GatewayCommandLine {
 
@@ -39,13 +42,13 @@ public class GatewayCommandLine {
   }
 
   public static void printUsage() {
-    PrintWriter printer = new PrintWriter( System.err );
+    PrintWriter printer = new PrintWriter(new OutputStreamWriter( System.err, StandardCharsets.UTF_8), true);
     new HelpFormatter().printUsage( printer, LINE_WIDTH, COMMAND_NAME, createCommandLine() );
     printer.flush();
   }
 
   public static void printHelp() {
-    PrintWriter printer = new PrintWriter( System.err );
+    PrintWriter printer = new PrintWriter(new OutputStreamWriter( System.err, StandardCharsets.UTF_8), true);
     new HelpFormatter().printHelp(printer, LINE_WIDTH, COMMAND_NAME, null, createCommandLine(), DEFAULT_LEFT_PAD, DEFAULT_DESC_PAD, null);
     printer.flush();
   }

@@ -18,14 +18,14 @@
 package org.apache.knox.gateway.config.impl;
 
 import org.apache.commons.beanutils.ConvertUtilsBean2;
+import org.apache.knox.gateway.config.Alias;
 import org.apache.knox.gateway.config.ConfigurationAdapter;
+import org.apache.knox.gateway.config.ConfigurationBinding;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.Configure;
-import org.apache.knox.gateway.config.spi.ConfigurationInjector;
-import org.apache.knox.gateway.config.Alias;
-import org.apache.knox.gateway.config.ConfigurationBinding;
 import org.apache.knox.gateway.config.Default;
 import org.apache.knox.gateway.config.Optional;
+import org.apache.knox.gateway.config.spi.ConfigurationInjector;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -157,7 +157,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
   private <T extends Annotation> T findAnnotation( Annotation[] annotations, Class<T> type ) {
     T found = null;
     for( Annotation current : annotations ) {
-      if( type.isAssignableFrom( current.getClass() ) ) {
+      if( type.isAssignableFrom( current.annotationType() ) ) {
         found = (T)current;
         break;
       }

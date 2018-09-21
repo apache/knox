@@ -110,27 +110,27 @@ public class HaProviderDeploymentContributor extends ProviderDeploymentContribut
       if (serviceLevelParams != null && !serviceLevelParams.isEmpty()) {
          String enabled = serviceLevelParams.get(Service.HA_ENABLED_PARAM);
          if (enabled != null) {
-            config.setEnabled(Boolean.valueOf(enabled));
+            config.setEnabled(Boolean.parseBoolean(enabled));
          }
 
          String failOverSleep = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP);
          if (failOverSleep != null) {
-            config.setFailoverSleep(Integer.valueOf(failOverSleep));
+            config.setFailoverSleep(Integer.parseInt(failOverSleep));
          }
 
          String failOverAttempts = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
          if (failOverAttempts != null) {
-            config.setMaxFailoverAttempts(Integer.valueOf(failOverAttempts));
+            config.setMaxFailoverAttempts(Integer.parseInt(failOverAttempts));
          }
 
          String retrySleep = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
          if (retrySleep != null) {
-            config.setRetrySleep(Integer.valueOf(retrySleep));
+            config.setRetrySleep(Integer.parseInt(retrySleep));
          }
 
          String retryAttempts = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
          if (retryAttempts != null) {
-            config.setMaxRetryAttempts(Integer.valueOf(retryAttempts));
+            config.setMaxRetryAttempts(Integer.parseInt(retryAttempts));
          }
 
          String zkEnsemble = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);

@@ -17,30 +17,19 @@
  */
 package org.apache.knox.gateway.util;
 
-import java.io.BufferedReader;
-import java.io.Console;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.knox.gateway.GatewayCommandLine;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -60,15 +49,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.SSLContexts;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -82,6 +62,27 @@ import org.apache.shiro.util.ThreadContext;
 import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
 /**
  *
@@ -1473,7 +1474,7 @@ public class KnoxCLI extends Configured implements Tool {
           this.username = c.readLine("Username: ");
         }else{
           try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             out.println("Username: ");
             this.username = reader.readLine();
             reader.close();
@@ -1490,7 +1491,7 @@ public class KnoxCLI extends Configured implements Tool {
           this.password = c.readPassword("Password: ");
         }else{
           try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             out.println("Password: ");
             String pw = reader.readLine();
             if(pw != null){
@@ -1766,7 +1767,7 @@ public class KnoxCLI extends Configured implements Tool {
       String authString = "";
 //    Create Authorization String
       if( user != null && pass != null) {
-        authString = "Basic " + Base64.encodeBase64String((user + ":" + pass).getBytes());
+        authString = "Basic " + Base64.encodeBase64String((user + ":" + pass).getBytes(StandardCharsets.UTF_8));
       } else {
         out.println("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.");
       }

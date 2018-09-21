@@ -17,6 +17,17 @@
  */
 package org.apache.knox.test;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.eclipse.jetty.http.HttpTester;
+import org.eclipse.jetty.servlet.ServletTester;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,20 +41,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.eclipse.jetty.http.HttpTester;
-import org.eclipse.jetty.servlet.ServletTester;
 
 public class TestUtils {
 
@@ -204,10 +205,10 @@ public class TestUtils {
   public static HttpTester.Response execute( ServletTester server, HttpTester.Request request ) throws Exception {
     LOG.debug( "execute: request=" + request );
     ByteBuffer requestBuffer = request.generate();
-    LOG.trace( "execute: requestBuffer=[" + new String(requestBuffer.array(),0,requestBuffer.limit()) + "]" );
+    LOG.trace( "execute: requestBuffer=[" + new String(requestBuffer.array(),0,requestBuffer.limit(), StandardCharsets.UTF_8) + "]" );
     ByteBuffer responseBuffer = server.getResponses( requestBuffer, 30, TimeUnit.SECONDS );
     HttpTester.Response response = HttpTester.parseResponse( responseBuffer );
-    LOG.trace( "execute: responseBuffer=[" + new String(responseBuffer.array(),0,responseBuffer.limit()) + "]" );
+    LOG.trace( "execute: responseBuffer=[" + new String(responseBuffer.array(),0,responseBuffer.limit(), StandardCharsets.UTF_8) + "]" );
     LOG.debug( "execute: reponse=" + response );
     return response;
   }

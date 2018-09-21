@@ -17,21 +17,6 @@
  */
 package org.apache.knox.gateway.deploy.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentContext;
@@ -51,6 +36,22 @@ import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Version;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
 
@@ -94,7 +95,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     if( !file.exists() ) {
       rules = UrlRewriteRulesDescriptorFactory.load( "xml", new StringReader( "<rules/>" ) );
     } else {
-      FileReader reader = new FileReader( file );
+      InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
       rules = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
       reader.close();
     }

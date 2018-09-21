@@ -33,6 +33,7 @@ import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.zookeeper.ZooDefs;
 
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -566,12 +567,12 @@ public class RemoteAliasService implements AliasService {
    */
   public String decrypt(final String encoded) throws Exception {
 
-    final String line = new String(Base64.decodeBase64(encoded));
+    final String line = new String(Base64.decodeBase64(encoded), StandardCharsets.UTF_8);
     final String[] parts = line.split("::");
 
     return new String(encryptor
         .decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]),
-            Base64.decodeBase64(parts[2])), "UTF8");
+            Base64.decodeBase64(parts[2])), StandardCharsets.UTF_8);
   }
 
   /**
@@ -679,7 +680,7 @@ public class RemoteAliasService implements AliasService {
             && aliasService instanceof RemoteAliasService) {
           try {
             ((RemoteAliasService) aliasService)
-                .addAliasForClusterLocally(cluster, alias, remoteAliasService.decrypt(new String(data)));
+                .addAliasForClusterLocally(cluster, alias, remoteAliasService.decrypt(new String(data, StandardCharsets.UTF_8)));
           } catch (final Exception e) {
             /* log and move on */
             LOG.errorAddingAliasLocally(cluster, alias, e.toString());

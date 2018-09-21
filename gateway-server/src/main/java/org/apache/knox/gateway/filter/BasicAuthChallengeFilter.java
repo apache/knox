@@ -26,6 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  *
@@ -67,7 +68,7 @@ public class BasicAuthChallengeFilter extends AbstractGatewayFilter {
     if( basicAuthResponse != null ) {
       String[] parts = basicAuthResponse.split( " " );
       if( parts.length == 2 ) {
-        String usernamePassword = new String( Base64.decodeBase64( parts[1] ) );
+        String usernamePassword = new String( Base64.decodeBase64( parts[1] ), StandardCharsets.UTF_8);
         parts = usernamePassword.split( ":" );
         if( parts.length == 2 ) {
           String username = parts[0];

@@ -48,7 +48,7 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.gateway.trace.AccessHandler;
-import org.apache.knox.gateway.trace.ErrorHandler;
+import org.apache.knox.gateway.trace.KnoxErrorHandler;
 import org.apache.knox.gateway.trace.TraceHandler;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.XmlUtils;
@@ -82,10 +82,11 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -93,6 +94,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -424,7 +426,7 @@ public class GatewayServer {
     String[] mimeTypes = {};
     if (config.getMimeTypesToCompress() != null
         && !config.getMimeTypesToCompress().isEmpty()) {
-      mimeTypes = (String[]) config.getMimeTypesToCompress().toArray();
+      mimeTypes = config.getMimeTypesToCompress().toArray(new String[0]);
     }
     gzipHandler.addIncludedMimeTypes(mimeTypes);
     gzipHandler.setHandler(correlationHandler);
@@ -693,8 +695,8 @@ public class GatewayServer {
     return addresses;
   }
 
-  private ErrorHandler createErrorHandler() {
-    ErrorHandler errorHandler = new ErrorHandler();
+  private KnoxErrorHandler createErrorHandler() {
+    KnoxErrorHandler errorHandler = new KnoxErrorHandler();
     errorHandler.setShowStacks( false );
     errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
     return errorHandler;
@@ -755,8 +757,8 @@ public class GatewayServer {
           originalRoot.appendChild( importedNode );
         }
       }
-
-      XmlUtils.writeXml( webXmlDoc, new FileWriter(webXmlFile) );
+      
+      XmlUtils.writeXml( webXmlDoc, new OutputStreamWriter(new FileOutputStream(webXmlFile), StandardCharsets.UTF_8) );
     }
   }
 

@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -197,7 +198,7 @@ public class BaseKeystoreService {
   protected char[] getCredential(String alias, char[] credential, KeyStore ks) {
     if (ks != null) {
       try {
-        credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded()).toCharArray();
+        credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded(), StandardCharsets.UTF_8).toCharArray();
       } catch (UnrecoverableKeyException e) {
         LOG.failedToGetCredential(e);
       } catch (KeyStoreException e) {

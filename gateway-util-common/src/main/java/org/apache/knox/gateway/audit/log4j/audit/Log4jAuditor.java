@@ -37,7 +37,7 @@ public class Log4jAuditor implements Auditor {
   /** Comma seperated list of query parameters who's values will be masked
   * e.g. -Dmasked_params=knoxtoken,ccNumber
   **/
-  public static String MASKED_QUERY_PARAMS_OPTION = "masked_params";
+  public static final String MASKED_QUERY_PARAMS_OPTION = "masked_params";
   private Logger logger;
   private String componentName;
   private String serviceName;

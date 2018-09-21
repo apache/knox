@@ -17,12 +17,20 @@
  */
 package org.apache.knox.gateway.service.test;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.Service;
+import org.apache.knox.gateway.topology.Topology;
+import org.glassfish.jersey.internal.util.Base64;
+
 import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -36,20 +44,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.gateway.topology.Service;
-import org.apache.knox.gateway.topology.Topology;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.SSLContexts;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.glassfish.jersey.internal.util.Base64;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -76,7 +77,7 @@ public class ServiceTestResource {
 
 //    Create Authorization String
     if( username != null && password != null) {
-      authString = "Basic " + Base64.encodeAsString((username + ":" + password).getBytes());
+      authString = "Basic " + Base64.encodeAsString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
     } else if (request.getHeader("Authorization") != null) {
       authString = request.getHeader("Authorization");
     } else {

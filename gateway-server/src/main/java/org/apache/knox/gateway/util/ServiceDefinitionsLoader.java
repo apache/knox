@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -117,10 +118,10 @@ public class ServiceDefinitionsLoader {
   public static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {
     File rewriteFile = new File(servicesDir, REWRITE_FILE);
     if ( rewriteFile.exists() ) {
-      InputStream stream = null;
+      InputStream stream;
       try {
         stream = new FileInputStream(rewriteFile);
-        Reader reader = new InputStreamReader(stream);
+        Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         UrlRewriteRulesDescriptor rules = UrlRewriteRulesDescriptorFactory.load(
             "xml", reader);
         reader.close();

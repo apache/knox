@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.encrypturi.impl;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.encrypturi.EncryptStepContextParams;
 import org.apache.knox.gateway.encrypturi.api.DecryptUriDescriptor;
@@ -34,6 +31,10 @@ import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.urltemplate.Expander;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 public class DecryptUriProcessor
     implements UrlRewriteStepProcessor<DecryptUriDescriptor> {
@@ -63,7 +64,7 @@ public class DecryptUriProcessor
           .expandToString( template, context.getParameters(), context.getEvaluator() );
       String url = decode( resolvedTemplate );
       EncryptStepContextParams params = new EncryptStepContextParams();
-      params.addParam( param, Arrays.asList( url ) );
+      params.addParam( param, Collections.singletonList(url));
       context.addParameters( params );
       return UrlRewriteStepStatus.SUCCESS;
     }
@@ -83,7 +84,7 @@ public class DecryptUriProcessor
         result.iv,
         result.salt);
     if (clear != null) {
-      return new String(clear);
+      return new String(clear, StandardCharsets.UTF_8);
     }
     return null;
   }

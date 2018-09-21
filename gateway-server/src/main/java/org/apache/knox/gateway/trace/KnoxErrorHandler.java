@@ -18,13 +18,14 @@
 package org.apache.knox.gateway.trace;
 
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
 
-public class ErrorHandler extends org.eclipse.jetty.server.handler.ErrorHandler {
+public class KnoxErrorHandler extends ErrorHandler {
 
   private Set<Integer> bodyFilter;
 

@@ -29,6 +29,7 @@ import org.apache.knox.gateway.services.security.EncryptionResult;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -162,10 +163,10 @@ public class CMFMasterService {
 
   protected void initializeFromMaster(File masterFile) throws Exception {
       try {
-        List<String> lines = FileUtils.readLines(masterFile, "UTF8");
+        List<String> lines = FileUtils.readLines(masterFile, StandardCharsets.UTF_8);
         String tag = lines.get(0);
         LOG.loadingFromPersistentMaster( tag );
-        String line = new String(Base64.decodeBase64(lines.get(1)));
+        String line = new String(Base64.decodeBase64(lines.get(1)), StandardCharsets.UTF_8);
         String[] parts = line.split("::");
         this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]),
             Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])),

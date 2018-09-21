@@ -17,15 +17,6 @@
  */
 package org.apache.knox.gateway.hdfs.dispatch;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -37,6 +28,15 @@ import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.hdfs.i18n.WebHdfsMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
 
@@ -104,7 +104,7 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          inboundResponse.setEntity(entity);
          ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
          inboundResponse.getEntity().writeTo(outputStream);
-         String body = new String(outputStream.toByteArray());
+         String body = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
          if (body.contains("StandbyException")) {
             throw new StandbyException();
          }
