@@ -56,7 +56,7 @@ limitations under the License.
 
     <property>
         <name>sun.security.krb5.debug</name>
-        <value>true</value>
+        <value>false</value>
         <description>Boolean flag indicating whether to enable debug messages for krb5 authentication</description>
     </property>
 
