@@ -19,6 +19,7 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class StormDispatch extends org.apache.knox.gateway.storm.StormDispatch{
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {

@@ -19,6 +19,7 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class PassAllHeadersDispatch extends org.apache.knox.gateway.dispatch.PassAllHeadersDispatch{
   @Override
   public void init() {

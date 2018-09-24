@@ -20,6 +20,7 @@ import java.net.URI;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class PassAllHeadersNoEncodingDispatch extends org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch {
   @Override
   public URI getDispatchUrl(HttpServletRequest request) {

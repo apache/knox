@@ -29,6 +29,7 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class DefaultDispatch extends org.apache.knox.gateway.dispatch.DefaultDispatch {
   @Override
   public void init() {

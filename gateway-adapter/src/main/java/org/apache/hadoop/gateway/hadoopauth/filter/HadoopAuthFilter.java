@@ -21,6 +21,7 @@ import java.util.Properties;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class HadoopAuthFilter extends org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter {
 
   @Override

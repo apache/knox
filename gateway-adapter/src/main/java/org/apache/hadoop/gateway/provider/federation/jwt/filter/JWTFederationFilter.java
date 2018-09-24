@@ -26,6 +26,7 @@ import java.io.IOException;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class JWTFederationFilter extends org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter {
 
   @Override

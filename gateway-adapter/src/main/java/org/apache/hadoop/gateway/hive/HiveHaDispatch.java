@@ -19,6 +19,7 @@ import org.apache.http.client.methods.HttpUriRequest;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 public class HiveHaDispatch extends org.apache.knox.gateway.hive.HiveHaDispatch{
   public HiveHaDispatch() {
     super();
