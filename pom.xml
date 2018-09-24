@@ -128,6 +128,7 @@
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
+        <module>gateway-docker</module>
     </modules>
 
     <properties>
@@ -163,6 +164,7 @@
         <curator.version>4.1.0</curator.version>
         <curator-test.version>2.13.0</curator-test.version>
         <dependency-check-maven.version>4.0.2</dependency-check-maven.version>
+        <dockerfile-maven-plugin.version>1.4.10</dockerfile-maven-plugin.version>
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.4</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
