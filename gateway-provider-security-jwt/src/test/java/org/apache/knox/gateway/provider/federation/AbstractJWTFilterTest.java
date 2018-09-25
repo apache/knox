@@ -527,8 +527,8 @@ public abstract class AbstractJWTFilterTest  {
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", chain.doFilterCalled == false);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }

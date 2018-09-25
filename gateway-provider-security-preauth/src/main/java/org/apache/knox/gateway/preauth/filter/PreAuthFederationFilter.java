@@ -101,6 +101,7 @@ public class PreAuthFederationFilter implements Filter {
       primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
       if (primaryPrincipal != null) {
         if (!primaryPrincipal.getName().equals(principal)) {
+          // TODO?
         }
       }
     }

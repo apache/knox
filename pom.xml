@@ -121,6 +121,7 @@
 
         <!-- Dependencies sorted alphabetically -->
         <apacheds-version>2.0.0-M16</apacheds-version>
+        <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils-version>1.9.3</commons-beanutils-version>
         <failsafe-version>2.19.1</failsafe-version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
@@ -130,6 +131,7 @@
         <jackson.version>2.9.5</jackson.version>
         <javax-websocket-version>1.1</javax-websocket-version>
         <jetty-version>9.2.25.v20180606</jetty-version>
+        <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
         <metrics-version>3.1.2</metrics-version>
         <mockito-version>1.10.19</mockito-version>
         <shiro.version>1.2.6</shiro.version>
@@ -442,7 +444,36 @@
                         </goals>
                     </execution>
                  </executions>
-             </plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <configLocation>${session.executionRootDirectory}/src/checkstyle/checker.xml</configLocation>
+                            <suppressionsLocation>${session.executionRootDirectory}/src/checkstyle/suppressions.xml</suppressionsLocation>
+                            <consoleOutput>true</consoleOutput>
+                            <!--<headerLocation>${session.executionRootDirectory}/src/checkstyle/header.txt</headerLocation>-->
+                            <failOnViolation>true</failOnViolation>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 

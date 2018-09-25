@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to you under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!--
+  This version of checkstyle is based on the Apache Calcite checkstyle
+  configuration, which in turn is based on Giraph, Hadoop, and
+  common-math configurations.
+
+  The documentation for checkstyle is available at
+
+  http://checkstyle.sourceforge.net
+-->
+
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.1//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_1.dtd">
+
+<!-- Calcite customization of default Checkstyle behavior -->
+<module name="Checker">
+    <property name="localeLanguage" value="en"/>
+
+    <module name="TreeWalker">
+        <property name="cacheFile" value="target/checkstyle-cachefile"/>
+
+        <!-- Checks for blocks. You know, those {}'s         -->
+        <!-- See http://checkstyle.sf.net/config_blocks.html -->
+        <!-- No empty blocks (i.e. catch); must contain at least a comment -->
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+        </module>
+        <module name="AvoidNestedBlocks">
+            <property name="allowInSwitchCase" value="true"/>
+        </module>
+
+        <!-- Checks for common coding problems               -->
+        <!-- See http://checkstyle.sf.net/config_coding.html -->
+        <module name="EmptyStatement"/>
+        <!-- Require hash code override when equals is -->
+        <module name="EqualsHashCode"/>
+        <!-- Disallow unnecessary instantiation of Boolean, String -->
+        <!--<module name="IllegalInstantiation">
+            <property name="classes" value="java.lang.Boolean, java.lang.String"/>
+        </module>-->
+        <!-- Switch statements should be complete and with independent cases -->
+        <!--<module name="FallThrough"/>-->
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <!-- Only one statement per line allowed -->
+        <!--<module name="OneStatementPerLine"/>-->
+        <!-- Don't add up parentheses when they are not required -->
+        <!--<module name="UnnecessaryParentheses"/>-->
+        <!-- Don't use = or != for string comparisons -->
+        <module name="StringLiteralEquality"/>
+        <!-- Don't declare multiple variables in the same statement -->
+        <!--<module name="MultipleVariableDeclarations"/>-->
+    </module>
+</module>
