@@ -19,14 +19,15 @@
 
 package org.apache.knox.gateway.shirorealm;
 
-import org.junit.Test;
-
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
-import static org.easymock.EasyMock.*;
 
 public class KnoxPamRealmTest {
   @Test

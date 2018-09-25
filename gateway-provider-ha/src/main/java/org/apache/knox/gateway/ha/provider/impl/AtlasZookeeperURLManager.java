@@ -26,7 +26,8 @@ import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AtlasZookeeperURLManager extends DefaultURLManager {
     private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/apache_atlas";
