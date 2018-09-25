@@ -1,22 +1,19 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.apache.knox.gateway.shirorealm;
 
 import org.apache.knox.gateway.GatewayMessages;
@@ -57,19 +54,19 @@ import java.util.Set;
  * {@link org.apache.shiro.realm.Realm Realm} that uses
  * <a href="https://github.com/kohsuke/libpam4j">libpam4j</a> to interface with
  * the PAM system libraries.
- * <p>
+ *
  * This is a single Shiro {@code Realm} that interfaces with the OS's
  * {@code PAM} subsystem which itself can be connected to several authentication
  * methods (unix-crypt,Samba, LDAP, etc.)
- * <p>
+ *
  * This {@code Realm} can also take part in Shiro's Pluggable Realms concept.
- * <p>
+ *
  * Using a {@code KnoxPamRealm} requires a PAM {@code service} name. This is the
  * name of the file under {@code /etc/pam.d} that is used to initialise and
  * configure the PAM subsytem. Normally, this file reflects the application
  * using it. For example {@code gdm}, {@code su}, etc. There is no default value
  * for this propery.
- * <p>
+ *
  * For example, defining this realm in Shiro .ini:
  *
  * <pre>

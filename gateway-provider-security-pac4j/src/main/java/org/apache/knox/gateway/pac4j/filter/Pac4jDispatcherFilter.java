@@ -1,13 +1,12 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,15 +53,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>This is the main filter for the pac4j provider. The pac4j provider module heavily relies on the j2e-pac4j library (https://github.com/pac4j/j2e-pac4j).</p>
- * <p>This filter dispatches the HTTP calls between the j2e-pac4j filters:</p>
+ *This is the main filter for the pac4j provider. The pac4j provider module heavily relies on the j2e-pac4j library (https://github.com/pac4j/j2e-pac4j).</p>
+ *This filter dispatches the HTTP calls between the j2e-pac4j filters:</p>
  * <ul>
  *     <li>to the {@link CallbackFilter} if the <code>client_name</code> parameter exists: it finishes the authentication process</li>
  *     <li>to the {@link SecurityFilter} otherwise: it starts the authentication process (redirection to the identity provider) if the user is not authenticated</li>
  * </ul>
- * <p>It uses the {@link KnoxSessionStore} to manage session data. The generated cookies are defined on a domain name
+ *It uses the {@link KnoxSessionStore} to manage session data. The generated cookies are defined on a domain name
  * which can be configured via the domain suffix parameter: <code>pac4j.cookie.domain.suffix</code>.</p>
- * <p>The callback url must be defined to the current protected url (KnoxSSO service for example) via the parameter: <code>pac4j.callbackUrl</code>.</p>
+ *The callback url must be defined to the current protected url (KnoxSSO service for example) via the parameter: <code>pac4j.callbackUrl</code>.</p>
  *
  * @since 0.8.0
  */

@@ -457,7 +457,7 @@
                             <configLocation>${session.executionRootDirectory}/src/checkstyle/checker.xml</configLocation>
                             <suppressionsLocation>${session.executionRootDirectory}/src/checkstyle/suppressions.xml</suppressionsLocation>
                             <consoleOutput>true</consoleOutput>
-                            <!--<headerLocation>${session.executionRootDirectory}/src/checkstyle/header.txt</headerLocation>-->
+                            <headerLocation>${session.executionRootDirectory}/src/checkstyle/header.txt</headerLocation>
                             <failOnViolation>true</failOnViolation>
                             <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         </configuration>
