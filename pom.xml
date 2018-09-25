@@ -141,8 +141,8 @@
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.0</asm.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <checkstyle.version>8.14</checkstyle.version>
         <cglib.version>3.2.9</cglib.version>
+        <checkstyle.version>8.14</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.11</commons-codec.version>
@@ -172,11 +172,14 @@
         <jackson.version>2.9.7</jackson.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
         <jansi.version>1.17.1</jansi.version>
+        <javax.activation.version>1.2.0</javax.activation.version>
         <javax.annotation-api.version>1.2</javax.annotation-api.version>
         <javax.json.version>1.1.3</javax.json.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
+        <jaxb.version>2.3.0</jaxb.version>
+        <jaxws-ri.version>2.3.1</jaxws-ri.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.4.14.v20181114</jetty.version>
@@ -378,6 +381,7 @@
                      change the maven.compiler.{source,target} property -->
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludedGroups>
@@ -971,6 +975,7 @@
                 <artifactId>gateway-shell-samples</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-common</artifactId>
@@ -1060,6 +1065,35 @@
                 <groupId>javax.ws.rs</groupId>
                 <artifactId>javax.ws.rs-api</artifactId>
                 <version>${javax.ws.rs-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.activation</groupId>
+                <artifactId>javax.activation</artifactId>
+                <version>${javax.activation.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${jaxb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-core</artifactId>
+                <version>${jaxb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>${jaxb.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.xml.ws</groupId>
+                <artifactId>jaxws-ri</artifactId>
+                <version>${jaxws-ri.version}</version>
+                <type>pom</type>
             </dependency>
 
             <dependency>
