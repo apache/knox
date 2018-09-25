@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.services.topology.impl;
-
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
@@ -84,7 +82,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
-
 
 public class DefaultTopologyService
     extends FileAlterationListenerAdaptor

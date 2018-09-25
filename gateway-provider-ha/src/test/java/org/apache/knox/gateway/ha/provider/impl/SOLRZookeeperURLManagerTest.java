@@ -89,8 +89,8 @@ public class SOLRZookeeperURLManagerTest {
     
     for(String url : urls)
     {
-    	assertTrue(expected.contains(url));
-    	expected.remove(url);
+      assertTrue(expected.contains(url));
+      expected.remove(url);
     }
     
     assertEquals(0,expected.size());

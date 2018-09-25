@@ -17,7 +17,9 @@
  */
 package org.apache.knox.gateway;
 
-import java.io.IOException;
+import org.easymock.EasyMock;
+import org.easymock.IMocksControl;
+import org.junit.Test;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
@@ -25,10 +27,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
-import org.junit.Test;
+import java.io.IOException;
 
 public class GatewayForwardingServletTest {
   

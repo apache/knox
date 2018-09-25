@@ -22,8 +22,8 @@ import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.knox.gateway.descriptor.FilterDescriptor;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
-import org.apache.knox.gateway.dispatch.GatewayDispatchFilter;
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.dispatch.GatewayDispatchFilter;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 

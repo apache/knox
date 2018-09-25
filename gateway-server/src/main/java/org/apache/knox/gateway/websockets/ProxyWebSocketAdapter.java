@@ -17,16 +17,6 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.concurrent.ExecutorService;
-
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.WebSocketContainer;
-
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -35,6 +25,15 @@ import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+
+import javax.websocket.ClientEndpointConfig;
+import javax.websocket.CloseReason;
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.WebSocketContainer;
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Handles outbound/inbound Websocket connections and sessions.

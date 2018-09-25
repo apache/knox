@@ -17,12 +17,13 @@
  */
 package org.apache.knox.gateway.pac4j;
 
-import javax.servlet.http.*;
-
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 public class MockHttpServletRequest extends HttpServletRequestWrapper {
 

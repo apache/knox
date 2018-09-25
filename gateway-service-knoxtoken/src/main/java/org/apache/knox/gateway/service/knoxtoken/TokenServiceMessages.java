@@ -61,6 +61,6 @@ public interface TokenServiceMessages {
   void setMaxAge(String age);
 
   @Message( level = MessageLevel.ERROR, text = "The original URL: {0} for redirecting back after authentication is " +
-  		"not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
+      "not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
   void whiteListMatchFail(String original, String whitelist);
 }

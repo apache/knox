@@ -19,7 +19,6 @@ package org.apache.knox.gateway.config;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
