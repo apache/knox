@@ -285,13 +285,27 @@ public class Hadoop implements Closeable {
     }
   }
 
-  public void shutdown() throws InterruptedException {
-    executor.shutdownNow();
+  private void closeClient() throws IOException {
+    if(client != null) {
+      client.close();
+    }
   }
 
-  public boolean shutdown( long timeout, TimeUnit unit ) throws InterruptedException {
-    executor.shutdown();
-    return executor.awaitTermination( timeout, unit );
+  public void shutdown() throws InterruptedException, IOException {
+    try {
+      executor.shutdownNow();
+    } finally {
+      closeClient();
+    }
+  }
+
+  public boolean shutdown( long timeout, TimeUnit unit ) throws InterruptedException, IOException {
+    try{
+      executor.shutdown();
+      return executor.awaitTermination( timeout, unit );
+    } finally {
+      closeClient();
+    }
   }
 
   @Override
@@ -300,8 +314,6 @@ public class Hadoop implements Closeable {
       shutdown();
     } catch (InterruptedException e) {
       throw new HadoopException("Can not shutdown underlying resources", e);
-    } finally {
-      client.close();
     }
   }
 }
