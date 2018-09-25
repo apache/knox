@@ -242,7 +242,7 @@ public class GatewayServer {
   }
 
   private static void setSystemProperty(String name, String value) {
-	  System.setProperty(name, value);
+    System.setProperty(name, value);
     log.logSysProp(name, System.getProperty(name));
   }
 

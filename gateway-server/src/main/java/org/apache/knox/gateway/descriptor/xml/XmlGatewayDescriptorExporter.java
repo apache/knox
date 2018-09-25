@@ -17,11 +17,6 @@
  */
 package org.apache.knox.gateway.descriptor.xml;
 
-import java.io.IOException;
-import java.io.Writer;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import org.apache.knox.gateway.descriptor.FilterDescriptor;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptor;
@@ -30,6 +25,11 @@ import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.io.Writer;
 
 public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, XmlGatewayDescriptorTags {
 

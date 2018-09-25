@@ -20,7 +20,6 @@ package org.apache.knox.gateway.ha.provider.impl;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -44,109 +43,109 @@ import java.util.List;
  * i.e. host1:2181,host2:2181.
  */
 public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
-	/**
-	 * Default Port Number for Confluent Kafka REST Server
-	 */
-	private static final int PORT_NUMBER = 8082;
-	/**
-	 * Base path for retrieval from Zookeeper
-	 */
-	private static final String BASE_PATH = "/brokers/ids";
-	
-	// -------------------------------------------------------------------------------------
-	// Abstract methods
-	// -------------------------------------------------------------------------------------
+  /**
+   * Default Port Number for Confluent Kafka REST Server
+   */
+  private static final int PORT_NUMBER = 8082;
+  /**
+   * Base path for retrieval from Zookeeper
+   */
+  private static final String BASE_PATH = "/brokers/ids";
 
-	/**
-	 * Look within Zookeeper under the /broker/ids branch for active Kafka hosts
-	 * 
-	 * @return A List of URLs (never null)
-	 */
-	@Override
-	protected List<String> lookupURLs() {
-		// Retrieve list of potential hosts from ZooKeeper
-		List<String> hosts = retrieveHosts();
-		
-		// Validate access to hosts using cheap ping style operation
-		List<String> validatedHosts = validateHosts(hosts,"/topics","application/vnd.kafka.v2+json");
+  // -------------------------------------------------------------------------------------
+  // Abstract methods
+  // -------------------------------------------------------------------------------------
 
-		// Randomize the hosts list for simple load balancing
-		if (!validatedHosts.isEmpty()) {
-			Collections.shuffle(validatedHosts);
-		}
+  /**
+   * Look within Zookeeper under the /broker/ids branch for active Kafka hosts
+   *
+   * @return A List of URLs (never null)
+   */
+  @Override
+  protected List<String> lookupURLs() {
+    // Retrieve list of potential hosts from ZooKeeper
+    List<String> hosts = retrieveHosts();
 
-		return validatedHosts;
-	}
+    // Validate access to hosts using cheap ping style operation
+    List<String> validatedHosts = validateHosts(hosts,"/topics","application/vnd.kafka.v2+json");
 
-	protected String getServiceName() {
-		return "KAFKA";
-	};
+    // Randomize the hosts list for simple load balancing
+    if (!validatedHosts.isEmpty()) {
+      Collections.shuffle(validatedHosts);
+    }
 
-	// -------------------------------------------------------------------------------------
-	// Private methods
-	// -------------------------------------------------------------------------------------
+    return validatedHosts;
+  }
 
-	/**
-	 * @return Retrieve lists of hosts from ZooKeeper
-	 */
-	private List<String> retrieveHosts()
-	{
-		List<String> serverHosts = new ArrayList<>();
-		
-		CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
-				.connectString(getZookeeperEnsemble())
-				.retryPolicy(new ExponentialBackoffRetry(1000, 3))
-				.build();
-		
-		try {
-			zooKeeperClient.start();
+  protected String getServiceName() {
+    return "KAFKA";
+  };
 
-			// Retrieve list of host URLs from ZooKeeper
-			List<String> brokers = zooKeeperClient.getChildren().forPath(BASE_PATH);
+  // -------------------------------------------------------------------------------------
+  // Private methods
+  // -------------------------------------------------------------------------------------
 
-			for (String broker : brokers) {
-				String serverInfo = new String(zooKeeperClient.getData().forPath(BASE_PATH + "/" + broker), Charset.forName("UTF-8"));
-				
-				String serverURL = constructURL(serverInfo);
-				serverHosts.add(serverURL);
-			}
-		} catch (Exception e) {
-			LOG.failedToGetZookeeperUrls(e);
-			throw new RuntimeException(e);
-		} finally {
-			// Close the client connection with ZooKeeper
-			if (zooKeeperClient != null) {
-				zooKeeperClient.close();
-			}
-		}
-		
-		return serverHosts;
-	}
-	
-	/**
-	 * Given a String of the format "{"jmx_port":-1,"timestamp":"1505763958072","endpoints":["PLAINTEXT://host:6667"],"host":"host","version":3,"port":6667}" 
-	 * convert to a URL of the format "http://host:port".
-	 * 
-	 * @param serverInfo Server Info in JSON Format from Zookeeper (required)
-	 * 
-	 * @return URL to Kafka
-	 * @throws ParseException 
-	 */
-	private String constructURL(String serverInfo) throws ParseException {
-		String scheme = "http";
+  /**
+   * @return Retrieve lists of hosts from ZooKeeper
+   */
+  private List<String> retrieveHosts()
+  {
+    List<String> serverHosts = new ArrayList<>();
 
-		StringBuffer buffer = new StringBuffer();
-		
-		buffer.append(scheme);
-		buffer.append("://");
-		
-		JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
-		JSONObject obj = (JSONObject) parser.parse(serverInfo);
-		buffer.append(obj.get("host"));
-		
-		buffer.append(":");
-		buffer.append(PORT_NUMBER);
+    CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
+        .connectString(getZookeeperEnsemble())
+        .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+        .build();
 
-		return buffer.toString();
-	}	
+    try {
+      zooKeeperClient.start();
+
+      // Retrieve list of host URLs from ZooKeeper
+      List<String> brokers = zooKeeperClient.getChildren().forPath(BASE_PATH);
+
+      for (String broker : brokers) {
+        String serverInfo = new String(zooKeeperClient.getData().forPath(BASE_PATH + "/" + broker), Charset.forName("UTF-8"));
+
+        String serverURL = constructURL(serverInfo);
+        serverHosts.add(serverURL);
+      }
+    } catch (Exception e) {
+      LOG.failedToGetZookeeperUrls(e);
+      throw new RuntimeException(e);
+    } finally {
+      // Close the client connection with ZooKeeper
+      if (zooKeeperClient != null) {
+        zooKeeperClient.close();
+      }
+    }
+
+    return serverHosts;
+  }
+
+  /**
+   * Given a String of the format "{"jmx_port":-1,"timestamp":"1505763958072","endpoints":["PLAINTEXT://host:6667"],"host":"host","version":3,"port":6667}"
+   * convert to a URL of the format "http://host:port".
+   *
+   * @param serverInfo Server Info in JSON Format from Zookeeper (required)
+   *
+   * @return URL to Kafka
+   * @throws ParseException
+   */
+  private String constructURL(String serverInfo) throws ParseException {
+    String scheme = "http";
+
+    StringBuffer buffer = new StringBuffer();
+
+    buffer.append(scheme);
+    buffer.append("://");
+
+    JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
+    JSONObject obj = (JSONObject) parser.parse(serverInfo);
+    buffer.append(obj.get("host"));
+
+    buffer.append(":");
+    buffer.append(PORT_NUMBER);
+
+    return buffer.toString();
+  }
 }

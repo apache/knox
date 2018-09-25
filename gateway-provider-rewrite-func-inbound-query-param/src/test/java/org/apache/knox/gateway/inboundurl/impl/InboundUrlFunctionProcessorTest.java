@@ -19,31 +19,34 @@ package org.apache.knox.gateway.inboundurl.impl;
 
 import com.google.common.collect.Lists;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteProcessor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
-import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
-import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
-import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteResponse;
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteProcessor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
+import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
+import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
+import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteResponse;
+import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
-import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
-import org.junit.Test;
-
-import java.util.*;
-
 import org.easymock.EasyMock;
+import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

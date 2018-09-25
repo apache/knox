@@ -59,7 +59,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.testng.Assert.assertNull;
 
-
 public class SimpleDescriptorHandlerTest {
 
     private static final String TEST_PROVIDER_CONFIG =

@@ -17,18 +17,8 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.dispatch.KnoxSpnegoAuthSchemeFactory;
-import org.apache.knox.gateway.ha.provider.HaServiceConfig;
-import org.apache.knox.gateway.ha.provider.URLManager;
-import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -41,8 +31,17 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dispatch.KnoxSpnegoAuthSchemeFactory;
+import org.apache.knox.gateway.ha.provider.HaServiceConfig;
+import org.apache.knox.gateway.ha.provider.URLManager;
+import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import com.google.common.collect.Lists;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Base implementation of URLManager intended for query of Zookeeper active hosts. In
@@ -53,195 +52,195 @@ import com.google.common.collect.Lists;
  * comma delimited list of the host and port number, i.e. host1:2181,host2:2181. 
  */
 public abstract class BaseZookeeperURLManager implements URLManager {
-	protected static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
-	/**
-	 * Host Ping Timeout
-	 */
-	private static final int TIMEOUT = 5000;
+  protected static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
+  /**
+   * Host Ping Timeout
+   */
+  private static final int TIMEOUT = 5000;
 
-	private String zooKeeperEnsemble;
-	private String zooKeeperNamespace;
-	private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<String>();
+  private String zooKeeperEnsemble;
+  private String zooKeeperNamespace;
+  private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<String>();
 
-	// -------------------------------------------------------------------------------------
-	// URLManager interface methods
-	// -------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------
+  // URLManager interface methods
+  // -------------------------------------------------------------------------------------
 
-	@Override
-	public boolean supportsConfig(HaServiceConfig config) {
-		if (!config.getServiceName().equalsIgnoreCase(getServiceName())) {
-			return false;
-		}
-		
-		String zookeeperEnsemble = config.getZookeeperEnsemble();
-		return zookeeperEnsemble != null && (zookeeperEnsemble.trim().length() > 0);
-	}
+  @Override
+  public boolean supportsConfig(HaServiceConfig config) {
+    if (!config.getServiceName().equalsIgnoreCase(getServiceName())) {
+      return false;
+    }
 
-	@Override
-	public void setConfig(HaServiceConfig config) {
-		zooKeeperEnsemble  = config.getZookeeperEnsemble();
-		zooKeeperNamespace = config.getZookeeperNamespace();
-		setURLs(lookupURLs());
-	}
+    String zookeeperEnsemble = config.getZookeeperEnsemble();
+    return zookeeperEnsemble != null && (zookeeperEnsemble.trim().length() > 0);
+  }
 
-	@Override
-	public synchronized String getActiveURL() {
-		// None available so refresh
-		if (urls.isEmpty()) {
-			setURLs(lookupURLs());
-		}
+  @Override
+  public void setConfig(HaServiceConfig config) {
+    zooKeeperEnsemble  = config.getZookeeperEnsemble();
+    zooKeeperNamespace = config.getZookeeperNamespace();
+    setURLs(lookupURLs());
+  }
 
-		return this.urls.peek();
-	}
+  @Override
+  public synchronized String getActiveURL() {
+    // None available so refresh
+    if (urls.isEmpty()) {
+      setURLs(lookupURLs());
+    }
 
-	@Override
-	public synchronized void setActiveURL(String url) {
-		throw new UnsupportedOperationException();
-	}
+    return this.urls.peek();
+  }
 
-	@Override
-	public synchronized List<String> getURLs() {
-		return Lists.newArrayList(this.urls.iterator());
-	}
+  @Override
+  public synchronized void setActiveURL(String url) {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
-	public synchronized void markFailed(String url) {
-		// Capture complete URL of active host
-		String topURL = getActiveURL();
+  @Override
+  public synchronized List<String> getURLs() {
+    return Lists.newArrayList(this.urls.iterator());
+  }
 
-		// Refresh URLs from ZooKeeper
-		setURLs(lookupURLs());
+  @Override
+  public synchronized void markFailed(String url) {
+    // Capture complete URL of active host
+    String topURL = getActiveURL();
 
-		// Show failed URL and new URL
-		LOG.markedFailedUrl(topURL, getActiveURL());
-	}
+    // Refresh URLs from ZooKeeper
+    setURLs(lookupURLs());
 
-	@Override
-	public synchronized void setURLs(List<String> urls) {
-		if ((urls != null) && (!(urls.isEmpty()))) {
-			this.urls.clear();
-			this.urls.addAll(urls);
-		}
-	}
+    // Show failed URL and new URL
+    LOG.markedFailedUrl(topURL, getActiveURL());
+  }
 
-	// -------------------------------------------------------------------------------------
-	// Abstract methods
-	// -------------------------------------------------------------------------------------
+  @Override
+  public synchronized void setURLs(List<String> urls) {
+    if ((urls != null) && (!(urls.isEmpty()))) {
+      this.urls.clear();
+      this.urls.addAll(urls);
+    }
+  }
 
-	/**
-	 * Look within Zookeeper under the /live_nodes branch for active hosts
-	 * 
-	 * @return A List of URLs (never null)
-	 */
-	protected abstract List<String> lookupURLs();
+  // -------------------------------------------------------------------------------------
+  // Abstract methods
+  // -------------------------------------------------------------------------------------
 
-	/**
-	 * @return The name of the Knox Topology Service to support
-	 */
-	protected abstract String getServiceName();
+  /**
+   * Look within Zookeeper under the /live_nodes branch for active hosts
+   *
+   * @return A List of URLs (never null)
+   */
+  protected abstract List<String> lookupURLs();
 
-	// -------------------------------------------------------------------------------------
-	// Protected methods
-	// -------------------------------------------------------------------------------------
+  /**
+   * @return The name of the Knox Topology Service to support
+   */
+  protected abstract String getServiceName();
 
-	protected String getZookeeperEnsemble() {
-		return zooKeeperEnsemble;
-	}
+  // -------------------------------------------------------------------------------------
+  // Protected methods
+  // -------------------------------------------------------------------------------------
 
-	protected String getZookeeperNamespace() {
-		return zooKeeperNamespace;
-	}
+  protected String getZookeeperEnsemble() {
+    return zooKeeperEnsemble;
+  }
 
-	/**
-	 * Validate access to hosts using simple light weight ping style REST call.
-	 * 
-	 * @param hosts List of hosts to evaluate (required)
-	 * @param suffix Text to append to host (required) 
-	 * @param acceptHeader Used for Accept header (optional)
-	 * 
-	 * @return Hosts with successful access
-	 */
-	protected List<String> validateHosts(List<String> hosts, String suffix, String acceptHeader) {
-		List<String> result = new ArrayList<String>();
-		
-		CloseableHttpClient client = buildHttpClient();
-		
-		try {
-			for(String host: hosts) {
-				try	{
-					HttpGet get = new HttpGet(host + suffix);
+  protected String getZookeeperNamespace() {
+    return zooKeeperNamespace;
+  }
 
-					if (acceptHeader != null) {
-						get.setHeader("Accept", acceptHeader);
-					}
+  /**
+   * Validate access to hosts using simple light weight ping style REST call.
+   *
+   * @param hosts List of hosts to evaluate (required)
+   * @param suffix Text to append to host (required)
+   * @param acceptHeader Used for Accept header (optional)
+   *
+   * @return Hosts with successful access
+   */
+  protected List<String> validateHosts(List<String> hosts, String suffix, String acceptHeader) {
+    List<String> result = new ArrayList<String>();
 
-					// Ping host
-					String response = client.execute(get, new StringResponseHandler());
-					
-					if (response != null) {
-						result.add(host);
-					}
-				} catch (Exception ex) {
-					// ignore host
-				}
-			}
-		} catch (Exception e) {
-			// Ignore errors
-		} finally	{
-			IOUtils.closeQuietly(client);
-		}
-		
-		return result;
-	}
+    CloseableHttpClient client = buildHttpClient();
 
-	/**
-	 * Construct an Apache HttpClient with suitable timeout and authentication.
-	 * 
-	 * @return Apache HttpClient
-	 */
-	private CloseableHttpClient buildHttpClient() {
-		CloseableHttpClient client = null;
-		
-		// Construct a HttpClient with short term timeout
-		RequestConfig.Builder requestBuilder = RequestConfig.custom()
-																												.setConnectTimeout(TIMEOUT)
-																												.setSocketTimeout(TIMEOUT)
-																												.setConnectionRequestTimeout(TIMEOUT);
+    try {
+      for(String host: hosts) {
+        try {
+          HttpGet get = new HttpGet(host + suffix);
 
-		// If Kerberos is enabled, allow for challenge/response transparent to client
-		if (Boolean.getBoolean(GatewayConfig.HADOOP_KERBEROS_SECURED)) {
-			CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-			credentialsProvider.setCredentials(AuthScope.ANY, new NullCredentials());
+          if (acceptHeader != null) {
+            get.setHeader("Accept", acceptHeader);
+          }
 
-			Registry<AuthSchemeProvider> authSchemeRegistry =
-														RegistryBuilder.<AuthSchemeProvider>create()
-																					 .register(AuthSchemes.SPNEGO, new KnoxSpnegoAuthSchemeFactory(true))
-																					 .build();
-			
-			client = HttpClientBuilder.create()
-																.setDefaultRequestConfig(requestBuilder.build())
-																.setDefaultAuthSchemeRegistry(authSchemeRegistry)
-																.setDefaultCredentialsProvider(credentialsProvider)
-																.build();
-		} else {
-			client = HttpClientBuilder.create()
-																.setDefaultRequestConfig(requestBuilder.build())
-																.build();
-		}
+          // Ping host
+          String response = client.execute(get, new StringResponseHandler());
 
-		return client;
-	}
-	
-	private static class NullCredentials implements Credentials {
-		@Override
-		public Principal getUserPrincipal() {
-			return null;
-		}
+          if (response != null) {
+            result.add(host);
+          }
+        } catch (Exception ex) {
+          // ignore host
+        }
+      }
+    } catch (Exception e) {
+      // Ignore errors
+    } finally {
+      IOUtils.closeQuietly(client);
+    }
 
-		@Override
-		public String getPassword() {
-			return null;
-		}
-	}
+    return result;
+  }
+
+  /**
+   * Construct an Apache HttpClient with suitable timeout and authentication.
+   *
+   * @return Apache HttpClient
+   */
+  private CloseableHttpClient buildHttpClient() {
+    CloseableHttpClient client = null;
+
+    // Construct a HttpClient with short term timeout
+    RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                        .setConnectTimeout(TIMEOUT)
+                                                        .setSocketTimeout(TIMEOUT)
+                                                        .setConnectionRequestTimeout(TIMEOUT);
+
+    // If Kerberos is enabled, allow for challenge/response transparent to client
+    if (Boolean.getBoolean(GatewayConfig.HADOOP_KERBEROS_SECURED)) {
+      CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+      credentialsProvider.setCredentials(AuthScope.ANY, new NullCredentials());
+
+      Registry<AuthSchemeProvider> authSchemeRegistry =
+                            RegistryBuilder.<AuthSchemeProvider>create()
+                                           .register(AuthSchemes.SPNEGO, new KnoxSpnegoAuthSchemeFactory(true))
+                                           .build();
+
+      client = HttpClientBuilder.create()
+                                .setDefaultRequestConfig(requestBuilder.build())
+                                .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+                                .setDefaultCredentialsProvider(credentialsProvider)
+                                .build();
+    } else {
+      client = HttpClientBuilder.create()
+                                .setDefaultRequestConfig(requestBuilder.build())
+                                .build();
+    }
+
+    return client;
+  }
+
+  private static class NullCredentials implements Credentials {
+    @Override
+    public Principal getUserPrincipal() {
+      return null;
+    }
+
+    @Override
+    public String getPassword() {
+      return null;
+    }
+  }
 
 }
