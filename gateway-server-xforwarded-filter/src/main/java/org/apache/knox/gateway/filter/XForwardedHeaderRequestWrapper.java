@@ -23,21 +23,22 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Locale;
 
 public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
   private static final String X_FORWARDED_FOR = "X-Forwarded-For";
-  private static final String X_FORWARDED_FOR_LOWER = X_FORWARDED_FOR.toLowerCase();
+  private static final String X_FORWARDED_FOR_LOWER = X_FORWARDED_FOR.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
-  private static final String X_FORWARDED_PROTO_LOWER = X_FORWARDED_PROTO.toLowerCase();
+  private static final String X_FORWARDED_PROTO_LOWER = X_FORWARDED_PROTO.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_PORT = "X-Forwarded-Port";
-  private static final String X_FORWARDED_PORT_LOWER = X_FORWARDED_PORT.toLowerCase();
+  private static final String X_FORWARDED_PORT_LOWER = X_FORWARDED_PORT.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_HOST = "X-Forwarded-Host";
-  private static final String X_FORWARDED_HOST_LOWER = X_FORWARDED_HOST.toLowerCase();
+  private static final String X_FORWARDED_HOST_LOWER = X_FORWARDED_HOST.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_SERVER = "X-Forwarded-Server";
-  private static final String X_FORWARDED_SERVER_LOWER = X_FORWARDED_SERVER.toLowerCase();
+  private static final String X_FORWARDED_SERVER_LOWER = X_FORWARDED_SERVER.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_CONTEXT = "X-Forwarded-Context";
-  private static final String X_FORWARDED_CONTEXT_LOWER = X_FORWARDED_CONTEXT.toLowerCase();
+  private static final String X_FORWARDED_CONTEXT_LOWER = X_FORWARDED_CONTEXT.toLowerCase(Locale.ROOT);
   private static final ArrayList<String> headerNames = new ArrayList<>();
 
   static {
@@ -68,7 +69,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
   @Override
   public Enumeration<String> getHeaders( String name ) {
-    name = name.toLowerCase();
+    name = name.toLowerCase(Locale.ROOT);
     Enumeration<String> values;
     String value = proxyHeaders.get( name );
     if( value != null ) {
@@ -81,7 +82,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
   @Override
   public String getHeader( String name ) {
-    name = name.toLowerCase();
+    name = name.toLowerCase(Locale.ROOT);
     String value = proxyHeaders.get( name );
     if( value == null ) {
       value = super.getHeader( name );

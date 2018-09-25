@@ -24,10 +24,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 
 public class PropertiesFileServiceDiscoveryTest {
@@ -109,7 +112,7 @@ public class PropertiesFileServiceDiscoveryTest {
                     value += url + " ";
                 }
             }
-            System.out.println(String.format("%18s: %s", name, value));
+            System.out.println(String.format(Locale.ROOT, "%18s: %s", name, value));
         }
     }
 

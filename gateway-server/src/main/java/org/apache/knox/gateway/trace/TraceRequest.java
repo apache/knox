@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.Locale;
 
 class TraceRequest extends HttpServletRequestWrapper {
 
@@ -74,7 +75,7 @@ class TraceRequest extends HttpServletRequestWrapper {
         Enumeration<String> values = getHeaders( name );
         while( values.hasMoreElements() ) {
           String value = values.nextElement();
-          sb.append( String.format( "%n\tHeader[%s]=%s", name, value ) );
+          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", name, value ) );
         }
       }
     }

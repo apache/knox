@@ -17,20 +17,20 @@
  */
 package org.apache.knox.gateway.securequery;
 
-import java.util.Arrays;
-
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
-import sun.misc.BASE64Encoder;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,14 +42,14 @@ public class SecureQueryEncodeProcessorTest {
     AliasService as = EasyMock.createNiceMock( AliasService.class );
     String secret = "sdkjfhsdkjfhsdfs";
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
-    CryptoService cryptoService = new DefaultCryptoService();
-    ((DefaultCryptoService)cryptoService).setAliasService(as);
+    DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
-    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
+    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn(Collections.singletonList("test-cluster-name")).anyTimes();
 
     Template inTemplate = Parser.parseLiteral( "http://host:0/root/path?query" );
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
@@ -64,8 +64,7 @@ public class SecureQueryEncodeProcessorTest {
     processor.initialize( environment, descriptor );
     processor.process( context );
 
-    BASE64Encoder encoder = new BASE64Encoder();
-    String encQuery = encoder.encode( "query".getBytes("utf-8" ) );
+    String encQuery = Base64.getEncoder().encodeToString( "query".getBytes(StandardCharsets.UTF_8) );
     encQuery = encQuery.replaceAll( "\\=", "" );
     String outExpect = "http://host:0/root/path?_=" + encQuery;
     String outActual = outTemplate.getValue().toString();

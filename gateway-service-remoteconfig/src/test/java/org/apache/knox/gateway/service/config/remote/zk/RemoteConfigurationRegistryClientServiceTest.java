@@ -23,11 +23,10 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.InstanceSpec;
 import org.apache.curator.test.TestingCluster;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.ChildEntryListener;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
 import org.apache.knox.gateway.service.config.remote.util.RemoteRegistryConfigTestUtils;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -38,6 +37,7 @@ import org.junit.Test;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -380,7 +380,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
             listenerLog.add("EXTERNAL: " + type.toString() + ":" + path);
             if (RemoteConfigurationRegistryClient.ChildEntryListener.Type.ADDED.equals(type)) {
                 try {
-                    c.addEntryListener(path, (cc, p, d) -> listenerLog.add("EXTERNAL: " + p + ":" + (d != null ? new String(d) : "null")));
+                    c.addEntryListener(path, (cc, p, d) -> listenerLog.add("EXTERNAL: " + p + ":" + (d != null ? new String(d, StandardCharsets.UTF_8) : "null")));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

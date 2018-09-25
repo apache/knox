@@ -17,14 +17,6 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
-
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -37,6 +29,14 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test to simulate unexpected connection drop. Here we establish a connection
@@ -120,7 +120,7 @@ public class ConnectionDroppedTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    serverUri = new URI(String.format("ws://%s:%d/", host, port));
+    serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
 
   }
 
@@ -146,7 +146,7 @@ public class ConnectionDroppedTest {
       host = "localhost";
     }
     int port = proxyConnector.getLocalPort();
-    proxyUri = new URI(String.format("ws://%s:%d/", host, port));
+    proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
 
   }
 

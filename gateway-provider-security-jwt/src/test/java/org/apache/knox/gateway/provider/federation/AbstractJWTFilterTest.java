@@ -17,26 +17,27 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import static org.junit.Assert.fail;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.security.AccessController;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.text.MessageFormat;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.Date;
-import java.util.Set;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -47,27 +48,28 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
-import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.nimbusds.jose.*;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
+import static org.junit.Assert.fail;
 
 public abstract class AbstractJWTFilterTest  {
   private static final String SERVICE_URL = "https://localhost:8888/resource";
@@ -84,7 +86,7 @@ public abstract class AbstractJWTFilterTest  {
   protected abstract String getVerificationPemProperty();
 
   private static String buildDistinguishedName(String hostname) {
-    MessageFormat headerFormatter = new MessageFormat(dnTemplate);
+    MessageFormat headerFormatter = new MessageFormat(dnTemplate, Locale.ROOT);
     String[] paramArray = new String[1];
     paramArray[0] = hostname;
     String dn = headerFormatter.format(paramArray);
@@ -99,8 +101,8 @@ public abstract class AbstractJWTFilterTest  {
     String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
     Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
     byte[] data = cert.getEncoded();
-    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
-    pem = new String(encoder.encodeToString( data ).getBytes( "ASCII" )).trim();
+    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
+    pem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
 
     publicKey = (RSAPublicKey) KPair.getPublic();
     privateKey = (RSAPrivateKey) KPair.getPrivate();
@@ -503,8 +505,8 @@ public abstract class AbstractJWTFilterTest  {
       String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
       Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
       byte[] data = cert.getEncoded();
-      Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
-      String failingPem = new String(encoder.encodeToString( data ).getBytes( "ASCII" )).trim();
+      Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
+      String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
 
       props.put(getAudienceProperty(), "bar");
       props.put(getVerificationPemProperty(), failingPem);

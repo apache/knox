@@ -17,19 +17,19 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
+import org.apache.knox.gateway.util.MimeTypes;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
+import java.util.Set;
 
 public class NiFiDispatch extends DefaultDispatch {
 
@@ -54,7 +54,7 @@ public class NiFiDispatch extends DefaultDispatch {
     }
     for ( Header header : headers ) {
       String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase())) {
+      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
         continue;
       }
       String value = header.getValue();

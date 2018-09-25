@@ -55,8 +55,8 @@ public class ResourcesInvoker implements InvocationHandler {
 
   protected final String getText( final Method method, final Object[] args ) {
     String pattern = getPattern( method );
-    String text = MessageFormat.format( pattern, args );
-    return text;
+    MessageFormat messageFormat = new MessageFormat(pattern, Locale.ROOT );
+    return messageFormat.format(args);
   }
 
   protected final String getPattern( final Method method ) {

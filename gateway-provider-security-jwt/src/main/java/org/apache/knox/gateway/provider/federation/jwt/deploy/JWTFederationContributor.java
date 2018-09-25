@@ -26,6 +26,7 @@ import org.apache.knox.gateway.topology.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -56,7 +57,7 @@ public class JWTFederationContributor extends
     }
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase(Locale.ROOT) ).value( entry.getValue() ) );
     }
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }

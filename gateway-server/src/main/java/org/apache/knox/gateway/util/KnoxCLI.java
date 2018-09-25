@@ -80,6 +80,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -969,7 +970,7 @@ public class KnoxCLI extends Configured implements Tool {
     public void execute() throws Exception {
       Properties buildProperties = loadBuildProperties();
       System.out.println(
-          String.format(
+          String.format(Locale.ROOT,
               "Apache Knox: %s (%s)",
               buildProperties.getProperty( "build.version", "unknown" ),
               buildProperties.getProperty( "build.hash", "unknown" ) ) );

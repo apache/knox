@@ -17,15 +17,6 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -40,6 +31,15 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import javax.websocket.CloseReason;
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Dummy Test for max message size.
@@ -145,7 +145,7 @@ public class MessageFailureTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    serverUri = new URI(String.format("ws://%s:%d/", host, port));
+    serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
 
   }
 
@@ -171,7 +171,7 @@ public class MessageFailureTest {
       host = "localhost";
     }
     int port = proxyConnector.getLocalPort();
-    proxyUri = new URI(String.format("ws://%s:%d/", host, port));
+    proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
     
   }
 

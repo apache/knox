@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Set;
 
 class TraceResponse extends HttpServletResponseWrapper {
@@ -66,7 +67,7 @@ class TraceResponse extends HttpServletResponseWrapper {
       Collection<String> names = getHeaderNames();
       for( String name : names ) {
         for( String value : getHeaders( name ) ) {
-          sb.append( String.format( "%n\tHeader[%s]=%s", name, value ) );
+          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", name, value ) );
         }
       }
     }

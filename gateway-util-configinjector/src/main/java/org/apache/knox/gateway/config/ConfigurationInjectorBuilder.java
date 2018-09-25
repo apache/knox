@@ -23,6 +23,7 @@ import org.apache.knox.gateway.config.impl.MappedConfigurationBinding;
 import org.apache.knox.gateway.config.spi.ConfigurationInjector;
 
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.ServiceLoader;
 
 public class ConfigurationInjectorBuilder {
@@ -50,7 +51,7 @@ public class ConfigurationInjectorBuilder {
       }
     }
     if( injector == null ) {
-      throw new ConfigurationException( String.format(
+      throw new ConfigurationException( String.format(Locale.ROOT,
           "Failed to load an implementation of %s", ConfigurationInjector.class.getName() ) );
     }
     return injector;

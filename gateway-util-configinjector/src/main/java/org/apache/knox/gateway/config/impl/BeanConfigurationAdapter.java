@@ -34,7 +34,7 @@ public class BeanConfigurationAdapter implements ConfigurationAdapter {
     try {
       return PropertyUtils.getSimpleProperty( bean, name );
     } catch( Exception e ) {
-      throw new ConfigurationException( String.format( "" ), e );
+      throw new ConfigurationException("", e );
     }
   }
 }

@@ -105,6 +105,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -455,7 +456,7 @@ public class GatewayServer {
 
         topologyContextHandler.setHandler(updateHandler);
         topologyContextHandler.setVirtualHosts(
-            new String[] { "@" + entry.getKey().toLowerCase() });
+            new String[] { "@" + entry.getKey().toLowerCase(Locale.ROOT) });
 
         handlers.addHandler(topologyContextHandler);
       }
@@ -498,16 +499,16 @@ public class GatewayServer {
       } else {
         log.portAlreadyInUse(port, topologyName);
       }
-      throw new IOException(String.format(" Port %d already in use. ", port));
+      throw new IOException(String.format(Locale.ROOT, "Port %d already in use.", port));
     }
 
     // if topology name is blank which means we have all topologies listening on this port
     if (StringUtils.isBlank(topologyName)) {
       // If we have Default Topology old and new configuration (Port Mapping) throw error.
-      if (config.getGatewayPortMappings().containsValue(Integer.valueOf(port))
+      if (config.getGatewayPortMappings().containsValue(port)
           && !StringUtils.isBlank(config.getDefaultTopologyName())) {
         log.portAlreadyInUse(port);
-        throw new IOException(String.format(
+        throw new IOException(String.format(Locale.ROOT,
             " Please map port %d using either \"gateway.port.mapping.sandbox\" or "
                 + "\"default.app.topology.name\" property, "
                 + "specifying both is not a valid configuration. ",
@@ -520,7 +521,7 @@ public class GatewayServer {
         if (connectors[i] instanceof ServerConnector
             && ((ServerConnector) connectors[i]).getPort() == port) {
           log.portAlreadyInUse(port, topologyName);
-          throw new IOException(String.format(
+          throw new IOException(String.format(Locale.ROOT,
               " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
               port, topologyName));
         }
@@ -589,15 +590,15 @@ public class GatewayServer {
       for (Map.Entry<String, Integer> entry : topologyPortMap.entrySet()) {
         // Add connector for only valid topologies, i.e. deployed topologies.
         // and NOT for Default Topology listening on standard gateway port.
-        if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue().intValue() != config.getGatewayPort()) ) {
-          log.createJettyConnector(entry.getKey().toLowerCase(), entry.getValue());
+        if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue() != config.getGatewayPort()) ) {
+          log.createJettyConnector(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
           try {
             jetty.addConnector(createConnector(jetty, config, entry.getValue(),
-                entry.getKey().toLowerCase()));
+                entry.getKey().toLowerCase(Locale.ROOT)));
           } catch(final IOException e) {
             /* in case of port conflict we log error and move on */
             if( e.toString().contains("ports for topologies (if defined) have to be unique.") ) {
-              log.startedGatewayPortConflict(entry.getKey().toLowerCase(), entry.getValue());
+              log.startedGatewayPortConflict(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
             } else {
               throw e;
             }

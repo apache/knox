@@ -17,17 +17,18 @@
  */
 package org.apache.knox.gateway.preauth.deploy;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class HeaderPreAuthContributor extends
     ProviderDeploymentContributorBase {
@@ -59,7 +60,7 @@ public class HeaderPreAuthContributor extends
     }
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase() ).value( entry.getValue() ) );
+      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase(Locale.ROOT) ).value( entry.getValue() ) );
     }
     resource.addFilter().name( getName() ).role( getRole() ).impl( PREAUTH_FILTER_CLASSNAME ).params( params );
   }

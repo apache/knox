@@ -37,6 +37,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -168,7 +169,7 @@ public class ZooKeeperConfigurationMonitorTest {
         // will download existing entries upon starting.
         final String preExistingProviderConfig = getProviderPath("pre-existing-providers.xml");
         client.create().withMode(CreateMode.PERSISTENT).forPath(preExistingProviderConfig,
-                                                                TEST_PROVIDERS_CONFIG_1.getBytes());
+                                                                TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
         File preExistingProviderConfigLocalFile = new File(providersDir, "pre-existing-providers.xml");
         assertFalse("This file should not exist locally prior to monitor starting.",
                     preExistingProviderConfigLocalFile.exists());
@@ -189,17 +190,17 @@ public class ZooKeeperConfigurationMonitorTest {
             final String pc_two_znode = getProviderPath("providers-config2.xml");
             final File pc_two         = new File(providersDir, "providers-config2.xml");
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_one.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_one));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_2, FileUtils.readFileToString(pc_two));
 
-            client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes());
+            client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_two));
@@ -219,22 +220,22 @@ public class ZooKeeperConfigurationMonitorTest {
             final File desc_two           = new File(descriptorsDir, "test2.json");
             final File desc_three         = new File(descriptorsDir, "test3.json");
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_one.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_one));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_two));
 
-            client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes());
+            client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
             assertEquals(TEST_DESCRIPTOR_2, FileUtils.readFileToString(desc_two));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_three.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_three));

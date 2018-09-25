@@ -42,6 +42,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -308,7 +309,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       if( attributes != null ) {
         for( Attribute attribute : tag.getAttributes() ) {
           String name = attribute.getName();
-          if( name.toLowerCase().startsWith( "xmlns" ) ) {
+          if( name.toLowerCase(Locale.ROOT).startsWith( "xmlns" ) ) {
             int colon = name.indexOf( ":", 5 );
             String prefix;
             if( colon <= 0 ) {

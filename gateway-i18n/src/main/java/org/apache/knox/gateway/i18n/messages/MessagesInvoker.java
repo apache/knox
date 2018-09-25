@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
+import java.util.Locale;
 
 /**
  *
@@ -67,7 +68,8 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     if( anno != null ) {
       int num = anno.code();
       if( Message.DEFAULT_CODE != num ) {
-        code = MessageFormat.format( codes, num );
+        MessageFormat messageFormat = new MessageFormat(codes, Locale.ROOT );
+        code = messageFormat.format(new Object[]{num});
       }
     }
     return code;

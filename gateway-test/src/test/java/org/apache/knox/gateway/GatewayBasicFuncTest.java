@@ -17,24 +17,8 @@
  */
 package org.apache.knox.gateway;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import javax.ws.rs.core.MediaType;
-
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
@@ -42,15 +26,8 @@ import io.restassured.http.Header;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.ResponseSpecification;
-import com.mycila.xmltool.XMLDoc;
-import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.knox.gateway.util.KnoxCLI;
-import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.category.MediumTests;
-import org.apache.knox.test.category.VerifyTest;
-import org.apache.knox.test.mock.MockRequestMatcher;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -68,6 +45,11 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.util.KnoxCLI;
+import org.apache.knox.test.TestUtils;
+import org.apache.knox.test.category.MediumTests;
+import org.apache.knox.test.category.VerifyTest;
+import org.apache.knox.test.mock.MockRequestMatcher;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -86,10 +68,34 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
@@ -2375,7 +2381,7 @@ public class GatewayBasicFuncTest {
     driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
         .pathInfo( path ).queryParam( "user.name", username ).respond()
         .status( HttpStatus.SC_OK )
-        .content( request.getBytes() )
+        .content( request.getBytes(StandardCharsets.UTF_8) )
         .contentType( contentType.toString() );
 
     ResponseSpecification response = given()
@@ -2628,7 +2634,7 @@ public class GatewayBasicFuncTest {
         .pathInfo( path )
         .queryParam( "user.name", username ).respond()
         .status( HttpStatus.SC_OK )
-        .content( request.getBytes() )
+        .content( request.getBytes(StandardCharsets.UTF_8) )
         .contentType( ContentType.JSON.toString() );
 
     String encryptedTrackingUrl = given()
@@ -3655,16 +3661,16 @@ public class GatewayBasicFuncTest {
     PrintStream out = System.out;
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outContent));
+    System.setOut(new PrintStream(outContent, false, "UTF-8"));
 
     String args[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", Integer.toString(gatewayAddress.getPort()), "--u", "kminder","--p", "kminder-password" };
     KnoxCLI cli = new KnoxCLI();
     cli.run(args);
 
-    assertThat(outContent.toString(), not(containsString("\"httpCode\": 401")));
-    assertThat( outContent.toString(), not(containsString("404")));
-    assertThat(outContent.toString(), not(containsString("403")));
+    assertThat(outContent.toString("UTF-8"), not(containsString("\"httpCode\": 401")));
+    assertThat( outContent.toString("UTF-8"), not(containsString("404")));
+    assertThat(outContent.toString("UTF-8"), not(containsString("403")));
     outContent.reset();
 
     setupResources();
@@ -3675,7 +3681,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args2);
-    assertThat(outContent.toString(), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
+    assertThat(outContent.toString("UTF-8"), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
     outContent.reset();
 
 
@@ -3684,7 +3690,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args3);
-    assertThat(outContent.toString().toLowerCase(),
+    assertThat(outContent.toString("UTF-8").toLowerCase(Locale.ROOT),
         either(containsString("nodename nor servname provided")).or(containsString("name or service not known"))
             .or(containsString("//bad-host:0/")));
     outContent.reset();
@@ -3694,7 +3700,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args4);
-    assertThat(outContent.toString(), containsString("failed: Connection refused"));
+    assertThat(outContent.toString("UTF-8"), containsString("failed: Connection refused"));
     outContent.reset();
 
 
@@ -3703,7 +3709,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args5);
-    assertThat(outContent.toString(), containsString("--cluster argument is required"));
+    assertThat(outContent.toString("UTF-8"), containsString("--cluster argument is required"));
     outContent.reset();
 
 //    Reset the out content
@@ -3777,7 +3783,7 @@ public class GatewayBasicFuncTest {
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
         .characterEncoding("utf-8");
-//            .content(driver.getResourceBytes(classLoaderResource + "." + type.toString().toLowerCase()))
+//            .content(driver.getResourceBytes(classLoaderResource + "." + type.toString().toLowerCase(Locale.ROOT)))
 //            .contentType(type.toString());
   }
 
@@ -4125,7 +4131,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( HttpStatus.SC_OK )
         .contentType( "application/json" )
-        .content( "{\"boolean\": true}".getBytes() );
+        .content( "{\"boolean\": true}".getBytes(StandardCharsets.UTF_8) );
     Response response = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
@@ -4163,7 +4169,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( status )
         .contentType( "application/json" )
-        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes(StandardCharsets.UTF_8) );
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
@@ -4191,7 +4197,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( status[0] )
         .contentType( "application/json" )
-        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes(StandardCharsets.UTF_8) );
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
@@ -4225,7 +4231,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status( status[ 0 ] )
         .contentType( "application/json" )
-        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes() );
+        .content( "{\"id\":\"job_201210301335_0086\"}".getBytes(StandardCharsets.UTF_8) );
     String json = given()
         //.log().all()
         .auth().preemptive().basic( user, password )
