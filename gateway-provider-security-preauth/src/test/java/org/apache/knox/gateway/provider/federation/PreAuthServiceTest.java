@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import junit.framework.TestCase;
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthService;
@@ -28,7 +27,6 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-
 import java.util.List;
 import java.util.Map;
 

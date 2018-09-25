@@ -21,14 +21,13 @@ package org.apache.knox.gateway.pac4j;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 public class MockHttpServletResponse extends HttpServletResponseWrapper {
 

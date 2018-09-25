@@ -43,6 +43,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -221,7 +222,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   }
 
   private String buildDistinguishedName(String hostname) {
-    MessageFormat headerFormatter = new MessageFormat(dnTemplate);
+    MessageFormat headerFormatter = new MessageFormat(dnTemplate, Locale.ROOT);
     String[] paramArray = new String[1];
     paramArray[0] = hostname;
     String dn = headerFormatter.format(paramArray);

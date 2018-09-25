@@ -24,13 +24,14 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.Collections;
-import java.util.ServiceLoader;
-import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -81,7 +82,7 @@ public class PreAuthService {
       if (validatorMap.containsKey(vName)) {
         vList.add(validatorMap.get(vName));
       } else {
-        throw new ServletException(String.format("Unable to find validator with name '%s'", validationMethods));
+        throw new ServletException(String.format(Locale.ROOT, "Unable to find validator with name '%s'", validationMethods));
       }
     }
     return vList;

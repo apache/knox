@@ -27,6 +27,7 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -173,7 +174,7 @@ public class UrlRewriteRuleDescriptorImpl extends UrlRewriteFlowDescriptorBase<U
   }
 
   private static UrlRewriter.Direction parseDirection( String direction ) {
-    direction = direction.trim().toLowerCase();
+    direction = direction.trim().toLowerCase( Locale.ROOT );
     return directionNameMap.get( direction );
   }
 

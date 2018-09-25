@@ -1,5 +1,3 @@
-package org.apache.knox.gateway;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -8,18 +6,18 @@ package org.apache.knox.gateway;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.knox.gateway;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.velocity.VelocityContext;
@@ -37,7 +35,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -159,7 +157,7 @@ public class GatewayPortMappingConfigTest {
       throws IOException, NoSuchFieldException, IllegalAccessException {
     /* Check port conflict with default port */
     exception.expect(IOException.class);
-    exception.expectMessage(String.format(
+    exception.expectMessage(String.format(Locale.ROOT, 
         " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
         huronPort, "eerie"));
 
@@ -196,7 +194,7 @@ public class GatewayPortMappingConfigTest {
 
     exception.expect(IOException.class);
     exception
-        .expectMessage(String.format("Port %d already in use.", defaultPort));
+        .expectMessage(String.format(Locale.ROOT, "Port %d already in use.", defaultPort));
 
     final GatewayServer gatewayServer = new GatewayServer(gatewayConfig);
     gatewayServer.checkPortConflict(defaultPort, null, gatewayConfig);

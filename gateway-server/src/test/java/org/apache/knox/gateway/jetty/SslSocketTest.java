@@ -17,24 +17,33 @@
  */
 package org.apache.knox.gateway.jetty;
 
-import org.apache.knox.test.category.MediumTests;
-import org.apache.knox.test.category.ManualTests;
 import org.apache.http.HttpVersion;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.apache.knox.test.category.ManualTests;
+import org.apache.knox.test.category.MediumTests;
 import org.eclipse.jetty.server.Server;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
-import java.io.*;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
-
-import static org.junit.Assert.assertThat;
+import java.nio.charset.StandardCharsets;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class SslSocketTest {
@@ -77,7 +86,7 @@ public class SslSocketTest {
         SSLSocket sslsocket = (SSLSocket)sslserversocket.accept();
 
         InputStream inputstream = sslsocket.getInputStream();
-        InputStreamReader inputstreamreader = new InputStreamReader( inputstream );
+        InputStreamReader inputstreamreader = new InputStreamReader( inputstream, StandardCharsets.UTF_8 );
         BufferedReader bufferedreader = new BufferedReader( inputstreamreader );
 
         String string = bufferedreader.readLine();
@@ -108,7 +117,7 @@ public class SslSocketTest {
     sslsocket.connect( new InetSocketAddress( "localhost", 9999 ) );
 
     OutputStream outputstream = sslsocket.getOutputStream();
-    OutputStreamWriter outputstreamwriter = new OutputStreamWriter( outputstream );
+    OutputStreamWriter outputstreamwriter = new OutputStreamWriter( outputstream, StandardCharsets.UTF_8 );
     BufferedWriter bufferedwriter = new BufferedWriter( outputstreamwriter );
 
     bufferedwriter.write( "HELLO\n" );

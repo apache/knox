@@ -30,10 +30,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class HS2ZookeeperURLManagerTest {
 
@@ -59,10 +59,10 @@ public class HS2ZookeeperURLManagerTest {
         "hive.server2.thrift.http.port=10004;hive.server2.thrift.bind.host=host4;hive.server2.use.SSL=true";
     zooKeeperClient.start();
     zooKeeperClient.create().forPath("/hiveServer2");
-    zooKeeperClient.create().forPath("/hiveServer2/host1", host1.getBytes());
-    zooKeeperClient.create().forPath("/hiveServer2/host2", host2.getBytes());
-    zooKeeperClient.create().forPath("/hiveServer2/host3", host3.getBytes());
-    zooKeeperClient.create().forPath("/hiveServer2/host4", host4.getBytes());
+    zooKeeperClient.create().forPath("/hiveServer2/host1", host1.getBytes(StandardCharsets.UTF_8));
+    zooKeeperClient.create().forPath("/hiveServer2/host2", host2.getBytes(StandardCharsets.UTF_8));
+    zooKeeperClient.create().forPath("/hiveServer2/host3", host3.getBytes(StandardCharsets.UTF_8));
+    zooKeeperClient.create().forPath("/hiveServer2/host4", host4.getBytes(StandardCharsets.UTF_8));
     zooKeeperClient.close();
     manager = new HS2ZookeeperURLManager();
     HaServiceConfig config = new DefaultHaServiceConfig("HIVE");

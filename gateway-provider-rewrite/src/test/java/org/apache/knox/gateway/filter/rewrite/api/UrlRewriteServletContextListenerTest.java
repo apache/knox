@@ -19,9 +19,9 @@ package org.apache.knox.gateway.filter.rewrite.api;
 
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
+import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.junit.After;
@@ -30,8 +30,6 @@ import org.junit.Before;
 import javax.servlet.DispatcherType;
 import java.net.URL;
 import java.util.EnumSet;
-
-import static org.junit.Assert.fail;
 
 public class UrlRewriteServletContextListenerTest {
 

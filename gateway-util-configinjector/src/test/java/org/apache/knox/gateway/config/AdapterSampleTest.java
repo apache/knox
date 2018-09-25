@@ -19,6 +19,7 @@ package org.apache.knox.gateway.config;
 
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,7 +40,7 @@ public class AdapterSampleTest {
     }
     @Override
     public Object getConfigurationValue( String name ) throws ConfigurationException {
-      Object value = config.get( name.toUpperCase() );
+      Object value = config.get( name.toUpperCase(Locale.ROOT) );
       return value == null ? null : value.toString();
     }
   }

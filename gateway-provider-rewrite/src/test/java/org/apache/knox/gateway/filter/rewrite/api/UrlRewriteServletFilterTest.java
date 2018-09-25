@@ -27,9 +27,9 @@ import org.apache.knox.test.mock.MockServlet;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
 import org.eclipse.jetty.util.ArrayQueue;
 import org.junit.After;
@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -56,7 +57,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
@@ -121,7 +121,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "GET" )
         .requestUrl( "http://mock-host:1/test-output-path-1" );
-    interaction.respond().status( 200 ).content( "test-response-content".getBytes() );
+    interaction.respond().status( 200 ).content( "test-response-content".getBytes(StandardCharsets.UTF_8) );
     interactions.add( interaction );
     // Create the client request.
     request.setMethod( "GET" );

@@ -17,15 +17,6 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -35,6 +26,15 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
+
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 
 public class DefaultAliasService implements AliasService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );

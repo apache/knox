@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -942,32 +943,32 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getAlgorithm() {
-	return getVar(CRYPTO_ALGORITHM, null);
+  return getVar(CRYPTO_ALGORITHM, null);
   }
 
   @Override
   public String getPBEAlgorithm() {
-	return getVar(CRYPTO_PBE_ALGORITHM, null);
+  return getVar(CRYPTO_PBE_ALGORITHM, null);
   }
 
   @Override
   public String getTransformation() {
-	return getVar(CRYPTO_TRANSFORMATION, null);
+  return getVar(CRYPTO_TRANSFORMATION, null);
   }
 
   @Override
   public String getSaltSize() {
-	return getVar(CRYPTO_SALTSIZE, null);
+  return getVar(CRYPTO_SALTSIZE, null);
   }
 
   @Override
   public String getIterationCount() {
-	return getVar(CRYPTO_ITERATION_COUNT, null);
+  return getVar(CRYPTO_ITERATION_COUNT, null);
   }
 
   @Override
   public String getKeyLength() {
-	return getVar(CRYPTO_KEY_LENGTH, null);
+  return getVar(CRYPTO_KEY_LENGTH, null);
   }
 
   @Override
@@ -987,12 +988,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getClusterMonitorPollingInterval(String type) {
-    return getInt(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase() + CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX, -1);
+    return getInt(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX, -1);
   }
   
   @Override
   public boolean isClusterMonitorEnabled(String type) {
-    return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase() + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, true);
+    return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, true);
   }
 
   @Override

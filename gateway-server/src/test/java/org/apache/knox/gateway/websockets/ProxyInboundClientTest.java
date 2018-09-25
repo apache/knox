@@ -1,21 +1,21 @@
-package org.apache.knox.gateway.websockets;
-
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership.  The ASF
- * licenses this file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+package org.apache.knox.gateway.websockets;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.server.Handler;
@@ -35,6 +35,8 @@ import javax.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -81,7 +83,7 @@ public class ProxyInboundClientTest {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-    serverUri = new URI(String.format("ws://%s:%d/",host,port));
+    serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/",host,port));
   }
 
   @AfterClass
@@ -102,7 +104,7 @@ public class ProxyInboundClientTest {
   public void testClientInstance() throws IOException, DeploymentException {
 
     final String textMessage = "Echo";
-    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes());
+    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
@@ -192,7 +194,7 @@ public class ProxyInboundClientTest {
   public void testBinarymessage() throws IOException, DeploymentException {
 
     final String textMessage = "Echo";
-    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes());
+    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
@@ -276,7 +278,7 @@ public class ProxyInboundClientTest {
       /* just wait for the test to finish */
     }
 
-    Assert.assertEquals("Binary message does not match", textMessage, new String(recievedBinaryMessage));
+    Assert.assertEquals("Binary message does not match", textMessage, new String(recievedBinaryMessage, StandardCharsets.UTF_8));
   }
 
   @Test(timeout = 3000)

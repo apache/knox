@@ -17,13 +17,14 @@
  */
 package org.apache.knox.gateway.identityasserter.switchcase;
 
-import java.util.Set;
+import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
+import org.apache.knox.gateway.security.GroupPrincipal;
+
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-
-import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
-import org.apache.knox.gateway.security.GroupPrincipal;
+import java.util.Locale;
+import java.util.Set;
 
 public class SwitchCaseIdentityAssertionFilter extends
     CommonIdentityAssertionFilter {
@@ -43,7 +44,7 @@ public class SwitchCaseIdentityAssertionFilter extends
     String s;
     s = filterConfig.getInitParameter( USER_INIT_PARAM );
     if ( s != null ) {
-      s = s.trim().toUpperCase();
+      s = s.trim().toUpperCase(Locale.ROOT);
       try {
         userCase = SwitchCase.valueOf( s );
         groupCase = userCase;
@@ -53,7 +54,7 @@ public class SwitchCaseIdentityAssertionFilter extends
     }
     s = filterConfig.getInitParameter( GROUP_INIT_PARAM );
     if ( s != null ) {
-      s = s.trim().toUpperCase();
+      s = s.trim().toUpperCase(Locale.ROOT);
       try {
         groupCase = SwitchCase.valueOf( s );
       } catch ( IllegalArgumentException e ) {
@@ -87,9 +88,9 @@ public class SwitchCaseIdentityAssertionFilter extends
     if ( name != null ) {
       switch( switchCase ) {
         case UPPER:
-          return name.toUpperCase();
+          return name.toUpperCase(Locale.ROOT);
         case LOWER:
-          return name.toLowerCase();
+          return name.toLowerCase(Locale.ROOT);
       }
     }
     return name;

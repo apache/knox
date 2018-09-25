@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,20 +17,19 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import java.io.IOException;
-
-import javax.security.auth.Subject;
-import javax.servlet.http.HttpServletRequest;
-
+import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
-import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
+import javax.security.auth.Subject;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Locale;
 
 class NiFiRequestUtil {
 
@@ -63,7 +62,7 @@ class NiFiRequestUtil {
         if (index >= 0) {
           knoxRouteContext = inboundRequestPathInfo.substring(0, index);
         } else {
-          Logger.getLogger(NiFiHaDispatch.class.getName()).error(String.format("Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
+          Logger.getLogger(NiFiHaDispatch.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
         }
         outboundRequest.setHeader(NiFiHeaders.X_FORWARDED_CONTEXT, xForwardedContextHeaderValue + knoxRouteContext);
       }
@@ -77,7 +76,7 @@ class NiFiRequestUtil {
     final Subject subject = SubjectUtils.getCurrentSubject();
     String effectivePrincipalName = SubjectUtils.getEffectivePrincipalName(subject);
     outboundRequest.setHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN, Objects.firstNonNull(inboundRequest.getHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN), "") +
-        String.format("<%s>", effectivePrincipalName.equalsIgnoreCase("anonymous") ? "" : effectivePrincipalName));
+        String.format(Locale.ROOT, "<%s>", effectivePrincipalName.equalsIgnoreCase("anonymous") ? "" : effectivePrincipalName));
 
     // Make sure headers named "Cookie" are removed from the request to NiFi, since NiFi does not use cookies.
     Header[] cookieHeaders = outboundRequest.getHeaders("Cookie");

@@ -17,17 +17,15 @@
  */
 package org.apache.knox.gateway.identityasserter.regex.filter;
 
-import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 
+import javax.security.auth.Subject;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.lang.Boolean;
 
 public class RegexIdentityAssertionFilter extends
     CommonIdentityAssertionFilter {
@@ -36,7 +34,7 @@ public class RegexIdentityAssertionFilter extends
   private String output = null;
   private Map<String,String> dict;
   RegexTemplate template;
-  
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);

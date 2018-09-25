@@ -17,26 +17,6 @@
  */
 package org.apache.knox.gateway.deploy;
 
-import java.beans.Statement;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.TreeMap;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayServlet;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -62,6 +42,27 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.FilterType;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.beans.Statement;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeMap;
 
 public abstract class DeploymentFactory {
 
@@ -353,7 +354,7 @@ public abstract class DeploymentFactory {
         for( String url : urls ) {
           if( url == null || url.isEmpty() || url.equals( "/" ) ) {
             if( !topology.getServices().isEmpty() ) {
-              throw new DeploymentException( String.format(
+              throw new DeploymentException( String.format(Locale.ROOT,
                   "Topologies with services cannot contain an application (%s) with a root url.", name ) );
             }
           }
@@ -786,8 +787,8 @@ public abstract class DeploymentFactory {
         throw new DeploymentException(
             "Failed to contribute provider. Role: " +
             role + " Name: " + name + ". Please check the topology for" +
-              	    " errors in name and role and that the provider is " +
-              	    "on the classpath.");
+                    " errors in name and role and that the provider is " +
+                    "on the classpath.");
       }
     }
     return contributor;

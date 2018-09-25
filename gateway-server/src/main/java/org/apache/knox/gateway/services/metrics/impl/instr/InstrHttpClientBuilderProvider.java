@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,17 +20,17 @@ package org.apache.knox.gateway.services.metrics.impl.instr;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.httpclient.HttpClientMetricNameStrategy;
 import com.codahale.metrics.httpclient.InstrumentedHttpRequestExecutor;
-import org.apache.knox.gateway.services.metrics.InstrumentationProvider;
-import org.apache.knox.gateway.services.metrics.MetricsContext;
-import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.RequestLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.knox.gateway.services.metrics.InstrumentationProvider;
+import org.apache.knox.gateway.services.metrics.MetricsContext;
+import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 public class InstrHttpClientBuilderProvider implements
     InstrumentationProvider<HttpClientBuilder> {
@@ -64,7 +64,7 @@ public class InstrHttpClientBuilderProvider implements
     }
 
     private String methodNameString(HttpRequest request) {
-      return request.getRequestLine().getMethod().toLowerCase() + "-requests";
+      return request.getRequestLine().getMethod().toLowerCase(Locale.ROOT) + "-requests";
     }
   };
 }

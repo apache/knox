@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,13 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
@@ -35,7 +40,7 @@ public class HaDescriptorManagerTest {
    public void testDescriptorLoad() throws IOException {
       String xml = "<ha><service name='foo' maxFailoverAttempts='42' failoverSleep='4000' maxRetryAttempts='2' retrySleep='2213' enabled='false'/>" +
             "<service name='bar' failoverLimit='3' enabled='true'/></ha>";
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes());
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
       HaDescriptor descriptor = HaDescriptorManager.load(inputStream);
       assertNotNull(descriptor);
       assertEquals(1, descriptor.getEnabledServiceNames().size());
@@ -54,7 +59,7 @@ public class HaDescriptorManagerTest {
    @Test
    public void testDescriptorDefaults() throws IOException {
       String xml = "<ha><service name='foo'/></ha>";
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes());
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
       HaDescriptor descriptor = HaDescriptorManager.load(inputStream);
       assertNotNull(descriptor);
       assertEquals(1, descriptor.getEnabledServiceNames().size());

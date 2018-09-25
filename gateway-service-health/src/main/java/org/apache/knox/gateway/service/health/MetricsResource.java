@@ -74,7 +74,7 @@ public class MetricsResource {
       if (registryAttr instanceof MetricRegistry) {
         this.registry = (MetricRegistry) registryAttr;
       } else {
-        throw new IllegalStateException(String.format("Couldn't find a MetricRegistry instance with key %s",
+        throw new IllegalStateException(String.format(Locale.ROOT, "Couldn't find a MetricRegistry instance with key %s",
             METRICS_REGISTRY));
       }
     }
@@ -86,7 +86,7 @@ public class MetricsResource {
     this.mapper = new ObjectMapper().registerModule(new MetricsModule(rateUnit, durationUnit,
         showSamples));
     this.allowedOrigin = context.getInitParameter(ALLOWED_ORIGIN);
-    log.basicInfo(String.format("Successfully initialized the registry '%s'", METRICS_REGISTRY));
+    log.basicInfo(String.format(Locale.ROOT, "Successfully initialized the registry '%s'", METRICS_REGISTRY));
   }
 
   @GET
@@ -118,7 +118,7 @@ public class MetricsResource {
       }
     } catch (IOException ioe) {
       log.logException("metrics", ioe);
-      return Response.serverError().entity(String.format("Failed to reply correctly due to : %s ", ioe)).build();
+      return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", ioe)).build();
     }
     return Response.ok().build();
   }

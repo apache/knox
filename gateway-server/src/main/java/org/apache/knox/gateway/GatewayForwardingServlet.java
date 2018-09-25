@@ -18,18 +18,22 @@
 package org.apache.knox.gateway;
 
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditService;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.audit.api.AuditService;
-import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 
-import java.io.*;
-
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class GatewayForwardingServlet extends HttpServlet{
 

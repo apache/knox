@@ -17,19 +17,10 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import java.security.KeyStoreException;
-import java.security.Principal;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import javax.security.auth.Subject;
-
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -42,10 +33,17 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
+import javax.security.auth.Subject;
+import java.security.KeyStoreException;
+import java.security.Principal;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 

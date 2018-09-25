@@ -37,6 +37,7 @@ import org.junit.Test;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -110,10 +111,10 @@ public class AuditLayoutTest {
     
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LoggingEvent event = CollectAppender.queue.iterator().next();
-    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss" );
+    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
     String formatedDate = format.format( new Date( event.getTimeStamp() ) );
     //14/01/24 12:40:24 1|2|3|audit.forward|hostaddress|WEBHDFS|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
-    String expectedOutput = String.format(
+    String expectedOutput = String.format(Locale.ROOT,
         RECORD_PATTERN, formatedDate,
         ROOT_REQUEST_ID, PARENT_REQUEST_ID, REQUEST_ID, "audit.forward",
         HOST_ADDRESS, TARGET_SERVICE, USERNAME, PROXYUSERNAME, SYSTEMUSERNAME, ACTION,
@@ -128,10 +129,11 @@ public class AuditLayoutTest {
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME, MESSAGE );
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LoggingEvent event = CollectAppender.queue.iterator().next();
-    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss" );
+    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
     String formatedDate = format.format( new Date( event.getTimeStamp() ) );
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|message
-    String expectedOutput = String.format( RECORD_PATTERN, formatedDate,
+    String expectedOutput = String.format( Locale.ROOT,
+        RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
         EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
@@ -144,10 +146,11 @@ public class AuditLayoutTest {
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME );
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LoggingEvent event = CollectAppender.queue.iterator().next();
-    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss" );
+    SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
     String formatedDate = format.format( new Date( event.getTimeStamp() ) );
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|
-    String expectedOutput = String.format( RECORD_PATTERN, formatedDate,
+    String expectedOutput = String.format( Locale.ROOT,
+        RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
         EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, EMPTY, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );

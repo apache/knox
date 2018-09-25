@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<FrontendFunctionDescriptor> {
@@ -83,7 +84,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
         parameter = first;
       }
     }
-    parameter = parameter.trim().toLowerCase();
+    parameter = parameter.trim().toLowerCase(Locale.ROOT);
     UrlRewriteResolver resolver = resolvers.get( parameter );
     if( resolver == null ) {
       throw new IllegalArgumentException( RES.invalidFrontendFunctionParameter( parameter ) );

@@ -51,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
@@ -200,7 +201,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
       if ( role == null ) {
         throw new IllegalArgumentException("Policy defined has no role for service " + service.getName());
       }
-      role = role.trim().toLowerCase();
+      role = role.trim().toLowerCase(Locale.ROOT);
       if ( "rewrite".equals(role) ) {
         addRewriteFilter(context, service, filterParams, params, resource);
       } else if ( topologyContainsProviderType(context, role) ) {

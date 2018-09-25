@@ -1,18 +1,19 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.knox.gateway.topology.monitor;
 
@@ -40,7 +41,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -133,7 +137,7 @@ public class RemoteConfigurationMonitorTest {
      */
     private static File setupDigestSaslConfig(String username, String password) throws Exception {
         File saslConfigFile = new File(testTmp, "server-jaas.conf");
-        FileWriter fw = new FileWriter(saslConfigFile);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(saslConfigFile), StandardCharsets.UTF_8);
         fw.write("Server {\n" +
                 "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
                 "    user_" + username + " =\"" + password + "\";\n" +
@@ -502,17 +506,17 @@ public class RemoteConfigurationMonitorTest {
             final String pc_two_znode = getProviderPath("providers-config2.xml");
             final File pc_two         = new File(providersDir, "providers-config2.xml");
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_one.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_one));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_2, FileUtils.readFileToString(pc_two));
 
-            client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes());
+            client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
             assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_two));
@@ -532,22 +536,22 @@ public class RemoteConfigurationMonitorTest {
             final File desc_two           = new File(descriptorsDir, "test2.json");
             final File desc_three         = new File(descriptorsDir, "test3.json");
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_one.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_one));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_two));
 
-            client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes());
+            client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
             assertEquals(TEST_DESCRIPTOR_2, FileUtils.readFileToString(desc_two));
 
-            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes());
+            client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_three.exists());
             assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_three));
