@@ -27,7 +27,6 @@ import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.lang.Boolean;
 
 public class RegexIdentityAssertionFilter extends
     CommonIdentityAssertionFilter {

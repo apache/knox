@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.util;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;

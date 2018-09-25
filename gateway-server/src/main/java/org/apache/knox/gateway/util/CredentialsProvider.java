@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.util;
 
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 
 import javax.security.auth.callback.*;
 import java.io.IOException;

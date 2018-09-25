@@ -29,8 +29,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static org.apache.knox.gateway.service.config.remote.util.RemoteRegistryConfigTestUtils.*;
-
 public class RemoteConfigurationRegistryConfigParserTest {
 
     @Test

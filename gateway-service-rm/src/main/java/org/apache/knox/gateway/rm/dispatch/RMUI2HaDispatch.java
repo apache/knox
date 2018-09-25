@@ -16,14 +16,8 @@
  */
 package org.apache.knox.gateway.rm.dispatch;
 
-import java.io.IOException;
-
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;

@@ -2,8 +2,6 @@ package org.apache.hadoop.gateway.rm.dispatch;
 
 import org.apache.knox.gateway.ha.provider.HaProvider;
 
-import javax.servlet.ServletException;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file

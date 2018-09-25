@@ -9,7 +9,6 @@ import org.apache.shiro.subject.PrincipalCollection;
 
 import javax.naming.NamingException;
 import javax.naming.ldap.LdapContext;
-import java.util.Map;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more

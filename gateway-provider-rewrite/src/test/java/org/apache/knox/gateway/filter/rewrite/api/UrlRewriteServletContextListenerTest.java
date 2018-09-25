@@ -31,8 +31,6 @@ import javax.servlet.DispatcherType;
 import java.net.URL;
 import java.util.EnumSet;
 
-import static org.junit.Assert.fail;
-
 public class UrlRewriteServletContextListenerTest {
 
   private ServletTester server;

@@ -17,7 +17,6 @@
 package org.apache.knox.gateway.service.config.remote.zk;
 
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
-import org.apache.knox.gateway.service.config.remote.zk.RemoteConfigurationRegistryJAASConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
 import org.junit.Test;

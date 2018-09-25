@@ -72,5 +72,15 @@ limitations under the License.
         <module name="StringLiteralEquality"/>
         <!-- Don't declare multiple variables in the same statement -->
         <!--<module name="MultipleVariableDeclarations"/>-->
+
+        <!-- Checks for imports                              -->
+        <!-- See http://checkstyle.sf.net/config_import.html -->
+        <module name="RedundantImport"/>
+        <!-- Import should be explicit, and only from pure java packages.
+             But we allow imports that are only used in javadoc. -->
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="true"/>
+        </module>
+        <module name="IllegalImport"/>
     </module>
 </module>

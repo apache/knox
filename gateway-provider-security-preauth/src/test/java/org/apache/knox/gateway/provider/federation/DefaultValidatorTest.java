@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import junit.framework.TestCase;
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.junit.Test;
 

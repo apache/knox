@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
-import org.apache.knox.gateway.service.knoxtoken.TokenResource;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;

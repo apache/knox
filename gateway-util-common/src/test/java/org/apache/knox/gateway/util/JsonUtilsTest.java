@@ -23,7 +23,6 @@ import org.junit.Test;
 
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class JsonUtilsTest extends org.junit.Assert {
   String expiresIn = "\"expires_in\":\"1364487943100\"";

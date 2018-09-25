@@ -19,7 +19,6 @@ package org.apache.knox.gateway.topology.builder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.knox.gateway.service.definition.CustomDispatch;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
