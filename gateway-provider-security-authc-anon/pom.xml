@@ -27,14 +27,6 @@
     <name>gateway-provider-security-authc-anon</name>
     <description>An extension of the gateway that provides a pseudo subject and no auth</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
         <dependency>
             <groupId>${gateway-group}</groupId>

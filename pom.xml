@@ -31,7 +31,30 @@
 
     <name>gateway</name>
     <description>The Apache Knox Project</description>
-    <url>http://knox.apache.org/</url>
+    <url>https://knox.apache.org/</url>
+
+    <scm>
+        <connection>scm:git:git://git.apache.org/knox.git</connection>
+        <developerConnection>scm:git:git://git.apache.org/knox.git</developerConnection>
+        <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
+    </scm>
+
+    <mailingLists>
+        <mailingList>
+            <name>Apache Knox User List</name>
+            <subscribe>user-subscribe@knox.apache.org</subscribe>
+            <unsubscribe>user-unsubscribe@knox.apache.org</unsubscribe>
+            <post>user@knox.apache.org</post>
+            <archive>https://mail-archives.apache.org/mod_mbox/knox-user/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Apache Knox Development List</name>
+            <subscribe>dev-subscribe@knox.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@knox.apache.org</unsubscribe>
+            <post>dev@knox.apache.org</post>
+            <archive>https://mail-archives.apache.org/mod_mbox/knox-dev/</archive>
+        </mailingList>
+    </mailingLists>
 
     <modules>
         <module>gateway-test-utils</module>
@@ -103,16 +126,11 @@
     </modules>
 
     <properties>
-        <!--
-         It is recommended to set the compiler version globally,
-         as the compiler plugin and the forbidden API checker both
-         use this version
-        -->
+        <!-- Ensure that source and target version are overridden from base ASF POM.
+             This is also used by forbiddenapis to ensure correct signatures are loaded. -->
+        <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <repo.id>internal.repo</repo.id>
-        <internal.maven.repo>https://repository.apache.org/service/local/staging/deploy/maven2</internal.maven.repo>
+        
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
@@ -121,54 +139,24 @@
 
         <!-- Dependencies sorted alphabetically -->
         <apacheds-version>2.0.0-M16</apacheds-version>
-        <commons-beanutils-version>1.9.3</commons-beanutils-version>
-        <failsafe-version>2.19.1</failsafe-version>
+        <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <commons-configuration.version>1.10</commons-configuration.version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
-        <groovy-version>2.4.8</groovy-version>
-        <hadoop-version>3.0.0</hadoop-version>
+        <groovy.version>2.4.8</groovy.version>
+        <hadoop.version>3.0.0</hadoop.version>
         <jackson.version>2.9.5</jackson.version>
-        <javax-websocket-version>1.1</javax-websocket-version>
-        <jetty-version>9.2.25.v20180606</jetty-version>
-        <metrics-version>3.1.2</metrics-version>
-        <mockito-version>1.10.19</mockito-version>
+        <javax-websocket.version>1.1</javax-websocket.version>
+        <jetty.version>9.2.25.v20180606</jetty.version>
+        <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.0.0-M1</maven-enforcer-plugin.version>
+        <metrics.version>3.1.2</metrics.version>
+        <mockito.version>1.10.19</mockito.version>
         <shiro.version>1.2.6</shiro.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
-        <surefire-version>2.16</surefire-version>
     </properties>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Apache Software Foundation</name>
-        <url>http://www.apache.org</url>
-    </organization>
-
-    <scm>
-        <connection>scm:git:git://git.apache.org/knox.git</connection>
-        <developerConnection>scm:git:git://git.apache.org/knox.git</developerConnection>
-        <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>${repo.id}</id>
-            <name>Internal Repository</name>
-            <url>${internal.maven.repo}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${repo.id}</id>
-            <name>Internal Repository</name>
-            <url>${internal.maven.repo}</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <profiles>
         <profile>
@@ -190,7 +178,6 @@
                     <plugin>
                         <inherited>false</inherited>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.4</version>
                         <executions>
                             <execution>
                                 <id>source</id>
@@ -204,7 +191,6 @@
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
                                     </descriptors>
-                                    <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
                         </executions>
@@ -237,7 +223,6 @@
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
-                <version>0.8</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
@@ -309,27 +294,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.6</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>${maven.compiler.target}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-compiler-javac</artifactId>
-                        <version>2.3</version>
-                    </dependency>
-                </dependencies>
+                <version>${maven-compiler-plugin.version}</version>
+                <!-- If you are looking to change source/target,
+                     change the maven.compiler.{source,target} property -->
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-version}</version>
                 <configuration>
                     <excludedGroups>
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
@@ -342,7 +317,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${failsafe-version}</version>
                 <configuration>
                     <groups>${failsafe.group}</groups>
                 </configuration>
@@ -363,7 +337,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M1</version>
+                <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -451,32 +425,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.2</version>
                 <configuration>
                     <generateReports>true</generateReports>
-                    <reportPlugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-project-info-reports-plugin</artifactId>
-                            <version>2.2</version>
-                            <report>index</report>
-                            <!--
-                            <report>dependencies</report>
-                            <report>modules</report>
-                            <report>project-team</report>
-                            <report>mailing-list</report>
-                            <report>issue-tracking</report>
-                            <report>license</report>
-                            <report>cim</report>
-                            <report>scm</report>
-                            -->
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-report-plugin</artifactId>
-                            <version>2.6</version>
-                        </plugin>
-                    </reportPlugins>
                 </configuration>
             </plugin>
             <plugin>
@@ -497,23 +447,22 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
-                <!--
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                -->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.6</version>
             </plugin>
         </plugins>
     </reporting>
@@ -834,7 +783,6 @@
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>4.41.2</version>
-                <scope>compile</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.bouncycastle</groupId>
@@ -850,27 +798,27 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-util</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlets</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
@@ -878,13 +826,6 @@
                 <version>3.1.0</version>
             </dependency>
 
-            <!--
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-jaspi</artifactId>
-                <version>${jetty-version}</version>
-            </dependency>
-            -->
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>
@@ -900,22 +841,22 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-groovysh</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-json</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
@@ -938,42 +879,23 @@
                 <version>2.9.2</version>
             </dependency>
 
-            <!--
-            <dependency>
-                <groupId>org.apache.geronimo.components</groupId>
-                <artifactId>geronimo-jaspi</artifactId>
-                <version>2.0.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.geronimo.specs</groupId>
-                <artifactId>geronimo-osgi-locator</artifactId>
-                <version>1.1</version>
-            </dependency>
-            -->
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
                 <exclusions>
-                    <!--
-                    <exclusion>
-                        <groupId>com.google.guava</groupId>
-                        <artifactId>guava</artifactId>
-                    </exclusion>
-                    -->
                     <exclusion>
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
@@ -1103,14 +1025,6 @@
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-servlet</artifactId>
                     </exclusion>
-
-                    <!--
-                    <exclusion>
-                        <groupId>com.fasterxml.jackson.core</groupId>
-                        <artifactId>jackson-databind</artifactId>
-                    </exclusion>
-                    -->
-
                 </exclusions>
             </dependency>
 
@@ -1153,7 +1067,7 @@
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
-                <version>${commons-beanutils-version}</version>
+                <version>${commons-beanutils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -1286,74 +1200,86 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-annotations</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jsp</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jstl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <!-- Websocket support -->
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-server</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-servlet</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.websocket</groupId>
                 <artifactId>javax.websocket-api</artifactId>
-                <version>${javax-websocket-version}</version>
+                <version>${javax-websocket.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-server-impl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-client-impl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-servlets</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-httpclient</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-graphite</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jetty9</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.velocity</groupId>
+                <artifactId>velocity</artifactId>
+                <version>1.7</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>2.4.0</version>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
@@ -1408,13 +1334,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.velocity</groupId>
-                <artifactId>velocity</artifactId>
-                <version>1.7</version>
-                <!--scope>test</scope-->
-            </dependency>
-
-            <dependency>
                 <groupId>com.mycila.xmltool</groupId>
                 <artifactId>xmltool</artifactId>
                 <version>3.3</version>
@@ -1423,7 +1342,7 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>${mockito-version}</version>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1433,12 +1352,7 @@
                 <version>0.10</version>
                 <scope>test</scope>
             </dependency>
-
-            <dependency>
-                <groupId>com.jayway.jsonpath</groupId>
-                <artifactId>json-path</artifactId>
-                <version>2.4.0</version>
-            </dependency>
+            
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path-assert</artifactId>
@@ -1452,8 +1366,6 @@
                 <version>2.12.0</version>
                 <scope>test</scope>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
-
 </project>

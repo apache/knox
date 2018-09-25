@@ -26,15 +26,7 @@
 
     <name>gateway-provider-security-pac4j</name>
     <description>An extension of the gateway integrating pac4j as an authentication provider.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
+    
     <properties>
         <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
         <pac4j.version>2.1.0</pac4j.version>
@@ -162,7 +154,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
 

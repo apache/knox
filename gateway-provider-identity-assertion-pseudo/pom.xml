@@ -30,14 +30,6 @@
     <name>gateway-provider-identity-assertion-pseudo</name>
     <description>An extension to the gateway that asserts identity to Hadoop clusters using the pseudo or simple authentication mechanism.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
 
         <dependency>

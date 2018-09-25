@@ -28,14 +28,6 @@
     <artifactId>gateway-adapter</artifactId>
     <name>gateway-adapter</name>
     <description>Adapter for old package structure to ensure compatibility.</description>
-    
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>

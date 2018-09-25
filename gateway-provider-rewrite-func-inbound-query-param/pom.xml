@@ -27,14 +27,6 @@
     <name>gateway-provider-rewrite-func-inbound-url</name>
     <description>An extension to the URL rewriter that provides a way to get the inbound service URL.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
 
         <dependency>

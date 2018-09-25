@@ -30,14 +30,6 @@
     <name>gateway-provider-identity-assertion-concat</name>
     <description>An extension to the gateway that provides an easy integration point for asserting identity to Hadoop clusters using using some custom mapping facility.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
 
         <dependency>

@@ -30,14 +30,6 @@
     <name>gateway-provider-rewrite-func-hostmap-static</name>
     <description>An extension to the URL rewriter that provides a way to map hostnames in requests and responses.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
 
         <dependency>
