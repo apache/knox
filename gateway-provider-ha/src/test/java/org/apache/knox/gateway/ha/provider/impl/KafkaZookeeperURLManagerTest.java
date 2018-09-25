@@ -58,7 +58,7 @@ public class KafkaZookeeperURLManagerTest {
   public void teardown() throws IOException {
     cluster.stop();
   }
-	
+  
   @Test
   public void testHBaseZookeeperURLManagerLoading() {
     HaServiceConfig config = new DefaultHaServiceConfig("KAFKA");

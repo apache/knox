@@ -87,10 +87,9 @@ public class SOLRZookeeperURLManagerTest {
     expected.add("http://host2:8983/solr");
     expected.add("http://host3:8983/solr");
     
-    for(String url : urls)
-    {
-    	assertTrue(expected.contains(url));
-    	expected.remove(url);
+    for(String url : urls) {
+      assertTrue(expected.contains(url));
+      expected.remove(url);
     }
     
     assertEquals(0,expected.size());

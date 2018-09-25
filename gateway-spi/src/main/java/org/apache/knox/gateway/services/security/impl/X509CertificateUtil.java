@@ -55,7 +55,7 @@ public class X509CertificateUtil {
    * @param algorithm the signing algorithm, eg "SHA1withRSA"
    */
   public static X509Certificate generateCertificate(String dn, KeyPair pair,
-	 int days, String algorithm) throws GeneralSecurityException, IOException {
+   int days, String algorithm) throws GeneralSecurityException, IOException {
 
   PrivateKey privkey = pair.getPrivate();
   Object x509CertImplObject = null;
@@ -70,7 +70,7 @@ public class X509CertificateUtil {
     // CertificateValidity interval = new CertificateValidity(from, to);
     Class<?> certValidityClass = Class.forName(getX509CertifValidityModuleName());
     Constructor<?> certValidityConstr = certValidityClass
-  		  .getConstructor(new Class[] { Date.class, Date.class });
+        .getConstructor(new Class[] { Date.class, Date.class });
     Object certValidityObject = certValidityConstr.newInstance(from, to);
 
     BigInteger sn = new BigInteger(64, new SecureRandom());
@@ -78,7 +78,7 @@ public class X509CertificateUtil {
     // X500Name owner = new X500Name(dn);
     Class<?> x500NameClass = Class.forName(getX509X500NameModuleName());
     Constructor<?> x500NameConstr = x500NameClass
-  		  .getConstructor(new Class[] { String.class });
+        .getConstructor(new Class[] { String.class });
     Object x500NameObject = x500NameConstr.newInstance(dn);
 
     Method methodSET = certInfoObject.getClass().getMethod("set", String.class, Object.class);
@@ -89,21 +89,21 @@ public class X509CertificateUtil {
     // info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
     Class<?> certificateSerialNumberClass = Class.forName(getCertificateSerialNumberModuleName());
     Constructor<?> certificateSerialNumberConstr = certificateSerialNumberClass
-				.getConstructor(new Class[] { BigInteger.class });
+        .getConstructor(new Class[] { BigInteger.class });
     Object certificateSerialNumberObject = certificateSerialNumberConstr
-				.newInstance(sn);
+        .newInstance(sn);
     methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SERIAL_NUMBER"),
-				certificateSerialNumberObject);
+        certificateSerialNumberObject);
 
     // info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
     try {
       Class<?> certificateSubjectNameClass = Class.forName(getCertificateSubjectNameModuleName());
       Constructor<?> certificateSubjectNameConstr = certificateSubjectNameClass
-  				.getConstructor(new Class[] { x500NameClass });
+          .getConstructor(new Class[] { x500NameClass });
       Object certificateSubjectNameObject = certificateSubjectNameConstr
-  				.newInstance(x500NameObject);
+          .newInstance(x500NameObject);
       methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SUBJECT"),
-  				certificateSubjectNameObject);
+          certificateSubjectNameObject);
     }
     catch (InvocationTargetException ite) {
       methodSET.invoke(certInfoObject, getSetField(certInfoObject, "SUBJECT"),
@@ -114,11 +114,11 @@ public class X509CertificateUtil {
     try {
       Class<?> certificateIssuerNameClass = Class.forName(getCertificateIssuerNameModuleName());
       Constructor<?> certificateIssuerNameConstr = certificateIssuerNameClass
-  				.getConstructor(new Class[] { x500NameClass });
+          .getConstructor(new Class[] { x500NameClass });
       Object certificateIssuerNameObject = certificateIssuerNameConstr
-  				.newInstance(x500NameObject);
+          .newInstance(x500NameObject);
       methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ISSUER"),
-  				certificateIssuerNameObject);
+          certificateIssuerNameObject);
     }
     catch (InvocationTargetException ite) {
       methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ISSUER"),
@@ -128,59 +128,59 @@ public class X509CertificateUtil {
     // info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
     Class<?> certificateX509KeyClass = Class.forName(getCertificateX509KeyModuleName());
     Constructor<?> certificateX509KeyConstr = certificateX509KeyClass
-				.getConstructor(new Class[] { PublicKey.class });
+        .getConstructor(new Class[] { PublicKey.class });
     Object certificateX509KeyObject = certificateX509KeyConstr
-				.newInstance(pair.getPublic());
+        .newInstance(pair.getPublic());
     methodSET.invoke(certInfoObject, getSetField(certInfoObject, "KEY"),
-				certificateX509KeyObject);
+        certificateX509KeyObject);
     // info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
     Class<?> certificateVersionClass = Class.forName(getCertificateVersionModuleName());
     Constructor<?> certificateVersionConstr = certificateVersionClass
-				.getConstructor(new Class[] { int.class });
+        .getConstructor(new Class[] { int.class });
     Constructor<?> certificateVersionConstr0 = certificateVersionClass
-				.getConstructor();
+        .getConstructor();
     Object certInfoObject0 = certificateVersionConstr0.newInstance();
     Field v3IntField = certInfoObject0.getClass()
-				.getDeclaredField("V3");
+        .getDeclaredField("V3");
     v3IntField.setAccessible(true);
     int fValue = (int) v3IntField.getInt(certInfoObject0);
     Object certificateVersionObject = certificateVersionConstr
-				.newInstance(fValue);
+        .newInstance(fValue);
     methodSET.invoke(certInfoObject, getSetField(certInfoObject, "VERSION"),
-				certificateVersionObject);
+        certificateVersionObject);
 
     // AlgorithmId algo = new AlgorithmId(AlgorithmId.md5WithRSAEncryption_oid);
     Class<?> algorithmIdClass = Class.forName(getAlgorithmIdModuleName());
     Field md5WithRSAField = algorithmIdClass
-				.getDeclaredField("md5WithRSAEncryption_oid");
+        .getDeclaredField("md5WithRSAEncryption_oid");
     md5WithRSAField.setAccessible(true);
     Class<?> objectIdentifierClass = Class.forName(getObjectIdentifierModuleName());
 
     Object md5WithRSAValue = md5WithRSAField.get(algorithmIdClass);
 
     Constructor<?> algorithmIdConstr = algorithmIdClass
-				.getConstructor(new Class[] { objectIdentifierClass });
+        .getConstructor(new Class[] { objectIdentifierClass });
     Object algorithmIdObject = algorithmIdConstr.newInstance(md5WithRSAValue);
 
     // info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
     Class<?> certificateAlgorithmIdClass = Class.forName(getCertificateAlgorithmIdModuleName());
     Constructor<?> certificateAlgorithmIdConstr = certificateAlgorithmIdClass
-				.getConstructor(new Class[] { algorithmIdClass });
+        .getConstructor(new Class[] { algorithmIdClass });
     Object certificateAlgorithmIdObject = certificateAlgorithmIdConstr
-				.newInstance(algorithmIdObject);
+        .newInstance(algorithmIdObject);
     methodSET.invoke(certInfoObject, getSetField(certInfoObject, "ALGORITHM_ID"),
-				certificateAlgorithmIdObject);
+        certificateAlgorithmIdObject);
 
     // Sign the cert to identify the algorithm that's used.
     // X509CertImpl cert = new X509CertImpl(info);
     Class<?> x509CertImplClass = Class.forName(getX509CertImplModuleName());
     Constructor<?> x509CertImplConstr = x509CertImplClass
-				.getConstructor(new Class[] { certInfoClass });
+        .getConstructor(new Class[] { certInfoClass });
     x509CertImplObject = x509CertImplConstr.newInstance(certInfoObject);
 
     // cert.sign(privkey, algorithm);
     Method methoSIGN = x509CertImplObject.getClass().getMethod("sign",
-				PrivateKey.class, String.class);
+        PrivateKey.class, String.class);
     methoSIGN.invoke(x509CertImplObject, privkey, algorithm);
 
     // Update the algorith, and resign.
@@ -192,8 +192,8 @@ public class X509CertificateUtil {
     String certAlgoIdAlgoValue = getSetField(certificateAlgorithmIdObject, "ALGORITHM");
     // info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
     methodSET.invoke(certInfoObject, certAlgoIdNameValue + "."
-				+ certAlgoIdAlgoValue,
-				methoGET.invoke(x509CertImplObject, sig_alg));
+        + certAlgoIdAlgoValue,
+        methoGET.invoke(x509CertImplObject, sig_alg));
 
     // cert = new X509CertImpl(info);
     x509CertImplObject = x509CertImplConstr.newInstance(certInfoObject);
@@ -207,66 +207,66 @@ public class X509CertificateUtil {
 
   private static String getX509CertInfoModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.X509CertInfo"
-				: "sun.security.x509.X509CertInfo";
+        : "sun.security.x509.X509CertInfo";
   }
 
   private static String getX509CertifValidityModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateValidity"
-				: "sun.security.x509.CertificateValidity";
+        : "sun.security.x509.CertificateValidity";
   }
 
   private static String getX509X500NameModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.X500Name"
-				: "sun.security.x509.X500Name";
+        : "sun.security.x509.X500Name";
   }
 
   private static String getCertificateSerialNumberModuleName() {
    return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateSerialNumber"
-				: "sun.security.x509.CertificateSerialNumber";
+        : "sun.security.x509.CertificateSerialNumber";
   }
 
   private static String getCertificateSubjectNameModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateSubjectName"
-				: "sun.security.x509.CertificateSubjectName";
+        : "sun.security.x509.CertificateSubjectName";
   }
 
   private static String getCertificateIssuerNameModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateIssuerName"
-				: "sun.security.x509.CertificateIssuerName";
+        : "sun.security.x509.CertificateIssuerName";
   }
 
   private static String getCertificateX509KeyModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateX509Key"
-				: "sun.security.x509.CertificateX509Key";
+        : "sun.security.x509.CertificateX509Key";
   }
 
   private static String getCertificateVersionModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateVersion"
-				: "sun.security.x509.CertificateVersion";
+        : "sun.security.x509.CertificateVersion";
   }
 
   private static String getAlgorithmIdModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.AlgorithmId"
-				: "sun.security.x509.AlgorithmId";
+        : "sun.security.x509.AlgorithmId";
   }
 
   private static String getObjectIdentifierModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.util.ObjectIdentifier"
-				: "sun.security.util.ObjectIdentifier";
+        : "sun.security.util.ObjectIdentifier";
   }
 
   private static String getCertificateAlgorithmIdModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.CertificateAlgorithmId"
-				: "sun.security.x509.CertificateAlgorithmId";
+        : "sun.security.x509.CertificateAlgorithmId";
   }
 
   private static String getX509CertImplModuleName() {
     return System.getProperty("java.vendor").contains("IBM") ? "com.ibm.security.x509.X509CertImpl"
-				: "sun.security.x509.X509CertImpl";
+        : "sun.security.x509.X509CertImpl";
   }
 
   private static String getSetField(Object obj, String setString)
-			throws Exception {
+      throws Exception {
     Field privateStringField = obj.getClass().getDeclaredField(setString);
     privateStringField.setAccessible(true);
     String fieldValue = (String) privateStringField.get(obj);

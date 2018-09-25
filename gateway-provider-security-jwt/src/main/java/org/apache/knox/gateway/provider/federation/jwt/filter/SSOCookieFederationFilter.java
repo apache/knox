@@ -177,7 +177,7 @@ private String gatewayPath;
   protected String constructLoginURL(HttpServletRequest request) {
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
-    	authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
+      authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
     }
     if (authenticationProviderUrl.contains("?")) {
       delimiter = "&";

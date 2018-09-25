@@ -53,8 +53,8 @@ public class CMFMasterService {
   }
 
   public void setupMasterSecret(String securityDir, String filename,
-		  boolean persisting, GatewayConfig config)
-				  throws ServiceLifecycleException {
+      boolean persisting, GatewayConfig config)
+          throws ServiceLifecycleException {
       encryptor.init(config);
       setupMasterSecret(securityDir, filename, persisting);
   }
@@ -73,7 +73,7 @@ public class CMFMasterService {
       }
     }
     else {
-	  if (master == null) {
+    if (master == null) {
         displayWarning(persisting);
         promptUser();
       }

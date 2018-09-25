@@ -943,32 +943,32 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getAlgorithm() {
-	return getVar(CRYPTO_ALGORITHM, null);
+  return getVar(CRYPTO_ALGORITHM, null);
   }
 
   @Override
   public String getPBEAlgorithm() {
-	return getVar(CRYPTO_PBE_ALGORITHM, null);
+  return getVar(CRYPTO_PBE_ALGORITHM, null);
   }
 
   @Override
   public String getTransformation() {
-	return getVar(CRYPTO_TRANSFORMATION, null);
+  return getVar(CRYPTO_TRANSFORMATION, null);
   }
 
   @Override
   public String getSaltSize() {
-	return getVar(CRYPTO_SALTSIZE, null);
+  return getVar(CRYPTO_SALTSIZE, null);
   }
 
   @Override
   public String getIterationCount() {
-	return getVar(CRYPTO_ITERATION_COUNT, null);
+  return getVar(CRYPTO_ITERATION_COUNT, null);
   }
 
   @Override
   public String getKeyLength() {
-	return getVar(CRYPTO_KEY_LENGTH, null);
+  return getVar(CRYPTO_KEY_LENGTH, null);
   }
 
   @Override

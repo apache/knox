@@ -23,24 +23,24 @@ import java.security.Principal;
 import org.jvnet.libpam.UnixUser;
 
 public class UnixUserPrincipal implements Principal {
-	private final UnixUser userName;
+  private final UnixUser userName;
 
-	public UnixUserPrincipal(UnixUser userName) {
-		this.userName = userName;
-	}
+  public UnixUserPrincipal(UnixUser userName) {
+    this.userName = userName;
+  }
 
-	@Override
-	public String getName() {
-		return userName.getUserName();
-	}
+  @Override
+  public String getName() {
+    return userName.getUserName();
+  }
 
-	public UnixUser getUnixUser() {
-		return userName;
-	}
+  public UnixUser getUnixUser() {
+    return userName;
+  }
 
-	@Override
-	public String toString() {
-		return String.valueOf(userName.getUserName());
-	}
+  @Override
+  public String toString() {
+    return String.valueOf(userName.getUserName());
+  }
 
 }

@@ -44,7 +44,7 @@ public class DefaultCryptoService implements CryptoService {
   private AliasService as = null;
   private KeystoreService ks = null;
   private HashMap<String,ConfigurableEncryptor> encryptorCache =
-		  new HashMap<String,ConfigurableEncryptor>();
+      new HashMap<String,ConfigurableEncryptor>();
   private GatewayConfig config = null;
 
   public void setKeystoreService(KeystoreService ks) {
@@ -59,7 +59,7 @@ public class DefaultCryptoService implements CryptoService {
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
     this.config = config;
-	if (as == null) {
+  if (as == null) {
       throw new ServiceLifecycleException("Alias service is not set");
     }
   }
@@ -197,7 +197,7 @@ public class DefaultCryptoService implements CryptoService {
   // We have seen via profiling that AESEncryptor instantiation is very expensive.
   private final ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
     synchronized( encryptorCache ) {
-    	ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
+      ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
       if( encryptor == null ) {
         encryptor = new ConfigurableEncryptor( String.valueOf( password ) );
         encryptor.init(config);

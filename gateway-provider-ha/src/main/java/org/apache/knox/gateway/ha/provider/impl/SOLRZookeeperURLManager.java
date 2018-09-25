@@ -36,83 +36,83 @@ import java.util.List;
  */
 public class SOLRZookeeperURLManager extends BaseZookeeperURLManager {
 
-	// -------------------------------------------------------------------------------------
-	// Abstract methods
-	// -------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------
+  // Abstract methods
+  // -------------------------------------------------------------------------------------
 
-	/**
-	 * Look within Zookeeper under the /live_nodes branch for active SOLR hosts
-	 * 
-	 * @return A List of URLs (never null)
-	 */
-	@Override
-	protected List<String> lookupURLs() {
-		// Retrieve list of potential hosts from ZooKeeper
-		List<String> hosts = retrieveHosts();
-		
-		// Randomize the hosts list for simple load balancing
-		if (!hosts.isEmpty()) {
-			Collections.shuffle(hosts);
-		}
+  /**
+   * Look within Zookeeper under the /live_nodes branch for active SOLR hosts
+   *
+   * @return A List of URLs (never null)
+   */
+  @Override
+  protected List<String> lookupURLs() {
+    // Retrieve list of potential hosts from ZooKeeper
+    List<String> hosts = retrieveHosts();
 
-		return hosts;
-	}
+    // Randomize the hosts list for simple load balancing
+    if (!hosts.isEmpty()) {
+      Collections.shuffle(hosts);
+    }
 
-	protected String getServiceName() {
-		return "SOLR";
-	};
+    return hosts;
+  }
 
-	// -------------------------------------------------------------------------------------
-	// Private methods
-	// -------------------------------------------------------------------------------------
+  protected String getServiceName() {
+    return "SOLR";
+  };
 
-	/**
-	 * @return Retrieve lists of hosts from ZooKeeper
-	 */
-	private List<String> retrieveHosts()
-	{
-		List<String> serverHosts = new ArrayList<>();
-		
-		CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
-				.connectString(getZookeeperEnsemble())
-				.retryPolicy(new ExponentialBackoffRetry(1000, 3))
-				.build();
-		
-		try {
-			zooKeeperClient.start();
-			List<String> serverNodes = zooKeeperClient.getChildren().forPath("/live_nodes");
-			for (String serverNode : serverNodes) {
-				String serverURL = constructURL(serverNode);
-				serverHosts.add(serverURL);
-			}
-		} catch (Exception e) {
-			LOG.failedToGetZookeeperUrls(e);
-			throw new RuntimeException(e);
-		} finally {
-			// Close the client connection with ZooKeeper
-			if (zooKeeperClient != null) {
-				zooKeeperClient.close();
-			}
-		}
+  // -------------------------------------------------------------------------------------
+  // Private methods
+  // -------------------------------------------------------------------------------------
 
-		return serverHosts;
-	}
-	
-	/**
-	 * Given a String of the format "host:port_solr" convert to a URL of the format
-	 * "http://host:port/solr".
-	 * 
-	 * @param serverInfo Server Info from Zookeeper (required)
-	 * 
-	 * @return URL to SOLR
-	 */
-	private String constructURL(String serverInfo) {
-		String scheme = "http";
+  /**
+   * @return Retrieve lists of hosts from ZooKeeper
+   */
+  private List<String> retrieveHosts()
+  {
+    List<String> serverHosts = new ArrayList<>();
 
-		StringBuffer buffer = new StringBuffer();
-		buffer.append(scheme);
-		buffer.append("://");
-		buffer.append(serverInfo.replace("_", "/"));
-		return buffer.toString();
-	}
+    CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
+        .connectString(getZookeeperEnsemble())
+        .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+        .build();
+
+    try {
+      zooKeeperClient.start();
+      List<String> serverNodes = zooKeeperClient.getChildren().forPath("/live_nodes");
+      for (String serverNode : serverNodes) {
+        String serverURL = constructURL(serverNode);
+        serverHosts.add(serverURL);
+      }
+    } catch (Exception e) {
+      LOG.failedToGetZookeeperUrls(e);
+      throw new RuntimeException(e);
+    } finally {
+      // Close the client connection with ZooKeeper
+      if (zooKeeperClient != null) {
+        zooKeeperClient.close();
+      }
+    }
+
+    return serverHosts;
+  }
+
+  /**
+   * Given a String of the format "host:port_solr" convert to a URL of the format
+   * "http://host:port/solr".
+   *
+   * @param serverInfo Server Info from Zookeeper (required)
+   *
+   * @return URL to SOLR
+   */
+  private String constructURL(String serverInfo) {
+    String scheme = "http";
+
+    StringBuffer buffer = new StringBuffer();
+    buffer.append(scheme);
+    buffer.append("://");
+    buffer.append(serverInfo.replace("_", "/"));
+    return buffer.toString();
+  }
 }
