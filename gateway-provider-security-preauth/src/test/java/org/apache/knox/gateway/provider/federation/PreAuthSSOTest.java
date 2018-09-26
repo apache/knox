@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -17,7 +16,6 @@
  * limitations under the License.
  */
 package org.apache.knox.gateway.provider.federation;
-
 
 import org.junit.Test;
 
