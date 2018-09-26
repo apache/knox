@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 
 public class DefaultRemoteConfigurationRegistriesTest {
 

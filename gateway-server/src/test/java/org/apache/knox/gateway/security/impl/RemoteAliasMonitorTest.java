@@ -35,9 +35,9 @@ import org.apache.zookeeper.data.ACL;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -245,10 +245,10 @@ public class RemoteAliasMonitorTest {
     aliases = zkAlias.getAliasesForCluster(expectedClusterName);
     aliasesDev = zkAlias.getAliasesForCluster(expectedClusterNameDev);
 
-    Assert.assertTrue(aliases.contains(expectedAlias),
-        "Expected alias 'knox.test.alias' not found ");
-    Assert.assertTrue(aliasesDev.contains(expectedAliasDev),
-        "Expected alias 'knox.test.alias.dev' not found ");
+    Assert.assertTrue("Expected alias 'knox.test.alias' not found ",
+        aliases.contains(expectedAlias));
+    Assert.assertTrue("Expected alias 'knox.test.alias.dev' not found ",
+        aliasesDev.contains(expectedAliasDev));
 
     final char[] result = zkAlias
         .getPasswordFromAliasForCluster(expectedClusterName, expectedAlias);
