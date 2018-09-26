@@ -38,6 +38,14 @@ limitations under the License.
     <!-- No tabs allowed! -->
     <module name="FileTabCharacter"/>
 
+    <!-- Checks for headers -->
+    <!-- See http://checkstyle.sf.net/config_header.html -->
+    <!-- Verify that EVERY source file has the appropriate license -->
+    <module name="Header">
+        <property name="header" value="/*\n"/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
     <module name="TreeWalker">
         <property name="cacheFile" value="target/checkstyle-cachefile"/>
 

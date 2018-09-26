@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -46,8 +46,8 @@ public class HiveJDBCSample {
           tableName = "test_table"
 
       Credentials credentials = new Credentials();
-      credentials.add("ClearInput", "Enter username: ", "user");
-                     .add("HiddenInput", "Enter pas" + "sword: ", "pass");
+      credentials.add("ClearInput", "Enter username: ", "user")
+          .add("HiddenInput", "Enter pas" + "sword: ", "pass");
       credentials.collect();
 
       String username = credentials.get("user").string();

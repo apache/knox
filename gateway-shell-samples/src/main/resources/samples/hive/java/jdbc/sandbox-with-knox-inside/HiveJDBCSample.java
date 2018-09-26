@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -43,8 +43,8 @@ public class HiveJDBCSample {
       String connectionString = String.format( "jdbc:hive2://%s:%d/;ssl=true;sslTrustStore=%s;trustStorePassword=%s?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s", gatewayHost, gatewayPort, trustStore, trustStorePassword, contextPath );
 
       Credentials credentials = new Credentials();
-      credentials.add("ClearInput", "Enter username: ", "user");
-                     .add("HiddenInput", "Enter pas" + "sword: ", "pass");
+      credentials.add("ClearInput", "Enter username: ", "user")
+          .add("HiddenInput", "Enter pas" + "sword: ", "pass");
       credentials.collect();
 
       String username = credentials.get("user").string();
