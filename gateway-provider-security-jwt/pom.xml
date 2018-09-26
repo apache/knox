@@ -23,18 +23,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-security-jwt</artifactId>
 
+    <artifactId>gateway-provider-security-jwt</artifactId>
     <name>gateway-provider-security-jwt</name>
     <description>An extension of the gateway introducing JWT as a recognized token for authentication.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -79,7 +71,5 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

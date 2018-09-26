@@ -24,18 +24,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-discovery-ambari</artifactId>
 
+    <artifactId>gateway-discovery-ambari</artifactId>
     <name>gateway-discovery-ambari</name>
     <description>The extension to the gateway for service discovery using Apache Ambari.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -60,7 +52,5 @@
             <artifactId>easymock</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

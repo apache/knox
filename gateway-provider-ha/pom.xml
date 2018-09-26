@@ -23,18 +23,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-ha</artifactId>
 
+    <artifactId>gateway-provider-ha</artifactId>
     <name>gateway-provider-ha</name>
     <description>An extension of the gateway that supports Hadoop services standing in HA mode</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -58,8 +50,7 @@
             <artifactId>curator-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-
+        
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
@@ -93,7 +84,5 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

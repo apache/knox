@@ -23,18 +23,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-security-webappsec</artifactId>
 
+    <artifactId>gateway-provider-security-webappsec</artifactId>
     <name>gateway-provider-security-webappsec</name>
     <description>An extension of the gateway introducing web application security protections.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -68,7 +60,5 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

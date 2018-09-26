@@ -19,23 +19,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <artifactId>gateway</artifactId>
         <groupId>org.apache.knox</groupId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
+
     <artifactId>gateway-adapter</artifactId>
     <name>gateway-adapter</name>
     <description>Adapter for old package structure to ensure compatibility.</description>
-    
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -97,5 +89,4 @@
             <artifactId>gateway-service-storm</artifactId>
         </dependency>
     </dependencies>
-
 </project>

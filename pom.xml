@@ -24,6 +24,7 @@
         <artifactId>apache</artifactId>
         <version>21</version>
     </parent>
+    
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
     <version>1.2.0-SNAPSHOT</version>
@@ -31,7 +32,13 @@
 
     <name>gateway</name>
     <description>The Apache Knox Project</description>
-    <url>http://knox.apache.org/</url>
+    <url>https://knox.apache.org/</url>
+
+    <scm>
+        <connection>scm:git:git://git.apache.org/knox.git</connection>
+        <developerConnection>scm:git:git://git.apache.org/knox.git</developerConnection>
+        <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
+    </scm>
 
     <modules>
         <module>gateway-test-utils</module>
@@ -103,16 +110,11 @@
     </modules>
 
     <properties>
-        <!--
-         It is recommended to set the compiler version globally,
-         as the compiler plugin and the forbidden API checker both
-         use this version
-        -->
+        <!-- Ensure that source and target version are overridden from base ASF POM.
+             This is also used by forbiddenapis to ensure correct signatures are loaded. -->
+        <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <repo.id>internal.repo</repo.id>
-        <internal.maven.repo>https://repository.apache.org/service/local/staging/deploy/maven2</internal.maven.repo>
+        
         <gateway-name>Apache Knox</gateway-name>
         <gateway-project>knox</gateway-project>
         <gateway-artifact>knox</gateway-artifact>
@@ -139,39 +141,7 @@
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
         <surefire-version>2.16</surefire-version>
     </properties>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Apache Software Foundation</name>
-        <url>http://www.apache.org</url>
-    </organization>
-
-    <scm>
-        <connection>scm:git:git://git.apache.org/knox.git</connection>
-        <developerConnection>scm:git:git://git.apache.org/knox.git</developerConnection>
-        <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>${repo.id}</id>
-            <name>Internal Repository</name>
-            <url>${internal.maven.repo}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${repo.id}</id>
-            <name>Internal Repository</name>
-            <url>${internal.maven.repo}</url>
-        </snapshotRepository>
-    </distributionManagement>
-
+    
     <profiles>
         <profile>
             <id>analyze</id>
@@ -317,10 +287,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
-                <configuration>
-                    <source>${maven.compiler.target}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
+                <!-- If you are looking to change source/target,
+                     change the maven.compiler.{source,target} property -->
                 <dependencies>
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>
@@ -491,16 +459,6 @@
                             <artifactId>maven-project-info-reports-plugin</artifactId>
                             <version>2.2</version>
                             <report>index</report>
-                            <!--
-                            <report>dependencies</report>
-                            <report>modules</report>
-                            <report>project-team</report>
-                            <report>mailing-list</report>
-                            <report>issue-tracking</report>
-                            <report>license</report>
-                            <report>cim</report>
-                            <report>scm</report>
-                            -->
                         </plugin>
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
@@ -1483,8 +1441,6 @@
                 <version>2.12.0</version>
                 <scope>test</scope>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
-
 </project>

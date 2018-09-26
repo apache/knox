@@ -28,14 +28,7 @@
     <artifactId>gateway-service-definitions</artifactId>
     <name>gateway-service-definitions</name>
     <description>The service definitions aka stacks.</description>
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
+    
     <dependencies>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>

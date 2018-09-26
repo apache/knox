@@ -23,21 +23,12 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-identity-assertion-hadoop-groups</artifactId>
 
+    <artifactId>gateway-provider-identity-assertion-hadoop-groups</artifactId>
     <name>gateway-provider-identity-assertion-hadoop-groups</name>
     <description>An extension to the gateway that provides group membership lookups similar to Hadoop for the authenticated (asserted) identity.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <dependencies>
-
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-identity-assertion-common</artifactId>
@@ -97,6 +88,5 @@
             <artifactId>easymock</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 </project>

@@ -24,14 +24,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.apache.knox</groupId>
+
     <artifactId>gateway-service-health</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
     <name>gateway-service-health</name>
-    <url>http://maven.apache.org</url>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${gateway-group}</groupId>

@@ -24,18 +24,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-service-storm</artifactId>
 
+    <artifactId>gateway-service-storm</artifactId>
     <name>gateway-service-storm</name>
     <description>The extension to the gateway for supporting Storm.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -61,5 +53,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 </project>

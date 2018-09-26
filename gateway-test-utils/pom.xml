@@ -24,18 +24,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-test-utils</artifactId>
 
+    <artifactId>gateway-test-utils</artifactId>
     <name>gateway-test-utils</name>
     <description>A collection of common utilities used for testing.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <build>
         <plugins>
@@ -48,7 +40,6 @@
     </build>
 
     <dependencies>
-
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -120,7 +111,5 @@
             <artifactId>velocity</artifactId>
             <scope>provided</scope>
         </dependency>
-
     </dependencies>
-
 </project>

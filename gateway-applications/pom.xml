@@ -28,13 +28,6 @@
     <artifactId>gateway-applications</artifactId>
     <name>gateway-applications</name>
     <description>The applications delivered with Knox.</description>
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>

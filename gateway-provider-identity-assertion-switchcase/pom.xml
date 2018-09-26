@@ -23,18 +23,10 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
 
+    <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
     <name>gateway-provider-identity-assertion-switchcase</name>
     <description>An extension to the gateway that provides the ability to switch the case of user and group names.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
 
     <dependencies>
         <dependency>
@@ -62,7 +54,5 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

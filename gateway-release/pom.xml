@@ -24,20 +24,11 @@
         <artifactId>gateway</artifactId>
         <version>1.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>gateway-release</artifactId>
 
+    <artifactId>gateway-release</artifactId>
     <name>gateway-release</name>
     <description>The gateway binary release packaging.</description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-
+    
     <profiles>
         <profile>
             <id>package</id>
@@ -350,5 +341,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 </project>
