@@ -56,7 +56,9 @@ public class KafkaZookeeperURLManagerTest {
 
   @After
   public void teardown() throws IOException {
-    cluster.stop();
+    if(cluster != null) {
+      cluster.close();
+    }
   }
   
   @Test

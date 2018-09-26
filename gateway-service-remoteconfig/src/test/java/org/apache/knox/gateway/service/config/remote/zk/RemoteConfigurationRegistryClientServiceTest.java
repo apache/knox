@@ -64,27 +64,23 @@ public class RemoteConfigurationRegistryClientServiceTest {
         final String CRED_ALIAS = null;
 
         // Configure and start a secure ZK cluster
-        TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD);
-
-        try {
+        try (TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD)) {
             // Create the setup client for the test cluster, and initialize the test znodes
             CuratorFramework setupClient = initializeTestClientAndZNodes(zkCluster, PRINCIPAL);
 
             // Mock configuration
             GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
             final String registryConfigValue =
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
             EasyMock.expect(config.getRemoteRegistryConfiguration(REGISTRY_CLIENT_NAME))
-                    .andReturn(registryConfigValue)
-                    .anyTimes();
+                .andReturn(registryConfigValue)
+                .anyTimes();
             EasyMock.expect(config.getRemoteRegistryConfigurationNames())
-                    .andReturn(Collections.singletonList(REGISTRY_CLIENT_NAME)).anyTimes();
+                .andReturn(Collections.singletonList(REGISTRY_CLIENT_NAME)).anyTimes();
             EasyMock.replay(config);
 
             doTestZooKeeperClient(setupClient, REGISTRY_CLIENT_NAME, config, CRED_ALIAS, PWD);
-        } finally {
-            zkCluster.stop();
         }
     }
 
@@ -100,31 +96,29 @@ public class RemoteConfigurationRegistryClientServiceTest {
         final String CRED_ALIAS = null;
 
         // Configure and start a secure ZK cluster
-        TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD);
-
-        try {
+        try (TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD)) {
             // Create the setup client for the test cluster, and initialize the test znodes
             CuratorFramework setupClient = initializeTestClientAndZNodes(zkCluster, PRINCIPAL);
 
             // Mock configuration
             GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
             final String registryConfigValue1 =
-                                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                                GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
             EasyMock.expect(config.getRemoteRegistryConfiguration(REGISTRY_CLIENT_NAME_1))
-                    .andReturn(registryConfigValue1).anyTimes();
+                .andReturn(registryConfigValue1).anyTimes();
             final String registryConfigValue2 =
-                                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                                GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString();
             EasyMock.expect(config.getRemoteRegistryConfiguration(REGISTRY_CLIENT_NAME_2))
-                    .andReturn(registryConfigValue2).anyTimes();
+                .andReturn(registryConfigValue2).anyTimes();
             EasyMock.expect(config.getRemoteRegistryConfigurationNames())
-                    .andReturn(Arrays.asList(REGISTRY_CLIENT_NAME_1, REGISTRY_CLIENT_NAME_2)).anyTimes();
+                .andReturn(Arrays.asList(REGISTRY_CLIENT_NAME_1, REGISTRY_CLIENT_NAME_2)).anyTimes();
             EasyMock.replay(config);
 
             // Create the client service instance
             RemoteConfigurationRegistryClientService clientService =
-                    RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+                RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
             assertEquals("Wrong registry client service type.", clientService.getClass(), CuratorClientService.class);
             clientService.setAliasService(null);
             clientService.init(config, null);
@@ -138,8 +132,6 @@ public class RemoteConfigurationRegistryClientServiceTest {
 
             doTestZooKeeperClient(setupClient, REGISTRY_CLIENT_NAME_1, clientService, false);
             doTestZooKeeperClient(setupClient, REGISTRY_CLIENT_NAME_2, clientService, false);
-        } finally {
-            zkCluster.stop();
         }
     }
 
@@ -155,30 +147,26 @@ public class RemoteConfigurationRegistryClientServiceTest {
         final String CRED_ALIAS = "zkCredential";
 
         // Configure and start a secure ZK cluster
-        TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD);
-
-        try {
+        try (TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD)) {
             // Create the setup client for the test cluster, and initialize the test znodes
             CuratorFramework setupClient = initializeTestClientAndZNodes(zkCluster, PRINCIPAL);
 
             // Mock configuration
             GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
             final String registryConfigValue =
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=" + AUTH_TYPE + ";" +
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + PRINCIPAL + ";" +
-                            GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + CRED_ALIAS;
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=" + AUTH_TYPE + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + PRINCIPAL + ";" +
+                    GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + CRED_ALIAS;
             EasyMock.expect(config.getRemoteRegistryConfiguration(REGISTRY_CLIENT_NAME))
-                    .andReturn(registryConfigValue)
-                    .anyTimes();
+                .andReturn(registryConfigValue)
+                .anyTimes();
             EasyMock.expect(config.getRemoteRegistryConfigurationNames())
-                    .andReturn(Collections.singletonList(REGISTRY_CLIENT_NAME)).anyTimes();
+                .andReturn(Collections.singletonList(REGISTRY_CLIENT_NAME)).anyTimes();
             EasyMock.replay(config);
 
             doTestZooKeeperClient(setupClient, REGISTRY_CLIENT_NAME, config, CRED_ALIAS, PWD);
-        } finally {
-            zkCluster.stop();
         }
     }
 
@@ -195,11 +183,8 @@ public class RemoteConfigurationRegistryClientServiceTest {
         final String CRED_ALIAS = "zkCredential";
 
         // Configure and start a secure ZK cluster
-        TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD);
-
         File tmpRegConfigFile = null;
-
-        try {
+        try (TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD)) {
             // Create the setup client for the test cluster, and initialize the test znodes
             CuratorFramework setupClient = initializeTestClientAndZNodes(zkCluster, PRINCIPAL);
 
@@ -213,7 +198,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
             registryConfigProps.put("principal", PRINCIPAL);
             registryConfigProps.put("credentialAlias", CRED_ALIAS);
             String registryConfigXML =
-                  RemoteRegistryConfigTestUtils.createRemoteConfigRegistriesXML(Collections.singleton(registryConfigProps));
+                RemoteRegistryConfigTestUtils.createRemoteConfigRegistriesXML(Collections.singleton(registryConfigProps));
             tmpRegConfigFile = File.createTempFile("myRemoteRegistryConfig", "xml");
             FileUtils.writeStringToFile(tmpRegConfigFile, registryConfigXML);
 
@@ -224,7 +209,6 @@ public class RemoteConfigurationRegistryClientServiceTest {
 
             doTestZooKeeperClient(setupClient, REGISTRY_CLIENT_NAME, config, CRED_ALIAS, PWD);
         } finally {
-            zkCluster.stop();
             if (tmpRegConfigFile != null && tmpRegConfigFile.exists()) {
                 tmpRegConfigFile.delete();
             }

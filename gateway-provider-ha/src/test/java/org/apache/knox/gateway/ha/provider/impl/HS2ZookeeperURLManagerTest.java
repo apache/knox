@@ -75,7 +75,9 @@ public class HS2ZookeeperURLManagerTest {
 
   @After
   public void teardown() throws IOException {
-    cluster.stop();
+    if(cluster != null) {
+      cluster.close();
+    }
   }
 
   @Test
