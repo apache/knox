@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,19 +81,7 @@ import static org.junit.Assert.assertTrue;
 public class SecureClusterTest {
 
   private static MiniDFSCluster miniDFSCluster;
-
-  /**
-   * Referring {@link MiniKdc} as {@link Object} to prevent the class loader
-   * from trying to load it before @BeforeClass annotation is called. Need to
-   * play this game because {@link MiniKdc} is not compatible with Java 7 so if
-   * we detect Java 7 we quit the test.
-   * <p>
-   * As result we need to up cast this object to {@link MiniKdc} every place we
-   * use it.
-   * 
-   * @since 0.10
-   */
-  private static Object kdc;
+  private static MiniKdc kdc;
   private static HdfsConfiguration configuration;
   private static int nameNodeHttpPort;
   private static String userName;
@@ -101,22 +89,8 @@ public class SecureClusterTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
   private static File baseDir;
 
-  /**
-   * Test should run if java major version is greater or equal to this property.
-   *
-   * @since 0.10
-   */
-  private static int JAVA_MAJOR_VERSION_FOR_TEST = 8;
-
   @BeforeClass
   public static void setupSuite() throws Exception {
-
-    /*
-     * Run the test only if the jre version matches the one we want, see
-     * KNOX-769
-     */
-    org.junit.Assume.assumeTrue(isJreVersionOK());
-
     nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(SecureClusterTest.class));
@@ -131,24 +105,23 @@ public class SecureClusterTest {
         .build();
   }
 
-
   private static void initKdc() throws Exception {
     Properties kdcConf = MiniKdc.createConf();
     kdc = new MiniKdc(kdcConf, baseDir);
-    ((MiniKdc)kdc).start();
+    kdc.start();
 
     configuration = new HdfsConfiguration();
     SecurityUtil.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS, configuration);
     UserGroupInformation.setConfiguration(configuration);
     assertTrue("Expected configuration to enable security", UserGroupInformation.isSecurityEnabled());
-    userName = UserGroupInformation.createUserForTesting("guest", new String[] {"users"}).getUserName();
+    userName = UserGroupInformation.createUserForTesting("guest", new String[]{"users"}).getUserName();
     File keytabFile = new File(baseDir, userName + ".keytab");
     String keytab = keytabFile.getAbsolutePath();
     // Windows will not reverse name lookup "127.0.0.1" to "localhost".
     String krbInstance = Path.WINDOWS ? "127.0.0.1" : "localhost";
-    ((MiniKdc)kdc).createPrincipal(keytabFile, userName + "/" + krbInstance, "HTTP/" + krbInstance);
-    String hdfsPrincipal = userName + "/" + krbInstance + "@" + ((MiniKdc)kdc).getRealm();
-    String spnegoPrincipal = "HTTP/" + krbInstance + "@" + ((MiniKdc)kdc).getRealm();
+    kdc.createPrincipal(keytabFile, userName + "/" + krbInstance, "HTTP/" + krbInstance);
+    String hdfsPrincipal = userName + "/" + krbInstance + "@" + kdc.getRealm();
+    String spnegoPrincipal = "HTTP/" + krbInstance + "@" + kdc.getRealm();
 
     configuration.set(DFS_NAMENODE_KERBEROS_PRINCIPAL_KEY, hdfsPrincipal);
     configuration.set(DFS_NAMENODE_KEYTAB_FILE_KEY, keytab);
@@ -184,7 +157,7 @@ public class SecureClusterTest {
   private static void setupKnox(String keytab, String hdfsPrincipal) throws Exception {
     //kerberos setup for http client
     File jaasConf = setupJaasConf(baseDir, keytab, hdfsPrincipal);
-    System.setProperty("java.security.krb5.conf", ((MiniKdc)kdc).getKrb5conf().getAbsolutePath());
+    System.setProperty("java.security.krb5.conf", kdc.getKrb5conf().getAbsolutePath());
     System.setProperty("java.security.auth.login.config", jaasConf.getAbsolutePath());
     System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
     System.setProperty("sun.security.krb5.debug", "true");
@@ -192,9 +165,9 @@ public class SecureClusterTest {
     //knox setup
     System.setProperty("gateway.hadoop.kerberos.secured", "true");
     GatewayTestConfig config = new GatewayTestConfig();
-    config.setGatewayPath( "gateway" );
+    config.setGatewayPath("gateway");
     config.setHadoopKerberosSecured(true);
-    config.setKerberosConfig(((MiniKdc)kdc).getKrb5conf().getAbsolutePath());
+    config.setKerberosConfig(kdc.getKrb5conf().getAbsolutePath());
     config.setKerberosLoginConfig(jaasConf.getAbsolutePath());
     driver.setResourceBase(SecureClusterTest.class);
     driver.setupLdap(0);
@@ -203,13 +176,15 @@ public class SecureClusterTest {
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    /* No need to clean up if we did not start anything */
-    if (isJreVersionOK()) {
-      ((MiniKdc) kdc).stop();
+    if(kdc != null) {
+      kdc.stop();
+    }
+    if(miniDFSCluster != null) {
       miniDFSCluster.shutdown();
+    }
+    if(driver != null) {
       driver.cleanup();
     }
-
   }
 
   @Test
@@ -223,7 +198,6 @@ public class SecureClusterTest {
     CloseableHttpResponse response = client.execute(target, request);
     String json = EntityUtils.toString(response.getEntity());
     response.close();
-//    System.out.println(json);
     assertEquals("{\"Path\":\"/user/" + userName + "\"}", json);
   }
 
@@ -261,17 +235,17 @@ public class SecureClusterTest {
     Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
     String content = String.format(Locale.ROOT,
         "com.sun.security.jgss.initiate {\n" +
-        "com.sun.security.auth.module.Krb5LoginModule required\n" +
-        "renewTGT=true\n" +
-        "doNotPrompt=true\n" +
-        "useKeyTab=true\n" +
-        "keyTab=\"%s\"\n" +
-        "principal=\"%s\"\n" +
-        "isInitiator=true\n" +
-        "storeKey=true\n" +
-        "useTicketCache=true\n" +
-        "client=true;\n" +
-        "};\n", keyTabFile, principal);
+            "com.sun.security.auth.module.Krb5LoginModule required\n" +
+            "renewTGT=true\n" +
+            "doNotPrompt=true\n" +
+            "useKeyTab=true\n" +
+            "keyTab=\"%s\"\n" +
+            "principal=\"%s\"\n" +
+            "isInitiator=true\n" +
+            "storeKey=true\n" +
+            "useTicketCache=true\n" +
+            "client=true;\n" +
+            "};\n", keyTabFile, principal);
     writer.write(content);
     writer.close();
     return file;
@@ -285,70 +259,49 @@ public class SecureClusterTest {
   private static XMLTag createTopology() {
     XMLTag xml = XMLDoc.newDocument(true)
         .addRoot("topology")
-        .addTag( "gateway" )
-        .addTag( "provider" )
+        .addTag("gateway")
+        .addTag("provider")
         .addTag("role").addText("webappsec")
         .addTag("name").addText("WebAppSec")
         .addTag("enabled").addText("true")
-        .addTag( "param" )
+        .addTag("param")
         .addTag("name").addText("csrf.enabled")
         .addTag("value").addText("false").gotoParent().gotoParent()
         .addTag("provider")
         .addTag("role").addText("authentication")
         .addTag("name").addText("ShiroProvider")
         .addTag("enabled").addText("true")
-        .addTag( "param" )
+        .addTag("param")
         .addTag("name").addText("main.ldapRealm")
         .addTag("value").addText("org.apache.knox.gateway.shirorealm.KnoxLdapRealm").gotoParent()
-        .addTag( "param" )
+        .addTag("param")
         .addTag("name").addText("main.ldapRealm.userDnTemplate")
-        .addTag( "value" ).addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
-        .addTag( "param" )
+        .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
+        .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.url")
-        .addTag( "value" ).addText(driver.getLdapUrl()).gotoParent()
-        .addTag( "param" )
+        .addTag("value").addText(driver.getLdapUrl()).gotoParent()
+        .addTag("param")
         .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
-        .addTag( "value" ).addText("simple").gotoParent()
-        .addTag( "param" )
+        .addTag("value").addText("simple").gotoParent()
+        .addTag("param")
         .addTag("name").addText("urls./**")
-        .addTag( "value" ).addText("authcBasic").gotoParent().gotoParent()
+        .addTag("value").addText("authcBasic").gotoParent().gotoParent()
         .addTag("provider")
         .addTag("role").addText("identity-assertion")
         .addTag("enabled").addText("true")
         .addTag("name").addText("Default").gotoParent()
         .addTag("provider")
-        .addTag( "role" ).addText( "authorization" )
-        .addTag( "enabled" ).addText( "true" )
+        .addTag("role").addText("authorization")
+        .addTag("enabled").addText("true")
         .addTag("name").addText("AclsAuthz").gotoParent()
         .addTag("param")
-        .addTag("name").addText( "webhdfs-acl" )
+        .addTag("name").addText("webhdfs-acl")
         .addTag("value").addText("hdfs;*;*").gotoParent()
         .gotoRoot()
         .addTag("service")
         .addTag("role").addText("WEBHDFS")
         .addTag("url").addText("http://localhost:" + nameNodeHttpPort + "/webhdfs/").gotoParent()
         .gotoRoot();
-//     System.out.println( "GATEWAY=" + xml.toString() );
     return xml;
   }
-
-  /**
-   * Check whether java version is >= {@link #JAVA_MAJOR_VERSION_FOR_TEST}
-   *
-   * @since 0.10
-   * @return
-   */
-  public static boolean isJreVersionOK() {
-
-    final String jreVersion = System.getProperty("java.version");
-    int majorVersion = Integer.parseInt(String.valueOf(jreVersion.charAt(2)));
-
-    if (majorVersion >= JAVA_MAJOR_VERSION_FOR_TEST) {
-      return true;
-    }
-
-    return false;
-
-  }
-
 }
