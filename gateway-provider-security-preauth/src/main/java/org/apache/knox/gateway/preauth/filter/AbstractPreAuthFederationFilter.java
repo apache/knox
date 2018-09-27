@@ -34,8 +34,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditService;
@@ -71,7 +69,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     validators = PreAuthService.getValidators(filterConfig);
   }
 
-  @VisibleForTesting
+  // VisibleForTesting
   public List<PreAuthValidator> getValidators() {
     return validators;
   }

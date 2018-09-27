@@ -17,15 +17,11 @@
  */
 package org.apache.knox.gateway.preauth.filter;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -51,13 +47,12 @@ public class PreAuthService {
   private static void initializeValidators() {
     ServiceLoader<PreAuthValidator> servLoader = ServiceLoader.load(PreAuthValidator.class);
     validatorMap = new ConcurrentHashMap<>();
-    for (Iterator<PreAuthValidator> iterator = servLoader.iterator(); iterator.hasNext(); ) {
-      PreAuthValidator validator = iterator.next();
+    for (PreAuthValidator validator : servLoader) {
       validatorMap.put(validator.getName(), validator);
     }
   }
 
-  @VisibleForTesting
+  // VisibleForTesting
   public static Map<String, PreAuthValidator> getValidatorMap() {
     return Collections.unmodifiableMap(validatorMap);
   }
@@ -73,7 +68,7 @@ public class PreAuthService {
   public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
     String validationMethods = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);
     List<PreAuthValidator> vList = new ArrayList<>();
-    if (Strings.isNullOrEmpty(validationMethods)) {
+    if (validationMethods == null || validationMethods.isEmpty()) {
       validationMethods = DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE;
     }
     Set<String> vMethodSet = new LinkedHashSet<>();
