@@ -30,18 +30,26 @@
 
     <dependencies>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-i18n</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-identity-assertion-common</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-spi</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-identity-assertion-common</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
         <dependency>
@@ -62,6 +70,10 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>

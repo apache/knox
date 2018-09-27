@@ -43,9 +43,20 @@
             <artifactId>gateway-provider-ha</artifactId>
         </dependency>
         <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-util-configinjector</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
+
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-test-utils</artifactId>
