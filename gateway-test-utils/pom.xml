@@ -29,16 +29,6 @@
     <name>gateway-test-utils</name>
     <description>A collection of common utilities used for testing.</description>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.4.2</version>
-            </plugin>
-        </plugins>
-    </build>
-
     <dependencies>
         <dependency>
             <groupId>org.hamcrest</groupId>
