@@ -27,7 +27,6 @@
 
     <artifactId>webhdfs-kerb-test</artifactId>
     <name>webhdfs-kerb-test</name>
-    <version>1.2.0-SNAPSHOT</version>
     <description>Tests for WebHDFS integration with Knox and Kerberos enabled</description>
 
     <dependencies>
@@ -92,5 +91,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

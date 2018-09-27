@@ -29,8 +29,11 @@
     <description>An extension of the gateway integrating pac4j as an authentication provider.</description>
 
     <properties>
+        <bcprov-jdk15on.version>1.56</bcprov-jdk15on.version>
         <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
+        <lang-tag.version>1.4.3</lang-tag.version>
         <pac4j.version>2.1.0</pac4j.version>
+        <spring-core.version>4.3.17.RELEASE</spring-core.version>
     </properties>
 
     <dependencies>
@@ -86,12 +89,44 @@
             </exclusions>
         </dependency>
 
+        <!-- pac4j Dependencies -->
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-cas</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-config</artifactId>
+            <version>${pac4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-core</artifactId>
+            <version>${pac4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-http</artifactId>
             <version>${pac4j.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-oauth</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oidc</artifactId>
@@ -126,53 +161,17 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>4.3.17.RELEASE</version>
+            <version>${spring-core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.56</version>
+            <version>${bcprov-jdk15on.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-cas</artifactId>
-            <version>${pac4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-oauth</artifactId>
-            <version>${pac4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-core</artifactId>
-            <version>${pac4j.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>lang-tag</artifactId>
-            <version>1.4.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-config</artifactId>
-            <version>${pac4j.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xalan</groupId>
-                    <artifactId>xalan</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>${lang-tag.version}</version>
         </dependency>
 
         <dependency>

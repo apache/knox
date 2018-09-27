@@ -82,7 +82,7 @@
                             <dependency>
                                 <groupId>org.apache.ant</groupId>
                                 <artifactId>ant-nodeps</artifactId>
-                                <version>1.8.1</version>
+                                <version>${ant-nodeps.version}</version>
                             </dependency>
                         </dependencies>
                     </plugin>

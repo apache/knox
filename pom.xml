@@ -142,6 +142,8 @@
         <!-- Dependencies sorted alphabetically -->
         <apacheds.version>2.0.0-M24</apacheds.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
+        <ant-nodeps.version>1.8.1</ant-nodeps.version>
+        <buildnumber-maven-plugin.version>1.3</buildnumber-maven-plugin.version>
         <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
@@ -153,25 +155,57 @@
         <commons-lang.version>2.6</commons-lang.version>
         <commons-lang3.version>3.8</commons-lang3.version>
         <commons-net.version>3.6</commons-net.version>
+        <cors-filter.version>2.4</cors-filter.version>
+        <curator.version>4.0.0</curator.version>
+        <curator-test.version>2.12.0</curator-test.version>
+        <easymock.version>3.5</easymock.version>
+        <eclipselink.version>2.5.2</eclipselink.version>
         <ehcache.version>2.5.0</ehcache.version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
-        <groovy-version>2.4.8</groovy-version>
-        <hadoop-version>3.0.0</hadoop-version>
+        <groovy.version>2.4.8</groovy.version>
+        <hadoop.version>3.0.0</hadoop.version>
+        <hamcrest.version>1.3</hamcrest.version>
+        <hamcrest-json.version>0.2</hamcrest-json.version>
+        <httpclient.version>4.5.4</httpclient.version>
+        <httpcore.version>4.4.6</httpcore.version>
         <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
         <jackson.version>2.9.5</jackson.version>
-        <javax-websocket-version>1.1</javax-websocket-version>
+        <jansi.version>1.16</jansi.version>
+        <javax.annotation-api.version>1.2</javax.annotation-api.version>
+        <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+        <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
+        <javax.websocket-api.version>1.1</javax.websocket-api.version>
+        <jericho-html.version>3.2</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty-version>9.2.25.v20180606</jetty-version>
+        <jetty.version>9.2.25.v20180606</jetty.version>
+        <jline.version>2.13</jline.version>
+        <jna.version>4.1.0</jna.version>
+        <joda-time.version>2.9.2</joda-time.version>
+        <json-path.version>2.4.0</json-path.version>
+        <json-smart.version>2.3</json-smart.version>
+        <junit.version>4.12</junit.version>
+        <libpam4j.version>1.9.1</libpam4j.version>
+        <log4j.version>1.2.17</log4j.version>
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
-        <metrics-version>3.1.2</metrics-version>
+        <maven-enforcer-plugin.version>3.0.0-M1</maven-enforcer-plugin.version>
+        <metrics.version>3.1.2</metrics.version>
+        <nimbus-jose-jwt.version>4.41.2</nimbus-jose-jwt.version>
         <pac4j.version>2.1.0</pac4j.version>
+        <rest-assured.version>3.0.3</rest-assured.version>
         <shiro.version>1.2.6</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
+        <slf4j.version>1.6.6</slf4j.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
+        <velocity.version>1.7</velocity.version>
+        <xmltool.version>3.3</xmltool.version>
+        <xml-matchers.version>0.10</xml-matchers.version>
+        <zip4j.version>1.3.2</zip4j.version>
+        <zookeeper.version>3.4.10</zookeeper.version>
     </properties>
     
     <profiles>
@@ -283,7 +317,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.3</version>
+                <version>${buildnumber-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>validate</phase>
@@ -303,7 +337,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <!-- If you are looking to change source/target,
                      change the maven.compiler.{source,target} property -->
             </plugin>
@@ -341,7 +375,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M1</version>
+                <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -847,7 +881,7 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>4.41.2</version>
+                <version>${nimbus-jose-jwt.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.bouncycastle</groupId>
@@ -858,118 +892,118 @@
             <dependency>
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
-                <version>2.3</version>
+                <version>${json-smart.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-http</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-util</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlets</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
-                <version>3.1.0</version>
+                <version>${javax.servlet-api.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>
-                <version>2.5.2</version>
+                <version>${eclipselink.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.thetransactioncompany</groupId>
                 <artifactId>cors-filter</artifactId>
-                <version>2.4</version>
+                <version>${cors-filter.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-groovysh</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-json</artifactId>
-                <version>${groovy-version}</version>
+                <version>${groovy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
                 <artifactId>jansi</artifactId>
-                <version>1.16</version>
+                <version>${jansi.version}</version>
             </dependency>
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
-                <version>2.13</version>
+                <version>${jline.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.5.4</version>
+                <version>${httpclient.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
-                <version>4.4.6</version>
+                <version>${httpcore.version}</version>
             </dependency>
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.9.2</version>
+                <version>${joda-time.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
                 <exclusions>
                     <!--
                     <exclusion>
@@ -1112,7 +1146,7 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-hdfs-client</artifactId>
-                <version>${hadoop-version}</version>
+                <version>${hadoop.version}</version>
             </dependency>
 
             <dependency>
@@ -1228,22 +1262,22 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.6.6</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.6.6</version>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
-                <version>1.2.17</version>
+                <version>${log4j.version}</version>
             </dependency>
 
             <dependency>
@@ -1272,41 +1306,42 @@
             <dependency>
                 <groupId>org.abstractj</groupId>
                 <artifactId>libpam4j</artifactId>
-                <version>1.9.1</version>
+                <version>${libpam4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>4.1.0</version>
+                <version>${jna.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
-                <version>3.4.10</version>
+                <version>${zookeeper.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-framework</artifactId>
-                <version>4.0.0</version>
+                <version>${curator.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-recipes</artifactId>
-                <version>4.0.0</version>
+                <version>${curator.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-client</artifactId>
-                <version>4.0.0</version>
+                <version>${curator.version}</version>
             </dependency>
 
             <!-- Html pull parser.  EPLv1 license -->
             <dependency>
                 <groupId>net.htmlparser.jericho</groupId>
                 <artifactId>jericho-html</artifactId>
-                <version>3.2</version>
+                <version>${jericho-html.version}</version>
             </dependency>
 
             <dependency>
@@ -1322,107 +1357,107 @@
             <dependency>
                 <groupId>net.lingala.zip4j</groupId>
                 <artifactId>zip4j</artifactId>
-                <version>1.3.2</version>
+                <version>${zip4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-io</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-annotations</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jsp</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jstl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <!-- Websocket support -->
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-api</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-server</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-servlet</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
-                <version>1.2</version>
+                <version>${javax.annotation-api.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.ws.rs</groupId>
                 <artifactId>javax.ws.rs-api</artifactId>
-                <version>2.0</version>
+                <version>${javax.ws.rs-api.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>javax.websocket</groupId>
                 <artifactId>javax.websocket-api</artifactId>
-                <version>${javax-websocket-version}</version>
+                <version>${javax.websocket-api.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-server-impl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-client-impl</artifactId>
-                <version>${jetty-version}</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-json</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-servlets</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-httpclient</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-graphite</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jetty9</artifactId>
-                <version>${metrics-version}</version>
+                <version>${metrics.version}</version>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
@@ -1439,19 +1474,19 @@
             <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-core</artifactId>
-                <version>1.3</version>
+                <version>${hamcrest.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-library</artifactId>
-                <version>1.3</version>
+                <version>${hamcrest.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>uk.co.datumedge</groupId>
                 <artifactId>hamcrest-json</artifactId>
-                <version>0.2</version>
+                <version>${hamcrest-json.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1459,66 +1494,66 @@
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
-                <version>3.0.3</version>
+                <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>json-path</artifactId>
-                <version>3.0.3</version>
+                <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
+                <version>${junit.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.easymock</groupId>
                 <artifactId>easymock</artifactId>
-                <version>3.5</version>
+                <version>${easymock.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity</artifactId>
-                <version>1.7</version>
+                <version>${velocity.version}</version>
                 <!--scope>test</scope-->
             </dependency>
 
             <dependency>
                 <groupId>com.mycila.xmltool</groupId>
                 <artifactId>xmltool</artifactId>
-                <version>3.3</version>
+                <version>${xmltool.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.xmlmatchers</groupId>
                 <artifactId>xml-matchers</artifactId>
-                <version>0.10</version>
+                <version>${xml-matchers.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
-                <version>2.4.0</version>
+                <version>${json-path.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path-assert</artifactId>
-                <version>2.4.0</version>
+                <version>${json-path.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
-                <version>2.12.0</version>
+                <version>${curator-test.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
