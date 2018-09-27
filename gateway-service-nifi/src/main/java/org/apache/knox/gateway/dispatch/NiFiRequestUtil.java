@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -45,7 +43,7 @@ class NiFiRequestUtil {
     final Header originalXForwardedContextHeader = outboundRequest.getFirstHeader(NiFiHeaders.X_FORWARDED_CONTEXT);
     if (originalXForwardedContextHeader != null) {
       String xForwardedContextHeaderValue = originalXForwardedContextHeader.getValue();
-      if (!Strings.isNullOrEmpty(xForwardedContextHeaderValue)) {
+      if (xForwardedContextHeaderValue != null && !xForwardedContextHeaderValue.isEmpty()) {
         // Inspect the inbound request and outbound request to determine the additional context path from the rewrite
         // rules that needs to be added to the X-Forwarded-Context header to allow proper proxying to NiFi.
         //
@@ -75,7 +73,11 @@ class NiFiRequestUtil {
     // as empty angle brackets "<>".
     final Subject subject = SubjectUtils.getCurrentSubject();
     String effectivePrincipalName = SubjectUtils.getEffectivePrincipalName(subject);
-    outboundRequest.setHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN, Objects.firstNonNull(inboundRequest.getHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN), "") +
+    String proxiedEntitesChainHeader = inboundRequest.getHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN);
+    if(proxiedEntitesChainHeader == null) {
+      proxiedEntitesChainHeader = "";
+    }
+    outboundRequest.setHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN, proxiedEntitesChainHeader +
         String.format(Locale.ROOT, "<%s>", effectivePrincipalName.equalsIgnoreCase("anonymous") ? "" : effectivePrincipalName));
 
     // Make sure headers named "Cookie" are removed from the request to NiFi, since NiFi does not use cookies.
