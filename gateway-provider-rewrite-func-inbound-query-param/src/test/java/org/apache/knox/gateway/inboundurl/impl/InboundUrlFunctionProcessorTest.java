@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.inboundurl.impl;
 
-import com.google.common.collect.Lists;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteProcessor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
@@ -126,7 +125,7 @@ public class InboundUrlFunctionProcessorTest {
     EasyMock.expect( environment.resolve( "cluster.name" ) ).andReturn(Collections.singletonList("test-cluster-name")).anyTimes();
 
     Resolver resolver = EasyMock.createNiceMock( Resolver.class );
-    EasyMock.expect( resolver.resolve( "query.param.host" ) ).andReturn( Lists.newArrayList( "http://foo:50075" ) ).anyTimes();
+    EasyMock.expect( resolver.resolve( "query.param.host" ) ).andReturn( Collections.singletonList( "http://foo:50075" ) ).anyTimes();
     EasyMock.replay( gatewayServices, environment, resolver );
 
     UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
