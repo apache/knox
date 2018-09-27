@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.services.metrics.impl.instr;
 
-import com.google.common.base.Strings;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +38,7 @@ public class InstrUtils {
      */
     public static String getResourcePath(String fullPath) {
         String resourcePath = "";
-        if (!Strings.isNullOrEmpty(fullPath)) {
+        if (fullPath != null && !fullPath.isEmpty()) {
             Matcher m = p.matcher(fullPath);
             if (m.find()) {
                 resourcePath = m.group(0);
