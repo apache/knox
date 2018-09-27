@@ -39,6 +39,15 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-util-urltemplate</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
