@@ -33,7 +33,7 @@
         </route>
         <route path="/webhdfs/data/v1/**?**">
             <rewrite apply="WEBHDFS/webhdfs/inbound/datanode" to="request.url"/>
-            <dispatch contributor-name="http-client" />
+            <dispatch contributor-name="http-client" ha-classname="org.apache.knox.gateway.dispatch.DefaultDispatch" />
         </route>
     </routes>
     <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
