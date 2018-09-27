@@ -17,13 +17,13 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
-import com.google.common.collect.Lists;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.URLManager;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -66,7 +66,7 @@ public class DefaultURLManager implements URLManager {
 
   @Override
   public synchronized List<String> getURLs() {
-    return Lists.newArrayList(urls.iterator());
+    return new ArrayList<>(urls);
   }
 
   @Override

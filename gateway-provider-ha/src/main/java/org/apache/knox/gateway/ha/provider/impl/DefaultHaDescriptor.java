@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
-import com.google.common.collect.Lists;
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 
@@ -49,12 +48,12 @@ public class DefaultHaDescriptor implements HaDescriptor {
 
    @Override
    public List<HaServiceConfig> getServiceConfigs() {
-      return Lists.newArrayList(serviceConfigs.values());
+      return new ArrayList<>(serviceConfigs.values());
    }
 
    @Override
    public List<String> getServiceNames() {
-      return Lists.newArrayList(serviceConfigs.keySet());
+      return new ArrayList<>(serviceConfigs.keySet());
    }
 
    @Override

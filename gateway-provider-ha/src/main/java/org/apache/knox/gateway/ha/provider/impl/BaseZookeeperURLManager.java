@@ -42,8 +42,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
-import com.google.common.collect.Lists;
-
 /**
  * Base implementation of URLManager intended for query of Zookeeper active hosts. In
  * the event of a failure via markFailed, Zookeeper is queried again for active
@@ -101,7 +99,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 
   @Override
   public synchronized List<String> getURLs() {
-    return Lists.newArrayList(this.urls.iterator());
+    return new ArrayList<>(this.urls);
   }
 
   @Override
