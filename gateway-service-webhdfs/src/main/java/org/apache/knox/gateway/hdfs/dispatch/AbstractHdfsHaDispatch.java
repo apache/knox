@@ -41,12 +41,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
 
   private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
-  private static final String RETRY_COUNTER_ATTRIBUTE = "dispatch.ha.retry.counter";
   private static final WebHdfsMessages LOG = MessagesFactory.get(WebHdfsMessages.class);
   private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
   private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
-  private int maxRetryAttempts = HaServiceConfigConstants.DEFAULT_MAX_RETRY_ATTEMPTS;
-  private int retrySleep = HaServiceConfigConstants.DEFAULT_RETRY_SLEEP;
   private HaProvider haProvider;
 
   public AbstractHdfsHaDispatch() throws ServletException {
@@ -60,8 +57,6 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
        HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getResourceRole());
        maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
        failoverSleep = serviceConfig.getFailoverSleep();
-       maxRetryAttempts = serviceConfig.getMaxRetryAttempts();
-       retrySleep = serviceConfig.getRetrySleep();
      }
    }
 
@@ -87,7 +82,7 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
       } catch (SafeModeException e) {
          LOG.errorReceivedFromSafeModeNode(e);
-         retryRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
       } catch (IOException e) {
          LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
          failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
@@ -138,32 +133,6 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
          LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getResourceRole());
-         if (inboundResponse != null) {
-            writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
-         } else {
-            throw new IOException(exception);
-         }
-      }
-   }
-
-  private void retryRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
-      LOG.retryingRequest(outboundRequest.getURI().toString());
-      AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(RETRY_COUNTER_ATTRIBUTE);
-      if (counter == null) {
-         counter = new AtomicInteger(0);
-      }
-      inboundRequest.setAttribute(RETRY_COUNTER_ATTRIBUTE, counter);
-      if (counter.incrementAndGet() <= maxRetryAttempts) {
-         if (retrySleep > 0) {
-            try {
-               Thread.sleep(retrySleep);
-            } catch (InterruptedException e) {
-               LOG.retrySleepFailed(getResourceRole(), e);
-            }
-         }
-         executeRequest(outboundRequest, inboundRequest, outboundResponse);
-      } else {
-         LOG.maxRetryAttemptsReached(maxRetryAttempts, getResourceRole(), outboundRequest.getURI().toString());
          if (inboundResponse != null) {
             writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
          } else {
