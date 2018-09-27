@@ -40,6 +40,23 @@
         <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
     </scm>
 
+    <mailingLists>
+        <mailingList>
+            <name>Apache Knox User List</name>
+            <subscribe>user-subscribe@knox.apache.org</subscribe>
+            <unsubscribe>user-unsubscribe@knox.apache.org</unsubscribe>
+            <post>user@knox.apache.org</post>
+            <archive>https://mail-archives.apache.org/mod_mbox/knox-user/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Apache Knox Development List</name>
+            <subscribe>dev-subscribe@knox.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@knox.apache.org</unsubscribe>
+            <post>dev@knox.apache.org</post>
+            <archive>https://mail-archives.apache.org/mod_mbox/knox-dev/</archive>
+        </mailingList>
+    </mailingLists>
+
     <modules>
         <module>gateway-test-utils</module>
         <module>gateway-util-common</module>
