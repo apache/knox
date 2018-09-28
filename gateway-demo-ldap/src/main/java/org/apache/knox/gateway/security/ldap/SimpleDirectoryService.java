@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.security.ldap;
 
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.server.core.DefaultDirectoryService;
 
 public class SimpleDirectoryService extends DefaultDirectoryService {
@@ -26,7 +27,7 @@ public class SimpleDirectoryService extends DefaultDirectoryService {
   }
 
   @Override
-  protected void showSecurityWarnings() throws Exception {
+  protected void showSecurityWarnings() throws LdapException {
     // NoOp - This prevents confusing warnings from being output.
   }
 

@@ -17,11 +17,11 @@
  */
 package org.apache.knox.gateway.security.ldap;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.directory.api.ldap.model.entry.DefaultModification;
 import org.apache.directory.api.ldap.model.entry.ModificationOperation;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.util.FileUtils;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.partition.Partition;
@@ -46,8 +46,6 @@ public class SimpleLdapDirectoryServer {
 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleLdapDirectoryServer.class);
 
-  private DirectoryServiceFactory factory;
-
   private DirectoryService service;
 
   private LdapServer server;
@@ -57,7 +55,7 @@ public class SimpleLdapDirectoryServer {
       throw new FileNotFoundException( usersLdif.getAbsolutePath() );
     }
 
-    DirectoryService directoryService = null;
+    DirectoryService directoryService;
     try {
       // creating the instance here so that
       // we we can set some properties like accesscontrol, anon access
@@ -71,13 +69,13 @@ public class SimpleLdapDirectoryServer {
       throw new RuntimeException( e );
     }
 
-    PartitionFactory partitionFactory = null;
+    PartitionFactory partitionFactory;
     try {
       String typeName = System.getProperty( "apacheds.partition.factory" );
 
       if ( typeName != null ) {
-        Class<? extends PartitionFactory> type = ( Class<? extends PartitionFactory> ) Class.forName( typeName );
-        partitionFactory = type.newInstance();
+        Class<? extends PartitionFactory> type = Class.forName( typeName ).asSubclass(PartitionFactory.class);
+        partitionFactory = type.getDeclaredConstructor().newInstance();
       } else {
         partitionFactory = new JdbmPartitionFactory();
       }
@@ -86,7 +84,7 @@ public class SimpleLdapDirectoryServer {
       throw new RuntimeException( e );
     }
 
-    factory = new DefaultDirectoryServiceFactory( directoryService, partitionFactory );
+    DirectoryServiceFactory factory = new DefaultDirectoryServiceFactory(directoryService, partitionFactory);
     factory.init( UUID.randomUUID().toString() );
     service = factory.getDirectoryService();
 

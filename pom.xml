@@ -140,7 +140,8 @@
         <gateway-group>org.apache.knox</gateway-group>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds-version>2.0.0-M16</apacheds-version>
+        <apacheds.version>2.0.0-M24</apacheds.version>
+        <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
@@ -1234,12 +1235,12 @@
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-jdbm</artifactId>
-                <version>2.0.0-M5</version>
+                <version>${apacheds-jdbm.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-all</artifactId>
-                <version>${apacheds-version}</version>
+                <version>${apacheds.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>ldapsdk</groupId>
