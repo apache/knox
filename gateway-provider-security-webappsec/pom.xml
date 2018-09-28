@@ -31,10 +31,6 @@
     <dependencies>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
         <dependency>
@@ -45,11 +41,6 @@
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
             <artifactId>cors-filter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
         <dependency>

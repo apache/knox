@@ -31,10 +31,6 @@
     <dependencies>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-util-common</artifactId>
         </dependency>
         <dependency>
@@ -49,20 +45,6 @@
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-provider-jersey</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

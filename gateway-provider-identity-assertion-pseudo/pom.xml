@@ -30,35 +30,18 @@
 
     <dependencies>
         <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-identity-assertion-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-provider-rewrite</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-identity-assertion-common</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-            <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
+            <groupId>${gateway-group}</groupId>
+            <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
 
         <dependency>

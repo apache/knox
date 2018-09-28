@@ -31,19 +31,11 @@
     <dependencies>
         <dependency>
             <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
             <artifactId>gateway-server</artifactId>
         </dependency>
         <dependency>
             <groupId>${gateway-group}</groupId>
             <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${gateway-group}</groupId>
-            <artifactId>gateway-util-common</artifactId>
         </dependency>
 
         <dependency>
@@ -52,16 +44,7 @@
         </dependency>
         <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-            <artifactId>shrinkwrap-descriptors-api-base</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
             <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.shiro</groupId>
-            <artifactId>shiro-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
@@ -71,10 +54,6 @@
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-ehcache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache-core</artifactId>
         </dependency>
 
         <dependency>
@@ -88,11 +67,6 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -101,12 +75,6 @@
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
             <scope>test</scope>
         </dependency>
 

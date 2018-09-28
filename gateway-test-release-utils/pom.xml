@@ -32,18 +32,6 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-demo-ldap</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-release</artifactId>
             <version>${gateway-version}</version>
             <exclusions>
@@ -110,13 +98,5 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
     </dependencies>
 </project>
