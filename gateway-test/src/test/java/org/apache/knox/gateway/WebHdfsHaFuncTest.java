@@ -361,15 +361,14 @@ public class WebHdfsHaFuncTest {
             .queryParam("destination", "/user/hdfs/foo.txt")
             .then()
             .log().ifError()
-            .statusCode(HttpStatus.SC_OK)
-            .body("boolean", is(true))
+            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
             .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
       masterServer.isEmpty();
       LOG_EXIT();
    }
 
    @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-   public void testServerInSafeModeRetriableException() throws IOException {
+   public void testServerInSafeModeFailover() throws IOException {
       LOG_ENTER();
       String username = "hdfs";
       String password = "hdfs-password";
@@ -382,6 +381,15 @@ public class WebHdfsHaFuncTest {
             .respond()
             .status(HttpStatus.SC_FORBIDDEN)
             .content(driver.getResourceBytes("webhdfs-mkdirs-safemode.json"))
+            .contentType("application/json");
+      standbyServer.expect()
+            .method("POST")
+            .pathInfo("/webhdfs/v1/user/hdfs/new")
+            .queryParam("op", "MKDIRS")
+            .queryParam("user.name", username)
+            .respond()
+            .status(HttpStatus.SC_FORBIDDEN)
+            .content(driver.getResourceBytes("webhdfs-liststatus-standby.json"))
             .contentType("application/json");
       masterServer.expect()
             .method("POST")
@@ -405,62 +413,4 @@ public class WebHdfsHaFuncTest {
       LOG_EXIT();
    }
 
-   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-   public void testServerInSafeModeRetryLimit() throws IOException {
-      LOG_ENTER();
-      String username = "hdfs";
-      String password = "hdfs-password";
-      //master is in safe mode
-      masterServer.expect()
-            .method("POST")
-            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
-            .queryParam("op", "RENAME")
-            .queryParam("destination", "/user/hdfs/foo.txt")
-            .queryParam("user.name", username)
-            .respond()
-            .status(HttpStatus.SC_FORBIDDEN)
-            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
-            .contentType("application/json");
-      masterServer.expect()
-            .method("POST")
-            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
-            .queryParam("op", "RENAME")
-            .queryParam("destination", "/user/hdfs/foo.txt")
-            .queryParam("user.name", username)
-            .respond()
-            .status(HttpStatus.SC_FORBIDDEN)
-            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
-            .contentType("application/json");
-      masterServer.expect()
-            .method("POST")
-            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
-            .queryParam("op", "RENAME")
-            .queryParam("destination", "/user/hdfs/foo.txt")
-            .queryParam("user.name", username)
-            .respond()
-            .status(HttpStatus.SC_FORBIDDEN)
-            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
-            .contentType("application/json");
-      masterServer.expect()
-            .method("POST")
-            .pathInfo("/webhdfs/v1/user/hdfs/foo.txt")
-            .queryParam("op", "RENAME")
-            .queryParam("destination", "/user/hdfs/foo.txt")
-            .queryParam("user.name", username)
-            .respond()
-            .status(HttpStatus.SC_FORBIDDEN)
-            .content(driver.getResourceBytes("webhdfs-rename-safemode.json"))
-            .contentType("application/json");
-      given()
-            .auth().preemptive().basic(username, password)
-            .header("X-XSRF-Header", "jksdhfkhdsf")
-            .queryParam("op", "RENAME")
-            .queryParam("destination", "/user/hdfs/foo.txt")
-            .then()
-//            .log().ifError()
-            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-            .when().post(driver.getUrl("WEBHDFS") + "/v1/user/hdfs/foo.txt");
-      masterServer.isEmpty();
-      LOG_EXIT();
-   }
 }
