@@ -171,24 +171,11 @@
                     <groupId>org.apache.directory.server</groupId>
                     <artifactId>apacheds-all</artifactId>
                 </exclusion>
-
-                <exclusion>
-                    <groupId>commons-configuration</groupId>
-                    <artifactId>commons-configuration</artifactId>
-                </exclusion>
-
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
-
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.10</version>
         </dependency>
 
         <dependency>
