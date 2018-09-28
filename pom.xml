@@ -142,7 +142,6 @@
         <apacheds-version>2.0.0-M16</apacheds-version>
         <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils-version>1.9.3</commons-beanutils-version>
-        <failsafe-version>2.19.1</failsafe-version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy-version>2.4.8</groovy-version>
@@ -156,7 +155,6 @@
         <shiro.version>1.2.6</shiro.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
-        <surefire-version>2.16</surefire-version>
     </properties>
     
     <profiles>
@@ -316,7 +314,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-version}</version>
                 <configuration>
                     <excludedGroups>
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
@@ -329,7 +326,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${failsafe-version}</version>
                 <configuration>
                     <groups>${failsafe.group}</groups>
                 </configuration>
@@ -504,16 +500,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.1</version>
-                <!--
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                -->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
