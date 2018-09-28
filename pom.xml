@@ -153,6 +153,8 @@
         <metrics-version>3.1.2</metrics-version>
         <mockito-version>1.10.19</mockito-version>
         <shiro.version>1.2.6</shiro.version>
+        <shrinkwrap.version>1.2.6</shrinkwrap.version>
+        <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
     </properties>
@@ -1155,22 +1157,22 @@
             <dependency>
                 <groupId>org.jboss.shrinkwrap</groupId>
                 <artifactId>shrinkwrap-api</artifactId>
-                <version>1.2.3</version>
+                <version>${shrinkwrap.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.shrinkwrap</groupId>
                 <artifactId>shrinkwrap-impl-base</artifactId>
-                <version>1.2.3</version>
+                <version>${shrinkwrap.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.shrinkwrap.descriptors</groupId>
                 <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
-                <version>2.0.0-alpha-8</version>
+                <version>${shrinkwrap.descriptors.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.shrinkwrap.descriptors</groupId>
                 <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
-                <version>2.0.0-alpha-8</version>
+                <version>${shrinkwrap.descriptors.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
