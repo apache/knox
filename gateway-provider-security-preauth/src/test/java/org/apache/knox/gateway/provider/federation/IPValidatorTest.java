@@ -19,13 +19,11 @@ package org.apache.knox.gateway.provider.federation;
 
 import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthValidationException;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class IPValidatorTest extends org.junit.Assert {
 
@@ -39,20 +37,30 @@ public class IPValidatorTest extends org.junit.Assert {
   @Test
   public void testIPAddressPositive() throws PreAuthValidationException {
     IPValidator ipv = new IPValidator();
-    final HttpServletRequest request = mock(HttpServletRequest.class);
-    when(request.getRemoteAddr()).thenReturn("10.1.23.42");
-    final FilterConfig filterConfig = mock(FilterConfig.class);
-    when(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).thenReturn("5.4.3.2,10.1.23.42");
+    
+    final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);
+    EasyMock.expect(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).andReturn("5.4.3.2,10.1.23.42");
+    EasyMock.replay(filterConfig);
+
+    final HttpServletRequest request = EasyMock.createMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRemoteAddr()).andReturn("10.1.23.42");
+    EasyMock.replay(request);
+
     assertTrue(ipv.validate(request, filterConfig));
   }
 
   @Test
   public void testIPAddressNegative() throws PreAuthValidationException {
     IPValidator ipv = new IPValidator();
-    final HttpServletRequest request = mock(HttpServletRequest.class);
-    when(request.getRemoteAddr()).thenReturn("10.1.23.42");
-    final FilterConfig filterConfig = mock(FilterConfig.class);
-    when(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).thenReturn("10.22.34.56");
+
+    final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);
+    EasyMock.expect(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).andReturn("10.22.34.56");
+    EasyMock.replay(filterConfig);
+
+    final HttpServletRequest request = EasyMock.createMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRemoteAddr()).andReturn("10.1.23.42");
+    EasyMock.replay(request);
+
     assertFalse(ipv.validate(request, filterConfig));
   }
 

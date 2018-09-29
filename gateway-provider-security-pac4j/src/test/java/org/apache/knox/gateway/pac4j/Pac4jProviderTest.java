@@ -26,6 +26,7 @@ import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
+import org.easymock.EasyMock;
 import org.junit.Test;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.context.Pac4jConstants;
@@ -42,8 +43,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * This class simulates a full authentication process using pac4j.
@@ -62,33 +61,40 @@ public class Pac4jProviderTest {
 
     @Test
     public void test() throws Exception {
-        final AliasService aliasService = mock(AliasService.class);
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true)).thenReturn(PAC4J_PASSWORD.toCharArray());
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD)).thenReturn(PAC4J_PASSWORD.toCharArray());
+        final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.replay(aliasService);
 
         final DefaultCryptoService cryptoService = new DefaultCryptoService();
         cryptoService.setAliasService(aliasService);
 
-        final GatewayServices services = mock(GatewayServices.class);
-        when(services.getService(GatewayServices.CRYPTO_SERVICE)).thenReturn(cryptoService);
-        when(services.getService(GatewayServices.ALIAS_SERVICE)).thenReturn(aliasService);
+        final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.replay(services);
 
-        final ServletContext context = mock(ServletContext.class);
-        when(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).thenReturn(services);
-        when(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).thenReturn(CLUSTER_NAME);
+        final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
+        EasyMock.replay(context);
 
-        final FilterConfig config = mock(FilterConfig.class);
-        when(config.getServletContext()).thenReturn(context);
-        when(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).thenReturn(PAC4J_CALLBACK_URL);
-        when(config.getInitParameter("clientName")).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+        EasyMock.expect(config.getServletContext()).andReturn(context);
+        EasyMock.expect(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(PAC4J_CALLBACK_URL);
+        EasyMock.expect(config.getInitParameter("clientName")).andReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        EasyMock.replay(config);
 
         final Pac4jDispatcherFilter dispatcher = new Pac4jDispatcherFilter();
         dispatcher.init(config);
         final Pac4jIdentityAdapter adapter = new Pac4jIdentityAdapter();
         adapter.init(config);
-        Pac4jIdentityAdapter.setAuditor(mock(Auditor.class));
-        final AuditService auditService = mock(AuditService.class);
-        when(auditService.getContext()).thenReturn(mock(AuditContext.class));
+        Pac4jIdentityAdapter.setAuditor(EasyMock.createNiceMock(Auditor.class));
+        final AuditService auditService = EasyMock.createNiceMock(AuditService.class);
+        EasyMock.expect(auditService.getContext()).andReturn(EasyMock.createNiceMock(AuditContext.class));
+        EasyMock.replay(auditService);
         Pac4jIdentityAdapter.setAuditService(auditService);
 
         // step 1: call the KnoxSSO service with an original url pointing to an Hadoop service (redirected by the SSOCookieProvider)
@@ -97,7 +103,7 @@ public class Pac4jProviderTest {
         request.setCookies(new Cookie[0]);
         request.setServerName(LOCALHOST);
         MockHttpServletResponse response = new MockHttpServletResponse();
-        FilterChain filterChain = mock(FilterChain.class);
+        FilterChain filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the idp topology
         assertEquals(302, response.getStatus());
@@ -117,7 +123,7 @@ public class Pac4jProviderTest {
         request.addHeader("Authorization", "Basic amxlbGV1OmpsZWxldQ==");
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the original url
         assertEquals(302, response.getStatus());
@@ -135,11 +141,11 @@ public class Pac4jProviderTest {
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(cookies.toArray(new Cookie[cookies.size()]));
+        request.setCookies(cookies.toArray(new Cookie[0]));
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
@@ -154,34 +160,41 @@ public class Pac4jProviderTest {
 
     @Test
     public void testValidIdAttribute() throws Exception {
-        final AliasService aliasService = mock(AliasService.class);
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true)).thenReturn(PAC4J_PASSWORD.toCharArray());
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD)).thenReturn(PAC4J_PASSWORD.toCharArray());
+        final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.replay(aliasService);
 
         final DefaultCryptoService cryptoService = new DefaultCryptoService();
         cryptoService.setAliasService(aliasService);
 
-        final GatewayServices services = mock(GatewayServices.class);
-        when(services.getService(GatewayServices.CRYPTO_SERVICE)).thenReturn(cryptoService);
-        when(services.getService(GatewayServices.ALIAS_SERVICE)).thenReturn(aliasService);
+        final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.replay(services);
 
-        final ServletContext context = mock(ServletContext.class);
-        when(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).thenReturn(services);
-        when(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).thenReturn(CLUSTER_NAME);
+        final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
+        EasyMock.replay(context);
 
-        final FilterConfig config = mock(FilterConfig.class);
-        when(config.getServletContext()).thenReturn(context);
-        when(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).thenReturn(PAC4J_CALLBACK_URL);
-        when(config.getInitParameter("clientName")).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
-        when(config.getInitParameter(Pac4jIdentityAdapter.PAC4J_ID_ATTRIBUTE)).thenReturn("username");
+        final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+        EasyMock.expect(config.getServletContext()).andReturn(context);
+        EasyMock.expect(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(PAC4J_CALLBACK_URL);
+        EasyMock.expect(config.getInitParameter("clientName")).andReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        EasyMock.expect(config.getInitParameter(Pac4jIdentityAdapter.PAC4J_ID_ATTRIBUTE)).andReturn("username");
+        EasyMock.replay(config);
 
         final Pac4jDispatcherFilter dispatcher = new Pac4jDispatcherFilter();
         dispatcher.init(config);
         final Pac4jIdentityAdapter adapter = new Pac4jIdentityAdapter();
         adapter.init(config);
-        Pac4jIdentityAdapter.setAuditor(mock(Auditor.class));
-        final AuditService auditService = mock(AuditService.class);
-        when(auditService.getContext()).thenReturn(mock(AuditContext.class));
+        Pac4jIdentityAdapter.setAuditor(EasyMock.createNiceMock(Auditor.class));
+        final AuditService auditService = EasyMock.createNiceMock(AuditService.class);
+        EasyMock.expect(auditService.getContext()).andReturn(EasyMock.createNiceMock(AuditContext.class));
+        EasyMock.replay(auditService);
         Pac4jIdentityAdapter.setAuditService(auditService);
 
         // step 1: call the KnoxSSO service with an original url pointing to an Hadoop service (redirected by the SSOCookieProvider)
@@ -190,7 +203,7 @@ public class Pac4jProviderTest {
         request.setCookies(new Cookie[0]);
         request.setServerName(LOCALHOST);
         MockHttpServletResponse response = new MockHttpServletResponse();
-        FilterChain filterChain = mock(FilterChain.class);
+        FilterChain filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the idp topology
         assertEquals(302, response.getStatus());
@@ -210,7 +223,7 @@ public class Pac4jProviderTest {
         request.addHeader("Authorization", "Basic amxlbGV1OmpsZWxldQ==");
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the original url
         assertEquals(302, response.getStatus());
@@ -228,11 +241,11 @@ public class Pac4jProviderTest {
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(cookies.toArray(new Cookie[cookies.size()]));
+        request.setCookies(cookies.toArray(new Cookie[0]));
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
@@ -246,34 +259,41 @@ public class Pac4jProviderTest {
     }
     @Test
     public void testInvalidIdAttribute() throws Exception {
-        final AliasService aliasService = mock(AliasService.class);
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true)).thenReturn(PAC4J_PASSWORD.toCharArray());
-        when(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD)).thenReturn(PAC4J_PASSWORD.toCharArray());
+        final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD))
+            .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.replay(aliasService);
 
         final DefaultCryptoService cryptoService = new DefaultCryptoService();
         cryptoService.setAliasService(aliasService);
 
-        final GatewayServices services = mock(GatewayServices.class);
-        when(services.getService(GatewayServices.CRYPTO_SERVICE)).thenReturn(cryptoService);
-        when(services.getService(GatewayServices.ALIAS_SERVICE)).thenReturn(aliasService);
+        final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.replay(services);
 
-        final ServletContext context = mock(ServletContext.class);
-        when(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).thenReturn(services);
-        when(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).thenReturn(CLUSTER_NAME);
+        final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
+        EasyMock.replay(context);
 
-        final FilterConfig config = mock(FilterConfig.class);
-        when(config.getServletContext()).thenReturn(context);
-        when(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).thenReturn(PAC4J_CALLBACK_URL);
-        when(config.getInitParameter("clientName")).thenReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
-        when(config.getInitParameter(Pac4jIdentityAdapter.PAC4J_ID_ATTRIBUTE)).thenReturn("larry");
+        final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+        EasyMock.expect(config.getServletContext()).andReturn(context);
+        EasyMock.expect(config.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(PAC4J_CALLBACK_URL);
+        EasyMock.expect(config.getInitParameter("clientName")).andReturn(Pac4jDispatcherFilter.TEST_BASIC_AUTH);
+        EasyMock.expect(config.getInitParameter(Pac4jIdentityAdapter.PAC4J_ID_ATTRIBUTE)).andReturn("larry");
+        EasyMock.replay(config);
 
         final Pac4jDispatcherFilter dispatcher = new Pac4jDispatcherFilter();
         dispatcher.init(config);
         final Pac4jIdentityAdapter adapter = new Pac4jIdentityAdapter();
         adapter.init(config);
-        Pac4jIdentityAdapter.setAuditor(mock(Auditor.class));
-        final AuditService auditService = mock(AuditService.class);
-        when(auditService.getContext()).thenReturn(mock(AuditContext.class));
+        Pac4jIdentityAdapter.setAuditor(EasyMock.createNiceMock(Auditor.class));
+        final AuditService auditService = EasyMock.createNiceMock(AuditService.class);
+        EasyMock.expect(auditService.getContext()).andReturn(EasyMock.createNiceMock(AuditContext.class));
+        EasyMock.replay(auditService);
         Pac4jIdentityAdapter.setAuditService(auditService);
 
         // step 1: call the KnoxSSO service with an original url pointing to an Hadoop service (redirected by the SSOCookieProvider)
@@ -282,7 +302,7 @@ public class Pac4jProviderTest {
         request.setCookies(new Cookie[0]);
         request.setServerName(LOCALHOST);
         MockHttpServletResponse response = new MockHttpServletResponse();
-        FilterChain filterChain = mock(FilterChain.class);
+        FilterChain filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the idp topology
         assertEquals(302, response.getStatus());
@@ -302,7 +322,7 @@ public class Pac4jProviderTest {
         request.addHeader("Authorization", "Basic amxlbGV1OmpsZWxldQ==");
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the original url
         assertEquals(302, response.getStatus());
@@ -320,11 +340,11 @@ public class Pac4jProviderTest {
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(cookies.toArray(new Cookie[cookies.size()]));
+        request.setCookies(cookies.toArray(new Cookie[0]));
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
-        filterChain = mock(FilterChain.class);
+        filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);

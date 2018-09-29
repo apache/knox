@@ -17,14 +17,14 @@
  */
 package org.apache.knox.gateway.pac4j;
 
+import org.easymock.EasyMock;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.mockito.Mockito.mock;
 
 public class MockHttpServletRequest extends HttpServletRequestWrapper {
 
@@ -36,7 +36,13 @@ public class MockHttpServletRequest extends HttpServletRequestWrapper {
     private Map<String, Object> attributes = new HashMap<>();
 
     public MockHttpServletRequest() {
-        super(mock(HttpServletRequest.class));
+        super(setupMockRequest());
+    }
+
+    private static HttpServletRequest setupMockRequest() {
+        HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.replay(request);
+        return request;
     }
 
     @Override

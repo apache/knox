@@ -18,6 +18,8 @@
 
 package org.apache.knox.gateway.pac4j;
 
+import org.easymock.EasyMock;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -27,8 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.mock;
-
 public class MockHttpServletResponse extends HttpServletResponseWrapper {
 
     private List<Cookie> cookies = new ArrayList<>();
@@ -37,7 +37,13 @@ public class MockHttpServletResponse extends HttpServletResponseWrapper {
     private Map<String, String> headers = new HashMap<>();
 
     public MockHttpServletResponse() {
-        super(mock(HttpServletResponse.class));
+        super(setupMockResponse());
+    }
+
+    private static HttpServletResponse setupMockResponse() {
+        HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        EasyMock.replay(response);
+        return response;
     }
 
     @Override

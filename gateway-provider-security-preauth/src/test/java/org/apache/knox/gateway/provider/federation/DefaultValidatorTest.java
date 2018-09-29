@@ -18,9 +18,8 @@
 package org.apache.knox.gateway.provider.federation;
 
 import org.apache.knox.gateway.preauth.filter.DefaultValidator;
+import org.easymock.EasyMock;
 import org.junit.Test;
-
-import static org.mockito.Mockito.mock;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -28,8 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 public class DefaultValidatorTest extends org.junit.Assert {
   @Test
   public void testDefault() throws Exception {
-    final FilterConfig filterConfig = mock(FilterConfig.class);
-    final HttpServletRequest request = mock(HttpServletRequest.class);
+    final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);
+    final HttpServletRequest request = EasyMock.createMock(HttpServletRequest.class);
     DefaultValidator dv = new DefaultValidator();
     assertTrue(dv.validate(request, filterConfig));
   }
