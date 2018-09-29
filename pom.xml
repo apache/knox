@@ -124,6 +124,7 @@
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
+        <module>build-tools</module>
     </modules>
 
     <properties>
@@ -374,7 +375,7 @@
                 <configuration>
                     <threshold>High</threshold>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>${session.executionRootDirectory}/src/spotbugs-filter.xml</excludeFilterFile>
+                    <excludeFilterFile>build-tools/spotbugs-filter.xml</excludeFilterFile>
                     <plugins>
                         <plugin>
                             <groupId>com.h3xstream.findsecbugs</groupId>
@@ -391,6 +392,11 @@
                     </execution>
                 </executions>
                 <dependencies>
+                    <dependency>
+                        <groupId>org.apache.knox</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
                     <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
                     <dependency>
                         <groupId>com.github.spotbugs</groupId>
@@ -436,8 +442,8 @@
                         <id>validate</id>
                         <phase>validate</phase>
                         <configuration>
-                            <configLocation>${session.executionRootDirectory}/src/checkstyle/checker.xml</configLocation>
-                            <suppressionsLocation>${session.executionRootDirectory}/src/checkstyle/suppressions.xml</suppressionsLocation>
+                            <configLocation>build-tools/checkstyle/checker.xml</configLocation>
+                            <suppressionsLocation>build-tools/checkstyle/suppressions.xml</suppressionsLocation>
                             <consoleOutput>true</consoleOutput>
                             <failOnViolation>true</failOnViolation>
                             <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -448,6 +454,11 @@
                     </execution>
                 </executions>
                 <dependencies>
+                    <dependency>
+                        <groupId>org.apache.knox</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
