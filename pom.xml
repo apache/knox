@@ -176,7 +176,7 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
-        <jericho-html.version>3.2</jericho-html.version>
+        <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.2.25.v20180606</jetty.version>
         <jline.version>2.14.6</jline.version>
@@ -187,6 +187,7 @@
         <junit.version>4.12</junit.version>
         <libpam4j.version>1.9.1</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
+        <log4j2.version>2.11.1</log4j2.version>
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
@@ -1278,6 +1279,12 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
             </dependency>
 
             <dependency>
