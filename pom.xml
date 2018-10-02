@@ -179,7 +179,7 @@
         <jericho-html.version>3.2</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.2.25.v20180606</jetty.version>
-        <jline.version>2.13</jline.version>
+        <jline.version>2.14.6</jline.version>
         <jna.version>4.1.0</jna.version>
         <joda-time.version>2.9.2</joda-time.version>
         <json-path.version>2.4.0</json-path.version>
