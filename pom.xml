@@ -167,8 +167,8 @@
         <hadoop.version>3.0.0</hadoop.version>
         <hamcrest.version>1.3</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <httpclient.version>4.5.4</httpclient.version>
-        <httpcore.version>4.4.6</httpcore.version>
+        <httpclient.version>4.5.6</httpclient.version>
+        <httpcore.version>4.4.10</httpcore.version>
         <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
         <jackson.version>2.9.5</jackson.version>
         <jansi.version>1.16</jansi.version>
