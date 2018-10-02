@@ -190,7 +190,7 @@
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
-        <maven-enforcer-plugin.version>3.0.0-M1</maven-enforcer-plugin.version>
+        <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
         <metrics.version>3.1.2</metrics.version>
         <nimbus-jose-jwt.version>4.41.2</nimbus-jose-jwt.version>
         <pac4j.version>2.1.0</pac4j.version>
