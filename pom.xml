@@ -171,7 +171,7 @@
         <httpcore.version>4.4.10</httpcore.version>
         <j2e-pac4j.version>3.0.0</j2e-pac4j.version>
         <jackson.version>2.9.5</jackson.version>
-        <jansi.version>1.16</jansi.version>
+        <jansi.version>1.17.1</jansi.version>
         <javax.annotation-api.version>1.2</javax.annotation-api.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
