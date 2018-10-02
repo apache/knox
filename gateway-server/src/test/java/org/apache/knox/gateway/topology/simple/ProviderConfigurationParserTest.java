@@ -16,9 +16,8 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-
+import org.apache.commons.io.FileUtils;
 import org.apache.knox.test.TestUtils;
-import org.apache.tools.ant.util.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class ProviderConfigurationParserTest {
   @AfterClass
   public static void removeTempDir() {
     if (tmpDir != null) {
-      FileUtils.delete(tmpDir);
+      FileUtils.deleteQuietly(tmpDir);
     }
   }
 
@@ -314,7 +313,7 @@ public class ProviderConfigurationParserTest {
     try {
       pc = ProviderConfigurationParser.parse(testConfig.getAbsolutePath());
     } finally {
-      FileUtils.delete(testConfig);
+      FileUtils.deleteQuietly(testConfig);
     }
 
     return pc;

@@ -158,7 +158,7 @@
         <cors-filter.version>2.6</cors-filter.version>
         <curator.version>4.0.1</curator.version>
         <curator-test.version>2.12.0</curator-test.version>
-        <easymock.version>3.5</easymock.version>
+        <easymock.version>3.6</easymock.version>
         <eclipselink.version>2.5.2</eclipselink.version>
         <ehcache.version>2.5.0</ehcache.version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
