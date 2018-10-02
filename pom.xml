@@ -143,7 +143,7 @@
         <apacheds.version>2.0.0-M24</apacheds.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
-        <buildnumber-maven-plugin.version>1.3</buildnumber-maven-plugin.version>
+        <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
