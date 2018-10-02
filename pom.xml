@@ -194,7 +194,6 @@
                     <plugin>
                         <inherited>false</inherited>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.4</version>
                         <executions>
                             <execution>
                                 <id>source</id>
@@ -472,13 +471,23 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <!-- Needed to ensure maven-assembly-plugin and maven-shade-plugin
+                 run before antrun plugin in gateway-shell-release -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>${maven-dependency-plugin.version}</version>
                 <executions>
                     <execution>
-                        <id>analyze</id>
+                        <id>analyze-dependencies</id>
                         <goals>
                             <goal>analyze-only</goal>
                         </goals>
