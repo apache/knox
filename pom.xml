@@ -153,7 +153,7 @@
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.6</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <commons-lang3.version>3.8</commons-lang3.version>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
         <commons-net.version>3.6</commons-net.version>
         <cors-filter.version>2.4</cors-filter.version>
         <curator.version>4.0.0</curator.version>
