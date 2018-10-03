@@ -199,7 +199,7 @@
         <shiro.version>1.2.6</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
-        <slf4j.version>1.6.6</slf4j.version>
+        <slf4j.version>1.7.25</slf4j.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
         <velocity.version>1.7</velocity.version>
