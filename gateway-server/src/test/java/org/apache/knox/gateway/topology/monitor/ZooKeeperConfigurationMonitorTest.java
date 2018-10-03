@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -108,6 +109,10 @@ public class ZooKeeperConfigurationMonitorTest {
         assertNotNull(client);
         client.start();
 
+        boolean connected = client.blockUntilConnected(10, TimeUnit.SECONDS);
+        assertTrue(connected);
+        assertTrue(client.isZk34CompatibilityMode());
+
         // Create the knox config paths with an ACL for the sasl user configured for the client
         List<ACL> acls = new ArrayList<>();
         acls.add(new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.ANYONE_ID_UNSAFE));
@@ -124,7 +129,9 @@ public class ZooKeeperConfigurationMonitorTest {
     public static void tearDownSuite() throws Exception {
         // Clean up the ZK nodes, and close the client
         if (client != null) {
-            client.delete().deletingChildrenIfNeeded().forPath(PATH_KNOX);
+            if (client.checkExists().forPath(PATH_KNOX) != null) {
+                client.delete().deletingChildrenIfNeeded().forPath(PATH_KNOX);
+            }
             client.close();
         }
 
@@ -252,6 +259,7 @@ public class ZooKeeperConfigurationMonitorTest {
             Thread.sleep(100);
             assertFalse(desc_one.exists());
         } finally {
+            clientService.stop();
             cm.stop();
         }
     }

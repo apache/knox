@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,13 +71,12 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
 
   public List<String> lookupURLs() {
     List<String> serverHosts = new ArrayList<>();
-    CuratorFramework zooKeeperClient =
-        CuratorFrameworkFactory.builder().connectString(zooKeeperEnsemble)
-            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
-    try {
+    try (CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder().connectString(zooKeeperEnsemble)
+        .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build()) {
       zooKeeperClient.start();
+      zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
       List<String> serverNodes = zooKeeperClient.getChildren().forPath("/" + zooKeeperNamespace);
-      for ( String serverNode : serverNodes ) {
+      for (String serverNode : serverNodes) {
         String serverInfo =
             new String(
                 zooKeeperClient.getData().forPath("/" + zooKeeperNamespace + "/" + serverNode),
@@ -84,14 +84,9 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
         String serverURL = constructURL(serverInfo);
         serverHosts.add(serverURL);
       }
-    } catch ( Exception e ) {
+    } catch (Exception e) {
       LOG.failedToGetZookeeperUrls(e);
       throw new RuntimeException(e);
-    } finally {
-      // Close the client connection with ZooKeeper
-      if ( zooKeeperClient != null ) {
-        zooKeeperClient.close();
-      }
     }
     return serverHosts;
   }

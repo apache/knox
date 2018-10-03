@@ -29,6 +29,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of URLManager intended for query of Zookeeper for active Kafka hosts. 
@@ -93,13 +94,12 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
   {
     List<String> serverHosts = new ArrayList<>();
 
-    CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
+    try (CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
         .connectString(getZookeeperEnsemble())
         .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-        .build();
-
-    try {
+        .build()) {
       zooKeeperClient.start();
+      zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
 
       // Retrieve list of host URLs from ZooKeeper
       List<String> brokers = zooKeeperClient.getChildren().forPath(BASE_PATH);
@@ -113,11 +113,6 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
     } catch (Exception e) {
       LOG.failedToGetZookeeperUrls(e);
       throw new RuntimeException(e);
-    } finally {
-      // Close the client connection with ZooKeeper
-      if (zooKeeperClient != null) {
-        zooKeeperClient.close();
-      }
     }
 
     return serverHosts;

@@ -18,7 +18,7 @@ package org.apache.knox.gateway.services.config.client;
 
 import java.util.List;
 
-public interface RemoteConfigurationRegistryClient {
+public interface RemoteConfigurationRegistryClient extends AutoCloseable {
 
     String getAddress();
 

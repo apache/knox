@@ -102,6 +102,13 @@ class CuratorClientService implements ZooKeeperClientService {
 
     @Override
     public void stop() throws ServiceLifecycleException {
+        for(RemoteConfigurationRegistryClient client : clients.values()) {
+            try {
+                client.close();
+            } catch (Exception e) {
+                throw new ServiceLifecycleException("failed to close client", e);
+            }
+        }
     }
 
     @Override
@@ -323,6 +330,11 @@ class CuratorClientService implements ZooKeeperClientService {
             } catch (Exception e) {
                 log.errorInteractingWithRemoteConfigRegistry(e);
             }
+        }
+
+        @Override
+        public void close() throws Exception {
+            delegate.close();
         }
     }
 

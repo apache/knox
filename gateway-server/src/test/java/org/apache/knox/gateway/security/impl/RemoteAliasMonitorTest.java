@@ -45,9 +45,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.capture;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test the listener/monitor service for
@@ -96,6 +98,7 @@ public class RemoteAliasMonitorTest {
         .retryPolicy(new ExponentialBackoffRetry(100, 3)).build();
     assertNotNull(client);
     client.start();
+    assertTrue(client.blockUntilConnected(10, TimeUnit.SECONDS));
 
     // Create the knox config paths with an ACL for the sasl user configured for the client
     List<ACL> acls = new ArrayList<>();

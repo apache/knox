@@ -28,6 +28,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class AtlasZookeeperURLManager extends DefaultURLManager {
     private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/apache_atlas";
@@ -67,28 +68,22 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
     public List<String> lookupURLs() {
 
         List<String> serverHosts = new ArrayList<>();
-        CuratorFramework zooKeeperClient =
-                CuratorFrameworkFactory.builder().connectString(zooKeeperEnsemble)
-                                                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-                                                 .build();
-        try {
+        try (CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
+            .connectString(zooKeeperEnsemble)
+            .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+            .build()) {
+            
             zooKeeperClient.start();
+            zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
 
             byte[] bytes = zooKeeperClient.getData().forPath(zooKeeperNamespace + APACHE_ATLAS_ACTIVE_SERVER_INFO);
 
             String activeURL = new String(bytes, Charset.forName("UTF-8"));
 
             serverHosts.add(activeURL);
-
         } catch (Exception e) {
-
             LOG.failedToGetZookeeperUrls(e);
             throw new RuntimeException(e);
-        } finally {
-            // Close the client connection with ZooKeeper
-            if (zooKeeperClient != null) {
-                zooKeeperClient.close();
-            }
         }
         return serverHosts;
     }

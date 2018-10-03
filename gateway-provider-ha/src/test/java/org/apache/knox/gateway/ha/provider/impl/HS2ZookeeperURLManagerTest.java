@@ -32,8 +32,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class HS2ZookeeperURLManagerTest {
 
@@ -58,6 +60,7 @@ public class HS2ZookeeperURLManagerTest {
     String host4 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
         "hive.server2.thrift.http.port=10004;hive.server2.thrift.bind.host=host4;hive.server2.use.SSL=true";
     zooKeeperClient.start();
+    assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
     zooKeeperClient.create().forPath("/hiveServer2");
     zooKeeperClient.create().forPath("/hiveServer2/host1", host1.getBytes(StandardCharsets.UTF_8));
     zooKeeperClient.create().forPath("/hiveServer2/host2", host2.getBytes(StandardCharsets.UTF_8));
@@ -128,7 +131,7 @@ public class HS2ZookeeperURLManagerTest {
     config.setZookeeperNamespace("hiveServer2");
     URLManager manager = URLManagerLoader.loadURLManager(config);
     Assert.assertNotNull(manager);
-    Assert.assertTrue(manager instanceof HS2ZookeeperURLManager);
+    assertTrue(manager instanceof HS2ZookeeperURLManager);
   }
 
 

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.ha.provider.impl;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -31,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -113,13 +115,14 @@ public class HBaseZookeeperURLManagerTest {
 
 
   private void createZNodes(String namespace) throws Exception {
-    CuratorFramework zooKeeperClient =
+    try (CuratorFramework zooKeeperClient =
                           CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
-                                                           .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
-    zooKeeperClient.start();
-    zooKeeperClient.create().forPath(namespace);
-    zooKeeperClient.create().forPath(namespace + "/rs");
-    zooKeeperClient.close();
+                                                           .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build()) {
+      zooKeeperClient.start();
+      assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
+      zooKeeperClient.create().forPath(namespace);
+      zooKeeperClient.create().forPath(namespace + "/rs");
+    }
   }
 
 }

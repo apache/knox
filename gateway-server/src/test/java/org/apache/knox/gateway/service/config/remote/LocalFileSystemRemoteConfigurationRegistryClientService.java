@@ -77,12 +77,24 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
 
     @Override
     public void stop() throws ServiceLifecycleException {
+        for(RemoteConfigurationRegistryClient client : clients.values()) {
+            try {
+                client.close();
+            } catch (Exception e) {
+                throw new ServiceLifecycleException("failed to close client", e);
+            }
+        }
     }
 
     private RemoteConfigurationRegistryClient createClient(RemoteConfigurationRegistryConfig config) {
         String rootDir = config.getConnectionString();
 
         return new RemoteConfigurationRegistryClient() {
+            @Override
+            public void close() throws Exception {
+
+            }
+
             private File root = new File(rootDir);
 
             @Override

@@ -50,13 +50,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test the RemoteConfigurationMonitor functionality with SASL configured, and znode ACLs applied.
@@ -185,6 +185,9 @@ public class RemoteConfigurationMonitorTest {
         assertNotNull(client);
         client.start();
 
+        assertTrue(client.blockUntilConnected(10, TimeUnit.SECONDS));
+        assertTrue(client.isZk34CompatibilityMode());
+
         // Create test config nodes with an ACL for a sasl user that is NOT configured for the test client
         List<ACL> acls = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("sasl", ALT_USERNAME)),
                                        new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
@@ -222,23 +225,23 @@ public class RemoteConfigurationMonitorTest {
         EasyMock.expect(gc.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
         EasyMock.expect(gc.getGatewayDescriptorsDir()).andReturn(descriptorsDir.getAbsolutePath()).anyTimes();
         EasyMock.expect(gc.getRemoteRegistryConfigurationNames())
-                .andReturn(Collections.singletonList(configMonitorName))
-                .anyTimes();
+            .andReturn(Collections.singletonList(configMonitorName))
+            .anyTimes();
         final String registryConfig =
-                GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
-                        GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
+            GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkCluster.getConnectString() + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_PRINCIPAL + "=" + ZK_USERNAME + ";" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_AUTH_TYPE + "=Digest;" +
+                GatewayConfig.REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS + "=" + alias;
         EasyMock.expect(gc.getRemoteRegistryConfiguration(configMonitorName))
-                .andReturn(registryConfig).anyTimes();
+            .andReturn(registryConfig).anyTimes();
         EasyMock.expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(configMonitorName).anyTimes();
         EasyMock.replay(gc);
 
         AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
         EasyMock.expect(aliasService.getPasswordFromAliasForGateway(alias))
-                .andReturn(ZK_PASSWORD.toCharArray())
-                .anyTimes();
+            .andReturn(ZK_PASSWORD.toCharArray())
+            .anyTimes();
         EasyMock.replay(aliasService);
 
         RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
@@ -270,16 +273,17 @@ public class RemoteConfigurationMonitorTest {
 
         try {
             cm.start();
-        } catch (Exception e) {
-            fail("Failed to start monitor: " + e.getMessage());
-        }
 
-        // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
-        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+            // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
+            List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+        } finally {
+            clientService.stop();
+            cm.stop();
+        }
     }
 
 
@@ -345,18 +349,19 @@ public class RemoteConfigurationMonitorTest {
 
         try {
             cm.start();
-        } catch (Exception e) {
-            fail("Failed to start monitor: " + e.getMessage());
-        }
 
-        // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
-        List<ACL> expectedACLs = new ArrayList<>();
-        expectedACLs.add(SASL_TESTUSER_ALL);
-        expectedACLs.add(WORLD_ANYONE_READ);
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+            // Validate the expected ACLs on the Knox config znodes (make sure the monitor removed the world:anyone ACL)
+            List<ACL> expectedACLs = new ArrayList<>();
+            expectedACLs.add(SASL_TESTUSER_ALL);
+            expectedACLs.add(WORLD_ANYONE_READ);
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+        } finally {
+            clientService.stop();
+            cm.stop();
+        }
     }
 
 
@@ -413,23 +418,24 @@ public class RemoteConfigurationMonitorTest {
 
         try {
             cm.start();
-        } catch (Exception e) {
-            fail("Failed to start monitor: " + e.getMessage());
-        }
 
-        // Test auth violation
-        clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
-        assertNull("Creation should have been prevented since write access is not granted to the test client.",
+            // Test auth violation
+            clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
+            assertNull("Creation should have been prevented since write access is not granted to the test client.",
                 client.checkExists().forPath("/auth_test/child_node/test1"));
-        assertTrue("Creation should have been prevented since write access is not granted to the test client.",
+            assertTrue("Creation should have been prevented since write access is not granted to the test client.",
                 client.getChildren().forPath("/auth_test/child_node").isEmpty());
 
-        // Validate the expected ACLs on the Knox config znodes (make sure the monitor didn't change them)
-        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+            // Validate the expected ACLs on the Knox config znodes (make sure the monitor didn't change them)
+            List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
+        } finally {
+            clientService.stop();
+            cm.stop();
+        }
     }
 
 
@@ -480,26 +486,22 @@ public class RemoteConfigurationMonitorTest {
 
         try {
             cm.start();
-        } catch (Exception e) {
-            fail("Failed to start monitor: " + e.getMessage());
-        }
+            
+            // Test auth violation
+            clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
+            assertNull("Creation should have been prevented since write access is not granted to the test client.",
+                       client.checkExists().forPath("/auth_test/child_node/test1"));
+            assertTrue("Creation should have been prevented since write access is not granted to the test client.",
+                       client.getChildren().forPath("/auth_test/child_node").isEmpty());
 
-        // Test auth violation
-        clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
-        assertNull("Creation should have been prevented since write access is not granted to the test client.",
-                   client.checkExists().forPath("/auth_test/child_node/test1"));
-        assertTrue("Creation should have been prevented since write access is not granted to the test client.",
-                   client.getChildren().forPath("/auth_test/child_node").isEmpty());
+            // Validate the expected ACLs on the Knox config znodes (make sure the monitor created them correctly)
+            List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
+            validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
 
-        // Validate the expected ACLs on the Knox config znodes (make sure the monitor created them correctly)
-        List<ACL> expectedACLs = Collections.singletonList(SASL_TESTUSER_ALL);
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_CONFIG));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_PROVIDERS));
-        validateKnoxConfigNodeACLs(expectedACLs, client.getACL().forPath(PATH_KNOX_DESCRIPTORS));
-
-        // Test the Knox config nodes, for which authentication should be sufficient for access
-        try {
+            // Test the Knox config nodes, for which authentication should be sufficient for access
             final String pc_one_znode = getProviderPath("providers-config1.xml");
             final File pc_one         = new File(providersDir, "providers-config1.xml");
             final String pc_two_znode = getProviderPath("providers-config2.xml");
@@ -567,6 +569,7 @@ public class RemoteConfigurationMonitorTest {
             Thread.sleep(100);
             assertFalse(desc_one.exists());
         } finally {
+            clientService.stop();
             cm.stop();
         }
     }

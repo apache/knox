@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -56,6 +57,7 @@ public class SOLRZookeeperURLManagerTest {
             .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 
     zooKeeperClient.start();
+    assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
     zooKeeperClient.create().forPath("/live_nodes");
     zooKeeperClient.create().forPath("/live_nodes/host1:8983_solr");
     zooKeeperClient.create().forPath("/live_nodes/host2:8983_solr");

@@ -32,9 +32,11 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AtlasZookeeperURLManagerTest {
 
@@ -54,6 +56,8 @@ public class AtlasZookeeperURLManagerTest {
                                                  .build();
 
         zooKeeperClient.start();
+        assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
+
         zooKeeperClient.create().forPath("/apache_atlas");
         zooKeeperClient.create().forPath("/apache_atlas/active_server_info");
         zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
@@ -143,16 +147,16 @@ public class AtlasZookeeperURLManagerTest {
 
 
     void setAtlasActiveHostURLInZookeeper(String activeURL) throws Exception {
-
-        CuratorFramework zooKeeperClient =
+        try (CuratorFramework zooKeeperClient =
                 CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
                                                  .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-                                                 .build();
+                                                 .build()) {
+            zooKeeperClient.start();
+            zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
 
-        zooKeeperClient.start();
-        zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
-                                          activeURL.getBytes(Charset.forName("UTF-8")));
-        zooKeeperClient.close();
+            zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
+                activeURL.getBytes(Charset.forName("UTF-8")));
+        }
     }
 
 }
