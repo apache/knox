@@ -159,7 +159,7 @@
         <curator.version>4.0.1</curator.version>
         <curator-test.version>2.12.0</curator-test.version>
         <easymock.version>3.6</easymock.version>
-        <eclipselink.version>2.5.2</eclipselink.version>
+        <eclipselink.version>2.7.3</eclipselink.version>
         <ehcache.version>2.5.0</ehcache.version>
         <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
@@ -173,6 +173,7 @@
         <jackson.version>2.9.5</jackson.version>
         <jansi.version>1.17.1</jansi.version>
         <javax.annotation-api.version>1.2</javax.annotation-api.version>
+        <javax.json.version>1.1.2</javax.json.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
@@ -925,16 +926,37 @@
                 <artifactId>jetty-servlets</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annotation-api.version}</version>
+            </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
                 <version>${javax.servlet-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.ws.rs</groupId>
+                <artifactId>javax.ws.rs-api</artifactId>
+                <version>${javax.ws.rs-api.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>
                 <version>${eclipselink.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.json</groupId>
+                <artifactId>javax.json-api</artifactId>
+                <version>${javax.json.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.json</artifactId>
+                <version>${javax.json.version}</version>
             </dependency>
 
             <dependency>
@@ -963,16 +985,19 @@
                 <artifactId>groovy-json</artifactId>
                 <version>${groovy.version}</version>
             </dependency>
+            
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
                 <artifactId>jansi</artifactId>
                 <version>${jansi.version}</version>
             </dependency>
+            
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
                 <version>${jline.version}</version>
             </dependency>
+            
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
@@ -983,6 +1008,7 @@
                 <artifactId>httpcore</artifactId>
                 <version>${httpcore.version}</version>
             </dependency>
+            
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
@@ -1294,13 +1320,12 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.shiro</groupId>
-                <artifactId>shiro-web</artifactId>
+                <artifactId>shiro-ehcache</artifactId>
                 <version>${shiro.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.shiro</groupId>
-                <artifactId>shiro-ehcache</artifactId>
+                <artifactId>shiro-web</artifactId>
                 <version>${shiro.version}</version>
             </dependency>
 
@@ -1361,6 +1386,7 @@
                 <artifactId>gateway-demo-ldap-launcher</artifactId>
                 <version>${gateway-version}</version>
             </dependency>
+            
             <dependency>
                 <groupId>net.lingala.zip4j</groupId>
                 <artifactId>zip4j</artifactId>
@@ -1390,6 +1416,12 @@
 
             <!-- Websocket support -->
             <dependency>
+                <groupId>javax.websocket</groupId>
+                <artifactId>javax.websocket-api</artifactId>
+                <version>${javax.websocket-api.version}</version>
+            </dependency>
+            
+            <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-api</artifactId>
                 <version>${jetty.version}</version>
@@ -1399,7 +1431,6 @@
                 <artifactId>websocket-server</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-servlet</artifactId>
@@ -1407,29 +1438,10 @@
             </dependency>
 
             <dependency>
-                <groupId>javax.annotation</groupId>
-                <artifactId>javax.annotation-api</artifactId>
-                <version>${javax.annotation-api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>javax.ws.rs</groupId>
-                <artifactId>javax.ws.rs-api</artifactId>
-                <version>${javax.ws.rs-api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>javax.websocket</groupId>
-                <artifactId>javax.websocket-api</artifactId>
-                <version>${javax.websocket-api.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-server-impl</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>javax-websocket-client-impl</artifactId>

@@ -28,25 +28,4 @@
     <artifactId>gateway-applications</artifactId>
     <name>gateway-applications</name>
     <description>The applications delivered with Knox.</description>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>eclipselink</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-test-utils</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 </project>
