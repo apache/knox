@@ -195,6 +195,7 @@
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
         <metrics.version>3.1.2</metrics.version>
         <nimbus-jose-jwt.version>4.41.2</nimbus-jose-jwt.version>
+        <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
         <rest-assured.version>3.1.1</rest-assured.version>
         <shiro.version>1.2.6</shiro.version>
@@ -1013,6 +1014,12 @@
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
                 <version>${joda-time.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okhttp</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
             </dependency>
 
             <dependency>
