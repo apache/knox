@@ -197,6 +197,7 @@
         <nimbus-jose-jwt.version>4.41.2</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
+        <protobuf.version>3.6.1</protobuf.version>
         <rest-assured.version>3.1.1</rest-assured.version>
         <shiro.version>1.2.6</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
@@ -1020,6 +1021,12 @@
                 <groupId>com.squareup.okhttp</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
             </dependency>
 
             <dependency>
