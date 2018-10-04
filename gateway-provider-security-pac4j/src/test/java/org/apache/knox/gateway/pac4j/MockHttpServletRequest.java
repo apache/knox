@@ -23,6 +23,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,6 +81,11 @@ public class MockHttpServletRequest extends HttpServletRequestWrapper {
 
     public void addParameter(String key, String value) {
         parameters.put(key, value);
+    }
+
+    @Override
+    public Enumeration<String> getHeaderNames() {
+        return Collections.enumeration(headers.keySet());
     }
 
     @Override
