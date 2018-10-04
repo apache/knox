@@ -54,7 +54,7 @@ public class SecureQueryEncodeProcessorTest {
     Template inTemplate = Parser.parseLiteral( "http://host:0/root/path?query" );
     UrlRewriteContext context = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( context.getCurrentUrl() ).andReturn( inTemplate );
-    Capture<Template> outTemplate = new Capture<Template>();
+    Capture<Template> outTemplate = Capture.newInstance();
     context.setCurrentUrl( EasyMock.capture( outTemplate ) );
 
     EasyMock.replay( environment, context );

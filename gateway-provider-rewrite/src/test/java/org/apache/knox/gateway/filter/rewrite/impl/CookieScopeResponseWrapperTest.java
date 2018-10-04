@@ -37,8 +37,8 @@ public class CookieScopeResponseWrapperTest extends EasyMockSupport {
   @Before
   public void init(){
     mock = EasyMock.createNiceMock(HttpServletResponse.class);
-    captureKey = new Capture<>();
-    captureValue = new Capture<>();
+    captureKey = Capture.newInstance();
+    captureValue = Capture.newInstance();
     mock.addHeader( EasyMock.capture(captureKey), EasyMock.capture(captureValue));
     EasyMock.replay(mock);
   }

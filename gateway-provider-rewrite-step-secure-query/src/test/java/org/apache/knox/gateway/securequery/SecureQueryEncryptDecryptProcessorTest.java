@@ -63,7 +63,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     UrlRewriteContext encContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( encContext.getCurrentUrl() ).andReturn( origTemplate );
-    Capture<Template> encTemplate = new Capture<Template>();
+    Capture<Template> encTemplate = Capture.newInstance();
     encContext.setCurrentUrl( EasyMock.capture( encTemplate ) );
     EasyMock.replay( gatewayServices, as, encEnvironment, encContext );
 
@@ -93,7 +93,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
     EasyMock.expect( decContext.getParameters() ).andReturn( decParams );
-    Capture<Template> decTemplate = new Capture<Template>();
+    Capture<Template> decTemplate = Capture.newInstance();
     decContext.setCurrentUrl( EasyMock.capture( decTemplate ) );
     EasyMock.replay( gatewayServices, as, decEnvironment, decParams, decContext );
 
@@ -130,7 +130,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     UrlRewriteContext encContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( encContext.getCurrentUrl() ).andReturn( origTemplate );
-    Capture<Template> encTemplate = new Capture<Template>();
+    Capture<Template> encTemplate = Capture.newInstance();
     encContext.setCurrentUrl( EasyMock.capture( encTemplate ) );
     EasyMock.replay( gatewayServices, as, encEnvironment, encContext );
 
@@ -160,7 +160,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
     EasyMock.expect( decContext.getParameters() ).andReturn( decParams );
-    Capture<Template> decTemplate = new Capture<Template>();
+    Capture<Template> decTemplate = Capture.newInstance();
     decContext.setCurrentUrl( EasyMock.capture( decTemplate ) );
     SecureQueryDecryptDescriptor descriptor1 = new SecureQueryDecryptDescriptor();
     SecureQueryDecryptProcessor decProcessor =

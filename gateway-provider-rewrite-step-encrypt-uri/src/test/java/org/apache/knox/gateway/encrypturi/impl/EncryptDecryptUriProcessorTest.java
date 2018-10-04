@@ -99,7 +99,7 @@ public class EncryptDecryptUriProcessorTest {
     EasyMock.expect( encContext.getParameters() ).andReturn( hostPortParams );
 
 
-    Capture<EncryptStepContextParams> encodedValue = new Capture<EncryptStepContextParams>();
+    Capture<EncryptStepContextParams> encodedValue = Capture.newInstance();
     encContext.addParameters( EasyMock.capture( encodedValue ) );
 
     EasyMock.replay( gatewayServices, as, encEnvironment, encContext );
@@ -136,7 +136,7 @@ public class EncryptDecryptUriProcessorTest {
     encryptedParams.addParam( "foo1", Arrays.asList( "test" ) );
     EasyMock.expect( decContext.getParameters() ).andReturn( encryptedParams );
 
-    Capture<EncryptStepContextParams> decodedValue = new Capture<EncryptStepContextParams>();
+    Capture<EncryptStepContextParams> decodedValue = Capture.newInstance();
     decContext.addParameters( EasyMock.capture( decodedValue ) );
 
     EasyMock.replay( gatewayServices, as, decEnvironment, decContext );
