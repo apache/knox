@@ -205,6 +205,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <spotbugs.version>3.1.7</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
+        <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
@@ -1426,6 +1427,17 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>apache-jstl</artifactId>
                 <version>${jetty.version}</version>
+            </dependency>
+            <!-- apache-jstl includes taglibs 1.2.1 which has CVEs -->
+            <dependency>
+                <groupId>org.apache.taglibs</groupId>
+                <artifactId>taglibs-standard-spec</artifactId>
+                <version>${taglibs-standard.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.taglibs</groupId>
+                <artifactId>taglibs-standard-impl</artifactId>
+                <version>${taglibs-standard.version}</version>
             </dependency>
 
             <!-- Websocket support -->
