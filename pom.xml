@@ -194,7 +194,7 @@
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
         <metrics.version>3.1.2</metrics.version>
-        <nimbus-jose-jwt.version>4.41.2</nimbus-jose-jwt.version>
+        <nimbus-jose-jwt.version>6.0.2</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
         <protobuf.version>3.6.1</protobuf.version>
