@@ -32,6 +32,7 @@
         <bcprov-jdk15on.version>1.60</bcprov-jdk15on.version>
         <j2e-pac4j.version>4.0.0</j2e-pac4j.version>
         <pac4j.version>3.2.0</pac4j.version>
+        <spring-core.version>5.0.9.RELEASE</spring-core.version>
     </properties>
 
     <dependencies>
@@ -141,13 +142,23 @@
                     <groupId>org.bouncycastle</groupId>
                     <artifactId>bcprov-jdk15on</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-core</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
+        <!-- Upgrade pac4j-saml dependencies to avoid known CVEs -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>${bcprov-jdk15on.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring-core.version}</version>
         </dependency>
 
         <dependency>
