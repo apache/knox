@@ -156,7 +156,7 @@ public class UrlRewriteResponseTest {
       rewriteResponse.streamResponse( input, output );
 
       inStream = isGzip ? new GZIPInputStream( new FileInputStream( outputFile ) ) : new FileInputStream( outputFile );
-      assertThat( String.valueOf( IOUtils.toCharArray( inStream ) ), is( content ) );
+      assertThat( String.valueOf( IOUtils.toCharArray( inStream, StandardCharsets.UTF_8 ) ), is( content ) );
     } finally {
       if ( inStream != null ) {
         inStream.close();

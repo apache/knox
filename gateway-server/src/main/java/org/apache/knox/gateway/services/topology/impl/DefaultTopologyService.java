@@ -72,6 +72,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -776,7 +777,7 @@ public class DefaultTopologyService
 
     File destFile = new File(dest, name);
     try {
-      FileUtils.writeStringToFile(destFile, content);
+      FileUtils.writeStringToFile(destFile, content, StandardCharsets.UTF_8);
       log.wroteConfigurationFile(destFile.getAbsolutePath());
       result = true;
     } catch (IOException e) {
@@ -996,7 +997,7 @@ public class DefaultTopologyService
         boolean affectedDescriptors = false;
         // Identify any descriptors associated with the cluster configuration change
         for (File descriptor : topologyService.getDescriptors()) {
-          String descriptorContent = FileUtils.readFileToString(descriptor);
+          String descriptorContent = FileUtils.readFileToString(descriptor, StandardCharsets.UTF_8);
           if (descriptorContent.contains(source)) {
             if (descriptorContent.contains(clusterName)) {
               affectedDescriptors = true;

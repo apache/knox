@@ -20,6 +20,7 @@ package org.apache.knox.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -170,7 +171,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-static-hello-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -227,7 +228,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-dynamic-app-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -262,7 +263,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-naked-app-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -283,7 +284,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-default-app-name-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -321,7 +322,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-multi-apps-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -400,7 +401,7 @@ public class GatewayAppFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-svcs-and-apps-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -489,7 +490,7 @@ public class GatewayAppFuncTest {
 
       String topoStr = TestUtils.merge( DAT, "test-dynamic-app-topology.xml", params );
       File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-      FileUtils.writeStringToFile( topoFile, topoStr );
+      FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
       topos.reloadTopologies();
 
       File deployDir = new File( config.getGatewayDeploymentDir() );
@@ -559,7 +560,7 @@ public class GatewayAppFuncTest {
 
       String topoStr = TestUtils.merge( DAT, "test-dynamic-app-topology.xml", params );
       File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-      FileUtils.writeStringToFile( topoFile, topoStr );
+      FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
       topos.reloadTopologies();
 
@@ -589,7 +590,7 @@ public class GatewayAppFuncTest {
 
       topoStr = TestUtils.merge( DAT, "test-dynamic-app-topology.xml", params );
       topoFile = new File( config.getGatewayTopologyDir(), "test-topology-2.xml" );
-      FileUtils.writeStringToFile( topoFile, topoStr );
+      FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
       topos.reloadTopologies();
 

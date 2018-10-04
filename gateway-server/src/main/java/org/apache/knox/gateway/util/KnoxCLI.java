@@ -1980,7 +1980,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     private void upload(RemoteConfigurationRegistryClient client, String entryPath, File source) throws Exception {
-      String content = FileUtils.readFileToString(source);
+      String content = FileUtils.readFileToString(source, StandardCharsets.UTF_8);
       if (client.entryExists(entryPath)) {
         // If it exists, then we're going to set the data
         client.setEntryData(entryPath, content);

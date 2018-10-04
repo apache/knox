@@ -175,7 +175,7 @@ public class SimpleDescriptorHandlerTest {
 
         // Write the externalized provider config to a temp file
         File providerConfig = new File(System.getProperty("java.io.tmpdir"), "ambari-cluster-policy.xml");
-        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG);
+        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
 
         File topologyFile = null;
         try {
@@ -573,7 +573,7 @@ public class SimpleDescriptorHandlerTest {
 
         // Write the externalized provider config to a temp file
         File providerConfig = new File(System.getProperty("java.io.tmpdir"), "ambari-cluster-policy.xml");
-        FileUtils.write(providerConfig, TEST_HA_PROVIDER_CONFIG);
+        FileUtils.write(providerConfig, TEST_HA_PROVIDER_CONFIG, StandardCharsets.UTF_8);
 
         File topologyFile = null;
         try {
@@ -768,7 +768,7 @@ public class SimpleDescriptorHandlerTest {
 
     private File writeProviderConfig(String path, String content) throws IOException {
         File f = new File(path);
-        FileUtils.write(f, content);
+        FileUtils.write(f, content, StandardCharsets.UTF_8);
         return f;
     }
 

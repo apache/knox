@@ -510,17 +510,17 @@ public class RemoteConfigurationMonitorTest {
             client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_one.exists());
-            assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_one));
+            assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_one, StandardCharsets.UTF_8));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
-            assertEquals(TEST_PROVIDERS_CONFIG_2, FileUtils.readFileToString(pc_two));
+            assertEquals(TEST_PROVIDERS_CONFIG_2, FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8));
 
             client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(pc_two.exists());
-            assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_two));
+            assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8));
 
             client.delete().forPath(pc_two_znode);
             Thread.sleep(100);
@@ -540,22 +540,22 @@ public class RemoteConfigurationMonitorTest {
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_one.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_one));
+            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_one, StandardCharsets.UTF_8));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_two));
+            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8));
 
             client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_two.exists());
-            assertEquals(TEST_DESCRIPTOR_2, FileUtils.readFileToString(desc_two));
+            assertEquals(TEST_DESCRIPTOR_2, FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
             Thread.sleep(100);
             assertTrue(desc_three.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_three));
+            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_three, StandardCharsets.UTF_8));
 
             client.delete().forPath(desc_two_znode);
             Thread.sleep(100);

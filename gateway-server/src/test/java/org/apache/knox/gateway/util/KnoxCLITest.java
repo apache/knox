@@ -37,6 +37,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -135,7 +136,7 @@ public class KnoxCLITest {
       final String[] uploadArgs = {"upload-provider-config", testProviderConfig.getAbsolutePath(),
                                    "--registry-client", "test_client",
                                    "--master", "master"};
-      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent, StandardCharsets.UTF_8);
 
 
       final String[] args = {"get-registry-acl", "/knox/config/shared-providers",
@@ -180,7 +181,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -203,7 +204,7 @@ public class KnoxCLITest {
 
       File registryFile = new File(testRegistry, "knox/config/shared-providers/" + providerConfigName);
       assertTrue(registryFile.exists());
-      assertEquals(FileUtils.readFileToString(registryFile), providerConfigContent);
+      assertEquals(FileUtils.readFileToString(registryFile, StandardCharsets.UTF_8), providerConfigContent);
     } finally {
       FileUtils.forceDelete(testRoot);
     }
@@ -228,7 +229,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -244,7 +245,7 @@ public class KnoxCLITest {
       assertFalse((new File(testRegistry, "knox/config/shared-providers/" + providerConfigName)).exists());
       File registryFile = new File(testRegistry, "knox/config/shared-providers/" + entryName);
       assertTrue(registryFile.exists());
-      assertEquals(FileUtils.readFileToString(registryFile), providerConfigContent);
+      assertEquals(FileUtils.readFileToString(registryFile, StandardCharsets.UTF_8), providerConfigContent);
     } finally {
       FileUtils.forceDelete(testRoot);
     }
@@ -267,7 +268,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -290,7 +291,7 @@ public class KnoxCLITest {
 
       File registryFile = new File(testRegistry, "knox/config/descriptors/" + descriptorName);
       assertTrue(registryFile.exists());
-      assertEquals(FileUtils.readFileToString(registryFile), descriptorContent);
+      assertEquals(FileUtils.readFileToString(registryFile, StandardCharsets.UTF_8), descriptorContent);
     } finally {
       FileUtils.forceDelete(testRoot);
     }
@@ -314,7 +315,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -330,7 +331,7 @@ public class KnoxCLITest {
       assertFalse((new File(testRegistry, "knox/config/descriptors/" + descriptorName)).exists());
       File registryFile = new File(testRegistry, "knox/config/descriptors/" + entryName);
       assertTrue(registryFile.exists());
-      assertEquals(FileUtils.readFileToString(registryFile), descriptorContent);
+      assertEquals(FileUtils.readFileToString(registryFile, StandardCharsets.UTF_8), descriptorContent);
     } finally {
       FileUtils.forceDelete(testRoot);
     }
@@ -353,7 +354,7 @@ public class KnoxCLITest {
                                    "--registry-client", "test_client",
                                    "--master", "master"};
 
-      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent);
+      FileUtils.writeStringToFile(testProviderConfig, providerConfigContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -405,7 +406,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testDescriptor, descriptorContent);
+      FileUtils.writeStringToFile(testDescriptor, descriptorContent, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();

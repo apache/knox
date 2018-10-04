@@ -22,6 +22,7 @@ import org.apache.knox.gateway.service.config.remote.util.RemoteRegistryConfigTe
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class RemoteConfigurationRegistryConfigParserTest {
 
         File registryConfigFile = File.createTempFile("remote-registries", "xml");
         try {
-            FileUtils.writeStringToFile(registryConfigFile, configXML);
+            FileUtils.writeStringToFile(registryConfigFile, configXML, StandardCharsets.UTF_8);
 
             List<RemoteConfigurationRegistryConfig> configs =
                                     RemoteConfigurationRegistriesParser.getConfig(registryConfigFile.getAbsolutePath());

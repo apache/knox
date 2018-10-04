@@ -35,6 +35,7 @@ import org.apache.knox.gateway.services.security.CryptoService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +108,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
       clusterServices.put(serviceName , regEntry);
       String json = renderAsJsonString(registry);
       try {
-        FileUtils.write(new File(registryFileName), json);
+        FileUtils.write(new File(registryFileName), json, StandardCharsets.UTF_8);
         rc = true;
       } catch (IOException e) {
         // log appropriately
@@ -184,7 +185,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     File registryFile = new File(securityDir, filename);
     if (registryFile.exists()) {
       try {
-        String json = FileUtils.readFileToString(registryFile);
+        String json = FileUtils.readFileToString(registryFile, StandardCharsets.UTF_8);
         Registry reg = (Registry) getMapFromJsonString(json);
         if (reg != null) {
           registry = reg;

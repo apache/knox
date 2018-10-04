@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -78,7 +79,7 @@ public class AmbariServiceDefinitionTest {
     setupGateway();
     String topoStr = TestUtils.merge( DAT, "test-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
     LOG_EXIT();
   }

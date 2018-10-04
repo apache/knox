@@ -18,6 +18,7 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -194,7 +195,7 @@ public class GatewaySslFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "test-admin-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8);
 
     topos.reloadTopologies();
 

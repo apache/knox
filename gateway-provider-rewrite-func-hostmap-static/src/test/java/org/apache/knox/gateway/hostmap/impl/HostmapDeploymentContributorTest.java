@@ -30,6 +30,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class HostmapDeploymentContributorTest {
     assertThat( funcDesc.config(), is( "/WEB-INF/hostmap.txt" ) );
 
     Node node = webArchive.get( "/WEB-INF/hostmap.txt" );
-    String asset = IOUtils.toString( node.getAsset().openStream() );
+    String asset = IOUtils.toString( node.getAsset().openStream(), StandardCharsets.UTF_8 );
     assertThat( asset, containsString( "test-host-external=test-host-internal" ) );
 
     // Just make sure it doesn't blow up.

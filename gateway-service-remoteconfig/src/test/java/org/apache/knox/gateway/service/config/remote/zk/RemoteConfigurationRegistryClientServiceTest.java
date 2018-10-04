@@ -201,7 +201,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
             String registryConfigXML =
                 RemoteRegistryConfigTestUtils.createRemoteConfigRegistriesXML(Collections.singleton(registryConfigProps));
             tmpRegConfigFile = File.createTempFile("myRemoteRegistryConfig", "xml");
-            FileUtils.writeStringToFile(tmpRegConfigFile, registryConfigXML);
+            FileUtils.writeStringToFile(tmpRegConfigFile, registryConfigXML, StandardCharsets.UTF_8);
 
             System.setProperty("org.apache.knox.gateway.remote.registry.config.file", tmpRegConfigFile.getAbsolutePath());
 

@@ -24,6 +24,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -1695,7 +1696,7 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually write a file to the descriptors directory
     File descriptorOneFile = new File(descriptorsDir, descriptorFileNames.get(0));
-    FileUtils.write(descriptorOneFile, createDescriptor(clusterNames.get(0)));
+    FileUtils.write(descriptorOneFile, createDescriptor(clusterNames.get(0)), StandardCharsets.UTF_8);
 
     // Request a listing of all the descriptors
     responseBody = given()
@@ -1712,7 +1713,7 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually write another file to the descriptors directory
     File descriptorTwoFile = new File(descriptorsDir, descriptorFileNames.get(1));
-    FileUtils.write(descriptorTwoFile, createDescriptor(clusterNames.get(1)));
+    FileUtils.write(descriptorTwoFile, createDescriptor(clusterNames.get(1)), StandardCharsets.UTF_8);
 
     // Request a listing of all the descriptors
     responseBody = given()
@@ -2053,11 +2054,11 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually add two descriptor files to the descriptors directory
     File descriptorOneFile = new File(descriptorsDir, "deleteme-one.json");
-    FileUtils.writeStringToFile(descriptorOneFile, createDescriptor("clusterOne"));
+    FileUtils.writeStringToFile(descriptorOneFile, createDescriptor("clusterOne"), StandardCharsets.UTF_8);
     assertTrue(descriptorOneFile.exists());
 
     File descriptorTwoFile = new File(descriptorsDir, "deleteme-two.json");
-    FileUtils.writeStringToFile(descriptorTwoFile, createDescriptor("clusterTwo"));
+    FileUtils.writeStringToFile(descriptorTwoFile, createDescriptor("clusterTwo"), StandardCharsets.UTF_8);
     assertTrue(descriptorTwoFile.exists());
 
     // Request a listing of all the descriptors

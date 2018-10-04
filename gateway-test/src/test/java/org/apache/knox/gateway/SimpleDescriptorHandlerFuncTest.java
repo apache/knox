@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -131,7 +132,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
     // Write the externalized provider config to a temp file
     File providerConfig = new File(testProvDir, "ambari-cluster-policy.xml");
-    FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG);
+    FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
 
     File topologyFile = null;
     try {

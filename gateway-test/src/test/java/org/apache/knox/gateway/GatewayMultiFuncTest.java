@@ -170,7 +170,7 @@ public class GatewayMultiFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "knox678.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -220,7 +220,7 @@ public class GatewayMultiFuncTest {
 
     String topoStr = TestUtils.merge( DAT, "topologies/test-knox678-utf8-chars-topology.xml", params );
     File topoFile = new File( config.getGatewayTopologyDir(), "knox681.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
 
     topos.reloadTopologies();
 
@@ -313,7 +313,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-user-dn-template.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-1.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()
@@ -335,7 +335,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-attribute.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-2.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()
@@ -357,7 +357,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-filter.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-3.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()
@@ -379,7 +379,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-object.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-4.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()
@@ -401,7 +401,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-onelevel-positive.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-5.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()
@@ -423,7 +423,7 @@ public class GatewayMultiFuncTest {
 
     topoStr = TestUtils.merge( DAT, "topologies/test-knox694-principal-regex-search-scope-onelevel-negative.xml", params );
     topoFile = new File( config.getGatewayTopologyDir(), "knox694-6.xml" );
-    FileUtils.writeStringToFile( topoFile, topoStr );
+    FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
     topos.reloadTopologies();
 
     given()

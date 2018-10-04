@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -450,16 +451,20 @@ public class DefaultTopologyServiceTest {
       // "Deploy" the referenced provider configs first
       boolean isDeployed =
         ts.deployProviderConfiguration(provConfOne,
-                FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
-                    "org/apache/knox/gateway/topology/file/provider-config-one.xml").toURI())));
+                FileUtils.readFileToString(
+                    new File(ClassLoader.getSystemResource(
+                        "org/apache/knox/gateway/topology/file/provider-config-one.xml").toURI()),
+                    StandardCharsets.UTF_8));
       assertTrue(isDeployed);
       File provConfOneFile = new File(sharedProvidersDir, provConfOne);
       assertTrue(provConfOneFile.exists());
 
       isDeployed =
         ts.deployProviderConfiguration(provConfTwo,
-                FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
-                    "org/apache/knox/gateway/topology/file/ambari-cluster-policy.xml").toURI())));
+                FileUtils.readFileToString(
+                    new File(ClassLoader.getSystemResource(
+                        "org/apache/knox/gateway/topology/file/ambari-cluster-policy.xml").toURI()),
+                    StandardCharsets.UTF_8));
       assertTrue(isDeployed);
       File provConfTwoFile = new File(sharedProvidersDir, provConfTwo);
       assertTrue(provConfTwoFile.exists());
@@ -474,8 +479,10 @@ public class DefaultTopologyServiceTest {
       // "Deploy" the simple descriptor, which depends on provConfOne
       isDeployed =
         ts.deployDescriptor(simpleDescName,
-            FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
-                "org/apache/knox/gateway/topology/file/simple-descriptor-six.json").toURI())));
+            FileUtils.readFileToString(
+                new File(ClassLoader.getSystemResource(
+                    "org/apache/knox/gateway/topology/file/simple-descriptor-six.json").toURI()),
+                StandardCharsets.UTF_8));
       assertTrue(isDeployed);
       File simpleDesc = new File(descriptorsDir, simpleDescName);
       assertTrue(simpleDesc.exists());
@@ -496,8 +503,10 @@ public class DefaultTopologyServiceTest {
       // Overwrite the simple descriptor with content that changes the provider config reference to provConfTwo
       isDeployed =
         ts.deployDescriptor(simpleDescName,
-              FileUtils.readFileToString(new File(ClassLoader.getSystemResource(
-                  "org/apache/knox/gateway/topology/file/simple-descriptor-five.json").toURI())));
+              FileUtils.readFileToString(
+                  new File(ClassLoader.getSystemResource(
+                      "org/apache/knox/gateway/topology/file/simple-descriptor-five.json").toURI()),
+                  StandardCharsets.UTF_8));
       assertTrue(isDeployed);
       assertTrue(simpleDesc.exists());
       ts.getProviderConfigurations();

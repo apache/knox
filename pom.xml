@@ -444,6 +444,8 @@
                     <failOnViolation>true</failOnViolation>
                     <!-- if the used Java version is too new, don't fail, just do nothing: -->
                     <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <!-- prevent failing if a module doesn't have all signature dependencies like commons-io -->
+                    <failOnUnresolvableSignatures>false</failOnUnresolvableSignatures>
                     <bundledSignatures>
                         <!--
                           This will automatically choose the right
@@ -453,6 +455,8 @@
                         <bundledSignature>jdk-deprecated</bundledSignature>
                         <!-- disallow undocumented classes like sun.misc.Unsafe: -->
                         <bundledSignature>jdk-non-portable</bundledSignature>
+                        <!-- disallow unsafe commons-io classes -->
+                        <bundledSignature>commons-io-unsafe-${commons-io.version}</bundledSignature>
                     </bundledSignatures>
                 </configuration>
                 <executions>
