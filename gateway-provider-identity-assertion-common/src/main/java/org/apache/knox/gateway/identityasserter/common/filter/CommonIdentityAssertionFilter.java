@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.knox.gateway.IdentityAsserterMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
 
@@ -34,6 +36,8 @@ import java.io.IOException;
 import java.security.AccessController;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
+  private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
+  
   private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   private static final String PRINCIPAL_MAPPING = "principal.mapping";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
@@ -75,6 +79,11 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
       throws IOException, ServletException {
     Subject subject = Subject.getSubject(AccessController.getContext());
+
+    if (subject == null) {
+      LOG.subjectNotAvailable();
+      throw new IllegalStateException("Required Subject Missing");
+    }
 
     String principalName = getPrincipalName(subject);
 

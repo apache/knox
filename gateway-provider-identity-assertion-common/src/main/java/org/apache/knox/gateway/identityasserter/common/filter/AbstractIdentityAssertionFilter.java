@@ -34,6 +34,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditService;
@@ -43,6 +44,7 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.GatewaySpiResources;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
@@ -53,6 +55,8 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
  */
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
+
+  private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
   private static final GatewaySpiResources RES = ResourcesFactory.get( GatewaySpiResources.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -108,6 +112,11 @@ public abstract class AbstractIdentityAssertionFilter extends
         
         // look up the current Java Subject and assosciated group principals
         Subject currentSubject = Subject.getSubject(AccessController.getContext());
+        if (currentSubject == null) {
+          LOG.subjectNotAvailable();
+          throw new IllegalStateException("Required Subject Missing");
+        }
+
         Set<?> currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
         
         primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
