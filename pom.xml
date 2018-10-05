@@ -138,7 +138,9 @@
         <apacheds.version>2.0.0-M24</apacheds.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
+        <asm.version>7.0</asm.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+        <cglib.version>3.2.9</cglib.version>
         <checkstyle.version>8.12</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
@@ -175,7 +177,7 @@
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.2.26.v20180806</jetty.version>
+        <jetty.version>9.4.12.v20180830</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>4.5.2</jna.version>
         <joda-time.version>2.10</joda-time.version>
@@ -962,6 +964,19 @@
             </dependency>
 
             <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${jetty.version}</version>
+                <classifier>tests</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-http</artifactId>
+                <version>${jetty.version}</version>
+                <classifier>tests</classifier>
+            </dependency>
+
+            <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
                 <version>${javax.annotation-api.version}</version>
@@ -1250,6 +1265,12 @@
             </dependency>
 
             <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib</artifactId>
+                <version>${cglib.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>${commons-beanutils.version}</version>
@@ -1283,6 +1304,12 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-digester3</artifactId>
                 <version>${commons-digester3.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>cglib</groupId>
+                        <artifactId>cglib</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -1451,6 +1478,17 @@
             </dependency>
 
             <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-commons</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-io</artifactId>
                 <version>${jetty.version}</version>
@@ -1486,6 +1524,11 @@
             <dependency>
                 <groupId>javax.websocket</groupId>
                 <artifactId>javax.websocket-api</artifactId>
+                <version>${javax.websocket-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.websocket</groupId>
+                <artifactId>javax.websocket-client-api</artifactId>
                 <version>${javax.websocket-api.version}</version>
             </dependency>
             
