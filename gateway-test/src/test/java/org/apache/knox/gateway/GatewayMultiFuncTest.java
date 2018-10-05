@@ -185,7 +185,7 @@ public class GatewayMultiFuncTest {
         .then()
         //.log().all()
         .statusCode( HttpStatus.SC_OK )
-        .contentType( "application/json; charset=UTF-8" )
+        .contentType( "application/json;charset=UTF-8" )
         .when().get( gatewayUrl + "/knox678/repeat" ).andReturn().asString();
     assertThat( json, is("{\"msg\":\"H\u00eallo\"}") );
     assertThat( mock.isEmpty(), is(true) );
@@ -232,7 +232,7 @@ public class GatewayMultiFuncTest {
         .status( HttpStatus.SC_CREATED )
         .content( "{\"name\":\"value\"}".getBytes(StandardCharsets.UTF_8) )
         .contentLength( -1 )
-        .contentType( "application/json; charset=UTF-8" )
+        .contentType( "application/json;charset=UTF-8" )
         .header( "Location", gatewayUrl + "/knox681/repeat" );
 
     String uname = "guest";
@@ -259,7 +259,7 @@ public class GatewayMultiFuncTest {
     CloseableHttpResponse response = client.execute( request, context );
     assertThat( response.getStatusLine().getStatusCode(), is( HttpStatus.SC_CREATED ) );
     assertThat( response.getFirstHeader( "Location" ).getValue(), endsWith("/gateway/knox681/repeat" ) );
-    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/json; charset=UTF-8") );
+    assertThat( response.getFirstHeader( "Content-Type" ).getValue(), is("application/json;charset=utf-8") );
     String body = new String( IOUtils.toByteArray( response.getEntity().getContent() ), StandardCharsets.UTF_8 );
     assertThat( body, is( "{\"name\":\"value\"}" ) );
     response.close();

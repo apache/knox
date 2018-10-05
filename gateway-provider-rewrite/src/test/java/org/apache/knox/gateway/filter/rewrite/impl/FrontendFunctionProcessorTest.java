@@ -37,7 +37,6 @@ import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.ServletTester;
-import org.eclipse.jetty.util.ArrayQueue;
 import org.eclipse.jetty.util.Attributes;
 import org.eclipse.jetty.util.AttributesMap;
 import org.eclipse.jetty.util.log.Log;
@@ -59,10 +58,12 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.ServiceLoader;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -76,7 +77,7 @@ public class FrontendFunctionProcessorTest {
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
-  private ArrayQueue<MockInteraction> interactions;
+  private Queue<MockInteraction> interactions;
   private MockInteraction interaction;
 
   @SuppressWarnings("rawtypes")
@@ -157,8 +158,8 @@ public class FrontendFunctionProcessorTest {
       }
     }
     rewriteFilter.setFilter( new UrlRewriteServletFilter() );
-
-    interactions = new ArrayQueue<>();
+    
+    interactions = new ArrayDeque<>();
 
     ServletHolder servlet = server.addServlet( MockServlet.class, "/" );
     servlet.setServlet( new MockServlet( "mock-servlet", interactions ) );

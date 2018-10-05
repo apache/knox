@@ -87,8 +87,7 @@ public class RequestUpdateHandler extends ScopedHandler {
     // if the request already has the /{gatewaypath}/{topology} part then skip
     if (!StringUtils.startsWithIgnoreCase(target, redirectContext)) {
       baseRequest.setPathInfo(redirectContext + baseRequest.getPathInfo());
-      baseRequest.setUri(
-          new HttpURI(redirectContext + baseRequest.getUri().toString()));
+      baseRequest.setHttpURI(new HttpURI(redirectContext + baseRequest.getHttpURI()));
 
       LOG.topologyPortMappingUpdateRequest(target, newTarget);
       nextHandle(newTarget, baseRequest, newRequest, response);
