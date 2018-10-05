@@ -37,7 +37,7 @@ public class AccessHandler extends AbstractLifeCycle implements RequestLog {
       sb.append( "|" );
       sb.append( request.getMethod() );
       sb.append( "|" );
-      sb.append( request.getUri().toString() );
+      sb.append( request.getRequestURI() );
       sb.append( "|" );
       sb.append( request.getContentLength() );
       sb.append( "|" );
