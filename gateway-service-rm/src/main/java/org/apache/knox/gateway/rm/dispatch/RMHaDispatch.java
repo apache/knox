@@ -41,8 +41,6 @@ public class RMHaDispatch extends RMHaBaseDispatcher {
        HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(RESOURCE_ROLE);
        super.setMaxFailoverAttempts( serviceConfig.getMaxFailoverAttempts());
        super.setFailoverSleep( serviceConfig.getFailoverSleep());
-       super.setMaxRetryAttempts( serviceConfig.getMaxRetryAttempts());
-       super.setRetrySleep( serviceConfig.getRetrySleep());
        super.setHaProvider(haProvider);
      }
    }

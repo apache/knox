@@ -16,8 +16,6 @@
  */
 package org.apache.knox.gateway.rm.dispatch;
 
-import javax.servlet.ServletException;
-
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
@@ -27,7 +25,7 @@ public class RMUI2HaDispatch extends RMHaBaseDispatcher {
   private static final String RESOURCE_ROLE = "YARNUIV2";
   private HaProvider haProvider;
 
-  public RMUI2HaDispatch() throws ServletException {
+  public RMUI2HaDispatch() {
    super();
   }
 
@@ -44,8 +42,6 @@ public class RMUI2HaDispatch extends RMHaBaseDispatcher {
       HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(RESOURCE_ROLE);
       super.setMaxFailoverAttempts(serviceConfig.getMaxFailoverAttempts());
       super.setFailoverSleep(serviceConfig.getFailoverSleep());
-      super.setMaxRetryAttempts(serviceConfig.getMaxRetryAttempts());
-      super.setRetrySleep(serviceConfig.getRetrySleep());
       super.setHaProvider(haProvider);
     }
   }
