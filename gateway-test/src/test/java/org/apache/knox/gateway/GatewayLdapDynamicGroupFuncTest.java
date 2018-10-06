@@ -27,8 +27,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,13 +70,9 @@ public class GatewayLdapDynamicGroupFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new File(".").getCanonicalPath();
-    }
-    Path path = FileSystems.getDefault().getPath(basedir, "/src/test/resources/users-dynamic.ldif");
-    driver.setupLdap( 0, path.toFile() );
+    URL resource = GatewayLdapDynamicGroupFuncTest.class.getClassLoader().getResource("users-dynamic.ldif");
+    assert resource != null;
+    driver.setupLdap( 0, new File(resource.toURI()) );
     setupGateway();
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
     LOG_EXIT();
@@ -89,8 +83,6 @@ public class GatewayLdapDynamicGroupFuncTest {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
   }
 

@@ -56,7 +56,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 /**
  * Functional test to verify : looking up ldap groups from directory
  * and using them in acl authorization checks
- *
  */
 @Category(ReleaseTest.class)
 public class GatewayLdapPosixGroupFuncTest {
@@ -74,8 +73,7 @@ public class GatewayLdapPosixGroupFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
-    URL usersUrl = TestUtils.getResourceUrl( GatewayLdapPosixGroupFuncTest.class, "users.ldif" );
+    URL usersUrl = TestUtils.getResourceUrl( GatewayLdapPosixGroupFuncTest.class, "users-posix.ldif" );
     driver.setupLdap( 0, new File( usersUrl.toURI() ) );
     setupGateway();
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );

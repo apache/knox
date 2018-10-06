@@ -44,6 +44,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-definitions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-release</artifactId>
             <version>${gateway-version}</version>
             <exclusions>

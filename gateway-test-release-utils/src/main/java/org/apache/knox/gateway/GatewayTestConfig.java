@@ -22,8 +22,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 
-import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -313,8 +313,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     if( gatewayServicesDir != null ) {
       return gatewayServicesDir;
     } else {
-      File targetDir = new File( System.getProperty( "user.dir" ), "target/services" );
-      return targetDir.getPath();
+      URL resource = GatewayTestConfig.class.getClassLoader().getResource("services");
+      assert resource != null;
+      return resource.getFile();
     }
   }
 
