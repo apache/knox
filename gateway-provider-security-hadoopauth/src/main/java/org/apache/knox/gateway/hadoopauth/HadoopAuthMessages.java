@@ -20,11 +20,18 @@ package org.apache.knox.gateway.hadoopauth;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway.provider.global.hadoopauth")
 public interface HadoopAuthMessages {
   
   @Message( level = MessageLevel.DEBUG, text = "Hadoop Authentication Asserted Principal: {0}" )
   void hadoopAuthAssertedPrincipal(String name);
+
+  @Message( level = MessageLevel.ERROR, text = "Alias service exception: {0}" )
+  void aliasServiceException(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to get password for {0}: {1}" )
+  void unableToGetPassword(String name, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
   
 }

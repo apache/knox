@@ -21,6 +21,12 @@ import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
+import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
+import org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter;
+import org.apache.knox.gateway.hadoopauth.filter.HadoopAuthPostFilter;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 
@@ -30,14 +36,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class HadoopAuthDeploymentContributor extends
-    ProviderDeploymentContributorBase {
+public class HadoopAuthDeploymentContributor extends ProviderDeploymentContributorBase {
 
-  private static final String ROLE = "authentication";
-  private static final String NAME = "HadoopAuth";
+  private static HadoopAuthMessages log = MessagesFactory.get( HadoopAuthMessages.class );
 
-  private static final String HADOOPAUTH_FILTER_CLASSNAME = "org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter";
-  private static final String HADOOPAUTH_POSTFILTER_CLASSNAME = "org.apache.knox.gateway.hadoopauth.filter.HadoopAuthPostFilter";
+  private static final String HADOOPAUTH_FILTER_CLASSNAME = HadoopAuthFilter.class.getCanonicalName();
+  private static final String HADOOPAUTH_POSTFILTER_CLASSNAME = HadoopAuthPostFilter.class.getCanonicalName();
+
+  public static final String ROLE = "authentication";
+  public static final String NAME = "HadoopAuth";
+  private AliasService as;
 
   @Override
   public String getRole() {
@@ -49,6 +57,10 @@ public class HadoopAuthDeploymentContributor extends
     return NAME;
   }
 
+  public void setAliasService(AliasService as) {
+    this.as = as;
+  }
+
   @Override
   public void initializeContribution(DeploymentContext context) {
     super.initializeContribution(context);
@@ -57,15 +69,37 @@ public class HadoopAuthDeploymentContributor extends
   @Override
   public void contributeFilter(DeploymentContext context, Provider provider, Service service,
       ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    String clusterName = context.getTopology().getName();
+
+    List<String> aliases = new ArrayList<>();
+    try {
+      aliases = this.as.getAliasesForCluster(clusterName);
+    } catch (AliasServiceException e) {
+      log.aliasServiceException(e);
+    }
+
     // blindly add all the provider params as filter init params
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name( entry.getKey().toLowerCase(Locale.ROOT) ).value( entry.getValue() ) );
+      String key = entry.getKey().toLowerCase(Locale.ROOT);
+      String value = null;
+      if(aliases.contains(key)) {
+        try {
+          value = String.valueOf(this.as.getPasswordFromAliasForCluster(clusterName, key));
+        } catch (AliasServiceException e) {
+          log.unableToGetPassword(key, e);
+        }
+      } else {
+        value = entry.getValue();
+      }
+
+      params.add( resource.createFilterParam().name( key ).value( value ) );
     }
-    resource.addFilter().name( getName() ).role( getRole() ).impl( HADOOPAUTH_FILTER_CLASSNAME ).params( params );
-    resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl( HADOOPAUTH_POSTFILTER_CLASSNAME ).params( params );
+
+    resource.addFilter().name( getName() ).role( getRole() ).impl(HADOOPAUTH_FILTER_CLASSNAME).params( params );
+    resource.addFilter().name( "Post" + getName() ).role( getRole() ).impl(HADOOPAUTH_POSTFILTER_CLASSNAME).params( params );
   }
 }
