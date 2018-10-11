@@ -23,9 +23,6 @@ import java.util.Properties;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
-import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-
 /*
  * see http://hadoop.apache.org/docs/current/hadoop-auth/Configuration.html
  *
@@ -48,21 +45,17 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 public class HadoopAuthFilter extends 
     org.apache.hadoop.security.authentication.server.AuthenticationFilter {
   
-  private static HadoopAuthMessages log = MessagesFactory.get( HadoopAuthMessages.class );
-  
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
     Properties props = new Properties();
-    Enumeration<?> names = filterConfig.getInitParameterNames();
+    Enumeration<String> names = filterConfig.getInitParameterNames();
     while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
+      String name = names.nextElement();
       if (name.startsWith(configPrefix)) {
         String value = filterConfig.getInitParameter(name);
-        log.initializingHadoopAuthProperty(name, value);
         props.put(name.substring(configPrefix.length()), value);
       }
     }
     return props;
   }
-  
 }

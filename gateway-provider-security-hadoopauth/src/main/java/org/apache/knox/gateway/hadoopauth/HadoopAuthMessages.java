@@ -24,9 +24,6 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 @Messages(logger="org.apache.knox.gateway.provider.global.hadoopauth")
 public interface HadoopAuthMessages {
   
-  @Message( level = MessageLevel.INFO, text = "Initializing Hadoop Auth Property, name: {0},  value: {1}" )
-  void initializingHadoopAuthProperty(String name, String value);
-  
   @Message( level = MessageLevel.DEBUG, text = "Hadoop Authentication Asserted Principal: {0}" )
   void hadoopAuthAssertedPrincipal(String name);
   
