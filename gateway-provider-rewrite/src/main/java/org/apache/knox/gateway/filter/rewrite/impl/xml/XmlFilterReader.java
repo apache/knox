@@ -99,6 +99,11 @@ public abstract class XmlFilterReader extends Reader {
     factory = XMLInputFactory.newFactory();
     //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
     //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
+    /* This disables DTDs entirely for that factory */
+    factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+    /* disable external entities */
+    factory.setProperty("javax.xml.stream.isSupportingExternalEntities", false);
+
     factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
     factory.setProperty("http://java.sun.com/xml/stream/"
                 + "properties/report-cdata-event", Boolean.TRUE);
