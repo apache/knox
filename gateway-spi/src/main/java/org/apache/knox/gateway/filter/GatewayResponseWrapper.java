@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.filter;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.util.MimeTypes;
-import org.apache.hadoop.io.IOUtils;
 
 import javax.activation.MimeType;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +30,6 @@ import java.io.OutputStream;
 public abstract class GatewayResponseWrapper extends HttpServletResponseWrapper implements GatewayResponse {
 
   private static final String DEFAULT_MIME_TYPE = "*/*";
-  private static final int STREAM_COPY_BUFFER_SIZE = 4096;
 
   /**
    * Constructs a response adaptor wrapping the given response.
@@ -60,7 +59,7 @@ public abstract class GatewayResponseWrapper extends HttpServletResponseWrapper 
 
   @Override
   public void streamResponse( InputStream input, OutputStream output ) throws IOException {
-    IOUtils.copyBytes( input, output, STREAM_COPY_BUFFER_SIZE );
+    IOUtils.copy(input, output);
     //KNOX-685: output.flush();
     output.close();
   }

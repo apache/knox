@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.filter.GatewayResponse;
-import org.apache.hadoop.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -35,9 +35,8 @@ import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
 
-  private static final int STREAM_COPY_BUFFER_SIZE = 4096;
   private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
-  
+
   static {
       REQUEST_EXCLUDE_HEADERS.add("Host");
       REQUEST_EXCLUDE_HEADERS.add("Authorization");
@@ -62,7 +61,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
         ((GatewayResponse)response).streamResponse( stream );
       } else {
         OutputStream output = response.getOutputStream();
-        IOUtils.copyBytes( stream, output, STREAM_COPY_BUFFER_SIZE );
+        IOUtils.copy(stream, output);
         //KNOX-685: output.flush();
         output.close();
       }
