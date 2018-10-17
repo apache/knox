@@ -170,7 +170,7 @@ public class SecureClusterTest {
     config.setKerberosConfig(kdc.getKrb5conf().getAbsolutePath());
     config.setKerberosLoginConfig(jaasConf.getAbsolutePath());
     driver.setResourceBase(SecureClusterTest.class);
-    driver.setupLdap(0);
+    driver.setupLdap(0, new File(SecureClusterTest.class.getClassLoader().getResource("users-hadoop.ldif").toURI()));
     driver.setupGateway(config, "cluster", createTopology(), true);
   }
 

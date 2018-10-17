@@ -83,7 +83,7 @@ public class ShellTest {
     config.setGatewayPath( "gateway" );
     config.setHadoopKerberosSecured(false);
     driver.setResourceBase(ShellTest.class);
-    driver.setupLdap(0);
+    driver.setupLdap(0, new File(ShellTest.class.getClassLoader().getResource("users-hadoop.ldif").toURI()));
     driver.setupGateway(config, "cluster", createTopology(), true);
   }
 
