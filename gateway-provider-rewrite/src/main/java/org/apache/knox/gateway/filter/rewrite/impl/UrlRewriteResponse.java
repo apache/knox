@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.impl;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.knox.gateway.filter.GatewayResponseWrapper;
 import org.apache.knox.gateway.filter.ResponseStreamer;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -53,7 +54,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil.getRewriteFilterConfig;
@@ -180,7 +180,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
       final InputStream unFilteredStream;
       if(isGzip) {
-        unFilteredStream = new GZIPInputStream(new GZIPInputStreamHelperInputStream(inBuffer), STREAM_BUFFER_SIZE);
+        unFilteredStream = new GzipCompressorInputStream(inBuffer, true);
       } else {
         unFilteredStream = inBuffer;
       }
@@ -340,78 +340,4 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       xForwardedPort = Integer.toString( request.getLocalPort() );
     }
   }
-
-  /**
-   * This InputStream wraps another InputStream to override the available() behavior. This is to fulfill
-   * GZIPInputStream's expectation of the available() method, for which the behavior actually varies across InputStream
-   * implementations; in some cases, it causes GZIPInputStream to terminate prematurely, resulting in partial reads.
-   *
-   * Guaranteeing that the available() method always returns a value greater than zero forces the GZIPInputStream to
-   * continue reading from the underlying InputStream until it actually reaches the end of the stream.
-   */
-  private static class GZIPInputStreamHelperInputStream extends InputStream {
-
-    private InputStream delegate;
-
-    GZIPInputStreamHelperInputStream(InputStream delegate) {
-      this.delegate = delegate;
-    }
-
-    /**
-     * @return The delegate's available() result if it's > 0, otherwise 1.
-     */
-    @Override
-    public int available() throws IOException {
-      int available = delegate.available();
-      if (available <= 1) {
-        available = 1;
-      }
-      return available;
-    }
-
-    @Override
-    public int read() throws IOException {
-      return delegate.read();
-    }
-
-    @Override
-    public int read(byte[] b) throws IOException {
-      return delegate.read(b);
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-      return delegate.read(b, off, len);
-    }
-
-    @Override
-    public long skip(long n) throws IOException {
-      return delegate.skip(n);
-    }
-
-    @Override
-    public void close() throws IOException {
-      delegate.close();
-    }
-
-    @Override
-    public synchronized void mark(int readlimit) {
-      if (markSupported()) {
-        delegate.mark(readlimit);
-      }
-    }
-
-    @Override
-    public synchronized void reset() throws IOException {
-      if (markSupported()) {
-        delegate.reset();
-      }
-    }
-
-    @Override
-    public boolean markSupported() {
-      return delegate.markSupported();
-    }
-  }
-
 }
