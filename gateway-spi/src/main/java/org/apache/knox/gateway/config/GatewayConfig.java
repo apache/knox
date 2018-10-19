@@ -234,12 +234,6 @@ public interface GatewayConfig {
   int getGraphiteReportingFrequency();
 
   /**
-   * List of MIME Type to be compressed.
-   * @since 0.12
-   */
-  List<String> getMimeTypesToCompress();
-
-  /**
    * Enable cookie scoping to gateway path
    *
    * @since 0.13

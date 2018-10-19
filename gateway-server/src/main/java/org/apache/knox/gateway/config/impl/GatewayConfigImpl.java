@@ -163,13 +163,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GATEWAY_PORT_MAPPING_REGEX = GATEWAY_CONFIG_FILE_PREFIX + "\\.port\\.mapping\\..*";
   public static final String GATEWAY_PORT_MAPPING_ENABLED = GATEWAY_PORT_MAPPING_PREFIX + "enabled";
 
-  /**
-   * Comma-separated list of MIME Types to be compressed by Knox on the way out.
-   *
-   * @since 0.12
-   */
-  public static final String MIME_TYPES_TO_COMPRESS = GATEWAY_CONFIG_FILE_PREFIX + ".gzip.compress.mime.types";
-
   public static final String CLUSTER_CONFIG_MONITOR_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".cluster.config.monitor.";
   public static final String CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX = ".interval";
   public static final String CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX = ".enabled";
@@ -215,13 +208,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
   public static final boolean DEFAULT_STRICT_TOPOLOGY_VALIDATION = false;
-
-  /**
-   * Default list of MIME Type to be compressed.
-   * @since 0.12
-   */
-  public static final String DEFAULT_MIME_TYPES_TO_COMPRESS =
-        "text/html, text/plain, text/xml, text/css, application/javascript, application/x-javascript, text/javascript";
 
   public static final String COOKIE_SCOPING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
   public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED = false;
@@ -866,22 +852,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketIdleTimeout() {
     return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see
-   * GatewayConfig#getMimeTypesToCompress()
-   */
-  @Override
-  public List<String> getMimeTypesToCompress() {
-    List<String> mimeTypes = null;
-    String value = get(MIME_TYPES_TO_COMPRESS, DEFAULT_MIME_TYPES_TO_COMPRESS);
-    if (value != null && !value.isEmpty()) {
-      mimeTypes = Arrays.asList(value.trim().split("\\s*,\\s*"));
-    }
-    return mimeTypes;
   }
 
   /**
