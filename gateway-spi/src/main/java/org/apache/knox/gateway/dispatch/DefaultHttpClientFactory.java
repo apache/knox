@@ -113,11 +113,11 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           .register(AuthSchemes.SPNEGO, new KnoxSpnegoAuthSchemeFactory(true))
           .build();
 
-      builder = builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
+      builder.setDefaultAuthSchemeRegistry(authSchemeRegistry)
           .setDefaultCookieStore(new HadoopAuthCookieStore(gatewayConfig))
           .setDefaultCredentialsProvider(credentialsProvider);
     } else {
-      builder = builder.setDefaultCookieStore(new NoCookieStore());
+      builder.setDefaultCookieStore(new NoCookieStore());
     }
 
     builder.setKeepAliveStrategy( DefaultConnectionKeepAliveStrategy.INSTANCE );
@@ -131,8 +131,10 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
     builder.setDefaultRequestConfig( getRequestConfig( filterConfig ) );
 
-    HttpClient client = builder.build();
-    return client;
+    // See KNOX-1530 for details
+    builder.disableContentCompression();
+
+    return builder.build();
   }
 
   private static RequestConfig getRequestConfig( FilterConfig config ) {
