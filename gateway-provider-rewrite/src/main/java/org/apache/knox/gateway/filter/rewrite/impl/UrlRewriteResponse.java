@@ -153,21 +153,18 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     InputStream  inStream;
     OutputStream outStream;
 
+
+    // Use this way to check whether the input stream is gzip compressed, in case
+    // the content encoding header is unknown, as it could be unset in inbound response
     boolean isGzip = false;
-
     BufferedInputStream inBuffer = new BufferedInputStream(input, STREAM_BUFFER_SIZE);
-
-    try {
-      // Use this way to check whether the input stream is gzip compressed, in case
-      // the content encoding header is unknown, as it could be unset in inbound response
-      inBuffer.mark(STREAM_BUFFER_SIZE);
-      inStream = new GZIPInputStream(new GZIPInputStreamHelperInputStream(inBuffer), STREAM_BUFFER_SIZE);
+    inBuffer.mark(2);
+    byte [] signature = new byte[2];
+    int len = inBuffer.read( signature ); //read the signature
+    if( len == 2 && signature[ 0 ] == (byte) 0x1f && signature[ 1 ] == (byte) 0x8b ) {
       isGzip = true;
-    } catch (IOException e) {
-      // Not proper gzip content
-      inBuffer.reset();
-      inStream = inBuffer;
     }
+    inBuffer.reset();
 
     MimeType mimeType = getMimeType();
     UrlRewriteFilterContentDescriptor filterContentConfig =
@@ -177,6 +174,12 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       if ( asType != null && asType.trim().length() > 0 ) {
         mimeType = MimeTypes.create(asType, getCharacterEncoding());
       }
+    }
+
+    if(isGzip) {
+      inStream = new GZIPInputStream(new GZIPInputStreamHelperInputStream(inBuffer), STREAM_BUFFER_SIZE);
+    } else {
+      inStream = inBuffer;
     }
 
     InputStream filteredInput = UrlRewriteStreamFilterFactory.create(mimeType,
