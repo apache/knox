@@ -46,6 +46,8 @@ public class SimpleLdapDirectoryServer {
 
   private static final Logger LOG = LoggerFactory.getLogger(SimpleLdapDirectoryServer.class);
 
+  private static final String DEFAULT_PORT = "33389";
+
   private DirectoryService service;
 
   private LdapServer server;
@@ -144,7 +146,7 @@ public class SimpleLdapDirectoryServer {
       throw new FileNotFoundException( file.getAbsolutePath() );
     }
 
-    int port = 33389;
+    int port = Integer.parseInt(System.getProperty("ldap.port", DEFAULT_PORT));
 
     // Make sure the port is free.
     ServerSocket socket = new ServerSocket( port );
