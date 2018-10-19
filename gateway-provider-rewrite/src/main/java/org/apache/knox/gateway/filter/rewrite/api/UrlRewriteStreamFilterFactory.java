@@ -25,6 +25,7 @@ import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,13 +33,12 @@ import java.util.ServiceLoader;
 
 public abstract class UrlRewriteStreamFilterFactory {
 
-  private static final String DEFAULT_CHARACTER_ENCODING = "ISO-8859-1";
-
   private static final Map<String,Map<String,UrlRewriteStreamFilter>> MAP = loadFactories();
 
   private UrlRewriteStreamFilterFactory() {
   }
 
+  @Deprecated
   public static InputStream create(
       MimeType type,
       String name,
@@ -48,14 +48,20 @@ public abstract class UrlRewriteStreamFilterFactory {
       UrlRewriter.Direction direction,
       UrlRewriteFilterContentDescriptor config )
           throws IOException {
-    InputStream filteredStream = null;
-    Map<String,UrlRewriteStreamFilter> nameMap = getNameMap( type );
-    UrlRewriteStreamFilter filter = getFilter( nameMap, name );
-    String charset = MimeTypes.getCharset( type, DEFAULT_CHARACTER_ENCODING );
+    UrlRewriteStreamFilter filter = create(type, name);
+    String charset = MimeTypes.getCharset( type, StandardCharsets.ISO_8859_1.name() );
+    final InputStream filteredStream;
     if( filter != null ) {
       filteredStream = filter.filter( stream, charset, rewriter, resolver, direction, config );
+    } else {
+      filteredStream = stream;
     }
     return filteredStream;
+  }
+
+  public static UrlRewriteStreamFilter create(MimeType type, String name) {
+    Map<String,UrlRewriteStreamFilter> nameMap = getNameMap( type );
+    return getFilter( nameMap, name );
   }
 
   private static Map<String,Map<String,UrlRewriteStreamFilter>> loadFactories() {
@@ -64,11 +70,7 @@ public abstract class UrlRewriteStreamFilterFactory {
     for( UrlRewriteStreamFilter filter : filters ) {
       String[] types = filter.getTypes();
       for( String type: types ) {
-        Map<String,UrlRewriteStreamFilter> nameMap = typeMap.get( type );
-        if( nameMap == null ) {
-          nameMap = new LinkedHashMap<String,UrlRewriteStreamFilter>();
-          typeMap.put( type, nameMap );
-        }
+        Map<String, UrlRewriteStreamFilter> nameMap = typeMap.computeIfAbsent(type, k -> new LinkedHashMap<>());
         for( String name: filter.getNames() ) {
           nameMap.put( name, filter );
         }

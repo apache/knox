@@ -20,5 +20,4 @@ org.apache.knox.gateway.filter.rewrite.impl.json.JsonUrlRewriteStreamFilter
 org.apache.knox.gateway.filter.rewrite.impl.xml.XmlUrlRewriteStreamFilter
 org.apache.knox.gateway.filter.rewrite.impl.html.HtmlUrlRewriteStreamFilter
 org.apache.knox.gateway.filter.rewrite.impl.form.FormUrlRewriteStreamFilter
-org.apache.knox.gateway.filter.rewrite.impl.noop.NoOpUrlRewriteStreamFilter
 org.apache.knox.gateway.filter.rewrite.impl.javascript.JavaScriptUrlRewriteStreamFilter

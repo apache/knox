@@ -25,6 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.knox.gateway.util.Urls;
@@ -46,6 +47,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -92,8 +94,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private String xForwardedPort;
   private String xForwardedScheme;
 
-  public UrlRewriteResponse( FilterConfig config, HttpServletRequest request, HttpServletResponse response )
-      throws IOException {
+  public UrlRewriteResponse( FilterConfig config, HttpServletRequest request, HttpServletResponse response ) {
     super( response );
     this.rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );
     this.config = config;
@@ -150,25 +151,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
   @Override
   public void streamResponse( InputStream input, OutputStream output ) throws IOException {
-    InputStream  inStream;
-    OutputStream outStream;
-
-
-    // Use this way to check whether the input stream is gzip compressed, in case
-    // the content encoding header is unknown, as it could be unset in inbound response
-    boolean isGzip = false;
-    BufferedInputStream inBuffer = new BufferedInputStream(input, STREAM_BUFFER_SIZE);
-    inBuffer.mark(2);
-    byte [] signature = new byte[2];
-    int len = inBuffer.read( signature ); //read the signature
-    if( len == 2 && signature[ 0 ] == (byte) 0x1f && signature[ 1 ] == (byte) 0x8b ) {
-      isGzip = true;
-    }
-    inBuffer.reset();
-
     MimeType mimeType = getMimeType();
     UrlRewriteFilterContentDescriptor filterContentConfig =
-                                                getRewriteFilterConfig(rewriter.getConfig(), bodyFilterName, mimeType);
+        getRewriteFilterConfig(rewriter.getConfig(), bodyFilterName, mimeType);
     if (filterContentConfig != null) {
       String asType = filterContentConfig.asType();
       if ( asType != null && asType.trim().length() > 0 ) {
@@ -176,24 +161,40 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       }
     }
 
-    if(isGzip) {
-      inStream = new GZIPInputStream(new GZIPInputStreamHelperInputStream(inBuffer), STREAM_BUFFER_SIZE);
+    UrlRewriteStreamFilter filter = UrlRewriteStreamFilterFactory.create(mimeType, null);
+
+    final InputStream inStream;
+    final OutputStream outStream;
+    if( filter != null ) {
+      // Use this way to check whether the input stream is gzip compressed, in case
+      // the content encoding header is unknown, as it could be unset in inbound response
+      boolean isGzip = false;
+      final BufferedInputStream inBuffer = new BufferedInputStream(input, STREAM_BUFFER_SIZE);
+      inBuffer.mark(2);
+      byte [] signature = new byte[2];
+      int len = inBuffer.read(signature);
+      if( len == 2 && signature[ 0 ] == (byte) 0x1f && signature[ 1 ] == (byte) 0x8b ) {
+        isGzip = true;
+      }
+      inBuffer.reset();
+
+      final InputStream unFilteredStream;
+      if(isGzip) {
+        unFilteredStream = new GZIPInputStream(new GZIPInputStreamHelperInputStream(inBuffer), STREAM_BUFFER_SIZE);
+      } else {
+        unFilteredStream = inBuffer;
+      }
+      String charset = MimeTypes.getCharset( mimeType, StandardCharsets.ISO_8859_1.name() );
+      inStream = filter.filter( unFilteredStream, charset, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
+      outStream = (isGzip) ? new GZIPOutputStream(output, STREAM_BUFFER_SIZE) : output;
     } else {
-      inStream = inBuffer;
+      inStream = input;
+      outStream = output;
     }
 
-    InputStream filteredInput = UrlRewriteStreamFilterFactory.create(mimeType,
-                                                                     null,
-                                                                     inStream,
-                                                                     rewriter,
-                                                                     this,
-                                                                     UrlRewriter.Direction.OUT,
-                                                                     filterContentConfig);
-    outStream = (isGzip) ? new GZIPOutputStream(output, STREAM_BUFFER_SIZE) : output;
     try {
-      IOUtils.copyLarge(filteredInput, outStream, new byte[STREAM_BUFFER_SIZE]);
+      IOUtils.copy(inStream, outStream, STREAM_BUFFER_SIZE);
     } finally {
-      //KNOX-685: outStream.flush();
       outStream.close();
     }
   }

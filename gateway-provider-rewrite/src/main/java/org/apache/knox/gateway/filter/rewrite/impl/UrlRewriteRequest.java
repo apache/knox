@@ -28,6 +28,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteStreamFilterFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
+import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.knox.gateway.util.urltemplate.Parser;
@@ -48,6 +49,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
@@ -265,7 +267,15 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
           mimeType = MimeTypes.create(asType, getCharacterEncoding());
         }
       }
-      InputStream stream = UrlRewriteStreamFilterFactory.create( mimeType, null, input, rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
+
+      final InputStream stream;
+      UrlRewriteStreamFilter filter = UrlRewriteStreamFilterFactory.create(mimeType, null);
+      if(filter != null) {
+        String charset = MimeTypes.getCharset( mimeType, StandardCharsets.ISO_8859_1.name() );
+        stream = filter.filter(input, charset, rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
+      } else {
+        stream = input;
+      }
       input = new UrlRewriteRequestStream( stream );
     }
     return input;
