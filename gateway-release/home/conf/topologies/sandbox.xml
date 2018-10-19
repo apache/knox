@@ -103,16 +103,28 @@
     <service>
         <role>OOZIE</role>
         <url>http://localhost:11000/oozie</url>
+        <param>
+            <name>replayBufferSize</name>
+            <value>8</value>
+        </param>
     </service>
 
     <service>
         <role>WEBHBASE</role>
         <url>http://localhost:60080</url>
+        <param>
+            <name>replayBufferSize</name>
+            <value>8</value>
+        </param>
     </service>
 
     <service>
         <role>HIVE</role>
         <url>http://localhost:10001/cliservice</url>
+        <param>
+            <name>replayBufferSize</name>
+            <value>8</value>
+        </param>
     </service>
 
     <service>
