@@ -57,7 +57,7 @@ public class CreateScanner {
     private String tableName;
     private String startRow;
     private String endRow;
-    private List<Column> columns = new ArrayList<Column>();
+    private List<Column> columns = new ArrayList<>();
     private Integer batch;
     private Long startTime;
     private Long endTime;

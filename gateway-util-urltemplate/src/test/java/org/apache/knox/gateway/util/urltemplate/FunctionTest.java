@@ -155,7 +155,7 @@ public class FunctionTest {
 
     @Override
     public List<String> evaluate( String function, List<String> parameters ) {
-      List<String> result = new ArrayList<String>( parameters.size() );
+      List<String> result = new ArrayList<>( parameters.size() );
       for( String parameter : parameters ) {
         result.add( "<" + function + ":" + parameter + ">" );
       }

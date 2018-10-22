@@ -100,7 +100,7 @@ public class HadoopGroupProviderDeploymentContributor
       ResourceDescriptor resource, List<FilterParamDescriptor> params) {
   // blindly add all the provider params as filter init params
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     Map<String, String> providerParams = provider.getParams();
     return createParamList(resource, params, providerParams);
@@ -109,7 +109,7 @@ public class HadoopGroupProviderDeploymentContributor
   private List<FilterParamDescriptor> createParamList(ResourceDescriptor resource, List<FilterParamDescriptor> params,
         Map<String, String> providerParams) {
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     for(Entry<String, String> entry : providerParams.entrySet()) {
       params.add( resource.createFilterParam().name(entry.getKey().toLowerCase(Locale.ROOT)).value(entry.getValue()));

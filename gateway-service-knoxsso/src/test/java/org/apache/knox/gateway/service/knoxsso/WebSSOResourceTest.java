@@ -863,7 +863,7 @@ public class WebSSOResourceTest {
                                long expires) throws TokenServiceException {
       List<String> audiences = null;
       if (audience != null) {
-        audiences = new ArrayList<String>();
+        audiences = new ArrayList<>();
         audiences.add(audience);
       }
       return issueToken(p, audiences, algorithm, expires);

@@ -58,11 +58,11 @@ public class UsernameFunctionProcessor
     List<String> results = null;
     Subject subject = SubjectUtils.getCurrentSubject( );
     if( subject != null ) {
-      results = new ArrayList<String>( 1 );
+      results = new ArrayList<>( 1 );
       String username = SubjectUtils.getEffectivePrincipalName(subject);
       results.add( username );
     } else if( parameters != null && !parameters.isEmpty() ) {
-      results = new ArrayList<String>( 1 );
+      results = new ArrayList<>( 1 );
       results.add( parameters.get( 0 ) );
     }
     return results;

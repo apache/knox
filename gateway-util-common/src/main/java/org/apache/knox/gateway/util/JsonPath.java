@@ -128,7 +128,7 @@ public class JsonPath {
             if( list != null ) {
               throw new IllegalArgumentException( expression );
             }
-            list = new ArrayList<Segment>();
+            list = new ArrayList<>();
             segment = new Segment( Segment.Type.ROOT );
             list.add( segment );
             break;
@@ -211,8 +211,8 @@ public class JsonPath {
       JsonNode child;
       Match newMatch;
       List<Match> tempMatches;
-      List<Match> oldMatches = new ArrayList<Match>();
-      List<Match> newMatches = new ArrayList<Match>();
+      List<Match> oldMatches = new ArrayList<>();
+      List<Match> newMatches = new ArrayList<>();
       if( root != null ) {
         for( Segment seg : segments ) {
           if( Segment.Type.ROOT == seg.getType() ) {

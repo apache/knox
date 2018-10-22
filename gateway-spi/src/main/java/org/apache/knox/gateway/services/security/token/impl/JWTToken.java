@@ -60,7 +60,7 @@ public class JWTToken implements JWT {
 
     if (claimsArray[2] != null) {
       if (audiences == null) {
-        audiences = new ArrayList<String>();
+        audiences = new ArrayList<>();
       }
       audiences.add(claimsArray[2]);
     }

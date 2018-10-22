@@ -163,7 +163,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       if (params == null) {
         params = new HashMap<>();
       }
-      ArrayList<String> al = new ArrayList<String>();
+      ArrayList<String> al = new ArrayList<>();
       al.add(username);
 
       List<String> principalParamNames = getImpersonationParamNames();
@@ -192,7 +192,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     // params in a future release and get this list from a central registry.
     // This will provide better coverage of protection by removing any
     // prepopulated impersonation params.
-    ArrayList<String> principalParamNames = new ArrayList<String>();
+    ArrayList<String> principalParamNames = new ArrayList<>();
     principalParamNames.add(DOAS_PRINCIPAL_PARAM);
     principalParamNames.add(PRINCIPAL_PARAM);
     return principalParamNames;

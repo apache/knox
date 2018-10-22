@@ -115,7 +115,7 @@ public class XFrameOptionsFilter implements Filter {
     public Collection<String> getHeaderNames() {
         List<String> names = (List<String>) super.getHeaderNames();
         if (names == null) {
-          names = new ArrayList<String>();
+          names = new ArrayList<>();
         }
         names.add(X_FRAME_OPTIONS);
         return names;
@@ -126,7 +126,7 @@ public class XFrameOptionsFilter implements Filter {
         List<String> values = (List<String>) super.getHeaders(name);
         if (name.equals(X_FRAME_OPTIONS)) {
           if (values == null) {
-            values = new ArrayList<String>();
+            values = new ArrayList<>();
           }
           values.add(option);
         }

@@ -48,7 +48,7 @@ public class JaasLoginFilter extends AbstractGatewayFilter {
 //        subject.getPublicCredentials().add( new PrincipalCredentials( credentials.getUserPrincipal() ) );
 //        //System.out.println( "Subject=" + subject );
 //
-//        PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
+//        PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<>() {
 //          @Override
 //          public Void run() throws Exception {
 //            chain.doFilter( request, response );

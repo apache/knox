@@ -94,7 +94,7 @@ public abstract class XmlFilterReader extends Reader {
     buffer = writer.getBuffer();
     offset = 0;
     document = null;
-    stack = new Stack<Level>();
+    stack = new Stack<>();
     isEmptyElement = false;
     factory = XMLInputFactory.newFactory();
     //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );

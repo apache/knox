@@ -57,7 +57,7 @@ public class AclsAuthzDeploymentContributor extends ProviderDeploymentContributo
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, 
       ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     // add resource role to params so that we can determine the acls to enforce at runtime
     params.add( resource.createFilterParam().name( "resource.role" ).value(resource.role() ) );

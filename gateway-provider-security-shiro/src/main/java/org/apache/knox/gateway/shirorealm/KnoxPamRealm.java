@@ -110,7 +110,7 @@ public class KnoxPamRealm extends AuthorizingRealm {
 
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    Set<String> roles = new LinkedHashSet<String>();
+    Set<String> roles = new LinkedHashSet<>();
 
     UnixUserPrincipal user = principals.oneByType(UnixUserPrincipal.class);
     if (user != null) {

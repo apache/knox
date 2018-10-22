@@ -70,7 +70,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
     this.reader = reader;
     document = XmlUtils.createDocument( false );
-    stack = new Stack<Level>();
+    stack = new Stack<>();
     parser = new StreamedSource( reader );
     iterator = parser.iterator();
     writer = new StringWriter();

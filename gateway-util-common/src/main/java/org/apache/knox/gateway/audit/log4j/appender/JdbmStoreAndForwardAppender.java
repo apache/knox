@@ -53,7 +53,7 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
   @Override
   public void activateOptions() {
     try {
-      queue = new JdbmQueue<LoggingEvent>( file );
+      queue = new JdbmQueue<>( file );
     } catch ( IOException e ) {
       throw new IllegalStateException( e );
     }

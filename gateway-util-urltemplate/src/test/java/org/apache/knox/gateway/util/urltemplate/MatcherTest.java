@@ -61,7 +61,7 @@ public class MatcherTest {
     Template patternTemplate, inputTemplate;
     Matcher<String>.Match match;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     patternTemplate = Parser.parseTemplate( "*://*:*/a/{pathB=**}/c" );
     matcher.add( patternTemplate, "webhdfs" );
     inputTemplate = Parser.parseLiteral( "s://h:5/a/b1/b2/c" );
@@ -70,7 +70,7 @@ public class MatcherTest {
     assertThat( match.getValue(), is( "webhdfs" ) );
     assertThat( match.getParams().resolve( "pathB" ), hasItems( "b1", "b2" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "s://h:5/a/b/c" );
     patternTemplate = Parser.parseTemplate( "{scheme=*}://{host=*}:{port=*}/a/{pathB=**}/c" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -80,7 +80,7 @@ public class MatcherTest {
     assertThat( match.getParams().resolve( "pathB" ), hasItems( "b" ) );
 
     // KNOX-357
-//    matcher = new Matcher<String>();
+//    matcher = new Matcher<>();
 //    inputTemplate = Parser.parse( "s://h:5/a/c" );
 //    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/a/{pathB=**}/c" );
 //    matcher.add( patternTemplate, "webhdfs" );
@@ -88,7 +88,7 @@ public class MatcherTest {
 //    assertThat( match, notNullValue() );
 //    assertThat( match.getValue(), is( "webhdfs" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "s://h:5/a/b" );
     patternTemplate = Parser.parseTemplate( "{scheme=*}://{host=*}:{port=*}/{pathA=**}/b" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -97,7 +97,7 @@ public class MatcherTest {
     assertThat( match.getValue(), is( "webhdfs" ) );
 
     // KNOX-357
-//    matcher = new Matcher<String>();
+//    matcher = new Matcher<>();
 //    inputTemplate = Parser.parse( "s://h:5/b" );
 //    patternTemplate = Parser.parse( "{scheme=*}://{host=*}:{port=*}/{pathA=**}/b" );
 //    matcher.add( patternTemplate, "webhdfs" );
@@ -112,7 +112,7 @@ public class MatcherTest {
     Template patternTemplate, inputTemplate;
     Matcher<String>.Match match;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://127.0.0.1:8443/webhdfs/v1/tmp?op=LISTSTATUS" );
     patternTemplate = Parser.parseTemplate( "*://*:*/webhdfs/{version}/{path=**}?{**}" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -120,7 +120,7 @@ public class MatcherTest {
     assertThat( match, notNullValue() );
     assertThat( match.getValue(), is( "webhdfs" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://127.0.0.1:8443/top/webhdfs/v1/tmp?op=LISTSTATUS" );
     patternTemplate = Parser.parseTemplate( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -128,7 +128,7 @@ public class MatcherTest {
     assertThat( match, notNullValue() );
     assertThat( match.getValue(), is( "webhdfs" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://127.0.0.1:8443/a/b/c" );
     patternTemplate = Parser.parseTemplate( "*://*:*/**/c" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -136,7 +136,7 @@ public class MatcherTest {
     assertThat( match, notNullValue() );
     assertThat( match.getValue(), is( "webhdfs" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://127.0.0.1:8443/a/b/c/d" );
     patternTemplate = Parser.parseTemplate( "*://*:*/{pathA=**}/b/{pathC=**}/d" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -146,7 +146,7 @@ public class MatcherTest {
     assertThat( match.getParams().resolve( "pathA" ), hasItems( "a" ) );
     assertThat( match.getParams().resolve( "pathC" ), hasItems( "c" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://127.0.0.1:8443/a1/a2/b/c1/c2/d" );
     patternTemplate = Parser.parseTemplate( "*://*:*/{pathA=**}/b/{pathC=**}/d" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -157,7 +157,7 @@ public class MatcherTest {
     assertThat( match.getParams().resolve( "pathC" ), hasItems( "c1", "c2" ) );
 
     // KNOX-357
-//    matcher = new Matcher<String>();
+//    matcher = new Matcher<>();
 //    inputTemplate = Parser.parse( "https://0.0.0.0:0/b" );
 //    patternTemplate = Parser.parse( "*://*:*/**/b/**" );
 //    matcher.add( patternTemplate, "webhdfs" );
@@ -166,7 +166,7 @@ public class MatcherTest {
 //    assertThat( match.getValue(), is( "webhdfs" ) );
 
     // KNOX-357
-//    matcher = new Matcher<String>();
+//    matcher = new Matcher<>();
 //    inputTemplate = Parser.parse( "https://127.0.0.1:8443/webhdfs/v1/tmp?op=LISTSTATUS" );
 //    patternTemplate = Parser.parse( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
 //    matcher.add( patternTemplate, "webhdfs" );
@@ -182,7 +182,7 @@ public class MatcherTest {
     Matcher<String>.Match match;
 
     // First verify that if .../test_table/test_row/family1... works.
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://localhost:8443/gateway/sandbox/hbase/test_table/test_row/family1:row2_col1,family2/0,9223372036854775807?v=1" );
     patternTemplate = Parser.parseTemplate( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -190,7 +190,7 @@ public class MatcherTest {
     assertThat( match, nullValue() );
 
     // Then reproduce the issue with .../test_table/*/family1..
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://localhost:8443/gateway/sandbox/hbase/test_table/*/family1:row2_col1,family2/0,9223372036854775807?v=1" );
     patternTemplate = Parser.parseTemplate( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -198,7 +198,7 @@ public class MatcherTest {
     assertThat( match, nullValue() );
 
     // Reproduce the issue where the wrong match was picked when there was a "*" in the input URL template.
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     inputTemplate = Parser.parseLiteral( "https://localhost:8443/gateway/sandbox/hbase/test_table/*/family1:row2_col1,family2/0,9223372036854775807?v=1" );
     patternTemplate = Parser.parseTemplate( "*://*:*/**/webhdfs/{version}/{path=**}?{**}" );
     matcher.add( patternTemplate, "webhdfs" );
@@ -216,7 +216,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
     inputTemplate = Parser.parseLiteral( "test-scheme://test-host:42" );
@@ -231,7 +231,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*/" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
     inputTemplate = Parser.parseLiteral( "test-scheme://test-host:42" );
@@ -246,7 +246,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*/*" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
     inputTemplate = Parser.parseLiteral( "test-scheme://test-host:42" );
@@ -261,7 +261,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*/**" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
 //KM: I'm not sure what the correct behavior is here.
@@ -277,7 +277,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*/{path=*}" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
     inputTemplate = Parser.parseLiteral( "test-scheme://test-host:42" );
@@ -292,7 +292,7 @@ public class MatcherTest {
 
     ///////
     patternTemplate = Parser.parseTemplate( "*://*:*/{path=**}" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-match" );
 
 //KM: I'm not sure what the correct behavior is here.
@@ -309,7 +309,7 @@ public class MatcherTest {
 
   @Test
   public void testDefaultPortMatching() throws Exception {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     Template patternTemplate, inputTemplate;
     Matcher<String>.Match match;
 
@@ -345,14 +345,14 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "{*}://{host}:{*}/{**=**}?{**}" );
     inputTemplate = Parser.parseLiteral( "test-scheme://test-input-host:42/test-path/test-file?test-name=test-value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-math" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the path ** should include both test-path and test-file", match, notNullValue() );
 
     patternTemplate = Parser.parseTemplate( "{*}://{host}:{*}/{**}?{**}" );
     inputTemplate = Parser.parseLiteral( "test-scheme://test-input-host:42/test-path/test-file?test-name=test-value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "test-math" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the path ** should include both test-path and test-file", match, notNullValue() );
@@ -366,12 +366,12 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{query}" );
     inputTemplate = Parser.parseLiteral( "/path" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/path?{query}" ), "T1" );
     matcher.add( Parser.parseTemplate( "/path" ), "T2" );
     inputTemplate = Parser.parseLiteral( "/path" );
@@ -381,7 +381,7 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{query}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
@@ -390,21 +390,21 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{*}" );
     inputTemplate = Parser.parseLiteral( "/path" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
 
     patternTemplate = Parser.parseTemplate( "/path?*" );
     inputTemplate = Parser.parseLiteral( "/path" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should not match because input does not contain the required query.", match, nullValue() );
 
     patternTemplate = Parser.parseTemplate( "/path?*" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat(
@@ -416,7 +416,7 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{*}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
@@ -424,21 +424,21 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{**}" );
     inputTemplate = Parser.parseLiteral( "/path" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the template has an optional query.", match, notNullValue() );
 
     patternTemplate = Parser.parseTemplate( "/path?**" );
     inputTemplate = Parser.parseLiteral( "/path" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
 
     patternTemplate = Parser.parseTemplate( "/path?**" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
@@ -446,7 +446,7 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{**}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because the template has an optional extra query.", match, notNullValue() );
@@ -455,14 +455,14 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{query}&{*}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should not match because input does not contain the required extra query.", match, nullValue() );
 
     patternTemplate = Parser.parseTemplate( "/path?{query}&{*}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value&extra=extra-value" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
@@ -471,7 +471,7 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{query=**}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value1&query=value2" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
@@ -481,7 +481,7 @@ public class MatcherTest {
 
     patternTemplate = Parser.parseTemplate( "/path?{query}" );
     inputTemplate = Parser.parseLiteral( "/path?query=value1&query=value2" );
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( patternTemplate, "T" );
     match = matcher.match( inputTemplate );
     assertThat( "Should match because input does contain the required query.", match, notNullValue() );
@@ -497,7 +497,7 @@ public class MatcherTest {
     Template patternTemplate, inputTemplate;
     Matcher<String>.Match match;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -507,7 +507,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -530,7 +530,7 @@ public class MatcherTest {
     Template patternTemplate, inputTemplate;
     Matcher<String>.Match match;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "path";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -542,7 +542,7 @@ public class MatcherTest {
     assertThat( match.getValue(), equalTo( pattern ) );
 
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "/path";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -552,7 +552,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "path/path";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -562,7 +562,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "*/path";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -572,7 +572,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "**/path";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -582,7 +582,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "path-1/{path=**}/path-4";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -594,7 +594,7 @@ public class MatcherTest {
     assertThat( match.getParams().resolve( "path" ).get( 0 ), equalTo( "path-2" ) );
     assertThat( match.getParams().resolve( "path" ).get( 1 ), equalTo( "path-3" ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "/";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -604,7 +604,7 @@ public class MatcherTest {
     assertThat( match.getTemplate(), sameInstance( patternTemplate ) );
     assertThat( match.getValue(), equalTo( pattern ) );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     pattern = "";
     patternTemplate = Parser.parseTemplate( pattern );
     matcher.add( patternTemplate, pattern );
@@ -617,7 +617,7 @@ public class MatcherTest {
 
   @Test
   public void testVariousPatterns() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs" ), "/webhdfs" );
     matcher.add( Parser.parseTemplate( "/webhdfs/dfshealth.jsp" ), "/webhdfs/dfshealth.jsp" );
     matcher.add( Parser.parseTemplate( "/webhdfs/*.jsp" ), "/webhdfs/*.jsp" );
@@ -641,7 +641,7 @@ public class MatcherTest {
 
   @Test
   public void testStar() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/*" ), "/webhdfs/*" );
     assertValidMatch( matcher, "/webhdfs/*", "/webhdfs/*" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/*" );
@@ -652,7 +652,7 @@ public class MatcherTest {
 
   @Test
   public void testGlob() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/path/", "/webhdfs/**" );
@@ -662,7 +662,7 @@ public class MatcherTest {
 
   @Test
   public void testMatrixParam() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     matcher.add( Parser.parseTemplate( "/webhdfs/browseDirectory.jsp;dn=*" ), "/webhdfs/browseDirectory.jsp;dn=*" );
     assertValidMatch( matcher, "/webhdfs/browseDirectory.jsp;dn=X", "/webhdfs/browseDirectory.jsp;dn=*" );
@@ -670,14 +670,14 @@ public class MatcherTest {
 
   @Test
   public void testTwoGlobsAtDifferentDepths() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     matcher.add( Parser.parseTemplate( "/webhdfs/v1/**" ), "/webhdfs/v1/**" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/v1/file", "/webhdfs/v1/**" );
 
     // Reverse the put order.
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/v1/**" ), "/webhdfs/v1/**" );
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/**" );
@@ -686,14 +686,14 @@ public class MatcherTest {
 
   @Test
   public void testGlobsVsStarsAtSameDepth() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/*" ), "/webhdfs/*" );
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     assertValidMatch( matcher, "/webhdfs/file", "/webhdfs/*" ); // The star should be picked in preference to the glob.
     assertValidMatch( matcher, "/webhdfs/path/file", "/webhdfs/**" );
 
     // Reverse the put order.
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/webhdfs/**" ), "/webhdfs/**" );
     matcher.add( Parser.parseTemplate( "/webhdfs/*" ), "/webhdfs/*" );
     assertValidMatch( matcher, "/webhdfs/path/file", "/webhdfs/**" );
@@ -702,19 +702,19 @@ public class MatcherTest {
 
   @Test
   public void testMatchingPatternsWithinPathSegments() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/path/{file}" ), "default" );
     assertValidMatch( matcher, "/path/file-name", "default" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/path/{file=*}" ), "*" );
     assertValidMatch( matcher, "/path/some-name", "*" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/path/{more=**}" ), "**" );
     assertValidMatch( matcher, "/path/some-path/some-name", "**" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "/path/{regex=prefix*suffix}" ), "regex" );
     assertValidMatch( matcher, "/path/prefix-middle-suffix", "regex" );
     assertValidMatch( matcher, "/path/not-prefix-middle-suffix", null );
@@ -722,19 +722,19 @@ public class MatcherTest {
 
   @Test
   public void testMatchingPatternsWithinQuerySegments() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "?query={queryParam}" ), "default" );
     assertValidMatch( matcher, "?query=value", "default" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "?query={queryParam=*}" ), "*" );
     assertValidMatch( matcher, "?query=some-value", "*" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "?query={queryParam=**}" ), "**" );
     assertValidMatch( matcher, "?query=some-value", "**" );
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     matcher.add( Parser.parseTemplate( "?query={queryParam=prefix*suffix}" ), "regex" );
     assertValidMatch( matcher, "?query=prefix-middle-suffix", "regex" );
     assertValidMatch( matcher, "?query=not-prefix-middle-suffix", null );
@@ -742,7 +742,7 @@ public class MatcherTest {
 
   @Test
   public void testMatchingForTemplatesThatVaryOnlyByQueryParams() throws URISyntaxException {
-    Matcher<String> matcher = new Matcher<String>();
+    Matcher<String> matcher = new Matcher<>();
     addTemplate( matcher, "?one={queryParam}" );
     addTemplate( matcher, "?two={queryParam}" );
 
@@ -762,7 +762,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "{scheme}://{username}:{password}@{host}:{port}/{root}/{path}/{file}?queryA={paramA}&queryB={paramB}#{fragment}" );
     input = Parser.parseLiteral( "http://horton:hadoop@hortonworks.com:80/top/middle/end?queryA=valueA&queryB=valueB#section" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
 
@@ -801,17 +801,17 @@ public class MatcherTest {
 
 //    template = Parser.parse( "*://*:*/**/webhdfs/v1/**?**" );
 //    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
-//    matcher = new Matcher<String>( template, "test-value" );
+//    matcher = new Matcher<>( template, "test-value" );
 //    match = matcher.match( input );
 //    assertThat( (String)match.getValue(), is( "test-value" ) );
 //
 //    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
 //    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
-//    matcher = new Matcher<String>( template, "test-value-2" );
+//    matcher = new Matcher<>( template, "test-value-2" );
 //    match = matcher.match( input );
 //    assertThat( (String)match.getValue(), is( "test-value-2" ) );
 //
-//    stringMatcher = new Matcher<String>();
+//    stringMatcher = new Matcher<>();
 //    template = Parser.parse( "*://*:*/**/webhdfs/data/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
 //    stringMatcher.add( template, "test-value-C" );
 //    template = Parser.parse( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
@@ -822,7 +822,7 @@ public class MatcherTest {
 //    assertThat( (String)match.getValue(), is( "test-value-B" ) );
 
     // This is just a reverse of the above.  The order caused a bug.
-    stringMatcher = new Matcher<String>();
+    stringMatcher = new Matcher<>();
     template = Parser.parseTemplate( "*://*:*/**/webhdfs/v1/{path=**}?{**=*}" );
     stringMatcher.add( template, "test-value-B" );
     template = Parser.parseTemplate( "*://*:*/**/webhdfs/data/v1/{path=**}?host={host=*}&port={port=*}&{**=*}" );
@@ -844,7 +844,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "{path-queryParam}" );
     input = Parser.parseLiteral( "path-value" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -855,7 +855,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "/some-path/{path-queryParam}" );
     input = Parser.parseLiteral( "/some-path/path-value" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -866,7 +866,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "/some-path/{path-queryParam}/some-other-path" );
     input = Parser.parseLiteral( "/some-path/path-value/some-other-path" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -877,7 +877,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "{path=**}" );
     input = Parser.parseLiteral( "A/B" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -889,7 +889,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "/top/{mid=**}/end" );
     input = Parser.parseLiteral( "/top/A/B/end" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -901,7 +901,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "*://*:*/{path=**}?{**}" );
     input = Parser.parseLiteral( "http://host:port/pathA/pathB" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
@@ -910,7 +910,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "*://*:*/{path=**}?{**}" );
     input = Parser.parseLiteral( "http://host:port/pathA/pathB" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
@@ -919,7 +919,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "*://*:*/{path=**}?{**}" );
     input = Parser.parseLiteral( "http://host:port/pathA/pathB" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params.resolve( "path" ), hasItem( "pathA" ) );
@@ -937,7 +937,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "?query-queryParam={queryParam-name}" );
     input = Parser.parseLiteral( "?query-queryParam=queryParam-value" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -948,7 +948,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "?query-queryParam={queryParam-name}" );
     input = Parser.parseLiteral( "?query-queryParam=queryParam-value" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -968,7 +968,7 @@ public class MatcherTest {
 
     template = Parser.parseTemplate( "" );
     input = Parser.parseLiteral( "" );
-    matcher = new Matcher<Void>( template, null );
+    matcher = new Matcher<>( template, null );
     match = matcher.match( input );
     params = match.getParams();
     assertThat( params, notNullValue() );
@@ -982,7 +982,7 @@ public class MatcherTest {
     Matcher<String> matcher;
     Matcher<?>.Match match;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     template = Parser.parseTemplate( "*://*:*/**/webhdfs/v1/{path=**}?{**}" );
     matcher.add( template, "test-value" );
 

@@ -50,7 +50,7 @@ public class MockServer {
   private String name;
   private Server jetty;
 
-  private Queue<MockInteraction> interactions = new LinkedList<MockInteraction>();
+  private Queue<MockInteraction> interactions = new LinkedList<>();
 
   public MockServer( String name ) {
     this.name = name;

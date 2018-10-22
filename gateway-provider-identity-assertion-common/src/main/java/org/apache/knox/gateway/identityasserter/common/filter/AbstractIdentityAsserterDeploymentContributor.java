@@ -49,7 +49,7 @@ public abstract class AbstractIdentityAsserterDeploymentContributor extends
       ResourceDescriptor resource, List<FilterParamDescriptor> params) {
     // blindly add all the provider params as filter init params
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     Map<String, String> providerParams = provider.getParams();
     for(Entry<String, String> entry : providerParams.entrySet()) {

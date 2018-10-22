@@ -34,9 +34,9 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
     private List<Application> applications;
 
     public BeanPropertyTopologyBuilder() {
-        providers = new ArrayList<Provider>();
-        services = new ArrayList<Service>();
-        applications = new ArrayList<Application>();
+        providers = new ArrayList<>();
+        services = new ArrayList<>();
+        applications = new ArrayList<>();
     }
 
     public BeanPropertyTopologyBuilder name(String name) {

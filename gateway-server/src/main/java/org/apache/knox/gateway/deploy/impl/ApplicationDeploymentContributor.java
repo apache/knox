@@ -72,7 +72,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     if( !file.exists() ) {
       definition = new ServiceDefinition();
       definition.setName( application.getName() );
-      List<Route> routes = new ArrayList<Route>(1);
+      List<Route> routes = new ArrayList<>(1);
       Route route;
       route = new Route();
       route.setPath( "/?**" );
@@ -171,7 +171,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   }
 
   private void contributeResource( DeploymentContext context, Service service, Route binding, Map<String, String> filterParams) throws URISyntaxException {
-    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+    List<FilterParamDescriptor> params = new ArrayList<>();
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role(service.getRole());
     resource.pattern(binding.getPath());

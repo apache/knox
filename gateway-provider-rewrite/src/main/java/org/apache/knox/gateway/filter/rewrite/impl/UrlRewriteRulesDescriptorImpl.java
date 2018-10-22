@@ -31,10 +31,10 @@ import java.util.Map;
 public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor {
 
   private Map<String,UrlRewriteFunctionDescriptor> funcMap = new HashMap<>();
-  private List<UrlRewriteFunctionDescriptor> funcList = new ArrayList<UrlRewriteFunctionDescriptor>();
-  private List<UrlRewriteRuleDescriptor> ruleList = new ArrayList<UrlRewriteRuleDescriptor>();
+  private List<UrlRewriteFunctionDescriptor> funcList = new ArrayList<>();
+  private List<UrlRewriteRuleDescriptor> ruleList = new ArrayList<>();
   private Map<String,UrlRewriteRuleDescriptor> ruleMap = new HashMap<>();
-  private List<UrlRewriteFilterDescriptor> filterList = new ArrayList<UrlRewriteFilterDescriptor>();
+  private List<UrlRewriteFilterDescriptor> filterList = new ArrayList<>();
   private Map<String,UrlRewriteFilterDescriptor> filterMap = new HashMap<>();
 
   @Override

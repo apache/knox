@@ -78,7 +78,7 @@ public class ServiceTestDeploymentContributor extends JerseyServiceDeploymentCon
 //      addIdentityAssertionFilter(context, service, resource);
 //      addAuthorizationFilter(context, service, resource);
 //       addRewriteFilter( context, service, resource, null );
-      List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+      List<FilterParamDescriptor> params = new ArrayList<>();
       FilterParamDescriptor param = resource.createFilterParam();
       param.name(PACKAGES_PARAM);
       param.value(packages);

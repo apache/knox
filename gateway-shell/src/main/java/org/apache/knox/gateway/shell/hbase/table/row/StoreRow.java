@@ -51,7 +51,7 @@ public class StoreRow {
 
     private String rowId;
     private String tableName;
-    private List<InsertableColumn> columns = new ArrayList<InsertableColumn>();
+    private List<InsertableColumn> columns = new ArrayList<>();
 
     public Request( Hadoop session, String rowId, String tableName ) {
       super( session );

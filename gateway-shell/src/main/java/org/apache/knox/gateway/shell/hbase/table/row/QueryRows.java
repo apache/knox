@@ -34,7 +34,7 @@ public class QueryRows {
 
     private String rowsId;
     private String tableName;
-    private List<Column> columns = new ArrayList<Column>();
+    private List<Column> columns = new ArrayList<>();
     private Long startTime;
     private Long endTime;
     private Long numVersions;

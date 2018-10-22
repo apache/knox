@@ -111,7 +111,7 @@ class Command {
   }
 
   private static List<URL> loadClassPath( File base, String classPath ) throws MalformedURLException {
-    List<URL> urls = new ArrayList<URL>();
+    List<URL> urls = new ArrayList<>();
     StringTokenizer parser = new StringTokenizer( classPath, CLASS_PATH_DELIM, false );
     while( parser.hasMoreTokens() ) {
       String libPath = parser.nextToken().trim();

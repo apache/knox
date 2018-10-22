@@ -51,7 +51,7 @@ public class DefaultHaProviderTest {
    public void testAddingService() {
       HaDescriptor descriptor = new DefaultHaDescriptor();
       HaProvider provider = new DefaultHaProvider(descriptor);
-      ArrayList<String> urls = new ArrayList<String>();
+      ArrayList<String> urls = new ArrayList<>();
       urls.add("http://host1");
       urls.add("http://host2");
       provider.addHaService("foo", urls);
@@ -65,7 +65,7 @@ public class DefaultHaProviderTest {
    public void testActiveUrl() {
       HaDescriptor descriptor = new DefaultHaDescriptor();
       HaProvider provider = new DefaultHaProvider(descriptor);
-      ArrayList<String> urls = new ArrayList<String>();
+      ArrayList<String> urls = new ArrayList<>();
       String url1 = "http://host1";
       urls.add(url1);
       String url2 = "http://host2";

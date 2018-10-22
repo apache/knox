@@ -320,7 +320,7 @@ public class UrlRewriteProcessorTest {
     pattern = Parser.parseTemplate("*://*:*/**/solr/{collection=**}/{query=**}?{**}");
     template = Parser.parseTemplate("http://sandbox.hortonworks.com/solr/{collection=**}/{query=**}?{**}");
 
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add(pattern, null);
     match = matcher.match(input);
 
@@ -363,7 +363,7 @@ public class UrlRewriteProcessorTest {
     pattern = Parser.parseTemplate("*://*:*/**/solr/{collection=**}/{query=**}?{**}");
     template = Parser.parseTemplate("http://sandbox.hortonworks.com/solr/{collection=**}/{query=**}?{**}");
 
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add(pattern, null);
     match = matcher.match(input);
 

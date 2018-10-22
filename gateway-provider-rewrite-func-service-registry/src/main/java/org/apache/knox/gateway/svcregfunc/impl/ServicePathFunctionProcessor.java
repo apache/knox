@@ -40,7 +40,7 @@ public class ServicePathFunctionProcessor
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
     List<String> results = null;
     if( parameters != null ) {
-      results = new ArrayList<String>( parameters.size() );
+      results = new ArrayList<>( parameters.size() );
       for( String parameter : parameters ) {
         String url = lookupServiceUrl( parameter );
         if( url != null ) {

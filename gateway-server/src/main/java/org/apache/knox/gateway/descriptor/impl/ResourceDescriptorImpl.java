@@ -36,8 +36,8 @@ public class ResourceDescriptorImpl implements ResourceDescriptor {
 
   ResourceDescriptorImpl( GatewayDescriptor parent ) {
     this.parent = parent;
-    this.params = new ArrayList<ResourceParamDescriptor>();
-    this.filters = new ArrayList<FilterDescriptor>();
+    this.params = new ArrayList<>();
+    this.filters = new ArrayList<>();
   }
 
   @Override

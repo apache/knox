@@ -104,7 +104,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     // You may also need to do some additional processing of the response in order to not return cookies or other
     // filter specifics that are not needed for integration with Knox. Below we do that in the pre-processing filter.
     if (params == null) {
-      params = new ArrayList<FilterParamDescriptor>();
+      params = new ArrayList<>();
     }
     Map<String, String> providerParams = provider.getParams();
     String redirectToUrl = providerParams.get(RedirectToUrlFilter.REDIRECT_TO_URL);

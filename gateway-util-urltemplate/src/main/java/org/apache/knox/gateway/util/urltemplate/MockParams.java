@@ -34,7 +34,7 @@ public class MockParams implements Params {
   private List<String> getOrAddValues( String name ) {
     List<String> values = resolve( name );
     if( values == null ) {
-      values = new ArrayList<String>( 1 );
+      values = new ArrayList<>( 1 );
       map.put( name, values );
     }
     return values;

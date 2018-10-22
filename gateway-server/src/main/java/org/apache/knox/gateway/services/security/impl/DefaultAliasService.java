@@ -190,7 +190,7 @@ public class DefaultAliasService implements AliasService {
    */
   @Override
   public List<String> getAliasesForCluster(String clusterName) {
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     KeyStore keyStore;
     try {
       keyStore = keystoreService.getCredentialStoreForCluster(clusterName);

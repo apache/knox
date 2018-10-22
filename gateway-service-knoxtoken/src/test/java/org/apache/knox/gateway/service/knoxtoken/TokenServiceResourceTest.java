@@ -271,7 +271,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
     EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost,OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
-    ArrayList<X509Certificate> certArrayList = new ArrayList<X509Certificate>();
+    ArrayList<X509Certificate> certArrayList = new ArrayList<>();
     certArrayList.add(trustedCertMock);
     X509Certificate[] certs = {};
     EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
@@ -328,7 +328,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
     EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
-    ArrayList<X509Certificate> certArrayList = new ArrayList<X509Certificate>();
+    ArrayList<X509Certificate> certArrayList = new ArrayList<>();
     certArrayList.add(trustedCertMock);
     X509Certificate[] certs = {};
     EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
@@ -735,7 +735,7 @@ public class TokenServiceResourceTest {
                                long expires) throws TokenServiceException {
       ArrayList<String> audiences = null;
       if (audience != null) {
-        audiences = new ArrayList<String>();
+        audiences = new ArrayList<>();
         audiences.add(audience);
       }
       return issueToken(p, audiences, algorithm, expires);

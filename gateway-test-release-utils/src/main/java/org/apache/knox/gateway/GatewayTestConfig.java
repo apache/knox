@@ -230,7 +230,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public List getExcludedSSLProtocols() {
-    List<String> protocols = new ArrayList<String>();
+    List<String> protocols = new ArrayList<>();
     protocols.add("SSLv3");
     return protocols;
   }
@@ -717,7 +717,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getAutoDeployTopologyNames() {
-    ArrayList<String> names = new ArrayList<String>();
+    ArrayList<String> names = new ArrayList<>();
     names.add("manager");
     names.add("admin");
     return null;

@@ -28,7 +28,7 @@ public class UrlRewriteFilterGroupDescriptorBase
     extends UrlRewriteFilterSelectorDescriptorBase
     implements UrlRewriteFilterGroupDescriptor {
 
-  private List<UrlRewriteFilterPathDescriptor> selectors = new ArrayList<UrlRewriteFilterPathDescriptor>();
+  private List<UrlRewriteFilterPathDescriptor> selectors = new ArrayList<>();
 
   @Override
   public List<UrlRewriteFilterPathDescriptor> getSelectors() {

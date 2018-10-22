@@ -74,7 +74,7 @@ class JsonFilterReader extends Reader {
     buffer = writer.getBuffer();
     offset = 0;
     generator = factory.createGenerator( writer );
-    stack = new Stack<Level>();
+    stack = new Stack<>();
     bufferingLevel = null;
     bufferingConfig = null;
     this.config = config;

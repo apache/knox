@@ -59,7 +59,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 
   private String zooKeeperEnsemble;
   private String zooKeeperNamespace;
-  private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<String>();
+  private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<>();
 
   // -------------------------------------------------------------------------------------
   // URLManager interface methods
@@ -160,7 +160,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
    * @return Hosts with successful access
    */
   protected List<String> validateHosts(List<String> hosts, String suffix, String acceptHeader) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     CloseableHttpClient client = buildHttpClient();
 

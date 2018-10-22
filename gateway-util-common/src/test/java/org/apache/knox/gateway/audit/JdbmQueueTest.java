@@ -48,7 +48,7 @@ public class JdbmQueueTest {
   public void setup() throws IOException {
     file = new File( "target/JdbmQueueTest" );
     cleanup();
-    queue = new JdbmQueue<String>( file );
+    queue = new JdbmQueue<>( file );
   }
 
   @After

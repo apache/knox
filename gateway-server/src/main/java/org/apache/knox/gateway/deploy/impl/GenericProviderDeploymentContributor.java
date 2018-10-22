@@ -76,7 +76,7 @@ public class GenericProviderDeploymentContributor extends
       FilterDescriptor filter,
       Map<String,String> providerParams,
       List<FilterParamDescriptor> filterParams ) {
-    List<FilterParamDescriptor> aggregateParams = new ArrayList<FilterParamDescriptor>();
+    List<FilterParamDescriptor> aggregateParams = new ArrayList<>();
     if( providerParams != null ) {
       for( Map.Entry<String,String> param : providerParams.entrySet() ) {
         String name = param.getKey();

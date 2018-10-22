@@ -28,12 +28,12 @@ public class IpAddressValidator {
   /**
    * The parsed list of ip addresses 
    */
-  private ArrayList<String> ipaddr = new ArrayList<String>();
+  private ArrayList<String> ipaddr = new ArrayList<>();
   
   /**
    * IP addresses from the ipaddr list that contain a wildcard character '*'
    */
-  private ArrayList<String> wildCardIPs = new ArrayList<String>();
+  private ArrayList<String> wildCardIPs = new ArrayList<>();
   
   /**
    * Optimization based on empty IP address list or an explicit '*' wildcard
@@ -57,8 +57,8 @@ public class IpAddressValidator {
    */
   private void parseIpAddesses(String commaSeparatedIpAddresses) {
     String[] ips = commaSeparatedIpAddresses.split(",");
-    ipaddr = new ArrayList<String>();
-    wildCardIPs = new ArrayList<String>();
+    ipaddr = new ArrayList<>();
+    wildCardIPs = new ArrayList<>();
     Collections.addAll(ipaddr, ips);
     if (!ipaddr.contains("*")) {
       anyIP = false;

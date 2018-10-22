@@ -134,7 +134,7 @@ public class CMFMasterService {
   protected void persistMaster(char[] master, File masterFile) {
     EncryptionResult atom = encryptMaster(master);
     try {
-      ArrayList<String> lines = new ArrayList<String>();
+      ArrayList<String> lines = new ArrayList<>();
       lines.add(MASTER_PERSISTENCE_TAG);
       
       String line = Base64.encodeBase64String((
@@ -192,7 +192,7 @@ public class CMFMasterService {
   
           // " +" regular expression for 1 or more spaces
           final String[] argsString = args.split(" +");
-          List<String> cmdList = new ArrayList<String>();
+          List<String> cmdList = new ArrayList<>();
           cmdList.add("/bin/chmod");
           cmdList.addAll(Arrays.asList(argsString));
           cmdList.add(file.getAbsolutePath());

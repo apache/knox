@@ -35,7 +35,7 @@ public class FilterDescriptorImpl implements FilterDescriptor {
 
   FilterDescriptorImpl( ResourceDescriptor parent ) {
     this.parent = parent;
-    this.params = new ArrayList<FilterParamDescriptor>();
+    this.params = new ArrayList<>();
   }
 
   @Override

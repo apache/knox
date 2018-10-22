@@ -569,7 +569,7 @@ public class GatewayServer {
     final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();
 
     // List of all the topology that are deployed
-    final List<String> deployedTopologyList = new ArrayList<String>();
+    final List<String> deployedTopologyList = new ArrayList<>();
 
     for (final Topology t : topologies) {
       deployedTopologyList.add(t.getName());
@@ -841,7 +841,7 @@ public class GatewayServer {
     }
 
     // Find all the deployed contexts we need to deactivate.
-    List<WebAppContext> deactivate = new ArrayList<WebAppContext>();
+    List<WebAppContext> deactivate = new ArrayList<>();
     if( deployments != null ) {
       for( WebAppContext app : deployments.values() ) {
         String appPath = app.getContextPath();

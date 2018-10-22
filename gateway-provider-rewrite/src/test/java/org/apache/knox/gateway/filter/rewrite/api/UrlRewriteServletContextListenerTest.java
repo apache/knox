@@ -58,7 +58,7 @@ public class UrlRewriteServletContextListenerTest {
     FilterHolder filter = server.addFilter( UrlRewriteServletFilter.class, "/*", EnumSet.of( DispatcherType.REQUEST ) );
     filter.setFilter( new UrlRewriteServletFilter() );
 
-    interactions = new ArrayQueue<MockInteraction>();
+    interactions = new ArrayQueue<>();
 
     ServletHolder servlet = server.addServlet( MockServlet.class, "/" );
     servlet.setServlet( new MockServlet( "mock-servlet", interactions ) );

@@ -29,7 +29,7 @@ public class MimeTypeMapTest {
 
   @Test
   public void testTypeFallback() throws MimeTypeParseException {
-     MimeTypeMap<String> map = new MimeTypeMap<String>();
+     MimeTypeMap<String> map = new MimeTypeMap<>();
 
     map.put( new MimeType( "text/xml" ), "text/xml" );
     map.put( new MimeType( "text/json" ), "text/json" );

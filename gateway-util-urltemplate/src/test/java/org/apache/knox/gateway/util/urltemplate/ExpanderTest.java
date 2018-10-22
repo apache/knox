@@ -414,7 +414,7 @@ public class ExpanderTest {
     pattern = Parser.parseTemplate( "*://*:*/**/templeton/v1/?{**}" );
     template = Parser.parseTemplate( "{$serviceUrl[WEBHCAT]}/v1/?{**}" );
 
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( pattern, null );
     match = matcher.match( input );
 
@@ -446,7 +446,7 @@ public class ExpanderTest {
     pattern = Parser.parseTemplate( "*://*:*/{contextRoot}/?{**}#{fragment}" );
     template = Parser.parseTemplate( "{$gateway.url}/foo/{contextRoot}/?{**}#{fragment}" );
 
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( pattern, null );
     match = matcher.match( input );
 
@@ -482,7 +482,7 @@ public class ExpanderTest {
     // Check to make sure that you can use constants within the {}
     template = Parser.parseTemplate( "{root=ROOT}/{path=**}" );
     rewrite = Parser.parseTemplate( "{root}/{path}" );
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( template, null );
     input = Parser.parseLiteral( "ROOT/child/path" );
     match = matcher.match( input );
@@ -493,7 +493,7 @@ public class ExpanderTest {
     // Check to see what happens when you use the special { character within the {}.
     template = Parser.parseTemplate( "{root={}/{path=**}" );
     rewrite = Parser.parseTemplate( "{root}/{path}" );
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( template, null );
     input = Parser.parseLiteral( "{/child/path" );
     match = matcher.match( input );
@@ -504,7 +504,7 @@ public class ExpanderTest {
     // Check to see what happens when you use the special } character within the {}.
     template = Parser.parseTemplate( "{root=}}/{path=**}" );
     rewrite = Parser.parseTemplate( "{root}/{path}" );
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( template, null );
     input = Parser.parseLiteral( "}/child/path" );
     match = matcher.match( input );
@@ -515,7 +515,7 @@ public class ExpanderTest {
     // Check to see what happens when you use the special } character within the {}.
     template = Parser.parseTemplate( "{root={}}/{path=**}" );
     rewrite = Parser.parseTemplate( "{root}/{path}" );
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( template, null );
     input = Parser.parseLiteral( "{}/child/path" );
     match = matcher.match( input );
@@ -526,7 +526,7 @@ public class ExpanderTest {
     template = Parser.parseTemplate( "{var=${*}}/{path=**}" );
     rewrite = Parser.parseTemplate( "{var}/{path}" );
 
-    matcher = new Matcher<Void>();
+    matcher = new Matcher<>();
     matcher.add( template, null );
 
     input = Parser.parseLiteral( "${app.dir}/child/path" );

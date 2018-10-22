@@ -30,7 +30,7 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
     UrlRewriteFlowDescriptor<T> {
 
   private UrlRewriteStepFlow flow;
-  private List<UrlRewriteStepDescriptor> steps = new ArrayList<UrlRewriteStepDescriptor>();
+  private List<UrlRewriteStepDescriptor> steps = new ArrayList<>();
 
   public UrlRewriteFlowDescriptorBase( String type ) {
     super( type );

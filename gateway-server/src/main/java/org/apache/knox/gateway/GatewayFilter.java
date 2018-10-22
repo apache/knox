@@ -81,7 +81,7 @@ public class GatewayFilter implements Filter {
 
   public GatewayFilter() {
     holders = new HashSet<>();
-    chains = new Matcher<Chain>();
+    chains = new Matcher<>();
   }
 
   @Override
@@ -258,7 +258,7 @@ public class GatewayFilter implements Filter {
     private String resourceRole; 
 
     private Chain() {
-      this.chain = new ArrayList<Holder>();
+      this.chain = new ArrayList<>();
     }
 
     private Chain( List<Holder> chain ) {

@@ -62,7 +62,7 @@ public class Service {
 
   public List<String> getUrls() {
     if ( urls == null ) {
-      urls = new ArrayList<String>();
+      urls = new ArrayList<>();
     }
     return urls;
   }
@@ -88,7 +88,7 @@ public class Service {
 
   public Collection<Param> getParamsList(){
 
-    ArrayList<Param> paramList = new ArrayList<Param>();
+    ArrayList<Param> paramList = new ArrayList<>();
 
     for(Map.Entry<String, String> entry : params.entrySet()){
       Param p = new Param();

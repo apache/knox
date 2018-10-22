@@ -53,7 +53,7 @@ public class TopologyValidator {
   }
 
   public boolean validateTopology() {
-    errors = new LinkedList<String>();
+    errors = new LinkedList<>();
     try {
       SchemaFactory fact = SchemaFactory
           .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);

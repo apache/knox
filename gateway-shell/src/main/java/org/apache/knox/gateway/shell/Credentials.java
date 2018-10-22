@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.ServiceLoader;
 
 public class Credentials {
-  ArrayList<CredentialCollector> collectors = new ArrayList<CredentialCollector>();
+  ArrayList<CredentialCollector> collectors = new ArrayList<>();
   
   public Credentials add(String collectorType, String prompt, String name) 
     throws CredentialCollectionException {

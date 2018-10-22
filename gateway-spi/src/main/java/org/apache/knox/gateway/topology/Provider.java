@@ -62,7 +62,7 @@ public class Provider {
 
   public Collection<Param> getParamsList(){
 
-    ArrayList<Param> paramList = new ArrayList<Param>();
+    ArrayList<Param> paramList = new ArrayList<>();
 
     for(Map.Entry<String, String> entry : params.entrySet()){
       Param p = new Param();

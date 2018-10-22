@@ -37,7 +37,7 @@ public class Sqoop {
   public static class Request extends AbstractRequest<Response> {
 
     private String statusDir;
-    List<NameValuePair> params = new ArrayList<NameValuePair>();
+    List<NameValuePair> params = new ArrayList<>();
 
     public Request( Hadoop session ) {
       super( session );

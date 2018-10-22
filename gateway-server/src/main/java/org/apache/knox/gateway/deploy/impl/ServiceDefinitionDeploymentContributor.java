@@ -121,7 +121,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   }
 
   private void contributeResource(DeploymentContext context, Service service, Route binding, Map<String, String> filterParams) throws URISyntaxException {
-    List<FilterParamDescriptor> params = new ArrayList<FilterParamDescriptor>();
+    List<FilterParamDescriptor> params = new ArrayList<>();
     ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
     resource.role(service.getRole());
     resource.pattern(binding.getPath());

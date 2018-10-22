@@ -85,7 +85,7 @@ public class SOLRZookeeperURLManagerTest {
     // Order of URLS is not deterministic out of Zookeeper
     // So we just check for expected values
     
-    TreeSet<String> expected = new TreeSet<String>();
+    TreeSet<String> expected = new TreeSet<>();
 
     expected.add("http://host1:8983/solr");
     expected.add("http://host2:8983/solr");

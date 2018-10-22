@@ -39,7 +39,7 @@ public class Pig {
     private String group;
     private String file;
     private String statusDir;
-    List<NameValuePair> params = new ArrayList<NameValuePair>();
+    List<NameValuePair> params = new ArrayList<>();
 
     public Request( Hadoop session ) {
       super( session );

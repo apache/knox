@@ -95,7 +95,7 @@ public class DefaultTopologyService
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
 
-  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<String>();
+  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<>();
   static {
     SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("xml");
     SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("conf");
@@ -214,7 +214,7 @@ public class DefaultTopologyService
   private List<TopologyEvent> createChangeEvents(
       Map<File, Topology> oldTopologies,
       Map<File, Topology> newTopologies) {
-    ArrayList<TopologyEvent> events = new ArrayList<TopologyEvent>();
+    ArrayList<TopologyEvent> events = new ArrayList<>();
     // Go through the old topologies and find anything that was deleted.
     for (Entry<File, Topology> oldTopology : oldTopologies.entrySet()) {
       if (!newTopologies.containsKey(oldTopology.getKey())) {
@@ -794,7 +794,7 @@ public class DefaultTopologyService
   public static class DescriptorsMonitor extends FileAlterationListenerAdaptor
                                           implements FileFilter {
 
-    static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<String>();
+    static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
     static {
       SUPPORTED_EXTENSIONS.add("json");
       SUPPORTED_EXTENSIONS.add("yml");

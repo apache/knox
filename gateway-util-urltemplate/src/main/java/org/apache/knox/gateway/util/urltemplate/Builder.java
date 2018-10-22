@@ -60,7 +60,7 @@ public class Builder {
     this.port = null;
     this.isAbsolute = false;
     this.isDirectory = false;
-    this.path = new ArrayList<Path>();
+    this.path = new ArrayList<>();
     this.hasQuery = false;
     this.query = new LinkedHashMap<String,Query>();
     this.extra = null;
@@ -136,7 +136,7 @@ public class Builder {
   }
 
   private List<Path> copyPath( List<Path> orig ) {
-    List<Path> copy = new ArrayList<Path>();
+    List<Path> copy = new ArrayList<>();
     if( orig != null ) {
       for( Path path : orig ) {
         copy.add( new Path( path ) );

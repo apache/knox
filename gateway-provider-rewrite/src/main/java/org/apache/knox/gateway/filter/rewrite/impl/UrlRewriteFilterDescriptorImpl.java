@@ -30,8 +30,8 @@ public class UrlRewriteFilterDescriptorImpl implements
     UrlRewriteFilterDescriptor {
 
   private String name;
-  private List<UrlRewriteFilterContentDescriptor> contentList = new ArrayList<UrlRewriteFilterContentDescriptor>();
-  private MimeTypeMap<UrlRewriteFilterContentDescriptor> contentMap = new MimeTypeMap<UrlRewriteFilterContentDescriptor>();
+  private List<UrlRewriteFilterContentDescriptor> contentList = new ArrayList<>();
+  private MimeTypeMap<UrlRewriteFilterContentDescriptor> contentMap = new MimeTypeMap<>();
 
   public UrlRewriteFilterDescriptorImpl() {
   }

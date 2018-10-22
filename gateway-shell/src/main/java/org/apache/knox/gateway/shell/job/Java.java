@@ -41,7 +41,7 @@ class Java {
     String app;
     String input;
     String output;
-    List<NameValuePair> params = new ArrayList<NameValuePair>();
+    List<NameValuePair> params = new ArrayList<>();
 
     public Request( Hadoop session ) {
       super( session );

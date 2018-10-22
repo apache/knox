@@ -54,7 +54,7 @@ public class UpdateTable {
     }
 
     public Family<Request> family( String name ) {
-      Family<Request> family = new Family<Request>( this, name );
+      Family<Request> family = new Family<>( this, name );
       families.add( family );
       return family;
     }

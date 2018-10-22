@@ -344,8 +344,8 @@ public class Matcher<V> {
 
   private class Status {
 
-    List<MatchSegment> candidates = new ArrayList<MatchSegment>();
-    List<MatchSegment> matches = new ArrayList<MatchSegment>();
+    List<MatchSegment> candidates = new ArrayList<>();
+    List<MatchSegment> matches = new ArrayList<>();
     List<MatchSegment> temp;
 
     private void swapMatchesToCandidates() {
@@ -383,7 +383,7 @@ public class Matcher<V> {
     private List<String> getOrAddValues( String name ) {
       List<String> values = resolve( name );
       if( values == null ) {
-        values = new ArrayList<String>( 1 );
+        values = new ArrayList<>( 1 );
         map.put( name, values );
       }
       return values;
@@ -456,7 +456,7 @@ public class Matcher<V> {
 
     private QueryNode addQuery( Template template, V value ) {
       if( queries == null ) {
-        queries = new LinkedHashSet<QueryNode>();
+        queries = new LinkedHashSet<>();
       }
       QueryNode query = new QueryNode( template, value );
       queries.add( query );

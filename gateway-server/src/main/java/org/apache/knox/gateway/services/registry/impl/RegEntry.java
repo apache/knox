@@ -47,7 +47,7 @@ public class RegEntry {
 
   public List<String> getUrls() {
     if (urls == null && url != null && !"null".equals(url)) {
-      urls = new ArrayList<String>();
+      urls = new ArrayList<>();
       urls.add(url);
     }
     return urls;

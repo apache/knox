@@ -115,7 +115,7 @@ public class StrictTransportFilter implements Filter {
     public Collection<String> getHeaderNames() {
         List<String> names = (List<String>) super.getHeaderNames();
         if (names == null) {
-          names = new ArrayList<String>();
+          names = new ArrayList<>();
         }
         names.add(STRICT_TRANSPORT);
         return names;
@@ -126,7 +126,7 @@ public class StrictTransportFilter implements Filter {
         List<String> values = (List<String>) super.getHeaders(name);
         if (name.equals(STRICT_TRANSPORT)) {
           if (values == null) {
-            values = new ArrayList<String>();
+            values = new ArrayList<>();
           }
           values.add(option);
         }

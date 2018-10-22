@@ -660,7 +660,7 @@ public class GatewayAppFuncTest {
   }
 
   public static Collection<String> toNames( File[] files ) {
-    List<String> names = new ArrayList<String>( files.length );
+    List<String> names = new ArrayList<>( files.length );
     for( File file : files ) {
       names.add( file.getAbsolutePath() );
     }

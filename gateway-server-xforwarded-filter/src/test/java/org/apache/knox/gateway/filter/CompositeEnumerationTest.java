@@ -39,7 +39,7 @@ public class CompositeEnumerationTest {
     String[] b = new String[]{ "3", "4" };
     Enumeration<String> eb = Collections.enumeration( Arrays.asList( b ) );
 
-    CompositeEnumeration<String> ce = new CompositeEnumeration<String>( ea, eb );
+    CompositeEnumeration<String> ce = new CompositeEnumeration<>( ea, eb );
 
     assertThat( ce.nextElement(), is( "1" ) );
     assertThat( ce.nextElement(), is( "2" ) );
@@ -57,7 +57,7 @@ public class CompositeEnumerationTest {
     String[] b = new String[]{ "2" };
     Enumeration<String> eb = Collections.enumeration( Arrays.asList( b ) );
 
-    CompositeEnumeration<String> ce = new CompositeEnumeration<String>( ea, eb );
+    CompositeEnumeration<String> ce = new CompositeEnumeration<>( ea, eb );
 
     assertThat( ce.nextElement(), is( "1" ) );
     assertThat( ce.nextElement(), is( "2" ) );
@@ -73,27 +73,27 @@ public class CompositeEnumerationTest {
 
     Enumeration<String> e1 = Collections.enumeration( Arrays.asList( a ) );
     Enumeration<String> e2 = Collections.enumeration( Arrays.asList( c ) );
-    CompositeEnumeration<String> ce = new CompositeEnumeration<String>( e1, e2 );
+    CompositeEnumeration<String> ce = new CompositeEnumeration<>( e1, e2 );
     assertThat( ce.nextElement(), is( "1" ) );
     assertThat( ce.nextElement(), is( "2" ) );
     assertThat( ce.hasMoreElements(), is( false ) );
 
     e1 = Collections.enumeration( Arrays.asList( c ) );
     e2 = Collections.enumeration( Arrays.asList( a ) );
-    ce = new CompositeEnumeration<String>( e1, e2 );
+    ce = new CompositeEnumeration<>( e1, e2 );
     assertThat( ce.nextElement(), is( "1" ) );
     assertThat( ce.nextElement(), is( "2" ) );
     assertThat( ce.hasMoreElements(), is( false ) );
 
     e1 = Collections.enumeration( Arrays.asList( c ) );
     e2 = Collections.enumeration( Arrays.asList( c ) );
-    ce = new CompositeEnumeration<String>( e1, e2 );
+    ce = new CompositeEnumeration<>( e1, e2 );
     assertThat( ce.hasMoreElements(), is( false ) );
   }
 
   @Test
   public void testEmpty() {
-    CompositeEnumeration<String> ce = new CompositeEnumeration<String>();
+    CompositeEnumeration<String> ce = new CompositeEnumeration<>();
     assertThat( ce.hasMoreElements(), is( false ) );
 
     try {
@@ -107,7 +107,7 @@ public class CompositeEnumerationTest {
   @Test
   public void testNulls() {
     try {
-      CompositeEnumeration<String> ce = new CompositeEnumeration<String>( null );
+      CompositeEnumeration<String> ce = new CompositeEnumeration<>( null );
       fail( "Expected IllegalArgumentException" );
     } catch( IllegalArgumentException e ) {
       // Expected.

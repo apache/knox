@@ -58,7 +58,7 @@ public class ServiceMappedAddressFunctionProcessor
     List<String> results = null;
     if( parameters != null ) {
       UrlRewriter.Direction direction = context.getDirection();
-      results = new ArrayList<String>( parameters.size() );
+      results = new ArrayList<>( parameters.size() );
       for( String parameter : parameters ) {
         parameter = resolve( direction, parameter );
         results.add( parameter );

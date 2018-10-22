@@ -41,7 +41,7 @@ public class UrlRewriteStepProcessorStateTest {
 
   @Test
   public void testEmpty() {
-    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<UrlRewriteStepProcessorHolder>();
+    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<>();
     UrlRewriteStepProcessorState state = new UrlRewriteStepProcessorState( steps.iterator() );
 
     MatcherAssert
@@ -56,7 +56,7 @@ public class UrlRewriteStepProcessorStateTest {
   @Test
   public void testNextAction() throws Exception {
     UrlRewriteStepProcessorHolder holder;
-    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<UrlRewriteStepProcessorHolder>();
+    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<>();
     holder = new UrlRewriteStepProcessorHolder();
     holder.initialize( new FakeEnvironment(), new FakeActionDescriptor( "one" ), new FakeActionProcessor( "one" ) );
     steps.add( holder );
@@ -90,7 +90,7 @@ public class UrlRewriteStepProcessorStateTest {
   @Test
   public void testNextCondition() throws Exception {
     UrlRewriteStepProcessorHolder holder;
-    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<UrlRewriteStepProcessorHolder>();
+    List<UrlRewriteStepProcessorHolder> steps = new ArrayList<>();
     holder = new UrlRewriteStepProcessorHolder();
     holder.initialize( new FakeEnvironment(), new FakeConditionDescriptor( "one" ), new FakeConditionProcessor( "one" ) );
     steps.add( holder );

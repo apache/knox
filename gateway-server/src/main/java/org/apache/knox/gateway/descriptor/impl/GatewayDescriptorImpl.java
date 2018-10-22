@@ -30,8 +30,8 @@ public class GatewayDescriptorImpl implements GatewayDescriptor {
   private List<ResourceDescriptor> resources;
 
   public GatewayDescriptorImpl() {
-    this.params = new ArrayList<GatewayParamDescriptor>();
-    this.resources = new ArrayList<ResourceDescriptor>();
+    this.params = new ArrayList<>();
+    this.resources = new ArrayList<>();
   }
 
   @Override

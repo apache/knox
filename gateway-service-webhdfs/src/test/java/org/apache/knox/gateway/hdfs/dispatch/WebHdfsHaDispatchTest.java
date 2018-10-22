@@ -52,7 +52,7 @@ public class WebHdfsHaDispatchTest {
       HaProvider provider = new DefaultHaProvider(descriptor);
       URI uri1 = new URI( "http://unreachable-host" );
       URI uri2 = new URI( "http://reachable-host" );
-      ArrayList<String> urlList = new ArrayList<String>();
+      ArrayList<String> urlList = new ArrayList<>();
       urlList.add(uri1.toString());
       urlList.add(uri2.toString());
       provider.addHaService(serviceName, urlList);

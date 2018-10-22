@@ -23,7 +23,7 @@ public class Family<T extends FamilyContainer> {
 
   private T parent;
   private String name;
-  private List<Attribute> attributes = new ArrayList<Attribute>();
+  private List<Attribute> attributes = new ArrayList<>();
 
   public Family( T parent, String name ) {
     this.parent = parent;
@@ -48,7 +48,7 @@ public class Family<T extends FamilyContainer> {
   }
 
   public Family<T> family( String name ) {
-    Family<T> family = new Family<T>( parent, name );
+    Family<T> family = new Family<>( parent, name );
     parent.addFamily( family );
     return family;
   }

@@ -41,7 +41,7 @@ public class UrlRewriteMatchProcessorExt implements
     if( template == null ) {
       this.matcher = null;
     } else {
-      this.matcher = new Matcher<Void>( descriptor.template(), null );
+      this.matcher = new Matcher<>( descriptor.template(), null );
     }
   }
 

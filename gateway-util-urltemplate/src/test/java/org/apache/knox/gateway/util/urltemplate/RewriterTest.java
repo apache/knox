@@ -407,7 +407,7 @@ public class RewriterTest {
       if( config != null ) {
         String value = config.getInitParameter( name );
         if( value != null ) {
-          values = new ArrayList<String>( 1 );
+          values = new ArrayList<>( 1 );
           values.add( value );
           return values;
         }

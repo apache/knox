@@ -46,7 +46,7 @@ public class CreateTable {
     private static final String ATTRIBUTE_NAME = "name";
 
     private String tableName;
-    private List<Attribute> attributes = new ArrayList<Attribute>();
+    private List<Attribute> attributes = new ArrayList<>();
     private List<Family<Request>> families = new ArrayList<Family<Request>>();
 
     public Request( Hadoop session, String tableName ) {
@@ -60,7 +60,7 @@ public class CreateTable {
     }
 
     public Family<Request> family( String name ) {
-      Family<Request> family = new Family<Request>( this, name );
+      Family<Request> family = new Family<>( this, name );
       families.add( family );
       return family;
     }

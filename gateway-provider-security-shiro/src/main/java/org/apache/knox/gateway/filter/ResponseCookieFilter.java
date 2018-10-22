@@ -33,7 +33,7 @@ import java.util.List;
 public class ResponseCookieFilter extends AbstractGatewayFilter {
   public static final String RESTRICTED_COOKIES = "restrictedCookies";
 
-  protected static List<String> restrictedCookies = new ArrayList<String>();
+  protected static List<String> restrictedCookies = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

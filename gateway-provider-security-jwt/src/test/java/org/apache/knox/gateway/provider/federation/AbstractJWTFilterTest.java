@@ -707,7 +707,7 @@ public abstract class AbstractJWTFilterTest  {
   protected SignedJWT getJWT(String issuer, String sub, String aud, Date expires, Date nbf, RSAPrivateKey privateKey,
                              String signatureAlgorithm)
       throws Exception {
-    List<String> audiences = new ArrayList<String>();
+    List<String> audiences = new ArrayList<>();
     if (aud != null) {
       audiences.add(aud);
     }

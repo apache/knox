@@ -1287,7 +1287,7 @@ public class ParserTest {
     Template input;
     Matcher<String> matcher;
 
-    matcher = new Matcher<String>();
+    matcher = new Matcher<>();
     template = Parser.parseTemplate( "*://*:*/**/webhdfs/v1/{path=**}?{**}" );
     matcher.add( template, "test-value" );
 

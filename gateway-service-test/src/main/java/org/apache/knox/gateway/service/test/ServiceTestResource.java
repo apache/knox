@@ -390,7 +390,7 @@ public class ServiceTestResource {
 
     @XmlElement(name="ServiceTest")
     @XmlElementWrapper(name="Tests")
-    private List<ServiceTest> tests = new ArrayList<ServiceTest>();
+    private List<ServiceTest> tests = new ArrayList<>();
 
     @XmlElement(name="message")
     @XmlElementWrapper(name="messages")

@@ -53,7 +53,7 @@ public class TempletonDemo {
   }
 
   private void demo( String url ) throws IOException {
-    List<NameValuePair> parameters = new ArrayList<NameValuePair>();
+    List<NameValuePair> parameters = new ArrayList<>();
     parameters.add( new BasicNameValuePair( "user.name", "hdfs" ) );
     parameters.add( new BasicNameValuePair( "jar", "wordcount/org.apache.hadoop-examples.jar" ) );
     parameters.add( new BasicNameValuePair( "class", "org.apache.org.apache.hadoop.examples.WordCount" ) );

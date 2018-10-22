@@ -35,11 +35,11 @@ public class Topology {
   private String defaultServicePath = null;
   private long timestamp;
   private boolean isGenerated;
-  public List<Provider> providerList = new ArrayList<Provider>();
+  public List<Provider> providerList = new ArrayList<>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<>();
-  public List<Service> services = new ArrayList<Service>();
+  public List<Service> services = new ArrayList<>();
   private MultiKeyMap serviceMap;
-  private List<Application> applications = new ArrayList<Application>();
+  private List<Application> applications = new ArrayList<>();
   private Map<String,Application> applicationMap = new HashMap<>();
   private CustomDispatch dispatch = null;
 

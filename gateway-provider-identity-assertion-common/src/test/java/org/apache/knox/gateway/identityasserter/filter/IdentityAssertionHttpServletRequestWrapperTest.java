@@ -261,14 +261,14 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     assertThat( s, is( "no-values" ) );
 
     m = new HashMap<>();
-    List<String> lst = new ArrayList<String>();
+    List<String> lst = new ArrayList<>();
     lst.add("value1");
     m.put( "one-value", lst);
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
     assertThat( s, is( "one-value=value1" ) );
 
     m = new HashMap<>();
-    lst = new ArrayList<String>();
+    lst = new ArrayList<>();
     String[] a = {"value1", "value2"};
     lst.addAll(Arrays.asList(a));
     m.put( "two-values", lst);

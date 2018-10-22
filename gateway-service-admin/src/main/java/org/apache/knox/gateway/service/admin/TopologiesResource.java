@@ -141,7 +141,7 @@ public class TopologiesResource {
 
     TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
-    ArrayList<SimpleTopology> st = new ArrayList<SimpleTopology>();
+    ArrayList<SimpleTopology> st = new ArrayList<>();
     for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
       st.add(getSimpleTopology(t, config));
     }
@@ -764,7 +764,7 @@ public class TopologiesResource {
 
     @XmlElement(name="topology")
     @XmlElementWrapper(name="topologies")
-    private List<SimpleTopology> topologies = new ArrayList<SimpleTopology>();
+    private List<SimpleTopology> topologies = new ArrayList<>();
 
     public List<SimpleTopology> getTopologies(){
       return topologies;

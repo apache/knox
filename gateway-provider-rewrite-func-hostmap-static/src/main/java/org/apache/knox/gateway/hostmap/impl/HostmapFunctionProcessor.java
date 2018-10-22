@@ -70,7 +70,7 @@ public class HostmapFunctionProcessor
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
     List<String> result = null;
     if( parameters != null ) {
-      result = new ArrayList<String>( parameters.size() );
+      result = new ArrayList<>( parameters.size() );
       for( String parameter : parameters ) {
         switch( context.getDirection() ) {
           case IN:

@@ -58,7 +58,7 @@ public class DefaultHaDescriptor implements HaDescriptor {
 
    @Override
    public List<String> getEnabledServiceNames() {
-      ArrayList<String> services = new ArrayList<String>(serviceConfigs.size());
+      ArrayList<String> services = new ArrayList<>(serviceConfigs.size());
       Collection<HaServiceConfig> configs = serviceConfigs.values();
       for (HaServiceConfig config : configs) {
          if (config.isEnabled()) {

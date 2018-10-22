@@ -82,7 +82,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    List<String> audiences = new ArrayList<String>();
+    List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
 
     JWT token = new JWTToken("RS256", claims, audiences);
@@ -100,7 +100,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    List<String> audiences = new ArrayList<String>();
+    List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
 
@@ -119,7 +119,7 @@ public class JWTTokenTest extends org.junit.Assert {
     claims[1] = "john.doe@example.com";
     claims[2] = "LJM";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    ArrayList<String> audiences = new ArrayList<String>();
+    ArrayList<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
 

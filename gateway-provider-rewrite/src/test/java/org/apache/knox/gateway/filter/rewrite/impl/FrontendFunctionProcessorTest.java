@@ -158,7 +158,7 @@ public class FrontendFunctionProcessorTest {
     }
     rewriteFilter.setFilter( new UrlRewriteServletFilter() );
 
-    interactions = new ArrayQueue<MockInteraction>();
+    interactions = new ArrayQueue<>();
 
     ServletHolder servlet = server.addServlet( MockServlet.class, "/" );
     servlet.setServlet( new MockServlet( "mock-servlet", interactions ) );

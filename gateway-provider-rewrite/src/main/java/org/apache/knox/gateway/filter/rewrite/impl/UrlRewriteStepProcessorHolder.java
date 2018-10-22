@@ -67,7 +67,7 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
     this.descriptor = descriptor;
     this.processor = processor;
     this.isCondition = descriptor instanceof UrlRewriteFlowDescriptor;
-    this.childProcessors = new ArrayList<UrlRewriteStepProcessorHolder>();
+    this.childProcessors = new ArrayList<>();
     if( isCondition ) {
       UrlRewriteFlowDescriptor flowDescriptor = (UrlRewriteFlowDescriptor)descriptor;
       List<UrlRewriteStepDescriptor> stepList = flowDescriptor.steps();

@@ -36,7 +36,7 @@ public class PropertyTopologyBuilder implements TopologyBuilder {
     private List<Property> properties;
 
     public PropertyTopologyBuilder() {
-        properties = new ArrayList<Property>();
+        properties = new ArrayList<>();
     }
 
     public PropertyTopologyBuilder addProperty(Property property) {

@@ -133,7 +133,7 @@ public abstract class AbstractJWTFilter implements Filter {
     if (!StringUtils.isEmpty(expectedAudiences)) {
       // parse into the list
       String[] audArray = expectedAudiences.split(",");
-      audList = new ArrayList<String>();
+      audList = new ArrayList<>();
       for (String a : audArray) {
         audList.add(a.trim());
       }

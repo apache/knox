@@ -87,7 +87,7 @@ public abstract class DeploymentFactory {
   }
 
   static List<Application> findApplicationsByUrl( Topology topology, String url ) {
-    List<Application> foundApps = new ArrayList<Application>();
+    List<Application> foundApps = new ArrayList<>();
     if( topology != null ) {
       url = Urls.trimLeadingAndTrailingSlash( url );
       Collection<Application> searchApps = topology.getApplications();
@@ -95,7 +95,7 @@ public abstract class DeploymentFactory {
         for( Application searchApp : searchApps ) {
           List<String> searchUrls = searchApp.getUrls();
           if( searchUrls == null || searchUrls.isEmpty() ) {
-            searchUrls = new ArrayList<String>(1);
+            searchUrls = new ArrayList<>(1);
             searchUrls.add( searchApp.getName() );
           }
           for( String searchUrl : searchUrls ) {
@@ -118,7 +118,7 @@ public abstract class DeploymentFactory {
         for( Application app : apps ) {
           List<String> urls = app.getUrls();
           if( urls == null || urls.isEmpty() ) {
-            urls = new ArrayList<String>(1);
+            urls = new ArrayList<>(1);
             urls.add( app.getName() );
           }
           for( String url : urls ) {
@@ -305,7 +305,7 @@ public abstract class DeploymentFactory {
       String role = contributor.getRole();
       List<ProviderDeploymentContributor> list = defaults.get( role );
       if( list == null ) {
-        list = new ArrayList<ProviderDeploymentContributor>();
+        list = new ArrayList<>();
         defaults.put( role, list );
       }
       if( list.isEmpty() ) {
@@ -325,7 +325,7 @@ public abstract class DeploymentFactory {
       if( contributor != null ) {
         List<ServiceDeploymentContributor> list = defaults.get( role );
         if( list == null ) {
-          list = new ArrayList<ServiceDeploymentContributor>( 1 );
+          list = new ArrayList<>( 1 );
           defaults.put( role, list );
         }
         if( !list.contains( contributor ) ) {
@@ -348,7 +348,7 @@ public abstract class DeploymentFactory {
         ApplicationDeploymentContributor contributor = new ApplicationDeploymentContributor( config, application );
         List<String> urls = application.getUrls();
         if( urls == null || urls.isEmpty() ) {
-          urls = new ArrayList<String>( 1 );
+          urls = new ArrayList<>( 1 );
           urls.add( "/" + name );
         }
         for( String url : urls ) {

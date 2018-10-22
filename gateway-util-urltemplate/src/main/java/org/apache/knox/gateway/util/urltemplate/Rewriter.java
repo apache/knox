@@ -46,7 +46,7 @@ public class Rewriter {
   }
 
   public Rewriter() {
-    rules = new Matcher<Template>();
+    rules = new Matcher<>();
   }
 
   public void addRule( Template inputTemplate, Template outputTemplate ) {
