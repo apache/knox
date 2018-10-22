@@ -58,6 +58,7 @@
     </mailingLists>
 
     <modules>
+        <module>build-tools</module>
         <module>gateway-test-utils</module>
         <module>gateway-util-common</module>
         <module>gateway-util-configinjector</module>
@@ -124,7 +125,6 @@
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
-        <module>build-tools</module>
     </modules>
 
     <properties>
@@ -132,12 +132,6 @@
              This is also used by forbiddenapis to ensure correct signatures are loaded. -->
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        
-        <gateway-name>Apache Knox</gateway-name>
-        <gateway-project>knox</gateway-project>
-        <gateway-artifact>knox</gateway-artifact>
-        <gateway-version>1.2.0-SNAPSHOT</gateway-version>
-        <gateway-group>org.apache.knox</gateway-group>
 
         <!-- Dependencies sorted alphabetically -->
         <apacheds.version>2.0.0-M24</apacheds.version>
@@ -228,8 +222,8 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
-                                    <finalName>${gateway-artifact}-${gateway-version}</finalName>
-                                    <outputDirectory>target/${gateway-version}</outputDirectory>
+                                    <finalName>knox-${project.version}</finalName>
+                                    <outputDirectory>target/${project.version}</outputDirectory>
                                     <descriptors>
                                         <descriptor>src/assembly.xml</descriptor>
                                     </descriptors>
@@ -331,7 +325,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <revisionOnScmFailure>${gateway-version}</revisionOnScmFailure>
+                    <revisionOnScmFailure>${project.version}</revisionOnScmFailure>
                 </configuration>
             </plugin>
             <plugin>
@@ -352,7 +346,7 @@
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
                     </excludedGroups>
                     <systemPropertyVariables>
-                        <gateway-version>${gateway-version}</gateway-version>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -426,7 +420,7 @@
                     <dependency>
                         <groupId>org.apache.knox</groupId>
                         <artifactId>build-tools</artifactId>
-                        <version>${project.version}</version>
+                        <version>1.0.0</version>
                     </dependency>
                     <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
                     <dependency>
@@ -492,7 +486,7 @@
                     <dependency>
                         <groupId>org.apache.knox</groupId>
                         <artifactId>build-tools</artifactId>
-                        <version>${project.version}</version>
+                        <version>1.0.0</version>
                     </dependency>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
@@ -567,304 +561,304 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-util-common</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-util-configinjector</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-util-launcher</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-util-urltemplate</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-i18n</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-i18n-logging-sl4j</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-i18n-logging-log4j</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-spi</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-jwt</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-pac4j</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-webappsec</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-preauth</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-hadoopauth</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-authc-anon</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-shiro</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-authz-acls</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-common</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-concat</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-pseudo</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-hadoop-groups</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-regex</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite-func-hostmap-static</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite-func-service-registry</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite-func-inbound-query-param</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite-step-secure-query</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite-step-encrypt-uri</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-jersey</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-ha</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-tgs</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-vault</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-knoxssout</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-knoxsso</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-knoxtoken</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-health</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-admin</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-remoteconfig</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-test</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-as</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-hbase</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-hive</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-webhdfs</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-rm</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-storm</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-definitions</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-nifi</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-server</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-server-launcher</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-server-xforwarded-filter</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>knox-cli-launcher</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell-launcher</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-adapter</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>hadoop-examples</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-discovery-ambari</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-release</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-applications</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell-release</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell-samples</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
@@ -1395,14 +1389,14 @@
             </dependency>
 
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-demo-ldap</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-demo-ldap-launcher</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
             </dependency>
             
             <dependency>
@@ -1513,9 +1507,9 @@
             <!-- ********** ********** ********** ********** ********** ********** -->
 
             <dependency>
-                <groupId>${gateway-group}</groupId>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-test-utils</artifactId>
-                <version>${gateway-version}</version>
+                <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
 

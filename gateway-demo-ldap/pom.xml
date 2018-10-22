@@ -63,7 +63,7 @@
         </dependency>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>

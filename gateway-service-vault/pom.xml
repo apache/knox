@@ -30,15 +30,15 @@
 
     <dependencies>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-jersey</artifactId>
         </dependency>
 

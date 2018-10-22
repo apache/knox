@@ -91,58 +91,58 @@
             -->
             <scope>runtime</scope>
             <excludes>
-                <exclude>${gateway-group}:gateway-*</exclude>
-                <exclude>${gateway-group}:hadoop-examples</exclude>
+                <exclude>org.apache.knox:gateway-*</exclude>
+                <exclude>org.apache.knox:hadoop-examples</exclude>
                 <exclude>org.apache.kerby:*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <includes>
-                <include>${gateway-group}:gateway-*</include>
-                <!-- include>${gateway-group}:gateway-release-*</include -->
+                <include>org.apache.knox:gateway-*</include>
+                <!-- include>org.apache.knox:gateway-release-*</include -->
             </includes>
             <excludes>
-                <exclude>${gateway-group}:gateway-util-launcher</exclude>
-                <exclude>${gateway-group}:gateway-server-launcher</exclude>
-                <exclude>${gateway-group}:gateway-shell-launcher</exclude>
-                <exclude>${gateway-group}:gateway-demo-ldap-launcher</exclude>
-                <exclude>${gateway-group}:gateway-applications</exclude>
+                <exclude>org.apache.knox:gateway-util-launcher</exclude>
+                <exclude>org.apache.knox:gateway-server-launcher</exclude>
+                <exclude>org.apache.knox:gateway-shell-launcher</exclude>
+                <exclude>org.apache.knox:gateway-demo-ldap-launcher</exclude>
+                <exclude>org.apache.knox:gateway-applications</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>knoxcli.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:knox-cli-launcher</include>
+                <include>org.apache.knox:knox-cli-launcher</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>gateway.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:gateway-server-launcher</include>
+                <include>org.apache.knox:gateway-server-launcher</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>shell.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:gateway-shell-launcher</include>
+                <include>org.apache.knox:gateway-shell-launcher</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>ldap.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:gateway-demo-ldap-launcher</include>
+                <include>org.apache.knox:gateway-demo-ldap-launcher</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>samples</outputDirectory>
             <outputFileNameMapping>hadoop-examples.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:hadoop-examples</include>
+                <include>org.apache.knox:hadoop-examples</include>
             </includes>
         </dependencySet>
     </dependencySets>

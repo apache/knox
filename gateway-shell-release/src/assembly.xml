@@ -68,14 +68,14 @@
             <outputDirectory>bin</outputDirectory>
             <outputFileNameMapping>knoxshell.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:gateway-shell-release</include>
+                <include>org.apache.knox:gateway-shell-release</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>samples</outputDirectory>
             <outputFileNameMapping>hadoop-examples.jar</outputFileNameMapping>
             <includes>
-                <include>${gateway-group}:hadoop-examples</include>
+                <include>org.apache.knox:hadoop-examples</include>
             </includes>
         </dependencySet>
     </dependencySets>

@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-release</artifactId>
-            <version>${gateway-version}</version>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.directory.server</groupId>

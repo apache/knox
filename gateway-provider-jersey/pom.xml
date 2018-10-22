@@ -53,7 +53,7 @@
         </dependency>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
 
@@ -63,13 +63,13 @@
         </dependency>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-server</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>

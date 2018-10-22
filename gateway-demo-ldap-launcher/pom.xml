@@ -31,7 +31,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-launcher</artifactId>
         </dependency>
         <dependency>

@@ -31,11 +31,11 @@
 
     <dependencies>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
@@ -43,7 +43,7 @@
             <artifactId>httpclient</artifactId>
         </dependency>
         <dependency>
-            <groupId>${gateway-group}</groupId>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>

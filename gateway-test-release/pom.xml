@@ -214,7 +214,7 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-release</artifactId>
-            <version>${gateway-version}</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -237,7 +237,7 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-release-utils</artifactId>
-            <version>${gateway-version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -264,7 +264,7 @@
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
                     <systemPropertyVariables>
-                        <gateway-version>${gateway-version}</gateway-version>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
