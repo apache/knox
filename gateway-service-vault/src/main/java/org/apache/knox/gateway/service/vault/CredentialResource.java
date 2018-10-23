@@ -85,7 +85,6 @@ public class CredentialResource {
     try {
       aliases = as.getAliasesForCluster(clusterName);
     } catch (AliasServiceException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     return aliases;
@@ -104,7 +103,6 @@ public class CredentialResource {
     try {
       credential = as.getPasswordFromAliasForCluster(clusterName, alias);
     } catch (AliasServiceException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     if (credential != null) {

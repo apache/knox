@@ -51,7 +51,6 @@ public class CMFMasterServiceTest {
       assertTrue(file.exists());
       file.delete();
     } catch (ServiceLifecycleException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       fail();
     }

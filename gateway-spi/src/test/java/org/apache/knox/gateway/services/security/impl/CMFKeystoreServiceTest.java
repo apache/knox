@@ -55,28 +55,18 @@ public class CMFKeystoreServiceTest {
 
         public void init(GatewayConfig config, Map<String, String> options)
             throws ServiceLifecycleException {
-          // TODO Auto-generated method stub
-
         }
 
-        public void start() throws ServiceLifecycleException {
-          // TODO Auto-generated method stub
+        public void start() throws ServiceLifecycleException {}
 
-        }
-
-        public void stop() throws ServiceLifecycleException {
-          // TODO Auto-generated method stub
-
-        }
+        public void stop() throws ServiceLifecycleException {}
 
         public char[] getMasterSecret() {
-          // TODO Auto-generated method stub
           return "testmaster".toCharArray();
         }
 
       });
     } catch (ServiceLifecycleException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }

@@ -786,9 +786,7 @@ public abstract class AbstractJWTFilterTest  {
      * @see JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
      */
     @Override
-    public JWT issueToken(Subject subject, String algorithm)
-        throws TokenServiceException {
-      // TODO Auto-generated method stub
+    public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
       return null;
     }
 
@@ -796,9 +794,7 @@ public abstract class AbstractJWTFilterTest  {
      * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
      */
     @Override
-    public JWT issueToken(Principal p, String algorithm)
-        throws TokenServiceException {
-      // TODO Auto-generated method stub
+    public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
       return null;
     }
 
@@ -839,9 +835,7 @@ public abstract class AbstractJWTFilterTest  {
      * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long)
      */
     @Override
-    public JWT issueToken(Principal p, String algorithm, long expires)
-        throws TokenServiceException {
-      // TODO Auto-generated method stub
+    public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
       return null;
     }
 

@@ -258,7 +258,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public boolean isClientAuthNeeded() {
-    // TODO Auto-generated method stub
     return false;
   }
 
@@ -267,7 +266,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public String getTruststorePath() {
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -276,7 +274,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    */
   @Override
   public boolean getTrustAllCerts() {
-    // TODO Auto-generated method stub
     return false;
   }
 

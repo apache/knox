@@ -46,7 +46,6 @@ public class JWTAccessTokenAssertionContributor extends
 
   @Override
   public void initializeContribution(DeploymentContext context) {
-    // TODO Auto-generated method stub
     super.initializeContribution(context);
     crypto.createAndStoreEncryptionKeyForCluster(GATEWAY, ENCRYPT_ACCESS_TOKENS);
   }

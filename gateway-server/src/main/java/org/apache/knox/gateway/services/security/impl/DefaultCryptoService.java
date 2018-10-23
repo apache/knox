@@ -66,13 +66,11 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public void start() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
 
   }
 
@@ -81,7 +79,6 @@ public class DefaultCryptoService implements CryptoService {
     try {
       as.generateAliasForCluster(clusterName, alias);
     } catch (AliasServiceException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
@@ -92,7 +89,6 @@ public class DefaultCryptoService implements CryptoService {
     try {
       password = as.getPasswordFromAliasForCluster(clusterName, alias);
     } catch (AliasServiceException e2) {
-      // TODO Auto-generated catch block
       e2.printStackTrace();
     }
     if (password != null) {

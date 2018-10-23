@@ -271,7 +271,6 @@ public class JWTToken implements JWT {
     try {
       rc = jwt.verify(verifier);
     } catch (JOSEException e) {
-      // TODO Auto-generated catch block
       log.unableToVerifyToken(e);
     }
 

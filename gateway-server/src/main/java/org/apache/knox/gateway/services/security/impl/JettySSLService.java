@@ -235,14 +235,10 @@ public class JettySSLService implements SSLService {
   
   @Override
   public void start() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-    
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    // TODO Auto-generated method stub
-    
   }
 
   private static KeyStore loadKeyStore( String fileName, String storeType, char[] storePass ) throws CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException {

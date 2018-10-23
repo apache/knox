@@ -180,19 +180,16 @@ public class KnoxSessionStore implements SessionStore {
 
     @Override
     public SessionStore buildFromTrackableSession(WebContext arg0, Object arg1) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public boolean destroySession(WebContext arg0) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public Object getTrackableSession(WebContext arg0) {
-        // TODO Auto-generated method stub
         return null;
     }
 

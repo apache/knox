@@ -152,7 +152,6 @@ public class CMFMasterService {
   }
 
   private EncryptionResult encryptMaster(char[] master) {
-    // TODO Auto-generated method stub
     try {
       return encryptor.encrypt(new String(master));
     } catch (Exception e) {

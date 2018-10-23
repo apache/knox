@@ -29,7 +29,6 @@ public class VaultServiceDeploymentContributor extends JerseyServiceDeploymentCo
    */
   @Override
   public String getRole() {
-    // TODO Auto-generated method stub
     return "VAULT";
   }
 

@@ -81,13 +81,9 @@ public class CMFKeystoreService extends BaseKeystoreService {
       } else {
         throw new IOException("Unable to open gateway keystore.");
       }
-    } catch (NoSuchAlgorithmException e) {
+    } catch (IOException | GeneralSecurityException e) {
       LOG.failedToAddSeflSignedCertForGateway(alias, e);
-    } catch (GeneralSecurityException e) {
-      LOG.failedToAddSeflSignedCertForGateway(alias, e);
-    } catch (IOException e) {
-      LOG.failedToAddSeflSignedCertForGateway(alias, e);
-    }  
+    }
   }
   
   public void createCredentialStore() throws KeystoreServiceException {
@@ -99,9 +95,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     try {
       return isKeystoreAvailable(keyStoreFile, "JCEKS");
-    } catch (KeyStoreException e) {
-      throw new KeystoreServiceException(e);
-    } catch (IOException e) {
+    } catch (KeyStoreException | IOException e) {
       throw new KeystoreServiceException(e);
     }
   }
@@ -110,9 +104,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + ".jks" );
     try {
       return isKeystoreAvailable(keyStoreFile, "JKS");
-    } catch (KeyStoreException e) {
-      throw new KeystoreServiceException(e);
-    } catch (IOException e) {
+    } catch (KeyStoreException | IOException e) {
       throw new KeystoreServiceException(e);
     }
   }
@@ -123,12 +115,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     if (ks != null) {
       try {
         key = ks.getKey(alias, passphrase);
-      } catch (UnrecoverableKeyException e) {
-        // TODO Auto-generated catch block
-        LOG.failedToGetKey(alias, e);
-      } catch (KeyStoreException e) {
-        LOG.failedToGetKey(alias, e);
-      } catch (NoSuchAlgorithmException e) {
+      } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
         LOG.failedToGetKey(alias, e);
       }
     }
@@ -146,13 +133,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     try {
       writeKeystoreToFile(ks, keyStoreFile);
-    } catch (KeyStoreException e) {
-      LOG.failedToAddCredential(e);
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToAddCredential(e);
-    } catch (CertificateException e) {
-      LOG.failedToAddCredential(e);
-    } catch (IOException e) {
+    } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
       LOG.failedToAddCredential(e);
     }
   }

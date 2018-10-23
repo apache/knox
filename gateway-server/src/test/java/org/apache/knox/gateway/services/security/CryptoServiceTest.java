@@ -80,19 +80,15 @@ public class CryptoServiceTest {
 
       @Override
       public char[] getPasswordFromAliasForGateway(String alias) {
-        // TODO Auto-generated method stub
         return null;
       }
 
       @Override
       public void generateAliasForGateway(String alias) {
-        // TODO Auto-generated method stub
-        
       }
 
       @Override
       public Certificate getCertificateForGateway(String alias) {
-        // TODO Auto-generated method stub
         return null;
       }
 
@@ -102,13 +98,11 @@ public class CryptoServiceTest {
 
       @Override
       public List<String> getAliasesForCluster(String clusterName) {
-        // TODO Auto-generated method stub
         return null;
       }
 
       @Override
       public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-        // TODO Auto-generated method stub
         return null;
       }
     };

@@ -144,7 +144,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
 
       @Override
       public String getName() {
-        // TODO Auto-generated method stub
         return principalName;
       }
     };
