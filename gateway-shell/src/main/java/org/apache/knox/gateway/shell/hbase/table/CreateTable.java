@@ -47,7 +47,7 @@ public class CreateTable {
 
     private String tableName;
     private List<Attribute> attributes = new ArrayList<>();
-    private List<Family<Request>> families = new ArrayList<Family<Request>>();
+    private List<Family<Request>> families = new ArrayList<>();
 
     public Request( Hadoop session, String tableName ) {
       super( session );

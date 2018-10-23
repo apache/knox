@@ -62,7 +62,7 @@ public class Builder {
     this.isDirectory = false;
     this.path = new ArrayList<>();
     this.hasQuery = false;
-    this.query = new LinkedHashMap<String,Query>();
+    this.query = new LinkedHashMap<>();
     this.extra = null;
     this.hasFragment = false;
     this.fragment = null;

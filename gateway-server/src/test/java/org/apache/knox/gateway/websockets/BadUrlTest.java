@@ -294,7 +294,7 @@ public class BadUrlTest {
 
   private static class TestTopologyListener implements TopologyListener {
 
-    public ArrayList<List<TopologyEvent>> events = new ArrayList<List<TopologyEvent>>();
+    public ArrayList<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override
     public void handleTopologyEvent(List<TopologyEvent> events) {

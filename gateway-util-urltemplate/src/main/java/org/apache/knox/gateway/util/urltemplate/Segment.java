@@ -47,19 +47,19 @@ abstract class Segment {
 
 //  protected Segment( String paramName, String valuePattern ) {
 //    this.paramName = paramName;
-//    this.values = new LinkedHashMap<String,Value>();
+//    this.values = new LinkedHashMap<>();
 //    this.values.put( valuePattern, new Value( valuePattern ) );
 //  }
 
   protected Segment( Token token ) {
     this.token = token;
-    this.values = new LinkedHashMap<String,Value>();
+    this.values = new LinkedHashMap<>();
     this.values.put( token.effectivePattern, new Value( token ) );
   }
 
 //  protected Segment( Segment that ) {
 //    this.paramName = that.paramName;
-//    this.values = new LinkedHashMap<String,Value>();
+//    this.values = new LinkedHashMap<>();
 //    for( Value thatValue : that.getValues() ) {
 //      Value thisValue = new Value( thatValue );
 //      this.values.put( thisValue.getPattern(), thisValue );

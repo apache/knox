@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MessagesFactory {
 
   private static MessageLoggerFactory loggers = getMessageLoggerFactory();
-  private static Map<Class<?>, Object> proxies = new ConcurrentHashMap<Class<?>, Object>();
+  private static Map<Class<?>, Object> proxies = new ConcurrentHashMap<>();
 
   @SuppressWarnings( "unchecked" )
   public static <T> T get( Class<T> clazz ) {

@@ -46,7 +46,7 @@ public class UpdateTable {
     private static final String ATTRIBUTE_NAME = "name";
 
     private String tableName;
-    private List<Family<Request>> families = new ArrayList<Family<Request>>();
+    private List<Family<Request>> families = new ArrayList<>();
 
     public Request( Hadoop session, String tableName ) {
       super( session );

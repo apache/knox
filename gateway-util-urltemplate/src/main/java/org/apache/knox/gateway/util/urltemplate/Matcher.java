@@ -56,7 +56,7 @@ public class Matcher<V> {
   private PathNode root;
 
   public Matcher() {
-    map = new LinkedHashMap<Template,V>();
+    map = new LinkedHashMap<>();
     root = new PathNode( null, null );
   }
 
@@ -447,7 +447,7 @@ public class Matcher<V> {
 
     private PathNode addPath( Segment path ) {
       if( children == null ) {
-        children = new LinkedHashMap<Segment,PathNode>();
+        children = new LinkedHashMap<>();
       }
       PathNode child = new PathNode( this, path );
       children.put( path, child );

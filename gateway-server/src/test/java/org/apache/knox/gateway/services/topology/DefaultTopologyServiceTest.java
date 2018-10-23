@@ -594,7 +594,7 @@ public class DefaultTopologyServiceTest {
 
   private class TestTopologyListener implements TopologyListener {
 
-    ArrayList<List<TopologyEvent>> events = new ArrayList<List<TopologyEvent>>();
+    ArrayList<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override
     public void handleTopologyEvent(List<TopologyEvent> events) {

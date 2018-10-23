@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TestMessageLoggerFactory implements MessageLoggerFactory {
 
   private static TestMessageLoggerFactory INSTANCE;
-  private static final Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<String,MessageLogger>();
+  private static final Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<>();
 
   public static TestMessageLoggerFactory getFactory() {
     if( INSTANCE == null ) {

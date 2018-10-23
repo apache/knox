@@ -39,7 +39,7 @@ public class Config {
   Map<String,Map<String,String>> sections;
 
   public Config() {
-    sections = new LinkedHashMap<String,Map<String,String>>();
+    sections = new LinkedHashMap<>();
   }
 
   public void load( Reader reader ) throws IOException {
