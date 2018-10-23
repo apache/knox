@@ -34,10 +34,10 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -51,7 +51,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   
-  String username = null;
+  private String username;
 
   public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
     super(request);
@@ -83,11 +83,11 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
   }
 
   private Map<String, String[]> convertValuesToStringArrays(Map<String, List<String>> params) {
-    Map<String, String[]> arrayMap = new HashMap<String, String[]>();
-    String name = null;
+    Map<String, String[]> arrayMap = new HashMap<>();
+    String name;
     Enumeration<String> names = getParameterNames();
     while (names.hasMoreElements()) {
-      name = (String) names.nextElement();
+      name = names.nextElement();
       arrayMap.put(name, getParameterValues(name));
     }
     return arrayMap;
@@ -102,7 +102,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       if (params == null) {
         params = new HashMap<>();
       }
-      e = Collections.enumeration((Collection<String>) params.keySet());
+      e = Collections.enumeration(params.keySet());
     } catch (UnsupportedEncodingException e1) {
       log.unableToGetParamsFromQueryString(e1);
     }
@@ -119,7 +119,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       if (params == null) {
         params = new HashMap<>();
       }
-      p = (String[]) params.get(name).toArray(p);
+      p = params.get(name).toArray(p);
     } catch (UnsupportedEncodingException e) {
       log.unableToGetParamsFromQueryString(e);
     }
@@ -241,7 +241,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       }
       body = urlEncode( params, encoding );
       // ASCII is OK here because the urlEncode about should have already escaped
-      return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes( "US-ASCII" ) ) );
+      return new ServletInputStreamWrapper( new ByteArrayInputStream( body.getBytes(StandardCharsets.US_ASCII.name()) ) );
     } else {
       return super.getInputStream();
     }
@@ -261,23 +261,22 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       String name = entry.getKey();
       if( name != null && name.length() > 0 ) {
         List<String> values = entry.getValue();
-        if( values == null || values.size() == 0 ) {
+        if( values == null || values.isEmpty() ) {
           sb.append( entry.getKey() );
         } else {
-          for( int i = 0; i < values.size(); i++ ) {
-            String value = values.get(i);
-              if( sb.length() > 0 ) {
-                sb.append( "&" );
+          for (String value : values) {
+            if (sb.length() > 0) {
+              sb.append("&");
+            }
+            try {
+              sb.append(urlEncode(name, encoding));
+              if (value != null) {
+                sb.append("=");
+                sb.append(urlEncode(value, encoding));
               }
-              try {
-                sb.append( urlEncode( name, encoding ) );
-                if( value != null ) {
-                  sb.append("=");
-                  sb.append(urlEncode(value, encoding));
-                }
-              } catch( IllegalArgumentException e ) {
-                log.skippingUnencodableParameter( name, value, encoding, e );
-              }
+            } catch (IllegalArgumentException e) {
+              log.skippingUnencodableParameter(name, value, encoding, e);
+            }
           }
         }
       }
@@ -285,8 +284,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return sb.toString();
   }
 
-  private static class ServletInputStreamWrapper extends
-      SynchronousServletInputStreamAdapter {
+  private static class ServletInputStreamWrapper extends SynchronousServletInputStreamAdapter {
 
     private InputStream stream;
 
@@ -299,6 +297,44 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       return stream.read();
     }
 
-  }
+    @Override
+    public int read(byte[] b) throws IOException {
+      return stream.read(b);
+    }
 
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      return stream.read(b, off, len);
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+      return stream.skip(n);
+    }
+
+    @Override
+    public int available() throws IOException {
+      return stream.available();
+    }
+
+    @Override
+    public void close() throws IOException {
+      stream.close();
+    }
+
+    @Override
+    public synchronized void mark(int readlimit) {
+      stream.mark(readlimit);
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+      stream.reset();
+    }
+
+    @Override
+    public boolean markSupported() {
+      return stream.markSupported();
+    }
+  }
 }
