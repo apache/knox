@@ -833,7 +833,7 @@ public class CappedBufferHttpEntityTest {
 
   private static String blockRead( InputStream stream, Charset charset, int total, int chunk ) throws IOException {
     StringBuilder string = null;
-    byte buffer[] = new byte[ chunk ];
+    byte[] buffer = new byte[ chunk ];
     int count = 0;
     if( total < 0 ) {
       total = Integer.MAX_VALUE;

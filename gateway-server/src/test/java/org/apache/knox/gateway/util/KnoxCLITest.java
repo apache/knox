@@ -846,7 +846,7 @@ public class KnoxCLITest {
     GatewayConfigMock config = new GatewayConfigMock();
     URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
     config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
-    String args[] = {"list-topologies", "--master", "knox"};
+    String[] args = {"list-topologies", "--master", "knox"};
 
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
@@ -962,7 +962,7 @@ public class KnoxCLITest {
     GatewayConfigMock config = new GatewayConfigMock();
     URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
     config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
-    String args[] = {"validate-topology", "--master", "knox", "--cluster", "sandbox"};
+    String[] args = {"validate-topology", "--master", "knox", "--cluster", "sandbox"};
 
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
@@ -974,21 +974,21 @@ public class KnoxCLITest {
     outContent.reset();
 
 
-    String args2[] = {"validate-topology", "--master", "knox", "--cluster", "NotATopology"};
+    String[] args2 = {"validate-topology", "--master", "knox", "--cluster", "NotATopology"};
     cli.run(args2);
 
     assertThat(outContent.toString("UTF-8"), containsString("NotATopology"));
     assertThat(outContent.toString("UTF-8"), containsString("does not exist"));
     outContent.reset();
 
-    String args3[] = {"validate-topology", "--master", "knox", "--path", config.getGatewayTopologyDir() + "/admin.xml"};
+    String[] args3 = {"validate-topology", "--master", "knox", "--path", config.getGatewayTopologyDir() + "/admin.xml"};
     cli.run(args3);
 
     assertThat(outContent.toString("UTF-8"), containsString("admin"));
     assertThat(outContent.toString("UTF-8"), containsString("success"));
     outContent.reset();
 
-    String args4[] = {"validate-topology", "--master", "knox", "--path", "not/a/path"};
+    String[] args4 = {"validate-topology", "--master", "knox", "--path", "not/a/path"};
     cli.run(args4);
     assertThat(outContent.toString("UTF-8"), containsString("does not exist"));
     assertThat(outContent.toString("UTF-8"), containsString("not/a/path"));
@@ -1003,7 +1003,7 @@ public class KnoxCLITest {
     GatewayConfigMock config = new GatewayConfigMock();
     URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");
     config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
-    String args[] = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-bad"};
+    String[] args = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-bad"};
 
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
@@ -1018,7 +1018,7 @@ public class KnoxCLITest {
 
     outContent.reset();
 
-    String args2[] = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-good"};
+    String[] args2 = {"validate-topology", "--master", "knox", "--cluster", "test-cluster-good"};
 
     cli.run(args2);
 

@@ -69,7 +69,7 @@ public class Version implements Comparable<Version> {
   }
 
   private void parseVersion(String version) {
-    String parts[] = version.split("\\.");
+    String[] parts = version.split("\\.");
     int length = parts.length;
     if (length >= 1) {
       major = Integer.parseInt(parts[0]);

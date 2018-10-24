@@ -244,7 +244,7 @@ public class KnoxCliLdapFuncTestNegative {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
 
-    String args1[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
+    String[] args1 = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
     cli.run( args1 );
 
@@ -260,7 +260,7 @@ public class KnoxCliLdapFuncTestNegative {
     cli = new KnoxCLI();
     cli.setConf( config );
 
-    String args2[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
+    String[] args2 = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
     Enumeration<Appender> before = NoOpAppender.setUp();
     try {
@@ -278,7 +278,7 @@ public class KnoxCliLdapFuncTestNegative {
     cli = new KnoxCLI();
     cli.setConf( config );
 
-    String args3[] = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
+    String[] args3 = {"user-auth-test", "--master", "knox", "--cluster", "bad-cluster",
         "--u", username, "--p", password, "--g" };
     cli.run( args3 );
 

@@ -3663,7 +3663,7 @@ public class GatewayBasicFuncTest {
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent, false, "UTF-8"));
 
-    String args[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+    String[] args = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", Integer.toString(gatewayAddress.getPort()), "--u", "kminder","--p", "kminder-password" };
     KnoxCLI cli = new KnoxCLI();
     cli.run(args);
@@ -3676,7 +3676,7 @@ public class GatewayBasicFuncTest {
     setupResources();
 
 
-    String args2[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+    String[] args2 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", Integer.toString(gatewayAddress.getPort()) };
 
     cli = new KnoxCLI();
@@ -3685,7 +3685,7 @@ public class GatewayBasicFuncTest {
     outContent.reset();
 
 
-    String args3[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", "bad-host",
+    String[] args3 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", "bad-host",
         "--port", "0", "--u", "guest", "--p", "guest-password" };
 
     cli = new KnoxCLI();
@@ -3695,7 +3695,7 @@ public class GatewayBasicFuncTest {
             .or(containsString("//bad-host:0/")));
     outContent.reset();
 
-    String args4[] = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
+    String[] args4 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", "543", "--u", "mapred", "--p", "mapred-password" };
 
     cli = new KnoxCLI();
@@ -3704,7 +3704,7 @@ public class GatewayBasicFuncTest {
     outContent.reset();
 
 
-    String args5[] = {"service-test", "--master", "knox", "--hostname", gatewayAddress.getHostName(),
+    String[] args5 = {"service-test", "--master", "knox", "--hostname", gatewayAddress.getHostName(),
         "--port", "543", "--u", "mapred", "--p", "mapred-password" };
 
     cli = new KnoxCLI();

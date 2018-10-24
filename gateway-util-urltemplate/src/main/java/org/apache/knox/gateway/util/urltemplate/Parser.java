@@ -266,7 +266,7 @@ public class Parser {
           builder.addQuery( paramName, new Token( paramName, paramPattern.originalPattern, builder.isLiteral() ) );
         }
       } else {
-        String nameValue[] = split( token, '=' );
+        String[] nameValue = split( token, '=' );
         if( nameValue.length == 1 ) {
           String queryName = nameValue[ 0 ];
           builder.addQuery( queryName, new Token( Segment.ANONYMOUS_PARAM, null, builder.isLiteral() ) );

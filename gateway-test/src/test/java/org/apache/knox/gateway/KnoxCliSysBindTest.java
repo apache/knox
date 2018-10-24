@@ -233,7 +233,7 @@ public class KnoxCliSysBindTest {
 
 //    Test 1: Make sure authentication is successful
     outContent.reset();
-    String args[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-1", "--d" };
+    String[] args = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-1", "--d" };
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args);
@@ -241,7 +241,7 @@ public class KnoxCliSysBindTest {
 
     //    Test 2: Make sure authentication fails
     outContent.reset();
-    String args2[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-2", "--d" };
+    String[] args2 = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-2", "--d" };
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args2);
@@ -250,7 +250,7 @@ public class KnoxCliSysBindTest {
 
     //    Test 3: Make sure authentication is successful
     outContent.reset();
-    String args3[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
+    String[] args3 = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
     cli = new KnoxCLI();
     cli.setConf(config);
     Enumeration<Appender> before = NoOpAppender.setUp();
@@ -264,7 +264,7 @@ public class KnoxCliSysBindTest {
 
     //    Test 4: Assert that we get a username/password not present error is printed
     outContent.reset();
-    String args4[] = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-4" };
+    String[] args4 = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-4" };
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args4);
@@ -274,7 +274,7 @@ public class KnoxCliSysBindTest {
 
     //    Test 5: Assert that we get a username/password not present error is printed
     outContent.reset();
-    String args5[] = { "system-user-auth-test", "--master", "knox", "--cluster", "not-a-cluster" };
+    String[] args5 = { "system-user-auth-test", "--master", "knox", "--cluster", "not-a-cluster" };
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args5);

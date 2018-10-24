@@ -566,7 +566,7 @@ public class DefaultTopologyServiceTest {
   public void testProviderParamsOrderIsPreserved() {
 
     Provider provider = new Provider();
-    String names[] = {"ldapRealm=",
+    String[] names = {"ldapRealm=",
         "ldapContextFactory",
         "ldapRealm.contextFactory",
         "ldapGroupRealm",
